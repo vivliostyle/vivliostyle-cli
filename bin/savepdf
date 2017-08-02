@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const path = require('path');
+const program = require('commander');
+const savepdf = require('./../lib');
+
+program.arguments('<input>')
+  .parse(process.argv);
+
+if (program.args.length < 1) {
+  program.help();
+}
+
+savepdf(path.resolve(process.cwd(), program.args[0]))

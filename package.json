@@ -1,0 +1,20 @@
+{
+  "name": "viola-savepdf",
+  "version": "1.0.0",
+  "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
+  "main": "lib/index.js",
+  "directories": {
+    "bin": "bin"
+  },
+  "repository": "https://github.com/pentapod/viola-savepdf.git",
+  "author": "spring_raining <harusamex.com@gmail.com>",
+  "license": "AGPLv3",
+  "dependencies": {
+    "chrome-launcher": "^0.3.2",
+    "chrome-remote-interface": "^0.24.2",
+    "commander": "^2.11.0",
+    "http-server": "^0.10.0",
+    "portfinder": "^1.0.13",
+    "vivliostyle": "^2017.6.0"
+  }
+}

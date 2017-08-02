@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<!-- The broker page that serves Vivliostyle -->
+<html data-vivliostyle-paginated="true">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+
+  <script src="node_modules/vivliostyle/lib/vivliostyle.min.js"></script>
+  <link rel="stylesheet" href="node_modules/vivliostyle/resources/vivliostyle-viewport.css">
+  <link rel="stylesheet" href="node_modules/vivliostyle/resources/vivliostyle-viewport-screen.css" media="screen">
+  <style>
+    body {
+      margin: 0;
+    }
+    #out {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Print viewport area only */
+    @media print {
+      html[data-vivliostyle-paginated] {
+        width: 100%;
+        height: 100%;
+      }
+      html[data-vivliostyle-paginated] body > * {
+        display: none;
+      }
+      html[data-vivliostyle-paginated] [data-vivliostyle-viewer-viewport] {
+        display: block;
+      }
+      html[data-vivliostyle-paginated] body
+      html[data-vivliostyle-paginated] [data-vivliostyle-viewer-viewport] {
+        width: 100% !important;
+        height: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="out" data-vivliostyle-viewer-viewport="true"></div>
+
+  <script type="text/javascript">
+    window.viewer = new vivliostyle.viewer.Viewer({
+      userAgentRootURL: 'node_modules/vivliostyle/resources/',
+      viewportElement: document.getElementById('out'),
+      debug: false
+    });
+  </script>
+</body>
+</html>
