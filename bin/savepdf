@@ -5,10 +5,12 @@
 const path = require('path');
 const program = require('commander');
 const savepdf = require('./../lib');
+const packageJSON = require('./../package.json');
 
 const runningVivliostyleTimeout = 60 * 1000;
 
 program.arguments('<input>')
+  .version(packageJSON.version)
   .option('-s, --size <size>',
           "Output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')")
   .option('-t --timeout <time>',
