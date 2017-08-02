@@ -6,11 +6,18 @@ const path = require('path');
 const program = require('commander');
 const savepdf = require('./../lib');
 
+const runningVivliostyleTimeout = 60 * 1000;
+
 program.arguments('<input>')
+  .option('-s, --size <size>',
+          "Output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')")
+  .option('-t --timeout <time>',
+          "Timeout times for waiting Vivliostyle process (default: 60s)",
+          val => (Number.isFinite(+val) && +val > 0)? +val * 1000 : runningVivliostyleTimeout)
   .parse(process.argv);
 
 if (program.args.length < 1) {
   program.help();
 }
 
-savepdf(path.resolve(process.cwd(), program.args[0]))
+savepdf(path.resolve(process.cwd(), program.args[0]), program.size, program.timeout);
