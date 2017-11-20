@@ -1,8 +1,9 @@
+body {
+    position: relative;
+    margin: 0;
+}
+
 @media screen {
-    body {
-        position: relative;
-        margin: 0;
-    }
     #out {
         position: absolute;
         top: 0;
