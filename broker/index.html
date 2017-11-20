@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!-- The broker page that serves Vivliostyle -->
+<html data-vivliostyle-paginated="true">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+
+  <script src="/node_modules/preact/dist/preact.min.js"></script>
+  <script src="/node_modules/vivliostyle/lib/vivliostyle.min.js"></script>
+  <link rel="stylesheet" href="/node_modules/vivliostyle/resources/vivliostyle-viewport.css">
+  <link rel="stylesheet" href="/node_modules/vivliostyle/resources/vivliostyle-viewport-screen.css" media="screen">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Empty tag for injecting page size style -->
+  <style id="vivliostyle-page-rules"></style>
+</head>
+<body>
+  <div id="out" data-vivliostyle-viewer-viewport="true"></div>
+  <div id="ui"></div>
+
+  <script type="text/javascript" src="main.js"></script>
+</body>
+</html>
