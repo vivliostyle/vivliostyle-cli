@@ -8,10 +8,10 @@
   },
   "repository": "https://github.com/pentapod/viola-savepdf.git",
   "author": "spring_raining <harusamex.com@gmail.com>",
-  "license": "AGPLv3",
+  "license": "AGPL-3.0",
   "dependencies": {
-    "chrome-launcher": "^0.3.2",
-    "chrome-remote-interface": "^0.24.2",
+    "chrome-launcher": "^0.8.1",
+    "chrome-remote-interface": "^0.25.3",
     "commander": "^2.11.0",
     "http-server": "^0.10.0",
     "portfinder": "^1.0.13",
