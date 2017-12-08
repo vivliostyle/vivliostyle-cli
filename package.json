@@ -1,6 +1,6 @@
 {
   "name": "viola-savepdf",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
   "main": "bin/savepdf",
   "directories": {
