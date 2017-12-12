@@ -49,6 +49,11 @@ body {
         -webkit-font-smoothing: antialiased;
     }
 
+    #ui a,
+    #ui a:visited {
+        color: inherit;
+    }
+
     #ui button {
         /* position: relative; */
         /* width: 32px; */
@@ -250,8 +255,20 @@ body {
 
     #ui .Menu_footer {
         display: flex;
-        box-sizing: border-box;
+        flex-direction: column;
         padding: 1em .4em;
+    }
+
+    #ui .Menu_footer-text {
+        font-size: 90%;
+        color: #555;
+        text-align: center;
+    }
+
+    #ui .Menu_footer-button-area {
+        display: flex;
+        box-sizing: border-box;
+        margin-top: 1em;
     }
 
     #ui .Menu_footer-button {

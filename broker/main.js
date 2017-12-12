@@ -98,7 +98,7 @@ class Menu extends Component {
   }
 
   render() {
-    const { vivliostyleState } = this.props;
+    const { vivliostyleState, version } = this.props;
     const {
       valueChanged,
       pageSizeOption,
@@ -217,7 +217,17 @@ class Menu extends Component {
         )
       ),
       h('div', {className: 'Menu_footer'},
-        footerButton
+        h('div', {className: 'Menu_footer-text'},
+          h('a', {href: 'https://github.com/pentapod/viola-savepdf'}, 'viola-savepdf'),
+          version && h('span', {}, ' v' + version)
+        ),
+        h('div', {className: 'Menu_footer-text'},
+          'Powered by ',
+          h('a', {href: 'http://vivliostyle.com'}, 'Vivliostyle.js')
+        ),
+        h('div', {className: 'Menu_footer-button-area'},
+          footerButton
+        )
       )
     );
   }
@@ -259,10 +269,12 @@ class App extends Component {
         }
       }
     }
+    let version = query.version || null;
 
     this.state = {
       vivliostyleState: 'loading',
       renderUrl,
+      version,
     };
     this.defaultSettings = {
       pageSizeOption: 'auto',
@@ -337,12 +349,13 @@ class App extends Component {
   }
 
   render() {
-    const { vivliostyleState } = this.state;
+    const { vivliostyleState, version } = this.state;
 
     return h('div', {className: 'App'},
       h(PageNavigator, null),
       h(Menu, {
         vivliostyleState,
+        version,
         defaultSettings: this.defaultSettings,
         onApplySettings: this.loadDocument.bind(this)
       })
