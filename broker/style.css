@@ -260,7 +260,6 @@ body {
     }
 
     #ui .PageNavigator {
-        pointer-events: none;
         position: absolute;
         top: 0;
         bottom: 0;
@@ -268,31 +267,42 @@ body {
         right: 0;
         display: flex;
         justify-content: space-between;
-        align-content: center;
+        align-items: center;
+
+        opacity: 0;
+        transition: opacity 0.08s linear;
+    }
+    #ui .PageNavigator:hover {
+        opacity: 1;
     }
 
     #ui .PageNavigator_navigation-left,
     #ui .PageNavigator_navigation-right {
         pointer-events: auto;
         width: 40px;
-        height: 100%;
+        height: 50%;
         color: white;
         background-color: rgba(0, 0, 0, 0.4);
         line-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        cursor: pointer;
         user-select: none;
+    }
+    #ui .PageNavigator_navigation-left {
+        cursor: w-resize;
+    }
+    #ui .PageNavigator_navigation-right {
+        cursor: e-resize;
     }
 
     #ui .PageNavigator_navigation-left:before,
     #ui .PageNavigator_navigation-right:before {
         content: '';
         display: block;
-        width: 8px;
-        height: 8px;
-        border: 2.5px solid #ffffff;
+        width: 10px;
+        height: 10px;
+        border: 4px solid #ffffff;
         border-top: none;
         border-right: none;
         background: transparent;
