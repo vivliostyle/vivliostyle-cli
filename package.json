@@ -14,8 +14,9 @@
     "chrome-remote-interface": "^0.25.3",
     "commander": "^2.11.0",
     "http-server": "^0.10.0",
+    "mathjax": "2.7.2",
     "portfinder": "^1.0.13",
     "preact": "^8.2.6",
-    "vivliostyle": "^2017.6.0"
+    "vivliostyle": "2017.6.0"
   }
 }
