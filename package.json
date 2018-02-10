@@ -1,6 +1,6 @@
 {
   "name": "viola-savepdf",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
   "main": "bin/savepdf",
   "directories": {
@@ -10,13 +10,13 @@
   "author": "spring_raining <harusamex.com@gmail.com>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "chrome-launcher": "^0.10.0",
-    "chrome-remote-interface": "^0.25.3",
-    "commander": "^2.11.0",
+    "chrome-launcher": "^0.10.2",
+    "chrome-remote-interface": "^0.25.5",
+    "commander": "^2.14.1",
     "http-server": "^0.11.1",
-    "mathjax": "2.7.2",
+    "mathjax": "2.7.3",
     "portfinder": "^1.0.13",
-    "preact": "^8.2.6",
+    "preact": "^8.2.7",
     "vivliostyle": "2017.6.0"
   }
 }
