@@ -20,6 +20,8 @@ program.arguments('<input>')
   .option('-o, --output <output_file>',
           `specify output file path (default output.pdf)`,
           'output.pdf')
+  .option('-r, --root <root_directory>',
+          `specify assets root path (default directory of input file)`, undefined)
   .option('-s, --size <size>',
           `output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')`)
   .option('-t, --timeout <time>',
@@ -35,5 +37,6 @@ if (program.preview) {
   preview(path.resolve(process.cwd(), program.args[0]), program.sandbox);
 } else {
   save(path.resolve(process.cwd(), program.args[0]),
-       path.resolve(process.cwd(), program.output), program.size, program.timeout, program.sandbox);
+       path.resolve(process.cwd(), program.output), program.size, program.timeout, program.sandbox,
+       program.root && path.resolve(process.cwd(), program.root));
 }
