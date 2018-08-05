@@ -14,6 +14,8 @@ program.arguments('<input>')
   .version(packageJSON.version)
   .option('--no-sandbox',
           `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`)
+  .option('-r, --root <root_directory>',
+          `specify assets root path (default directory of input file)`, undefined)
   .option('--preview',
           `open preview page and save PDF interactively
                             (if preview option is set, options below this line will be ignored)`)
@@ -32,8 +34,10 @@ if (program.args.length < 1) {
 }
 
 if (program.preview) {
-  preview(path.resolve(process.cwd(), program.args[0]), program.sandbox);
+  preview(path.resolve(process.cwd(), program.args[0]), program.sandbox,
+          program.root && path.resolve(process.cwd(), program.root));
 } else {
   save(path.resolve(process.cwd(), program.args[0]),
-       path.resolve(process.cwd(), program.output), program.size, program.timeout, program.sandbox);
+       path.resolve(process.cwd(), program.output), program.size, program.timeout, program.sandbox,
+       program.root && path.resolve(process.cwd(), program.root));
 }
