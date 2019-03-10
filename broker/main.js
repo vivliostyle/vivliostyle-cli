@@ -223,7 +223,7 @@ class Menu extends Component {
         ),
         h('div', {className: 'Menu_footer-text'},
           'Powered by ',
-          h('a', {href: 'http://vivliostyle.com'}, 'Vivliostyle.js'),
+          h('a', {href: 'https://vivliostyle.org'}, 'Vivliostyle.js'),
           vivliostyleVersion && h('span', {}, ' v' + vivliostyleVersion)
         ),
         h('div', {className: 'Menu_footer-button-area'},
