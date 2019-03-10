@@ -98,7 +98,7 @@ class Menu extends Component {
   }
 
   render() {
-    const { vivliostyleState, version } = this.props;
+    const { vivliostyleState, brokerVersion, vivliostyleVersion } = this.props;
     const {
       valueChanged,
       pageSizeOption,
@@ -219,11 +219,12 @@ class Menu extends Component {
       h('div', {className: 'Menu_footer'},
         h('div', {className: 'Menu_footer-text'},
           h('a', {href: 'https://github.com/pentapod/viola-savepdf'}, 'viola-savepdf'),
-          version && h('span', {}, ' v' + version)
+          brokerVersion && h('span', {}, ' v' + brokerVersion)
         ),
         h('div', {className: 'Menu_footer-text'},
           'Powered by ',
-          h('a', {href: 'http://vivliostyle.com'}, 'Vivliostyle.js')
+          h('a', {href: 'http://vivliostyle.com'}, 'Vivliostyle.js'),
+          vivliostyleVersion && h('span', {}, ' v' + vivliostyleVersion)
         ),
         h('div', {className: 'Menu_footer-button-area'},
           footerButton
@@ -269,12 +270,10 @@ class App extends Component {
         }
       }
     }
-    let version = query.version || null;
 
     this.state = {
       vivliostyleState: 'loading',
       renderUrl,
-      version,
     };
     this.defaultSettings = {
       pageSizeOption: 'auto',
@@ -345,7 +344,28 @@ class App extends Component {
     }
   }
 
+  fetchPackageInfo() {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+      if (xhr.status >= 400 || !xhr.responseText) {
+        return;
+      }
+      try {
+        const json = JSON.parse(xhr.responseText);
+        this.setState({
+          brokerVersion: json.version,
+          vivliostyleVersion: json.dependencies.vivliostyle,
+        });
+      } catch (err) {
+        return;
+      }
+    };
+    xhr.open('GET', '/package.json', true);
+    xhr.send();
+  }
+
   componentDidMount() {
+    this.fetchPackageInfo();
     window.viewer = new vivliostyle.viewer.Viewer({
       userAgentRootURL: '/node_modules/vivliostyle/resources/',
       viewportElement: document.getElementById('out'),
@@ -361,13 +381,14 @@ class App extends Component {
   }
 
   render() {
-    const { vivliostyleState, version } = this.state;
+    const { vivliostyleState, brokerVersion, vivliostyleVersion } = this.state;
 
     return h('div', {className: 'App'},
       h(PageNavigator, null),
       h(Menu, {
         vivliostyleState,
-        version,
+        brokerVersion,
+        vivliostyleVersion,
         defaultSettings: this.defaultSettings,
         onApplySettings: this.loadDocument.bind(this)
       })
