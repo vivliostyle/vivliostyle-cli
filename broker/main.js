@@ -70,6 +70,18 @@ class Menu extends Component {
     });
   }
 
+  onLoadModeRadioClick(value) {
+    return () => {
+      console.log(value);
+      if (this.state.loadMode !== value) {
+        this.setState({
+          valueChanged: true,
+          loadMode: value,
+        });
+      }
+    };
+  }
+
   onPrintButtonClick() {
     if (this.state.valueChanged) {
 
@@ -106,7 +118,8 @@ class Menu extends Component {
       pageSizeUseLandscape,
       pageSizeWidth,
       pageSizeHeight,
-      overrideDocumentStylesheets
+      overrideDocumentStylesheets,
+      loadMode
     } = this.state;
 
     const footerButton = valueChanged? [
@@ -121,7 +134,7 @@ class Menu extends Component {
     return h('div', {className: 'Menu'},
       h('div', {className: 'Menu_content'},
         h('h3', null, 'Viola print previewer'),
-        h('fieldset', {className: 'Menu_page-size'},
+        h('fieldset', {className: 'Menu_page-size Menu_item'},
           h('legend', null,
             h('h4', null, 'Page Size')
           ),
@@ -206,7 +219,7 @@ class Menu extends Component {
             )
           )
         ),
-        h('div', null,
+        h('div', {className: 'Menu_item'},
           h('input', {
             type: 'checkbox',
             id: 'override-stylesheets',
@@ -214,16 +227,53 @@ class Menu extends Component {
             onClick: this.onOverrideCheckboxClick.bind(this)
           }),
           h('label', {for: 'override-stylesheets'}, 'Override Document StyleSheets')
+        ),
+        h('fieldset', {className: 'Menu_load-mode Menu_item'},
+          h('legend', null,
+            h('h4', null, 'Document loading mode')
+          ),
+          h('ul', null,
+            h('li', {className: loadMode !== 'book' ? 'selected' : ''},
+              h('input', {
+                type: 'radio',
+                id: 'load-mode_document',
+                checked: loadMode !== 'book',
+                onClick: this.onLoadModeRadioClick.bind(this)('document')
+              }),
+              h('label', {for: 'load-mode_document'}, 'Document'),
+              h('div', {className: 'Menu_subform'},
+                h('small', null,
+                  'It loads a single (X)HTML document.'
+                )
+              )
+            ),
+            h('li', {className: loadMode === 'book' ? 'selected' : ''},
+              h('input', {
+                type: 'radio',
+                id: 'load-mode_book',
+                checked: loadMode === 'book',
+                onClick: this.onLoadModeRadioClick.bind(this)('book')
+              }),
+              h('label', {for: 'load-mode_book'}, 'Book'),
+              h('div', {className: 'Menu_subform'},
+                h('small', null,
+                  'It loads a series of HTML documents. See also ',
+                  h('a', {href: 'http://vivliostyle.github.io/vivliostyle.js/docs/en/', target: '_blank'}, 'the Vivliostyle guide'),
+                  '.'
+                )
+              )
+            )
+          )
         )
       ),
       h('div', {className: 'Menu_footer'},
         h('div', {className: 'Menu_footer-text'},
-          h('a', {href: 'https://github.com/pentapod/viola-savepdf'}, 'viola-savepdf'),
+          h('a', {href: 'https://github.com/pentapod/viola-savepdf', target: '_blank'}, 'viola-savepdf'),
           brokerVersion && h('span', {}, ' v' + brokerVersion)
         ),
         h('div', {className: 'Menu_footer-text'},
           'Powered by ',
-          h('a', {href: 'https://vivliostyle.org'}, 'Vivliostyle.js'),
+          h('a', {href: 'https://vivliostyle.org', target: '_blank'}, 'Vivliostyle.js'),
           vivliostyleVersion && h('span', {}, ' v' + vivliostyleVersion)
         ),
         h('div', {className: 'Menu_footer-button-area'},
