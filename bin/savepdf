@@ -12,13 +12,17 @@ const runningVivliostyleTimeout = 60 * 1000;
 
 program.arguments('<input>')
   .version(packageJSON.version)
+  .option('-b, --book',
+          `load document as book mode
+                             It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
+                             Please see also http://vivliostyle.github.io/vivliostyle.js/docs/en/`)
   .option('--no-sandbox',
           `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`)
   .option('-r, --root <root_directory>',
           `specify assets root path (default directory of input file)`, undefined)
   .option('--preview',
           `open preview page and save PDF interactively
-                            (if preview option is set, options below this line will be ignored)`)
+                             If preview option is set, options below this line will be ignored.`)
   .option('-o, --output <output_file>',
           `specify output file path (default output.pdf)`,
           'output.pdf')
@@ -34,10 +38,20 @@ if (program.args.length < 1) {
 }
 
 if (program.preview) {
-  preview(path.resolve(process.cwd(), program.args[0]), program.sandbox,
-          program.root && path.resolve(process.cwd(), program.root));
+  preview({
+    input: path.resolve(process.cwd(), program.args[0]),
+    rootDir: program.root && path.resolve(process.cwd(), program.root),
+    loadMode: program.book? 'book' : 'document',
+    sandbox: program.sandbox
+  });
 } else {
-  save(path.resolve(process.cwd(), program.args[0]),
-       path.resolve(process.cwd(), program.output), program.size, program.timeout, program.sandbox,
-       program.root && path.resolve(process.cwd(), program.root));
+  save({
+    input: path.resolve(process.cwd(), program.args[0]),
+    outputPath: path.resolve(process.cwd(), program.output),
+    size: program.size,
+    vivliostyleTimeout: program.timeout,
+    rootDir: program.root && path.resolve(process.cwd(), program.root),
+    loadMode: program.book? 'book' : 'document',
+    sandbox: program.sandbox
+  })
 }

@@ -283,6 +283,7 @@ class App extends Component {
       pageSizeWidth: '210mm',
       pageSizeHeight: '297mm',
       overrideDocumentStylesheets: false,
+      loadMode: query.loadMode || 'document',
     };
   }
 
@@ -323,14 +324,25 @@ class App extends Component {
       return;
     }
 
-    window.viewer.loadDocument([ renderUrl ], {
-      userStyleSheet: [{
-        text: this.getUserStyleSheetString(settings)
-      }]
-    }, {
-      fitToScreen: true,
-      pageViewMode: 'singlePage'
-    });
+    if (settings.loadMode === 'book') {
+      window.viewer.loadPublication(renderUrl, {
+        userStyleSheet: [{
+          text: this.getUserStyleSheetString(settings)
+        }]
+      }, {
+        fitToScreen: true,
+        pageViewMode: 'singlePage'
+      });
+    } else {
+      window.viewer.loadDocument([ renderUrl ], {
+        userStyleSheet: [{
+          text: this.getUserStyleSheetString(settings)
+        }]
+      }, {
+        fitToScreen: true,
+        pageViewMode: 'singlePage'
+      });
+    }
   }
 
   componentDidMount() {
