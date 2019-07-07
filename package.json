@@ -18,6 +18,6 @@
     "mathjax": "2.7.5",
     "portfinder": "^1.0.20",
     "preact": "^8.4.2",
-    "vivliostyle": "2019.1.102"
+    "vivliostyle": "~2019.1.106"
   }
 }
