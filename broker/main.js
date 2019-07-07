@@ -268,7 +268,7 @@ class Menu extends Component {
       ),
       h('div', {className: 'Menu_footer'},
         h('div', {className: 'Menu_footer-text'},
-          h('a', {href: 'https://github.com/pentapod/viola-savepdf', target: '_blank'}, 'viola-savepdf'),
+          h('a', {href: 'https://github.com/vivliostyle/vivliostyle-savepdf', target: '_blank'}, 'vivliostyle-savepdf'),
           brokerVersion && h('span', {}, ' v' + brokerVersion)
         ),
         h('div', {className: 'Menu_footer-text'},
