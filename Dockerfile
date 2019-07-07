@@ -18,14 +18,14 @@ RUN set -x \
     && ln -s /opt/chrome-linux/chrome /usr/local/bin/chromium \
     && rm -rf /opt/chrome-linux.zip /var/lib/apt/lists/ /src/*.deb
 
-ADD . /opt/viola-savepdf
-WORKDIR /opt/viola-savepdf
+ADD . /opt/vivliostyle-savepdf
+WORKDIR /opt/vivliostyle-savepdf
 
 RUN groupadd -r viola \
     && useradd -s /bin/bash -r -m -g viola -G audio,video viola \
     && mkdir -p /home/viola/Downloads \
     && chown -R viola:viola /home/viola \
-    && chown -R viola:viola /opt/viola-savepdf
+    && chown -R viola:viola /opt/vivliostyle-savepdf
 
 USER viola
 RUN set -x \
