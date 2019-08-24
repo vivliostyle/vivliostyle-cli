@@ -11,13 +11,13 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "boxen": "^4.1.0",
-    "chrome-launcher": "^0.10.4",
-    "chrome-remote-interface": "^0.27.1",
-    "commander": "^2.19.0",
+    "chrome-launcher": "^0.11.2",
+    "chrome-remote-interface": "^0.27.2",
+    "commander": "^2.20.0",
     "http-server": "^0.11.1",
     "mathjax": "2.7.5",
-    "portfinder": "^1.0.20",
-    "preact": "^8.4.2",
-    "vivliostyle": "~2019.1.106"
+    "portfinder": "^1.0.21",
+    "preact": "^8.5.1",
+    "vivliostyle": "~2019.8.101"
   }
 }
