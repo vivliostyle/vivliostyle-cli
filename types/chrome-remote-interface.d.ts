@@ -6,15 +6,36 @@ declare module 'chrome-remote-interface' {
 
 declare function chrome(fn: (args: Protocol) => void): Event;
 
+type CallFrameId = string;
+type UniqueDebuggerId = string;
+type ScriptId = string;
+type ExecutionContextId = number;
+type UnserializableValue = string;
+type RemoteObjectId = string;
+type TransitionType =
+  | 'link'
+  | 'typed'
+  | 'address_bar'
+  | 'auto_bookmark'
+  | 'auto_subframe'
+  | 'manual_subframe'
+  | 'generated'
+  | 'auto_toplevel'
+  | 'form_submit'
+  | 'reload'
+  | 'keyword'
+  | 'keyword_generated'
+  | 'other';
+
+interface Event {
+  on: (eventType: string, cb: (args?: any) => unknown) => void;
+}
+
 interface Protocol {
   Page: Page;
   Runtime: Runtime;
   Emulation: Emulation;
   close: () => Promise<void>;
-}
-
-interface Event {
-  on: (eventType: string, cb: (args?: any) => unknown) => void;
 }
 
 interface Page {
@@ -67,21 +88,6 @@ interface Emulation {
   setEmulatedMedia: (args: {media: string}) => Promise<void>;
 }
 
-type TransitionType =
-  | 'link'
-  | 'typed'
-  | 'address_bar'
-  | 'auto_bookmark'
-  | 'auto_subframe'
-  | 'manual_subframe'
-  | 'generated'
-  | 'auto_toplevel'
-  | 'form_submit'
-  | 'reload'
-  | 'keyword'
-  | 'keyword_generated'
-  | 'other';
-
 interface RemoteObject {
   type:
     | 'object'
@@ -110,14 +116,13 @@ interface RemoteObject {
     | 'typedarray'
     | 'arraybuffer'
     | 'dataview';
-
   className?: string;
   value?: any;
-  unserializableValue?: 'UnserializableValue';
+  unserializableValue?: UnserializableValue;
   description?: string;
-  objectId?: 'RemoteObjectId';
-  preview?: 'ObjectPreview';
-  customPreview?: 'CustomPreview';
+  objectId?: RemoteObjectId;
+  preview?: ObjectPreview;
+  customPreview?: CustomPreview;
 }
 
 interface Scope {
@@ -132,13 +137,10 @@ interface Scope {
     | 'eval'
     | 'module';
   object: RemoteObject;
-
   name?: string;
   startLocation?: Location;
   endLocation?: Location;
 }
-
-type CallFrameId = string;
 
 interface CallFrame {
   callFrameId: CallFrameId;
@@ -150,8 +152,6 @@ interface CallFrame {
   this: RemoteObject;
   returnValue?: RemoteObject;
 }
-
-type UniqueDebuggerId = string;
 
 interface StackTraceId {
   id: string;
@@ -165,8 +165,6 @@ interface StackTrace {
   parentId?: StackTraceId;
 }
 
-type ScriptId = string;
-
 interface ExceptionDetails {
   exceptionId: number;
   text: string;
@@ -174,7 +172,75 @@ interface ExceptionDetails {
   columnNumber: number;
   scriptId?: ScriptId;
   url?: string;
-  stackTrace?: 'StackTrace';
+  stackTrace?: StackTrace;
   exception?: RemoteObject;
-  executionContextId?: 'ExecutionContextId';
+  executionContextId?: ExecutionContextId;
+}
+
+interface ObjectPreview {
+  type:
+    | 'object'
+    | 'function'
+    | 'undefined'
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'symbol'
+    | 'bigint';
+  subtype?:
+    | 'array'
+    | 'null'
+    | 'node'
+    | 'regexp'
+    | 'date'
+    | 'map'
+    | 'set'
+    | 'weakmap'
+    | 'weakset'
+    | 'iterator'
+    | 'generator'
+    | 'error';
+  description?: string;
+  overflow: boolean;
+  properties: PropertyPreview[];
+  entries?: EntryPreview[];
+}
+
+interface PropertyPreview {
+  name: string;
+  type:
+    | 'object'
+    | 'function'
+    | 'undefined'
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'symbol'
+    | 'accessor'
+    | 'bigint';
+  value?: string;
+  valuePreview?: ObjectPreview;
+  subtype?:
+    | 'array'
+    | 'null'
+    | 'node'
+    | 'regexp'
+    | 'date'
+    | 'map'
+    | 'set'
+    | 'weakmap'
+    | 'weakset'
+    | 'iterator'
+    | 'generator'
+    | 'error';
+}
+
+interface EntryPreview {
+  key?: ObjectPreview;
+  value: ObjectPreview;
+}
+
+interface CustomPreview {
+  header: string;
+  bodyGetterId?: RemoteObjectId;
 }
