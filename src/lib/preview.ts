@@ -8,7 +8,7 @@ import {
   LoadMode,
 } from './misc';
 
-interface PreviewOption {
+export interface PreviewOption {
   input: string;
   rootDir: string;
   loadMode: LoadMode;

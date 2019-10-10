@@ -8,6 +8,10 @@ import httpServer from 'http-server';
 import portfinder from 'portfinder';
 import * as chromeLauncher from 'chrome-launcher';
 
+export type SourceServer = Server;
+export type BrokerServer = Server;
+export type LoadMode = 'document' | 'book';
+
 export interface Server {
   server: http.Server | https.Server;
   port: number;
@@ -15,6 +19,13 @@ export interface Server {
 
 export interface PresetPageSize {
   [index: string]: [number, number];
+}
+
+export interface GetBrokerURLOption {
+  sourcePort: number;
+  sourceIndex: string;
+  brokerPort: number;
+  loadMode: LoadMode;
 }
 
 const cm = 1 / 2.54;
@@ -86,15 +97,6 @@ export function findPort(): Promise<number> {
   return portfinder.getPortPromise();
 }
 
-export type LoadMode = 'document' | 'book';
-
-interface GetBrokerURLOption {
-  sourcePort: number;
-  sourceIndex: string;
-  brokerPort: number;
-  loadMode: LoadMode;
-}
-
 export function getBrokerUrl({
   sourcePort,
   sourceIndex,
@@ -123,8 +125,6 @@ export async function launchSourceAndBrokerServer(
     throw e;
   }
 }
-
-type BrokerServer = Server;
 
 export function launchBrokerServer(): Promise<BrokerServer> {
   return new Promise((resolve) => {
@@ -174,8 +174,6 @@ export function launchBrokerServer(): Promise<BrokerServer> {
     });
   });
 }
-
-type SourceServer = Server;
 
 export function launchSourceServer(root: string): Promise<SourceServer> {
   return new Promise((resolve) => {

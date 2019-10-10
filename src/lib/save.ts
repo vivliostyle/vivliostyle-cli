@@ -10,6 +10,9 @@ import {
   LoadMode,
 } from './misc';
 
+type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
+type RejectFunction = (reason?: any) => void;
+
 export interface SaveOption {
   input: string;
   outputPath: string;
@@ -18,6 +21,15 @@ export interface SaveOption {
   rootDir: string;
   loadMode: LoadMode;
   sandbox: boolean;
+}
+
+export interface OnPageLoadOption {
+  Page: Page;
+  Runtime: Runtime;
+  Emulation: Emulation;
+  outputFile: string;
+  outputSize: [number, number] | null;
+  vivliostyleTimeout: number;
 }
 
 export default async function run({
@@ -107,18 +119,6 @@ export default async function run({
     console.trace(err);
     process.exit(1);
   }
-}
-
-type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
-type RejectFunction = (reason?: any) => void;
-
-interface OnPageLoadOption {
-  Page: Page;
-  Runtime: Runtime;
-  Emulation: Emulation;
-  outputFile: string;
-  outputSize: [number, number] | null;
-  vivliostyleTimeout: number;
 }
 
 function onPageLoad({
