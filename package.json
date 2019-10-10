@@ -26,8 +26,12 @@
   "author": "spring_raining <harusamex.com@gmail.com>",
   "license": "AGPL-3.0",
   "main": "dist/cli.js",
+  "types": "dist/cli.d.ts",
   "bin": {
     "savepdf": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "repository": "https://github.com/vivliostyle/vivliostyle-savepdf.git"
 }
