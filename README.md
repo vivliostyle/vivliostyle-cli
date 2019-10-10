@@ -35,7 +35,8 @@ Options:
 ```
 yarn install
 yarn build
-bin/savepdf --version
+yarn link
+savepdf --version
 ```
 
 ### Docker Build
