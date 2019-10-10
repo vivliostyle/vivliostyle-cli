@@ -1,8 +1,8 @@
-import fs from 'fs';
 import path from 'path';
 import execa from 'execa';
 import fileType from 'file-type';
 import readChunk from 'read-chunk';
+
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.resolve(rootPath, 'package.json'));
 const cliPath = path.resolve(rootPath, packageJSON.bin.savepdf);
