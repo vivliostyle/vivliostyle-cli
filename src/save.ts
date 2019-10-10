@@ -185,7 +185,7 @@ function onPageLoad({
         });
       }
     })
-    .then(({data}: {data: Buffer}) => {
+    .then(({data}: {data: string}) => {
       fs.writeFileSync(outputFile, data, {encoding: 'base64'});
     });
 }
