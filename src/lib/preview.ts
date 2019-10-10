@@ -15,7 +15,7 @@ interface PreviewOption {
   sandbox: boolean;
 }
 
-export function run({
+export default function run({
   input,
   rootDir,
   loadMode = 'document',

@@ -20,7 +20,7 @@ export interface SaveOption {
   sandbox: boolean;
 }
 
-export async function run({
+export default async function run({
   input,
   outputPath,
   size,
