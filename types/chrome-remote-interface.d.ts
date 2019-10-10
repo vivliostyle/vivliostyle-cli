@@ -58,7 +58,7 @@ interface Page {
     footerTemplate?: string;
     preferCSSPageSize?: boolean;
     transferMode?: 'ReturnAsBase64' | 'ReturnAsStream';
-  }) => Promise<{data: string; stream: any}>;
+  }) => Promise<{ data: string; stream: any }>;
   navigate: (args: {
     url: string;
     referrer?: string;
@@ -81,11 +81,11 @@ interface Runtime {
     awaitPromise?: boolean;
     throwOnSideEffect?: boolean;
     timeout?: number;
-  }) => Promise<{result: RemoteObject; exceptionDetails?: ExceptionDetails}>;
+  }) => Promise<{ result: RemoteObject; exceptionDetails?: ExceptionDetails }>;
 }
 
 interface Emulation {
-  setEmulatedMedia: (args: {media: string}) => Promise<void>;
+  setEmulatedMedia: (args: { media: string }) => Promise<void>;
 }
 
 interface RemoteObject {

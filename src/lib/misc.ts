@@ -4,7 +4,7 @@ import path from 'path';
 import http from 'http';
 import https from 'https';
 import portfinder from 'portfinder';
-import {NextFunction} from 'connect';
+import { NextFunction } from 'connect';
 import httpServer from 'http-server';
 import * as chromeLauncher from 'chrome-launcher';
 
@@ -180,7 +180,7 @@ export function launchBrokerServer(): Promise<BrokerServer> {
           server.close();
         });
       });
-      resolve({server, port});
+      resolve({ server, port });
     });
   });
 }
@@ -203,7 +203,7 @@ export function launchSourceServer(root: string): Promise<SourceServer> {
           server.close();
         });
       });
-      resolve({server, port});
+      resolve({ server, port });
     });
   });
 }

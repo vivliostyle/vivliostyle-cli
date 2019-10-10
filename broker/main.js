@@ -1,4 +1,4 @@
-const {h, Component} = preact;
+const { h, Component } = preact;
 
 function parseQuery(text) {
   var qs = text.slice(1).split('&');
@@ -112,7 +112,7 @@ class Menu extends Component {
   }
 
   render() {
-    const {vivliostyleState, brokerVersion, vivliostyleVersion} = this.props;
+    const { vivliostyleState, brokerVersion, vivliostyleVersion } = this.props;
     const {
       valueChanged,
       pageSizeOption,
@@ -146,7 +146,7 @@ class Menu extends Component {
       : vivliostyleState === 'loading' || vivliostyleState === 'interactive'
       ? h(
           'button',
-          {className: 'Menu_footer-button', disabled: true},
+          { className: 'Menu_footer-button', disabled: true },
           'Rendering…',
         )
       : h(
@@ -160,45 +160,45 @@ class Menu extends Component {
 
     return h(
       'div',
-      {className: 'Menu'},
+      { className: 'Menu' },
       h(
         'div',
-        {className: 'Menu_content'},
+        { className: 'Menu_content' },
         h('h3', null, 'Viola print previewer'),
         h(
           'fieldset',
-          {className: 'Menu_page-size Menu_item'},
+          { className: 'Menu_page-size Menu_item' },
           h('legend', null, h('h4', null, 'Page Size')),
           h(
             'ul',
             null,
             h(
               'li',
-              {className: pageSizeOption === 'auto' ? 'selected' : ''},
+              { className: pageSizeOption === 'auto' ? 'selected' : '' },
               h('input', {
                 type: 'radio',
                 id: 'page-size_auto',
                 checked: pageSizeOption === 'auto',
                 onClick: this.onPageSizeRadioClick.bind(this)('auto'),
               }),
-              h('label', {for: 'page-size_auto'}, 'Auto'),
+              h('label', { for: 'page-size_auto' }, 'Auto'),
             ),
             h(
               'li',
-              {className: pageSizeOption === 'preset' ? 'selected' : ''},
+              { className: pageSizeOption === 'preset' ? 'selected' : '' },
               h('input', {
                 type: 'radio',
                 id: 'page-size_preset',
                 checked: pageSizeOption === 'preset',
                 onClick: this.onPageSizeRadioClick.bind(this)('preset'),
               }),
-              h('label', {for: 'page-size_preset'}, 'Preset'),
+              h('label', { for: 'page-size_preset' }, 'Preset'),
               h(
                 'div',
-                {className: 'Menu_subform'},
+                { className: 'Menu_subform' },
                 h(
                   'div',
-                  {className: 'Menu_input-form'},
+                  { className: 'Menu_input-form' },
                   h('span', null, 'Size'),
                   h(
                     'select',
@@ -206,48 +206,48 @@ class Menu extends Component {
                       value: pageSizePresetSelect,
                       onChange: this.onPresetSelectChange.bind(this),
                     },
-                    h('option', {value: 'A5'}, 'A5'),
-                    h('option', {value: 'A4'}, 'A4'),
-                    h('option', {value: 'A3'}, 'A3'),
-                    h('option', {value: 'B5'}, 'B5(ISO)'),
-                    h('option', {value: 'B4'}, 'B4(ISO)'),
-                    h('option', {value: 'JIS-B5'}, 'B5(JIS)'),
-                    h('option', {value: 'JIS-B4'}, 'B4(JIS)'),
-                    h('option', {value: 'letter'}, 'Letter'),
-                    h('option', {value: 'legal'}, 'Legal'),
-                    h('option', {value: 'ledger'}, 'Ledger'),
+                    h('option', { value: 'A5' }, 'A5'),
+                    h('option', { value: 'A4' }, 'A4'),
+                    h('option', { value: 'A3' }, 'A3'),
+                    h('option', { value: 'B5' }, 'B5(ISO)'),
+                    h('option', { value: 'B4' }, 'B4(ISO)'),
+                    h('option', { value: 'JIS-B5' }, 'B5(JIS)'),
+                    h('option', { value: 'JIS-B4' }, 'B4(JIS)'),
+                    h('option', { value: 'letter' }, 'Letter'),
+                    h('option', { value: 'legal' }, 'Legal'),
+                    h('option', { value: 'ledger' }, 'Ledger'),
                   ),
                 ),
                 h(
                   'div',
-                  {className: 'Menu_input-form'},
+                  { className: 'Menu_input-form' },
                   h('input', {
                     type: 'checkbox',
                     id: 'page-size_landscape',
                     checked: pageSizeUseLandscape,
                     onClick: this.onUseLandscapeCheckboxClick.bind(this),
                   }),
-                  h('label', {for: 'page-size_landscape'}, 'Landscape'),
+                  h('label', { for: 'page-size_landscape' }, 'Landscape'),
                 ),
               ),
             ),
             h(
               'li',
-              {className: pageSizeOption === 'custom' ? 'selected' : ''},
+              { className: pageSizeOption === 'custom' ? 'selected' : '' },
               h('input', {
                 type: 'radio',
                 id: 'page-size_custom',
                 checked: pageSizeOption === 'custom',
                 onClick: this.onPageSizeRadioClick.bind(this)('custom'),
               }),
-              h('label', {for: 'page-size_custom'}, 'Custom'),
+              h('label', { for: 'page-size_custom' }, 'Custom'),
               h(
                 'div',
-                {className: 'Menu_subform'},
+                { className: 'Menu_subform' },
                 h(
                   'div',
-                  {className: 'Menu_input-form'},
-                  h('label', {for: 'page-size_width'}, 'Width'),
+                  { className: 'Menu_input-form' },
+                  h('label', { for: 'page-size_width' }, 'Width'),
                   h('input', {
                     type: 'text',
                     id: 'page-size_width',
@@ -258,8 +258,8 @@ class Menu extends Component {
                 ),
                 h(
                   'div',
-                  {className: 'Menu_input-form'},
-                  h('label', {for: 'page-size_height'}, 'Height'),
+                  { className: 'Menu_input-form' },
+                  h('label', { for: 'page-size_height' }, 'Height'),
                   h('input', {
                     type: 'text',
                     id: 'page-size_height',
@@ -274,7 +274,7 @@ class Menu extends Component {
         ),
         h(
           'div',
-          {className: 'Menu_item'},
+          { className: 'Menu_item' },
           h('input', {
             type: 'checkbox',
             id: 'override-stylesheets',
@@ -283,46 +283,46 @@ class Menu extends Component {
           }),
           h(
             'label',
-            {for: 'override-stylesheets'},
+            { for: 'override-stylesheets' },
             'Override Document StyleSheets',
           ),
         ),
         h(
           'fieldset',
-          {className: 'Menu_load-mode Menu_item'},
+          { className: 'Menu_load-mode Menu_item' },
           h('legend', null, h('h4', null, 'Document loading mode')),
           h(
             'ul',
             null,
             h(
               'li',
-              {className: loadMode !== 'book' ? 'selected' : ''},
+              { className: loadMode !== 'book' ? 'selected' : '' },
               h('input', {
                 type: 'radio',
                 id: 'load-mode_document',
                 checked: loadMode !== 'book',
                 onClick: this.onLoadModeRadioClick.bind(this)('document'),
               }),
-              h('label', {for: 'load-mode_document'}, 'Document'),
+              h('label', { for: 'load-mode_document' }, 'Document'),
               h(
                 'div',
-                {className: 'Menu_subform'},
+                { className: 'Menu_subform' },
                 h('small', null, 'It loads a single (X)HTML document.'),
               ),
             ),
             h(
               'li',
-              {className: loadMode === 'book' ? 'selected' : ''},
+              { className: loadMode === 'book' ? 'selected' : '' },
               h('input', {
                 type: 'radio',
                 id: 'load-mode_book',
                 checked: loadMode === 'book',
                 onClick: this.onLoadModeRadioClick.bind(this)('book'),
               }),
-              h('label', {for: 'load-mode_book'}, 'Book'),
+              h('label', { for: 'load-mode_book' }, 'Book'),
               h(
                 'div',
-                {className: 'Menu_subform'},
+                { className: 'Menu_subform' },
                 h(
                   'small',
                   null,
@@ -345,10 +345,10 @@ class Menu extends Component {
       ),
       h(
         'div',
-        {className: 'Menu_footer'},
+        { className: 'Menu_footer' },
         h(
           'div',
-          {className: 'Menu_footer-text'},
+          { className: 'Menu_footer-text' },
           h(
             'a',
             {
@@ -361,16 +361,16 @@ class Menu extends Component {
         ),
         h(
           'div',
-          {className: 'Menu_footer-text'},
+          { className: 'Menu_footer-text' },
           'Powered by ',
           h(
             'a',
-            {href: 'https://vivliostyle.org', target: '_blank'},
+            { href: 'https://vivliostyle.org', target: '_blank' },
             'Vivliostyle.js',
           ),
           vivliostyleVersion && h('span', {}, ' v' + vivliostyleVersion),
         ),
-        h('div', {className: 'Menu_footer-button-area'}, footerButton),
+        h('div', { className: 'Menu_footer-button-area' }, footerButton),
       ),
     );
   }
@@ -388,7 +388,7 @@ class PageNavigator extends Component {
   render() {
     return h(
       'div',
-      {className: 'PageNavigator'},
+      { className: 'PageNavigator' },
       h('div', {
         className: 'PageNavigator_navigation-left',
         onClick: this.onNavigationLeftClick.bind(this),
@@ -466,7 +466,7 @@ class App extends Component {
   }
 
   loadDocument(settings) {
-    const {renderUrl} = this.state;
+    const { renderUrl } = this.state;
     if (!renderUrl) {
       return;
     }
@@ -534,18 +534,18 @@ class App extends Component {
 
     window.viewer.addListener('readystatechange', (e) => {
       const vivliostyleState = window.viewer.readyState;
-      this.setState({vivliostyleState});
+      this.setState({ vivliostyleState });
     });
 
     this.loadDocument(this.defaultSettings);
   }
 
   render() {
-    const {vivliostyleState, brokerVersion, vivliostyleVersion} = this.state;
+    const { vivliostyleState, brokerVersion, vivliostyleVersion } = this.state;
 
     return h(
       'div',
-      {className: 'App'},
+      { className: 'App' },
       h(PageNavigator, null),
       h(Menu, {
         vivliostyleState,

@@ -89,7 +89,7 @@ export default async function run({
     });
 
     chrome(async (protocol) => {
-      const {Page, Runtime, Emulation} = protocol;
+      const { Page, Runtime, Emulation } = protocol;
 
       await Promise.all([Page.enable(), Runtime.enable()]).catch((err) => {
         console.trace(err);
@@ -114,7 +114,7 @@ export default async function run({
         process.exit(0);
       });
 
-      Page.navigate({url: navigateURL});
+      Page.navigate({ url: navigateURL });
     }).on('error', (err) => {
       console.error('Cannot connect to Chrome:' + err);
       process.exit(1);
@@ -143,7 +143,7 @@ async function onPageLoad({
           return reject(new Error('Running Vivliostyle process timed out.'));
         }
 
-        const {result} = await Runtime.evaluate({expression: js});
+        const { result } = await Runtime.evaluate({ expression: js });
         if (result.value === 'complete') {
           return resolve();
         }
@@ -158,7 +158,7 @@ async function onPageLoad({
 
   console.log('Running Vivliostyle...');
 
-  await Emulation.setEmulatedMedia({media: 'print'});
+  await Emulation.setEmulatedMedia({ media: 'print' });
   await checkBuildComplete();
 
   console.log('Printing to PDF...');
@@ -190,7 +190,7 @@ async function onPageLoad({
     };
   }
 
-  const {data} = await Page.printToPDF(printConfig());
+  const { data } = await Page.printToPDF(printConfig());
 
-  fs.writeFileSync(outputFile, data, {encoding: 'base64'});
+  fs.writeFileSync(outputFile, data, { encoding: 'base64' });
 }

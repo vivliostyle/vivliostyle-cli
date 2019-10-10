@@ -3,7 +3,7 @@
 import path from 'path';
 import chalk from 'chalk';
 import program from 'commander';
-import boxen, {BorderStyle} from 'boxen';
+import boxen, { BorderStyle } from 'boxen';
 import preview from './lib/preview';
 import save from './lib/save';
 

@@ -4,8 +4,8 @@
   "version": "1.3.1",
   "scripts": {
     "build": "NODE_ENV=production tsc && shx chmod +x dist/cli.js",
-    "test": "yarn build && jest",
-    "dev": "tsc -w"
+    "dev": "tsc -w",
+    "test": "yarn build && jest"
   },
   "dependencies": {
     "boxen": "^4.1.0",
@@ -23,7 +23,11 @@
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.12",
     "execa": "^2.1.0",
+    "husky": "^3.0.8",
     "jest": "^24.9.0",
+    "lint-staged": "^9.4.2",
+    "prettier": "^1.18.2",
+    "pretty-quick": "^1.11.1",
     "shx": "^0.3.2",
     "ts-jest": "^24.1.0",
     "typescript": "^3.6.4"
@@ -38,5 +42,10 @@
   "files": [
     "dist"
   ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
   "repository": "https://github.com/vivliostyle/vivliostyle-savepdf.git"
 }
