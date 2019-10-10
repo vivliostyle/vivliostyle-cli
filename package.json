@@ -39,14 +39,19 @@
   "bin": {
     "savepdf": "dist/cli.js"
   },
+  "bugs": "https://github.com/vivliostyle/vivliostyle-savepdf/issues",
   "files": [
     "dist"
   ],
+  "homepage": "https://github.com/vivliostyle/vivliostyle-savepdf",
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged",
       "pre-push": "yarn test"
     }
   },
+  "keywords": [
+    "vivliostyle"
+  ],
   "repository": "https://github.com/vivliostyle/vivliostyle-savepdf.git"
 }
