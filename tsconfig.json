@@ -1,5 +1,5 @@
 {
-  "exclude": ["broker", "dist"],
+  "exclude": ["broker", "dist", "tests"],
   "compilerOptions": {
     /* Basic Options */
     // "incremental": true,                   /* Enable incremental compilation */
