@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 import path from 'path';
+import chalk from 'chalk';
 import program from 'commander';
 import boxen, {BorderStyle} from 'boxen';
-import chalk from 'chalk';
 import preview from './lib/preview';
 import save from './lib/save';
-const packageJSON = require('../package.json');
 
+const packageJSON = require('../package.json');
 const runningVivliostyleTimeout = 60 * 1000;
 
 // viola-savepdf is an old package

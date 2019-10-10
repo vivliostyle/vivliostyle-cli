@@ -15,7 +15,7 @@ export interface PreviewOption {
   sandbox: boolean;
 }
 
-export default function run({
+export default async function run({
   input,
   rootDir,
   loadMode = 'document',
@@ -28,37 +28,38 @@ export default function run({
     : input;
   const sourceIndex = path.relative(root, indexFile);
 
-  launchSourceAndBrokerServer(root)
-    .then(([source, broker]) => {
-      const sourcePort = source.port;
-      const brokerPort = broker.port;
-      const url = getBrokerUrl({
-        sourcePort,
-        sourceIndex,
-        brokerPort,
-        loadMode,
-      });
+  try {
+    const [source, broker] = await launchSourceAndBrokerServer(root);
 
-      console.log(`Opening preview page... ${url}`);
-      launchChrome({
-        startingUrl: url,
-        chromeFlags: sandbox ? [] : ['--no-sandbox'],
-      }).catch((err) => {
-        if (err.code === 'ECONNREFUSED') {
-          console.log(
-            `Cannot launch Chrome. use --no-sandbox option or open ${url} directly.`,
-          );
-          // Should still run
-        } else {
-          console.log(
-            'Cannot launch Chrome. Did you install it?\nvivliostyle-savepdf supports Chrome (Canary) only.',
-          );
-          process.exit(1);
-        }
-      });
-    })
-    .catch((err: Error) => {
-      console.trace(err);
-      process.exit(1);
+    const sourcePort = source.port;
+    const brokerPort = broker.port;
+    const url = getBrokerUrl({
+      sourcePort,
+      sourceIndex,
+      brokerPort,
+      loadMode,
     });
+
+    console.log(`Opening preview page... ${url}`);
+
+    launchChrome({
+      startingUrl: url,
+      chromeFlags: sandbox ? [] : ['--no-sandbox'],
+    }).catch((err) => {
+      if (err.code === 'ECONNREFUSED') {
+        console.log(
+          `Cannot launch Chrome. use --no-sandbox option or open ${url} directly.`,
+        );
+        // Should still run
+      } else {
+        console.log(
+          'Cannot launch Chrome. Did you install it?\nvivliostyle-savepdf supports Chrome (Canary) only.',
+        );
+        process.exit(1);
+      }
+    });
+  } catch (err) {
+    console.trace(err);
+    process.exit(1);
+  }
 }

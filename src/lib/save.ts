@@ -8,6 +8,7 @@ import {
   launchSourceAndBrokerServer,
   launchChrome,
   LoadMode,
+  PageSize,
 } from './misc';
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
@@ -28,7 +29,7 @@ export interface OnPageLoadOption {
   Runtime: Runtime;
   Emulation: Emulation;
   outputFile: string;
-  outputSize: [number, number] | null;
+  outputSize: PageSize | null;
   vivliostyleTimeout: number;
 }
 
@@ -75,7 +76,8 @@ export default async function run({
     };
 
     console.log(`Launching headless Chrome... port:${launcherOptions.port}`);
-    const launcher = await launchChrome(launcherOptions).catch((err) => {
+
+    await launchChrome(launcherOptions).catch((err) => {
       if (err.code === 'ECONNREFUSED') {
         console.log(`Cannot launch headless Chrome. use --no-sandbox option.`);
       } else {
@@ -85,8 +87,10 @@ export default async function run({
       }
       process.exit(1);
     });
+
     chrome(async (protocol) => {
       const {Page, Runtime, Emulation} = protocol;
+
       await Promise.all([Page.enable(), Runtime.enable()]).catch((err) => {
         console.trace(err);
         process.exit(1);
@@ -121,7 +125,7 @@ export default async function run({
   }
 }
 
-function onPageLoad({
+async function onPageLoad({
   Page,
   Runtime,
   Emulation,
@@ -129,63 +133,64 @@ function onPageLoad({
   outputSize,
   vivliostyleTimeout,
 }: OnPageLoadOption) {
-  function checkBuildComplete() {
+  function checkBuildComplete(freq: number = 1000): Promise<void> {
     const js = `window.viewer.readyState`;
     let time = 0;
 
-    function fn(
-      freq: number,
-      resolve: ResolveFunction<void>,
-      reject: RejectFunction,
-    ) {
-      setTimeout(() => {
+    function fn(resolve: ResolveFunction<void>, reject: RejectFunction) {
+      setTimeout(async () => {
         if (time > vivliostyleTimeout) {
-          reject(new Error('Running Vivliostyle process timed out.'));
-          return;
+          return reject(new Error('Running Vivliostyle process timed out.'));
         }
-        Runtime.evaluate({expression: js}).then(({result}) => {
-          time += freq;
-          result.value === 'complete' ? resolve() : fn(freq, resolve, reject);
-        });
+
+        const {result} = await Runtime.evaluate({expression: js});
+        if (result.value === 'complete') {
+          return resolve();
+        }
+
+        time += freq;
+        fn(resolve, reject);
       }, freq);
     }
-    return new Promise((resolve, reject) => {
-      fn(1000, resolve, reject);
-    });
+
+    return new Promise((resolve, reject) => fn(resolve, reject));
   }
 
   console.log('Running Vivliostyle...');
-  return Emulation.setEmulatedMedia({media: 'print'})
-    .then(checkBuildComplete)
-    .then(() => {
-      console.log('Printing to PDF...');
-      if (outputSize) {
-        return Page.printToPDF({
-          paperWidth: outputSize[0],
-          paperHeight: outputSize[1],
-          marginTop: 0,
-          marginBottom: 0,
-          marginRight: 0,
-          marginLeft: 0,
-          printBackground: true,
-        });
-      } else {
-        console.log(
-          'Warning: Output size is not defined.\n' +
-            'Due to the headless Chrome bug, @page { size } CSS rule will be ignored.\n' +
-            'cf. https://bugs.chromium.org/p/chromium/issues/detail?id=724160',
-        );
-        return Page.printToPDF({
-          marginTop: 0,
-          marginBottom: 0,
-          marginRight: 0,
-          marginLeft: 0,
-          printBackground: true,
-          preferCSSPageSize: true,
-        });
-      }
-    })
-    .then(({data}: {data: string}) => {
-      fs.writeFileSync(outputFile, data, {encoding: 'base64'});
-    });
+
+  await Emulation.setEmulatedMedia({media: 'print'});
+  await checkBuildComplete();
+
+  console.log('Printing to PDF...');
+
+  function printConfig() {
+    if (outputSize === undefined || outputSize === null) {
+      console.log(
+        'Warning: Output size is not defined.\n' +
+          'Due to the headless Chrome bug, @page { size } CSS rule will be ignored.\n' +
+          'cf. https://bugs.chromium.org/p/chromium/issues/detail?id=724160',
+      );
+      return {
+        marginTop: 0,
+        marginBottom: 0,
+        marginRight: 0,
+        marginLeft: 0,
+        printBackground: true,
+        preferCSSPageSize: true,
+      };
+    }
+    return {
+      paperWidth: outputSize[0],
+      paperHeight: outputSize[1],
+      marginTop: 0,
+      marginBottom: 0,
+      marginRight: 0,
+      marginLeft: 0,
+      printBackground: true,
+    };
+  }
+
+  const {data} = await Page.printToPDF(printConfig());
+
+  fs.writeFileSync(outputFile, data, {encoding: 'base64'});
 }
