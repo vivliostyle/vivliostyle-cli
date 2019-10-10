@@ -6,7 +6,7 @@ import https from 'https';
 import {NextFunction} from 'connect';
 import httpServer from 'http-server';
 import portfinder from 'portfinder';
-import chromeLauncher from 'chrome-launcher';
+import * as chromeLauncher from 'chrome-launcher';
 
 export interface Server {
   server: http.Server | https.Server;
@@ -131,7 +131,7 @@ export function launchBrokerServer(): Promise<BrokerServer> {
     findPort().then((port) => {
       console.log(`Launching broker server... http://localhost:${port}`);
       const server = httpServer.createServer({
-        root: path.resolve(__dirname, '..'),
+        root: path.resolve(__dirname, '../..'),
         cache: -1, // disable caching,
         cors: true,
         before: [

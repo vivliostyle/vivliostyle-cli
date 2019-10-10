@@ -1,12 +1,12 @@
-const { h, Component } = preact;
+const {h, Component} = preact;
 
 function parseQuery(text) {
   var qs = text.slice(1).split('&');
   var ret = {};
-  for (var i=0; i < qs.length; i++) {
+  for (var i = 0; i < qs.length; i++) {
     var q = qs[i].split('=');
     if (q.length > 0) {
-      ret[decodeURIComponent(q[0])] = q[1]? decodeURIComponent(q[1]) : '';
+      ret[decodeURIComponent(q[0])] = q[1] ? decodeURIComponent(q[1]) : '';
     }
   }
   return ret;
@@ -84,7 +84,6 @@ class Menu extends Component {
 
   onPrintButtonClick() {
     if (this.state.valueChanged) {
-
     } else {
       window.print();
     }
@@ -98,10 +97,13 @@ class Menu extends Component {
   }
 
   onApplyButtonClick() {
-    const prevSettings = Object.keys(this.props.defaultSettings).reduce((obj, k) => {
-      obj[k] = this.state[k];
-      return obj;
-    }, {});
+    const prevSettings = Object.keys(this.props.defaultSettings).reduce(
+      (obj, k) => {
+        obj[k] = this.state[k];
+        return obj;
+      },
+      {},
+    );
     this.setState({
       prevSettings,
       valueChanged: false,
@@ -110,7 +112,7 @@ class Menu extends Component {
   }
 
   render() {
-    const { vivliostyleState, brokerVersion, vivliostyleVersion } = this.props;
+    const {vivliostyleState, brokerVersion, vivliostyleVersion} = this.props;
     const {
       valueChanged,
       pageSizeOption,
@@ -119,50 +121,91 @@ class Menu extends Component {
       pageSizeWidth,
       pageSizeHeight,
       overrideDocumentStylesheets,
-      loadMode
+      loadMode,
     } = this.state;
 
-    const footerButton = valueChanged? [
-      h('button', {className: 'Menu_footer-button cancel', onClick: this.onResetButtonClick.bind(this)}, 'Reset'),
-      h('button', {className: 'Menu_footer-button', onClick: this.onApplyButtonClick.bind(this)}, 'Apply')
-    ] : (vivliostyleState === 'loading' || vivliostyleState === 'interactive')? (
-      h('button', {className: 'Menu_footer-button', disabled: true}, 'Rendering…')
-    ) : (
-      h('button', {className: 'Menu_footer-button', onClick: this.onPrintButtonClick.bind(this)}, 'Print')
-    )
-
-    return h('div', {className: 'Menu'},
-      h('div', {className: 'Menu_content'},
-        h('h3', null, 'Viola print previewer'),
-        h('fieldset', {className: 'Menu_page-size Menu_item'},
-          h('legend', null,
-            h('h4', null, 'Page Size')
+    const footerButton = valueChanged
+      ? [
+          h(
+            'button',
+            {
+              className: 'Menu_footer-button cancel',
+              onClick: this.onResetButtonClick.bind(this),
+            },
+            'Reset',
           ),
-          h('ul', null,
-            h('li', {className: pageSizeOption === 'auto' ? 'selected' : ''},
+          h(
+            'button',
+            {
+              className: 'Menu_footer-button',
+              onClick: this.onApplyButtonClick.bind(this),
+            },
+            'Apply',
+          ),
+        ]
+      : vivliostyleState === 'loading' || vivliostyleState === 'interactive'
+      ? h(
+          'button',
+          {className: 'Menu_footer-button', disabled: true},
+          'Rendering…',
+        )
+      : h(
+          'button',
+          {
+            className: 'Menu_footer-button',
+            onClick: this.onPrintButtonClick.bind(this),
+          },
+          'Print',
+        );
+
+    return h(
+      'div',
+      {className: 'Menu'},
+      h(
+        'div',
+        {className: 'Menu_content'},
+        h('h3', null, 'Viola print previewer'),
+        h(
+          'fieldset',
+          {className: 'Menu_page-size Menu_item'},
+          h('legend', null, h('h4', null, 'Page Size')),
+          h(
+            'ul',
+            null,
+            h(
+              'li',
+              {className: pageSizeOption === 'auto' ? 'selected' : ''},
               h('input', {
                 type: 'radio',
                 id: 'page-size_auto',
                 checked: pageSizeOption === 'auto',
-                onClick: this.onPageSizeRadioClick.bind(this)('auto')
+                onClick: this.onPageSizeRadioClick.bind(this)('auto'),
               }),
-              h('label', {for: 'page-size_auto'}, 'Auto')
+              h('label', {for: 'page-size_auto'}, 'Auto'),
             ),
-            h('li', {className: pageSizeOption === 'preset' ? 'selected' : ''},
+            h(
+              'li',
+              {className: pageSizeOption === 'preset' ? 'selected' : ''},
               h('input', {
                 type: 'radio',
                 id: 'page-size_preset',
                 checked: pageSizeOption === 'preset',
-                onClick: this.onPageSizeRadioClick.bind(this)('preset')
+                onClick: this.onPageSizeRadioClick.bind(this)('preset'),
               }),
               h('label', {for: 'page-size_preset'}, 'Preset'),
-              h('div', {className: 'Menu_subform'},
-                h('div', {className: 'Menu_input-form'},
+              h(
+                'div',
+                {className: 'Menu_subform'},
+                h(
+                  'div',
+                  {className: 'Menu_input-form'},
                   h('span', null, 'Size'),
-                  h('select', {
-                    value: pageSizePresetSelect,
-                    onChange: this.onPresetSelectChange.bind(this)
-                  },
+                  h(
+                    'select',
+                    {
+                      value: pageSizePresetSelect,
+                      onChange: this.onPresetSelectChange.bind(this),
+                    },
                     h('option', {value: 'A5'}, 'A5'),
                     h('option', {value: 'A4'}, 'A4'),
                     h('option', {value: 'A3'}, 'A3'),
@@ -172,120 +215,168 @@ class Menu extends Component {
                     h('option', {value: 'JIS-B4'}, 'B4(JIS)'),
                     h('option', {value: 'letter'}, 'Letter'),
                     h('option', {value: 'legal'}, 'Legal'),
-                    h('option', {value: 'ledger'}, 'Ledger')
-                  )
+                    h('option', {value: 'ledger'}, 'Ledger'),
+                  ),
                 ),
-                h('div', {className: 'Menu_input-form'},
+                h(
+                  'div',
+                  {className: 'Menu_input-form'},
                   h('input', {
                     type: 'checkbox',
                     id: 'page-size_landscape',
                     checked: pageSizeUseLandscape,
-                    onClick: this.onUseLandscapeCheckboxClick.bind(this)
+                    onClick: this.onUseLandscapeCheckboxClick.bind(this),
                   }),
-                  h('label', {for: 'page-size_landscape'}, 'Landscape')
-                )
-              )
+                  h('label', {for: 'page-size_landscape'}, 'Landscape'),
+                ),
+              ),
             ),
-            h('li', {className: pageSizeOption === 'custom' ? 'selected' : ''},
+            h(
+              'li',
+              {className: pageSizeOption === 'custom' ? 'selected' : ''},
               h('input', {
                 type: 'radio',
                 id: 'page-size_custom',
                 checked: pageSizeOption === 'custom',
-                onClick: this.onPageSizeRadioClick.bind(this)('custom')
+                onClick: this.onPageSizeRadioClick.bind(this)('custom'),
               }),
               h('label', {for: 'page-size_custom'}, 'Custom'),
-              h('div', {className: 'Menu_subform'},
-                h('div', {className: 'Menu_input-form'},
+              h(
+                'div',
+                {className: 'Menu_subform'},
+                h(
+                  'div',
+                  {className: 'Menu_input-form'},
                   h('label', {for: 'page-size_width'}, 'Width'),
                   h('input', {
                     type: 'text',
                     id: 'page-size_width',
                     size: 1,
                     value: pageSizeWidth,
-                    onChange: this.onWidthTextChange.bind(this)
-                  })
+                    onChange: this.onWidthTextChange.bind(this),
+                  }),
                 ),
-                h('div', {className: 'Menu_input-form'},
+                h(
+                  'div',
+                  {className: 'Menu_input-form'},
                   h('label', {for: 'page-size_height'}, 'Height'),
                   h('input', {
                     type: 'text',
                     id: 'page-size_height',
                     size: 1,
                     value: pageSizeHeight,
-                    onChange: this.onHeightTextChange.bind(this)
-                  })
+                    onChange: this.onHeightTextChange.bind(this),
+                  }),
                 ),
-              )
-            )
-          )
+              ),
+            ),
+          ),
         ),
-        h('div', {className: 'Menu_item'},
+        h(
+          'div',
+          {className: 'Menu_item'},
           h('input', {
             type: 'checkbox',
             id: 'override-stylesheets',
             checked: overrideDocumentStylesheets,
-            onClick: this.onOverrideCheckboxClick.bind(this)
+            onClick: this.onOverrideCheckboxClick.bind(this),
           }),
-          h('label', {for: 'override-stylesheets'}, 'Override Document StyleSheets')
-        ),
-        h('fieldset', {className: 'Menu_load-mode Menu_item'},
-          h('legend', null,
-            h('h4', null, 'Document loading mode')
+          h(
+            'label',
+            {for: 'override-stylesheets'},
+            'Override Document StyleSheets',
           ),
-          h('ul', null,
-            h('li', {className: loadMode !== 'book' ? 'selected' : ''},
+        ),
+        h(
+          'fieldset',
+          {className: 'Menu_load-mode Menu_item'},
+          h('legend', null, h('h4', null, 'Document loading mode')),
+          h(
+            'ul',
+            null,
+            h(
+              'li',
+              {className: loadMode !== 'book' ? 'selected' : ''},
               h('input', {
                 type: 'radio',
                 id: 'load-mode_document',
                 checked: loadMode !== 'book',
-                onClick: this.onLoadModeRadioClick.bind(this)('document')
+                onClick: this.onLoadModeRadioClick.bind(this)('document'),
               }),
               h('label', {for: 'load-mode_document'}, 'Document'),
-              h('div', {className: 'Menu_subform'},
-                h('small', null,
-                  'It loads a single (X)HTML document.'
-                )
-              )
+              h(
+                'div',
+                {className: 'Menu_subform'},
+                h('small', null, 'It loads a single (X)HTML document.'),
+              ),
             ),
-            h('li', {className: loadMode === 'book' ? 'selected' : ''},
+            h(
+              'li',
+              {className: loadMode === 'book' ? 'selected' : ''},
               h('input', {
                 type: 'radio',
                 id: 'load-mode_book',
                 checked: loadMode === 'book',
-                onClick: this.onLoadModeRadioClick.bind(this)('book')
+                onClick: this.onLoadModeRadioClick.bind(this)('book'),
               }),
               h('label', {for: 'load-mode_book'}, 'Book'),
-              h('div', {className: 'Menu_subform'},
-                h('small', null,
+              h(
+                'div',
+                {className: 'Menu_subform'},
+                h(
+                  'small',
+                  null,
                   'It loads a series of HTML documents. See also ',
-                  h('a', {href: 'http://vivliostyle.github.io/vivliostyle.js/docs/en/', target: '_blank'}, 'the Vivliostyle guide'),
-                  '.'
-                )
-              )
-            )
-          )
-        )
+                  h(
+                    'a',
+                    {
+                      href:
+                        'http://vivliostyle.github.io/vivliostyle.js/docs/en/',
+                      target: '_blank',
+                    },
+                    'the Vivliostyle guide',
+                  ),
+                  '.',
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
-      h('div', {className: 'Menu_footer'},
-        h('div', {className: 'Menu_footer-text'},
-          h('a', {href: 'https://github.com/vivliostyle/vivliostyle-savepdf', target: '_blank'}, 'vivliostyle-savepdf'),
-          brokerVersion && h('span', {}, ' v' + brokerVersion)
+      h(
+        'div',
+        {className: 'Menu_footer'},
+        h(
+          'div',
+          {className: 'Menu_footer-text'},
+          h(
+            'a',
+            {
+              href: 'https://github.com/vivliostyle/vivliostyle-savepdf',
+              target: '_blank',
+            },
+            'vivliostyle-savepdf',
+          ),
+          brokerVersion && h('span', {}, ' v' + brokerVersion),
         ),
-        h('div', {className: 'Menu_footer-text'},
+        h(
+          'div',
+          {className: 'Menu_footer-text'},
           'Powered by ',
-          h('a', {href: 'https://vivliostyle.org', target: '_blank'}, 'Vivliostyle.js'),
-          vivliostyleVersion && h('span', {}, ' v' + vivliostyleVersion)
+          h(
+            'a',
+            {href: 'https://vivliostyle.org', target: '_blank'},
+            'Vivliostyle.js',
+          ),
+          vivliostyleVersion && h('span', {}, ' v' + vivliostyleVersion),
         ),
-        h('div', {className: 'Menu_footer-button-area'},
-          footerButton
-        )
-      )
+        h('div', {className: 'Menu_footer-button-area'}, footerButton),
+      ),
     );
   }
 }
 
 class PageNavigator extends Component {
-
   onNavigationLeftClick() {
     window.viewer.navigateToPage('left');
   }
@@ -295,15 +386,22 @@ class PageNavigator extends Component {
   }
 
   render() {
-    return h('div', {className: 'PageNavigator'},
-      h('div', {className: 'PageNavigator_navigation-left', onClick: this.onNavigationLeftClick.bind(this)}),
-      h('div', {className: 'PageNavigator_navigation-right', onClick: this.onNavigationRightClick.bind(this)})
+    return h(
+      'div',
+      {className: 'PageNavigator'},
+      h('div', {
+        className: 'PageNavigator_navigation-left',
+        onClick: this.onNavigationLeftClick.bind(this),
+      }),
+      h('div', {
+        className: 'PageNavigator_navigation-right',
+        onClick: this.onNavigationRightClick.bind(this),
+      }),
     );
   }
 }
 
 class App extends Component {
-
   constructor(props) {
     super(props);
 
@@ -347,50 +445,62 @@ class App extends Component {
     let declaration = '';
     switch (pageSizeOption) {
       case 'auto':
-        declaration += "auto";
+        declaration += 'auto';
         break;
       case 'preset':
         declaration += pageSizePresetSelect;
         if (pageSizeUseLandscape) {
-          declaration += " landscape";
+          declaration += ' landscape';
         }
         break;
       case 'custom':
-        declaration += pageSizeWidth + " " + pageSizeHeight;
+        declaration += pageSizeWidth + ' ' + pageSizeHeight;
         break;
       default:
-        throw new Error("Unknown mode " + this.mode());
+        throw new Error('Unknown mode ' + this.mode());
     }
     if (overrideDocumentStylesheets) {
-      declaration += " !important";
+      declaration += ' !important';
     }
     return `@page { size: ${declaration}; }`;
   }
 
   loadDocument(settings) {
-    const { renderUrl } = this.state;
+    const {renderUrl} = this.state;
     if (!renderUrl) {
       return;
     }
 
     if (settings.loadMode === 'book') {
-      window.viewer.loadPublication(renderUrl, {
-        userStyleSheet: [{
-          text: this.getUserStyleSheetString(settings)
-        }]
-      }, {
-        fitToScreen: true,
-        pageViewMode: 'singlePage'
-      });
+      window.viewer.loadPublication(
+        renderUrl,
+        {
+          userStyleSheet: [
+            {
+              text: this.getUserStyleSheetString(settings),
+            },
+          ],
+        },
+        {
+          fitToScreen: true,
+          pageViewMode: 'singlePage',
+        },
+      );
     } else {
-      window.viewer.loadDocument([ renderUrl ], {
-        userStyleSheet: [{
-          text: this.getUserStyleSheetString(settings)
-        }]
-      }, {
-        fitToScreen: true,
-        pageViewMode: 'singlePage'
-      });
+      window.viewer.loadDocument(
+        [renderUrl],
+        {
+          userStyleSheet: [
+            {
+              text: this.getUserStyleSheetString(settings),
+            },
+          ],
+        },
+        {
+          fitToScreen: true,
+          pageViewMode: 'singlePage',
+        },
+      );
     }
   }
 
@@ -419,29 +529,31 @@ class App extends Component {
     window.viewer = new vivliostyle.viewer.Viewer({
       userAgentRootURL: '/node_modules/vivliostyle/resources/',
       viewportElement: document.getElementById('out'),
-      debug: false
+      debug: false,
     });
 
     window.viewer.addListener('readystatechange', (e) => {
       const vivliostyleState = window.viewer.readyState;
-      this.setState({ vivliostyleState });
-    })
+      this.setState({vivliostyleState});
+    });
 
     this.loadDocument(this.defaultSettings);
   }
 
   render() {
-    const { vivliostyleState, brokerVersion, vivliostyleVersion } = this.state;
+    const {vivliostyleState, brokerVersion, vivliostyleVersion} = this.state;
 
-    return h('div', {className: 'App'},
+    return h(
+      'div',
+      {className: 'App'},
       h(PageNavigator, null),
       h(Menu, {
         vivliostyleState,
         brokerVersion,
         vivliostyleVersion,
         defaultSettings: this.defaultSettings,
-        onApplySettings: this.loadDocument.bind(this)
-      })
+        onApplySettings: this.loadDocument.bind(this),
+      }),
     );
   }
 }

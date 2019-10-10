@@ -3,7 +3,7 @@
   "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
   "version": "1.3.1",
   "scripts": {
-    "build": "tsc && shx chmod +x dist/cli.js",
+    "build": "NODE_ENV=production tsc && shx chmod +x dist/cli.js",
     "dev": "tsc -w"
   },
   "dependencies": {

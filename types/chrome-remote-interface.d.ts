@@ -40,7 +40,7 @@ interface Protocol {
 
 interface Page {
   enable: () => Promise<void>;
-  loadEventFired: (fn: () => Promise<void>) => Promise<void>;
+  loadEventFired: (fn: () => void) => Promise<void>;
   printToPDF: (args: {
     landscape?: boolean;
     displayHeaderFooter?: boolean;
