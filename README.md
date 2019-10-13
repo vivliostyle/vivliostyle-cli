@@ -1,4 +1,5 @@
 # vivliostyle-savepdf
+
 Save the pdf file via Headless Chrome and Vivliostyle.
 
 ## Install
@@ -25,6 +26,23 @@ Options:
   -s, --size <size>            output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')
   -t, --timeout <time>         timeout times for waiting Vivliostyle process (default: 60s)
   -h, --help                   output usage information
+```
+
+## Contribute
+
+### Build
+
+```
+yarn install
+yarn build
+yarn link
+savepdf --version
+```
+
+### Docker Build
+
+```
+docker build -t vivliostyle/savepdf .
 ```
 
 ## License
