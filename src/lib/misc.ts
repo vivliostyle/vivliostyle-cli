@@ -1,18 +1,18 @@
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
-import http from 'http';
+import http, { RequestListener } from 'http';
 import https from 'https';
 import portfinder from 'portfinder';
-import { NextFunction } from 'connect';
-import httpServer from 'http-server';
+import handler from 'serve-handler';
 import * as chromeLauncher from 'chrome-launcher';
 
 export type LoadMode = 'document' | 'book';
 export type PageSize = [number, number];
 type SourceServer = Server;
 type BrokerServer = Server;
-type BeforeHook = (
+type NextFunction = (err?: any) => void;
+type RequestHandler = (
   req: http.IncomingMessage,
   res: http.ServerResponse,
   next: NextFunction,
@@ -122,6 +122,44 @@ export function getBrokerUrl({
   );
 }
 
+export function startEndpoint({
+  root,
+  before = [],
+}: {
+  root: string;
+  before?: RequestHandler[];
+}): http.Server {
+  const serve = (req: http.IncomingMessage, res: http.ServerResponse) =>
+    handler(req, res, {
+      public: root,
+      cleanUrls: false,
+      headers: [
+        {
+          source: '**/*',
+          headers: [
+            {
+              key: 'access-control-allow-headers',
+              value: 'Origin, X-Requested-With, Content-Type, Accept, Range',
+            },
+            {
+              key: 'access-control-allow-origin',
+              value: '*',
+            },
+            {
+              key: 'cache-control',
+              value: 'no-cache, no-store, must-revalidate',
+            },
+          ],
+        },
+      ],
+    });
+  const listener = before.reduceRight<RequestListener>(
+    (prv, cur) => (req, res) => cur(req, res, () => prv(req, res)),
+    serve,
+  );
+  return http.createServer(listener);
+}
+
 export async function launchSourceAndBrokerServer(
   root: string,
 ): Promise<[SourceServer, BrokerServer]> {
@@ -143,7 +181,7 @@ export function launchBrokerServer(): Promise<BrokerServer> {
 
     console.log(`Launching broker server... http://localhost:${port}`);
 
-    const beforeHook: BeforeHook = (req, res, next) => {
+    const beforeHook: RequestHandler = (req, res, next) => {
       // Provide node_modules
       let resolvedPath;
       if (req.url && req.url.startsWith('/node_modules')) {
@@ -167,10 +205,8 @@ export function launchBrokerServer(): Promise<BrokerServer> {
       stream.pipe(res); // send module to client
     };
 
-    const server = httpServer.createServer({
+    const server = startEndpoint({
       root: path.resolve(__dirname, '../..'),
-      cache: -1, // disable caching,
-      cors: true,
       before: [beforeHook],
     });
 
@@ -191,11 +227,7 @@ export function launchSourceServer(root: string): Promise<SourceServer> {
 
     console.log(`Launching source server... http://localhost:${port}`);
 
-    const server = httpServer.createServer({
-      root,
-      cache: -1, // disable caching,
-      cors: true,
-    });
+    const server = startEndpoint({ root });
 
     server.listen(port, 'localhost', () => {
       (['exit', 'SIGNIT', 'SIGTERM'] as NodeJS.Signals[]).forEach((sig) => {
