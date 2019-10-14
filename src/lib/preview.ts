@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import {
+  findEntryPointFile,
   getBrokerUrl,
   launchSourceAndBrokerServer,
   launchChrome,
@@ -10,7 +11,7 @@ import {
 
 export interface PreviewOption {
   input: string;
-  rootDir: string;
+  rootDir?: string;
   loadMode: LoadMode;
   sandbox: boolean;
 }
@@ -23,10 +24,7 @@ export default async function run({
 }: PreviewOption) {
   const stat = fs.statSync(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
-  const indexFile = stat.isDirectory()
-    ? path.resolve(input, 'index.html')
-    : input;
-  const sourceIndex = path.relative(root, indexFile);
+  const sourceIndex = await findEntryPointFile(input, root);
 
   try {
     const [source, broker] = await launchSourceAndBrokerServer(root);

@@ -410,13 +410,6 @@ class App extends Component {
     if (query.render) {
       // When vivliostyle loads document, we need to specify the html file.
       renderUrl = query.render;
-      if (!renderUrl.match(/\.html?$/)) {
-        if (renderUrl.charAt(renderUrl.length - 1) === '/') {
-          renderUrl += 'index.html';
-        } else {
-          renderUrl += '/index.html';
-        }
-      }
     }
 
     this.state = {

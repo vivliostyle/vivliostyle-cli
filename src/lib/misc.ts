@@ -103,6 +103,28 @@ export function convertSizeToInch(size: string): PageSize {
   return ret;
 }
 
+export function findEntryPointFile(
+  target: string,
+  root: string,
+): Promise<string> {
+  return new Promise((resolve) => {
+    const stat = fs.statSync(target);
+    if (!stat.isDirectory()) {
+      return resolve(path.relative(root, target));
+    }
+    const files = fs.readdirSync(target);
+    const index = ['index.html', 'index.htm', 'index.xhtml', 'index.xht'].find(
+      (n) => files.includes(n),
+    );
+    if (index) {
+      return resolve(path.relative(root, path.resolve(target, index)));
+    }
+
+    // give up finding entrypoint
+    resolve(path.relative(root, target));
+  });
+}
+
 export function findPort(): Promise<number> {
   portfinder.basePort = 13000;
   return portfinder.getPortPromise();
@@ -133,9 +155,10 @@ export function startEndpoint({
     handler(req, res, {
       public: root,
       cleanUrls: false,
+      directoryListing: false,
       headers: [
         {
-          source: '**/*',
+          source: '**',
           headers: [
             {
               key: 'access-control-allow-headers',
