@@ -4,6 +4,7 @@ import chrome from 'chrome-remote-interface';
 
 import {
   convertSizeToInch,
+  findEntryPointFile,
   getBrokerUrl,
   launchSourceAndBrokerServer,
   launchChrome,
@@ -19,7 +20,7 @@ export interface SaveOption {
   outputPath: string;
   size: number | string;
   vivliostyleTimeout: number;
-  rootDir: string;
+  rootDir?: string;
   loadMode: LoadMode;
   sandbox: boolean;
 }
@@ -44,10 +45,7 @@ export default async function run({
 }: SaveOption) {
   const stat = fs.statSync(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
-  const indexFile = stat.isDirectory()
-    ? path.resolve(input, 'index.html')
-    : input;
-  const sourceIndex = path.relative(root, indexFile);
+  const sourceIndex = await findEntryPointFile(input, root);
 
   const outputFile =
     fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()
