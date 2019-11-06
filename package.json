@@ -5,7 +5,7 @@
   "scripts": {
     "build": "NODE_ENV=production tsc && shx chmod +x dist/cli.js",
     "dev": "tsc -w",
-    "test": "yarn build && jest"
+    "test": "yarn build && jest --coverage"
   },
   "dependencies": {
     "boxen": "^4.1.0",
@@ -19,8 +19,8 @@
     "vivliostyle": "~2019.8.101"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.18",
-    "@types/node": "^12.7.12",
+    "@types/jest": "^24.0.21",
+    "@types/node": "^12.12.5",
     "@types/serve-handler": "^6.1.0",
     "execa": "^2.1.0",
     "file-type": "^12.3.0",

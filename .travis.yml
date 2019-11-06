@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - node
+  - stable
+before_install:
+  - yarn install
+script:
+  - yarn test
+notifications:
+  email: false
