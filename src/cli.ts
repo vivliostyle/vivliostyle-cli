@@ -17,7 +17,7 @@ if (packageJSON.name === 'viola-savepdf') {
 It seems to be you are using {yellow viola-savepdf}, however it's no longer maintained.
 Please use {yellow vivliostyle-savepdf} which brand-new package rather than viola-savepdf!
 
-{gray $ npm r -g viola-savepdf && npm i -g vivliostyle-savepdf}
+{gray $ npm r -g viola-savepdf && npm i -g @vivliostyle/cli}
   `.trim();
   console.log(
     boxen(msg, {

@@ -1,17 +1,17 @@
-# vivliostyle-savepdf
+# Vivliostyle CLI
 
 Save the pdf file via Headless Chrome and Vivliostyle.
 
 ## Install
 
 ```
-npm install -g vivliostyle-savepdf
+npm install -g @vivliostyle/cli
 ```
 
 ## Usage
 
 ```
-Usage: savepdf [options] <input>
+Usage: vivliostyle [options] <input>
 
 Options:
   -V, --version                output the version number
@@ -36,13 +36,13 @@ Options:
 yarn install
 yarn build
 yarn link
-savepdf --version
+vivliostyle --version
 ```
 
 ### Docker Build
 
 ```
-docker build -t vivliostyle/savepdf .
+docker build -t vivliostyle/cli .
 ```
 
 ## License

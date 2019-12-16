@@ -352,10 +352,10 @@ class Menu extends Component {
           h(
             'a',
             {
-              href: 'https://github.com/vivliostyle/vivliostyle-savepdf',
+              href: 'https://github.com/vivliostyle/vivliostyle-cli',
               target: '_blank',
             },
-            'vivliostyle-savepdf',
+            'vivliostyle-cli',
           ),
           brokerVersion && h('span', {}, ' v' + brokerVersion),
         ),
