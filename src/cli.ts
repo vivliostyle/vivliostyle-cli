@@ -1,33 +1,12 @@
 #!/usr/bin/env node
 
 import path from 'path';
-import chalk from 'chalk';
 import program from 'commander';
-import boxen, { BorderStyle } from 'boxen';
 import preview from './lib/preview';
 import save from './lib/save';
 
 const packageJSON = require('../package.json');
 const runningVivliostyleTimeout = 60 * 1000;
-
-// viola-savepdf is an old package
-if (packageJSON.name === 'viola-savepdf') {
-  const msg = chalk`
-{bold.redBright viola-savepdf is deprecated}
-It seems to be you are using {yellow viola-savepdf}, however it's no longer maintained.
-Please use {yellow vivliostyle-savepdf} which brand-new package rather than viola-savepdf!
-
-{gray $ npm r -g viola-savepdf && npm i -g vivliostyle-savepdf}
-  `.trim();
-  console.log(
-    boxen(msg, {
-      margin: 1,
-      padding: 1,
-      borderStyle: BorderStyle.Round,
-      borderColor: 'yellow',
-    }),
-  );
-}
 
 program
   .arguments('<input>')

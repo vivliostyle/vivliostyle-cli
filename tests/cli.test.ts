@@ -5,21 +5,21 @@ import readChunk from 'read-chunk';
 
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.resolve(rootPath, 'package.json'));
-const cliPath = path.resolve(rootPath, packageJSON.bin.savepdf);
+const cliPath = path.resolve(rootPath, packageJSON.bin.vivliostyle);
 const fixturePath = path.resolve(__dirname, 'fixtures', 'wood');
 const outputPath = path.resolve(rootPath, 'output.pdf');
 
-function savepdf(args: string[]) {
+function vivliostyleCLI(args: string[]) {
   return execa(cliPath, args, { cwd: rootPath });
 }
 
 it('show version', async () => {
-  const { stdout } = await savepdf(['--version']);
+  const { stdout } = await vivliostyleCLI(['--version']);
   expect(stdout).toEqual(packageJSON.version);
 });
 
 it('generate pdf without errors', async () => {
-  const { stdout } = await savepdf([
+  const { stdout } = await vivliostyleCLI([
     fixturePath,
     '-b',
     '-s',

@@ -80,7 +80,7 @@ export default async function run({
         console.log(`Cannot launch headless Chrome. use --no-sandbox option.`);
       } else {
         console.log(
-          'Cannot launch Chrome. Did you install it?\nvivliostyle-savepdf supports Chrome (Canary) only.',
+          'Cannot launch Chrome. Did you install it?\nvivliostyle-cli supports Chrome (Canary) only.',
         );
       }
       process.exit(1);

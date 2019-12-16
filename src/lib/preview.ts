@@ -51,7 +51,7 @@ export default async function run({
         // Should still run
       } else {
         console.log(
-          'Cannot launch Chrome. Did you install it?\nvivliostyle-savepdf supports Chrome (Canary) only.',
+          'Cannot launch Chrome. Did you install it?\nvivliostyle-cli supports Chrome (Canary) only.',
         );
         process.exit(1);
       }

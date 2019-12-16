@@ -18,16 +18,16 @@ RUN set -x \
   && ln -s /opt/chrome-linux/chrome /usr/local/bin/chromium \
   && rm -rf /opt/chrome-linux.zip /var/lib/apt/lists/ /src/*.deb
 
-ADD . /opt/vivliostyle-savepdf
-WORKDIR /opt/vivliostyle-savepdf
+ADD . /opt/vivliostyle-cli
+WORKDIR /opt/vivliostyle-cli
 
-RUN groupadd -r viola \
-  && useradd -s /bin/bash -r -m -g viola -G audio,video viola \
-  && mkdir -p /home/viola/Downloads \
-  && chown -R viola:viola /home/viola \
-  && chown -R viola:viola /opt/vivliostyle-savepdf
+RUN groupadd -r vivliostyle \
+  && useradd -s /bin/bash -r -m -g vivliostyle -G audio,video vivliostyle \
+  && mkdir -p /home/vivliostyle/Downloads \
+  && chown -R vivliostyle:vivliostyle /home/vivliostyle \
+  && chown -R vivliostyle:vivliostyle /opt/vivliostyle-cli
 
-USER viola
+USER vivliostyle
 RUN set -x \
   && yarn install \
   && yarn build
