@@ -20,6 +20,7 @@ it('show version', async () => {
 
 it('generate pdf without errors', async () => {
   const { stdout } = await vivliostyleCLI([
+    'save',
     fixturePath,
     '-b',
     '-s',
