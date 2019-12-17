@@ -366,7 +366,7 @@ class Menu extends Component {
           h(
             'a',
             { href: 'https://vivliostyle.org', target: '_blank' },
-            'Vivliostyle.js',
+            'Vivliostyle',
           ),
           vivliostyleVersion && h('span', {}, ' v' + vivliostyleVersion),
         ),
@@ -378,11 +378,11 @@ class Menu extends Component {
 
 class PageNavigator extends Component {
   onNavigationLeftClick() {
-    window.viewer.navigateToPage('left');
+    window.coreViewer.navigateToPage('left');
   }
 
   onNavigationRightClick() {
-    window.viewer.navigateToPage('right');
+    window.coreViewer.navigateToPage('right');
   }
 
   render() {
@@ -465,7 +465,7 @@ class App extends Component {
     }
 
     if (settings.loadMode === 'book') {
-      window.viewer.loadPublication(
+      window.coreViewer.loadPublication(
         renderUrl,
         {
           userStyleSheet: [
@@ -480,7 +480,7 @@ class App extends Component {
         },
       );
     } else {
-      window.viewer.loadDocument(
+      window.coreViewer.loadDocument(
         [renderUrl],
         {
           userStyleSheet: [
@@ -507,7 +507,7 @@ class App extends Component {
         const json = JSON.parse(xhr.responseText);
         this.setState({
           brokerVersion: json.version,
-          vivliostyleVersion: json.dependencies.vivliostyle,
+          vivliostyleVersion: json.dependencies['@vivliostyle/core'],
         });
       } catch (err) {
         return;
@@ -519,14 +519,14 @@ class App extends Component {
 
   componentDidMount() {
     this.fetchPackageInfo();
-    window.viewer = new vivliostyle.viewer.Viewer({
-      userAgentRootURL: '/node_modules/vivliostyle/resources/',
+    window.coreViewer = new Vivliostyle.CoreViewer({
+      userAgentRootURL: '/node_modules/@vivliostyle/core/resources/',
       viewportElement: document.getElementById('out'),
       debug: false,
     });
 
-    window.viewer.addListener('readystatechange', (e) => {
-      const vivliostyleState = window.viewer.readyState;
+    window.coreViewer.addListener('readystatechange', (e) => {
+      const vivliostyleState = window.coreViewer.readyState;
       this.setState({ vivliostyleState });
     });
 

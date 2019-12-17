@@ -132,7 +132,6 @@ async function onPageLoad({
   vivliostyleTimeout,
 }: OnPageLoadOption) {
   function checkBuildComplete(freq: number = 1000): Promise<void> {
-    const js = `window.viewer.readyState`;
     let time = 0;
 
     function fn(resolve: ResolveFunction<void>, reject: RejectFunction) {
@@ -141,7 +140,9 @@ async function onPageLoad({
           return reject(new Error('Running Vivliostyle process timed out.'));
         }
 
-        const { result } = await Runtime.evaluate({ expression: js });
+        const { result } = await Runtime.evaluate({
+          expression: `window.coreViewer.readyState`,
+        });
         if (result.value === 'complete') {
           return resolve();
         }

@@ -8,6 +8,7 @@
     "test": "yarn build && jest --coverage"
   },
   "dependencies": {
+    "@vivliostyle/core": "2.0.0-pre.4",
     "boxen": "^4.1.0",
     "chrome-launcher": "^0.11.2",
     "chrome-remote-interface": "^0.27.2",
@@ -15,8 +16,7 @@
     "mathjax": "2.7.5",
     "portfinder": "^1.0.21",
     "preact": "^8.5.1",
-    "serve-handler": "^6.1.2",
-    "vivliostyle": "~2019.8.101"
+    "serve-handler": "^6.1.2"
   },
   "devDependencies": {
     "@types/jest": "^24.0.21",
@@ -34,10 +34,16 @@
     "ts-jest": "^24.1.0",
     "typescript": "^3.6.4"
   },
+  "types": "dist/cli.d.ts",
+  "main": "dist/cli.js",
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged",
+      "pre-push": "yarn test"
+    }
+  },
   "author": "spring_raining <harusamex.com@gmail.com>",
   "license": "AGPL-3.0",
-  "main": "dist/cli.js",
-  "types": "dist/cli.d.ts",
   "bin": {
     "vivliostyle": "dist/cli.js"
   },
@@ -46,14 +52,11 @@
     "dist"
   ],
   "homepage": "https://github.com/vivliostyle/vivliostyle-cli",
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged",
-      "pre-push": "yarn test"
-    }
-  },
   "keywords": [
     "vivliostyle"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": "https://github.com/vivliostyle/vivliostyle-cli.git"
 }

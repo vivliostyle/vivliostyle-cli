@@ -437,6 +437,11 @@
   dependencies:
     "@types/yargs-parser" "*"
 
+"@vivliostyle/core@2.0.0-pre.4":
+  version "2.0.0-pre.4"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.0.0-pre.4.tgz#480bc93243391eeba5127e2ba8cd56c850aa993c"
+  integrity sha512-lJdnMlDfNIxUYtlzzCmhgZfKYW07lbBURu6/ZXaIMlOZva7+sEqtyN5K2aoAzGM3Rn7nSdrLiC83QojTIdwdgw==
+
 abab@^2.0.0:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/abab/-/abab-2.0.2.tgz#a2fba1b122c69a85caa02d10f9270c7219709a9d"
@@ -4581,11 +4586,6 @@ verror@1.10.0:
     assert-plus "^1.0.0"
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
-
-vivliostyle@~2019.8.101:
-  version "2019.8.101"
-  resolved "https://registry.yarnpkg.com/vivliostyle/-/vivliostyle-2019.8.101.tgz#625a0c5d6582ed236eb45c034ecd24a8e07b7912"
-  integrity sha512-o6iSm77/qj185HXU+aGLnk1F3F5bx4Bg5Adrjtb3BAmRNN+obJMt20qFmtpQ3ltCQe9E/7nMpHY9/AiUndIZ/Q==
 
 w3c-hr-time@^1.0.1:
   version "1.0.1"
