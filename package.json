@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@vivliostyle/core": "2.0.0-pre.4",
-    "preact": "^8.5.1",
     "chrome-launcher": "^0.12.0",
     "chrome-remote-interface": "^0.28.1",
     "commander": "^4.0.1",
     "mathjax": "2.7.7",
     "portfinder": "^1.0.25",
+    "preact": "^8.5.1",
     "serve-handler": "^6.1.2"
   },
   "devDependencies": {
@@ -49,7 +49,8 @@
   },
   "bugs": "https://github.com/vivliostyle/vivliostyle-cli/issues",
   "files": [
-    "dist"
+    "dist",
+    "broker"
   ],
   "homepage": "https://github.com/vivliostyle/vivliostyle-cli",
   "keywords": [
