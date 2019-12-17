@@ -19,20 +19,20 @@
     "serve-handler": "^6.1.2"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.21",
-    "@types/node": "^12.12.5",
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.18",
     "@types/serve-handler": "^6.1.0",
     "execa": "^2.1.0",
-    "file-type": "^12.3.0",
-    "husky": "^3.0.8",
+    "file-type": "^12.4.0",
+    "husky": "^3.1.0",
     "jest": "^24.9.0",
-    "lint-staged": "^9.4.2",
-    "prettier": "^1.18.2",
+    "lint-staged": "^9.5.0",
+    "prettier": "^1.19.1",
     "pretty-quick": "^1.11.1",
     "read-chunk": "^3.2.0",
     "shx": "^0.3.2",
-    "ts-jest": "^24.1.0",
-    "typescript": "^3.6.4"
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.7.3"
   },
   "types": "dist/cli.d.ts",
   "main": "dist/cli.js",

@@ -4,7 +4,10 @@ declare module 'chrome-remote-interface' {
   export = chrome;
 }
 
-declare function chrome(fn: (args: Protocol) => void): Event;
+declare function chrome(
+  options: { port: number },
+  fn: (args: Protocol) => void,
+): Event;
 
 type CallFrameId = string;
 type UniqueDebuggerId = string;
