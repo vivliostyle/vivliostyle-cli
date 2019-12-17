@@ -15,7 +15,7 @@
     "commander": "^4.0.1",
     "mathjax": "2.7.7",
     "portfinder": "^1.0.25",
-    "preact": "^8.5.1",
+    "preact": "^10.1.1",
     "serve-handler": "^6.1.2"
   },
   "devDependencies": {
