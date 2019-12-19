@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
-// cli-save will be called when we uses `save` subcommand
+// cli-build will be called when we uses `build` subcommand
 
 import path from 'path';
 import program from 'commander';
-import save from './lib/save';
+import build from './lib/build';
 
 const runningVivliostyleTimeout = 60 * 1000;
 
 program
-  .name('vivliostyle save')
+  .name('vivliostyle build')
   .description('Launch headless Chrome and save PDF file')
   .arguments('<input>')
   .option(
@@ -50,7 +50,7 @@ if (program.args.length < 1) {
   program.help();
 }
 
-save({
+build({
   input: path.resolve(process.cwd(), program.args[0]),
   outputPath: path.resolve(process.cwd(), program.output),
   size: program.size,
