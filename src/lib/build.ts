@@ -10,6 +10,7 @@ import {
   launchChrome,
   LoadMode,
   PageSize,
+  findPort,
 } from './misc';
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
@@ -63,8 +64,9 @@ export default async function run({
       brokerPort,
       loadMode,
     });
+    const chromePort = await findPort();
     const launcherOptions = {
-      port: 9222,
+      port: chromePort,
       chromeFlags: [
         '--window-size=1280,720',
         '--disable-gpu',
@@ -86,7 +88,7 @@ export default async function run({
       process.exit(1);
     });
 
-    chrome(async (protocol) => {
+    chrome({ port: chromePort }, async (protocol) => {
       const { Page, Runtime, Emulation } = protocol;
 
       await Promise.all([Page.enable(), Runtime.enable()]).catch((err) => {
@@ -132,7 +134,6 @@ async function onPageLoad({
   vivliostyleTimeout,
 }: OnPageLoadOption) {
   function checkBuildComplete(freq: number = 1000): Promise<void> {
-    const js = `window.viewer.readyState`;
     let time = 0;
 
     function fn(resolve: ResolveFunction<void>, reject: RejectFunction) {
@@ -141,7 +142,9 @@ async function onPageLoad({
           return reject(new Error('Running Vivliostyle process timed out.'));
         }
 
-        const { result } = await Runtime.evaluate({ expression: js });
+        const { result } = await Runtime.evaluate({
+          expression: `window.coreViewer.readyState`,
+        });
         if (result.value === 'complete') {
           return resolve();
         }
