@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import util from 'util';
 import chrome from 'chrome-remote-interface';
 
 import {
@@ -12,9 +11,8 @@ import {
   LoadMode,
   PageSize,
   findPort,
+  statPromise,
 } from './misc';
-
-const statPromise = util.promisify(fs.stat);
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
 type RejectFunction = (reason?: any) => void;
