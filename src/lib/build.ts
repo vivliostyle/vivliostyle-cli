@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
 import chrome from 'chrome-remote-interface';
 
 import {
@@ -12,6 +13,8 @@ import {
   PageSize,
   findPort,
 } from './misc';
+
+const statPromise = util.promisify(fs.stat);
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
 type RejectFunction = (reason?: any) => void;
@@ -44,7 +47,12 @@ export default async function run({
   loadMode = 'document',
   sandbox = true,
 }: SaveOption) {
-  const stat = fs.statSync(input);
+  const stat = await statPromise(input).catch((err) => {
+    if (err.code === 'ENOENT') {
+      throw new Error(`Specified input doesn't exists: ${input}`);
+    }
+    throw err;
+  });
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 

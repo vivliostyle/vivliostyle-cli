@@ -1,9 +1,8 @@
-#!/usr/bin/env node
-
 // cli-preview will be called when we uses `preview` subcommand
 
 import path from 'path';
 import program from 'commander';
+import chalk from 'chalk';
 import preview from './lib/preview';
 
 program
@@ -36,4 +35,6 @@ preview({
   rootDir: program.root && path.resolve(process.cwd(), program.root),
   loadMode: program.book ? 'book' : 'document',
   sandbox: program.sandbox,
+}).catch((err) => {
+  console.error(`${chalk.red.bold('Error:')} ${err.message}`);
 });
