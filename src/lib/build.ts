@@ -11,6 +11,7 @@ import {
   LoadMode,
   PageSize,
   findPort,
+  statPromise,
 } from './misc';
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
@@ -44,7 +45,12 @@ export default async function run({
   loadMode = 'document',
   sandbox = true,
 }: SaveOption) {
-  const stat = fs.statSync(input);
+  const stat = await statPromise(input).catch((err) => {
+    if (err.code === 'ENOENT') {
+      throw new Error(`Specified input doesn't exists: ${input}`);
+    }
+    throw err;
+  });
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 

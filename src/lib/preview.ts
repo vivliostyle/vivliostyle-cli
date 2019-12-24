@@ -7,6 +7,7 @@ import {
   launchSourceAndBrokerServer,
   launchChrome,
   LoadMode,
+  statPromise,
 } from './misc';
 
 export interface PreviewOption {
@@ -22,7 +23,12 @@ export default async function run({
   loadMode = 'document',
   sandbox = true,
 }: PreviewOption) {
-  const stat = fs.statSync(input);
+  const stat = await statPromise(input).catch((err) => {
+    if (err.code === 'ENOENT') {
+      throw new Error(`Specified input doesn't exists: ${input}`);
+    }
+    throw err;
+  });
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 

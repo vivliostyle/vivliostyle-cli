@@ -1,5 +1,6 @@
 import fs from 'fs';
 import url from 'url';
+import util from 'util';
 import path from 'path';
 import http, { RequestListener } from 'http';
 import https from 'https';
@@ -113,9 +114,12 @@ export function findEntryPointFile(
       return resolve(path.relative(root, target));
     }
     const files = fs.readdirSync(target);
-    const index = ['index.html', 'index.htm', 'index.xhtml', 'index.xht'].find(
-      (n) => files.includes(n),
-    );
+    const index = [
+      'index.html',
+      'index.htm',
+      'index.xhtml',
+      'index.xht',
+    ].find((n) => files.includes(n));
     if (index) {
       return resolve(path.relative(root, path.resolve(target, index)));
     }
@@ -274,3 +278,5 @@ export async function launchChrome(launcherOptions: chromeLauncher.Options) {
 
   return launcher;
 }
+
+export const statPromise = util.promisify(fs.stat);

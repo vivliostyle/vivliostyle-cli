@@ -1,9 +1,8 @@
-#!/usr/bin/env node
-
 // cli-build will be called when we uses `build` subcommand
 
 import path from 'path';
 import program from 'commander';
+import chalk from 'chalk';
 import build from './lib/build';
 
 const runningVivliostyleTimeout = 60 * 1000;
@@ -58,4 +57,6 @@ build({
   rootDir: program.root && path.resolve(process.cwd(), program.root),
   loadMode: program.book ? 'book' : 'document',
   sandbox: program.sandbox,
+}).catch((err) => {
+  console.error(`${chalk.red.bold('Error:')} ${err.message}`);
 });
