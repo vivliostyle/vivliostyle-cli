@@ -1,14 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import chrome from 'chrome-remote-interface';
+import puppeteer, { PDFOptions } from 'puppeteer';
 
 import {
   findEntryPointFile,
   getBrokerUrl,
   launchSourceAndBrokerServer,
-  launchChrome,
   LoadMode,
-  findPort,
   statPromise,
   parseSize,
 } from './misc';
@@ -24,14 +22,6 @@ export interface SaveOption {
   rootDir?: string;
   loadMode: LoadMode;
   sandbox: boolean;
-}
-
-export interface OnPageLoadOption {
-  Page: Page;
-  Runtime: Runtime;
-  Emulation: Emulation;
-  outputFile: string;
-  vivliostyleTimeout: number;
 }
 
 export default async function run({
@@ -69,111 +59,93 @@ export default async function run({
       loadMode,
       outputSize,
     });
-    const chromePort = await findPort();
-    const launcherOptions = {
-      port: chromePort,
-      chromeFlags: [
-        '--disable-gpu',
-        '--headless',
-        sandbox ? '' : '--no-sandbox',
-      ],
+
+    console.log(`Launching headless Chrome...`);
+    const browser = await puppeteer.launch({
+      executablePath:
+        '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+      headless: true,
+      defaultViewport: {
+        width: 1280,
+        height: 720,
+      },
+      args: ['--disable-gpu', sandbox ? '' : '--no-sandbox'],
+    });
+    const version = await browser.version();
+    console.log(version);
+    const page = await browser.newPage();
+
+    console.log('Running Vivliostyle...');
+    console.log(navigateURL);
+    const session = await page.target().createCDPSession();
+    await session.send('DOM.enable');
+    await session.send('CSS.enable');
+    session.on('CSS.fontsUpdated', (event) => {
+      console.log(event);
+      // event will be received when browser updates fonts on the page due to webfont loading.
+    });
+    await page.goto(navigateURL, { waitUntil: 'networkidle0' });
+    const checkBuildComplete = function(freq: number = 1000): Promise<void> {
+      let time = 0;
+
+      function fn(resolve: ResolveFunction<void>, reject: RejectFunction) {
+        setTimeout(async () => {
+          if (time > vivliostyleTimeout) {
+            return reject(new Error('Running Vivliostyle process timed out.'));
+          }
+
+          const readyState = await page.evaluate(
+            () =>
+              ((window as unknown) as Window & {
+                coreViewer: { readyState: string };
+              }).coreViewer.readyState,
+          );
+          console.log(readyState);
+          if (readyState === 'complete') {
+            return resolve();
+          }
+
+          time += freq;
+          fn(resolve, reject);
+        }, freq);
+      }
+
+      return new Promise((resolve, reject) => fn(resolve, reject));
     };
 
-    console.log(`Launching headless Chrome... port:${launcherOptions.port}`);
+    await page.emulateMediaType('print');
+    await page.screenshot({ path: 'screenshot.png' });
+    await checkBuildComplete();
 
-    await launchChrome(launcherOptions).catch((err) => {
-      if (err.code === 'ECONNREFUSED') {
-        console.log(`Cannot launch headless Chrome. use --no-sandbox option.`);
-      } else {
-        console.log(
-          'Cannot launch Chrome. Did you install it?\nvivliostyle-cli supports Chrome (Canary) only.',
-        );
-      }
-      process.exit(1);
+    console.log('Printing to PDF...');
+
+    let printConfig: PDFOptions = {
+      path: outputFile,
+      margin: {
+        top: 0,
+        bottom: 0,
+        right: 0,
+        left: 0,
+      },
+      printBackground: true,
+    };
+
+    await page.pdf({
+      marginTop: 0,
+      marginBottom: 0,
+      marginRight: 0,
+      marginLeft: 0,
+      printBackground: true,
+      preferCSSPageSize: true,
+      path: outputFile,
     });
 
-    chrome({ port: chromePort }, async (protocol) => {
-      const { Page, Runtime, Emulation } = protocol;
+    await browser.close();
 
-      await Promise.all([Page.enable(), Runtime.enable()]).catch((err) => {
-        console.trace(err);
-        process.exit(1);
-      });
-
-      Page.loadEventFired(async () => {
-        await onPageLoad({
-          Page,
-          Runtime,
-          Emulation,
-          outputFile,
-          vivliostyleTimeout,
-        }).catch((err: Error) => {
-          console.trace(err);
-          protocol.close();
-          process.exit(1);
-        });
-
-        protocol.close();
-        process.exit(0);
-      });
-
-      Page.navigate({ url: navigateURL });
-    }).on('error', (err) => {
-      console.error('Cannot connect to Chrome:' + err);
-      process.exit(1);
-    });
+    // TODO: gracefully exit borker & source server
+    process.exit(0);
   } catch (err) {
     console.trace(err);
     process.exit(1);
   }
-}
-
-async function onPageLoad({
-  Page,
-  Runtime,
-  Emulation,
-  outputFile,
-  vivliostyleTimeout,
-}: OnPageLoadOption) {
-  function checkBuildComplete(freq: number = 1000): Promise<void> {
-    let time = 0;
-
-    function fn(resolve: ResolveFunction<void>, reject: RejectFunction) {
-      setTimeout(async () => {
-        if (time > vivliostyleTimeout) {
-          return reject(new Error('Running Vivliostyle process timed out.'));
-        }
-
-        const { result } = await Runtime.evaluate({
-          expression: `window.coreViewer.readyState`,
-        });
-        if (result.value === 'complete') {
-          return resolve();
-        }
-
-        time += freq;
-        fn(resolve, reject);
-      }, freq);
-    }
-
-    return new Promise((resolve, reject) => fn(resolve, reject));
-  }
-
-  console.log('Running Vivliostyle...');
-
-  await Emulation.setEmulatedMedia({ media: 'print' });
-  await checkBuildComplete();
-
-  console.log('Printing to PDF...');
-
-  const { data } = await Page.printToPDF({
-    marginTop: 0,
-    marginBottom: 0,
-    marginRight: 0,
-    marginLeft: 0,
-    printBackground: true,
-    preferCSSPageSize: true,
-  });
-
-  fs.writeFileSync(outputFile, data, { encoding: 'base64' });
 }

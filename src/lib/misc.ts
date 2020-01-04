@@ -6,7 +6,6 @@ import http, { RequestListener } from 'http';
 import https from 'https';
 import portfinder from 'portfinder';
 import handler from 'serve-handler';
-import * as chromeLauncher from 'chrome-launcher';
 
 export type LoadMode = 'document' | 'book';
 export type PageSize = { format: string } | { width: string; height: string };
@@ -48,6 +47,11 @@ export function parseSize(size: string | number): PageSize {
   }
 }
 
+export function findPort(): Promise<number> {
+  portfinder.basePort = 13000;
+  return portfinder.getPortPromise();
+}
+
 export function findEntryPointFile(
   target: string,
   root: string,
@@ -71,11 +75,6 @@ export function findEntryPointFile(
     // give up finding entrypoint
     resolve(path.relative(root, target));
   });
-}
-
-export function findPort(): Promise<number> {
-  portfinder.basePort = 13000;
-  return portfinder.getPortPromise();
 }
 
 export function getBrokerUrl({
@@ -222,18 +221,6 @@ export function launchSourceServer(root: string): Promise<SourceServer> {
       resolve({ server, port });
     });
   });
-}
-
-export async function launchChrome(launcherOptions: chromeLauncher.Options) {
-  const launcher = await chromeLauncher.launch(launcherOptions);
-
-  (['exit', 'SIGNIT', 'SIGTERM'] as NodeJS.Signals[]).forEach((sig) => {
-    process.on(sig, () => {
-      launcher.kill();
-    });
-  });
-
-  return launcher;
 }
 
 export const statPromise = util.promisify(fs.stat);

@@ -10,17 +10,17 @@
   },
   "dependencies": {
     "@vivliostyle/core": "2.0.0-pre.4",
-    "chrome-launcher": "^0.12.0",
-    "chrome-remote-interface": "^0.28.1",
     "commander": "^4.0.1",
     "mathjax": "2.7.7",
     "portfinder": "^1.0.25",
     "preact": "^10.1.1",
+    "puppeteer": "^2.0.0",
     "serve-handler": "^6.1.2"
   },
   "devDependencies": {
     "@types/jest": "^24.0.23",
     "@types/node": "^12.12.20",
+    "@types/puppeteer": "^2.0.0",
     "@types/serve-handler": "^6.1.0",
     "execa": "^3.4.0",
     "file-type": "^12.4.0",

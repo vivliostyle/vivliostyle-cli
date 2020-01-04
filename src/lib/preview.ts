@@ -1,11 +1,10 @@
-import fs from 'fs';
 import path from 'path';
+import puppeteer from 'puppeteer';
 
 import {
   findEntryPointFile,
   getBrokerUrl,
   launchSourceAndBrokerServer,
-  launchChrome,
   LoadMode,
   statPromise,
 } from './misc';
@@ -45,23 +44,18 @@ export default async function run({
     });
 
     console.log(`Opening preview page... ${url}`);
-
-    launchChrome({
-      startingUrl: url,
-      chromeFlags: sandbox ? [] : ['--no-sandbox'],
-    }).catch((err) => {
-      if (err.code === 'ECONNREFUSED') {
-        console.log(
-          `Cannot launch Chrome. use --no-sandbox option or open ${url} directly.`,
-        );
-        // Should still run
-      } else {
-        console.log(
-          'Cannot launch Chrome. Did you install it?\nvivliostyle-cli supports Chrome (Canary) only.',
-        );
-        process.exit(1);
-      }
+    const browser = await puppeteer.launch({
+      executablePath:
+        '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+      headless: false,
+      defaultViewport: {
+        width: 1280,
+        height: 720,
+      },
+      args: [sandbox ? '' : '--no-sandbox'],
     });
+    const page = await browser.newPage();
+    await page.goto(url);
   } catch (err) {
     console.trace(err);
     process.exit(1);
