@@ -114,7 +114,6 @@ export default async function run({
     };
 
     await page.emulateMediaType('print');
-    await page.screenshot({ path: 'screenshot.png' });
     await checkBuildComplete();
 
     console.log('Printing to PDF...');
@@ -142,7 +141,7 @@ export default async function run({
 
     await browser.close();
 
-    // TODO: gracefully exit borker & source server
+    // TODO: gracefully exit broker & source server
     process.exit(0);
   } catch (err) {
     console.trace(err);
