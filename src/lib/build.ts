@@ -62,8 +62,6 @@ export default async function run({
 
     console.log(`Launching headless Chrome...`);
     const browser = await puppeteer.launch({
-      executablePath:
-        '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       headless: true,
       defaultViewport: {
         width: 1280,
