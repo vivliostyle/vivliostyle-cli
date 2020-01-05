@@ -145,6 +145,8 @@ export default async function run({
     process.exit(0);
   } catch (err) {
     console.trace(err);
+    console.log(`
+If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
     process.exit(1);
   }
 }
