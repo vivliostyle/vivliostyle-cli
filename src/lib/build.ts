@@ -75,14 +75,16 @@ export default async function run({
 
     console.log('Running Vivliostyle...');
     console.log(navigateURL);
-    const session = await page.target().createCDPSession();
-    await session.send('DOM.enable');
-    await session.send('CSS.enable');
-    session.on('CSS.fontsUpdated', (event) => {
-      console.log(event);
-      // event will be received when browser updates fonts on the page due to webfont loading.
-    });
+
+    // const session = await page.target().createCDPSession();
+    // await session.send('DOM.enable');
+    // await session.send('CSS.enable');
+    // session.on('CSS.fontsUpdated', (event) => {
+    //   console.log(event);
+    // });
+
     await page.goto(navigateURL, { waitUntil: 'networkidle0' });
+
     const checkBuildComplete = function(freq: number = 1000): Promise<void> {
       let time = 0;
 
@@ -98,7 +100,7 @@ export default async function run({
                 coreViewer: { readyState: string };
               }).coreViewer.readyState,
           );
-          console.log(readyState);
+
           if (readyState === 'complete') {
             return resolve();
           }
