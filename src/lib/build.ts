@@ -1,10 +1,12 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import puppeteer, { PDFOptions } from 'puppeteer';
-import * as pressReadyModule from 'press-ready';
-import { log, statFile } from './util';
 import chalk from 'chalk';
+import puppeteer from 'puppeteer';
+import * as pressReadyModule from 'press-ready';
+import uuid from 'uuid/v1';
+
+import { log, statFile } from './util';
 const debug = require('debug')('vivliostyle-cli');
 
 import {
@@ -106,8 +108,8 @@ export default async function run({
 
   log('Printing to PDF... ');
 
-  const tmpDir = fs.mkdtempSync(os.tmpdir());
-  const tmpPath = path.join(tmpDir, 'workbench.pdf');
+  const tmpDir = os.tmpdir();
+  const tmpPath = path.join(tmpDir, `vivliostyle-cli-${uuid()}.pdf`);
 
   await page.pdf({
     margin: {
