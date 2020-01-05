@@ -12,6 +12,7 @@ import {
   getBrokerUrl,
   launchSourceAndBrokerServer,
   LoadMode,
+  parseSize,
 } from './misc';
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
@@ -56,15 +57,12 @@ export default async function run({
     sourceIndex,
     brokerPort,
     loadMode,
+    outputSize,
   });
 
   log(`Launching build environment... `);
   const browser = await puppeteer.launch({
     headless: true,
-    defaultViewport: {
-      width: 1280,
-      height: 720,
-    },
     args: ['--disable-gpu', sandbox ? '' : '--no-sandbox'],
   });
   const version = await browser.version();

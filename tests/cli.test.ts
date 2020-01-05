@@ -56,4 +56,4 @@ it('generate pdf without errors', async () => {
   const screenshot = await pdf2png(outputPdfPath);
   fs.writeFileSync(outputScreenshotPath, screenshot);
   expect(screenshot).toMatchSnapshot();
-}, 10000);
+}, 20000);
