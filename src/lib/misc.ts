@@ -6,6 +6,7 @@ import http, { RequestListener } from 'http';
 import https from 'https';
 import portfinder from 'portfinder';
 import handler from 'serve-handler';
+const debug = require('debug')('vivliostyle-cli');
 
 export type LoadMode = 'document' | 'book';
 export type PageSize = { format: string } | { width: string; height: string };
@@ -162,7 +163,7 @@ export function launchBrokerServer(): Promise<BrokerServer> {
   return new Promise(async (resolve) => {
     const port = await findPort();
 
-    console.log(`Launching broker server... http://localhost:${port}`);
+    debug(`Launching broker server... http://localhost:${port}`);
 
     const beforeHook: RequestHandler = (req, res, next) => {
       // Provide node_modules
@@ -208,7 +209,7 @@ export function launchSourceServer(root: string): Promise<SourceServer> {
   return new Promise(async (resolve) => {
     const port = await findPort();
 
-    console.log(`Launching source server... http://localhost:${port}`);
+    debug(`Launching source server... http://localhost:${port}`);
 
     const server = startEndpoint({ root });
 

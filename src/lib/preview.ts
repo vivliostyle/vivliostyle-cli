@@ -45,16 +45,11 @@ export default async function run({
 
     console.log(`Opening preview page... ${url}`);
     const browser = await puppeteer.launch({
-      executablePath:
-        '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       headless: false,
-      defaultViewport: {
-        width: 1280,
-        height: 720,
-      },
       args: [sandbox ? '' : '--no-sandbox'],
     });
     const page = await browser.newPage();
+    await page.setViewport({ width: 0, height: 0 });
     await page.goto(url);
   } catch (err) {
     console.trace(err);
