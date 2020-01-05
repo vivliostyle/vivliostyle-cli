@@ -9,7 +9,7 @@ import handler from 'serve-handler';
 import * as chromeLauncher from 'chrome-launcher';
 
 export type LoadMode = 'document' | 'book';
-export type PageSize = [number, number];
+export type PageSize = { format: string } | { width: string; height: string };
 type SourceServer = Server;
 type BrokerServer = Server;
 type NextFunction = (err?: any) => void;
@@ -24,84 +24,28 @@ export interface Server {
   port: number;
 }
 
-export interface PresetPageSize {
-  [index: string]: PageSize;
-}
-
 export interface GetBrokerURLOption {
   sourcePort: number;
   sourceIndex: string;
   brokerPort: number;
   loadMode: LoadMode;
+  outputSize?: PageSize;
 }
 
-const cm = 1 / 2.54;
-const mm = 1 / 25.4;
-const q = 1 / 101.6;
-const inch = 1;
-const pc = 1 / 6;
-const pt = 1 / 72;
-const px = 1 / 96;
-const presetPageSize: PresetPageSize = {
-  a5: [148 * mm, 210 * mm],
-  a4: [210 * mm, 297 * mm],
-  a3: [297 * mm, 420 * mm],
-  b5: [176 * mm, 250 * mm],
-  b4: [250 * mm, 353 * mm],
-  'jis-b5': [182 * mm, 257 * mm],
-  'jis-b4': [257 * mm, 364 * mm],
-  letter: [8.5 * inch, 11 * inch],
-  legal: [8.5 * inch, 14 * inch],
-  ledger: [11 * inch, 17 * inch],
-};
-
-export function convertSizeToInch(size: string): PageSize {
-  const size_ = size.trim().toLowerCase();
-  if (size_ in presetPageSize) {
-    return presetPageSize[size_];
+export function parseSize(size: string | number): PageSize {
+  const [width, height, ...others] = size ? `${size}`.split(',') : [];
+  if (others.length) {
+    throw new Error(`Cannot parse size: ${size}`);
+  } else if (width && height) {
+    return {
+      width,
+      height,
+    };
+  } else {
+    return {
+      format: width || 'Letter',
+    };
   }
-
-  const splitted = size_.split(',');
-  if (splitted.length !== 2) {
-    throw new Error(`Cannot parse size : ${size}`);
-  }
-
-  const ret = splitted.map((str) => {
-    const match = str.trim().match(/^([\d\.]+)([\w]*)$/);
-
-    if (!match) {
-      throw new Error(`Cannot parse size : ${str}`);
-    }
-
-    const num = +match[1];
-    const unit = match[2];
-
-    if (!Number.isFinite(num) || num <= 0) {
-      throw new Error(`Cannot parse size : ${str}`);
-    }
-
-    switch (unit) {
-      case 'cm':
-        return num * cm;
-      case 'mm':
-        return num * mm;
-      case 'q':
-        return num * q;
-      case 'in':
-        return num * inch;
-      case 'pc':
-        return num * pc;
-      case 'pt':
-        return num * pt;
-      case '':
-      case 'px':
-        return num * px;
-      default:
-        throw new Error(`Cannot parse size : ${str}`);
-    }
-  }) as PageSize;
-
-  return ret;
 }
 
 export function findEntryPointFile(
@@ -139,13 +83,26 @@ export function getBrokerUrl({
   sourceIndex,
   brokerPort,
   loadMode = 'document',
+  outputSize,
 }: GetBrokerURLOption) {
-  const sourceUrl = `http://127.0.0.1:${sourcePort}/${sourceIndex}`;
-  return (
-    `http://localhost:${brokerPort}/broker/index.html?render=${encodeURIComponent(
-      sourceUrl,
-    )}` + `&loadMode=${encodeURIComponent(loadMode)}`
-  );
+  const sourceURL = url.format({
+    protocol: 'http',
+    hostname: 'localhost',
+    port: sourcePort,
+    pathname: sourceIndex,
+  });
+
+  return url.format({
+    protocol: 'http',
+    hostname: 'localhost',
+    port: brokerPort,
+    pathname: '/broker/index.html',
+    query: {
+      render: sourceURL,
+      loadMode,
+      ...outputSize,
+    },
+  });
 }
 
 export function startEndpoint({

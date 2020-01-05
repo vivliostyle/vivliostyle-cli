@@ -417,11 +417,15 @@ class App extends Component {
       renderUrl,
     };
     this.defaultSettings = {
-      pageSizeOption: 'auto',
-      pageSizePresetSelect: 'A5',
+      pageSizeOption: query.format
+        ? 'preset'
+        : query.width && query.height
+        ? 'custom'
+        : 'auto',
+      pageSizePresetSelect: query.format || 'A5',
       pageSizeUseLandscape: false,
-      pageSizeWidth: '210mm',
-      pageSizeHeight: '297mm',
+      pageSizeWidth: query.width || '210mm',
+      pageSizeHeight: query.height || '297mm',
       overrideDocumentStylesheets: false,
       loadMode: query.loadMode || 'document',
     };
@@ -459,7 +463,7 @@ class App extends Component {
   }
 
   loadDocument(settings) {
-    const { renderUrl } = this.state;
+    const { renderUrl, pageSizeOption } = this.state;
     if (!renderUrl) {
       return;
     }
@@ -475,7 +479,7 @@ class App extends Component {
           ],
         },
         {
-          fitToScreen: true,
+          fitToScreen: pageSizeOption === 'auto',
           pageViewMode: 'singlePage',
         },
       );
@@ -490,7 +494,7 @@ class App extends Component {
           ],
         },
         {
-          fitToScreen: true,
+          fitToScreen: pageSizeOption === 'auto',
           pageViewMode: 'singlePage',
         },
       );
