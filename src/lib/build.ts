@@ -3,15 +3,14 @@ import path from 'path';
 import chrome from 'chrome-remote-interface';
 
 import {
-  convertSizeToInch,
   findEntryPointFile,
   getBrokerUrl,
   launchSourceAndBrokerServer,
   launchChrome,
   LoadMode,
-  PageSize,
   findPort,
   statPromise,
+  parseSize,
 } from './misc';
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
@@ -32,7 +31,6 @@ export interface OnPageLoadOption {
   Runtime: Runtime;
   Emulation: Emulation;
   outputFile: string;
-  outputSize: PageSize | null;
   vivliostyleTimeout: number;
 }
 
@@ -58,7 +56,7 @@ export default async function run({
     fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()
       ? path.resolve(outputPath, 'output.pdf')
       : outputPath;
-  const outputSize = typeof size === 'string' ? convertSizeToInch(size) : null;
+  const outputSize = parseSize(size);
 
   try {
     const [source, broker] = await launchSourceAndBrokerServer(root);
@@ -69,12 +67,12 @@ export default async function run({
       sourceIndex,
       brokerPort,
       loadMode,
+      outputSize,
     });
     const chromePort = await findPort();
     const launcherOptions = {
       port: chromePort,
       chromeFlags: [
-        '--window-size=1280,720',
         '--disable-gpu',
         '--headless',
         sandbox ? '' : '--no-sandbox',
@@ -108,7 +106,6 @@ export default async function run({
           Runtime,
           Emulation,
           outputFile,
-          outputSize,
           vivliostyleTimeout,
         }).catch((err: Error) => {
           console.trace(err);
@@ -136,7 +133,6 @@ async function onPageLoad({
   Runtime,
   Emulation,
   outputFile,
-  outputSize,
   vivliostyleTimeout,
 }: OnPageLoadOption) {
   function checkBuildComplete(freq: number = 1000): Promise<void> {
@@ -170,34 +166,14 @@ async function onPageLoad({
 
   console.log('Printing to PDF...');
 
-  function printConfig() {
-    if (outputSize === undefined || outputSize === null) {
-      console.log(
-        'Warning: Output size is not defined.\n' +
-          'Due to the headless Chrome bug, @page { size } CSS rule will be ignored.\n' +
-          'cf. https://bugs.chromium.org/p/chromium/issues/detail?id=724160',
-      );
-      return {
-        marginTop: 0,
-        marginBottom: 0,
-        marginRight: 0,
-        marginLeft: 0,
-        printBackground: true,
-        preferCSSPageSize: true,
-      };
-    }
-    return {
-      paperWidth: outputSize[0],
-      paperHeight: outputSize[1],
-      marginTop: 0,
-      marginBottom: 0,
-      marginRight: 0,
-      marginLeft: 0,
-      printBackground: true,
-    };
-  }
-
-  const { data } = await Page.printToPDF(printConfig());
+  const { data } = await Page.printToPDF({
+    marginTop: 0,
+    marginBottom: 0,
+    marginRight: 0,
+    marginLeft: 0,
+    printBackground: true,
+    preferCSSPageSize: true,
+  });
 
   fs.writeFileSync(outputFile, data, { encoding: 'base64' });
 }
