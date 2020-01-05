@@ -3,7 +3,6 @@ import path from 'path';
 import execa from 'execa';
 import fileType from 'file-type';
 import readChunk from 'read-chunk';
-import { pdf2png } from './pdf2png';
 
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));
@@ -35,7 +34,6 @@ it('show version', async () => {
 
 it('generate pdf without errors', async () => {
   const outputPath = path.join(localTmpDir, 'test.pdf');
-  const outputScreenshotPath = path.join(localTmpDir, 'screenshot.png');
   cleanUp(outputPath);
 
   try {
@@ -57,11 +55,6 @@ it('generate pdf without errors', async () => {
   const buffer = readChunk.sync(outputPath, 0, fileType.minimumBytes);
   const type = fileType(buffer)!;
   expect(type.mime).toEqual('application/pdf');
-
-  // screenshot test
-  const screenshot = await pdf2png(outputPath);
-  fs.writeFileSync(outputScreenshotPath, screenshot);
-  expect(screenshot).toMatchSnapshot();
 }, 20000);
 
 it('generate press-ready pdf without errors', async () => {
