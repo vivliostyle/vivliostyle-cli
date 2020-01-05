@@ -64,7 +64,6 @@ build({
   pressReady: program.pressReady,
 }).catch((err) => {
   console.error(`${chalk.red.bold('Error:')} ${err.message}`);
-  console.trace(err);
   console.log(`
 If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
   process.exit(1);

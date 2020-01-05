@@ -3,6 +3,8 @@ node_js:
   - node
   - stable
 before_install:
+  - sudo apt-get update
+  - sudo apt-get install ghostscript poppler-utils -y
   - yarn install
 script:
   - yarn test
