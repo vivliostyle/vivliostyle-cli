@@ -65,6 +65,7 @@ export default async function run({
   log(`Launching build environment... `);
   const browser = await puppeteer.launch({
     headless: true,
+    // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
     args: [sandbox ? '' : '--no-sandbox'],
   });
   const version = await browser.version();
