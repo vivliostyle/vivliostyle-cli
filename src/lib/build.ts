@@ -65,7 +65,7 @@ export default async function run({
   log(`Launching build environment... `);
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--disable-gpu', sandbox ? '' : '--no-sandbox'],
+    args: [sandbox ? '' : '--no-sandbox'],
   });
   const version = await browser.version();
   debug(chalk.green(`success [version=${version}]`));
