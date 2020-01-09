@@ -426,7 +426,7 @@ class App extends Component {
       pageSizeUseLandscape: false,
       pageSizeWidth: query.width || '210mm',
       pageSizeHeight: query.height || '297mm',
-      overrideDocumentStylesheets: false,
+      overrideDocumentStylesheets: true,
       loadMode: query.loadMode || 'document',
     };
     console.log(`defaultSettings`, JSON.stringify(this.defaultSettings));
