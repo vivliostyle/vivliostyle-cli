@@ -26,27 +26,25 @@ export function findAvailablePort(): Promise<number> {
   return portfinder.getPortPromise();
 }
 
-export function findEntryPointFile(
+export async function findEntryPointFile(
   target: string,
   root: string,
 ): Promise<string> {
-  return new Promise((resolve) => {
-    const stat = fs.statSync(target);
-    if (!stat.isDirectory()) {
-      return resolve(path.relative(root, target));
-    }
-    const files = fs.readdirSync(target);
-    const index = [
-      'index.html',
-      'index.htm',
-      'index.xhtml',
-      'index.xht',
-    ].find((n) => files.includes(n));
-    if (index) {
-      return resolve(path.relative(root, path.resolve(target, index)));
-    }
+  const stat = fs.statSync(target);
+  if (!stat.isDirectory()) {
+    return path.relative(root, target);
+  }
+  const files = fs.readdirSync(target);
+  const index = [
+    'index.html',
+    'index.htm',
+    'index.xhtml',
+    'index.xht',
+  ].find((n) => files.includes(n));
+  if (index) {
+    return path.relative(root, path.resolve(target, index));
+  }
 
-    // give up finding entrypoint
-    resolve(path.relative(root, target));
-  });
+  // give up finding entrypoint
+  return path.relative(root, target);
 }
