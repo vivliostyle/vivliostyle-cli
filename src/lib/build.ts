@@ -2,20 +2,17 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import chalk from 'chalk';
+import uuid from 'uuid/v1';
 import puppeteer from 'puppeteer';
 import * as pressReadyModule from 'press-ready';
-import uuid from 'uuid/v1';
-
-import { log, statFile } from './util';
-const debug = require('debug')('vivliostyle-cli');
 
 import {
-  findEntryPointFile,
   getBrokerUrl,
   launchSourceAndBrokerServer,
   LoadMode,
-  parseSize,
-} from './misc';
+  PageSize,
+} from './server';
+import { log, statFile, findEntryPointFile, debug } from './util';
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
 type RejectFunction = (reason?: any) => void;
@@ -29,6 +26,22 @@ export interface SaveOption {
   loadMode: LoadMode;
   sandbox: boolean;
   pressReady: boolean;
+}
+
+export function parseSize(size: string | number): PageSize {
+  const [width, height, ...others] = size ? `${size}`.split(',') : [];
+  if (others.length) {
+    throw new Error(`Cannot parse size: ${size}`);
+  } else if (width && height) {
+    return {
+      width,
+      height,
+    };
+  } else {
+    return {
+      format: width || 'Letter',
+    };
+  }
 }
 
 export default async function run({

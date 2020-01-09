@@ -1,13 +1,8 @@
 import path from 'path';
 import puppeteer from 'puppeteer';
 
-import {
-  findEntryPointFile,
-  getBrokerUrl,
-  launchSourceAndBrokerServer,
-  LoadMode,
-  statPromise,
-} from './misc';
+import { getBrokerUrl, launchSourceAndBrokerServer, LoadMode } from './server';
+import { findEntryPointFile, statFile } from './util';
 
 export interface PreviewOption {
   input: string;
@@ -22,12 +17,7 @@ export default async function run({
   loadMode = 'document',
   sandbox = true,
 }: PreviewOption) {
-  const stat = await statPromise(input).catch((err) => {
-    if (err.code === 'ENOENT') {
-      throw new Error(`Specified input doesn't exists: ${input}`);
-    }
-    throw err;
-  });
+  const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 
