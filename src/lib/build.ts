@@ -71,6 +71,7 @@ export default async function run({
     loadMode,
     outputSize,
   });
+  debug('brokerURL', navigateURL);
 
   log(`Launching build environment...`);
   const browser = await puppeteer.launch({
@@ -79,8 +80,27 @@ export default async function run({
     args: [sandbox ? '' : '--no-sandbox'],
   });
   const version = await browser.version();
-  debug(chalk.green(`success [version=${version}]`));
+  debug(chalk.green('success'), `version=${version}`);
+
   const page = await browser.newPage();
+
+  page.on('pageerror', (error) => {
+    debug(chalk.red('broker:error'), error.message);
+  });
+
+  page.on('console', (msg) =>
+    debug(chalk.magenta('broker:console'), msg.text()),
+  );
+
+  page.on('response', (response) => {
+    debug(
+      chalk.gray('broker:response'),
+      chalk.green(response.status().toString()),
+      response.url(),
+    );
+    if (300 > response.status() && 200 <= response.status()) return;
+    debug(chalk.red('broker:failedRequest'), response.status(), response.url());
+  });
 
   log('Building pages...');
 

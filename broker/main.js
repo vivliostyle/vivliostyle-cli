@@ -429,6 +429,7 @@ class App extends Component {
       overrideDocumentStylesheets: false,
       loadMode: query.loadMode || 'document',
     };
+    console.log(`defaultSettings`, JSON.stringify(this.defaultSettings));
   }
 
   getUserStyleSheetString({
