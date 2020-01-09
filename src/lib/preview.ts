@@ -1,14 +1,8 @@
-import fs from 'fs';
 import path from 'path';
+import puppeteer from 'puppeteer';
 
-import {
-  findEntryPointFile,
-  getBrokerUrl,
-  launchSourceAndBrokerServer,
-  launchChrome,
-  LoadMode,
-  statPromise,
-} from './misc';
+import { getBrokerUrl, launchSourceAndBrokerServer, LoadMode } from './server';
+import { findEntryPointFile, statFile } from './util';
 
 export interface PreviewOption {
   input: string;
@@ -23,12 +17,7 @@ export default async function run({
   loadMode = 'document',
   sandbox = true,
 }: PreviewOption) {
-  const stat = await statPromise(input).catch((err) => {
-    if (err.code === 'ENOENT') {
-      throw new Error(`Specified input doesn't exists: ${input}`);
-    }
-    throw err;
-  });
+  const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 
@@ -45,23 +34,13 @@ export default async function run({
     });
 
     console.log(`Opening preview page... ${url}`);
-
-    launchChrome({
-      startingUrl: url,
-      chromeFlags: sandbox ? [] : ['--no-sandbox'],
-    }).catch((err) => {
-      if (err.code === 'ECONNREFUSED') {
-        console.log(
-          `Cannot launch Chrome. use --no-sandbox option or open ${url} directly.`,
-        );
-        // Should still run
-      } else {
-        console.log(
-          'Cannot launch Chrome. Did you install it?\nvivliostyle-cli supports Chrome (Canary) only.',
-        );
-        process.exit(1);
-      }
+    const browser = await puppeteer.launch({
+      headless: false,
+      args: [sandbox ? '' : '--no-sandbox'],
     });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 0, height: 0 });
+    await page.goto(url);
   } catch (err) {
     console.trace(err);
     process.exit(1);

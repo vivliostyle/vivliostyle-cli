@@ -43,6 +43,10 @@ program
         ? +val * 1000
         : runningVivliostyleTimeout,
   )
+  .option(
+    '--press-ready',
+    `make generated PDF compatible with press ready PDF/X-1a`,
+  )
   .parse(process.argv);
 
 if (program.args.length < 1) {
@@ -53,10 +57,14 @@ build({
   input: path.resolve(process.cwd(), program.args[0]),
   outputPath: path.resolve(process.cwd(), program.output),
   size: program.size,
-  vivliostyleTimeout: program.timeout,
+  timeout: program.timeout,
   rootDir: program.root && path.resolve(process.cwd(), program.root),
   loadMode: program.book ? 'book' : 'document',
   sandbox: program.sandbox,
+  pressReady: program.pressReady,
 }).catch((err) => {
   console.error(`${chalk.red.bold('Error:')} ${err.message}`);
+  console.log(`
+If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
+  process.exit(1);
 });

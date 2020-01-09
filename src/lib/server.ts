@@ -1,15 +1,15 @@
 import fs from 'fs';
 import url from 'url';
-import util from 'util';
 import path from 'path';
 import http, { RequestListener } from 'http';
 import https from 'https';
-import portfinder from 'portfinder';
 import handler from 'serve-handler';
-import * as chromeLauncher from 'chrome-launcher';
+
+import { findAvailablePort, debug } from './util';
 
 export type LoadMode = 'document' | 'book';
 export type PageSize = { format: string } | { width: string; height: string };
+
 type SourceServer = Server;
 type BrokerServer = Server;
 type NextFunction = (err?: any) => void;
@@ -30,52 +30,6 @@ export interface GetBrokerURLOption {
   brokerPort: number;
   loadMode: LoadMode;
   outputSize?: PageSize;
-}
-
-export function parseSize(size: string | number): PageSize {
-  const [width, height, ...others] = size ? `${size}`.split(',') : [];
-  if (others.length) {
-    throw new Error(`Cannot parse size: ${size}`);
-  } else if (width && height) {
-    return {
-      width,
-      height,
-    };
-  } else {
-    return {
-      format: width || 'Letter',
-    };
-  }
-}
-
-export function findEntryPointFile(
-  target: string,
-  root: string,
-): Promise<string> {
-  return new Promise((resolve) => {
-    const stat = fs.statSync(target);
-    if (!stat.isDirectory()) {
-      return resolve(path.relative(root, target));
-    }
-    const files = fs.readdirSync(target);
-    const index = [
-      'index.html',
-      'index.htm',
-      'index.xhtml',
-      'index.xht',
-    ].find((n) => files.includes(n));
-    if (index) {
-      return resolve(path.relative(root, path.resolve(target, index)));
-    }
-
-    // give up finding entrypoint
-    resolve(path.relative(root, target));
-  });
-}
-
-export function findPort(): Promise<number> {
-  portfinder.basePort = 13000;
-  return portfinder.getPortPromise();
 }
 
 export function getBrokerUrl({
@@ -161,9 +115,9 @@ export async function launchSourceAndBrokerServer(
 
 export function launchBrokerServer(): Promise<BrokerServer> {
   return new Promise(async (resolve) => {
-    const port = await findPort();
+    const port = await findAvailablePort();
 
-    console.log(`Launching broker server... http://localhost:${port}`);
+    debug(`Launching broker server... http://localhost:${port}`);
 
     const beforeHook: RequestHandler = (req, res, next) => {
       // Provide node_modules
@@ -207,9 +161,9 @@ export function launchBrokerServer(): Promise<BrokerServer> {
 
 export function launchSourceServer(root: string): Promise<SourceServer> {
   return new Promise(async (resolve) => {
-    const port = await findPort();
+    const port = await findAvailablePort();
 
-    console.log(`Launching source server... http://localhost:${port}`);
+    debug(`Launching source server... http://localhost:${port}`);
 
     const server = startEndpoint({ root });
 
@@ -223,17 +177,3 @@ export function launchSourceServer(root: string): Promise<SourceServer> {
     });
   });
 }
-
-export async function launchChrome(launcherOptions: chromeLauncher.Options) {
-  const launcher = await chromeLauncher.launch(launcherOptions);
-
-  (['exit', 'SIGNIT', 'SIGTERM'] as NodeJS.Signals[]).forEach((sig) => {
-    process.on(sig, () => {
-      launcher.kill();
-    });
-  });
-
-  return launcher;
-}
-
-export const statPromise = util.promisify(fs.stat);

@@ -1,54 +1,57 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
-import chrome from 'chrome-remote-interface';
+import chalk from 'chalk';
+import uuid from 'uuid/v1';
+import puppeteer from 'puppeteer';
+import * as pressReadyModule from 'press-ready';
 
 import {
-  findEntryPointFile,
   getBrokerUrl,
   launchSourceAndBrokerServer,
-  launchChrome,
   LoadMode,
-  findPort,
-  statPromise,
-  parseSize,
-} from './misc';
-
-type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
-type RejectFunction = (reason?: any) => void;
+  PageSize,
+} from './server';
+import { log, statFile, findEntryPointFile, debug, retry } from './util';
 
 export interface SaveOption {
   input: string;
   outputPath: string;
   size: number | string;
-  vivliostyleTimeout: number;
+  timeout: number;
   rootDir?: string;
   loadMode: LoadMode;
   sandbox: boolean;
+  pressReady: boolean;
 }
 
-export interface OnPageLoadOption {
-  Page: Page;
-  Runtime: Runtime;
-  Emulation: Emulation;
-  outputFile: string;
-  vivliostyleTimeout: number;
+function parseSize(size: string | number): PageSize {
+  const [width, height, ...others] = size ? `${size}`.split(',') : [];
+  if (others.length) {
+    throw new Error(`Cannot parse size: ${size}`);
+  } else if (width && height) {
+    return {
+      width,
+      height,
+    };
+  } else {
+    return {
+      format: width || 'Letter',
+    };
+  }
 }
 
 export default async function run({
   input,
   outputPath,
   size,
-  vivliostyleTimeout,
+  timeout,
   rootDir,
   loadMode = 'document',
   sandbox = true,
+  pressReady = false,
 }: SaveOption) {
-  const stat = await statPromise(input).catch((err) => {
-    if (err.code === 'ENOENT') {
-      throw new Error(`Specified input doesn't exists: ${input}`);
-    }
-    throw err;
-  });
+  const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 
@@ -58,122 +61,79 @@ export default async function run({
       : outputPath;
   const outputSize = parseSize(size);
 
-  try {
-    const [source, broker] = await launchSourceAndBrokerServer(root);
-    const sourcePort = source.port;
-    const brokerPort = broker.port;
-    const navigateURL = getBrokerUrl({
-      sourcePort,
-      sourceIndex,
-      brokerPort,
-      loadMode,
-      outputSize,
-    });
-    const chromePort = await findPort();
-    const launcherOptions = {
-      port: chromePort,
-      chromeFlags: [
-        '--disable-gpu',
-        '--headless',
-        sandbox ? '' : '--no-sandbox',
-      ],
-    };
-
-    console.log(`Launching headless Chrome... port:${launcherOptions.port}`);
-
-    await launchChrome(launcherOptions).catch((err) => {
-      if (err.code === 'ECONNREFUSED') {
-        console.log(`Cannot launch headless Chrome. use --no-sandbox option.`);
-      } else {
-        console.log(
-          'Cannot launch Chrome. Did you install it?\nvivliostyle-cli supports Chrome (Canary) only.',
-        );
-      }
-      process.exit(1);
-    });
-
-    chrome({ port: chromePort }, async (protocol) => {
-      const { Page, Runtime, Emulation } = protocol;
-
-      await Promise.all([Page.enable(), Runtime.enable()]).catch((err) => {
-        console.trace(err);
-        process.exit(1);
-      });
-
-      Page.loadEventFired(async () => {
-        await onPageLoad({
-          Page,
-          Runtime,
-          Emulation,
-          outputFile,
-          vivliostyleTimeout,
-        }).catch((err: Error) => {
-          console.trace(err);
-          protocol.close();
-          process.exit(1);
-        });
-
-        protocol.close();
-        process.exit(0);
-      });
-
-      Page.navigate({ url: navigateURL });
-    }).on('error', (err) => {
-      console.error('Cannot connect to Chrome:' + err);
-      process.exit(1);
-    });
-  } catch (err) {
-    console.trace(err);
-    process.exit(1);
-  }
-}
-
-async function onPageLoad({
-  Page,
-  Runtime,
-  Emulation,
-  outputFile,
-  vivliostyleTimeout,
-}: OnPageLoadOption) {
-  function checkBuildComplete(freq: number = 1000): Promise<void> {
-    let time = 0;
-
-    function fn(resolve: ResolveFunction<void>, reject: RejectFunction) {
-      setTimeout(async () => {
-        if (time > vivliostyleTimeout) {
-          return reject(new Error('Running Vivliostyle process timed out.'));
-        }
-
-        const { result } = await Runtime.evaluate({
-          expression: `window.coreViewer.readyState`,
-        });
-        if (result.value === 'complete') {
-          return resolve();
-        }
-
-        time += freq;
-        fn(resolve, reject);
-      }, freq);
-    }
-
-    return new Promise((resolve, reject) => fn(resolve, reject));
-  }
-
-  console.log('Running Vivliostyle...');
-
-  await Emulation.setEmulatedMedia({ media: 'print' });
-  await checkBuildComplete();
-
-  console.log('Printing to PDF...');
-
-  const { data } = await Page.printToPDF({
-    marginTop: 0,
-    marginBottom: 0,
-    marginRight: 0,
-    marginLeft: 0,
-    printBackground: true,
-    preferCSSPageSize: true,
+  const [source, broker] = await launchSourceAndBrokerServer(root);
+  const sourcePort = source.port;
+  const brokerPort = broker.port;
+  const navigateURL = getBrokerUrl({
+    sourcePort,
+    sourceIndex,
+    brokerPort,
+    loadMode,
+    outputSize,
   });
 
-  fs.writeFileSync(outputFile, data, { encoding: 'base64' });
+  log(`Launching build environment...`);
+  const browser = await puppeteer.launch({
+    headless: true,
+    // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
+    args: [sandbox ? '' : '--no-sandbox'],
+  });
+  const version = await browser.version();
+  debug(chalk.green(`success [version=${version}]`));
+  const page = await browser.newPage();
+
+  log('Building pages...');
+
+  await page.goto(navigateURL, { waitUntil: 'networkidle0' });
+  await page.emulateMediaType('print');
+  await retry(
+    async () => {
+      const readyState = await page.evaluate(
+        () =>
+          ((window as unknown) as Window & {
+            coreViewer: { readyState: string };
+          }).coreViewer.readyState,
+      );
+
+      if (readyState !== 'complete') {
+        throw new Error(`Document being rendered: ${readyState}`);
+      }
+    },
+    { timeout },
+  );
+
+  log('Generating PDF...');
+
+  const tmpDir = os.tmpdir();
+  const tmpPath = path.join(tmpDir, `vivliostyle-cli-${uuid()}.pdf`);
+
+  await page.pdf({
+    margin: {
+      top: 0,
+      bottom: 0,
+      right: 0,
+      left: 0,
+    },
+    printBackground: true,
+    preferCSSPageSize: true,
+    path: tmpPath,
+  });
+
+  await browser.close();
+
+  if (pressReady) {
+    log(`Running press-ready`);
+    await pressReadyModule.build({
+      input: tmpPath,
+      output: outputFile,
+    });
+  } else {
+    fs.copyFileSync(tmpPath, outputFile);
+  }
+
+  log(`🎉  Done`);
+  log(`${chalk.bold(outputFile)} has been created`);
+
+  // TODO: gracefully exit broker & source server
+  process.exit(0);
 }
