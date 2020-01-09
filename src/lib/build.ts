@@ -12,23 +12,20 @@ import {
   LoadMode,
   PageSize,
 } from './server';
-import { log, statFile, findEntryPointFile, debug } from './util';
-
-type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
-type RejectFunction = (reason?: any) => void;
+import { log, statFile, findEntryPointFile, debug, retry } from './util';
 
 export interface SaveOption {
   input: string;
   outputPath: string;
   size: number | string;
-  vivliostyleTimeout: number;
+  timeout: number;
   rootDir?: string;
   loadMode: LoadMode;
   sandbox: boolean;
   pressReady: boolean;
 }
 
-export function parseSize(size: string | number): PageSize {
+function parseSize(size: string | number): PageSize {
   const [width, height, ...others] = size ? `${size}`.split(',') : [];
   if (others.length) {
     throw new Error(`Cannot parse size: ${size}`);
@@ -48,7 +45,7 @@ export default async function run({
   input,
   outputPath,
   size,
-  vivliostyleTimeout,
+  timeout,
   rootDir,
   loadMode = 'document',
   sandbox = true,
@@ -75,7 +72,7 @@ export default async function run({
     outputSize,
   });
 
-  log(`Launching build environment... `);
+  log(`Launching build environment...`);
   const browser = await puppeteer.launch({
     headless: true,
     // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
@@ -85,42 +82,27 @@ export default async function run({
   debug(chalk.green(`success [version=${version}]`));
   const page = await browser.newPage();
 
-  log('Building pages... ');
+  log('Building pages...');
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
-
-  const checkBuildComplete = function(freq: number = 1000): Promise<void> {
-    let time = 0;
-
-    function fn(resolve: ResolveFunction<void>, reject: RejectFunction) {
-      setTimeout(async () => {
-        if (time > vivliostyleTimeout) {
-          return reject(new Error('Running Vivliostyle process timed out.'));
-        }
-
-        const readyState = await page.evaluate(
-          () =>
-            ((window as unknown) as Window & {
-              coreViewer: { readyState: string };
-            }).coreViewer.readyState,
-        );
-
-        if (readyState === 'complete') {
-          return resolve();
-        }
-
-        time += freq;
-        fn(resolve, reject);
-      }, freq);
-    }
-
-    return new Promise((resolve, reject) => fn(resolve, reject));
-  };
-
   await page.emulateMediaType('print');
-  await checkBuildComplete();
+  await retry(
+    async () => {
+      const readyState = await page.evaluate(
+        () =>
+          ((window as unknown) as Window & {
+            coreViewer: { readyState: string };
+          }).coreViewer.readyState,
+      );
 
-  log('Printing to PDF... ');
+      if (readyState !== 'complete') {
+        throw new Error(`Document being rendered: ${readyState}`);
+      }
+    },
+    { timeout },
+  );
+
+  log('Generating PDF...');
 
   const tmpDir = os.tmpdir();
   const tmpPath = path.join(tmpDir, `vivliostyle-cli-${uuid()}.pdf`);

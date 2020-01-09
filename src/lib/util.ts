@@ -4,6 +4,9 @@ import util from 'util';
 import portfinder from 'portfinder';
 import debugConstructor from 'debug';
 
+type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
+type RejectFunction = (reason?: any) => void;
+
 export const debug = debugConstructor('vivliostyle-cli');
 
 export function log(...obj: any) {
@@ -47,4 +50,38 @@ export async function findEntryPointFile(
 
   // give up finding entrypoint
   return path.relative(root, target);
+}
+
+export function retry(
+  fn: Function,
+  { timeout, freq = 1000 }: { timeout: number; freq?: number },
+): Promise<void> {
+  let time = 0;
+
+  function innerFunction(
+    resolve: ResolveFunction<void>,
+    reject: RejectFunction,
+  ) {
+    setTimeout(async () => {
+      if (time > timeout) {
+        return reject(
+          new Error(
+            `Failed because build process exceeded timeout limit ${timeout}ms. Try it again with --timeout option.`,
+          ),
+        );
+      }
+
+      try {
+        await Promise.resolve(fn());
+        resolve();
+      } catch (err) {
+        debug(err.message);
+      }
+
+      time += freq;
+      innerFunction(resolve, reject);
+    }, freq);
+  }
+
+  return new Promise((resolve, reject) => innerFunction(resolve, reject));
 }

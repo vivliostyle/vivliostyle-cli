@@ -46,7 +46,7 @@ it('generate pdf without errors', async () => {
       '-o',
       outputPath,
     ]);
-    expect(response.stdout).toContain('Printing to PDF');
+    expect(response.stdout).toContain('Generating PDF');
   } catch (err) {
     throw err.stderr;
   }
