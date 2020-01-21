@@ -14,7 +14,7 @@ import {
 } from './server';
 import { log, statFile, findEntryPointFile, debug, retry } from './util';
 
-export interface SaveOption {
+export interface BuildOption {
   input: string;
   outputPath: string;
   size: number | string;
@@ -50,7 +50,7 @@ export default async function run({
   loadMode = 'document',
   sandbox = true,
   pressReady = false,
-}: SaveOption) {
+}: BuildOption) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
