@@ -2,6 +2,9 @@
   "name": "@vivliostyle/cli",
   "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
   "version": "2.0.0-pre.1",
+  "engines": {
+    "node": ">= 10"
+  },
   "scripts": {
     "build": "NODE_ENV=production tsc && shx chmod +x dist/cli.js",
     "clean": "shx rm -rf dist tmp",
