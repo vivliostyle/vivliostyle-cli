@@ -119,28 +119,29 @@ export function launchBrokerServer(): Promise<BrokerServer> {
 
     debug(`Launching broker server... http://localhost:${port}`);
 
-    const beforeHook: RequestHandler = (req, res, next) => {
+    const beforeHook: RequestHandler = async (req, res, next) => {
       // Provide node_modules
-      let resolvedPath;
       if (req.url && req.url.startsWith('/node_modules')) {
         const pathName = url.parse(req.url).pathname!;
         const moduleName = pathName.substr(14).replace('..', '');
-        try {
-          resolvedPath = require.resolve(moduleName);
-        } catch (e) {
-          if (e.code !== 'MODULE_NOT_FOUND') {
-            next();
-            throw e;
+        const basePathCandidates = require.resolve.paths(moduleName) || [];
+        for (const basePath of basePathCandidates) {
+          try {
+            const resolvedPath = path.resolve(basePath, moduleName);
+            await fs.promises.access(resolvedPath);
+            const stream = fs.createReadStream(resolvedPath);
+            stream.pipe(res); // send module to client
+            return;
+          } catch (e) {
+            if (e.code === 'ENOENT') {
+              continue;
+            } else {
+              throw e;
+            }
           }
         }
       }
-
-      if (!resolvedPath) {
-        return next(); // module not found
-      }
-
-      const stream = fs.createReadStream(resolvedPath);
-      stream.pipe(res); // send module to client
+      next(); // module not found
     };
 
     const server = startEndpoint({
