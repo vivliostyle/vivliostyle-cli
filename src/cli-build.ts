@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // cli-build will be called when we uses `build` subcommand
 
 import path from 'path';

@@ -12,7 +12,14 @@ import {
   LoadMode,
   PageSize,
 } from './server';
-import { log, statFile, findEntryPointFile, debug, retry } from './util';
+import {
+  log,
+  statFile,
+  findEntryPointFile,
+  debug,
+  retry,
+  launchBrowser,
+} from './util';
 
 export interface BuildOption {
   input: string;
@@ -80,7 +87,7 @@ export default async function run({
     `Executing Chromium path: ${executableChromium ||
       puppeteer.executablePath()}`,
   );
-  const browser = await puppeteer.launch({
+  const browser = await launchBrowser({
     headless: true,
     executablePath: executableChromium || puppeteer.executablePath(),
     // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.

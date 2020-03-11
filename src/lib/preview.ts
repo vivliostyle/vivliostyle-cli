@@ -2,7 +2,7 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 
 import { getBrokerUrl, launchSourceAndBrokerServer, LoadMode } from './server';
-import { findEntryPointFile, statFile, debug } from './util';
+import { findEntryPointFile, statFile, debug, launchBrowser } from './util';
 
 export interface PreviewOption {
   input: string;
@@ -40,7 +40,7 @@ export default async function run({
       `Executing Chromium path: ${executableChromium ||
         puppeteer.executablePath()}`,
     );
-    const browser = await puppeteer.launch({
+    const browser = await launchBrowser({
       headless: false,
       executablePath: executableChromium || puppeteer.executablePath(),
       args: [sandbox ? '' : '--no-sandbox'],
