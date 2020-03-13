@@ -24,7 +24,7 @@ import {
 export interface BuildOption {
   input: string;
   outputPath: string;
-  size: number | string;
+  size?: number | string;
   timeout: number;
   rootDir?: string;
   loadMode: LoadMode;
@@ -68,7 +68,7 @@ export default async function run({
     fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()
       ? path.resolve(outputPath, 'output.pdf')
       : outputPath;
-  const outputSize = parseSize(size);
+  const outputSize = size ? parseSize(size) : undefined;
 
   const [source, broker] = await launchSourceAndBrokerServer(root);
   const sourcePort = source.port;
