@@ -3,6 +3,7 @@ import path from 'path';
 import util from 'util';
 import portfinder from 'portfinder';
 import debugConstructor from 'debug';
+import puppeteer from 'puppeteer';
 
 type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
 type RejectFunction = (reason?: any) => void;
@@ -84,4 +85,24 @@ export function retry(
   }
 
   return new Promise((resolve, reject) => innerFunction(resolve, reject));
+}
+
+export async function launchBrowser(
+  options?: puppeteer.LaunchOptions,
+): Promise<puppeteer.Browser> {
+  // process listener of puppeteer won't handle signal
+  // because it doesn't support subprocess which is spawned by CLI
+  const browser = await puppeteer.launch({
+    handleSIGINT: false,
+    handleSIGTERM: false,
+    handleSIGHUP: false,
+    ...options,
+  });
+  (['SIGINT', 'SIGTERM', 'SIGHUP'] as NodeJS.Signals[]).forEach((sig) => {
+    process.on(sig, () => {
+      browser.close();
+      process.exit(1);
+    });
+  });
+  return browser;
 }

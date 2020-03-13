@@ -12,7 +12,14 @@ import {
   LoadMode,
   PageSize,
 } from './server';
-import { log, statFile, findEntryPointFile, debug, retry } from './util';
+import {
+  log,
+  statFile,
+  findEntryPointFile,
+  debug,
+  retry,
+  launchBrowser,
+} from './util';
 
 export interface BuildOption {
   input: string;
@@ -23,6 +30,7 @@ export interface BuildOption {
   loadMode: LoadMode;
   sandbox: boolean;
   pressReady: boolean;
+  executableChromium?: string;
 }
 
 function parseSize(size: string | number): PageSize {
@@ -50,6 +58,7 @@ export default async function run({
   loadMode = 'document',
   sandbox = true,
   pressReady = false,
+  executableChromium,
 }: BuildOption) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
@@ -74,8 +83,13 @@ export default async function run({
   debug('brokerURL', navigateURL);
 
   log(`Launching build environment...`);
-  const browser = await puppeteer.launch({
+  debug(
+    `Executing Chromium path: ${executableChromium ||
+      puppeteer.executablePath()}`,
+  );
+  const browser = await launchBrowser({
     headless: true,
+    executablePath: executableChromium || puppeteer.executablePath(),
     // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
     args: [sandbox ? '' : '--no-sandbox'],
   });

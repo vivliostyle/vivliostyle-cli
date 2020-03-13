@@ -47,6 +47,10 @@ program
     '--press-ready',
     `make generated PDF compatible with press ready PDF/X-1a`,
   )
+  .option(
+    '--executable-chromium <path>',
+    'specify a path of executable Chrome(Chromium) you installed',
+  )
   .parse(process.argv);
 
 if (program.args.length < 1) {
@@ -62,6 +66,7 @@ build({
   loadMode: program.book ? 'book' : 'document',
   sandbox: program.sandbox,
   pressReady: program.pressReady,
+  executableChromium: program.executableChromium,
 }).catch((err) => {
   console.error(`${chalk.red.bold('Error:')} ${err.message}`);
   console.log(`

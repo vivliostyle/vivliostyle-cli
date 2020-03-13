@@ -19,7 +19,7 @@
     "portfinder": "^1.0.25",
     "preact": "^10.1.1",
     "press-ready": "^4.0.1",
-    "puppeteer": "^2.0.0",
+    "puppeteer": "2.1.1",
     "serve-handler": "^6.1.2",
     "uuid": "^3.3.3"
   },

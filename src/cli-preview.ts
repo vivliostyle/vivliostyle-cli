@@ -24,6 +24,10 @@ program
     `specify assets root path (default directory of input file)`,
     undefined,
   )
+  .option(
+    '--executable-chromium <path>',
+    'specify a path of executable Chrome(Chromium) you installed',
+  )
   .parse(process.argv);
 
 if (program.args.length < 1) {
@@ -35,6 +39,7 @@ preview({
   rootDir: program.root && path.resolve(process.cwd(), program.root),
   loadMode: program.book ? 'book' : 'document',
   sandbox: program.sandbox,
+  executableChromium: program.executableChromium,
 }).catch((err) => {
   console.error(`${chalk.red.bold('Error:')} ${err.message}`);
   console.log(`
