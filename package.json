@@ -6,7 +6,7 @@
     "node": ">= 10"
   },
   "scripts": {
-    "build": "NODE_ENV=production tsc && shx chmod +x dist/cli*.js",
+    "build": "NODE_ENV=production tsc && shx chmod +x dist/cli.js",
     "clean": "shx rm -rf dist tmp",
     "dev": "tsc -w",
     "test": "yarn build && jest --coverage"

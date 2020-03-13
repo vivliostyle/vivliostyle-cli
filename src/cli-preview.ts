@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // cli-preview will be called when we uses `preview` subcommand
 
 import path from 'path';
