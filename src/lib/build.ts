@@ -31,6 +31,7 @@ export interface BuildOption {
   sandbox: boolean;
   pressReady: boolean;
   executableChromium?: string;
+  grayscale?: boolean;
 }
 
 function parseSize(size: string | number): PageSize {
@@ -59,6 +60,7 @@ export default async function run({
   sandbox = true,
   pressReady = false,
   executableChromium,
+  grayscale = false,
 }: BuildOption) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));

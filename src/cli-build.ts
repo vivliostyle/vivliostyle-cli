@@ -51,6 +51,7 @@ program
     '--executable-chromium <path>',
     'specify a path of executable Chrome(Chromium) you installed',
   )
+  .option('--grayscale', 'use grayscale color mode for exported PDF')
   .parse(process.argv);
 
 if (program.args.length < 1) {
