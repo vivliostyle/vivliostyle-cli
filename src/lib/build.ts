@@ -6,6 +6,7 @@ import uuid from 'uuid/v1';
 import puppeteer from 'puppeteer';
 import * as pressReadyModule from 'press-ready';
 
+import { CoreViewer } from './broker';
 import {
   getBrokerUrl,
   launchSourceAndBrokerServer,
@@ -17,7 +18,6 @@ import {
   statFile,
   findEntryPointFile,
   debug,
-  retry,
   launchBrowser,
 } from './util';
 
@@ -31,6 +31,12 @@ export interface BuildOption {
   sandbox: boolean;
   pressReady: boolean;
   executableChromium?: string;
+}
+
+declare global {
+  export interface Window {
+    coreViewer: CoreViewer;
+  }
 }
 
 function parseSize(size: string | number): PageSize {
@@ -120,20 +126,12 @@ export default async function run({
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
   await page.emulateMediaType('print');
-  await retry(
-    async () => {
-      const readyState = await page.evaluate(
-        () =>
-          ((window as unknown) as Window & {
-            coreViewer: { readyState: string };
-          }).coreViewer.readyState,
-      );
-
-      if (readyState !== 'complete') {
-        throw new Error(`Document being rendered: ${readyState}`);
-      }
+  await page.waitForFunction(
+    () => window.coreViewer.readyState === 'complete',
+    {
+      polling: 1000,
+      timeout,
     },
-    { timeout },
   );
 
   log('Generating PDF...');
