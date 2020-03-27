@@ -1,12 +1,10 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import chalk from 'chalk';
-import uuid from 'uuid/v1';
 import puppeteer from 'puppeteer';
-import * as pressReadyModule from 'press-ready';
 
 import { CoreViewer } from './broker';
+import { PostProcess } from './postprocess';
 import {
   getBrokerUrl,
   launchSourceAndBrokerServer,
@@ -130,10 +128,7 @@ export default async function run({
 
   log('Generating PDF...');
 
-  const tmpDir = os.tmpdir();
-  const tmpPath = path.join(tmpDir, `vivliostyle-cli-${uuid()}.pdf`);
-
-  await page.pdf({
+  const pdf = await page.pdf({
     margin: {
       top: 0,
       bottom: 0,
@@ -142,20 +137,14 @@ export default async function run({
     },
     printBackground: true,
     preferCSSPageSize: true,
-    path: tmpPath,
   });
+
+  log('Processing PDF...');
 
   await browser.close();
 
-  if (pressReady) {
-    log(`Running press-ready`);
-    await pressReadyModule.build({
-      input: tmpPath,
-      output: outputFile,
-    });
-  } else {
-    fs.copyFileSync(tmpPath, outputFile);
-  }
+  const post = await PostProcess.load(pdf);
+  await post.save(outputFile, { pressReady });
 
   log(`🎉  Done`);
   log(`${chalk.bold(outputFile)} has been created`);
