@@ -1,7 +1,7 @@
 {
-  "name": "@vivliostyle/cli",
+  "name": "@bignerdranch/vivliostyle-cli",
   "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
-  "version": "2.0.0",
+  "version": "2.1.0-pre.1",
   "engines": {
     "node": ">= 10"
   },
@@ -65,7 +65,11 @@
     "vivliostyle"
   ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com/"
   },
-  "repository": "https://github.com/vivliostyle/vivliostyle-cli.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bignerdranch/vivliostyle-cli.git"
+  }
 }
