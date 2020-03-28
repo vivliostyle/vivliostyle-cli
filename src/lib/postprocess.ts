@@ -1,11 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { PDFDocument } from 'pdf-lib';
+import {
+  PDFDocument,
+  PDFRef,
+  PDFDict,
+  PDFName,
+  PDFNumber,
+  PDFString,
+} from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
 import uuid from 'uuid/v1';
 
-import { Meta } from './broker';
+import { Meta, TOCItem } from './broker';
 
 export interface SaveOption {
   pressReady: boolean;
@@ -27,6 +34,12 @@ const metaTerms = {
   created: `${prefixes.meta}created`,
   date: `${prefixes.meta}date`,
 };
+
+interface PDFTocItem extends TOCItem {
+  children: PDFTocItem[];
+  ref: PDFRef;
+  parentRef: PDFRef;
+}
 
 export class PostProcess {
   static async load(pdf: Buffer): Promise<PostProcess> {
@@ -89,5 +102,64 @@ export class PostProcess {
     if (creationDate) {
       this.document.setCreationDate(creationDate);
     }
+  }
+
+  async toc(items: TOCItem[]) {
+    if (!items.length) {
+      return;
+    }
+
+    const addRefs = (items: TOCItem[], parentRef: PDFRef): PDFTocItem[] =>
+      items.map((item) => {
+        const ref = this.document.context.nextRef();
+        return {
+          ...item,
+          parentRef,
+          ref,
+          children: addRefs(item.children, ref),
+        };
+      });
+    const countAll = (items: PDFTocItem[]): number =>
+      items.reduce((sum, item) => sum + countAll(item.children), items.length);
+    const addObjectsToPDF = (items: PDFTocItem[]) => {
+      for (const [i, item] of items.entries()) {
+        const child = PDFDict.withContext(this.document.context);
+        child.set(PDFName.of('Title'), PDFString.of(item.title));
+        child.set(PDFName.of('Dest'), PDFName.of(item.id));
+        child.set(PDFName.of('Parent'), item.parentRef);
+        const prev = items[i - 1];
+        if (prev) {
+          child.set(PDFName.of('Prev'), prev.ref);
+        }
+        const next = items[i + 1];
+        if (next) {
+          child.set(PDFName.of('Next'), next.ref);
+        }
+        if (item.children.length) {
+          child.set(PDFName.of('First'), item.children[0].ref);
+          child.set(
+            PDFName.of('Last'),
+            item.children[item.children.length - 1].ref,
+          );
+          child.set(PDFName.of('Count'), PDFNumber.of(countAll(item.children)));
+        }
+        this.document.context.assign(item.ref, child);
+        addObjectsToPDF(item.children);
+      }
+    };
+
+    const outlineRef = this.document.context.nextRef();
+    const itemsWithRefs = addRefs(items, outlineRef);
+    addObjectsToPDF(itemsWithRefs);
+
+    const outline = PDFDict.withContext(this.document.context);
+    outline.set(PDFName.of('First'), itemsWithRefs[0].ref);
+    outline.set(
+      PDFName.of('Last'),
+      itemsWithRefs[itemsWithRefs.length - 1].ref,
+    );
+    outline.set(PDFName.of('Count'), PDFNumber.of(countAll(itemsWithRefs)));
+    this.document.context.assign(outlineRef, outline);
+    this.document.catalog.set(PDFName.of('Outlines'), outlineRef);
   }
 }
