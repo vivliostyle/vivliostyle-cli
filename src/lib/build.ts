@@ -3,7 +3,7 @@ import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 
-import { CoreViewer } from './broker';
+import { CoreViewer, Meta } from './broker';
 import { PostProcess } from './postprocess';
 import {
   getBrokerUrl,
@@ -132,6 +132,8 @@ export default async function run({
     },
   );
 
+  const metadata = await loadMetadata(page);
+
   log('Generating PDF...');
 
   const pdf = await page.pdf({
@@ -150,6 +152,7 @@ export default async function run({
   await browser.close();
 
   const post = await PostProcess.load(pdf);
+  await post.metadata(metadata);
   await post.save(outputFile, { pressReady });
 
   log(`🎉  Done`);
@@ -157,4 +160,8 @@ export default async function run({
 
   // TODO: gracefully exit broker & source server
   process.exit(0);
+}
+
+async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
+  return page.evaluate(() => window.coreViewer.getMetadata?.() || {});
 }

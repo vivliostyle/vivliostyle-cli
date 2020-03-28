@@ -1,30 +1,93 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import uuid from 'uuid/v1';
+import { PDFDocument } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
+import uuid from 'uuid/v1';
+
+import { Meta } from './broker';
 
 export interface SaveOption {
   pressReady: boolean;
 }
 
+const prefixes = {
+  dcterms: 'http://purl.org/dc/terms/',
+  meta: 'http://idpf.org/epub/vocab/package/meta/#',
+};
+
+const metaTerms = {
+  title: `${prefixes.dcterms}title`,
+  creator: `${prefixes.dcterms}creator`,
+  description: `${prefixes.dcterms}description`,
+  subject: `${prefixes.dcterms}subject`,
+  contributor: `${prefixes.dcterms}contributor`,
+  language: `${prefixes.dcterms}language`,
+  role: `${prefixes.meta}role`,
+  created: `${prefixes.meta}created`,
+  date: `${prefixes.meta}date`,
+};
+
 export class PostProcess {
   static async load(pdf: Buffer): Promise<PostProcess> {
-    return new PostProcess(pdf);
+    const document = await PDFDocument.load(pdf);
+    return new PostProcess(document);
   }
 
-  private constructor(private pdf: Buffer) {}
+  private constructor(private document: PDFDocument) {}
 
   async save(output: string, { pressReady = false }: SaveOption) {
     const input = pressReady
       ? path.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
       : output;
 
-    const pdf = this.pdf;
+    const pdf = await this.document.save();
     await fs.promises.writeFile(input, pdf);
 
     if (pressReady) {
       await pressReadyModule.build({ input, output });
+    }
+  }
+
+  async metadata(tree: Meta) {
+    this.document.setProducer('Vivliostyle');
+
+    const title = tree[metaTerms.title]?.[0].v;
+    if (title) {
+      this.document.setTitle(title);
+    }
+
+    const author = tree[metaTerms.creator]?.map((item) => item.v)?.join('; ');
+    if (author) {
+      this.document.setAuthor(author);
+    }
+
+    const subject = tree[metaTerms.description]?.[0].v;
+    if (subject) {
+      this.document.setSubject(subject);
+    }
+
+    const keywords = tree[metaTerms.subject]?.map((item) => item.v);
+    if (keywords) {
+      this.document.setKeywords(keywords);
+    }
+
+    const creator = tree[metaTerms.contributor]?.find(
+      (item) => item.r?.[metaTerms.role]?.[0].v === 'bkp',
+    )?.v;
+    if (creator) {
+      this.document.setCreator(creator);
+    }
+
+    const language = tree[metaTerms.language]?.[0].v;
+    if (language) {
+      this.document.setLanguage(language);
+    }
+
+    const creation = (tree[metaTerms.created] || tree[metaTerms.date])?.[0].v;
+    const creationDate = creation && new Date(creation);
+    if (creationDate) {
+      this.document.setCreationDate(creationDate);
     }
   }
 }
