@@ -486,10 +486,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vivliostyle/core@2.0.0-pre.4":
-  version "2.0.0-pre.4"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.0.0-pre.4.tgz#480bc93243391eeba5127e2ba8cd56c850aa993c"
-  integrity sha512-lJdnMlDfNIxUYtlzzCmhgZfKYW07lbBURu6/ZXaIMlOZva7+sEqtyN5K2aoAzGM3Rn7nSdrLiC83QojTIdwdgw==
+"@vivliostyle/core@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.0.0.tgz#a2aa5915c7bd89580d53dcdc5ef6bbccfe8fbff4"
+  integrity sha512-rUMKNPmNiucFQ9HhQEOJ9FhA+xOScJFxlkLvPPpHHMoP4zigXK5ebzb8g4NihpxasY5KzZfJki4q//8rn8uI4Q==
 
 abab@^2.0.0:
   version "2.0.2"
