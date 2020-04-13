@@ -3,6 +3,7 @@ import path from 'path';
 import execa from 'execa';
 import fileType from 'file-type';
 import readChunk from 'read-chunk';
+import { PDFCatalog, PDFDict, PDFDocument, PDFName } from 'pdf-lib';
 
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));
@@ -80,4 +81,40 @@ it('generate press-ready pdf without errors', async () => {
   const buffer = readChunk.sync(outputPath, 0, fileType.minimumBytes);
   const type = fileType(buffer)!;
   expect(type.mime).toEqual('application/pdf');
+}, 20000);
+
+it('generates a PDF with metadata', async () => {
+  const outputPath = path.join(localTmpDir, 'test-metadata.pdf');
+
+  try {
+    const response = await vivliostyleCLI([
+      'build',
+      fixtureProjectPath,
+      '-b',
+      '-s',
+      'Letter',
+      '-o',
+      outputPath,
+    ]);
+    expect(response.stdout).toContain('Processing PDF');
+  } catch (err) {
+    throw err.stderr;
+  }
+
+  const bytes = fs.readFileSync(outputPath);
+  const document = await PDFDocument.load(bytes);
+
+  const metadata = document.context.lookup(
+    document.context.trailerInfo.Info,
+    PDFDict,
+  );
+  const title = metadata.get(PDFName.of('Title'));
+  expect(title?.sizeInBytes()).toBe(62); // 'Wood Engraving' as hex, with BOM
+
+  const catalog = document.context.lookup(
+    document.context.trailerInfo.Root,
+    PDFCatalog,
+  );
+  const outlines = catalog.get(PDFName.of('Outlines'));
+  expect(outlines).toBeUndefined();
 }, 20000);
