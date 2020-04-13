@@ -12,7 +12,7 @@
     "test": "yarn build && jest --coverage"
   },
   "dependencies": {
-    "@vivliostyle/core": "2.0.0",
+    "@bignerdranch/vivliostyle-core": "^2.1.0-pre.0",
     "commander": "^4.0.1",
     "debug": "^4.1.1",
     "mathjax": "2.7.7",

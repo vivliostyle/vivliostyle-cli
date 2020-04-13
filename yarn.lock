@@ -130,6 +130,11 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
+"@bignerdranch/vivliostyle-core@^2.1.0-pre.1":
+  version "2.1.0-pre.1"
+  resolved "https://npm.pkg.github.com/download/@bignerdranch/vivliostyle-core/2.1.0-pre.1/cc7a42bd683aa80db361055dbc2610a3cddd32ae518e2e599c48c0b85b7f2e7e#4e6da16f02dcf262bba5a5388fa9f596eb7ac29f"
+  integrity sha512-b2asz4VL5qYxPZnz54W3poIVtNl6eT/F0QLaqeUYWaAyR/HjH+INEWXdeOxoA0WA/YBunvonXn/L2AKJuC5ZaA==
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.3.tgz#099139eaec7ebf07a27c1786a3ff64f39464d2ef"
@@ -485,11 +490,6 @@
   integrity sha512-Ke1WmBbIkVM8bpvsNEcGgQM70XcEh/nbpxQhW7FhrsbCsXSY9BmLB1+LHtD7r9zrsOcFlLiF+a/UeJsdfw3C5A==
   dependencies:
     "@types/yargs-parser" "*"
-
-"@vivliostyle/core@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.0.0.tgz#a2aa5915c7bd89580d53dcdc5ef6bbccfe8fbff4"
-  integrity sha512-rUMKNPmNiucFQ9HhQEOJ9FhA+xOScJFxlkLvPPpHHMoP4zigXK5ebzb8g4NihpxasY5KzZfJki4q//8rn8uI4Q==
 
 abab@^2.0.0:
   version "2.0.2"

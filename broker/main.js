@@ -513,7 +513,8 @@ class App extends Component {
         const json = JSON.parse(xhr.responseText);
         this.setState({
           brokerVersion: json.version,
-          vivliostyleVersion: json.dependencies['@vivliostyle/core'],
+          vivliostyleVersion:
+            json.dependencies['@bignerdranch/vivliostyle-core'],
         });
       } catch (err) {
         return;
@@ -526,7 +527,8 @@ class App extends Component {
   componentDidMount() {
     this.fetchPackageInfo();
     window.coreViewer = new Vivliostyle.CoreViewer({
-      userAgentRootURL: '/node_modules/@vivliostyle/core/resources/',
+      userAgentRootURL:
+        '/node_modules/@bignerdranch/vivliostyle-core/resources/',
       viewportElement: document.getElementById('out'),
       debug: false,
     });
