@@ -3,7 +3,14 @@ import path from 'path';
 import execa from 'execa';
 import fileType from 'file-type';
 import readChunk from 'read-chunk';
-import { PDFCatalog, PDFDict, PDFDocument, PDFName } from 'pdf-lib';
+import {
+  PDFCatalog,
+  PDFDict,
+  PDFDocument,
+  PDFName,
+  PDFNumber,
+  PDFHexString,
+} from 'pdf-lib';
 
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));
@@ -104,17 +111,26 @@ it('generates a PDF with metadata', async () => {
   const bytes = fs.readFileSync(outputPath);
   const document = await PDFDocument.load(bytes);
 
+  // Document metadata
   const metadata = document.context.lookup(
     document.context.trailerInfo.Info,
     PDFDict,
   );
-  const title = metadata.get(PDFName.of('Title'));
-  expect(title?.sizeInBytes()).toBe(62); // 'Wood Engraving' as hex, with BOM
+  const metaTitle = metadata.lookup(PDFName.of('Title'), PDFHexString);
+  expect(metaTitle.sizeInBytes()).toBe(62); // 'Wood Engraving' as hex, with BOM
 
   const catalog = document.context.lookup(
     document.context.trailerInfo.Root,
     PDFCatalog,
   );
-  const outlines = catalog.get(PDFName.of('Outlines'));
-  expect(outlines).toBeUndefined();
+
+  // Outlines
+  const outlines = catalog.lookup(PDFName.of('Outlines'), PDFDict);
+
+  const count = outlines.lookup(PDFName.of('Count'), PDFNumber);
+  expect(count.value()).toBe(1);
+
+  const intro = outlines.lookup(PDFName.of('First'), PDFDict);
+  const introTitle = intro.lookup(PDFName.of('Title'), PDFHexString);
+  expect(introTitle.sizeInBytes()).toBe(78);
 }, 20000);
