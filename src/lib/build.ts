@@ -123,6 +123,11 @@ export default async function run({
   log('Building pages...');
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
+  await page.waitFor(() => !!window.coreViewer);
+
+  const metadata = await loadMetadata(page);
+  const toc = await loadTOC(page);
+
   await page.emulateMediaType('print');
   await page.waitForFunction(
     () => window.coreViewer.readyState === 'complete',
@@ -131,9 +136,6 @@ export default async function run({
       timeout,
     },
   );
-
-  const metadata = await loadMetadata(page);
-  const toc = await loadTOC(page);
 
   log('Generating PDF...');
 
