@@ -7,7 +7,7 @@ import {
   PDFDict,
   PDFName,
   PDFNumber,
-  PDFString,
+  PDFHexString,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
 import uuid from 'uuid/v1';
@@ -124,7 +124,7 @@ export class PostProcess {
     const addObjectsToPDF = (items: PDFTocItem[]) => {
       for (const [i, item] of items.entries()) {
         const child = PDFDict.withContext(this.document.context);
-        child.set(PDFName.of('Title'), PDFString.of(item.title));
+        child.set(PDFName.of('Title'), PDFHexString.fromText(item.title));
         child.set(PDFName.of('Dest'), PDFName.of(item.id));
         child.set(PDFName.of('Parent'), item.parentRef);
         const prev = items[i - 1];
