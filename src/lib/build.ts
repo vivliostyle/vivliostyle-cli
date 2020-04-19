@@ -161,7 +161,7 @@ export default async function run({
 }
 
 async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
-  return page.evaluate(() => window.coreViewer.getMetadata?.() || {});
+  return page.evaluate(() => window.coreViewer.getMetadata());
 }
 
 async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
@@ -177,7 +177,7 @@ async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
           }
           window.coreViewer.removeListener('done', listener);
           window.coreViewer.showTOC(false);
-          resolve(window.coreViewer.getTOC?.() || []);
+          resolve(window.coreViewer.getTOC());
         }
         window.coreViewer.addListener('done', listener);
         window.coreViewer.showTOC(true);

@@ -8,9 +8,9 @@ export interface CoreViewer {
   readyState: string;
   addListener(type: string, listener: (payload: Payload) => void): void;
   removeListener(type: string, listener: (payload: Payload) => void): void;
-  getMetadata?: () => Meta;
-  showTOC(opt_show?: boolean | null): void;
-  getTOC?: () => TOCItem[];
+  getMetadata(): Meta;
+  showTOC(show: boolean): void;
+  getTOC(): TOCItem[];
 }
 
 export interface Payload {
