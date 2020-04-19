@@ -501,7 +501,7 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vivliostyle/core@2.0.0":
+"@vivliostyle/core@^2.1.0-pre.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.0.0.tgz#a2aa5915c7bd89580d53dcdc5ef6bbccfe8fbff4"
   integrity sha512-rUMKNPmNiucFQ9HhQEOJ9FhA+xOScJFxlkLvPPpHHMoP4zigXK5ebzb8g4NihpxasY5KzZfJki4q//8rn8uI4Q==
