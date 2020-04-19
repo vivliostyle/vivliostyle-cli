@@ -31,12 +31,6 @@ export interface BuildOption {
   executableChromium?: string;
 }
 
-declare global {
-  export interface Window {
-    coreViewer: CoreViewer;
-  }
-}
-
 function parseSize(size: string | number): PageSize {
   const [width, height, ...others] = size ? `${size}`.split(',') : [];
   if (others.length) {

@@ -1,3 +1,9 @@
+declare global {
+  export interface Window {
+    coreViewer: CoreViewer;
+  }
+}
+
 export interface CoreViewer {
   readyState: string;
   addListener(type: string, listener: (payload: Payload) => void): void;
