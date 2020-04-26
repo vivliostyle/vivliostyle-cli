@@ -3,7 +3,7 @@ import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 
-import { CoreViewer, Meta, Payload, TOCItem } from './broker';
+import { Meta, Payload, TOCItem, CoverItem } from './broker';
 import { PostProcess } from './postprocess';
 import {
   getBrokerUrl,
@@ -29,6 +29,7 @@ export interface BuildOption {
   sandbox: boolean;
   pressReady: boolean;
   executableChromium?: string;
+  cover?: boolean;
 }
 
 function parseSize(size: string | number): PageSize {
@@ -57,6 +58,7 @@ export default async function run({
   sandbox = true,
   pressReady = false,
   executableChromium,
+  cover = false,
 }: BuildOption) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
@@ -121,6 +123,7 @@ export default async function run({
 
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
+  const coverItem = cover ? await loadCover(page) : null;
 
   await page.emulateMediaType('print');
   await page.waitForFunction(
@@ -151,6 +154,7 @@ export default async function run({
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata);
   await post.toc(toc);
+  await post.cover(coverItem, root);
   await post.save(outputFile, { pressReady });
 
   log(`🎉  Done`);
@@ -183,4 +187,8 @@ async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
         window.coreViewer.showTOC(true);
       }),
   );
+}
+
+async function loadCover(page: puppeteer.Page): Promise<CoverItem | null> {
+  return page.evaluate(() => window.coreViewer.getCover());
 }
