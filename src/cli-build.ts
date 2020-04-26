@@ -51,6 +51,7 @@ program
     '--executable-chromium <path>',
     'specify a path of executable Chrome(Chromium) you installed',
   )
+  .option('-c, --cover', 'whether to include cover from EPUB')
   .parse(process.argv);
 
 if (program.args.length < 1) {
