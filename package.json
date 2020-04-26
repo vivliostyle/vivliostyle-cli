@@ -1,7 +1,7 @@
 {
   "name": "@bignerdranch/vivliostyle-cli",
   "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
-  "version": "2.1.0-pre.4",
+  "version": "2.1.0-pre.5",
   "engines": {
     "node": ">= 10"
   },
