@@ -11,6 +11,7 @@ export interface CoreViewer {
   getMetadata(): Meta;
   showTOC(show: boolean): void;
   getTOC(): TOCItem[];
+  getCover(): CoverItem | null;
 }
 
 export interface Payload {
@@ -33,4 +34,9 @@ export interface TOCItem {
   id: string;
   title: string;
   children: TOCItem[];
+}
+
+export interface CoverItem {
+  src: string;
+  mediaType: string | null;
 }

@@ -3379,7 +3379,7 @@ p-try@^2.0.0, p-try@^2.1.0:
   resolved "https://registry.yarnpkg.com/p-try/-/p-try-2.2.0.tgz#cb2868540e313d61de58fafbe35ce9004d5540e6"
   integrity sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==
 
-pako@^1.0.10, pako@^1.0.6:
+pako@^1.0.10, pako@^1.0.11, pako@^1.0.6:
   version "1.0.11"
   resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.11.tgz#6c9599d340d54dfd3946380252a35705a6b992bf"
   integrity sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==
@@ -3465,14 +3465,14 @@ path-type@^4.0.0:
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
 
 pdf-lib@^1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/pdf-lib/-/pdf-lib-1.4.1.tgz#49edb1b236582f27312f263f79c3e07a812449cc"
-  integrity sha512-Fj72wP2ZNIr797953v+8iQSH0argRdFkd8nbW+q0ngsuocgwCC9FT7sSXLsaSsUGM5eNKQlKJNHvWQlo7+ROJA==
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/pdf-lib/-/pdf-lib-1.5.0.tgz#858b9b4641d8ba5e721bc6f7e62a386efdacd4fa"
+  integrity sha512-ZpMB7AY7JxvhAAaz/YS0J67Con+ks63h9GWSTHbul46mg1j35pfz6LN/xNGiwoMM19PjaxTbtuhNQAePIyKyRA==
   dependencies:
     "@pdf-lib/standard-fonts" "^0.0.4"
     "@pdf-lib/upng" "^1.0.1"
-    pako "^1.0.10"
-    tslib "^1.10.0"
+    pako "^1.0.11"
+    tslib "^1.11.1"
 
 pend@~1.2.0:
   version "1.2.0"
@@ -4457,7 +4457,7 @@ ts-jest@^24.2.0:
     semver "^5.5"
     yargs-parser "10.x"
 
-tslib@^1.10.0, tslib@^1.9.0:
+tslib@^1.11.1, tslib@^1.9.0:
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.11.1.tgz#eb15d128827fbee2841549e171f45ed338ac7e35"
   integrity sha512-aZW88SY8kQbU7gpV19lN24LtXh/yD4ZZg6qieAJDDg+YBsJcSmLGK9QpnUjAKVG/xefmvJGd1WUmfpT/g6AJGA==
