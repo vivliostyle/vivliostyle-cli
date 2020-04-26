@@ -58,6 +58,7 @@ export default async function run({
   sandbox = true,
   pressReady = false,
   executableChromium,
+  cover = false,
 }: BuildOption) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
@@ -122,7 +123,7 @@ export default async function run({
 
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
-  const cover = await loadCover(page);
+  const coverItem = cover ? await loadCover(page) : null;
 
   await page.emulateMediaType('print');
   await page.waitForFunction(
@@ -153,7 +154,7 @@ export default async function run({
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata);
   await post.toc(toc);
-  await post.cover(cover, root);
+  await post.cover(coverItem, root);
   await post.save(outputFile, { pressReady });
 
   log(`🎉  Done`);
