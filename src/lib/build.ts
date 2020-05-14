@@ -3,7 +3,7 @@ import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 
-import { CoreViewer, Meta } from './broker';
+import { CoreViewer, Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
 import {
   getBrokerUrl,
@@ -117,6 +117,11 @@ export default async function run({
   log('Building pages...');
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
+  await page.waitFor(() => !!window.coreViewer);
+
+  const metadata = await loadMetadata(page);
+  const toc = await loadTOC(page);
+
   await page.emulateMediaType('print');
   await page.waitForFunction(
     () => window.coreViewer.readyState === 'complete',
@@ -125,8 +130,6 @@ export default async function run({
       timeout,
     },
   );
-
-  const metadata = await loadMetadata(page);
 
   log('Generating PDF...');
 
@@ -147,6 +150,7 @@ export default async function run({
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata);
+  await post.toc(toc);
   await post.save(outputFile, { pressReady });
 
   log(`🎉  Done`);
@@ -158,4 +162,25 @@ export default async function run({
 
 async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
   return page.evaluate(() => window.coreViewer.getMetadata());
+}
+
+async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
+  // Show and hide the TOC in order to read its contents.
+  // Chromium needs to see the TOC links in the DOM to add
+  // the PDF destinations used during postprocessing.
+  return page.evaluate(
+    () =>
+      new Promise<TOCItem[]>((resolve) => {
+        function listener(payload: Payload) {
+          if (payload.a !== 'toc') {
+            return;
+          }
+          window.coreViewer.removeListener('done', listener);
+          window.coreViewer.showTOC(false);
+          resolve(window.coreViewer.getTOC());
+        }
+        window.coreViewer.addListener('done', listener);
+        window.coreViewer.showTOC(true);
+      }),
+  );
 }
