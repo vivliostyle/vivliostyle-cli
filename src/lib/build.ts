@@ -1,11 +1,10 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import chalk from 'chalk';
-import uuid from 'uuid/v1';
 import puppeteer from 'puppeteer';
-import * as pressReadyModule from 'press-ready';
 
+import { CoreViewer, Meta, Payload, TOCItem } from './broker';
+import { PostProcess } from './postprocess';
 import {
   getBrokerUrl,
   launchSourceAndBrokerServer,
@@ -17,7 +16,6 @@ import {
   statFile,
   findEntryPointFile,
   debug,
-  retry,
   launchBrowser,
 } from './util';
 
@@ -119,29 +117,23 @@ export default async function run({
   log('Building pages...');
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
-  await page.emulateMediaType('print');
-  await retry(
-    async () => {
-      const readyState = await page.evaluate(
-        () =>
-          ((window as unknown) as Window & {
-            coreViewer: { readyState: string };
-          }).coreViewer.readyState,
-      );
+  await page.waitFor(() => !!window.coreViewer);
 
-      if (readyState !== 'complete') {
-        throw new Error(`Document being rendered: ${readyState}`);
-      }
+  const metadata = await loadMetadata(page);
+  const toc = await loadTOC(page);
+
+  await page.emulateMediaType('print');
+  await page.waitForFunction(
+    () => window.coreViewer.readyState === 'complete',
+    {
+      polling: 1000,
+      timeout,
     },
-    { timeout },
   );
 
   log('Generating PDF...');
 
-  const tmpDir = os.tmpdir();
-  const tmpPath = path.join(tmpDir, `vivliostyle-cli-${uuid()}.pdf`);
-
-  await page.pdf({
+  const pdf = await page.pdf({
     margin: {
       top: 0,
       bottom: 0,
@@ -150,24 +142,45 @@ export default async function run({
     },
     printBackground: true,
     preferCSSPageSize: true,
-    path: tmpPath,
   });
+
+  log('Processing PDF...');
 
   await browser.close();
 
-  if (pressReady) {
-    log(`Running press-ready`);
-    await pressReadyModule.build({
-      input: tmpPath,
-      output: outputFile,
-    });
-  } else {
-    fs.copyFileSync(tmpPath, outputFile);
-  }
+  const post = await PostProcess.load(pdf);
+  await post.metadata(metadata);
+  await post.toc(toc);
+  await post.save(outputFile, { pressReady });
 
   log(`🎉  Done`);
   log(`${chalk.bold(outputFile)} has been created`);
 
   // TODO: gracefully exit broker & source server
   process.exit(0);
+}
+
+async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
+  return page.evaluate(() => window.coreViewer.getMetadata());
+}
+
+async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
+  // Show and hide the TOC in order to read its contents.
+  // Chromium needs to see the TOC links in the DOM to add
+  // the PDF destinations used during postprocessing.
+  return page.evaluate(
+    () =>
+      new Promise<TOCItem[]>((resolve) => {
+        function listener(payload: Payload) {
+          if (payload.a !== 'toc') {
+            return;
+          }
+          window.coreViewer.removeListener('done', listener);
+          window.coreViewer.showTOC(false);
+          resolve(window.coreViewer.getTOC());
+        }
+        window.coreViewer.addListener('done', listener);
+        window.coreViewer.showTOC(true);
+      }),
+  );
 }
