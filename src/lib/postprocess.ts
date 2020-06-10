@@ -105,7 +105,7 @@ export class PostProcess {
   }
 
   async toc(items: TOCItem[]) {
-    if (!items.length) {
+    if (!items || !items.length) {
       return;
     }
 
