@@ -2,11 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import portfinder from 'portfinder';
-import debugConstructor from 'debug';
 import puppeteer from 'puppeteer';
-
-type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void;
-type RejectFunction = (reason?: any) => void;
+import debugConstructor from 'debug';
 
 export const debug = debugConstructor('vivliostyle-cli');
 
