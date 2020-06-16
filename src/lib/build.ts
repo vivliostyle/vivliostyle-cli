@@ -32,8 +32,17 @@ export interface BuildOption {
   verbose?: boolean;
 }
 
+// TODO:
+// - load config
+// - merge cli config
+// - mkdir dist dir and out dir
+// - compile vfm if necessary and put html files into out dir
+//   - collect title and theme attributes
+//   - replace theme package name with actual .css location
+// - generate manifest and toc
+// - copy theme css and cover image and other assets
 // 1. launch server
-// 2. launch chromium
+// 2. launch chromium (point to dist/manifest.json)
 // 3. wait for compilation
 // 4. export PDF
 export default async function buildPDF({
