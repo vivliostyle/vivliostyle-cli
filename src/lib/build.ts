@@ -29,6 +29,7 @@ export interface BuildOption {
   sandbox: boolean;
   pressReady: boolean;
   executableChromium?: string;
+  verbose?: boolean;
 }
 
 function parseSize(size: string | number): PageSize {
@@ -57,6 +58,7 @@ export default async function run({
   sandbox = true,
   pressReady = false,
   executableChromium,
+  verbose = false,
 }: BuildOption) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
@@ -97,12 +99,14 @@ export default async function run({
   const page = await browser.newPage();
 
   page.on('pageerror', (error) => {
-    debug(chalk.red('broker:error'), error.message);
+    log(chalk.red(error.message));
   });
 
-  page.on('console', (msg) =>
-    debug(chalk.magenta('broker:console'), msg.text()),
-  );
+  page.on('console', (msg) => {
+    if (/time slice/.test(msg.text())) return;
+    if (!verbose) return;
+    log(chalk.gray(msg.text()));
+  });
 
   page.on('response', (response) => {
     debug(
@@ -111,7 +115,7 @@ export default async function run({
       response.url(),
     );
     if (300 > response.status() && 200 <= response.status()) return;
-    debug(chalk.red('broker:failedRequest'), response.status(), response.url());
+    log(chalk.red(response.status(), response.url()));
   });
 
   log('Building pages...');

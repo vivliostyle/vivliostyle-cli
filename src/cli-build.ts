@@ -51,6 +51,7 @@ program
     '--executable-chromium <path>',
     'specify a path of executable Chrome(Chromium) you installed',
   )
+  .option('--verbose', 'verbose log output')
   .parse(process.argv);
 
 if (program.args.length < 1) {
@@ -67,6 +68,7 @@ build({
   sandbox: program.sandbox,
   pressReady: program.pressReady,
   executableChromium: program.executableChromium,
+  verbose: program.verbose,
 }).catch((err) => {
   console.error(`${chalk.red.bold('Error:')} ${err.message}`);
   console.log(`
