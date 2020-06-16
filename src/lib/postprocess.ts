@@ -10,7 +10,7 @@ import {
   PDFHexString,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
-import uuid from 'uuid/v1';
+import { v1 as uuid } from 'uuid';
 
 import { Meta, TOCItem } from './broker';
 
