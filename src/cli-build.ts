@@ -3,7 +3,7 @@
 import path from 'path';
 import program from 'commander';
 import chalk from 'chalk';
-import build from './lib/build';
+import buildPDF from './lib/build';
 
 const runningVivliostyleTimeout = 60 * 1000;
 
@@ -12,10 +12,8 @@ program
   .description('Launch headless Chrome and save PDF file')
   .arguments('<input>')
   .option(
-    '-b, --book',
-    `load document as book mode
-                             It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
-                             Please see also http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
+    '--document-mode',
+    `force document mode. Further reading: http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
   )
   .option(
     '--no-sandbox',
@@ -36,8 +34,8 @@ program
     `output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')`,
   )
   .option(
-    '-t, --timeout <time>',
-    `timeout times for waiting Vivliostyle process (default: 60s)`,
+    '-t, --timeout <seconds>',
+    `timeout limit for waiting Vivliostyle process (default: 60s)`,
     (val) =>
       Number.isFinite(+val) && +val > 0
         ? +val * 1000
@@ -58,13 +56,13 @@ if (program.args.length < 1) {
   program.help();
 }
 
-build({
+buildPDF({
   input: path.resolve(process.cwd(), program.args[0]),
   outputPath: path.resolve(process.cwd(), program.output),
   size: program.size,
   timeout: program.timeout,
   rootDir: program.root && path.resolve(process.cwd(), program.root),
-  loadMode: program.book ? 'book' : 'document',
+  loadMode: program.documentMode ? 'document' : 'book',
   sandbox: program.sandbox,
   pressReady: program.pressReady,
   executableChromium: program.executableChromium,

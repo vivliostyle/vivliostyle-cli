@@ -3,7 +3,7 @@ import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 
-import { CoreViewer, Meta, Payload, TOCItem } from './broker';
+import { Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
 import {
   getBrokerUrl,
@@ -23,38 +23,26 @@ export interface BuildOption {
   input: string;
   outputPath: string;
   size?: number | string;
-  timeout: number;
   rootDir?: string;
+  pressReady: boolean;
   loadMode: LoadMode;
   sandbox: boolean;
-  pressReady: boolean;
+  timeout: number;
   executableChromium?: string;
   verbose?: boolean;
 }
 
-function parseSize(size: string | number): PageSize {
-  const [width, height, ...others] = size ? `${size}`.split(',') : [];
-  if (others.length) {
-    throw new Error(`Cannot parse size: ${size}`);
-  } else if (width && height) {
-    return {
-      width,
-      height,
-    };
-  } else {
-    return {
-      format: width || 'Letter',
-    };
-  }
-}
-
-export default async function run({
+// 1. launch server
+// 2. launch chromium
+// 3. wait for compilation
+// 4. export PDF
+export default async function buildPDF({
   input,
   outputPath,
   size,
   timeout,
   rootDir,
-  loadMode = 'document',
+  loadMode = 'book',
   sandbox = true,
   pressReady = false,
   executableChromium,
@@ -68,7 +56,7 @@ export default async function run({
     fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()
       ? path.resolve(outputPath, 'output.pdf')
       : outputPath;
-  const outputSize = size ? parseSize(size) : undefined;
+  const outputSize = size ? parsePageSize(size) : undefined;
 
   const [source, broker] = await launchSourceAndBrokerServer(root);
   const sourcePort = source.port;
@@ -84,8 +72,9 @@ export default async function run({
 
   log(`Launching build environment...`);
   debug(
-    `Executing Chromium path: ${executableChromium ||
-      puppeteer.executablePath()}`,
+    `Executing Chromium path: ${
+      executableChromium || puppeteer.executablePath()
+    }`,
   );
   const browser = await launchBrowser({
     headless: true,
@@ -164,14 +153,30 @@ export default async function run({
   process.exit(0);
 }
 
+function parsePageSize(size: string | number): PageSize {
+  const [width, height, ...others] = size ? `${size}`.split(',') : [];
+  if (others.length) {
+    throw new Error(`Cannot parse size: ${size}`);
+  } else if (width && height) {
+    return {
+      width,
+      height,
+    };
+  } else {
+    return {
+      format: width || 'Letter',
+    };
+  }
+}
+
 async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
   return page.evaluate(() => window.coreViewer.getMetadata());
 }
 
+// Show and hide the TOC in order to read its contents.
+// Chromium needs to see the TOC links in the DOM to add
+// the PDF destinations used during postprocessing.
 async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
-  // Show and hide the TOC in order to read its contents.
-  // Chromium needs to see the TOC links in the DOM to add
-  // the PDF destinations used during postprocessing.
   return page.evaluate(
     () =>
       new Promise<TOCItem[]>((resolve) => {
