@@ -37,8 +37,9 @@ export default async function run({
 
     console.log(`Opening preview page... ${url}`);
     debug(
-      `Executing Chromium path: ${executableChromium ||
-        puppeteer.executablePath()}`,
+      `Executing Chromium path: ${
+        executableChromium || puppeteer.executablePath()
+      }`,
     );
     const browser = await launchBrowser({
       headless: false,
