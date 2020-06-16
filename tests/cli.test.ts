@@ -47,7 +47,6 @@ it('generate pdf without errors', async () => {
     const response = await vivliostyleCLI([
       'build',
       fixtureProjectPath,
-      '-b',
       '-s',
       'A4',
       '-o',
@@ -71,7 +70,6 @@ it('generate press-ready pdf without errors', async () => {
     const response = await vivliostyleCLI([
       'build',
       fixtureProjectPath,
-      '-b',
       '-s',
       'A4',
       '-o',
@@ -94,7 +92,6 @@ it('generates a PDF with metadata', async () => {
     const response = await vivliostyleCLI([
       'build',
       fixtureProjectPath,
-      '-b',
       '-s',
       'Letter',
       '-o',
