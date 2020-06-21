@@ -18,8 +18,8 @@ Options:
   -h, --help       output usage information
 
 Commands:
-  build <input>    Launch headless Chrome and save PDF file
-  preview <input>  Open preview page and save PDF interactively
+  build <input>    Launch headless Chrome and build PDF file
+  preview <input>  Open preview page
   help [cmd]       display help for [cmd]
 ```
 
@@ -43,6 +43,7 @@ Options:
   -t, --timeout <time>          timeout times for waiting Vivliostyle process (default: 60s)
   --press-ready                 make generated PDF compatible with press ready PDF/X-1a
   --executable-chromium <path>  specify a path of executable Chrome(Chromium) you installed
+  --verbose                     verbose log output
   -h, --help                    output usage information
 ```
 
