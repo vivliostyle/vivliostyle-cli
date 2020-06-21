@@ -115,7 +115,7 @@ export default async function run({
       response.url(),
     );
     if (300 > response.status() && 200 <= response.status()) return;
-    log(chalk.red(response.status(), response.url()));
+    log(chalk.red(`${response.status()}`, response.url()));
   });
 
   log('Building pages...');
