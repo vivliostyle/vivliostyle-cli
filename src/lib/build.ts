@@ -4,7 +4,9 @@ import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import shelljs from 'shelljs';
-import { stringify } from '@vivliostyle/vfm';
+import process from 'process';
+import vfile, { VFile } from 'vfile';
+import { VFM, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 
 import { Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
@@ -21,12 +23,30 @@ import {
   debug,
   launchBrowser,
 } from './util';
-import process from 'process';
+
+interface Theme {
+  type: 'path' | 'uri';
+  name: string;
+  location: string;
+}
+
+export interface ThemeConfig {
+  title: string;
+  style: string;
+}
 
 export interface Entry {
   path: string;
   title?: string;
   theme?: string;
+}
+
+export interface ParsedEntry {
+  type: 'markdown' | 'html';
+  title?: string;
+  theme?: Theme;
+  source: { path: string; dir: string };
+  target: { path: string; dir: string };
 }
 
 export interface VivliostyleConfig {
@@ -41,31 +61,6 @@ export interface VivliostyleConfig {
   size?: string;
   pressReady?: boolean;
   timeout?: number;
-}
-
-export interface ThemeConfig {
-  title: string;
-  style: string;
-}
-
-export interface ParsedEntry {
-  title?: string;
-  entry: string;
-  entryPath: string;
-  entryDir: string;
-  contextEntryPath: string;
-  targetPath: string;
-  targetDir: string;
-  relativeTargetPath: string;
-}
-
-export interface ManifestOption {
-  title?: string;
-  author?: string;
-  language?: string;
-  modified: string;
-  stylePath: string;
-  entries: Entry[];
 }
 
 export interface BuildCliFlags {
@@ -86,10 +81,20 @@ export interface BuildCliFlags {
   executableChromium?: string;
 }
 
-function ctx(context: string, loc: string | undefined): string | undefined {
-  return loc && path.resolve(context, loc);
+export interface ManifestOption {
+  title?: string;
+  author?: string;
+  language?: string;
+  modified: string;
+  entries: Entry[];
 }
 
+interface File extends VFile {
+  data: {
+    title?: string;
+    theme?: string;
+  };
+}
 export default async function build(cliFlags: BuildCliFlags) {
   const cwd = process.cwd();
   const configPath = cliFlags.configPath
@@ -110,10 +115,12 @@ export default async function build(cliFlags: BuildCliFlags) {
   const contextDir = path.resolve(
     cliFlags.rootDir || ctx(configBaseDir, config?.entryContext) || '.',
   );
+  const themes: Theme[] = [];
   const theme = cliFlags.theme || config?.theme;
-  const themePath = theme && resolveThemePath(theme);
-  const distStyleName = 'style.css';
-  const distStylePath = path.join(distDir, distStyleName);
+  const rootTheme = theme && parseTheme(theme);
+  if (rootTheme) {
+    themes.push(rootTheme);
+  }
 
   const pressReady = cliFlags.pressReady || config?.pressReady || false;
   const verbose = cliFlags.verbose || false;
@@ -144,24 +151,36 @@ export default async function build(cliFlags: BuildCliFlags) {
     )
     .map(
       (entry: Entry): ParsedEntry => {
-        const entryPath = path.resolve(contextDir, entry.path); // abs
-        const entryDir = path.dirname(entryPath); // abs
-        const contextEntryPath = path.relative(contextDir, entryPath); // rel
+        const sourcePath = path.resolve(contextDir, entry.path); // abs
+        const sourceDir = path.dirname(sourcePath); // abs
+        const contextEntryPath = path.relative(contextDir, sourcePath); // rel
         const targetPath = path
           .resolve(artifactDir, contextEntryPath)
           .replace(/\.md$/, '.html');
         const targetDir = path.dirname(targetPath);
-        const relativeTargetPath = path.relative(distDir, targetPath);
+        const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
+
+        let title: string | undefined;
+        let theme: Theme | undefined;
+
+        if (type === 'markdown') {
+          const file = processMarkdown(sourcePath);
+          title = file.data.title;
+          theme = parseTheme(file.data.theme);
+        }
+
+        const parsedTheme = parseTheme(entry.theme) || theme || themes[0];
+
+        if (parsedTheme && themes.every((t) => t.name !== parsedTheme.name)) {
+          themes.push(parsedTheme);
+        }
 
         return {
-          entry: entry.path,
-          entryPath,
-          entryDir,
-          contextEntryPath,
-          targetPath,
-          targetDir,
-          relativeTargetPath,
-          title: entry.title,
+          type,
+          source: { path: sourcePath, dir: sourceDir },
+          target: { path: targetPath, dir: targetDir },
+          title: entry.title || title || config?.title,
+          theme: parsedTheme,
         };
       },
     );
@@ -170,49 +189,49 @@ export default async function build(cliFlags: BuildCliFlags) {
     throw new Error('no entry found');
   }
 
-  // cleanup
+  // setup
   shelljs.rm('-rf', distDir);
-
-  // compilation
   shelljs.mkdir('-p', artifactDir);
 
-  for (const entryItem of entries) {
-    const { entryDir, entryPath, targetPath, targetDir } = entryItem;
-
-    shelljs.mkdir('-p', targetDir);
-
-    // copy html files
-    if (entryItem.entryPath.endsWith('.html')) {
-      shelljs.cp(entryPath, targetPath);
-      continue;
+  // populate entries
+  for (const entry of entries) {
+    if (entry.type === 'html') {
+      // copy html files
+      shelljs.cp(entry.source.path, entry.target.path);
+    } else {
+      // compile markdown
+      const stylesheet = entry.theme
+        ? entry.theme.type === 'path'
+          ? path.relative(
+              entry.target.dir,
+              path.join(distDir, entry.theme.name),
+            )
+          : entry.theme.location
+        : undefined;
+      const file = processMarkdown(entry.source.path, { stylesheet });
+      shelljs.mkdir('-p', entry.target.dir);
+      fs.writeFileSync(entry.target.path, String(file));
     }
-
-    // compile markdown
-    const relativeStylePath = path.join('..', distStyleName);
-    const stylesheet = path.relative(entryDir, relativeStylePath);
-
-    const html = stringify(fs.readFileSync(entryPath, 'utf8'), {
-      stylesheet,
-    });
-    fs.writeFileSync(targetPath, html);
   }
 
   // copy theme
-  themePath && shelljs.cp(themePath, distStylePath);
+  for (const theme of themes) {
+    if (theme.type === 'path') {
+      shelljs.cp(theme.location, path.join(distDir, theme.name));
+    }
+  }
 
   // generate manifest
   const manifestPath = path.join(distDir, 'manifest.json');
   generateManifest(manifestPath, {
-    // TODO: guess title from HTML, package.json
     title: cliFlags.title || config?.title,
     author: cliFlags.author || config?.author,
     language: config?.language || 'en',
     entries: entries.map((entry) => ({
       title: entry.title,
-      path: entry.relativeTargetPath,
+      path: path.relative(distDir, entry.target.path),
     })),
-    modified: new Date().toString(),
-    stylePath: distStylePath,
+    modified: new Date().toISOString(),
   });
 
   // generate PDF
@@ -236,6 +255,10 @@ export default async function build(cliFlags: BuildCliFlags) {
   process.exit(0);
 }
 
+function ctx(context: string, loc: string | undefined): string | undefined {
+  return loc && path.resolve(context, loc);
+}
+
 function collectVivliostyleConfig(
   configPath: string,
 ): VivliostyleConfig | undefined {
@@ -245,7 +268,20 @@ function collectVivliostyleConfig(
   return require(configPath) as VivliostyleConfig;
 }
 
-function resolveThemePath(themeString: string): string {
+function parseTheme(themeString: unknown): Theme | undefined {
+  if (typeof themeString !== 'string') {
+    return undefined;
+  }
+
+  // handle url
+  if (/^https?:\/\/.+\.css$/.test(themeString)) {
+    return {
+      type: 'uri',
+      name: path.basename(themeString),
+      location: themeString,
+    };
+  }
+
   const pkgRoot = resolvePkg(themeString, { cwd: process.cwd() });
   if (!pkgRoot) {
     throw new Error('package not found: ' + themeString);
@@ -253,7 +289,7 @@ function resolveThemePath(themeString: string): string {
 
   // return bare .css path
   if (pkgRoot.endsWith('.css')) {
-    return pkgRoot;
+    return { type: 'path', name: path.basename(pkgRoot), location: pkgRoot };
   }
 
   // node_modules & local path
@@ -271,8 +307,24 @@ function resolveThemePath(themeString: string): string {
     throw new Error('invalid css file: ' + maybeCSS);
   }
 
-  return path.resolve(pkgRoot, maybeCSS);
+  return {
+    type: 'path',
+    name: `${packageJson.name.replace(/\//g, '-')}.css`,
+    location: path.resolve(pkgRoot, maybeCSS),
+  };
 }
+
+function processMarkdown(
+  filepath: string,
+  options: StringifyMarkdownOptions = {},
+): File {
+  const vfm = VFM(options);
+  const processed = vfm.processSync(
+    vfile({ path: filepath, contents: fs.readFileSync(filepath, 'utf8') }),
+  ) as File;
+  return processed;
+}
+
 function generateManifest(outputPath: string, options: ManifestOption) {
   const manifest = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
@@ -290,9 +342,7 @@ function generateManifest(outputPath: string, options: ManifestOption) {
       type: 'text/html',
       title: entry.title,
     })),
-    resources: [
-      { href: options.stylePath, type: 'text/css' }, // `theme` in `vivliostyle.config.js`
-    ],
+    resources: [],
   };
 
   fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
