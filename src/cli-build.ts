@@ -10,22 +10,26 @@ const runningVivliostyleTimeout = 60 * 1000;
 program
   .name('vivliostyle build')
   .description('Launch headless Chrome and save PDF file')
+  .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
-  .option('-i, --input <input_file>', 'input files')
   .option(
     '-o, --output <output_file>',
     `specify output file path (default output.pdf)`,
-    'output.pdf',
   )
   .option(
     '-r, --root <root_directory>',
     `specify assets root path (default directory of input file)`,
-    undefined,
   )
+  .option('-t, --theme', 'theme path or package name')
   .option(
     '-s, --size <size>',
     `output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')`,
   )
+  .option(
+    '--press-ready',
+    `make generated PDF compatible with press ready PDF/X-1a`,
+  )
+  .option('--verbose', 'verbose log output')
   .option(
     '-t, --timeout <seconds>',
     `timeout limit for waiting Vivliostyle process (default: 60s)`,
@@ -43,28 +47,24 @@ program
     `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
   )
   .option(
-    '--press-ready',
-    `make generated PDF compatible with press ready PDF/X-1a`,
-  )
-  .option(
     '--executable-chromium <path>',
     'specify a path of executable Chrome(Chromium) you installed',
   )
-  .option('--verbose', 'verbose log output')
   .parse(process.argv);
 
 build({
   configPath: program.config,
-  input: program.input,
-  outputPath: path.resolve(process.cwd(), program.output),
+  rootDir: program.root,
+  input: program.args?.[0] || program.input,
+  outFile: program.output,
+  theme: program.theme,
   size: program.size,
-  timeout: program.timeout,
-  rootDir: program.root && path.resolve(process.cwd(), program.root),
-  loadMode: program.documentMode ? 'document' : 'book',
-  sandbox: program.sandbox,
   pressReady: program.pressReady,
-  executableChromium: program.executableChromium,
   verbose: program.verbose,
+  timeout: program.timeout,
+  loadMode: program.documentMode,
+  sandbox: program.sandbox,
+  executableChromium: program.executableChromium,
 }).catch((err) => {
   console.error(`${chalk.red.bold('Error:')} ${err.message}`);
   console.log(`
