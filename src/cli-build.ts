@@ -3,31 +3,24 @@
 import path from 'path';
 import program from 'commander';
 import chalk from 'chalk';
-import buildPDF from './lib/build';
+import build from './lib/build';
 
 const runningVivliostyleTimeout = 60 * 1000;
 
 program
   .name('vivliostyle build')
   .description('Launch headless Chrome and save PDF file')
-  .arguments('<input>')
+  .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
+  .option('-i, --input <input_file>', 'input files')
   .option(
-    '--document-mode',
-    `force document mode. Further reading: http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
-  )
-  .option(
-    '--no-sandbox',
-    `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
+    '-o, --output <output_file>',
+    `specify output file path (default output.pdf)`,
+    'output.pdf',
   )
   .option(
     '-r, --root <root_directory>',
     `specify assets root path (default directory of input file)`,
     undefined,
-  )
-  .option(
-    '-o, --output <output_file>',
-    `specify output file path (default output.pdf)`,
-    'output.pdf',
   )
   .option(
     '-s, --size <size>',
@@ -42,6 +35,14 @@ program
         : runningVivliostyleTimeout,
   )
   .option(
+    '--document-mode',
+    `force document mode. Further reading: http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
+  )
+  .option(
+    '--no-sandbox',
+    `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
+  )
+  .option(
     '--press-ready',
     `make generated PDF compatible with press ready PDF/X-1a`,
   )
@@ -52,12 +53,9 @@ program
   .option('--verbose', 'verbose log output')
   .parse(process.argv);
 
-if (program.args.length < 1) {
-  program.help();
-}
-
-buildPDF({
-  input: path.resolve(process.cwd(), program.args[0]),
+build({
+  configPath: program.config,
+  input: program.input,
   outputPath: path.resolve(process.cwd(), program.output),
   size: program.size,
   timeout: program.timeout,
