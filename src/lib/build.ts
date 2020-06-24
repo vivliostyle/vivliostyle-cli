@@ -9,6 +9,7 @@ import vfile, { VFile } from 'vfile';
 import h from 'hastscript';
 import toHTML from 'hast-util-to-html';
 import { JSDOM } from 'jsdom';
+import pkgUp from 'pkg-up';
 import { VFM, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 
 import { Meta, Payload, TOCItem } from './broker';
@@ -95,200 +96,6 @@ interface File extends VFile {
     theme?: string;
   };
 }
-
-function parseMetadata(type: string, sourcePath: string) {
-  let title: string | undefined;
-  let theme: ParsedTheme | undefined;
-  if (type === 'markdown') {
-    const file = processMarkdown(sourcePath);
-    title = file.data.title;
-    theme = parseTheme(file.data.theme);
-  } else {
-    const {
-      window: { document },
-    } = new JSDOM(fs.readFileSync(sourcePath));
-    title = document.querySelector('title')?.textContent || undefined;
-    const link = document.querySelector<HTMLLinkElement>(
-      'link[rel="stylesheet"]',
-    );
-    theme = parseTheme(link?.href);
-  }
-  return { title, theme };
-}
-
-export default async function build(cliFlags: BuildCliFlags) {
-  const cwd = process.cwd();
-
-  // attempt to load config
-  const configPath = cliFlags.configPath
-    ? path.resolve(cwd, cliFlags.configPath)
-    : path.join(cwd, 'vivliostyle.config.js');
-  const config = collectVivliostyleConfig(configPath);
-  const configBaseDir = config ? path.dirname(configPath) : cwd;
-  const distDir = path.resolve(
-    ctxPath(configBaseDir, config?.outDir) || '.vivliostyle',
-  );
-  const artifactDirName = 'dist';
-  const artifactDir = path.join(distDir, artifactDirName);
-
-  // merge config
-  const title = cliFlags.title || config?.title;
-  const author = cliFlags.author || config?.author;
-  const language = config?.language || 'en';
-  const outFile = path.resolve(
-    cliFlags.outFile ||
-      ctxPath(configBaseDir, config?.outFile) ||
-      './output.pdf',
-  );
-  const size = cliFlags.size || config?.size;
-  const contextDir = path.resolve(
-    cliFlags.rootDir || ctxPath(configBaseDir, config?.entryContext) || '.',
-  );
-  const toc = config?.toc || true;
-  const pressReady = cliFlags.pressReady || config?.pressReady || false;
-  const verbose = cliFlags.verbose || false;
-  const timeout = cliFlags.timeout || config?.timeout || 3000;
-  const sandbox = cliFlags.sandbox || true;
-  const loadMode = cliFlags.loadMode || 'book';
-  const executableChromium = cliFlags.executableChromium;
-
-  // setup themes
-  const themes: ParsedTheme[] = [];
-  const theme = cliFlags.theme || config?.theme;
-  const rootTheme = theme ? parseTheme(theme) : undefined;
-  if (rootTheme) {
-    themes.push(rootTheme);
-  }
-
-  function normalizeEnry(e: string | Entry): Entry {
-    if (typeof e === 'object') {
-      return e;
-    }
-    return { path: e };
-  }
-
-  function parseEntry(entry: Entry): ParsedEntry {
-    const sourcePath = path.resolve(contextDir, entry.path); // abs
-    const sourceDir = path.dirname(sourcePath); // abs
-    const contextEntryPath = path.relative(contextDir, sourcePath); // rel
-    const targetPath = path
-      .resolve(artifactDir, contextEntryPath)
-      .replace(/\.md$/, '.html');
-    const targetDir = path.dirname(targetPath);
-    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
-
-    const { title, theme } = parseMetadata(type, sourcePath);
-
-    const parsedTheme = parseTheme(entry.theme) || theme || themes[0];
-
-    if (parsedTheme && themes.every((t) => t.name !== parsedTheme.name)) {
-      themes.push(parsedTheme);
-    }
-
-    return {
-      type,
-      source: { path: sourcePath, dir: sourceDir },
-      target: { path: targetPath, dir: targetDir },
-      title: entry.title || title || config?.title,
-      theme: parsedTheme,
-    };
-  }
-
-  // parse entry items
-  const rawEntries = cliFlags.input
-    ? [cliFlags.input]
-    : config
-    ? Array.isArray(config.entry)
-      ? config.entry
-      : config.entry
-      ? [config.entry]
-      : []
-    : [];
-
-  const entries: ParsedEntry[] = rawEntries.map(normalizeEnry).map(parseEntry);
-
-  if (entries.length === 0) {
-    throw new Error('no entry found');
-  }
-
-  // cleanup dist
-  shelljs.rm('-rf', distDir);
-  shelljs.mkdir('-p', artifactDir);
-
-  // populate entries
-  for (const entry of entries) {
-    if (entry.type === 'html') {
-      // copy html files
-      shelljs.cp(entry.source.path, entry.target.path);
-    } else {
-      // compile markdown
-      const stylesheet = entry.theme
-        ? entry.theme.type === 'path'
-          ? path.relative(
-              entry.target.dir,
-              path.join(distDir, entry.theme.name),
-            )
-          : entry.theme.location
-        : undefined;
-      const file = processMarkdown(entry.source.path, { stylesheet });
-      shelljs.mkdir('-p', entry.target.dir);
-      fs.writeFileSync(entry.target.path, String(file));
-    }
-  }
-
-  // copy theme
-  for (const theme of themes) {
-    if (theme.type === 'path') {
-      shelljs.cp(theme.location, path.join(distDir, theme.name));
-    }
-  }
-
-  // generate manifest
-  const manifestPath = path.join(distDir, 'manifest.json');
-  generateManifest(manifestPath, {
-    title,
-    author,
-    language,
-    toc,
-    entries: entries.map((entry) => ({
-      title: entry.title,
-      path: path.relative(distDir, entry.target.path),
-    })),
-    modified: new Date().toISOString(),
-  });
-
-  // generate toc
-  if (toc) {
-    const distTocPath = path.join(distDir, 'toc.html');
-    if (typeof toc === 'string') {
-      shelljs.cp(ctxPath(contextDir, toc)!, distTocPath);
-    } else {
-      const tocString = generateToC(entries, distDir);
-      fs.writeFileSync(distTocPath, tocString);
-    }
-  }
-
-  // generate PDF
-  const outputFile = await generatePDF({
-    input: manifestPath,
-    rootDir: distDir,
-    outputPath: outFile,
-    size,
-    pressReady,
-    verbose,
-    timeout,
-    loadMode,
-    sandbox,
-    executableChromium,
-  });
-
-  log(`🎉  Done`);
-  log(`${chalk.bold(outputFile)} has been created`);
-
-  // TODO: gracefully exit broker & source server
-  process.exit(0);
-}
-
 function ctxPath(context: string, loc: string | undefined): string | undefined {
   return loc && path.resolve(context, loc);
 }
@@ -572,4 +379,203 @@ async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
         window.coreViewer.showTOC(true);
       }),
   );
+}
+
+export default async function build(cliFlags: BuildCliFlags) {
+  const cwd = process.cwd();
+
+  const pkgJsonPath = await pkgUp();
+  const pkgJson = pkgJsonPath ? require(pkgJsonPath) : undefined;
+
+  // attempt to load config
+  const configPath = cliFlags.configPath
+    ? path.resolve(cwd, cliFlags.configPath)
+    : path.join(cwd, 'vivliostyle.config.js');
+  const config = collectVivliostyleConfig(configPath);
+  const configBaseDir = config ? path.dirname(configPath) : cwd;
+  const distDir = path.resolve(
+    ctxPath(configBaseDir, config?.outDir) || '.vivliostyle',
+  );
+  const artifactDirName = 'artifacts';
+  const artifactDir = path.join(distDir, artifactDirName);
+
+  // merge config
+  const title = cliFlags.title || config?.title || pkgJson?.name;
+  const author = cliFlags.author || config?.author || pkgJson?.author;
+  const language = config?.language || 'en';
+  const outFile = path.resolve(
+    cliFlags.outFile ||
+      ctxPath(configBaseDir, config?.outFile) ||
+      './output.pdf',
+  );
+  const size = cliFlags.size || config?.size;
+  const contextDir = path.resolve(
+    cliFlags.rootDir || ctxPath(configBaseDir, config?.entryContext) || '.',
+  );
+  const toc = config?.toc || true;
+  const pressReady = cliFlags.pressReady || config?.pressReady || false;
+  const verbose = cliFlags.verbose || false;
+  const timeout = cliFlags.timeout || config?.timeout || 3000;
+  const sandbox = cliFlags.sandbox || true;
+  const loadMode = cliFlags.loadMode || 'book';
+  const executableChromium = cliFlags.executableChromium;
+
+  // setup themes
+  const themes: ParsedTheme[] = [];
+  const theme = cliFlags.theme || config?.theme;
+  const rootTheme = theme ? parseTheme(theme) : undefined;
+  if (rootTheme) {
+    themes.push(rootTheme);
+  }
+
+  function normalizeEnry(e: string | Entry): Entry {
+    if (typeof e === 'object') {
+      return e;
+    }
+    return { path: e };
+  }
+
+  function parseMetadata(type: string, sourcePath: string) {
+    let title: string | undefined;
+    let theme: ParsedTheme | undefined;
+    if (type === 'markdown') {
+      const file = processMarkdown(sourcePath);
+      title = file.data.title;
+      theme = parseTheme(file.data.theme);
+    } else {
+      const {
+        window: { document },
+      } = new JSDOM(fs.readFileSync(sourcePath));
+      title = document.querySelector('title')?.textContent || undefined;
+      const link = document.querySelector<HTMLLinkElement>(
+        'link[rel="stylesheet"]',
+      );
+      theme = parseTheme(link?.href);
+    }
+    return { title, theme };
+  }
+
+  function parseEntry(entry: Entry): ParsedEntry {
+    const sourcePath = path.resolve(contextDir, entry.path); // abs
+    const sourceDir = path.dirname(sourcePath); // abs
+    const contextEntryPath = path.relative(contextDir, sourcePath); // rel
+    const targetPath = path
+      .resolve(artifactDir, contextEntryPath)
+      .replace(/\.md$/, '.html');
+    const targetDir = path.dirname(targetPath);
+    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
+
+    const { title, theme } = parseMetadata(type, sourcePath);
+
+    const parsedTheme = parseTheme(entry.theme) || theme || themes[0];
+
+    if (parsedTheme && themes.every((t) => t.name !== parsedTheme.name)) {
+      themes.push(parsedTheme);
+    }
+
+    return {
+      type,
+      source: { path: sourcePath, dir: sourceDir },
+      target: { path: targetPath, dir: targetDir },
+      title: entry.title || title || config?.title,
+      theme: parsedTheme,
+    };
+  }
+
+  // parse entry items
+  const rawEntries = cliFlags.input
+    ? [cliFlags.input]
+    : config
+    ? Array.isArray(config.entry)
+      ? config.entry
+      : config.entry
+      ? [config.entry]
+      : []
+    : [];
+
+  const entries: ParsedEntry[] = rawEntries.map(normalizeEnry).map(parseEntry);
+
+  if (entries.length === 0) {
+    throw new Error('no entry found');
+  }
+
+  debug(entries);
+  debug(themes);
+
+  // cleanup dist
+  shelljs.rm('-rf', distDir);
+  shelljs.mkdir('-p', artifactDir);
+
+  // populate entries
+  for (const entry of entries) {
+    if (entry.type === 'html') {
+      // copy html files
+      shelljs.cp(entry.source.path, entry.target.path);
+    } else {
+      // compile markdown
+      const stylesheet = entry.theme
+        ? entry.theme.type === 'path'
+          ? path.relative(
+              entry.target.dir,
+              path.join(distDir, entry.theme.name),
+            )
+          : entry.theme.location
+        : undefined;
+      const file = processMarkdown(entry.source.path, { stylesheet });
+      shelljs.mkdir('-p', entry.target.dir);
+      fs.writeFileSync(entry.target.path, String(file));
+    }
+  }
+
+  // copy theme
+  for (const theme of themes) {
+    if (theme.type === 'path') {
+      shelljs.cp(theme.location, path.join(distDir, theme.name));
+    }
+  }
+
+  // generate manifest
+  const manifestPath = path.join(distDir, 'manifest.json');
+  generateManifest(manifestPath, {
+    title,
+    author,
+    language,
+    toc,
+    entries: entries.map((entry) => ({
+      title: entry.title,
+      path: path.relative(distDir, entry.target.path),
+    })),
+    modified: new Date().toISOString(),
+  });
+
+  // generate toc
+  if (toc) {
+    const distTocPath = path.join(distDir, 'toc.html');
+    if (typeof toc === 'string') {
+      shelljs.cp(ctxPath(contextDir, toc)!, distTocPath);
+    } else {
+      const tocString = generateToC(entries, distDir);
+      fs.writeFileSync(distTocPath, tocString);
+    }
+  }
+
+  // generate PDF
+  const outputFile = await generatePDF({
+    input: manifestPath,
+    rootDir: distDir,
+    outputPath: outFile,
+    size,
+    pressReady,
+    verbose,
+    timeout,
+    loadMode,
+    sandbox,
+    executableChromium,
+  });
+
+  log(`🎉  Done`);
+  log(`${chalk.bold(outputFile)} has been created`);
+
+  // TODO: gracefully exit broker & source server
+  process.exit(0);
 }
