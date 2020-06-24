@@ -8,7 +8,7 @@ Save the pdf file via Headless Chrome and Vivliostyle.
 npm install -g @vivliostyle/cli
 ```
 
-## Usage
+## Use
 
 ```
 Usage: vivliostyle [options] [command]
@@ -23,15 +23,19 @@ Commands:
   help [cmd]       display help for [cmd]
 ```
 
-### `build` command
+### `build`
 
-> Launch headless Chrome and save PDF file
+> build and create PDF file.
+
+Place [vivliostyle.config.js](https://github.com/vivliostyle/vivliostyle-cli/issues/38) in the root directory, then:
 
 ```
-Usage: vivliostyle build [options] <input>
+vivliostyle build
+```
 
-Launch headless Chrome and save PDF file
+#### CLI options
 
+```
 Options:
   -b, --book                    load document as book mode
                                It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
@@ -47,15 +51,17 @@ Options:
   -h, --help                    output usage information
 ```
 
-### `preview` command
+### `preview`
 
 > Open preview page and save PDF interactively
 
 ```
-Usage: vivliostyle preview [options] <input>
+vivliostyle preview
+```
 
-Open preview page and save PDF interactively
+#### CLI options
 
+```
 Options:
   -b, --book                    load document as book mode
                                It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
