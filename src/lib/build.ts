@@ -8,6 +8,7 @@ import process from 'process';
 import vfile, { VFile } from 'vfile';
 import h from 'hastscript';
 import toHTML from 'hast-util-to-html';
+import { JSDOM } from 'jsdom';
 import { VFM, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 
 import { Meta, Payload, TOCItem } from './broker';
@@ -55,7 +56,7 @@ export interface VivliostyleConfig {
   outFile?: string; // output.pdf
   entry: string | string[] | Entry | Entry[];
   entryContext?: string;
-  toc?: boolean;
+  toc?: boolean | string;
   size?: string;
   pressReady?: boolean;
   timeout?: number;
@@ -85,7 +86,7 @@ export interface ManifestOption {
   language?: string;
   modified: string;
   entries: Entry[];
-  toc?: boolean;
+  toc?: boolean | string;
 }
 
 interface File extends VFile {
@@ -94,6 +95,27 @@ interface File extends VFile {
     theme?: string;
   };
 }
+
+function parseMetadata(type: string, sourcePath: string) {
+  let title: string | undefined;
+  let theme: ParsedTheme | undefined;
+  if (type === 'markdown') {
+    const file = processMarkdown(sourcePath);
+    title = file.data.title;
+    theme = parseTheme(file.data.theme);
+  } else {
+    const {
+      window: { document },
+    } = new JSDOM(fs.readFileSync(sourcePath));
+    title = document.querySelector('title')?.textContent || undefined;
+    const link = document.querySelector<HTMLLinkElement>(
+      'link[rel="stylesheet"]',
+    );
+    theme = parseTheme(link?.href);
+  }
+  return { title, theme };
+}
+
 export default async function build(cliFlags: BuildCliFlags) {
   const cwd = process.cwd();
   const configPath = cliFlags.configPath
@@ -130,7 +152,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   const executableChromium = cliFlags.executableChromium;
 
   // parse entry items
-  const entries: ParsedEntry[] = (cliFlags.input
+  const rawEntries = cliFlags.input
     ? [cliFlags.input]
     : config
     ? Array.isArray(config.entry)
@@ -138,8 +160,9 @@ export default async function build(cliFlags: BuildCliFlags) {
       : config.entry
       ? [config.entry]
       : []
-    : []
-  )
+    : [];
+
+  const entries: ParsedEntry[] = rawEntries
     .map(
       (e: string | Entry): Entry => {
         if (typeof e === 'object') {
@@ -159,14 +182,7 @@ export default async function build(cliFlags: BuildCliFlags) {
         const targetDir = path.dirname(targetPath);
         const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
 
-        let title: string | undefined;
-        let theme: ParsedTheme | undefined;
-
-        if (type === 'markdown') {
-          const file = processMarkdown(sourcePath);
-          title = file.data.title;
-          theme = parseTheme(file.data.theme);
-        }
+        const { title, theme } = parseMetadata(type, sourcePath);
 
         const parsedTheme = parseTheme(entry.theme) || theme || themes[0];
 
@@ -236,9 +252,13 @@ export default async function build(cliFlags: BuildCliFlags) {
 
   // generate toc
   if (toc) {
-    const tocString = generateToC(entries, distDir);
-    console.log(tocString);
-    fs.writeFileSync(path.join(distDir, 'toc.html'), tocString);
+    const distTocPath = path.join(distDir, 'toc.html');
+    if (typeof toc === 'string') {
+      shelljs.cp(ctx(contextDir, toc)!, distTocPath);
+    } else {
+      const tocString = generateToC(entries, distDir);
+      fs.writeFileSync(distTocPath, tocString);
+    }
   }
 
   // generate PDF
@@ -334,6 +354,15 @@ function processMarkdown(
 
 // example: https://github.com/readium/webpub-manifest/blob/master/examples/MobyDick/manifest.json
 function generateManifest(outputPath: string, options: ManifestOption) {
+  const resources = [];
+  if (options.toc) {
+    resources.push({
+      href: 'toc.html',
+      rel: 'contents',
+      type: 'text/html',
+      title: 'Table of Contents',
+    });
+  }
   const manifest = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
     metadata: {
@@ -350,14 +379,7 @@ function generateManifest(outputPath: string, options: ManifestOption) {
       type: 'text/html',
       title: entry.title,
     })),
-    resources: [
-      options.toc && {
-        href: 'toc.html',
-        rel: 'contents',
-        type: 'text/html',
-        title: 'Table of Contents',
-      },
-    ],
+    resources,
   };
 
   fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
@@ -367,7 +389,11 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
   const items = entries.map((entry) =>
     h(
       'li',
-      h('a', { href: path.relative(distDir, entry.target.path) }, entry.title),
+      h(
+        'a',
+        { href: path.relative(distDir, entry.target.path) },
+        entry.title || path.basename(entry.target.path, '.html'),
+      ),
     ),
   );
   const toc = h(

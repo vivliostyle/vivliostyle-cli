@@ -18,6 +18,7 @@
     "debug": "^4.1.1",
     "hast-util-to-html": "^7.1.1",
     "hastscript": "^5.1.2",
+    "jsdom": "^16.2.2",
     "mathjax": "3.0.5",
     "pdf-lib": "^1.8.0",
     "portfinder": "^1.0.26",
@@ -34,6 +35,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.5",
     "@types/jest": "^26.0.2",
+    "@types/jsdom": "^16.2.3",
     "@types/node": "^14.0.14",
     "@types/puppeteer": "^3.0.0",
     "@types/serve-handler": "^6.1.0",
