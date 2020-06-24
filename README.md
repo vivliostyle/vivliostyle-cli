@@ -1,6 +1,6 @@
-# Vivliostyle CLI
+![Vivliostyle CLI](https://raw.githubusercontent.com/vivliostyle/vivliostyle-cli/master/assets/cover.jpg)
 
-Save the pdf file via Headless Chrome and Vivliostyle.
+> Supercharge your command-line publication workflow.
 
 ## Install
 
@@ -21,6 +21,14 @@ Commands:
   build <input>    Launch headless Chrome and build PDF file
   preview <input>  Open preview page
   help [cmd]       display help for [cmd]
+```
+
+### `init`
+
+> generate `vivliostyle.config.js`.
+
+```
+vivliostyle init
 ```
 
 ### `build`
@@ -72,7 +80,7 @@ Options:
   -h, --help                    output usage information
 ```
 
-## Contribute
+## Contributing
 
 ### Build
 
