@@ -118,31 +118,32 @@ function parseMetadata(type: string, sourcePath: string) {
 
 export default async function build(cliFlags: BuildCliFlags) {
   const cwd = process.cwd();
+
+  // attempt to load config
   const configPath = cliFlags.configPath
     ? path.resolve(cwd, cliFlags.configPath)
     : path.join(cwd, 'vivliostyle.config.js');
   const config = collectVivliostyleConfig(configPath);
-
   const configBaseDir = config ? path.dirname(configPath) : cwd;
   const distDir = path.resolve(
-    ctx(configBaseDir, config?.outDir) || '.vivliostyle',
+    ctxPath(configBaseDir, config?.outDir) || '.vivliostyle',
   );
-  const outFile = path.resolve(
-    cliFlags.outFile || ctx(configBaseDir, config?.outFile) || './output.pdf',
-  );
-  const size = cliFlags.size || config?.size;
   const artifactDirName = 'dist';
   const artifactDir = path.join(distDir, artifactDirName);
-  const contextDir = path.resolve(
-    cliFlags.rootDir || ctx(configBaseDir, config?.entryContext) || '.',
-  );
-  const themes: ParsedTheme[] = [];
-  const theme = cliFlags.theme || config?.theme;
-  const rootTheme = theme && parseTheme(theme);
-  if (rootTheme) {
-    themes.push(rootTheme);
-  }
 
+  // merge config
+  const title = cliFlags.title || config?.title;
+  const author = cliFlags.author || config?.author;
+  const language = config?.language || 'en';
+  const outFile = path.resolve(
+    cliFlags.outFile ||
+      ctxPath(configBaseDir, config?.outFile) ||
+      './output.pdf',
+  );
+  const size = cliFlags.size || config?.size;
+  const contextDir = path.resolve(
+    cliFlags.rootDir || ctxPath(configBaseDir, config?.entryContext) || '.',
+  );
   const toc = config?.toc || true;
   const pressReady = cliFlags.pressReady || config?.pressReady || false;
   const verbose = cliFlags.verbose || false;
@@ -150,6 +151,48 @@ export default async function build(cliFlags: BuildCliFlags) {
   const sandbox = cliFlags.sandbox || true;
   const loadMode = cliFlags.loadMode || 'book';
   const executableChromium = cliFlags.executableChromium;
+
+  // setup themes
+  const themes: ParsedTheme[] = [];
+  const theme = cliFlags.theme || config?.theme;
+  const rootTheme = theme ? parseTheme(theme) : undefined;
+  if (rootTheme) {
+    themes.push(rootTheme);
+  }
+
+  function normalizeEnry(e: string | Entry): Entry {
+    if (typeof e === 'object') {
+      return e;
+    }
+    return { path: e };
+  }
+
+  function parseEntry(entry: Entry): ParsedEntry {
+    const sourcePath = path.resolve(contextDir, entry.path); // abs
+    const sourceDir = path.dirname(sourcePath); // abs
+    const contextEntryPath = path.relative(contextDir, sourcePath); // rel
+    const targetPath = path
+      .resolve(artifactDir, contextEntryPath)
+      .replace(/\.md$/, '.html');
+    const targetDir = path.dirname(targetPath);
+    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
+
+    const { title, theme } = parseMetadata(type, sourcePath);
+
+    const parsedTheme = parseTheme(entry.theme) || theme || themes[0];
+
+    if (parsedTheme && themes.every((t) => t.name !== parsedTheme.name)) {
+      themes.push(parsedTheme);
+    }
+
+    return {
+      type,
+      source: { path: sourcePath, dir: sourceDir },
+      target: { path: targetPath, dir: targetDir },
+      title: entry.title || title || config?.title,
+      theme: parsedTheme,
+    };
+  }
 
   // parse entry items
   const rawEntries = cliFlags.input
@@ -162,49 +205,13 @@ export default async function build(cliFlags: BuildCliFlags) {
       : []
     : [];
 
-  const entries: ParsedEntry[] = rawEntries
-    .map(
-      (e: string | Entry): Entry => {
-        if (typeof e === 'object') {
-          return e;
-        }
-        return { path: e };
-      },
-    )
-    .map(
-      (entry: Entry): ParsedEntry => {
-        const sourcePath = path.resolve(contextDir, entry.path); // abs
-        const sourceDir = path.dirname(sourcePath); // abs
-        const contextEntryPath = path.relative(contextDir, sourcePath); // rel
-        const targetPath = path
-          .resolve(artifactDir, contextEntryPath)
-          .replace(/\.md$/, '.html');
-        const targetDir = path.dirname(targetPath);
-        const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
-
-        const { title, theme } = parseMetadata(type, sourcePath);
-
-        const parsedTheme = parseTheme(entry.theme) || theme || themes[0];
-
-        if (parsedTheme && themes.every((t) => t.name !== parsedTheme.name)) {
-          themes.push(parsedTheme);
-        }
-
-        return {
-          type,
-          source: { path: sourcePath, dir: sourceDir },
-          target: { path: targetPath, dir: targetDir },
-          title: entry.title || title || config?.title,
-          theme: parsedTheme,
-        };
-      },
-    );
+  const entries: ParsedEntry[] = rawEntries.map(normalizeEnry).map(parseEntry);
 
   if (entries.length === 0) {
     throw new Error('no entry found');
   }
 
-  // setup
+  // cleanup dist
   shelljs.rm('-rf', distDir);
   shelljs.mkdir('-p', artifactDir);
 
@@ -239,22 +246,22 @@ export default async function build(cliFlags: BuildCliFlags) {
   // generate manifest
   const manifestPath = path.join(distDir, 'manifest.json');
   generateManifest(manifestPath, {
-    title: cliFlags.title || config?.title,
-    author: cliFlags.author || config?.author,
-    language: config?.language || 'en',
+    title,
+    author,
+    language,
+    toc,
     entries: entries.map((entry) => ({
       title: entry.title,
       path: path.relative(distDir, entry.target.path),
     })),
     modified: new Date().toISOString(),
-    toc,
   });
 
   // generate toc
   if (toc) {
     const distTocPath = path.join(distDir, 'toc.html');
     if (typeof toc === 'string') {
-      shelljs.cp(ctx(contextDir, toc)!, distTocPath);
+      shelljs.cp(ctxPath(contextDir, toc)!, distTocPath);
     } else {
       const tocString = generateToC(entries, distDir);
       fs.writeFileSync(distTocPath, tocString);
@@ -262,18 +269,18 @@ export default async function build(cliFlags: BuildCliFlags) {
   }
 
   // generate PDF
-  const outputFile = await generatePDF(
-    manifestPath,
-    distDir,
-    outFile,
+  const outputFile = await generatePDF({
+    input: manifestPath,
+    rootDir: distDir,
+    outputPath: outFile,
     size,
-    loadMode,
-    executableChromium,
-    sandbox,
+    pressReady,
     verbose,
     timeout,
-    pressReady,
-  );
+    loadMode,
+    sandbox,
+    executableChromium,
+  });
 
   log(`🎉  Done`);
   log(`${chalk.bold(outputFile)} has been created`);
@@ -282,7 +289,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   process.exit(0);
 }
 
-function ctx(context: string, loc: string | undefined): string | undefined {
+function ctxPath(context: string, loc: string | undefined): string | undefined {
   return loc && path.resolve(context, loc);
 }
 
@@ -403,18 +410,29 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
   return toHTML(toc);
 }
 
-async function generatePDF(
-  input: string,
-  rootDir: string | undefined,
-  outputPath: string,
-  size: string | number | undefined,
-  loadMode: LoadMode,
-  executableChromium: string | undefined,
-  sandbox: boolean,
-  verbose: boolean,
-  timeout: number,
-  pressReady: boolean,
-) {
+async function generatePDF({
+  input,
+  rootDir,
+  outputPath,
+  size,
+  loadMode,
+  executableChromium,
+  sandbox,
+  verbose,
+  timeout,
+  pressReady,
+}: {
+  input: string;
+  rootDir: string | undefined;
+  outputPath: string;
+  size: string | number | undefined;
+  loadMode: LoadMode;
+  executableChromium: string | undefined;
+  sandbox: boolean;
+  verbose: boolean;
+  timeout: number;
+  pressReady: boolean;
+}) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
