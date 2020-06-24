@@ -24,27 +24,22 @@ import {
   launchBrowser,
 } from './util';
 
-interface Theme {
-  type: 'path' | 'uri';
-  name: string;
-  location: string;
-}
-
-export interface ThemeConfig {
-  title: string;
-  style: string;
-}
-
 export interface Entry {
   path: string;
   title?: string;
   theme?: string;
 }
 
+interface ParsedTheme {
+  type: 'path' | 'uri';
+  name: string;
+  location: string;
+}
+
 export interface ParsedEntry {
   type: 'markdown' | 'html';
   title?: string;
-  theme?: Theme;
+  theme?: ParsedTheme;
   source: { path: string; dir: string };
   target: { path: string; dir: string };
 }
@@ -115,7 +110,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   const contextDir = path.resolve(
     cliFlags.rootDir || ctx(configBaseDir, config?.entryContext) || '.',
   );
-  const themes: Theme[] = [];
+  const themes: ParsedTheme[] = [];
   const theme = cliFlags.theme || config?.theme;
   const rootTheme = theme && parseTheme(theme);
   if (rootTheme) {
@@ -145,7 +140,6 @@ export default async function build(cliFlags: BuildCliFlags) {
         if (typeof e === 'object') {
           return e;
         }
-        // TODO: collect title and theme attributes
         return { path: e };
       },
     )
@@ -161,7 +155,7 @@ export default async function build(cliFlags: BuildCliFlags) {
         const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
 
         let title: string | undefined;
-        let theme: Theme | undefined;
+        let theme: ParsedTheme | undefined;
 
         if (type === 'markdown') {
           const file = processMarkdown(sourcePath);
@@ -234,6 +228,8 @@ export default async function build(cliFlags: BuildCliFlags) {
     modified: new Date().toISOString(),
   });
 
+  // TODO: generate toc
+
   // generate PDF
   const outputFile = await generatePDF(
     manifestPath,
@@ -268,7 +264,7 @@ function collectVivliostyleConfig(
   return require(configPath) as VivliostyleConfig;
 }
 
-function parseTheme(themeString: unknown): Theme | undefined {
+function parseTheme(themeString: unknown): ParsedTheme | undefined {
   if (typeof themeString !== 'string') {
     return undefined;
   }
