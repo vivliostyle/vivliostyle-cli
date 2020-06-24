@@ -10,19 +10,13 @@ program
   .description('launch preview server')
   .arguments('<input>')
   .option(
-    '-b, --book',
-    `load document as book mode
-                             It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
-                             Please see also http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
+    '-r, --root <root_directory>',
+    `specify assets root path (default directory of input file)`,
+    undefined,
   )
   .option(
     '--no-sandbox',
     `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
-  )
-  .option(
-    '-r, --root <root_directory>',
-    `specify assets root path (default directory of input file)`,
-    undefined,
   )
   .option(
     '--executable-chromium <path>',

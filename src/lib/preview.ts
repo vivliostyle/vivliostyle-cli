@@ -7,7 +7,6 @@ import { findEntryPointFile, statFile, debug, launchBrowser } from './util';
 export interface PreviewOption {
   input: string;
   rootDir?: string;
-  loadMode: LoadMode;
   sandbox: boolean;
   executableChromium?: string;
 }
@@ -15,7 +14,6 @@ export interface PreviewOption {
 export default async function run({
   input,
   rootDir,
-  loadMode = 'document',
   sandbox = true,
   executableChromium,
 }: PreviewOption) {
@@ -32,7 +30,7 @@ export default async function run({
       sourcePort,
       sourceIndex,
       brokerPort,
-      loadMode,
+      loadMode: 'book',
     });
 
     console.log(`Opening preview page... ${url}`);
