@@ -23,6 +23,9 @@ export default async function run({
     (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 
+  // TODO: watch files and run compilation process
+  // TODO: after compilation open browser pointing at .vivliostyle/manifest.json
+
   try {
     const [source, broker] = await launchSourceAndBrokerServer(root);
 

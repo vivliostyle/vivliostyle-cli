@@ -5,7 +5,7 @@ import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
 import debugConstructor from 'debug';
 
-export const debug = debugConstructor('vivliostyle-cli');
+export const debug = debugConstructor('vs-cli');
 
 export function log(...obj: any) {
   console.log('===>', ...obj);
