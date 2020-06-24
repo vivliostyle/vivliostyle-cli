@@ -1,15 +1,13 @@
 // cli-build will be called when we uses `build` subcommand
 
-import path from 'path';
 import program from 'commander';
 import chalk from 'chalk';
 import build from './lib/build';
-import { title } from 'process';
 
 const runningVivliostyleTimeout = 60 * 1000;
 
 program
-  .name('vivliostyle build [options] <input>')
+  .name('vivliostyle build')
   .description('Launch headless Chrome and save PDF file')
   .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
@@ -43,7 +41,7 @@ program
         : runningVivliostyleTimeout,
   )
   .option(
-    '--document-mode',
+    '--force-document-mode',
     `force document mode. Further reading: http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
   )
   .option(
@@ -69,7 +67,7 @@ build({
   pressReady: program.pressReady,
   verbose: program.verbose,
   timeout: program.timeout,
-  loadMode: program.documentMode ? 'document' : 'book',
+  loadMode: program.forceDocumentMode ? 'document' : 'book',
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
 }).catch((err) => {
