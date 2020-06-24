@@ -47,30 +47,30 @@
   },
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
+  "bin": {
+    "vivliostyle": "dist/cli.js"
+  },
   "files": [
     "dist",
     "broker"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": "https://github.com/vivliostyle/vivliostyle-cli.git",
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged",
       "pre-push": "yarn test"
     }
   },
-  "license": "AGPL-3.0",
-  "bin": {
-    "vivliostyle": "dist/cli.js"
+  "publishConfig": {
+    "access": "public"
   },
+  "repository": "https://github.com/vivliostyle/vivliostyle-cli.git",
   "bugs": "https://github.com/vivliostyle/vivliostyle-cli/issues",
-  "engines": {
-    "node": ">= 10"
-  },
   "homepage": "https://github.com/vivliostyle/vivliostyle-cli",
   "keywords": [
     "vivliostyle"
-  ]
+  ],
+  "license": "AGPL-3.0",
+  "engines": {
+    "node": ">= 10"
+  }
 }

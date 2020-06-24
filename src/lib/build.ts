@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path, { resolve } from 'path';
+import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
@@ -21,8 +21,54 @@ import {
   debug,
   launchBrowser,
 } from './util';
+import process from 'process';
 
-export interface BuildOption {
+export interface Entry {
+  path: string;
+  title?: string;
+  theme?: string;
+}
+
+export interface VivliostyleConfig {
+  title?: string;
+  author?: string;
+  language?: string;
+  theme: string; // undefined
+  outDir?: string; // .vivliostyle
+  outFile?: string; // output.pdf
+  entry: string | string[] | Entry | Entry[];
+  entryContext?: string;
+  size?: string;
+  pressReady?: boolean;
+  timeout?: number;
+}
+
+export interface ThemeConfig {
+  title: string;
+  style: string;
+}
+
+export interface ParsedEntry {
+  title?: string;
+  entry: string;
+  entryPath: string;
+  entryDir: string;
+  contextEntryPath: string;
+  targetPath: string;
+  targetDir: string;
+  relativeTargetPath: string;
+}
+
+export interface ManifestOption {
+  title?: string;
+  author?: string;
+  language?: string;
+  modified: string;
+  stylePath: string;
+  entries: Entry[];
+}
+
+export interface BuildCliFlags {
   configPath: string;
   input: string;
   outFile: string;
@@ -40,57 +86,163 @@ export interface BuildOption {
   executableChromium?: string;
 }
 
-export interface VivliostyleConfig {
-  title?: string;
-  author?: string;
-  language?: string;
-  theme: string; // undefined
-  outDir?: string; // .vivliostyle
-  outFile?: string; // output.pdf
-  entry: string | string[];
-  entryContext?: string;
-  size?: string;
-  pressReady?: boolean;
-  verbose?: boolean;
-  timeout?: number;
-  loadMode?: string;
-  sandbox?: boolean;
-  executableChromium?: string;
+function ctx(context: string, loc: string | undefined): string | undefined {
+  return loc && path.resolve(context, loc);
 }
 
-export interface ThemeConfig {
-  title: string;
-  style: string;
-}
+export default async function build(cliFlags: BuildCliFlags) {
+  const cwd = process.cwd();
+  const configPath = cliFlags.configPath
+    ? path.resolve(cwd, cliFlags.configPath)
+    : path.join(cwd, 'vivliostyle.config.js');
+  const config = collectVivliostyleConfig(configPath);
 
-interface EntryItem {
-  title: string;
-  entry: string;
-  entryPath: string;
-  entryDir: string;
-  contextEntryPath: string;
-  targetPath: string;
-  targetDir: string;
-  relativeTargetPath: string;
-}
+  const configBaseDir = config ? path.dirname(configPath) : cwd;
+  const distDir = path.resolve(
+    ctx(configBaseDir, config?.outDir) || '.vivliostyle',
+  );
+  const outFile = path.resolve(
+    cliFlags.outFile || ctx(configBaseDir, config?.outFile) || './output.pdf',
+  );
+  const size = cliFlags.size || config?.size;
+  const artifactDirName = 'dist';
+  const artifactDir = path.join(distDir, artifactDirName);
+  const contextDir = path.resolve(
+    cliFlags.rootDir || ctx(configBaseDir, config?.entryContext) || '.',
+  );
+  const theme = cliFlags.theme || config?.theme;
+  const themePath = theme && resolveThemePath(theme);
+  const distStyleName = 'style.css';
+  const distStylePath = path.join(distDir, distStyleName);
 
-interface ManifestOption {
-  title?: string;
-  author?: string;
-  language?: string;
-  modified: string;
-  stylePath: string;
-  entries: { title: string; path: string }[];
+  const pressReady = cliFlags.pressReady || config?.pressReady || false;
+  const verbose = cliFlags.verbose || false;
+  const timeout = cliFlags.timeout || config?.timeout || 3000;
+  const sandbox = cliFlags.sandbox || true;
+  const loadMode = cliFlags.loadMode || 'book';
+  const executableChromium = cliFlags.executableChromium;
+
+  // parse entry items
+  const entries: ParsedEntry[] = (cliFlags.input
+    ? [cliFlags.input]
+    : config
+    ? Array.isArray(config.entry)
+      ? config.entry
+      : config.entry
+      ? [config.entry]
+      : []
+    : []
+  )
+    .map(
+      (e: string | Entry): Entry => {
+        if (typeof e === 'object') {
+          return e;
+        }
+        // TODO: collect title and theme attributes
+        return { path: e };
+      },
+    )
+    .map(
+      (entry: Entry): ParsedEntry => {
+        const entryPath = path.resolve(contextDir, entry.path); // abs
+        const entryDir = path.dirname(entryPath); // abs
+        const contextEntryPath = path.relative(contextDir, entryPath); // rel
+        const targetPath = path
+          .resolve(artifactDir, contextEntryPath)
+          .replace(/\.md$/, '.html');
+        const targetDir = path.dirname(targetPath);
+        const relativeTargetPath = path.relative(distDir, targetPath);
+
+        return {
+          entry: entry.path,
+          entryPath,
+          entryDir,
+          contextEntryPath,
+          targetPath,
+          targetDir,
+          relativeTargetPath,
+          title: entry.title,
+        };
+      },
+    );
+
+  if (entries.length === 0) {
+    throw new Error('no entry found');
+  }
+
+  // cleanup
+  shelljs.rm('-rf', distDir);
+
+  // compilation
+  shelljs.mkdir('-p', artifactDir);
+
+  for (const entryItem of entries) {
+    const { entryDir, entryPath, targetPath, targetDir } = entryItem;
+
+    shelljs.mkdir('-p', targetDir);
+
+    // copy html files
+    if (entryItem.entryPath.endsWith('.html')) {
+      shelljs.cp(entryPath, targetPath);
+      continue;
+    }
+
+    // compile markdown
+    const relativeStylePath = path.join('..', distStyleName);
+    const stylesheet = path.relative(entryDir, relativeStylePath);
+
+    const html = stringify(fs.readFileSync(entryPath, 'utf8'), {
+      stylesheet,
+    });
+    fs.writeFileSync(targetPath, html);
+  }
+
+  // copy theme
+  themePath && shelljs.cp(themePath, distStylePath);
+
+  // generate manifest
+  const manifestPath = path.join(distDir, 'manifest.json');
+  generateManifest(manifestPath, {
+    // TODO: guess title from HTML, package.json
+    title: cliFlags.title || config?.title,
+    author: cliFlags.author || config?.author,
+    language: config?.language || 'en',
+    entries: entries.map((entry) => ({
+      title: entry.title,
+      path: entry.relativeTargetPath,
+    })),
+    modified: new Date().toString(),
+    stylePath: distStylePath,
+  });
+
+  // generate PDF
+  const outputFile = await generatePDF(
+    manifestPath,
+    distDir,
+    outFile,
+    size,
+    loadMode,
+    executableChromium,
+    sandbox,
+    verbose,
+    timeout,
+    pressReady,
+  );
+
+  log(`🎉  Done`);
+  log(`${chalk.bold(outputFile)} has been created`);
+
+  // TODO: gracefully exit broker & source server
+  process.exit(0);
 }
 
 function collectVivliostyleConfig(
-  resolvedConfigPath: string,
-): { config: VivliostyleConfig; resolvedConfigPath: string } | undefined {
-  if (!fs.existsSync(resolvedConfigPath)) {
+  configPath: string,
+): VivliostyleConfig | undefined {
+  if (!fs.existsSync(configPath)) {
     return undefined;
   }
-  const config = require(resolvedConfigPath) as VivliostyleConfig;
-  return { config, resolvedConfigPath };
+  return require(configPath) as VivliostyleConfig;
 }
 
 function resolveThemePath(themeString: string): string {
@@ -121,7 +273,6 @@ function resolveThemePath(themeString: string): string {
 
   return path.resolve(pkgRoot, maybeCSS);
 }
-
 function generateManifest(outputPath: string, options: ManifestOption) {
   const manifest = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
@@ -145,142 +296,6 @@ function generateManifest(outputPath: string, options: ManifestOption) {
   };
 
   fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
-}
-
-export default async function build(cliFlags: BuildOption) {
-  const configPath = cliFlags.configPath
-    ? path.join(process.cwd(), cliFlags.configPath)
-    : path.join(process.cwd(), 'vivliostyle.config.js');
-  const { config, resolvedConfigPath } =
-    collectVivliostyleConfig(configPath) || {};
-
-  const outDir = cliFlags.rootDir || config?.outDir || '.vivliostyle';
-  const outFile = cliFlags.outFile || config?.outFile || 'output.pdf';
-  const size = cliFlags.size || config?.size;
-  const loadMode = cliFlags.loadMode || config?.loadMode || 'book';
-  const executableChromium =
-    cliFlags.executableChromium || config?.executableChromium;
-  const sandbox = cliFlags.sandbox || config?.sandbox || true;
-  const verbose = cliFlags.verbose || config?.verbose || false;
-  const timeout = cliFlags.timeout || config?.timeout || 3000;
-  const pressReady = cliFlags.pressReady || config?.pressReady || false;
-  const workDir = resolvedConfigPath
-    ? path.dirname(resolvedConfigPath)
-    : process.cwd();
-  const rootPath = path.resolve(outDir);
-  const distName = 'dist';
-  const distPath = path.join(rootPath, distName);
-  const context = config?.entryContext || '.';
-  const contextPath = path.join(workDir, context);
-  const absoluteStylePath =
-    cliFlags.theme ||
-    (config?.theme ? resolveThemePath(config.theme) : undefined);
-  const distStyleName = 'style.css';
-  const distStylePath = path.join(rootPath, distStyleName);
-
-  // parse entry items
-  const entries: EntryItem[] = (cliFlags.input
-    ? [cliFlags.input]
-    : config
-    ? Array.isArray(config.entry)
-      ? config.entry
-      : config.entry
-      ? [config.entry]
-      : []
-    : []
-  ).map(
-    (entry: string): EntryItem => {
-      const entryDir = path.dirname(entry);
-      const entryPath = path.resolve(contextPath, entry);
-      const contextEntryPath = path.relative(contextPath, entryPath);
-      const targetPath = path
-        .resolve(distPath, contextEntryPath)
-        .replace(/\.md$/, '.html');
-      const targetDir = path.dirname(targetPath);
-      const relativeTargetPath = path.relative(rootPath, targetPath);
-
-      return {
-        entry,
-        entryPath,
-        entryDir,
-        contextEntryPath,
-        targetPath,
-        targetDir,
-        relativeTargetPath,
-        // TODO: collect title and theme attributes
-        title: entry,
-      };
-    },
-  );
-
-  if (entries.length === 0) {
-    throw new Error('no entry found');
-  }
-
-  // cleanup
-  shelljs.rm('-rf', rootPath);
-
-  // compilation
-  shelljs.mkdir('-p', distPath);
-
-  for (const entryItem of entries) {
-    const { entryDir, entryPath, targetPath, targetDir } = entryItem;
-
-    shelljs.mkdir('-p', targetDir);
-
-    // copy html files
-    if (entryItem.entryPath.endsWith('.html')) {
-      shelljs.cp(entryPath, targetPath);
-      continue;
-    }
-
-    // compile markdown
-    const relativeStylePath = path.join('..', distStyleName);
-    const stylesheet = path.relative(entryDir, relativeStylePath);
-
-    const html = stringify(fs.readFileSync(entryPath, 'utf8'), {
-      stylesheet,
-    });
-    fs.writeFileSync(targetPath, html);
-  }
-
-  // copy theme
-  absoluteStylePath && shelljs.cp(absoluteStylePath, distStylePath);
-
-  // generate manifest
-  const manifestPath = path.join(rootPath, 'manifest.json');
-  generateManifest(manifestPath, {
-    // TODO: guess title from HTML, package.json
-    title: cliFlags.title || config?.title,
-    author: cliFlags.author || config?.author,
-    language: config?.language || 'en',
-    entries: entries.map((entry) => ({
-      title: entry.title,
-      path: entry.relativeTargetPath,
-    })),
-    modified: new Date().toString(),
-    stylePath: distStylePath,
-  });
-
-  // generate PDF
-  const outputFile = await generatePDF(
-    manifestPath,
-    rootPath,
-    outFile,
-    size,
-    loadMode,
-    executableChromium,
-    sandbox,
-    verbose,
-    timeout,
-    pressReady,
-  );
-
-  log(`🎉  Done`);
-  log(`${chalk.bold(outputFile)} has been created`);
-
-  // TODO: gracefully exit broker & source server
-  process.exit(0);
 }
 
 async function generatePDF(
