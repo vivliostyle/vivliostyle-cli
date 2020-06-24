@@ -223,7 +223,7 @@ export default async function build(cliFlags: BuildCliFlags) {
 
   // generate manifest
   const manifestPath = path.join(distDir, 'manifest.json');
-  generateManifest(manifestPath, {
+  const manifest = generateManifest({
     title: cliFlags.title || config?.title,
     author: cliFlags.author || config?.author,
     language: config?.language || 'en',
@@ -233,6 +233,7 @@ export default async function build(cliFlags: BuildCliFlags) {
     })),
     modified: new Date().toISOString(),
   });
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
   // generate PDF
   const outputFile = await generatePDF(
@@ -325,7 +326,7 @@ function processMarkdown(
   return processed;
 }
 
-function generateManifest(outputPath: string, options: ManifestOption) {
+export function generateManifest(options: ManifestOption): object {
   const manifest = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
     metadata: {
@@ -345,7 +346,7 @@ function generateManifest(outputPath: string, options: ManifestOption) {
     resources: [],
   };
 
-  fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
+  return manifest;
 }
 
 async function generatePDF(
