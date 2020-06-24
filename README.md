@@ -88,20 +88,7 @@ Options:
 
 ## Contributing
 
-### Build
-
-```
-yarn install
-yarn build
-yarn link
-vivliostyle --version
-```
-
-### Docker Build
-
-```
-docker build -t vivliostyle/cli .
-```
+See [Contribution Guide](CONTRIBUTING.md).
 
 ## License
 
