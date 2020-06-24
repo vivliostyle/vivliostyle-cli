@@ -85,7 +85,7 @@ it('generate press-ready pdf without errors', async () => {
   expect(type!.mime).toEqual('application/pdf');
 }, 20000);
 
-it('generates a PDF with metadata', async () => {
+it.skip('generates a PDF with metadata', async () => {
   const outputPath = path.join(localTmpDir, 'test-metadata.pdf');
 
   try {
