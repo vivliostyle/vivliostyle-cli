@@ -2,6 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
+import resolvePkg from 'resolve-pkg';
+import shelljs from 'shelljs';
+import { stringify } from '@vivliostyle/vfm';
 
 import { Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
@@ -20,6 +23,7 @@ import {
 } from './util';
 
 export interface BuildOption {
+  configPath: string;
   input: string;
   outputPath: string;
   size?: number | string;
@@ -32,7 +36,43 @@ export interface BuildOption {
   verbose?: boolean;
 }
 
+export interface VivliostyleConfig {
+  title?: string;
+  author?: string;
+  language?: string;
+  theme: string;
+  entry: string | string[];
+  entryContext?: string;
+  outDir?: string;
+}
+
+export interface ThemeConfig {
+  title: string;
+  style: string;
+}
+
+interface EntryItem {
+  title: string;
+  entry: string;
+  entryPath: string;
+  entryDir: string;
+  contextEntryPath: string;
+  targetPath: string;
+  targetDir: string;
+  relativeTargetPath: string;
+}
+
+interface ManifestOption {
+  title: string;
+  author: string;
+  language: string;
+  modified: string;
+  stylePath: string;
+  entries: { title: string; path: string }[];
+}
+
 // TODO:
+// https://github.com/vivliostyle/vivliostyle-cli/issues/38
 // - load config
 // - merge cli config
 // - mkdir dist dir and out dir
@@ -45,18 +85,192 @@ export interface BuildOption {
 // 2. launch chromium (point to dist/manifest.json)
 // 3. wait for compilation
 // 4. export PDF
-export default async function buildPDF({
-  input,
-  outputPath,
-  size,
-  timeout,
-  rootDir,
-  loadMode = 'book',
-  sandbox = true,
-  pressReady = false,
-  executableChromium,
-  verbose = false,
-}: BuildOption) {
+
+function collectVivliostyleConfig(resolvedConfigPath?: string) {
+  resolvedConfigPath =
+    (resolvedConfigPath && fs.existsSync(resolvedConfigPath)
+      ? resolvedConfigPath
+      : false) || path.join(process.cwd(), 'vivliostyle.config.js');
+  const config = require(resolvedConfigPath) as VivliostyleConfig;
+  // TODO: merge cli flags
+  return { config, resolvedConfigPath };
+}
+
+function resolveThemePath(themeString: string): string {
+  const pkgRoot = resolvePkg(themeString, { cwd: process.cwd() });
+  if (!pkgRoot) {
+    throw new Error('package not found: ' + themeString);
+  }
+
+  // return bare .css path
+  if (pkgRoot.endsWith('.css')) {
+    return pkgRoot;
+  }
+
+  // node_modules & local path
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'),
+  );
+
+  const maybeCSS =
+    packageJson?.vivliostyle?.theme?.style ||
+    packageJson?.vivliostyle?.theme?.stylesheet ||
+    packageJson.style ||
+    packageJson.main;
+
+  if (!maybeCSS || !maybeCSS.endsWith('.css')) {
+    throw new Error('invalid css file: ' + maybeCSS);
+  }
+
+  return path.resolve(pkgRoot, maybeCSS);
+}
+
+function generateManifest(outputPath: string, options: ManifestOption) {
+  const manifest = {
+    '@context': 'https://readium.org/webpub-manifest/context.jsonld',
+    metadata: {
+      '@type': 'http://schema.org/Book',
+      title: options.title,
+      author: options.author,
+      // identifier: 'urn:isbn:9780000000001', // UUID?
+      language: options.language,
+      modified: options.modified,
+    },
+    links: [],
+    readingOrder: options.entries.map((entry) => ({
+      href: entry.path,
+      type: 'text/html',
+      title: entry.title,
+    })),
+    resources: [
+      { href: options.stylePath, type: 'text/css' }, // `theme` in `vivliostyle.config.js`
+    ],
+  };
+
+  fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
+}
+
+export default async function build(cliFlags: BuildOption) {
+  const { config, resolvedConfigPath } = collectVivliostyleConfig(
+    cliFlags.configPath,
+  );
+  if (!config.outDir) {
+    config.outDir = '.vivliostyle';
+  }
+  const configRoot = path.dirname(resolvedConfigPath);
+  const rootPath = path.resolve(cliFlags.rootDir || config.outDir);
+  const distPath = path.join(rootPath, 'dist');
+  const context = config.entryContext || '.';
+  const contextPath = path.join(configRoot, context);
+  const absoluteStylePath = resolveThemePath(config.theme);
+  const distStyleName = 'style.css';
+  const distStylePath = path.join(rootPath, distStyleName);
+
+  // cleanup
+  shelljs.rm('-rf', rootPath);
+
+  // parse entry items
+  const entries: EntryItem[] = (Array.isArray(config.entry)
+    ? config.entry
+    : [config.entry]
+  ).map(
+    (entry: string): EntryItem => {
+      const entryDir = path.dirname(entry);
+      const entryPath = path.join(contextPath, entry);
+      const contextEntryPath = path.relative(contextPath, entryPath);
+      const targetPath = path
+        .join(distPath, contextEntryPath)
+        .replace(/\.md$/, '.html');
+      const targetDir = path.dirname(targetPath);
+      const relativeTargetPath = path.relative(rootPath, targetPath);
+
+      return {
+        entry,
+        entryPath,
+        entryDir,
+        contextEntryPath,
+        targetPath,
+        targetDir,
+        relativeTargetPath,
+        title: entry,
+      };
+    },
+  );
+
+  // compilation
+  shelljs.mkdir('-p', distPath);
+
+  for (const entryItem of entries) {
+    const { entryDir, entryPath, targetPath, targetDir } = entryItem;
+
+    shelljs.mkdir('-p', targetDir);
+
+    // copy html files
+    if (entryItem.entryPath.endsWith('.html')) {
+      shelljs.cp(entryPath, targetPath);
+      continue;
+    }
+
+    // compile markdown
+    const relativeStylePath = path.join('..', distStyleName);
+    const stylesheet = path.relative(entryDir, relativeStylePath);
+
+    const html = stringify(fs.readFileSync(entryPath, 'utf8'), {
+      stylesheet,
+    });
+    fs.writeFileSync(targetPath, html);
+  }
+
+  // copy theme
+  shelljs.cp(absoluteStylePath, distStylePath);
+
+  // generate manifest
+  const manifestPath = path.join(rootPath, 'manifest.json');
+  generateManifest(manifestPath, {
+    title: config.title || 'TODO',
+    author: config.author || 'TODO',
+    language: config.language || 'en',
+    entries: entries.map((entry) => ({
+      title: entry.title,
+      path: entry.relativeTargetPath,
+    })),
+    modified: new Date().toString(),
+    stylePath: distStylePath,
+  });
+
+  // generate PDF
+  const outputFile = await generatePDF(
+    manifestPath,
+    rootPath,
+    cliFlags.outputPath,
+    cliFlags.size,
+    cliFlags.loadMode,
+    cliFlags.executableChromium,
+    cliFlags.sandbox,
+    cliFlags.verbose || false,
+    cliFlags.timeout,
+    cliFlags.pressReady,
+  );
+
+  log(`🎉  Done`);
+  log(`${chalk.bold(outputFile)} has been created`);
+
+  // TODO: gracefully exit broker & source server
+  process.exit(0);
+}
+
+async function generatePDF(
+  input: string,
+  rootDir: string | undefined,
+  outputPath: string,
+  size: string | number | undefined,
+  loadMode: LoadMode,
+  executableChromium: string | undefined,
+  sandbox: boolean,
+  verbose: boolean,
+  timeout: number,
+  pressReady: boolean,
+) {
   const stat = await statFile(input);
   const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
@@ -154,12 +368,7 @@ export default async function buildPDF({
   await post.metadata(metadata);
   await post.toc(toc);
   await post.save(outputFile, { pressReady });
-
-  log(`🎉  Done`);
-  log(`${chalk.bold(outputFile)} has been created`);
-
-  // TODO: gracefully exit broker & source server
-  process.exit(0);
+  return outputFile;
 }
 
 function parsePageSize(size: string | number): PageSize {

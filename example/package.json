@@ -1,0 +1,13 @@
+{
+  "name": "example",
+  "version": "0.0.0",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "vivliostyle build"
+  },
+  "dependencies": {
+    "@vivliostyle/cli": "link:..",
+    "@vivliostyle/theme-bunko": "^0.1.0"
+  }
+}
