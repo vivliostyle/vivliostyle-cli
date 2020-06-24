@@ -7,7 +7,7 @@ import preview from './lib/preview';
 
 program
   .name('vivliostyle preview')
-  .description('Open preview page and save PDF interactively')
+  .description('launch preview server')
   .arguments('<input>')
   .option(
     '-b, --book',

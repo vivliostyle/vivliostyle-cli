@@ -8,7 +8,7 @@ const runningVivliostyleTimeout = 60 * 1000;
 
 program
   .name('vivliostyle build')
-  .description('Launch headless Chrome and save PDF file')
+  .description('build and create PDF file')
   .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
   .option(

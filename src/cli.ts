@@ -7,10 +7,10 @@ const packageJSON = require('../package.json');
 program
   .name('vivliostyle')
   .version(packageJSON.version, '-v, --version')
-  .command('build <input>', 'Launch headless Chrome and build PDF file', {
+  .command('build', 'build and create PDF file', {
     executableFile: 'cli-build',
   })
-  .command('preview <input>', 'Open preview page', {
+  .command('preview <input>', 'launch preview server', {
     executableFile: 'cli-preview',
   })
   .parse(process.argv);
