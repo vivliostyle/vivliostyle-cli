@@ -4,11 +4,12 @@ import path from 'path';
 import program from 'commander';
 import chalk from 'chalk';
 import build from './lib/build';
+import { title } from 'process';
 
 const runningVivliostyleTimeout = 60 * 1000;
 
 program
-  .name('vivliostyle build')
+  .name('vivliostyle build [options] <input>')
   .description('Launch headless Chrome and save PDF file')
   .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
@@ -20,18 +21,21 @@ program
     '-r, --root <root_directory>',
     `specify assets root path (default directory of input file)`,
   )
-  .option('-t, --theme', 'theme path or package name')
+  .option('-t, --theme <theme>', 'theme path or package name')
   .option(
     '-s, --size <size>',
     `output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')`,
   )
+  .option('--title <title>', 'title')
+  .option('--author <author>', 'author')
+  .option('--language <language>', 'language')
   .option(
     '--press-ready',
     `make generated PDF compatible with press ready PDF/X-1a`,
   )
   .option('--verbose', 'verbose log output')
   .option(
-    '-t, --timeout <seconds>',
+    '--timeout <seconds>',
     `timeout limit for waiting Vivliostyle process (default: 60s)`,
     (val) =>
       Number.isFinite(+val) && +val > 0
@@ -59,10 +63,13 @@ build({
   outFile: program.output,
   theme: program.theme,
   size: program.size,
+  title: program.title,
+  author: program.author,
+  language: program.language,
   pressReady: program.pressReady,
   verbose: program.verbose,
   timeout: program.timeout,
-  loadMode: program.documentMode,
+  loadMode: program.documentMode ? 'document' : 'book',
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
 }).catch((err) => {
