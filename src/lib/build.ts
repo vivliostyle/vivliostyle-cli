@@ -301,7 +301,7 @@ function parseTheme(themeString: unknown): ParsedTheme | undefined {
   }
 
   // handle url
-  if (/^https?:\/\/.+\.css$/.test(themeString)) {
+  if (/^https?:\/\//.test(themeString)) {
     return {
       type: 'uri',
       name: path.basename(themeString),
