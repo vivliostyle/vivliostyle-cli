@@ -29,6 +29,9 @@ export interface BuildOption {
   rootDir?: string;
   theme?: string;
   size?: number | string;
+  title?: string;
+  language?: string;
+  author?: string;
   pressReady: boolean;
   verbose?: boolean;
   timeout: number;
@@ -72,28 +75,13 @@ interface EntryItem {
 }
 
 interface ManifestOption {
-  title: string;
-  author: string;
-  language: string;
+  title?: string;
+  author?: string;
+  language?: string;
   modified: string;
   stylePath: string;
   entries: { title: string; path: string }[];
 }
-
-// TODO:
-// https://github.com/vivliostyle/vivliostyle-cli/issues/38
-// - load config
-// - merge cli config
-// - mkdir dist dir and out dir
-// - compile vfm if necessary and put html files into out dir
-//   - collect title and theme attributes
-//   - replace theme package name with actual .css location
-// - generate manifest and toc
-// - copy theme css and cover image and other assets
-// 1. launch server
-// 2. launch chromium (point to dist/manifest.json)
-// 3. wait for compilation
-// 4. export PDF
 
 function collectVivliostyleConfig(
   resolvedConfigPath: string,
@@ -203,10 +191,10 @@ export default async function build(cliFlags: BuildOption) {
   ).map(
     (entry: string): EntryItem => {
       const entryDir = path.dirname(entry);
-      const entryPath = path.join(contextPath, entry);
+      const entryPath = path.resolve(contextPath, entry);
       const contextEntryPath = path.relative(contextPath, entryPath);
       const targetPath = path
-        .join(distPath, contextEntryPath)
+        .resolve(distPath, contextEntryPath)
         .replace(/\.md$/, '.html');
       const targetDir = path.dirname(targetPath);
       const relativeTargetPath = path.relative(rootPath, targetPath);
@@ -219,6 +207,7 @@ export default async function build(cliFlags: BuildOption) {
         targetPath,
         targetDir,
         relativeTargetPath,
+        // TODO: collect title and theme attributes
         title: entry,
       };
     },
@@ -261,8 +250,9 @@ export default async function build(cliFlags: BuildOption) {
   // generate manifest
   const manifestPath = path.join(rootPath, 'manifest.json');
   generateManifest(manifestPath, {
-    title: config?.title || 'TODO',
-    author: config?.author || 'TODO',
+    // TODO: guess title from HTML, package.json
+    title: cliFlags.title || config?.title,
+    author: cliFlags.author || config?.author,
     language: config?.language || 'en',
     entries: entries.map((entry) => ({
       title: entry.title,
