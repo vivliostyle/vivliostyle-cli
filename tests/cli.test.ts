@@ -14,12 +14,6 @@ import {
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));
 const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
-const examplePath = path.join(rootPath, 'example');
-const exampleSingleFile = path.join(
-  examplePath,
-  'manuscripts',
-  'introduction.md',
-);
 const fixtureRoot = path.resolve(__dirname, 'fixtures/wood');
 const fixtureFile = path.join(fixtureRoot, 'index.html');
 

@@ -16,6 +16,8 @@
     "chalk": "^4.1.0",
     "commander": "^5.1.0",
     "debug": "^4.1.1",
+    "hast-util-to-html": "^7.1.1",
+    "hastscript": "^5.1.2",
     "mathjax": "3.0.5",
     "pdf-lib": "^1.8.0",
     "portfinder": "^1.0.26",

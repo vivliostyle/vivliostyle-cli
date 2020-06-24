@@ -6,6 +6,8 @@ import resolvePkg from 'resolve-pkg';
 import shelljs from 'shelljs';
 import process from 'process';
 import vfile, { VFile } from 'vfile';
+import h from 'hastscript';
+import toHTML from 'hast-util-to-html';
 import { VFM, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 
 import { Meta, Payload, TOCItem } from './broker';
@@ -53,6 +55,7 @@ export interface VivliostyleConfig {
   outFile?: string; // output.pdf
   entry: string | string[] | Entry | Entry[];
   entryContext?: string;
+  toc?: boolean;
   size?: string;
   pressReady?: boolean;
   timeout?: number;
@@ -82,6 +85,7 @@ export interface ManifestOption {
   language?: string;
   modified: string;
   entries: Entry[];
+  toc?: boolean;
 }
 
 interface File extends VFile {
@@ -117,6 +121,7 @@ export default async function build(cliFlags: BuildCliFlags) {
     themes.push(rootTheme);
   }
 
+  const toc = config?.toc || true;
   const pressReady = cliFlags.pressReady || config?.pressReady || false;
   const verbose = cliFlags.verbose || false;
   const timeout = cliFlags.timeout || config?.timeout || 3000;
@@ -226,9 +231,15 @@ export default async function build(cliFlags: BuildCliFlags) {
       path: path.relative(distDir, entry.target.path),
     })),
     modified: new Date().toISOString(),
+    toc,
   });
 
-  // TODO: generate toc
+  // generate toc
+  if (toc) {
+    const tocString = generateToC(entries, distDir);
+    console.log(tocString);
+    fs.writeFileSync(path.join(distDir, 'toc.html'), tocString);
+  }
 
   // generate PDF
   const outputFile = await generatePDF(
@@ -321,6 +332,7 @@ function processMarkdown(
   return processed;
 }
 
+// example: https://github.com/readium/webpub-manifest/blob/master/examples/MobyDick/manifest.json
 function generateManifest(outputPath: string, options: ManifestOption) {
   const manifest = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
@@ -338,10 +350,31 @@ function generateManifest(outputPath: string, options: ManifestOption) {
       type: 'text/html',
       title: entry.title,
     })),
-    resources: [],
+    resources: [
+      options.toc && {
+        href: 'toc.html',
+        rel: 'contents',
+        type: 'text/html',
+        title: 'Table of Contents',
+      },
+    ],
   };
 
   fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
+}
+
+export function generateToC(entries: ParsedEntry[], distDir: string) {
+  const items = entries.map((entry) =>
+    h(
+      'li',
+      h('a', { href: path.relative(distDir, entry.target.path) }, entry.title),
+    ),
+  );
+  const toc = h(
+    'html',
+    h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),
+  );
+  return toHTML(toc);
 }
 
 async function generatePDF(
