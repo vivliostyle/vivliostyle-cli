@@ -30,8 +30,7 @@ if (program.args.length < 1) {
 
 preview({
   input: path.resolve(process.cwd(), program.args[0]),
-  rootDir: program.root && path.resolve(process.cwd(), program.root),
-  loadMode: program.book ? 'book' : 'document',
+  rootDir: program.root,
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
 }).catch((err) => {

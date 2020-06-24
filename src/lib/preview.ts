@@ -7,7 +7,7 @@ import { findEntryPointFile, statFile, debug, launchBrowser } from './util';
 export interface PreviewOption {
   input: string;
   rootDir?: string;
-  sandbox: boolean;
+  sandbox?: boolean;
   executableChromium?: string;
 }
 
@@ -18,7 +18,9 @@ export default async function run({
   executableChromium,
 }: PreviewOption) {
   const stat = await statFile(input);
-  const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
+  const root =
+    (rootDir && path.resolve(process.cwd(), rootDir)) ||
+    (stat.isDirectory() ? input : path.dirname(input));
   const sourceIndex = await findEntryPointFile(input, root);
 
   try {
