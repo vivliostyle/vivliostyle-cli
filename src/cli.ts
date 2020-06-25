@@ -7,6 +7,9 @@ const packageJSON = require('../package.json');
 program
   .name('vivliostyle')
   .version(packageJSON.version, '-v, --version')
+  .command('init', 'create vivliostyle config', {
+    executableFile: 'commands/init',
+  })
   .command('build', 'build and create PDF file', {
     executableFile: 'commands/build',
   })

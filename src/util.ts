@@ -4,8 +4,17 @@ import util from 'util';
 import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
 import debugConstructor from 'debug';
+import chalk from 'chalk';
 
 export const debug = debugConstructor('vs-cli');
+
+export function gracefulError(err: Error) {
+  console.error(`${chalk.red.bold('Error:')} ${err.message}`);
+  console.log(`
+  If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
+
+  process.exit(1);
+}
 
 export function log(...obj: any) {
   console.log('===>', ...obj);
