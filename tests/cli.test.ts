@@ -85,7 +85,7 @@ it('generate press-ready pdf without errors', async () => {
   expect(type!.mime).toEqual('application/pdf');
 }, 20000);
 
-it.skip('generates a PDF with metadata', async () => {
+it('generates a PDF with metadata', async () => {
   const outputPath = path.join(localTmpDir, 'test-metadata.pdf');
 
   try {
@@ -107,27 +107,20 @@ it.skip('generates a PDF with metadata', async () => {
   const bytes = fs.readFileSync(outputPath);
   const document = await PDFDocument.load(bytes);
 
-  // Document metadata
-  const metadata = document.context.lookup(
-    document.context.trailerInfo.Info,
-    PDFDict,
-  );
-  const metaTitle = metadata.lookup(PDFName.of('Title'), PDFHexString);
-  expect(metaTitle.sizeInBytes()).toBe(62); // 'Wood Engraving' as hex, with BOM
+  expect(document.getTitle()).toBe('Wood Engraving');
 
   const catalog = document.context.lookup(
     document.context.trailerInfo.Root,
     PDFCatalog,
   );
 
-  // TODO: handle outline
   // Outlines
-  // const outlines = catalog.lookup(PDFName.of('Outlines'), PDFDict);
+  const outlines = catalog.lookup(PDFName.of('Outlines'), PDFDict);
 
-  // const count = outlines.lookup(PDFName.of('Count'), PDFNumber);
-  // expect(count.value()).toBe(1);
+  const count = outlines.lookup(PDFName.of('Count'), PDFNumber);
+  expect(count.value()).toBe(1);
 
-  // const intro = outlines.lookup(PDFName.of('First'), PDFDict);
-  // const introTitle = intro.lookup(PDFName.of('Title'), PDFHexString);
-  // expect(introTitle.sizeInBytes()).toBe(78);
+  const intro = outlines.lookup(PDFName.of('First'), PDFDict);
+  const introTitle = intro.lookup(PDFName.of('Title'), PDFHexString);
+  expect(introTitle.sizeInBytes()).toBe(62);
 }, 20000);
