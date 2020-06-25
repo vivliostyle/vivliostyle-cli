@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
+import shelljs from 'shelljs';
+import { Ora } from 'ora';
 
 import { Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
@@ -12,27 +14,16 @@ import {
   PageSize,
 } from './server';
 import {
-  log,
   statFile,
   findEntryPointFile,
   debug,
   launchBrowser,
+  ora,
 } from './util';
 
-export async function buildPDF({
-  input,
-  rootDir,
-  outputPath,
-  size,
-  loadMode,
-  executableChromium,
-  sandbox,
-  verbose,
-  timeout,
-  pressReady,
-}: {
+export interface BuiuldPdfOptions {
   input: string;
-  rootDir: string | undefined;
+  distDir: string | undefined;
   outputPath: string;
   size: string | number | undefined;
   loadMode: LoadMode;
@@ -41,12 +32,26 @@ export async function buildPDF({
   verbose: boolean;
   timeout: number;
   pressReady: boolean;
-}) {
+  oraInstance?: Ora;
+}
+
+export async function buildPDF({
+  input,
+  distDir,
+  outputPath,
+  size,
+  loadMode,
+  executableChromium,
+  sandbox,
+  verbose,
+  timeout,
+  pressReady,
+  oraInstance = ora,
+}: BuiuldPdfOptions) {
   const stat = await statFile(input);
-  const root = rootDir || (stat.isDirectory() ? input : path.dirname(input));
-  debug(root);
+  const root = distDir || (stat.isDirectory() ? input : path.dirname(input));
+
   const sourceIndex = await findEntryPointFile(input, root);
-  debug('index', sourceIndex);
 
   const outputFile =
     fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()
@@ -57,7 +62,7 @@ export async function buildPDF({
   const [source, broker] = await launchSourceAndBrokerServer(root);
   const sourcePort = source.port;
   const brokerPort = broker.port;
-  debug(source, broker);
+
   const navigateURL = getBrokerUrl({
     sourcePort,
     sourceIndex,
@@ -67,7 +72,7 @@ export async function buildPDF({
   });
   debug('brokerURL', navigateURL);
 
-  log(`Launching build environment...`);
+  oraInstance.text = `Launching build environment`;
   debug(
     `Executing Chromium path: ${
       executableChromium || puppeteer.executablePath()
@@ -85,13 +90,15 @@ export async function buildPDF({
   const page = await browser.newPage();
 
   page.on('pageerror', (error) => {
-    log(chalk.red(error.message));
+    oraInstance.fail(chalk.red(error.message));
+    oraInstance.start();
   });
 
   page.on('console', (msg) => {
     if (/time slice/.test(msg.text())) return;
     if (!verbose) return;
-    log(chalk.gray(msg.text()));
+    oraInstance.info(chalk.gray(msg.text()));
+    oraInstance.start();
   });
 
   page.on('response', (response) => {
@@ -101,10 +108,12 @@ export async function buildPDF({
       response.url(),
     );
     if (300 > response.status() && 200 <= response.status()) return;
-    log(chalk.red(`${response.status()}`, response.url()));
+
+    oraInstance.fail(chalk.red(`${response.status()}`, response.url()));
+    oraInstance.start();
   });
 
-  log('Building pages...');
+  oraInstance.text = 'Building pages';
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
   await page.waitFor(() => !!window.coreViewer);
@@ -121,7 +130,7 @@ export async function buildPDF({
     },
   );
 
-  log('Generating PDF...');
+  oraInstance.text = 'Generating PDF';
 
   const pdf = await page.pdf({
     margin: {
@@ -134,16 +143,20 @@ export async function buildPDF({
     preferCSSPageSize: true,
   });
 
-  log('Processing PDF...');
+  oraInstance.text = 'Processing PDF';
 
   await browser.close();
+  debug(path.dirname(outputFile));
+  shelljs.mkdir('-p', path.dirname(outputFile));
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata);
   await post.toc(toc);
   await post.save(outputFile, { pressReady });
+
   return outputFile;
 }
+
 function parsePageSize(size: string | number): PageSize {
   const [width, height, ...others] = size ? `${size}`.split(',') : [];
   if (others.length) {
@@ -163,10 +176,10 @@ function parsePageSize(size: string | number): PageSize {
 async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
   return page.evaluate(() => window.coreViewer.getMetadata());
 }
+
 // Show and hide the TOC in order to read its contents.
 // Chromium needs to see the TOC links in the DOM to add
 // the PDF destinations used during postprocessing.
-
 async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
   return page.evaluate(
     () =>

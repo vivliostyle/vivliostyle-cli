@@ -3,37 +3,18 @@ import chalk from 'chalk';
 import path from 'path';
 import process from 'process';
 
-import { LoadMode } from '../server';
-import { log, gracefulError } from '../util';
+import { gracefulError, ora, log } from '../util';
 import {
   mergeConfig,
   getVivliostyleConfigPath,
   collectVivliostyleConfig,
-  Entry,
-  ParsedTheme,
+  CliFlags,
+  validateTimeout,
 } from '../config';
 import { buildArtifacts } from '../builder';
 import { buildPDF } from '../pdf';
 
-export interface BuildCliFlags {
-  configPath?: string;
-  input: string;
-  outFile: string;
-  rootDir?: string;
-  theme?: string;
-  size?: number | string;
-  title?: string;
-  language?: string;
-  author?: string;
-  pressReady: boolean;
-  verbose?: boolean;
-  timeout: number;
-  loadMode: LoadMode;
-  sandbox: boolean;
-  executableChromium?: string;
-}
-
-const runningVivliostyleTimeout = 60 * 1000;
+export interface BuildCliFlags extends CliFlags {}
 
 program
   .name('vivliostyle build')
@@ -41,13 +22,10 @@ program
   .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
   .option(
-    '-o, --output <output_file>',
-    `specify output file path (default output.pdf)`,
+    '-o, --out-file <output file>',
+    `specify output file path (default ./output.pdf)`,
   )
-  .option(
-    '-r, --root <root_directory>',
-    `specify assets root path (default directory of input file)`,
-  )
+  .option('-d, --out-dir <output directory>', `specify output directory`)
   .option('-t, --theme <theme>', 'theme path or package name')
   .option(
     '-s, --size <size>',
@@ -60,14 +38,15 @@ program
     '--press-ready',
     `make generated PDF compatible with press ready PDF/X-1a`,
   )
+  .option(
+    '--entry-context <context directory>',
+    `specify assets root path (default directory of input file)`,
+  )
   .option('--verbose', 'verbose log output')
   .option(
     '--timeout <seconds>',
     `timeout limit for waiting Vivliostyle process (default: 60s)`,
-    (val) =>
-      Number.isFinite(+val) && +val > 0
-        ? +val * 1000
-        : runningVivliostyleTimeout,
+    validateTimeout,
   )
   .option(
     '--force-document-mode',
@@ -85,23 +64,25 @@ program
 
 build({
   configPath: program.config,
-  rootDir: program.root,
   input: program.args?.[0] || program.input,
-  outFile: program.output,
-  theme: program.theme,
-  size: program.size,
   title: program.title,
   author: program.author,
-  language: program.language,
+  theme: program.theme,
+  size: program.size,
   pressReady: program.pressReady,
+  outDir: program.outDir,
+  outFile: program.outFile,
+  language: program.language,
+  entryContext: program.entryContext,
   verbose: program.verbose,
   timeout: program.timeout,
-  loadMode: program.forceDocumentMode ? 'document' : 'book',
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
 }).catch(gracefulError);
 
 export default async function build(cliFlags: BuildCliFlags) {
+  const spinner = ora.start('Building manuscripts');
+
   const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
   const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
 
@@ -109,73 +90,21 @@ export default async function build(cliFlags: BuildCliFlags) {
     ? path.dirname(vivliostyleConfigPath)
     : process.cwd();
 
-  const {
-    contextDir,
-    artifactDir,
-    projectTitle,
-    themeIndex,
-    rawEntries,
-    distDir,
-    projectAuthor,
-    language,
-    toc,
-    outFile,
-    size,
-    pressReady,
-    verbose,
-    timeout,
-    loadMode,
-    sandbox,
-    executableChromium,
-  }: {
-    contextDir: string;
-    artifactDir: string;
-    projectTitle: any;
-    themeIndex: ParsedTheme[];
-    rawEntries: (string | Entry)[];
-    distDir: string;
-    projectAuthor: any;
-    language: string;
-    toc: string | boolean;
-    outFile: string;
-    size: string | number | undefined;
-    pressReady: boolean;
-    verbose: boolean;
-    timeout: number;
-    loadMode: LoadMode;
-    sandbox: boolean;
-    executableChromium: string | undefined;
-  } = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
-  const manifestPath = buildArtifacts({
-    contextDir,
-    distDir,
-    artifactDir,
-    rawEntries,
-    toc,
-    themeIndex,
-    projectTitle,
-    projectAuthor,
-    language,
-  });
+  const manifestPath = buildArtifacts(config);
 
   // generate PDF
-  const outputFile = await buildPDF({
+  const output = await buildPDF({
+    ...config,
     input: manifestPath,
-    outputPath: outFile,
-    rootDir: distDir,
-    size,
-    pressReady,
-    verbose,
-    timeout,
-    loadMode,
-    sandbox,
-    executableChromium,
+    oraInstance: spinner,
   });
 
-  log(`🎉  Done`);
-  log(`${chalk.bold(outputFile)} has been created`);
+  spinner.stopAndPersist({ text: `Done`, symbol: '🎉' });
+
+  log(`${chalk.bold(output)} has been created`);
 
   // TODO: gracefully exit broker & source server
   process.exit(0);

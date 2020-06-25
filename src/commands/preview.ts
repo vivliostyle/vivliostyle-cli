@@ -3,33 +3,55 @@ import program from 'commander';
 import puppeteer from 'puppeteer';
 import chokidar from 'chokidar';
 
-import { getBrokerUrl, launchSourceAndBrokerServer, LoadMode } from '../server';
-import { debug, launchBrowser, gracefulError } from '../util';
+import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
+import { debug, launchBrowser, gracefulError, ora } from '../util';
 import {
   getVivliostyleConfigPath,
   collectVivliostyleConfig,
-  ParsedTheme,
-  Entry,
   mergeConfig,
+  CliFlags,
+  validateTimeout,
 } from '../config';
 import { buildArtifacts } from '../builder';
 
-export interface PreviewOption {
-  configPath?: string;
-  input: string;
-  rootDir?: string;
-  sandbox?: boolean;
-  executableChromium?: string;
-}
+export interface PreviewCliFlags extends CliFlags {}
 
 program
   .name('vivliostyle preview')
   .description('launch preview server')
   .arguments('<input>')
+  .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
   .option(
-    '-r, --root <root_directory>',
+    '-o, --out-file <output file>',
+    `specify output file path (default ./output.pdf)`,
+  )
+  .option('-d, --out-dir <output directory>', `specify output directory`)
+  .option('-t, --theme <theme>', 'theme path or package name')
+  .option(
+    '-s, --size <size>',
+    `output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')`,
+  )
+  .option('--title <title>', 'title')
+  .option('--author <author>', 'author')
+  .option('--language <language>', 'language')
+  .option(
+    '--press-ready',
+    `make generated PDF compatible with press ready PDF/X-1a`,
+  )
+  .option(
+    '--entry-context <context directory>',
     `specify assets root path (default directory of input file)`,
+  )
+  .option('--verbose', 'verbose log output')
+  .option(
+    '--timeout <seconds>',
+    `timeout limit for waiting Vivliostyle process (default: 60s)`,
+    validateTimeout,
+  )
+  .option(
+    '--force-document-mode',
+    `force document mode. Further reading: http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
   )
   .option(
     '--no-sandbox',
@@ -45,13 +67,24 @@ let timer: NodeJS.Timeout;
 
 preview({
   configPath: program.config,
-  rootDir: program.root,
   input: program.args?.[0] || program.input,
+  title: program.title,
+  author: program.author,
+  theme: program.theme,
+  size: program.size,
+  outDir: program.outDir,
+  outFile: program.outFile,
+  language: program.language,
+  entryContext: program.entryContext,
+  verbose: program.verbose,
+  timeout: program.timeout,
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
 }).catch(gracefulError);
 
-export default async function preview(cliFlags: PreviewOption) {
+export default async function preview(cliFlags: PreviewCliFlags) {
+  const spinner = ora.start('Preparing preview');
+
   const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
   const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
 
@@ -59,107 +92,60 @@ export default async function preview(cliFlags: PreviewOption) {
     ? path.dirname(vivliostyleConfigPath)
     : process.cwd();
 
-  const {
-    contextDir,
-    distDir,
-    artifactDir,
-    projectTitle,
-    projectAuthor,
-    rawEntries,
-    themeIndex,
-    language,
-    toc,
-    loadMode,
-    sandbox,
-    executableChromium,
-  }: {
-    contextDir: string;
-    artifactDir: string;
-    projectTitle: any;
-    themeIndex: ParsedTheme[];
-    rawEntries: (string | Entry)[];
-    distDir: string;
-    projectAuthor: any;
-    language: string;
-    toc: string | boolean;
-    outFile: string;
-    size: string | number | undefined;
-    pressReady: boolean;
-    verbose: boolean;
-    timeout: number;
-    loadMode: LoadMode;
-    sandbox: boolean;
-    executableChromium: string | undefined;
-  } = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
-  const manifestPath = buildArtifacts({
-    contextDir,
-    distDir,
-    artifactDir,
-    rawEntries,
-    toc,
-    themeIndex,
-    projectTitle,
-    projectAuthor,
-    language,
-  });
+  const manifestPath = buildArtifacts(config);
 
-  const [source, broker] = await launchSourceAndBrokerServer(distDir);
-  const sourcePort = source.port;
-  const brokerPort = broker.port;
+  const [source, broker] = await launchSourceAndBrokerServer(config.distDir);
+
   const url = getBrokerUrl({
-    sourceIndex: path.relative(distDir, manifestPath),
-    sourcePort,
-    brokerPort,
-    loadMode,
+    sourceIndex: path.relative(config.distDir, manifestPath),
+    sourcePort: source.port,
+    brokerPort: broker.port,
+    loadMode: config.loadMode,
   });
 
   debug(url);
-  console.log(`🚀 Launching preview ...`);
   debug(
     `Executing Chromium path: ${
-      executableChromium || puppeteer.executablePath()
+      config.executableChromium || puppeteer.executablePath()
     }`,
   );
   const browser = await launchBrowser({
     headless: false,
-    executablePath: executableChromium || puppeteer.executablePath(),
-    args: [sandbox ? '' : '--no-sandbox'],
+    executablePath: config.executableChromium || puppeteer.executablePath(),
+    args: [config.sandbox ? '' : '--no-sandbox'],
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 0, height: 0 });
   await page.goto(url);
 
-  function handleChangeEvent() {
+  spinner.stopAndPersist({
+    text: 'Up and running ([Ctrl+C] to exit)',
+    symbol: '🚀',
+  });
+
+  function handleChangeEvent(path: string) {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      console.log('Rebuilding ...');
+      spinner.start(`Rebuilding ${path}`);
       // build artifacts
-      buildArtifacts({
-        contextDir,
-        distDir,
-        artifactDir,
-        rawEntries,
-        toc,
-        themeIndex,
-        projectTitle,
-        projectAuthor,
-        language,
-      });
+      buildArtifacts(config);
       page.reload();
+      spinner.succeed(`Built ${path}`);
     }, 2000);
   }
 
   chokidar
     .watch('**', {
       ignored: (p: string) => {
-        return /node_modules|\.git/.test(p) || p.startsWith(distDir);
+        return /node_modules|\.git/.test(p) || p.startsWith(config.distDir);
       },
       cwd: context,
     })
     .on('all', (event, path) => {
       if (!/\.(md|markdown|html?|css|jpe?g|png|gif|svg)$/i.test(path)) return;
-      handleChangeEvent();
+      handleChangeEvent(path);
     });
 }

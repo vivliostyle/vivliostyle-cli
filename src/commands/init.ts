@@ -2,7 +2,8 @@ import path from 'path';
 import fs from 'fs';
 import program from 'commander';
 
-import { gracefulError } from '../util';
+import { gracefulError, log } from '../util';
+import chalk from 'chalk';
 
 export interface PreviewOption {}
 
@@ -14,6 +15,7 @@ program
 preview({}).catch(gracefulError);
 
 export default async function preview(cliFlags: PreviewOption) {
+  log(`Generated ${chalk.cyan('vivliostyle.config.js')}`);
   const vivliostyleConfigPath = path.join(
     process.cwd(),
     'vivliostyle.config.js',

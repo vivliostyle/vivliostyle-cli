@@ -21,6 +21,7 @@
     "hastscript": "^5.1.2",
     "jsdom": "^16.2.2",
     "mathjax": "3.0.5",
+    "ora": "^4.0.4",
     "pdf-lib": "^1.8.0",
     "pkg-up": "^3.1.0",
     "portfinder": "^1.0.26",

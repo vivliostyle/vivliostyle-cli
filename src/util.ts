@@ -5,8 +5,15 @@ import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
 import debugConstructor from 'debug';
 import chalk from 'chalk';
+import oraConstructor from 'ora';
 
 export const debug = debugConstructor('vs-cli');
+
+export const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
+
+export function log(...obj: any) {
+  console.log('→', ...obj);
+}
 
 export function gracefulError(err: Error) {
   console.error(`${chalk.red.bold('Error:')} ${err.message}`);
@@ -14,10 +21,6 @@ export function gracefulError(err: Error) {
   If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
 
   process.exit(1);
-}
-
-export function log(...obj: any) {
-  console.log('===>', ...obj);
 }
 
 export async function statFile(filePath: string) {

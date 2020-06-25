@@ -39,7 +39,7 @@ it('show version', async () => {
   expect(stdout).toContain(packageJSON.version);
 });
 
-it('generate pdf without errors', async () => {
+it.only('generate pdf without errors', async () => {
   const outputPath = path.join(localTmpDir, 'test.pdf');
   cleanUp(outputPath);
 
@@ -52,7 +52,7 @@ it('generate pdf without errors', async () => {
       outputPath,
       fixtureFile,
     ]);
-    expect(response.stdout).toContain('Generating PDF');
+    expect(response.stdout).toContain('has been created');
   } catch (err) {
     throw err.stderr;
   }
@@ -99,7 +99,7 @@ it('generates a PDF with metadata', async () => {
       outputPath,
       fixtureFile,
     ]);
-    expect(response.stdout).toContain('Processing PDF');
+    expect(response.stdout).toContain('has been created');
   } catch (err) {
     throw err.stderr;
   }

@@ -52,7 +52,6 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
       '@type': 'http://schema.org/Book',
       title: options.title,
       author: options.author,
-      // identifier: 'urn:isbn:9780000000001', // UUID?
       language: options.language,
       modified: options.modified,
     },

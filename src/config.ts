@@ -3,6 +3,10 @@ import fs from 'fs';
 import process from 'process';
 import pkgUp from 'pkg-up';
 import resolvePkg from 'resolve-pkg';
+import { debug } from './util';
+import { BuildCliFlags } from './commands/build';
+import { PreviewCliFlags } from './commands/preview';
+import { LoadMode } from './server';
 
 export interface ParsedTheme {
   type: 'path' | 'uri';
@@ -19,16 +23,46 @@ export interface Entry {
 export interface VivliostyleConfig {
   title?: string;
   author?: string;
-  language?: string;
   theme: string; // undefined
-  outDir?: string; // .vivliostyle
-  outFile?: string; // output.pdf
   entry: string | string[] | Entry | Entry[];
   entryContext?: string;
-  toc?: boolean | string;
   size?: string;
+  format?: 'pdf';
   pressReady?: boolean;
+  outDir?: string;
+  outFile?: string; // output.pdf
+  language?: string;
+  cover?: string;
+  toc?: boolean | string;
+
   timeout?: number;
+  distDir?: string; // .vivliostyle
+}
+
+export interface CliFlags {
+  configPath?: string;
+  input?: string;
+  title?: string;
+  author?: string;
+  theme?: string;
+  size?: number | string;
+  pressReady?: boolean;
+  outDir?: string;
+  outFile?: string;
+  language?: string;
+  entryContext?: string;
+  verbose?: boolean;
+  timeout?: number;
+  loadMode?: LoadMode;
+  sandbox?: boolean;
+  executableChromium?: string;
+}
+
+const runningVivliostyleTimeout = 60 * 1000;
+export function validateTimeout(val: string) {
+  return Number.isFinite(+val) && +val > 0
+    ? +val * 1000
+    : runningVivliostyleTimeout;
 }
 
 export function ctxPath(
@@ -100,7 +134,7 @@ export function getVivliostyleConfigPath(configPath?: string) {
     : path.join(cwd, 'vivliostyle.config.js');
 }
 
-export async function mergeConfig<T extends { [index: string]: any }>(
+export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfig | undefined,
   context: string,
@@ -108,24 +142,35 @@ export async function mergeConfig<T extends { [index: string]: any }>(
   const pkgJsonPath = await pkgUp();
   const pkgJson = pkgJsonPath ? require(pkgJsonPath) : undefined;
 
-  // attempt to load config
-  const distDir = path.resolve(
-    ctxPath(context, config?.outDir) || '.vivliostyle',
-  );
-  const artifactDirName = 'artifacts';
-  const artifactDir = path.join(distDir, artifactDirName);
+  // TODO: use dirname of cliFlags.input if it was given
 
-  // merge config
   const projectTitle = cliFlags.title || config?.title || pkgJson?.name;
+  if (!projectTitle) {
+    throw new Error('title not defined');
+  }
   const projectAuthor = cliFlags.author || config?.author || pkgJson?.author;
-  const language = config?.language || 'en';
-  const outFile = path.resolve(
-    cliFlags.outFile || ctxPath(context, config?.outFile) || './output.pdf',
-  );
-  const size = cliFlags.size || config?.size;
+
   const contextDir = path.resolve(
-    cliFlags.rootDir || ctxPath(context, config?.entryContext) || '.',
+    cliFlags.entryContext || ctxPath(context, config?.entryContext) || '.',
   );
+  const distDir = path.resolve(
+    ctxPath(context, config?.distDir) || '.vivliostyle',
+  );
+  const artifactDir = path.join(distDir, 'artifacts');
+
+  const outDir = cliFlags.outDir || config?.outDir;
+  const outFile = cliFlags.outFile || config?.outFile;
+
+  if (outDir && outFile) {
+    throw new Error('outDir and outFile cannot be combined.');
+  }
+  const outputPath = outDir
+    ? path.resolve(ctxPath(context, outDir)!, `${projectTitle}.pdf`)
+    : ctxPath(context, outFile) || path.resolve('./output.pdf');
+  debug('outputPath', outputPath);
+
+  const language = config?.language || 'en';
+  const size = cliFlags.size || config?.size;
   const toc = config?.toc || true;
   const pressReady = cliFlags.pressReady || config?.pressReady || false;
   const verbose = cliFlags.verbose || false;
@@ -151,17 +196,17 @@ export async function mergeConfig<T extends { [index: string]: any }>(
       : []
     : [];
 
-  return {
+  const parsedConfig = {
     contextDir,
     artifactDir,
+    distDir,
+    outputPath,
     projectTitle,
+    projectAuthor,
     themeIndex,
     rawEntries,
-    distDir,
-    projectAuthor,
     language,
     toc,
-    outFile,
     size,
     pressReady,
     verbose,
@@ -170,4 +215,8 @@ export async function mergeConfig<T extends { [index: string]: any }>(
     sandbox,
     executableChromium,
   };
+
+  debug(parsedConfig);
+
+  return parsedConfig;
 }
