@@ -36,7 +36,7 @@ export function getBrokerUrl({
   sourcePort,
   sourceIndex,
   brokerPort,
-  loadMode = 'document',
+  loadMode = 'book',
   outputSize,
 }: GetBrokerURLOption) {
   const sourceURL = url.format({

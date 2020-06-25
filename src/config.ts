@@ -4,8 +4,6 @@ import process from 'process';
 import pkgUp from 'pkg-up';
 import resolvePkg from 'resolve-pkg';
 
-import { BuildCliFlags } from './commands/build';
-
 export interface ParsedTheme {
   type: 'path' | 'uri';
   name: string;
@@ -102,8 +100,8 @@ export function getVivliostyleConfigPath(configPath?: string) {
     : path.join(cwd, 'vivliostyle.config.js');
 }
 
-export async function mergeConfig(
-  cliFlags: BuildCliFlags,
+export async function mergeConfig<T extends { [index: string]: any }>(
+  cliFlags: T,
   config: VivliostyleConfig | undefined,
   context: string,
 ) {

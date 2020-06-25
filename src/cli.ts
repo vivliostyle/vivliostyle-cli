@@ -10,7 +10,7 @@ program
   .command('build', 'build and create PDF file', {
     executableFile: 'commands/build',
   })
-  .command('preview <input>', 'launch preview server', {
-    executableFile: 'cli-preview',
+  .command('preview', 'launch preview server', {
+    executableFile: 'commands/preview',
   })
   .parse(process.argv);

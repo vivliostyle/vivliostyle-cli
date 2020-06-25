@@ -18,7 +18,7 @@ import { buildArtifacts } from '../builder';
 import { buildPDF } from '../pdf';
 
 export interface BuildCliFlags {
-  configPath: string;
+  configPath?: string;
   input: string;
   outFile: string;
   rootDir?: string;

@@ -6,9 +6,18 @@ import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 
 import { getBrokerUrl, launchSourceAndBrokerServer, LoadMode } from '../server';
-import { findEntryPointFile, statFile, debug, launchBrowser } from '../util';
+import { debug, launchBrowser } from '../util';
+import {
+  getVivliostyleConfigPath,
+  collectVivliostyleConfig,
+  ParsedTheme,
+  Entry,
+  mergeConfig,
+} from '../config';
+import { buildArtifacts } from '../builder';
 
 export interface PreviewOption {
+  configPath?: string;
   input: string;
   rootDir?: string;
   sandbox?: boolean;
@@ -19,10 +28,10 @@ program
   .name('vivliostyle preview')
   .description('launch preview server')
   .arguments('<input>')
+  .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
   .option(
     '-r, --root <root_directory>',
     `specify assets root path (default directory of input file)`,
-    undefined,
   )
   .option(
     '--no-sandbox',
@@ -34,13 +43,10 @@ program
   )
   .parse(process.argv);
 
-if (program.args.length < 1) {
-  program.help();
-}
-
 preview({
-  input: path.resolve(process.cwd(), program.args[0]),
+  configPath: program.config,
   rootDir: program.root,
+  input: program.args?.[0] || program.input,
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
 }).catch((err) => {
@@ -49,29 +55,73 @@ preview({
 If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
 });
 
-export default async function preview({
-  input,
-  rootDir,
-  sandbox = true,
-  executableChromium,
-}: PreviewOption) {
-  const stat = await statFile(input);
-  const root =
-    (rootDir && path.resolve(process.cwd(), rootDir)) ||
-    (stat.isDirectory() ? input : path.dirname(input));
-  const sourceIndex = await findEntryPointFile(input, root);
+export default async function preview(cliFlags: PreviewOption) {
+  const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
+  const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
 
-  // TODO: watch files and run compilation process
-  // TODO: after compilation open browser pointing at .vivliostyle/manifest.json
+  const context = vivliostyleConfig
+    ? path.dirname(vivliostyleConfigPath)
+    : process.cwd();
+
+  const {
+    contextDir,
+    artifactDir,
+    projectTitle,
+    projectAuthor,
+    rawEntries,
+    themeIndex,
+    distDir,
+    language,
+    toc,
+    outFile,
+    size,
+    pressReady,
+    verbose,
+    timeout,
+    loadMode,
+    sandbox,
+    executableChromium,
+  }: {
+    contextDir: string;
+    artifactDir: string;
+    projectTitle: any;
+    themeIndex: ParsedTheme[];
+    rawEntries: (string | Entry)[];
+    distDir: string;
+    projectAuthor: any;
+    language: string;
+    toc: string | boolean;
+    outFile: string;
+    size: string | number | undefined;
+    pressReady: boolean;
+    verbose: boolean;
+    timeout: number;
+    loadMode: LoadMode;
+    sandbox: boolean;
+    executableChromium: string | undefined;
+  } = await mergeConfig(cliFlags, vivliostyleConfig, context);
+
+  // build artifacts
+  const manifestPath = buildArtifacts({
+    contextDir,
+    distDir,
+    artifactDir,
+    rawEntries,
+    toc,
+    themeIndex,
+    projectTitle,
+    projectAuthor,
+    language,
+  });
 
   try {
-    const [source, broker] = await launchSourceAndBrokerServer(root);
+    const [source, broker] = await launchSourceAndBrokerServer(distDir);
 
     const sourcePort = source.port;
     const brokerPort = broker.port;
     const url = getBrokerUrl({
+      sourceIndex: path.relative(distDir, manifestPath),
       sourcePort,
-      sourceIndex,
       brokerPort,
       loadMode: 'book',
     });
