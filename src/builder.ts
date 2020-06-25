@@ -9,6 +9,7 @@ import { debug } from './util';
 import { Entry, ctxPath, ParsedTheme, parseTheme } from './config';
 import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 import vfile, { VFile } from 'vfile';
+import chalk from 'chalk';
 
 export interface VSFile extends VFile {
   data: {
@@ -176,7 +177,12 @@ export function buildArtifacts({
   const entries: ParsedEntry[] = rawEntries.map(normalizeEnry).map(parseEntry);
 
   if (entries.length === 0) {
-    throw new Error('no entry found');
+    throw new Error(
+      `Missing entry.
+Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
+        'vivliostyle.config.js',
+      )}`,
+    );
   }
 
   debug(entries);

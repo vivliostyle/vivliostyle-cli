@@ -1,12 +1,10 @@
-// cli-build will be called when we uses `build` subcommand
-
 import program from 'commander';
 import chalk from 'chalk';
 import path from 'path';
 import process from 'process';
 
 import { LoadMode } from '../server';
-import { log } from '../util';
+import { log, gracefulError } from '../util';
 import {
   mergeConfig,
   getVivliostyleConfigPath,
@@ -101,12 +99,7 @@ build({
   loadMode: program.forceDocumentMode ? 'document' : 'book',
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
-}).catch((err) => {
-  console.error(`${chalk.red.bold('Error:')} ${err.message}`);
-  console.log(`
-If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
-  process.exit(1);
-});
+}).catch(gracefulError);
 
 export default async function build(cliFlags: BuildCliFlags) {
   const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);

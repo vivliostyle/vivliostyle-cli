@@ -1,12 +1,9 @@
-// cli-preview will be called when we uses `preview` subcommand
-
 import path from 'path';
 import program from 'commander';
-import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 
 import { getBrokerUrl, launchSourceAndBrokerServer, LoadMode } from '../server';
-import { debug, launchBrowser } from '../util';
+import { debug, launchBrowser, gracefulError } from '../util';
 import {
   getVivliostyleConfigPath,
   collectVivliostyleConfig,
@@ -49,11 +46,7 @@ preview({
   input: program.args?.[0] || program.input,
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,
-}).catch((err) => {
-  console.error(`${chalk.red.bold('Error:')} ${err.message}`);
-  console.log(`
-If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
-});
+}).catch(gracefulError);
 
 export default async function preview(cliFlags: PreviewOption) {
   const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
@@ -65,19 +58,14 @@ export default async function preview(cliFlags: PreviewOption) {
 
   const {
     contextDir,
+    distDir,
     artifactDir,
     projectTitle,
     projectAuthor,
     rawEntries,
     themeIndex,
-    distDir,
     language,
     toc,
-    outFile,
-    size,
-    pressReady,
-    verbose,
-    timeout,
     loadMode,
     sandbox,
     executableChromium,
@@ -114,34 +102,29 @@ export default async function preview(cliFlags: PreviewOption) {
     language,
   });
 
-  try {
-    const [source, broker] = await launchSourceAndBrokerServer(distDir);
+  const [source, broker] = await launchSourceAndBrokerServer(distDir);
+  const sourcePort = source.port;
+  const brokerPort = broker.port;
+  const url = getBrokerUrl({
+    sourceIndex: path.relative(distDir, manifestPath),
+    sourcePort,
+    brokerPort,
+    loadMode,
+  });
 
-    const sourcePort = source.port;
-    const brokerPort = broker.port;
-    const url = getBrokerUrl({
-      sourceIndex: path.relative(distDir, manifestPath),
-      sourcePort,
-      brokerPort,
-      loadMode: 'book',
-    });
-
-    console.log(`Opening preview page... ${url}`);
-    debug(
-      `Executing Chromium path: ${
-        executableChromium || puppeteer.executablePath()
-      }`,
-    );
-    const browser = await launchBrowser({
-      headless: false,
-      executablePath: executableChromium || puppeteer.executablePath(),
-      args: [sandbox ? '' : '--no-sandbox'],
-    });
-    const page = await browser.newPage();
-    await page.setViewport({ width: 0, height: 0 });
-    await page.goto(url);
-  } catch (err) {
-    console.trace(err);
-    process.exit(1);
-  }
+  debug(url);
+  console.log(`🚀 Launching preview ...`);
+  debug(
+    `Executing Chromium path: ${
+      executableChromium || puppeteer.executablePath()
+    }`,
+  );
+  const browser = await launchBrowser({
+    headless: false,
+    executablePath: executableChromium || puppeteer.executablePath(),
+    args: [sandbox ? '' : '--no-sandbox'],
+  });
+  const page = await browser.newPage();
+  await page.setViewport({ width: 0, height: 0 });
+  await page.goto(url);
 }
