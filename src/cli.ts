@@ -8,7 +8,7 @@ program
   .name('vivliostyle')
   .version(packageJSON.version, '-v, --version')
   .command('build', 'build and create PDF file', {
-    executableFile: 'cli-build',
+    executableFile: 'commands/build',
   })
   .command('preview <input>', 'launch preview server', {
     executableFile: 'cli-preview',

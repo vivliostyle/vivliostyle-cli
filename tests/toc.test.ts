@@ -1,4 +1,4 @@
-import { generateToC } from '../src/lib/build';
+import { generateToC } from '../src/builder';
 
 it('generateToC', () => {
   const toc = generateToC(

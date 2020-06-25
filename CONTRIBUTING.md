@@ -8,6 +8,7 @@ yarn install
 yarn build
 yarn link
 cd example
+yarn install
 DEBUG=vs-cli vivliostyle build
 ```
 

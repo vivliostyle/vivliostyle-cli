@@ -145,7 +145,7 @@ export function launchBrokerServer(): Promise<BrokerServer> {
     };
 
     const server = startEndpoint({
-      root: path.resolve(__dirname, '../..'),
+      root: path.resolve(__dirname, '..'),
       before: [beforeHook],
     });
 
