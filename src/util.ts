@@ -16,9 +16,16 @@ export function log(...obj: any) {
 }
 
 export function gracefulError(err: Error) {
-  console.error(`${chalk.red.bold('Error:')} ${err.message}`);
-  console.log(`
-  If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`);
+  const message = `${chalk.red.bold('Error:')} ${err.message}`;
+  if (ora.isSpinning) {
+    ora.fail(message);
+  } else {
+    console.error(message);
+  }
+  console.log(
+    chalk.gray(`
+If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues`),
+  );
 
   process.exit(1);
 }
