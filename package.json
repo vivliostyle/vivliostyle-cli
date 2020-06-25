@@ -14,6 +14,7 @@
     "@vivliostyle/core": "^2.1.0-pre.0",
     "@vivliostyle/vfm": "^1.0.0-alpha.5",
     "chalk": "^4.1.0",
+    "chokidar": "^3.4.0",
     "commander": "^5.1.0",
     "debug": "^4.1.1",
     "hast-util-to-html": "^7.1.1",

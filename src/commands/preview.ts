@@ -1,6 +1,7 @@
 import path from 'path';
 import program from 'commander';
 import puppeteer from 'puppeteer';
+import chokidar from 'chokidar';
 
 import { getBrokerUrl, launchSourceAndBrokerServer, LoadMode } from '../server';
 import { debug, launchBrowser, gracefulError } from '../util';
@@ -39,6 +40,8 @@ program
     'specify a path of executable Chrome(Chromium) you installed',
   )
   .parse(process.argv);
+
+let timer: NodeJS.Timeout;
 
 preview({
   configPath: program.config,
@@ -127,4 +130,36 @@ export default async function preview(cliFlags: PreviewOption) {
   const page = await browser.newPage();
   await page.setViewport({ width: 0, height: 0 });
   await page.goto(url);
+
+  function handleChangeEvent() {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      console.log('Rebuilding ...');
+      // build artifacts
+      buildArtifacts({
+        contextDir,
+        distDir,
+        artifactDir,
+        rawEntries,
+        toc,
+        themeIndex,
+        projectTitle,
+        projectAuthor,
+        language,
+      });
+      page.reload();
+    }, 2000);
+  }
+
+  chokidar
+    .watch('**', {
+      ignored: (p: string) => {
+        return /node_modules|\.git/.test(p) || p.startsWith(distDir);
+      },
+      cwd: context,
+    })
+    .on('all', (event, path) => {
+      if (!/\.(md|markdown|html?|css|jpe?g|png|gif|svg)$/i.test(path)) return;
+      handleChangeEvent();
+    });
 }

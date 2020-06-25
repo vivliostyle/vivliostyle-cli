@@ -1,15 +1,15 @@
 import fs from 'fs';
 import path from 'path';
+import chalk from 'chalk';
 import shelljs from 'shelljs';
 import { JSDOM } from 'jsdom';
 import h from 'hastscript';
 import toHTML from 'hast-util-to-html';
+import vfile, { VFile } from 'vfile';
+import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 
 import { debug } from './util';
 import { Entry, ctxPath, ParsedTheme, parseTheme } from './config';
-import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
-import vfile, { VFile } from 'vfile';
-import chalk from 'chalk';
 
 export interface VSFile extends VFile {
   data: {
