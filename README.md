@@ -14,13 +14,22 @@ npm install -g @vivliostyle/cli
 Usage: vivliostyle [options] [command]
 
 Options:
-  -v, --version    output the version number
-  -h, --help       output usage information
+  -v, --version   output the version number
+  -h, --help      display help for command
 
 Commands:
-  build            build and create PDF file
-  preview <input>  launch preview server
-  help [cmd]       display help for [cmd]
+  init            create vivliostyle config
+  build           build and create PDF file
+  preview         launch preview server
+  help [command]  display help for command
+```
+
+### `init`
+
+> create vivliostyle config file.
+
+```bash
+vivliostyle init
 ```
 
 ### `build`
