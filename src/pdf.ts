@@ -97,7 +97,7 @@ export async function buildPDF({
   page.on('console', (msg) => {
     if (/time slice/.test(msg.text())) return;
     if (!verbose) return;
-    logInfo(chalk.gray(msg.text()));
+    logInfo(msg.text());
   });
 
   page.on('response', (response) => {
