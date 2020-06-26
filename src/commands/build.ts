@@ -13,6 +13,7 @@ import {
 } from '../config';
 import { buildArtifacts } from '../builder';
 import { buildPDF } from '../pdf';
+import terminalLink from 'terminal-link';
 
 export interface BuildCliFlags extends CliFlags {}
 
@@ -104,7 +105,14 @@ export default async function build(cliFlags: BuildCliFlags) {
 
   stopLogging('Generated successfully.', '🎉');
 
-  log(`\n${chalk.bold(output)} has been created.`);
+  const formattedOutput = chalk.bold.green(
+    path.relative(process.cwd(), output),
+  );
+  log(
+    `\n${terminalLink(formattedOutput, 'file://' + output, {
+      fallback: () => formattedOutput,
+    })} has been created.`,
+  );
 
   // TODO: gracefully exit broker & source server
   process.exit(0);

@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import url from 'url';
+import terminalLink from 'terminal-link';
 
 import { Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
@@ -88,19 +89,17 @@ export async function buildPDF({
   });
 
   let lastEntry: ParsedEntry | undefined;
+
   function stringifyEntry(entry: ParsedEntry) {
-    return `${chalk.cyan(path.relative(entryContextDir, entry.source.path))} ${
-      entry.title ? chalk.gray(entry.title) : ''
-    }`;
+    const formattedSourcePath = chalk.bold.cyan(
+      path.relative(entryContextDir, entry.source.path),
+    );
+    return `${terminalLink(formattedSourcePath, 'file://' + entry.source.path, {
+      fallback: () => formattedSourcePath,
+    })} ${entry.title ? chalk.gray(entry.title) : ''}`;
   }
 
-  page.on('response', (response) => {
-    debug(
-      chalk.gray('broker:response'),
-      chalk.green(response.status().toString()),
-      response.url(),
-    );
-
+  function handleEntry(response: puppeteer.Response) {
     const entry = entries.find(
       (entry) =>
         path.relative(distDir, entry.target.path) ===
@@ -115,8 +114,20 @@ export async function buildPDF({
       startLogging(`Building ${stringifyEntry(entry)}`);
       lastEntry = entry;
     }
+  }
+
+  page.on('response', (response) => {
+    debug(
+      chalk.gray('broker:response'),
+      chalk.green(response.status().toString()),
+      response.url(),
+    );
+
+    handleEntry(response);
+
     if (300 > response.status() && 200 <= response.status()) return;
 
+    // NOTE: suppress unwanted 404 message
     // logError(chalk.red(`${response.status()}`, response.url()));
     debug(chalk.red(`${response.status()}`, response.url()));
   });
