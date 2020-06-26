@@ -22,7 +22,7 @@ export function stopLogging(text?: string, symbol?: string) {
   ora.stopAndPersist({ text, symbol });
 }
 
-export function log(...obj: string[]) {
+export function log(...obj: any) {
   console.log(...obj);
 }
 
@@ -32,17 +32,14 @@ export function logUpdate(...obj: string[]) {
 
 export function logSuccess(...obj: string[]) {
   ora.succeed(obj.join(' '));
-  ora.start();
 }
 
 export function logError(...obj: string[]) {
   ora.fail(obj.join(' '));
-  ora.start();
 }
 
 export function logInfo(...obj: string[]) {
   ora.info(obj.join(' '));
-  ora.start();
 }
 
 export function gracefulError(err: Error) {
