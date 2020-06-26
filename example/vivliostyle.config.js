@@ -1,4 +1,6 @@
 module.exports = {
+  title: 'Example Book',
+  author: 'Vivliostyle Foundation',
   theme:
     'https://raw.githubusercontent.com/youchan/viola-project/master/main.css',
   // theme: '../vivliostyle-theme-bunko',
