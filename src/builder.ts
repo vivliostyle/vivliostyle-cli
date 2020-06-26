@@ -1,13 +1,12 @@
-import fs from 'fs';
-import path from 'path';
 import chalk from 'chalk';
-import shelljs from 'shelljs';
-import h from 'hastscript';
+import fs from 'fs';
 import toHTML from 'hast-util-to-html';
-
-import { debug } from './util';
+import h from 'hastscript';
+import path from 'path';
+import shelljs from 'shelljs';
+import { contextResolve, Entry, MergedConfig, ParsedEntry } from './config';
 import { processMarkdown } from './markdown';
-import { Entry, contextResolve, MergedConfig, ParsedEntry } from './config';
+import { debug } from './util';
 
 export interface ManifestOption {
   title?: string;
@@ -16,6 +15,10 @@ export interface ManifestOption {
   modified: string;
   entries: Entry[];
   toc?: boolean | string;
+}
+
+export function cleanup(location: string) {
+  shelljs.rm('-rf', location);
 }
 
 // example: https://github.com/readium/webpub-manifest/blob/master/examples/MobyDick/manifest.json
@@ -91,11 +94,8 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
   debug(entries);
   debug(themeIndex);
 
-  // cleanup dist
-  shelljs.rm('-rf', distDir);
-  shelljs.mkdir('-p', artifactDir);
-
   // populate entries
+  shelljs.mkdir('-p', artifactDir);
   for (const entry of entries) {
     shelljs.mkdir('-p', entry.target.dir);
 
@@ -148,5 +148,5 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
       fs.writeFileSync(distTocPath, tocString);
     }
   }
-  return { manifestPath, entries, themeIndex };
+  return { manifestPath };
 }

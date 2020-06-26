@@ -41,6 +41,7 @@ export async function buildPDF({
   entryContextDir,
   entries,
 }: BuildPdfOptions) {
+  logUpdate(`Launching build environment`);
   const stat = await statFile(input);
   const root = distDir || (stat.isDirectory() ? input : path.dirname(input));
 
@@ -65,7 +66,6 @@ export async function buildPDF({
   });
   debug('brokerURL', navigateURL);
 
-  logUpdate(`Launching build environment`);
   debug(`Executing Chromium path: ${executableChromium}`);
   const browser = await launchBrowser({
     headless: true,
@@ -75,6 +75,8 @@ export async function buildPDF({
   });
   const version = await browser.version();
   debug(chalk.green('success'), `version=${version}`);
+
+  logUpdate('Building pages');
 
   const page = await browser.newPage();
 
@@ -99,6 +101,9 @@ export async function buildPDF({
     })} ${entry.title ? chalk.gray(entry.title) : ''}`;
   }
 
+  const building = (e: ParsedEntry) => `${stringifyEntry(e)}`;
+  const built = (e: ParsedEntry) => `${stringifyEntry(e)}`;
+
   function handleEntry(response: puppeteer.Response) {
     const entry = entries.find(
       (entry) =>
@@ -108,10 +113,10 @@ export async function buildPDF({
     if (entry) {
       if (!lastEntry) {
         lastEntry = entry;
-        return logUpdate(`Building ${stringifyEntry(entry)}`);
+        return logUpdate(building(entry));
       }
-      logSuccess(`Built ${stringifyEntry(lastEntry)}`);
-      startLogging(`Building ${stringifyEntry(entry)}`);
+      logSuccess(built(lastEntry));
+      startLogging(building(entry));
       lastEntry = entry;
     }
   }
@@ -132,8 +137,6 @@ export async function buildPDF({
     debug(chalk.red(`${response.status()}`, response.url()));
   });
 
-  logUpdate(`Building pages`);
-
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
   await page.waitFor(() => !!window.coreViewer);
 
@@ -149,7 +152,7 @@ export async function buildPDF({
     },
   );
 
-  logSuccess(`Built ${stringifyEntry(lastEntry!)}`);
+  logSuccess(built(lastEntry!));
   startLogging('Building PDF');
 
   const pdf = await page.pdf({
@@ -173,8 +176,6 @@ export async function buildPDF({
   await post.metadata(metadata);
   await post.toc(toc);
   await post.save(outputFile, { pressReady });
-
-  logSuccess('Built PDF');
 
   return outputFile;
 }

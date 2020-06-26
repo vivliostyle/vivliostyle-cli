@@ -1,7 +1,7 @@
 import program from 'commander';
 import chalk from 'chalk';
-import path from 'path';
-import process from 'process';
+import path, { relative } from 'path';
+import process, { cwd } from 'process';
 
 import { gracefulError, log, startLogging, stopLogging } from '../util';
 import {
@@ -11,7 +11,7 @@ import {
   CliFlags,
   validateTimeout,
 } from '../config';
-import { buildArtifacts } from '../builder';
+import { buildArtifacts, cleanup } from '../builder';
 import { buildPDF } from '../pdf';
 import terminalLink from 'terminal-link';
 
@@ -82,7 +82,7 @@ build({
 }).catch(gracefulError);
 
 export default async function build(cliFlags: BuildCliFlags) {
-  startLogging('Building manuscripts');
+  startLogging('Collecting build config');
 
   const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
   const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
@@ -94,16 +94,16 @@ export default async function build(cliFlags: BuildCliFlags) {
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
-  const { manifestPath, entries } = buildArtifacts(config);
+  cleanup(config.distDir);
+  const { manifestPath } = buildArtifacts(config);
 
   // generate PDF
   const output = await buildPDF({
     ...config,
     input: manifestPath,
-    entries,
   });
 
-  stopLogging('Generated successfully.', '🎉');
+  stopLogging('Built successfully.', '🎉');
 
   const formattedOutput = chalk.bold.green(
     path.relative(process.cwd(), output),
