@@ -2,35 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
 import shelljs from 'shelljs';
-import { JSDOM } from 'jsdom';
 import h from 'hastscript';
 import toHTML from 'hast-util-to-html';
-import vfile, { VFile } from 'vfile';
-import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 
 import { debug } from './util';
-import {
-  Entry,
-  contextResolve,
-  ParsedTheme,
-  parseTheme,
-  MergedConfig,
-} from './config';
-
-export interface VSFile extends VFile {
-  data: {
-    title?: string;
-    theme?: string;
-  };
-}
-
-export interface ParsedEntry {
-  type: 'markdown' | 'html';
-  title?: string;
-  theme?: ParsedTheme;
-  source: { path: string; dir: string };
-  target: { path: string; dir: string };
-}
+import { processMarkdown } from './markdown';
+import { Entry, contextResolve, MergedConfig, ParsedEntry } from './config';
 
 export interface ManifestOption {
   title?: string;
@@ -91,86 +68,17 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
   return toHTML(toc);
 }
 
-export function processMarkdown(
-  filepath: string,
-  options: StringifyMarkdownOptions = {},
-): VSFile {
-  const vfm = VFM(options);
-  const processed = vfm.processSync(
-    vfile({ path: filepath, contents: fs.readFileSync(filepath, 'utf8') }),
-  ) as VSFile;
-  return processed;
-}
-
 export function buildArtifacts({
   entryContextDir,
   artifactDir,
   projectTitle,
   themeIndex,
-  rawEntries,
+  entries,
   distDir,
   projectAuthor,
   language,
   toc,
 }: MergedConfig) {
-  function normalizeEnry(e: string | Entry): Entry {
-    if (typeof e === 'object') {
-      return e;
-    }
-    return { path: e };
-  }
-
-  function parseMetadata(type: string, sourcePath: string) {
-    let title: string | undefined;
-    let theme: ParsedTheme | undefined;
-    if (type === 'markdown') {
-      const file = processMarkdown(sourcePath);
-      title = file.data.title;
-      theme = parseTheme(file.data.theme);
-    } else {
-      const {
-        window: { document },
-      } = new JSDOM(fs.readFileSync(sourcePath));
-      title = document.querySelector('title')?.textContent || undefined;
-      const link = document.querySelector<HTMLLinkElement>(
-        'link[rel="stylesheet"]',
-      );
-      theme = parseTheme(link?.href);
-    }
-    return { title, theme };
-  }
-
-  function parseEntry(entry: Entry): ParsedEntry {
-    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
-    const sourceDir = path.dirname(sourcePath); // abs
-    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
-    const targetPath = path
-      .resolve(artifactDir, contextEntryPath)
-      .replace(/\.md$/, '.html');
-    const targetDir = path.dirname(targetPath);
-    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
-
-    const metadata = parseMetadata(type, sourcePath);
-
-    const title = entry.title || metadata.title || projectTitle;
-    const theme = parseTheme(entry.theme) || metadata.theme || themeIndex[0];
-
-    if (theme && themeIndex.every((t) => t.name !== theme.name)) {
-      themeIndex.push(theme);
-    }
-
-    return {
-      type,
-      source: { path: sourcePath, dir: sourceDir },
-      target: { path: targetPath, dir: targetDir },
-      title,
-      theme,
-    };
-  }
-
-  // parse entry items
-  const entries: ParsedEntry[] = rawEntries.map(normalizeEnry).map(parseEntry);
-
   if (entries.length === 0) {
     throw new Error(
       `Missing entry.

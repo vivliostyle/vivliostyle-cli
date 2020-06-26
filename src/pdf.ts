@@ -7,12 +7,7 @@ import url from 'url';
 
 import { Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
-import {
-  getBrokerUrl,
-  launchSourceAndBrokerServer,
-  LoadMode,
-  PageSize,
-} from './server';
+import { getBrokerUrl, launchSourceAndBrokerServer } from './server';
 import {
   statFile,
   findEntryPointFile,
@@ -24,8 +19,7 @@ import {
   logSuccess,
   startLogging,
 } from './util';
-import { ParsedEntry } from './builder';
-import { MergedConfig } from './config';
+import { MergedConfig, ParsedEntry } from './config';
 
 export interface BuildPdfOptions extends MergedConfig {
   input: string;

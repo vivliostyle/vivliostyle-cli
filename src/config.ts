@@ -4,8 +4,10 @@ import process from 'process';
 import pkgUp from 'pkg-up';
 import resolvePkg from 'resolve-pkg';
 import puppeteer from 'puppeteer';
+import { JSDOM } from 'jsdom';
 
 import { debug } from './util';
+import { processMarkdown } from './markdown';
 import { LoadMode, PageSize } from './server';
 
 export interface Entry {
@@ -18,6 +20,14 @@ export interface ParsedTheme {
   type: 'path' | 'uri';
   name: string;
   location: string;
+}
+
+export interface ParsedEntry {
+  type: 'markdown' | 'html';
+  title?: string;
+  theme?: ParsedTheme;
+  source: { path: string; dir: string };
+  target: { path: string; dir: string };
 }
 
 export interface VivliostyleConfig {
@@ -64,7 +74,7 @@ export interface MergedConfig {
   artifactDir: string;
   distDir: string;
   outputPath: string;
-  rawEntries: (string | Entry)[];
+  entries: ParsedEntry[];
   themeIndex: ParsedTheme[];
   toc: string | boolean;
   size: PageSize | undefined;
@@ -91,6 +101,12 @@ export function contextResolve(
   loc: string | undefined,
 ): string | undefined {
   return loc && path.resolve(context, loc);
+}
+function normalizeEnry(e: string | Entry): Entry {
+  if (typeof e === 'object') {
+    return e;
+  }
+  return { path: e };
 }
 
 export function parseTheme(themeString: unknown): ParsedTheme | undefined {
@@ -155,6 +171,26 @@ function parsePageSize(size: string | number): PageSize {
       format: width || 'Letter',
     };
   }
+}
+
+function parseFileMetadata(type: string, sourcePath: string) {
+  let title: string | undefined;
+  let theme: ParsedTheme | undefined;
+  if (type === 'markdown') {
+    const file = processMarkdown(sourcePath);
+    title = file.data.title;
+    theme = parseTheme(file.data.theme);
+  } else {
+    const {
+      window: { document },
+    } = new JSDOM(fs.readFileSync(sourcePath));
+    title = document.querySelector('title')?.textContent || undefined;
+    const link = document.querySelector<HTMLLinkElement>(
+      'link[rel="stylesheet"]',
+    );
+    theme = parseTheme(link?.href);
+  }
+  return { title, theme };
 }
 
 export function collectVivliostyleConfig(
@@ -237,6 +273,34 @@ export async function mergeConfig<T extends CliFlags>(
     themeIndex.push(rootTheme);
   }
 
+  function parseEntry(entry: Entry): ParsedEntry {
+    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
+    const sourceDir = path.dirname(sourcePath); // abs
+    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
+    const targetPath = path
+      .resolve(artifactDir, contextEntryPath)
+      .replace(/\.md$/, '.html');
+    const targetDir = path.dirname(targetPath);
+    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
+
+    const metadata = parseFileMetadata(type, sourcePath);
+
+    const title = entry.title || metadata.title || projectTitle;
+    const theme = parseTheme(entry.theme) || metadata.theme || themeIndex[0];
+
+    if (theme && themeIndex.every((t) => t.name !== theme.name)) {
+      themeIndex.push(theme);
+    }
+
+    return {
+      type,
+      source: { path: sourcePath, dir: sourceDir },
+      target: { path: targetPath, dir: targetDir },
+      title,
+      theme,
+    };
+  }
+
   const rawEntries = cliFlags.input
     ? [cliFlags.input]
     : config
@@ -246,13 +310,14 @@ export async function mergeConfig<T extends CliFlags>(
       ? [config.entry]
       : []
     : [];
+  const entries: ParsedEntry[] = rawEntries.map(normalizeEnry).map(parseEntry);
 
   const parsedConfig = {
     entryContextDir,
     artifactDir,
     distDir,
     outputPath,
-    rawEntries,
+    entries,
     themeIndex,
     toc,
     size,
