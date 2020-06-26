@@ -193,6 +193,8 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
 
   // populate entries
   for (const entry of entries) {
+    shelljs.mkdir('-p', entry.target.dir);
+
     if (entry.type === 'html') {
       // copy html files
       shelljs.cp(entry.source.path, entry.target.path);
@@ -207,7 +209,6 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
           : entry.theme.location
         : undefined;
       const file = processMarkdown(entry.source.path, { stylesheet });
-      shelljs.mkdir('-p', entry.target.dir);
       fs.writeFileSync(entry.target.path, String(file));
     }
   }
