@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import path from 'path';
 import process from 'process';
 
-import { gracefulError, ora, log } from '../util';
+import { gracefulError, log, startLogging, stopLogging } from '../util';
 import {
   mergeConfig,
   getVivliostyleConfigPath,
@@ -81,7 +81,7 @@ build({
 }).catch(gracefulError);
 
 export default async function build(cliFlags: BuildCliFlags) {
-  const spinner = ora.start('Building manuscripts');
+  startLogging('Building manuscripts');
 
   const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
   const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
@@ -99,12 +99,11 @@ export default async function build(cliFlags: BuildCliFlags) {
   const output = await buildPDF({
     ...config,
     input: manifestPath,
-    oraInstance: spinner,
   });
 
-  spinner.stopAndPersist({ text: `Done`, symbol: '🎉' });
+  stopLogging('Generated successfully.', '🎉');
 
-  log(`${chalk.bold(output)} has been created`);
+  log(`\n${chalk.bold(output)} has been created.`);
 
   // TODO: gracefully exit broker & source server
   process.exit(0);

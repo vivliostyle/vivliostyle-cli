@@ -18,7 +18,9 @@ import {
   findEntryPointFile,
   debug,
   launchBrowser,
-  ora,
+  logUpdate,
+  logError,
+  logInfo,
 } from './util';
 
 export interface BuiuldPdfOptions {
@@ -32,7 +34,7 @@ export interface BuiuldPdfOptions {
   verbose: boolean;
   timeout: number;
   pressReady: boolean;
-  oraInstance?: Ora;
+  ora?: Ora;
 }
 
 export async function buildPDF({
@@ -46,7 +48,6 @@ export async function buildPDF({
   verbose,
   timeout,
   pressReady,
-  oraInstance = ora,
 }: BuiuldPdfOptions) {
   const stat = await statFile(input);
   const root = distDir || (stat.isDirectory() ? input : path.dirname(input));
@@ -72,7 +73,7 @@ export async function buildPDF({
   });
   debug('brokerURL', navigateURL);
 
-  oraInstance.text = `Launching build environment`;
+  logUpdate(`Launching build environment`);
   debug(
     `Executing Chromium path: ${
       executableChromium || puppeteer.executablePath()
@@ -90,15 +91,13 @@ export async function buildPDF({
   const page = await browser.newPage();
 
   page.on('pageerror', (error) => {
-    oraInstance.fail(chalk.red(error.message));
-    oraInstance.start();
+    logError(chalk.red(error.message));
   });
 
   page.on('console', (msg) => {
     if (/time slice/.test(msg.text())) return;
     if (!verbose) return;
-    oraInstance.info(chalk.gray(msg.text()));
-    oraInstance.start();
+    logInfo(chalk.gray(msg.text()));
   });
 
   page.on('response', (response) => {
@@ -109,11 +108,10 @@ export async function buildPDF({
     );
     if (300 > response.status() && 200 <= response.status()) return;
 
-    oraInstance.fail(chalk.red(`${response.status()}`, response.url()));
-    oraInstance.start();
+    logError(chalk.red(`${response.status()}`, response.url()));
   });
 
-  oraInstance.text = 'Building pages';
+  logUpdate('Building pages');
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
   await page.waitFor(() => !!window.coreViewer);
@@ -130,7 +128,7 @@ export async function buildPDF({
     },
   );
 
-  oraInstance.text = 'Generating PDF';
+  logUpdate('Generating PDF');
 
   const pdf = await page.pdf({
     margin: {
@@ -143,7 +141,7 @@ export async function buildPDF({
     preferCSSPageSize: true,
   });
 
-  oraInstance.text = 'Processing PDF';
+  logUpdate('Processing PDF');
 
   await browser.close();
   debug(path.dirname(outputFile));

@@ -4,7 +4,14 @@ import puppeteer from 'puppeteer';
 import chokidar from 'chokidar';
 
 import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
-import { debug, launchBrowser, gracefulError, ora } from '../util';
+import {
+  debug,
+  launchBrowser,
+  gracefulError,
+  startLogging,
+  stopLogging,
+  logSuccess,
+} from '../util';
 import {
   getVivliostyleConfigPath,
   collectVivliostyleConfig,
@@ -83,7 +90,7 @@ preview({
 }).catch(gracefulError);
 
 export default async function preview(cliFlags: PreviewCliFlags) {
-  const spinner = ora.start('Preparing preview');
+  startLogging('Preparing preview');
 
   const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
   const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
@@ -121,19 +128,17 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   await page.setViewport({ width: 0, height: 0 });
   await page.goto(url);
 
-  spinner.stopAndPersist({
-    text: 'Up and running ([Ctrl+C] to exit)',
-    symbol: '🚀',
-  });
+  stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
 
   function handleChangeEvent(path: string) {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      spinner.start(`Rebuilding ${path}`);
+      startLogging(`Rebuilding ${path}`);
       // build artifacts
       buildArtifacts(config);
       page.reload();
-      spinner.succeed(`Built ${path}`);
+      logSuccess(`Built ${path}`);
+      stopLogging();
     }, 2000);
   }
 

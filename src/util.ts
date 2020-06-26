@@ -9,10 +9,40 @@ import oraConstructor from 'ora';
 
 export const debug = debugConstructor('vs-cli');
 
-export const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
+const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
+export function startLogging(text?: string) {
+  ora.start(text);
+}
 
-export function log(...obj: any) {
-  console.log('→', ...obj);
+export function stopLogging(text?: string, symbol?: string) {
+  if (!text) {
+    ora.stop();
+    return;
+  }
+  ora.stopAndPersist({ text, symbol });
+}
+
+export function log(...obj: string[]) {
+  console.log(...obj);
+}
+
+export function logUpdate(...obj: string[]) {
+  ora.text = obj.join(' ');
+}
+
+export function logSuccess(...obj: string[]) {
+  ora.succeed(obj.join(' '));
+  ora.start();
+}
+
+export function logError(...obj: string[]) {
+  ora.fail(obj.join(' '));
+  ora.start();
+}
+
+export function logInfo(...obj: string[]) {
+  ora.info(obj.join(' '));
+  ora.start();
 }
 
 export function gracefulError(err: Error) {

@@ -16,6 +16,7 @@ preview({}).catch(gracefulError);
 
 export default async function preview(cliFlags: PreviewOption) {
   log(`Generated ${chalk.cyan('vivliostyle.config.js')}`);
+
   const vivliostyleConfigPath = path.join(
     process.cwd(),
     'vivliostyle.config.js',
@@ -39,5 +40,6 @@ export default async function preview(cliFlags: PreviewOption) {
   toc: true, // whether generate and include toc.html or not (does not affect manifest.json), default to \`false\`. if \`string\` given, use it as a custom toc.html.
 };
 `;
+
   fs.writeFileSync(vivliostyleConfigPath, vivliostyleConfig);
 }
