@@ -5,7 +5,7 @@ import program from 'commander';
 import { gracefulError, log } from '../util';
 import chalk from 'chalk';
 
-export interface PreviewOption {}
+export interface PreviewCliFlags {}
 
 program
   .name('vivliostyle init')
@@ -14,7 +14,7 @@ program
 
 preview({}).catch(gracefulError);
 
-export default async function preview(cliFlags: PreviewOption) {
+export default async function preview(cliFlags: PreviewCliFlags) {
   log(`Generated ${chalk.cyan('vivliostyle.config.js')}`);
 
   const vivliostyleConfigPath = path.join(

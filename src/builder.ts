@@ -9,7 +9,13 @@ import vfile, { VFile } from 'vfile';
 import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 
 import { debug } from './util';
-import { Entry, contextResolve, ParsedTheme, parseTheme } from './config';
+import {
+  Entry,
+  contextResolve,
+  ParsedTheme,
+  parseTheme,
+  MergedConfig,
+} from './config';
 
 export interface VSFile extends VFile {
   data: {
@@ -106,17 +112,7 @@ export function buildArtifacts({
   projectAuthor,
   language,
   toc,
-}: {
-  entryContextDir: string;
-  artifactDir: string;
-  projectTitle: any;
-  themeIndex: ParsedTheme[];
-  rawEntries: (string | Entry)[];
-  distDir: string;
-  projectAuthor: any;
-  language: string;
-  toc: string | boolean;
-}) {
+}: MergedConfig) {
   function normalizeEnry(e: string | Entry): Entry {
     if (typeof e === 'object') {
       return e;
@@ -244,5 +240,5 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
       fs.writeFileSync(distTocPath, tocString);
     }
   }
-  return manifestPath;
+  return { manifestPath, entries, themeIndex };
 }

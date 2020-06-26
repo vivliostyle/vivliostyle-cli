@@ -102,7 +102,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
-  const manifestPath = buildArtifacts(config);
+  const { manifestPath } = buildArtifacts(config);
 
   const [source, broker] = await launchSourceAndBrokerServer(config.distDir);
 
@@ -138,7 +138,6 @@ export default async function preview(cliFlags: PreviewCliFlags) {
       buildArtifacts(config);
       page.reload();
       logSuccess(`Built ${path}`);
-      stopLogging();
     }, 2000);
   }
 

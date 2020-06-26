@@ -93,12 +93,13 @@ export default async function build(cliFlags: BuildCliFlags) {
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
-  const manifestPath = buildArtifacts(config);
+  const { manifestPath, entries } = buildArtifacts(config);
 
   // generate PDF
   const output = await buildPDF({
     ...config,
     input: manifestPath,
+    entries,
   });
 
   stopLogging('Generated successfully.', '🎉');

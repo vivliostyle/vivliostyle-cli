@@ -3,14 +3,10 @@ import fs from 'fs';
 import process from 'process';
 import pkgUp from 'pkg-up';
 import resolvePkg from 'resolve-pkg';
-import { debug } from './util';
-import { LoadMode } from './server';
+import puppeteer from 'puppeteer';
 
-export interface ParsedTheme {
-  type: 'path' | 'uri';
-  name: string;
-  location: string;
-}
+import { debug } from './util';
+import { LoadMode, PageSize } from './server';
 
 export interface Entry {
   path: string;
@@ -18,11 +14,17 @@ export interface Entry {
   theme?: string;
 }
 
+export interface ParsedTheme {
+  type: 'path' | 'uri';
+  name: string;
+  location: string;
+}
+
 export interface VivliostyleConfig {
   title?: string;
   author?: string;
   theme: string; // undefined
-  entry: string | string[] | Entry | Entry[];
+  entry: string | Entry | (string | Entry)[];
   entryContext?: string;
   size?: string;
   format?: 'pdf';
@@ -57,6 +59,26 @@ export interface CliFlags {
   executableChromium?: string;
 }
 
+export interface MergedConfig {
+  entryContextDir: string;
+  artifactDir: string;
+  distDir: string;
+  outputPath: string;
+  rawEntries: (string | Entry)[];
+  themeIndex: ParsedTheme[];
+  toc: string | boolean;
+  size: PageSize | undefined;
+  pressReady: boolean;
+  projectTitle: string;
+  projectAuthor: string;
+  language: string;
+  verbose: boolean;
+  timeout: number;
+  loadMode: LoadMode;
+  sandbox: boolean;
+  executableChromium: string;
+}
+
 const runningVivliostyleTimeout = 60 * 1000;
 export function validateTimeout(val: string) {
   return Number.isFinite(+val) && +val > 0
@@ -73,7 +95,9 @@ export function contextResolve(
 
 export function parseTheme(themeString: unknown): ParsedTheme | undefined {
   if (typeof themeString !== 'string') {
-    return undefined;
+    return themeString === null
+      ? { type: 'uri', name: '', location: '' }
+      : undefined;
   }
 
   // handle url
@@ -117,6 +141,22 @@ export function parseTheme(themeString: unknown): ParsedTheme | undefined {
   };
 }
 
+function parsePageSize(size: string | number): PageSize {
+  const [width, height, ...others] = size ? `${size}`.split(',') : [];
+  if (others.length) {
+    throw new Error(`Cannot parse size: ${size}`);
+  } else if (width && height) {
+    return {
+      width,
+      height,
+    };
+  } else {
+    return {
+      format: width || 'Letter',
+    };
+  }
+}
+
 export function collectVivliostyleConfig(
   configPath: string,
 ): VivliostyleConfig | undefined {
@@ -138,7 +178,7 @@ export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfig | undefined,
   context: string,
-) {
+): Promise<MergedConfig> {
   const pkgJsonPath = await pkgUp();
   const pkgJson = pkgJsonPath ? require(pkgJsonPath) : undefined;
 
@@ -174,7 +214,8 @@ export async function mergeConfig<T extends CliFlags>(
   debug('outputPath', outputPath);
 
   const language = config?.language || 'en';
-  const size = cliFlags.size || config?.size;
+  const sizeFlag = cliFlags.size || config?.size;
+  const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const toc =
     typeof config?.toc === 'string'
       ? contextResolve(context, config?.toc)!
@@ -186,7 +227,8 @@ export async function mergeConfig<T extends CliFlags>(
   const timeout = cliFlags.timeout || config?.timeout || 3000;
   const sandbox = cliFlags.sandbox || true;
   const loadMode = cliFlags.loadMode || 'book';
-  const executableChromium = cliFlags.executableChromium;
+  const executableChromium =
+    cliFlags.executableChromium || puppeteer.executablePath();
 
   const themeIndex: ParsedTheme[] = [];
   const projectTheme = cliFlags.theme || config?.theme;

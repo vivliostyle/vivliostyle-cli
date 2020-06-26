@@ -3,7 +3,7 @@ import path from 'path';
 import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
-import { Ora } from 'ora';
+import url from 'url';
 
 import { Meta, Payload, TOCItem } from './broker';
 import { PostProcess } from './postprocess';
@@ -21,20 +21,15 @@ import {
   logUpdate,
   logError,
   logInfo,
+  logSuccess,
+  startLogging,
 } from './util';
+import { ParsedEntry } from './builder';
+import { MergedConfig } from './config';
 
-export interface BuiuldPdfOptions {
+export interface BuildPdfOptions extends MergedConfig {
   input: string;
-  distDir: string | undefined;
-  outputPath: string;
-  size: string | number | undefined;
-  loadMode: LoadMode;
-  executableChromium: string | undefined;
-  sandbox: boolean;
-  verbose: boolean;
-  timeout: number;
-  pressReady: boolean;
-  ora?: Ora;
+  entries: ParsedEntry[];
 }
 
 export async function buildPDF({
@@ -48,7 +43,9 @@ export async function buildPDF({
   verbose,
   timeout,
   pressReady,
-}: BuiuldPdfOptions) {
+  entryContextDir,
+  entries,
+}: BuildPdfOptions) {
   const stat = await statFile(input);
   const root = distDir || (stat.isDirectory() ? input : path.dirname(input));
 
@@ -58,7 +55,7 @@ export async function buildPDF({
     fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()
       ? path.resolve(outputPath, 'output.pdf')
       : outputPath;
-  const outputSize = size ? parsePageSize(size) : undefined;
+  const outputSize = size;
 
   const [source, broker] = await launchSourceAndBrokerServer(root);
   const sourcePort = source.port;
@@ -74,14 +71,10 @@ export async function buildPDF({
   debug('brokerURL', navigateURL);
 
   logUpdate(`Launching build environment`);
-  debug(
-    `Executing Chromium path: ${
-      executableChromium || puppeteer.executablePath()
-    }`,
-  );
+  debug(`Executing Chromium path: ${executableChromium}`);
   const browser = await launchBrowser({
     headless: true,
-    executablePath: executableChromium || puppeteer.executablePath(),
+    executablePath: executableChromium,
     // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
     args: [sandbox ? '' : '--no-sandbox'],
   });
@@ -100,18 +93,41 @@ export async function buildPDF({
     logInfo(msg.text());
   });
 
+  let lastEntry: ParsedEntry | undefined;
+  function stringifyEntry(entry: ParsedEntry) {
+    return `${chalk.cyan(path.relative(entryContextDir, entry.source.path))} ${
+      entry.title ? chalk.gray(entry.title) : ''
+    }`;
+  }
+
   page.on('response', (response) => {
     debug(
       chalk.gray('broker:response'),
       chalk.green(response.status().toString()),
       response.url(),
     );
+
+    const entry = entries.find(
+      (entry) =>
+        path.relative(distDir, entry.target.path) ===
+        url.parse(response.url()).pathname!.substring(1),
+    );
+    if (entry) {
+      if (!lastEntry) {
+        lastEntry = entry;
+        return logUpdate(`Building ${stringifyEntry(entry)}`);
+      }
+      logSuccess(`Built ${stringifyEntry(lastEntry)}`);
+      startLogging(`Building ${stringifyEntry(entry)}`);
+      lastEntry = entry;
+    }
     if (300 > response.status() && 200 <= response.status()) return;
 
-    logError(chalk.red(`${response.status()}`, response.url()));
+    // logError(chalk.red(`${response.status()}`, response.url()));
+    debug(chalk.red(`${response.status()}`, response.url()));
   });
 
-  logUpdate('Building pages');
+  logUpdate(`Building pages`);
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
   await page.waitFor(() => !!window.coreViewer);
@@ -128,7 +144,8 @@ export async function buildPDF({
     },
   );
 
-  logUpdate('Generating PDF');
+  logSuccess(`Built ${stringifyEntry(lastEntry!)}`);
+  startLogging('Building PDF');
 
   const pdf = await page.pdf({
     margin: {
@@ -152,23 +169,9 @@ export async function buildPDF({
   await post.toc(toc);
   await post.save(outputFile, { pressReady });
 
-  return outputFile;
-}
+  logSuccess('Built PDF');
 
-function parsePageSize(size: string | number): PageSize {
-  const [width, height, ...others] = size ? `${size}`.split(',') : [];
-  if (others.length) {
-    throw new Error(`Cannot parse size: ${size}`);
-  } else if (width && height) {
-    return {
-      width,
-      height,
-    };
-  } else {
-    return {
-      format: width || 'Letter',
-    };
-  }
+  return outputFile;
 }
 
 async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
