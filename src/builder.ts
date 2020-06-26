@@ -9,7 +9,7 @@ import vfile, { VFile } from 'vfile';
 import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 
 import { debug } from './util';
-import { Entry, ctxPath, ParsedTheme, parseTheme } from './config';
+import { Entry, contextResolve, ParsedTheme, parseTheme } from './config';
 
 export interface VSFile extends VFile {
   data: {
@@ -97,7 +97,7 @@ export function processMarkdown(
 }
 
 export function buildArtifacts({
-  contextDir,
+  entryContextDir,
   artifactDir,
   projectTitle,
   themeIndex,
@@ -107,7 +107,7 @@ export function buildArtifacts({
   language,
   toc,
 }: {
-  contextDir: string;
+  entryContextDir: string;
   artifactDir: string;
   projectTitle: any;
   themeIndex: ParsedTheme[];
@@ -145,9 +145,9 @@ export function buildArtifacts({
   }
 
   function parseEntry(entry: Entry): ParsedEntry {
-    const sourcePath = path.resolve(contextDir, entry.path); // abs
+    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
     const sourceDir = path.dirname(sourcePath); // abs
-    const contextEntryPath = path.relative(contextDir, sourcePath); // rel
+    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
     const targetPath = path
       .resolve(artifactDir, contextEntryPath)
       .replace(/\.md$/, '.html');
@@ -238,7 +238,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
   if (toc) {
     const distTocPath = path.join(distDir, 'toc.html');
     if (typeof toc === 'string') {
-      shelljs.cp(ctxPath(contextDir, toc)!, distTocPath);
+      shelljs.cp(contextResolve(entryContextDir, toc)!, distTocPath);
     } else {
       const tocString = generateToC(entries, distDir);
       fs.writeFileSync(distTocPath, tocString);

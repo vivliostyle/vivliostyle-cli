@@ -4,8 +4,6 @@ import process from 'process';
 import pkgUp from 'pkg-up';
 import resolvePkg from 'resolve-pkg';
 import { debug } from './util';
-import { BuildCliFlags } from './commands/build';
-import { PreviewCliFlags } from './commands/preview';
 import { LoadMode } from './server';
 
 export interface ParsedTheme {
@@ -42,16 +40,17 @@ export interface VivliostyleConfig {
 export interface CliFlags {
   configPath?: string;
   input?: string;
+  size?: number | string;
+  outFile?: string;
+  outDir?: string;
+  theme?: string;
+  pressReady?: boolean;
   title?: string;
   author?: string;
-  theme?: string;
-  size?: number | string;
-  pressReady?: boolean;
-  outDir?: string;
-  outFile?: string;
   language?: string;
   entryContext?: string;
   verbose?: boolean;
+
   timeout?: number;
   loadMode?: LoadMode;
   sandbox?: boolean;
@@ -65,7 +64,7 @@ export function validateTimeout(val: string) {
     : runningVivliostyleTimeout;
 }
 
-export function ctxPath(
+export function contextResolve(
   context: string,
   loc: string | undefined,
 ): string | undefined {
@@ -124,7 +123,8 @@ export function collectVivliostyleConfig(
   if (!fs.existsSync(configPath)) {
     return undefined;
   }
-  return require(configPath) as VivliostyleConfig;
+  const config = require(configPath) as VivliostyleConfig;
+  return config;
 }
 
 export function getVivliostyleConfigPath(configPath?: string) {
@@ -150,28 +150,37 @@ export async function mergeConfig<T extends CliFlags>(
   }
   const projectAuthor = cliFlags.author || config?.author || pkgJson?.author;
 
-  const contextDir = path.resolve(
-    cliFlags.entryContext || ctxPath(context, config?.entryContext) || '.',
+  const entryContextDir = path.resolve(
+    cliFlags.input
+      ? '.'
+      : cliFlags.entryContext ||
+          contextResolve(context, config?.entryContext) ||
+          '.',
   );
   const distDir = path.resolve(
-    ctxPath(context, config?.distDir) || '.vivliostyle',
+    contextResolve(context, config?.distDir) || '.vivliostyle',
   );
   const artifactDir = path.join(distDir, 'artifacts');
 
-  const outDir = cliFlags.outDir || config?.outDir;
-  const outFile = cliFlags.outFile || config?.outFile;
+  const outDir = cliFlags.outDir || contextResolve(context, config?.outDir);
+  const outFile = cliFlags.outFile || contextResolve(context, config?.outFile);
 
   if (outDir && outFile) {
     throw new Error('outDir and outFile cannot be combined.');
   }
   const outputPath = outDir
-    ? path.resolve(ctxPath(context, outDir)!, `${projectTitle}.pdf`)
-    : ctxPath(context, outFile) || path.resolve('./output.pdf');
+    ? path.resolve(outDir, `${projectTitle}.pdf`)
+    : outFile || path.resolve('./output.pdf');
   debug('outputPath', outputPath);
 
   const language = config?.language || 'en';
   const size = cliFlags.size || config?.size;
-  const toc = config?.toc || true;
+  const toc =
+    typeof config?.toc === 'string'
+      ? contextResolve(context, config?.toc)!
+      : config?.toc !== undefined
+      ? config.toc
+      : true;
   const pressReady = cliFlags.pressReady || config?.pressReady || false;
   const verbose = cliFlags.verbose || false;
   const timeout = cliFlags.timeout || config?.timeout || 3000;
@@ -197,18 +206,18 @@ export async function mergeConfig<T extends CliFlags>(
     : [];
 
   const parsedConfig = {
-    contextDir,
+    entryContextDir,
     artifactDir,
     distDir,
     outputPath,
-    projectTitle,
-    projectAuthor,
-    themeIndex,
     rawEntries,
-    language,
+    themeIndex,
     toc,
     size,
     pressReady,
+    projectTitle,
+    projectAuthor,
+    language,
     verbose,
     timeout,
     loadMode,
