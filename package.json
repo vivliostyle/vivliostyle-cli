@@ -1,8 +1,22 @@
 {
   "name": "@vivliostyle/cli",
-  "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
   "version": "2.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
+  "license": "AGPL-3.0",
+  "repository": "https://github.com/vivliostyle/vivliostyle-cli.git",
   "author": "spring_raining <harusamex.com@gmail.com>",
+  "homepage": "https://github.com/vivliostyle/vivliostyle-cli",
+  "bugs": "https://github.com/vivliostyle/vivliostyle-cli/issues",
+  "main": "dist/index.js",
+  "bin": {
+    "vivliostyle": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">= 10"
+  },
   "scripts": {
     "build": "tsc && shx chmod +x dist/cli.js",
     "clean": "shx rm -rf dist tmp",
@@ -10,9 +24,16 @@
     "pretest": "yarn build",
     "test": "jest --coverage"
   },
+  "files": [
+    "broker",
+    "dist"
+  ],
+  "keywords": [
+    "vivliostyle"
+  ],
   "dependencies": {
     "@vivliostyle/core": "^2.1.0-pre.0",
-    "@vivliostyle/vfm": "^1.0.0-alpha.5",
+    "@vivliostyle/vfm": "^1.0.0-alpha.6",
     "chalk": "^4.1.0",
     "chokidar": "^3.4.0",
     "commander": "^5.1.0",
@@ -51,37 +72,17 @@
     "lint-staged": "^10.2.11",
     "prettier": "^2.0.5",
     "prettier-plugin-organize-imports": "^1.1.0",
+    "prettier-plugin-package": "^1.0.0",
     "pretty-quick": "^2.0.1",
     "shx": "^0.3.2",
     "ts-jest": "^26.1.1",
     "typescript": "^3.9.5"
   },
   "types": "dist/index.d.ts",
-  "main": "dist/index.js",
-  "bin": {
-    "vivliostyle": "dist/cli.js"
-  },
-  "files": [
-    "dist",
-    "broker"
-  ],
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged",
       "pre-push": "yarn test"
     }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": "https://github.com/vivliostyle/vivliostyle-cli.git",
-  "bugs": "https://github.com/vivliostyle/vivliostyle-cli/issues",
-  "homepage": "https://github.com/vivliostyle/vivliostyle-cli",
-  "keywords": [
-    "vivliostyle"
-  ],
-  "license": "AGPL-3.0",
-  "engines": {
-    "node": ">= 10"
   }
 }

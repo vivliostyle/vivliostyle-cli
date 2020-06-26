@@ -112,7 +112,10 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
             )
           : entry.theme.location
         : undefined;
-      const file = processMarkdown(entry.source.path, { stylesheet });
+      const file = processMarkdown(entry.source.path, {
+        stylesheet,
+        title: entry.title,
+      });
       fs.writeFileSync(entry.target.path, String(file));
     }
   }

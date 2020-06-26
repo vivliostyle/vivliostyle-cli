@@ -10,6 +10,7 @@ import util from 'util';
 export const debug = debugConstructor('vs-cli');
 
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
+
 export function startLogging(text?: string) {
   ora.start(text);
 }

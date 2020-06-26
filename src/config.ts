@@ -32,9 +32,9 @@ export interface ParsedEntry {
 export interface VivliostyleConfig {
   title?: string;
   author?: string;
-  theme: string; // undefined
+  theme?: string;
   entry: string | Entry | (string | Entry)[];
-  entryContext?: string;
+  entryContext?: string; // .
   size?: string;
   format?: 'pdf';
   pressReady?: boolean;

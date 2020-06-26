@@ -746,10 +746,10 @@
   resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.1.0-pre.0.tgz#74248f8509eeca21b27ae493db3cdca33444f375"
   integrity sha512-QkrhAtxXC4oB5wJlYi8dPxxkpGQSNu0EUdx3/HXnB1j3d4mjDlXVX+biGoDw8csTz64kwNm1l2FEjcCnw/ZCvw==
 
-"@vivliostyle/vfm@^1.0.0-alpha.5":
-  version "1.0.0-alpha.5"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.5.tgz#76dd97c4c5ff5e6780276542ff62d59cd196d647"
-  integrity sha512-dvEVrzDCGHo+wSBll3UcxFESDEry9NagWipLduRjNqxSvlQUY8HM4qxu4p1wkXgjMQ/oaKamBYKlGeY+z0BYZg==
+"@vivliostyle/vfm@^1.0.0-alpha.6":
+  version "1.0.0-alpha.6"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.6.tgz#8109cc32837045a49ada976a17c424d29b2e97db"
+  integrity sha512-nfoU6MgCDBEFfeeCP3uQysOKN4gOLRt374bibCFqJSIecZTZKVbTpJ8MXq8lsI6kV4CNdaEORXPIhq/9ixEm8w==
   dependencies:
     debug "^4.1.1"
     hast-util-is-element "^1.0.4"
@@ -3997,6 +3997,11 @@ prettier-plugin-organize-imports@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/prettier-plugin-organize-imports/-/prettier-plugin-organize-imports-1.1.0.tgz#92a4568c9952c7a2f266f607513405f3e108a070"
   integrity sha512-FqEbM+NA/8kDUCQIB+avdkWxJPvg86Shg1GeQsaE8OCi8BQ+TwyPKRdF/6JUZJX0V7VoevG7MVLhPq21fYIG3A==
+
+prettier-plugin-package@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-package/-/prettier-plugin-package-1.0.0.tgz#164a400f5b695246835b94c7e1b65ea253d67bdc"
+  integrity sha512-flbKuLB7ftrW2zQYJjb0mF6zY7R0jDrYatpr0BBNj04Eb+g1RLbquOQSJE1LffDZfzU03fwJQ74grqQjQjYa3Q==
 
 prettier@^2.0.5:
   version "2.0.5"
