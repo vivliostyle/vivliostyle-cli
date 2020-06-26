@@ -1,6 +1,6 @@
+import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 import fs from 'fs';
 import vfile, { VFile } from 'vfile';
-import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 
 export interface VSFile extends VFile {
   data: {

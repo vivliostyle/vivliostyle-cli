@@ -1,14 +1,14 @@
-import fs from 'fs';
-import path from 'path';
 import execa from 'execa';
 import fileType from 'file-type';
+import fs from 'fs';
+import path from 'path';
 import {
   PDFCatalog,
   PDFDict,
   PDFDocument,
+  PDFHexString,
   PDFName,
   PDFNumber,
-  PDFHexString,
 } from 'pdf-lib';
 
 const rootPath = path.resolve(__dirname, '..');

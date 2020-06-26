@@ -1,25 +1,24 @@
-import path from 'path';
-import program from 'commander';
-import puppeteer from 'puppeteer';
 import chokidar from 'chokidar';
-
+import program from 'commander';
+import path from 'path';
+import puppeteer from 'puppeteer';
+import { buildArtifacts } from '../builder';
+import {
+  CliFlags,
+  collectVivliostyleConfig,
+  getVivliostyleConfigPath,
+  mergeConfig,
+  validateTimeout,
+} from '../config';
 import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
 import {
   debug,
-  launchBrowser,
   gracefulError,
+  launchBrowser,
+  logSuccess,
   startLogging,
   stopLogging,
-  logSuccess,
 } from '../util';
-import {
-  getVivliostyleConfigPath,
-  collectVivliostyleConfig,
-  mergeConfig,
-  CliFlags,
-  validateTimeout,
-} from '../config';
-import { buildArtifacts } from '../builder';
 
 export interface PreviewCliFlags extends CliFlags {}
 

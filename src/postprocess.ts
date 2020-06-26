@@ -1,17 +1,16 @@
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 import {
-  PDFDocument,
-  PDFRef,
   PDFDict,
+  PDFDocument,
+  PDFHexString,
   PDFName,
   PDFNumber,
-  PDFHexString,
+  PDFRef,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
 import { v1 as uuid } from 'uuid';
-
 import { Meta, TOCItem } from './broker';
 
 export interface SaveOption {

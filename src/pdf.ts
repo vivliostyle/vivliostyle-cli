@@ -1,26 +1,25 @@
+import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
-import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
-import url from 'url';
 import terminalLink from 'terminal-link';
-
+import url from 'url';
 import { Meta, Payload, TOCItem } from './broker';
+import { MergedConfig, ParsedEntry } from './config';
 import { PostProcess } from './postprocess';
 import { getBrokerUrl, launchSourceAndBrokerServer } from './server';
 import {
-  statFile,
-  findEntryPointFile,
   debug,
+  findEntryPointFile,
   launchBrowser,
-  logUpdate,
   logError,
   logInfo,
   logSuccess,
+  logUpdate,
   startLogging,
+  statFile,
 } from './util';
-import { MergedConfig, ParsedEntry } from './config';
 
 export interface BuildPdfOptions extends MergedConfig {
   input: string;

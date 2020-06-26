@@ -1,14 +1,13 @@
-import path from 'path';
 import fs from 'fs';
-import process from 'process';
-import pkgUp from 'pkg-up';
-import resolvePkg from 'resolve-pkg';
-import puppeteer from 'puppeteer';
 import { JSDOM } from 'jsdom';
-
-import { debug } from './util';
+import path from 'path';
+import pkgUp from 'pkg-up';
+import process from 'process';
+import puppeteer from 'puppeteer';
+import resolvePkg from 'resolve-pkg';
 import { processMarkdown } from './markdown';
 import { LoadMode, PageSize } from './server';
+import { debug } from './util';
 
 export interface Entry {
   path: string;

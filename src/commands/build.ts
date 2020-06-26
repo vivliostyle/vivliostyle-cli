@@ -1,19 +1,18 @@
-import program from 'commander';
 import chalk from 'chalk';
-import path, { relative } from 'path';
-import process, { cwd } from 'process';
-
-import { gracefulError, log, startLogging, stopLogging } from '../util';
+import program from 'commander';
+import path from 'path';
+import process from 'process';
+import terminalLink from 'terminal-link';
+import { buildArtifacts, cleanup } from '../builder';
 import {
-  mergeConfig,
-  getVivliostyleConfigPath,
-  collectVivliostyleConfig,
   CliFlags,
+  collectVivliostyleConfig,
+  getVivliostyleConfigPath,
+  mergeConfig,
   validateTimeout,
 } from '../config';
-import { buildArtifacts, cleanup } from '../builder';
 import { buildPDF } from '../pdf';
-import terminalLink from 'terminal-link';
+import { gracefulError, log, startLogging, stopLogging } from '../util';
 
 export interface BuildCliFlags extends CliFlags {}
 

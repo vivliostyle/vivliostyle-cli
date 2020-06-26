@@ -1,9 +1,8 @@
-import path from 'path';
-import fs from 'fs';
-import program from 'commander';
-
-import { gracefulError, log } from '../util';
 import chalk from 'chalk';
+import program from 'commander';
+import fs from 'fs';
+import path from 'path';
+import { gracefulError, log } from '../util';
 
 export interface PreviewCliFlags {}
 

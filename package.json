@@ -50,6 +50,7 @@
     "jest": "^26.1.0",
     "lint-staged": "^10.2.11",
     "prettier": "^2.0.5",
+    "prettier-plugin-organize-imports": "^1.1.0",
     "pretty-quick": "^2.0.1",
     "shx": "^0.3.2",
     "ts-jest": "^26.1.1",

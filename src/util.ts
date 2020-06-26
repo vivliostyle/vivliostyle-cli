@@ -1,11 +1,11 @@
+import chalk from 'chalk';
+import debugConstructor from 'debug';
 import fs from 'fs';
+import oraConstructor from 'ora';
 import path from 'path';
-import util from 'util';
 import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
-import debugConstructor from 'debug';
-import chalk from 'chalk';
-import oraConstructor from 'ora';
+import util from 'util';
 
 export const debug = debugConstructor('vs-cli');
 

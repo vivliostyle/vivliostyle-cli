@@ -1,11 +1,10 @@
 import fs from 'fs';
-import url from 'url';
-import path from 'path';
 import http, { RequestListener } from 'http';
 import https from 'https';
+import path from 'path';
 import handler from 'serve-handler';
-
-import { findAvailablePort, debug } from './util';
+import url from 'url';
+import { debug, findAvailablePort } from './util';
 
 export type LoadMode = 'document' | 'book';
 export type PageSize = { format: string } | { width: string; height: string };
