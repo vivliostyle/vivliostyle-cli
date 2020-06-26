@@ -42,6 +42,8 @@ Put [vivliostyle.config.js](https://github.com/vivliostyle/vivliostyle-cli/issue
 vivliostyle build
 ```
 
+![build](https://raw.githubusercontent.com/vivliostyle/vivliostyle-cli/master/assets/build.gif)
+
 #### CLI options
 
 ```
