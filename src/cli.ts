@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 
 import program from 'commander';
+import fs from 'fs';
+import resolvePkg from 'resolve-pkg';
 
-const packageJSON = require('../package.json');
+const { version: cliVersion } = require('../package.json');
+const { version: coreVersion } = JSON.parse(
+  fs.readFileSync(resolvePkg('@vivliostyle/core')! + '/package.json', 'utf8'),
+);
+
+const version = `cli: ${cliVersion}
+core: ${coreVersion}`;
 
 program
   .name('vivliostyle')
-  .version(packageJSON.version, '-v, --version')
+  .version(version, '-v, --version')
   .command('init', 'create vivliostyle config', {
     executableFile: 'commands/init',
   })
