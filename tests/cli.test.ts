@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import execa from 'execa';
 import fileType from 'file-type';
-import readChunk from 'read-chunk';
 import {
   PDFCatalog,
   PDFDict,
@@ -60,9 +59,8 @@ it('generate pdf without errors', async () => {
   }
 
   // mimetype test
-  const buffer = readChunk.sync(outputPath, 0, fileType.minimumBytes);
-  const type = fileType(buffer)!;
-  expect(type.mime).toEqual('application/pdf');
+  const type = await fileType.fromFile(outputPath);
+  expect(type!.mime).toEqual('application/pdf');
 }, 20000);
 
 it('generate press-ready pdf without errors', async () => {
@@ -85,9 +83,8 @@ it('generate press-ready pdf without errors', async () => {
   }
 
   // mimetype test
-  const buffer = readChunk.sync(outputPath, 0, fileType.minimumBytes);
-  const type = fileType(buffer)!;
-  expect(type.mime).toEqual('application/pdf');
+  const type = await fileType.fromFile(outputPath);
+  expect(type!.mime).toEqual('application/pdf');
 }, 20000);
 
 it('generates a PDF with metadata', async () => {

@@ -1,4 +1,5 @@
-const { h, Component } = preact;
+import { h, Component, render } from 'preact';
+import { CoreViewer } from '@vivliostyle/core';
 
 function parseQuery(text) {
   var qs = text.slice(1).split('&');
@@ -428,7 +429,7 @@ class App extends Component {
       pageSizeHeight: query.height || '297mm',
       overrideDocumentStylesheets:
         !!query.format || !!(query.width && query.height),
-      loadMode: query.loadMode || 'document',
+      loadMode: query.loadMode || 'book',
     };
     console.log(`defaultSettings`, JSON.stringify(this.defaultSettings));
   }
@@ -525,11 +526,12 @@ class App extends Component {
 
   componentDidMount() {
     this.fetchPackageInfo();
-    window.coreViewer = new Vivliostyle.CoreViewer({
+    window.coreViewer = new CoreViewer({
       userAgentRootURL: '/node_modules/@vivliostyle/core/resources/',
       viewportElement: document.getElementById('out'),
       debug: false,
     });
+    console.log(window.coreViewer);
 
     window.coreViewer.addListener('readystatechange', (e) => {
       const vivliostyleState = window.coreViewer.readyState;
@@ -557,4 +559,4 @@ class App extends Component {
   }
 }
 
-preact.render(h(App), document.getElementById('ui'));
+render(h(App), document.getElementById('ui'));

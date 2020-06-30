@@ -1,4 +1,5 @@
 /dist
+/broker/dist
 /tmp
 *.pdf
 .vscode
