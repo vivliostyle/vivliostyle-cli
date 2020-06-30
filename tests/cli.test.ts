@@ -36,7 +36,7 @@ function vivliostyleCLI(args: string[]) {
 
 it('show version', async () => {
   const { stdout } = await vivliostyleCLI(['--version']);
-  expect(stdout).toEqual(packageJSON.version);
+  expect(stdout).toContain(packageJSON.version);
 });
 
 it('generate pdf without errors', async () => {
