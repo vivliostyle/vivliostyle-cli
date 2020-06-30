@@ -115,7 +115,8 @@ export function contextResolve(
 ): string | undefined {
   return loc && path.resolve(context, loc);
 }
-function normalizeEnry(e: string | Entry): Entry {
+
+function normalizeEntry(e: string | Entry): Entry {
   if (typeof e === 'object') {
     return e;
   }
@@ -123,21 +124,12 @@ function normalizeEnry(e: string | Entry): Entry {
 }
 
 // parse theme locator
-// 1. url {name: basename, location: url, type: 'url'}
-// 2. bare .css file {name: basename, location: absolutePath, path: '.', type: 'file'}
-// 3. package {name: pkg.name, location: pkgRoot, path: style, type: 'package'}
 export function parseTheme(
-  locator: string | null | undefined,
+  locator: string | undefined,
   contextDir: string,
 ): ParsedTheme | undefined {
-  if (typeof locator !== 'string') {
-    return locator === null
-      ? {
-          type: 'uri',
-          name: '',
-          location: '',
-        }
-      : undefined;
+  if (typeof locator !== 'string' || locator == '') {
+    return undefined;
   }
 
   // url
@@ -185,9 +177,9 @@ function parseStyleLocator(
   const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
 
   const maybeStyle =
-    packageJson?.vivliostyle?.theme?.style ||
-    packageJson.style ||
-    packageJson.main ||
+    packageJson?.vivliostyle?.theme?.style ??
+    packageJson.style ??
+    packageJson.main ??
     packageJson?.vivliostyle?.theme?.stylesheet; // TODO: remove theme.stylesheet
 
   if (!maybeStyle) {
@@ -209,7 +201,7 @@ function parsePageSize(size: string | number): PageSize {
     };
   } else {
     return {
-      format: width || 'Letter',
+      format: width ?? 'Letter',
     };
   }
 }
@@ -226,7 +218,7 @@ function parseFileMetadata(type: string, sourcePath: string) {
     const {
       window: { document },
     } = new JSDOM(fs.readFileSync(sourcePath));
-    title = document.querySelector('title')?.textContent || undefined;
+    title = document.querySelector('title')?.textContent ?? undefined;
     const link = document.querySelector<HTMLLinkElement>(
       'link[rel="stylesheet"]',
     );
@@ -262,37 +254,37 @@ export async function mergeConfig<T extends CliFlags>(
 
   debug('cliFlags', cliFlags);
 
-  const projectTitle = cliFlags.title || config?.title || pkgJson?.name;
+  const projectTitle = cliFlags.title ?? config?.title ?? pkgJson?.name;
   if (!projectTitle) {
     throw new Error('title not defined');
   }
-  const projectAuthor = cliFlags.author || config?.author || pkgJson?.author;
+  const projectAuthor = cliFlags.author ?? config?.author ?? pkgJson?.author;
 
   const entryContextDir = path.resolve(
     cliFlags.input
       ? '.'
-      : cliFlags.entryContext ||
-          contextResolve(context, config?.entryContext) ||
+      : cliFlags.entryContext ??
+          contextResolve(context, config?.entryContext) ??
           '.',
   );
   const distDir = path.resolve(
-    contextResolve(context, config?.distDir) || '.vivliostyle',
+    contextResolve(context, config?.distDir) ?? '.vivliostyle',
   );
   const artifactDir = path.join(distDir, 'artifacts');
 
-  const outDir = cliFlags.outDir || contextResolve(context, config?.outDir);
-  const outFile = cliFlags.outFile || contextResolve(context, config?.outFile);
+  const outDir = cliFlags.outDir ?? contextResolve(context, config?.outDir);
+  const outFile = cliFlags.outFile ?? contextResolve(context, config?.outFile);
 
   if (outDir && outFile) {
     throw new Error('outDir and outFile cannot be combined.');
   }
   const outputPath = outDir
     ? path.resolve(outDir, `${projectTitle}.pdf`)
-    : outFile || path.resolve('./output.pdf');
+    : outFile ?? path.resolve('./output.pdf');
   debug('outputPath', outputPath);
 
-  const language = config?.language || 'en';
-  const sizeFlag = cliFlags.size || config?.size;
+  const language = config?.language ?? 'en';
+  const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const toc =
     typeof config?.toc === 'string'
@@ -300,17 +292,17 @@ export async function mergeConfig<T extends CliFlags>(
       : config?.toc !== undefined
       ? config.toc
       : true;
-  const pressReady = cliFlags.pressReady || config?.pressReady || false;
-  const verbose = cliFlags.verbose || false;
-  const timeout = cliFlags.timeout || config?.timeout || DEFAULT_TIMEOUT;
-  const sandbox = cliFlags.sandbox || true;
-  const loadMode = cliFlags.loadMode || 'book';
+  const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
+  const verbose = cliFlags.verbose ?? false;
+  const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
+  const sandbox = cliFlags.sandbox ?? true;
+  const loadMode = cliFlags.loadMode ?? 'book';
   const executableChromium =
-    cliFlags.executableChromium || puppeteer.executablePath();
+    cliFlags.executableChromium ?? puppeteer.executablePath();
 
   const themeIndex: ParsedTheme[] = [];
   const rootTheme =
-    parseTheme(cliFlags.theme, process.cwd()) ||
+    parseTheme(cliFlags.theme, process.cwd()) ??
     parseTheme(config?.theme, context);
   if (rootTheme) {
     themeIndex.push(rootTheme);
@@ -328,9 +320,9 @@ export async function mergeConfig<T extends CliFlags>(
 
     const metadata = parseFileMetadata(type, sourcePath);
 
-    const title = entry.title || metadata.title || projectTitle;
+    const title = entry.title ?? metadata.title ?? projectTitle;
     const theme =
-      parseTheme(entry.theme, sourceDir) || metadata.theme || themeIndex[0];
+      parseTheme(entry.theme, sourceDir) ?? metadata.theme ?? themeIndex[0];
 
     if (theme && themeIndex.every((t) => t.location !== theme.location)) {
       themeIndex.push(theme);
@@ -354,7 +346,7 @@ export async function mergeConfig<T extends CliFlags>(
       ? [config.entry]
       : []
     : [];
-  const entries: ParsedEntry[] = rawEntries.map(normalizeEnry).map(parseEntry);
+  const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
 
   const parsedConfig = {
     entryContextDir,
