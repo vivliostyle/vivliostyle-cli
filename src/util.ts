@@ -58,6 +58,14 @@ If you think this is a bug, please report at https://github.com/vivliostyle/vivl
   process.exit(1);
 }
 
+export function readJSON(path: string) {
+  try {
+    return JSON.parse(fs.readFileSync(path, 'utf8'));
+  } catch (err) {
+    return undefined;
+  }
+}
+
 export async function statFile(filePath: string) {
   try {
     return util.promisify(fs.stat)(filePath);

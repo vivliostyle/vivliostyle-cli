@@ -2,13 +2,11 @@
 
 import program from 'commander';
 import fs from 'fs';
-import path from 'path';
+import { join } from 'path';
 import resolvePkg from 'resolve-pkg';
+import { readJSON } from './util';
 
-const { version: cliVersion } = require(path.join(
-  __dirname,
-  '../package.json',
-));
+const { version: cliVersion } = readJSON(join(__dirname, '../package.json'));
 const { version: coreVersion } = JSON.parse(
   fs.readFileSync(
     resolvePkg('@vivliostyle/core', { cwd: __dirname })! + '/package.json',

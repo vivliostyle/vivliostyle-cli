@@ -6,11 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title></title>
 
-    <script src="/node_modules/@vivliostyle/core/resources/mathjax-config.js"></script>
+    <script>
+      window.MathJax = {
+        showProcessingMessages: false,
+        messageStyle: 'none',
+        skipStartupTypeset: true,
+        CommonHTML: {
+          scale: 90,
+          linebreaks: {
+            automatic: true,
+          },
+          styles: {
+            '.MJXc-display': {
+              margin: '0',
+            },
+          },
+        },
+        'fast-preview': {
+          disabled: true,
+        },
+        AuthorInit: function () {
+          MathJax.Hub.processSectionDelay = 0;
+        },
+      };
+    </script>
     <script src="/node_modules/mathjax/es5/latest.js"></script>
-
-    <script src="/node_modules/preact/dist/preact.umd.js"></script>
-    <script src="/node_modules/@vivliostyle/core/lib/vivliostyle.js"></script>
     <link
       rel="stylesheet"
       href="/node_modules/@vivliostyle/core/resources/vivliostyle-viewport.css"
@@ -30,6 +50,6 @@
     <div id="out" data-vivliostyle-viewer-viewport="true"></div>
     <div id="ui"></div>
 
-    <script type="text/javascript" src="main.js"></script>
+    <script type="text/javascript" src="dist/bundle.js"></script>
   </body>
 </html>

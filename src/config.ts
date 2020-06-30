@@ -7,7 +7,7 @@ import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import { processMarkdown } from './markdown';
 import { LoadMode, PageSize } from './server';
-import { debug } from './util';
+import { debug, readJSON } from './util';
 
 export interface Entry {
   path: string;
@@ -250,7 +250,7 @@ export async function mergeConfig<T extends CliFlags>(
   context: string,
 ): Promise<MergedConfig> {
   const pkgJsonPath = await pkgUp();
-  const pkgJson = pkgJsonPath ? require(pkgJsonPath) : undefined;
+  const pkgJson = pkgJsonPath ? readJSON(pkgJsonPath) : undefined;
 
   debug('cliFlags', cliFlags);
 
