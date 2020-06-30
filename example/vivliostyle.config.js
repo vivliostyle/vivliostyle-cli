@@ -11,9 +11,9 @@ module.exports = {
     'introduction.md',
     {
       path: 'fragments/chapter1.md',
-      theme: null,
     },
     'gingatetsudo.md',
+    'fragments/chapter2.md',
     'alice.md',
   ],
   // toc: './toc.html',
