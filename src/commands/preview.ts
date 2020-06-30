@@ -26,7 +26,6 @@ program
   .name('vivliostyle preview')
   .description('launch preview server')
   .arguments('<input>')
-  .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
   .option(
     '-o, --out-file <output file>',

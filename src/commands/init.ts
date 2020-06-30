@@ -4,16 +4,16 @@ import fs from 'fs';
 import path from 'path';
 import { gracefulError, log } from '../util';
 
-export interface PreviewCliFlags {}
+export interface InitCliFlags {}
 
 program
   .name('vivliostyle init')
   .description('create vivliostyle config file')
   .parse(process.argv);
 
-preview({}).catch(gracefulError);
+init({}).catch(gracefulError);
 
-export default async function preview(cliFlags: PreviewCliFlags) {
+export default async function init(_cliFlags: InitCliFlags) {
   log(`Generated ${chalk.cyan('vivliostyle.config.js')}`);
 
   const vivliostyleConfigPath = path.join(
@@ -21,9 +21,9 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     'vivliostyle.config.js',
   );
   const vivliostyleConfig = `module.exports = {
-  title: 'Ginga Book', // populated into \`manifest.json\`, default to \`title\` of the first entry or \`name\` in \`package.json\`.
-  author: 'uetchy', // default to \`author\` in \`package.json\` or undefined
-  language: 'ja', // default to \`en\`,
+  title: 'Principia', // populated into \`manifest.json\`, default to \`title\` of the first entry or \`name\` in \`package.json\`.
+  author: 'Isaac Newton', // default to \`author\` in \`package.json\` or undefined
+  language: 'la', // default to \`en\`,
   size: 'A4',
   theme: '@vivliostyle/theme-bunko', // .css or local dir or npm package. default to undefined
   entryContext: './manuscripts', // default to '.' (relative to \`vivliostyle.config.js\`)
