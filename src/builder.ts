@@ -91,8 +91,8 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
     );
   }
 
-  debug(entries);
-  debug(themeIndex);
+  debug('entries', entries);
+  debug('themeIndex', themeIndex);
 
   // populate entries
   shelljs.mkdir('-p', artifactDir);
@@ -104,14 +104,29 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
       shelljs.cp(entry.source.path, entry.target.path);
     } else {
       // compile markdown
-      const style = entry.theme
-        ? entry.theme.type === 'path'
-          ? path.relative(
-              entry.target.dir,
-              path.join(distDir, entry.theme.name),
-            )
-          : entry.theme.location
-        : undefined;
+      let style;
+      switch (entry?.theme?.type) {
+        case 'uri':
+          style = entry.theme.location;
+          break;
+        case 'file':
+          style = path.relative(
+            entry.target.dir,
+            path.join(distDir, 'themes', entry.theme.name),
+          );
+          break;
+        case 'package':
+          style = path.relative(
+            entry.target.dir,
+            path.join(
+              distDir,
+              'themes',
+              'packages',
+              entry.theme.name,
+              entry.theme.style,
+            ),
+          );
+      }
       const file = processMarkdown(entry.source.path, {
         style,
         title: entry.title,
@@ -121,9 +136,18 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
   }
 
   // copy theme
+  const themeRoot = path.join(distDir, 'themes');
+  shelljs.mkdir('-p', path.join(themeRoot, 'packages'));
   for (const theme of themeIndex) {
-    if (theme.type === 'path') {
-      shelljs.cp(theme.location, path.join(distDir, theme.name));
+    switch (theme.type) {
+      case 'file':
+        shelljs.cp(theme.location, themeRoot);
+        break;
+      case 'package':
+        const target = path.join(themeRoot, 'packages', theme.name);
+        const targetDir = path.dirname(target);
+        shelljs.mkdir('-p', targetDir);
+        shelljs.cp('-r', theme.location, target);
     }
   }
 

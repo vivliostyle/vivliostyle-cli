@@ -15,10 +15,25 @@ export interface Entry {
   theme?: string;
 }
 
-export interface ParsedTheme {
-  type: 'path' | 'uri';
+export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
+
+export interface UriTheme {
+  type: 'uri';
   name: string;
   location: string;
+}
+
+export interface FileTheme {
+  type: 'file';
+  name: string;
+  location: string;
+}
+
+export interface PackageTheme {
+  type: 'package';
+  name: string;
+  location: string;
+  style: string;
 }
 
 export interface ParsedEntry {
@@ -107,57 +122,80 @@ function normalizeEnry(e: string | Entry): Entry {
   return { path: e };
 }
 
-export function parseTheme(themeString: unknown): ParsedTheme | undefined {
-  if (typeof themeString !== 'string') {
-    return themeString === null
-      ? { type: 'uri', name: '', location: '' }
+// parse theme locator
+// 1. url {name: basename, location: url, type: 'url'}
+// 2. bare .css file {name: basename, location: absolutePath, path: '.', type: 'file'}
+// 3. package {name: pkg.name, location: pkgRoot, path: style, type: 'package'}
+export function parseTheme(
+  locator: string | null | undefined,
+  contextDir: string,
+): ParsedTheme | undefined {
+  if (typeof locator !== 'string') {
+    return locator === null
+      ? {
+          type: 'uri',
+          name: '',
+          location: '',
+        }
       : undefined;
   }
 
-  const isCSSFile = themeString.endsWith('.css');
-
-  // handle url
-  if (/^https?:\/\//.test(themeString)) {
+  // url
+  if (/^https?:\/\//.test(locator)) {
     return {
       type: 'uri',
-      name: path.basename(themeString),
-      location: themeString,
+      name: path.basename(locator),
+      location: locator,
     };
   }
 
-  const pkgRoot = resolvePkg(themeString, { cwd: process.cwd() });
-  if (pkgRoot && !isCSSFile) {
-    debug('pkgRoot', pkgRoot);
-    // node_modules & local package
-    const packageJson = JSON.parse(
-      fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'),
-    );
+  const stylePath = path.resolve(contextDir, locator);
 
-    const maybeCSS =
-      packageJson?.vivliostyle?.theme?.style ||
-      packageJson?.vivliostyle?.theme?.stylesheet ||
-      packageJson.style ||
-      packageJson.main;
-
-    debug('maybeCSS', maybeCSS);
-
-    if (!maybeCSS || !isCSSFile) {
-      throw new Error('invalid css file: ' + maybeCSS);
+  // node_modules, local pkg
+  const pkgRootDir = resolvePkg(locator, { cwd: contextDir });
+  if (!pkgRootDir?.endsWith('.css')) {
+    const style = parseStyleLocator(pkgRootDir ?? stylePath, locator);
+    if (style) {
+      return {
+        type: 'package',
+        name: style.name,
+        location: pkgRootDir ?? stylePath,
+        style: style.maybeStyle,
+      };
     }
-
-    return {
-      type: 'path',
-      name: `${packageJson.name.replace(/\//g, '-')}.css`,
-      location: path.resolve(pkgRoot, maybeCSS),
-    };
   }
 
-  // return bare .css path
+  // bare .css file
   return {
-    type: 'path',
-    name: path.basename(themeString),
-    location: path.resolve(themeString),
+    type: 'file',
+    name: path.basename(locator),
+    location: stylePath,
   };
+}
+
+function parseStyleLocator(
+  pkgRootDir: string,
+  locator: string,
+): { name: string; maybeStyle: string } | undefined {
+  const pkgJsonPath = path.join(pkgRootDir, 'package.json');
+  if (!fs.existsSync(pkgJsonPath)) {
+    return undefined;
+  }
+
+  const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+
+  const maybeStyle =
+    packageJson?.vivliostyle?.theme?.style ||
+    packageJson.style ||
+    packageJson.main ||
+    packageJson?.vivliostyle?.theme?.stylesheet; // TODO: remove theme.stylesheet
+
+  if (!maybeStyle) {
+    throw new Error(
+      `invalid style file: ${maybeStyle} while parsing ${locator}`,
+    );
+  }
+  return { name: packageJson.name, maybeStyle };
 }
 
 function parsePageSize(size: string | number): PageSize {
@@ -177,12 +215,13 @@ function parsePageSize(size: string | number): PageSize {
 }
 
 function parseFileMetadata(type: string, sourcePath: string) {
+  const sourceDir = path.dirname(sourcePath);
   let title: string | undefined;
   let theme: ParsedTheme | undefined;
   if (type === 'markdown') {
     const file = processMarkdown(sourcePath);
     title = file.data.title;
-    theme = parseTheme(file.data.theme);
+    theme = parseTheme(file.data.theme, sourceDir);
   } else {
     const {
       window: { document },
@@ -191,7 +230,7 @@ function parseFileMetadata(type: string, sourcePath: string) {
     const link = document.querySelector<HTMLLinkElement>(
       'link[rel="stylesheet"]',
     );
-    theme = parseTheme(link?.href);
+    theme = parseTheme(link?.href, sourceDir);
   }
   return { title, theme };
 }
@@ -270,8 +309,9 @@ export async function mergeConfig<T extends CliFlags>(
     cliFlags.executableChromium || puppeteer.executablePath();
 
   const themeIndex: ParsedTheme[] = [];
-  const projectTheme = cliFlags.theme || config?.theme;
-  const rootTheme = projectTheme ? parseTheme(projectTheme) : undefined;
+  const rootTheme =
+    parseTheme(cliFlags.theme, process.cwd()) ||
+    parseTheme(config?.theme, context);
   if (rootTheme) {
     themeIndex.push(rootTheme);
   }
@@ -289,9 +329,10 @@ export async function mergeConfig<T extends CliFlags>(
     const metadata = parseFileMetadata(type, sourcePath);
 
     const title = entry.title || metadata.title || projectTitle;
-    const theme = parseTheme(entry.theme) || metadata.theme || themeIndex[0];
+    const theme =
+      parseTheme(entry.theme, sourceDir) || metadata.theme || themeIndex[0];
 
-    if (theme && themeIndex.every((t) => t.name !== theme.name)) {
+    if (theme && themeIndex.every((t) => t.location !== theme.location)) {
       themeIndex.push(theme);
     }
 
@@ -335,7 +376,7 @@ export async function mergeConfig<T extends CliFlags>(
     executableChromium,
   };
 
-  debug(parsedConfig);
+  debug('parsedConfig', parsedConfig);
 
   return parsedConfig;
 }

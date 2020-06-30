@@ -131,9 +131,8 @@ export async function buildPDF({
 
     if (300 > response.status() && 200 <= response.status()) return;
 
-    // NOTE: suppress unwanted 404 message
-    // logError(chalk.red(`${response.status()}`, response.url()));
-    debug(chalk.red(`${response.status()}`, response.url()));
+    logError(chalk.red(`${response.status()}`, response.url()));
+    // debug(chalk.red(`${response.status()}`, response.url()));
   });
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
