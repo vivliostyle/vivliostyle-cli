@@ -774,10 +774,10 @@
   dependencies:
     "@types/node" "*"
 
-"@vivliostyle/core@^2.1.0-pre.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.1.0.tgz#df196a93e18f0b4cab4617b9fe849448a2dfd2e3"
-  integrity sha512-4HTWOVgW4trp/Z3BABQ0VPwDf2uwIbFH7tpbb9T4tjwyPz3bPCt2NY/xMt+KAd5hqAjmylGsPQ7DP3Iexc/Wvg==
+"@vivliostyle/core@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.1.1.tgz#d0be87d6d62e8d48ccfb6773d67d3b6b898af5a0"
+  integrity sha512-Qdbinr6hT/D3wBB+MaaTUeh/XFH8XEspO8i3Jb8YuJAKKsXRplyYJMb55mJcfBWecbaS7a+R1T20+/UAnEqn/g==
   dependencies:
     fast-diff "^1.2.0"
 
