@@ -141,7 +141,6 @@ export function parseTheme(themeString: unknown): ParsedTheme | undefined {
 
   const maybeCSS =
     packageJson?.vivliostyle?.theme?.style ||
-    packageJson?.vivliostyle?.theme?.stylesheet ||
     packageJson.style ||
     packageJson.main;
 

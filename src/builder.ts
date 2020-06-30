@@ -104,7 +104,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
       shelljs.cp(entry.source.path, entry.target.path);
     } else {
       // compile markdown
-      const stylesheet = entry.theme
+      const style = entry.theme
         ? entry.theme.type === 'path'
           ? path.relative(
               entry.target.dir,
@@ -113,7 +113,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
           : entry.theme.location
         : undefined;
       const file = processMarkdown(entry.source.path, {
-        stylesheet,
+        style,
         title: entry.title,
       });
       fs.writeFileSync(entry.target.path, String(file));

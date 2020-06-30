@@ -599,10 +599,10 @@
     "@types/istanbul-lib-coverage" "*"
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@^26.0.2":
-  version "26.0.2"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.2.tgz#536dbf34e8dcb41ba4f5b3eeb2cad4e6d28a39d9"
-  integrity sha512-rJB5DZm6q6kILGvQVxMRXOteoMjvA10UlGDf7+hM6pcMiWQiTgxaPXKC+kYCTAdBe9y33O+n3WZ8dzvBKOTSmA==
+"@types/jest@^26.0.3":
+  version "26.0.3"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.3.tgz#79534e0e94857171c0edc596db0ebe7cb7863251"
+  integrity sha512-v89ga1clpVL/Y1+YI0eIu1VMW+KU7Xl8PhylVtDKVWaSUHBHYPLXMQGBdrpHewaKoTvlXkksbYqPgz8b4cmRZg==
   dependencies:
     jest-diff "^25.2.1"
     pretty-format "^25.2.1"
@@ -668,10 +668,10 @@
   resolved "https://registry.yarnpkg.com/@types/prettier/-/prettier-2.0.1.tgz#b6e98083f13faa1e5231bfa3bdb1b0feff536b6d"
   integrity sha512-boy4xPNEtiw6N3abRhBi/e7hNvy3Tt8E9ZRAQrwAGzoCGZS/1wjo9KY7JHhnfnEsG5wSjDbymCozUM9a3ea7OQ==
 
-"@types/puppeteer@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@types/puppeteer/-/puppeteer-3.0.0.tgz#24cdcc131e319477608d893f0017e08befd70423"
-  integrity sha512-59+fkfHHXHzX5rgoXIMnZyzum7ZLx/Wc3fhsOduFThpTpKbzzdBHMZsrkKGLunimB4Ds/tI5lXTRLALK8Mmnhg==
+"@types/puppeteer@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/puppeteer/-/puppeteer-3.0.1.tgz#053ec20facc162b25a64785affccaa3e5817c607"
+  integrity sha512-t03eNKCvWJXhQ8wkc5C6GYuSqMEdKLOX0GLMGtks25YZr38wKZlKTwGM/BoAPVtdysX7Bb9tdwrDS1+NrW3RRA==
   dependencies:
     "@types/node" "*"
 
@@ -746,12 +746,13 @@
   resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.1.0-pre.0.tgz#74248f8509eeca21b27ae493db3cdca33444f375"
   integrity sha512-QkrhAtxXC4oB5wJlYi8dPxxkpGQSNu0EUdx3/HXnB1j3d4mjDlXVX+biGoDw8csTz64kwNm1l2FEjcCnw/ZCvw==
 
-"@vivliostyle/vfm@^1.0.0-alpha.6":
-  version "1.0.0-alpha.6"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.6.tgz#8109cc32837045a49ada976a17c424d29b2e97db"
-  integrity sha512-nfoU6MgCDBEFfeeCP3uQysOKN4gOLRt374bibCFqJSIecZTZKVbTpJ8MXq8lsI6kV4CNdaEORXPIhq/9ixEm8w==
+"@vivliostyle/vfm@^1.0.0-alpha.8":
+  version "1.0.0-alpha.8"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.8.tgz#06c4c5c7f0802294dee7d4d61ec3e9f0c869ac69"
+  integrity sha512-jvME5EVm1gfqjsx+fPtU8ewRkNJYzkJw4m4UOhJixhWrQiDjYaDjGv5jDtqmR49KDIriB6xVROT90ZQ+gs0IhA==
   dependencies:
     debug "^4.1.1"
+    hast-util-find-and-replace "^3.0.0"
     hast-util-is-element "^1.0.4"
     hastscript "^5.1.2"
     js-yaml "^3.14.0"
@@ -2167,6 +2168,15 @@ hast-to-hyperscript@^7.0.0:
     style-to-object "^0.2.1"
     unist-util-is "^3.0.0"
     web-namespaces "^1.1.2"
+
+hast-util-find-and-replace@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/hast-util-find-and-replace/-/hast-util-find-and-replace-3.0.0.tgz#04422e781be807661768f4796332a3f17cdd987e"
+  integrity sha512-7LBMKYj4BbqKlrktm/ikU/iNFvdQfgqTxmjwiXHoDSoKNcuFj5OXX4/tV42nSTGhK1BhgafcymW6jVuPNhxJvQ==
+  dependencies:
+    escape-string-regexp "^2.0.0"
+    hast-util-is-element "^1.0.0"
+    unist-util-visit-parents "^3.0.0"
 
 hast-util-from-dom@^2.0.0:
   version "2.0.5"
@@ -3892,10 +3902,10 @@ path-type@^4.0.0:
   resolved "https://registry.yarnpkg.com/path-type/-/path-type-4.0.0.tgz#84ed01c0a7ba380afe09d90a8c180dcd9d03043b"
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
 
-pdf-lib@^1.8.0:
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/pdf-lib/-/pdf-lib-1.8.0.tgz#2fe74b6d5ab1ed4df990afcea2fc5a145c4d61ea"
-  integrity sha512-3D2FExYcr0Egdk4Uy5WxojkNLmxYDj/VRt/Lxu9qjRHD6m3G/YiyjA9aRFHAahsXDf8uI0R4cTZ/CgwR8P6yfw==
+pdf-lib@^1.9.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/pdf-lib/-/pdf-lib-1.9.0.tgz#315fdf6247553e85386fa92b9fefbded7dd53d85"
+  integrity sha512-CO0vkvnkqLGY9vC4cosHcoOR7PMsFC4Dkf29sQm5J894sphy9ZxO/vbccZfQcBqTROAp+aY7TD9bh1T1EY/52Q==
   dependencies:
     "@pdf-lib/standard-fonts" "^0.0.4"
     "@pdf-lib/upng" "^1.0.1"
