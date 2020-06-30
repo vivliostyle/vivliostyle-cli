@@ -2,11 +2,18 @@
 
 import program from 'commander';
 import fs from 'fs';
+import path from 'path';
 import resolvePkg from 'resolve-pkg';
 
-const { version: cliVersion } = require('../package.json');
+const { version: cliVersion } = require(path.join(
+  __dirname,
+  '../package.json',
+));
 const { version: coreVersion } = JSON.parse(
-  fs.readFileSync(resolvePkg('@vivliostyle/core')! + '/package.json', 'utf8'),
+  fs.readFileSync(
+    resolvePkg('@vivliostyle/core', { cwd: __dirname })! + '/package.json',
+    'utf8',
+  ),
 );
 
 const version = `cli: ${cliVersion}
