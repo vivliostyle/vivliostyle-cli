@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs';
+import globby from 'globby';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
 import path from 'path';
@@ -71,7 +72,7 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
   return toHTML(toc);
 }
 
-export function buildArtifacts({
+export async function buildArtifacts({
   entryContextDir,
   artifactDir,
   projectTitle,
@@ -149,6 +150,22 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
         shelljs.mkdir('-p', targetDir);
         shelljs.cp('-r', theme.location, target);
     }
+  }
+
+  // copy image assets
+  const assets = await globby(entryContextDir, {
+    caseSensitiveMatch: false,
+    expandDirectories: {
+      extensions: ['png', 'jpg', 'jpeg', 'svg', 'gif'],
+    },
+  });
+  for (const asset of assets) {
+    const target = path.join(
+      artifactDir,
+      path.relative(entryContextDir, asset),
+    );
+    shelljs.mkdir('-p', path.dirname(target));
+    shelljs.cp(asset, target);
   }
 
   // generate manifest

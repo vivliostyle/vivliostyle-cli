@@ -94,7 +94,7 @@ export default async function build(cliFlags: BuildCliFlags) {
 
   // build artifacts
   cleanup(config.distDir);
-  const { manifestPath } = buildArtifacts(config);
+  const { manifestPath } = await buildArtifacts(config);
 
   // generate PDF
   const output = await buildPDF({

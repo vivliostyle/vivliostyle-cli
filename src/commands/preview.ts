@@ -100,7 +100,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
-  const { manifestPath } = buildArtifacts(config);
+  const { manifestPath } = await buildArtifacts(config);
 
   const [source, broker] = await launchSourceAndBrokerServer(config.distDir);
 
