@@ -9,7 +9,7 @@ import {
   collectVivliostyleConfig,
   getVivliostyleConfigPath,
   mergeConfig,
-  validateTimeout,
+  validateTimeoutFlag,
 } from '../config';
 import { buildPDF } from '../pdf';
 import { gracefulError, log, startLogging, stopLogging } from '../util';
@@ -46,7 +46,7 @@ program
   .option(
     '--timeout <seconds>',
     `timeout limit for waiting Vivliostyle process (default: 60s)`,
-    validateTimeout,
+    validateTimeoutFlag,
   )
   .option(
     '--force-document-mode',

@@ -88,11 +88,10 @@ export interface MergedConfig {
   executableChromium: string;
 }
 
-const runningVivliostyleTimeout = 60 * 1000;
-export function validateTimeout(val: string) {
-  return Number.isFinite(+val) && +val > 0
-    ? +val * 1000
-    : runningVivliostyleTimeout;
+const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+
+export function validateTimeoutFlag(val: string) {
+  return Number.isFinite(+val) && +val > 0 ? +val * 1000 : DEFAULT_TIMEOUT;
 }
 
 export function contextResolve(
@@ -115,6 +114,8 @@ export function parseTheme(themeString: unknown): ParsedTheme | undefined {
       : undefined;
   }
 
+  const isCSSFile = themeString.endsWith('.css');
+
   // handle url
   if (/^https?:\/\//.test(themeString)) {
     return {
@@ -125,33 +126,37 @@ export function parseTheme(themeString: unknown): ParsedTheme | undefined {
   }
 
   const pkgRoot = resolvePkg(themeString, { cwd: process.cwd() });
-  if (!pkgRoot) {
-    throw new Error('package not found: ' + themeString);
+  if (pkgRoot && !isCSSFile) {
+    debug('pkgRoot', pkgRoot);
+    // node_modules & local package
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'),
+    );
+
+    const maybeCSS =
+      packageJson?.vivliostyle?.theme?.style ||
+      packageJson?.vivliostyle?.theme?.stylesheet ||
+      packageJson.style ||
+      packageJson.main;
+
+    debug('maybeCSS', maybeCSS);
+
+    if (!maybeCSS || !isCSSFile) {
+      throw new Error('invalid css file: ' + maybeCSS);
+    }
+
+    return {
+      type: 'path',
+      name: `${packageJson.name.replace(/\//g, '-')}.css`,
+      location: path.resolve(pkgRoot, maybeCSS),
+    };
   }
 
   // return bare .css path
-  if (pkgRoot.endsWith('.css')) {
-    return { type: 'path', name: path.basename(pkgRoot), location: pkgRoot };
-  }
-
-  // node_modules & local path
-  const packageJson = JSON.parse(
-    fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'),
-  );
-
-  const maybeCSS =
-    packageJson?.vivliostyle?.theme?.style ||
-    packageJson.style ||
-    packageJson.main;
-
-  if (!maybeCSS || !maybeCSS.endsWith('.css')) {
-    throw new Error('invalid css file: ' + maybeCSS);
-  }
-
   return {
     type: 'path',
-    name: `${packageJson.name.replace(/\//g, '-')}.css`,
-    location: path.resolve(pkgRoot, maybeCSS),
+    name: path.basename(themeString),
+    location: path.resolve(themeString),
   };
 }
 
@@ -216,7 +221,7 @@ export async function mergeConfig<T extends CliFlags>(
   const pkgJsonPath = await pkgUp();
   const pkgJson = pkgJsonPath ? require(pkgJsonPath) : undefined;
 
-  // TODO: use dirname of cliFlags.input if it was given
+  debug('cliFlags', cliFlags);
 
   const projectTitle = cliFlags.title || config?.title || pkgJson?.name;
   if (!projectTitle) {
@@ -258,7 +263,7 @@ export async function mergeConfig<T extends CliFlags>(
       : true;
   const pressReady = cliFlags.pressReady || config?.pressReady || false;
   const verbose = cliFlags.verbose || false;
-  const timeout = cliFlags.timeout || config?.timeout || 3000;
+  const timeout = cliFlags.timeout || config?.timeout || DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox || true;
   const loadMode = cliFlags.loadMode || 'book';
   const executableChromium =

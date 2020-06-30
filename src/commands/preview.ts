@@ -8,7 +8,7 @@ import {
   collectVivliostyleConfig,
   getVivliostyleConfigPath,
   mergeConfig,
-  validateTimeout,
+  validateTimeoutFlag,
 } from '../config';
 import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
 import {
@@ -52,7 +52,7 @@ program
   .option(
     '--timeout <seconds>',
     `timeout limit for waiting Vivliostyle process (default: 60s)`,
-    validateTimeout,
+    validateTimeoutFlag,
   )
   .option(
     '--force-document-mode',
