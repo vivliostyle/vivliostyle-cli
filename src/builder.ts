@@ -18,21 +18,35 @@ export interface ManifestOption {
   toc?: boolean | string;
 }
 
+export interface ManifestEntry {
+  href: string;
+  type: string;
+  title?: string;
+  rel?: string;
+}
+
 export function cleanup(location: string) {
   shelljs.rm('-rf', location);
 }
 
 // example: https://github.com/readium/webpub-manifest/blob/master/examples/MobyDick/manifest.json
 export function generateManifest(outputPath: string, options: ManifestOption) {
-  const resources = [];
+  const entries: ManifestEntry[] = options.entries.map((entry) => ({
+    href: entry.path,
+    type: 'text/html',
+    title: entry.title,
+  }));
+  const resources: ManifestEntry[] = [];
+
   if (options.toc) {
-    resources.push({
+    entries.push({
       href: 'toc.html',
       rel: 'contents',
       type: 'text/html',
       title: 'Table of Contents',
     });
   }
+
   const manifest = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
     metadata: {
@@ -43,11 +57,7 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
       modified: options.modified,
     },
     links: [],
-    readingOrder: options.entries.map((entry) => ({
-      href: entry.path,
-      type: 'text/html',
-      title: entry.title,
-    })),
+    readingOrder: entries,
     resources,
   };
 
@@ -67,6 +77,15 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
   );
   const toc = h(
     'html',
+    h(
+      'head',
+      h('title', 'Table of Contents'),
+      h('link', {
+        href: 'manifest.json',
+        rel: 'manifest',
+        type: 'application/webpub+json',
+      }),
+    ),
     h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),
   );
   return toHTML(toc);

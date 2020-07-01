@@ -10,7 +10,7 @@
     "clean": "shx rm -rf dist tmp broker/dist",
     "dev": "run-p dev:*",
     "dev:broker": "nodemon -w broker -i broker/dist --exec 'esbuild --bundle --outfile=broker/dist/bundle.js broker/main.js'",
-    "dev:cli": "tsc -w",
+    "dev:cli": "tsc -w --preserveWatchOutput",
     "example": "yarn --cwd example build",
     "pretest": "yarn build",
     "test": "jest --coverage"
