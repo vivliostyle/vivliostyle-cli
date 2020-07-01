@@ -35,7 +35,9 @@ program
   .option('-t, --theme <theme>', 'theme path or package name')
   .option(
     '-s, --size <size>',
-    `output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')`,
+    `output pdf size
+preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+custom(ex): 182mm,257mm 8.5in,11in`,
   )
   .option('--title <title>', 'title')
   .option('--author <author>', 'author')
