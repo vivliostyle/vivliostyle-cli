@@ -132,6 +132,7 @@ export async function buildPDF({
     if (300 > response.status() && 200 <= response.status()) return;
 
     logError(chalk.red(`${response.status()}`, response.url()));
+    startLogging();
     // debug(chalk.red(`${response.status()}`, response.url()));
   });
 
