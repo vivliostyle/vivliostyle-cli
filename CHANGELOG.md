@@ -1,3 +1,20 @@
+# [3.0.0-pre.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.1...v3.0.0-pre.2) (2020-07-02)
+
+### Bug Fixes
+
+- avoid infinite globby loop ([e7d9d64](https://github.com/vivliostyle/vivliostyle-cli/commit/e7d9d643cfb5edc6fbb2a657f41e4afe0e35ea58))
+- flush before running press-ready ([de28656](https://github.com/vivliostyle/vivliostyle-cli/commit/de286567c0159fe5faa341650a4e6f541f84020d))
+- prepend toc ([141c657](https://github.com/vivliostyle/vivliostyle-cli/commit/141c657e924729786d5e08e73ca6a35d011c55e6))
+- remove unncessary options ([3151d16](https://github.com/vivliostyle/vivliostyle-cli/commit/3151d16488ae5f87a6578f686657c1f081f0e3da))
+- use title as a output filename ([0e3b31a](https://github.com/vivliostyle/vivliostyle-cli/commit/0e3b31adb1561386db8bc07e11ad68ff66913805))
+- **init:** abort if config file exists ([8e45ab1](https://github.com/vivliostyle/vivliostyle-cli/commit/8e45ab1381b71d476568572f4ddf6fc01f5d2d41))
+- startLogging after error ([1c6670d](https://github.com/vivliostyle/vivliostyle-cli/commit/1c6670d16c6cbe96591866b89884b1bae7457251))
+
+### Features
+
+- cover field ([bc3a70e](https://github.com/vivliostyle/vivliostyle-cli/commit/bc3a70ecd7a7ce099a0b9f88af8c4b842a23a3d6))
+- validate vivliostyle.config.js ([7e43b1e](https://github.com/vivliostyle/vivliostyle-cli/commit/7e43b1e2eb3f1ff197970abe5f8c54f60173d8a1))
+
 ## 2.0.0-pre.0 (2019-12-19)
 
 - :arrow_up: Version 1.3.0 ([173420b](https://github.com/vivliostyle/vivliostyle-cli/commit/173420b))
