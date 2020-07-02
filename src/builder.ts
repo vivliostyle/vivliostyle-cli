@@ -39,7 +39,7 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
   const resources: ManifestEntry[] = [];
 
   if (options.toc) {
-    entries.push({
+    entries.splice(0, 0, {
       href: 'toc.html',
       rel: 'contents',
       type: 'text/html',
