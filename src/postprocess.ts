@@ -12,6 +12,7 @@ import {
 import * as pressReadyModule from 'press-ready';
 import { v1 as uuid } from 'uuid';
 import { Meta, TOCItem } from './broker';
+import { startLogging, stopLogging } from './util';
 
 export interface SaveOption {
   pressReady: boolean;
@@ -57,7 +58,9 @@ export class PostProcess {
     await fs.promises.writeFile(input, pdf);
 
     if (pressReady) {
+      stopLogging('Running press-ready', '🚀');
       await pressReadyModule.build({ input, output });
+      startLogging();
     }
   }
 
