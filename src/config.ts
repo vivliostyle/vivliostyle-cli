@@ -277,15 +277,17 @@ export async function mergeConfig<T extends CliFlags>(
   );
   const artifactDir = path.join(distDir, 'artifacts');
 
+  const format = config?.format ?? 'pdf';
   const outDir = cliFlags.outDir ?? contextResolve(context, config?.outDir);
   const outFile = cliFlags.outFile ?? contextResolve(context, config?.outFile);
 
   if (outDir && outFile) {
     throw new Error('outDir and outFile cannot be combined.');
   }
+  const outputFile = `${projectTitle}.${format}`;
   const outputPath = outDir
-    ? path.resolve(outDir, `${projectTitle}.pdf`)
-    : outFile ?? path.resolve('./output.pdf');
+    ? path.resolve(outDir, outputFile)
+    : outFile ?? path.resolve(outputFile);
 
   const language = config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
@@ -298,7 +300,6 @@ export async function mergeConfig<T extends CliFlags>(
       : false;
   const cover = contextResolve(context, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
-  const format = config?.format;
 
   const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
