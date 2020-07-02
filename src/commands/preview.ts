@@ -8,7 +8,6 @@ import {
   collectVivliostyleConfig,
   getVivliostyleConfigPath,
   mergeConfig,
-  validateTimeoutFlag,
 } from '../config';
 import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
 import {
@@ -27,11 +26,6 @@ program
   .description('launch preview server')
   .arguments('<input>')
   .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
-  .option(
-    '-o, --out-file <output file>',
-    `specify output file path (default ./output.pdf)`,
-  )
-  .option('-d, --out-dir <output directory>', `specify output directory`)
   .option('-t, --theme <theme>', 'theme path or package name')
   .option(
     '-s, --size <size>',
@@ -39,19 +33,10 @@ program
 preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
 custom(comma separated): 182mm,257mm or 8.5in,11in`,
   )
-  .option(
-    '-p, --press-ready',
-    `make generated PDF compatible with press ready PDF/X-1a`,
-  )
   .option('--title <title>', 'title')
   .option('--author <author>', 'author')
   .option('--language <language>', 'language')
   .option('--verbose', 'verbose log output')
-  .option(
-    '--timeout <seconds>',
-    `timeout limit for waiting Vivliostyle process (default: 60s)`,
-    validateTimeoutFlag,
-  )
   .option(
     '--no-sandbox',
     `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,

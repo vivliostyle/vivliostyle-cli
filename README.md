@@ -96,26 +96,20 @@ vivliostyle preview <input>
 
 ```
 Options:
-  -c, --config <config_file>        path to vivliostyle.config.js
-  -o, --out-file <output file>      specify output file path (default ./output.pdf)
-  -d, --out-dir <output directory>  specify output directory
-  -t, --theme <theme>               theme path or package name
-  -s, --size <size>                 output pdf size [Letter]
-                                    preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
-                                    ledger
-                                    custom(comma separated): 182mm,257mm or 8.5in,11in
-  -p, --press-ready                 make generated PDF compatible with press ready PDF/X-1a
-  --title <title>                   title
-  --author <author>                 author
-  --language <language>             language
-  --verbose                         verbose log output
-  --timeout <seconds>               timeout limit for waiting Vivliostyle process (default:
-                                    60s)
-  --no-sandbox                      launch chrome without sandbox (use this option to avoid
-                                    ECONNREFUSED error)
-  --executable-chromium <path>      specify a path of executable Chrome(Chromium) you
-                                    installed
-  -h, --help                        display help for command
+  -c, --config <config_file>    path to vivliostyle.config.js
+  -t, --theme <theme>           theme path or package name
+  -s, --size <size>             output pdf size [Letter]
+                                preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
+                                ledger
+                                custom(comma separated): 182mm,257mm or 8.5in,11in
+  --title <title>               title
+  --author <author>             author
+  --language <language>         language
+  --verbose                     verbose log output
+  --no-sandbox                  launch chrome without sandbox (use this option to avoid
+                                ECONNREFUSED error)
+  --executable-chromium <path>  specify a path of executable Chrome(Chromium) you installed
+  -h, --help                    display help for command
 ```
 
 ## Contribute
