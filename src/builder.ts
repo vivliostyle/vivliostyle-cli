@@ -4,6 +4,7 @@ import globby from 'globby';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
 import { imageSize } from 'image-size';
+import { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
 import path from 'path';
 import shelljs from 'shelljs';
@@ -141,40 +142,66 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
   for (const entry of entries) {
     shelljs.mkdir('-p', entry.target.dir);
 
+    // calculate style path
+    let style;
+    switch (entry?.theme?.type) {
+      case 'uri':
+        style = entry.theme.location;
+        break;
+      case 'file':
+        style = path.relative(
+          entry.target.dir,
+          path.join(distDir, 'themes', entry.theme.name),
+        );
+        break;
+      case 'package':
+        style = path.relative(
+          entry.target.dir,
+          path.join(
+            distDir,
+            'themes',
+            'packages',
+            entry.theme.name,
+            entry.theme.style,
+          ),
+        );
+    }
+
+    let compiledEntry;
     if (entry.type === 'html') {
-      // copy html files
-      shelljs.cp(entry.source.path, entry.target.path);
+      // compile html
+      const dom = new JSDOM(fs.readFileSync(entry.source.path, 'utf8'));
+      const {
+        window: { document },
+      } = dom;
+      if (!document) {
+        throw new Error('Invalid HTML document: ' + entry.source.path);
+      }
+
+      const titleEl = document.querySelector('title');
+      if (titleEl && entry.title) {
+        titleEl.innerHTML = entry.title;
+      }
+
+      const linkEl = document.querySelector<HTMLLinkElement>(
+        'link[rel="stylesheet"',
+      );
+      if (linkEl && style) {
+        linkEl.href = style;
+      }
+
+      const html = dom.serialize();
+      compiledEntry = html;
     } else {
       // compile markdown
-      let style;
-      switch (entry?.theme?.type) {
-        case 'uri':
-          style = entry.theme.location;
-          break;
-        case 'file':
-          style = path.relative(
-            entry.target.dir,
-            path.join(distDir, 'themes', entry.theme.name),
-          );
-          break;
-        case 'package':
-          style = path.relative(
-            entry.target.dir,
-            path.join(
-              distDir,
-              'themes',
-              'packages',
-              entry.theme.name,
-              entry.theme.style,
-            ),
-          );
-      }
-      const file = processMarkdown(entry.source.path, {
+      const vfile = processMarkdown(entry.source.path, {
         style,
         title: entry.title,
       });
-      fs.writeFileSync(entry.target.path, String(file));
+      compiledEntry = String(vfile);
     }
+
+    fs.writeFileSync(entry.target.path, compiledEntry);
   }
 
   // copy theme
