@@ -196,10 +196,13 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
   // copy image assets
   const assets = await globby(entryContextDir, {
     caseSensitiveMatch: false,
+    followSymbolicLinks: false,
+    gitignore: true,
     expandDirectories: {
       extensions: ['png', 'jpg', 'jpeg', 'svg', 'gif'],
     },
   });
+  debug('images', assets);
   for (const asset of assets) {
     const target = path.join(
       artifactDir,

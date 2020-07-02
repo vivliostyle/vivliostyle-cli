@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "@vivliostyle/cli": "link:..",
-    "@vivliostyle/theme-bunko": "^0.1.0"
+    "@vivliostyle/theme-bunko": "^0.2.1"
   }
 }
