@@ -22,6 +22,24 @@ docker build -t vivliostyle/cli .
 
 ## Release Guide (Maintainers only)
 
+### Enter pre-release
+
 ```bash
-np
+release-it --preRelease=beta
+```
+
+### Bump pre-release version
+
+```bash
+yarn release:pre
+# or
+release-it --preRelease --npm.tag=next
+```
+
+### Graduate
+
+```bash
+yarn release
+# or
+release-it
 ```

@@ -8,6 +8,8 @@
     "build:broker": "esbuild --bundle broker/main.js --outfile=broker/dist/bundle.js",
     "build:cli": "tsc && shx chmod +x dist/cli.js",
     "clean": "shx rm -rf dist tmp broker/dist",
+    "release": "release-it",
+    "release:pre": "release-it --preRelease --npm.tag=next",
     "dev": "run-p dev:*",
     "dev:broker": "nodemon -w broker -i broker/dist --exec 'esbuild --bundle --outfile=broker/dist/bundle.js broker/main.js'",
     "dev:cli": "tsc -w --preserveWatchOutput",
