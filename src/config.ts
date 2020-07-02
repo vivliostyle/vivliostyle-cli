@@ -1,3 +1,4 @@
+import Ajv from 'ajv';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
 import path from 'path';
@@ -6,6 +7,7 @@ import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import { processMarkdown } from './markdown';
+import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
 import { debug, readJSON } from './util';
 
@@ -231,6 +233,13 @@ export function collectVivliostyleConfig(
     return undefined;
   }
   const config = require(configPath) as VivliostyleConfig;
+
+  const ajv = Ajv();
+  const valid = ajv.validate(configSchema, config);
+  if (!valid) {
+    throw new Error('Invalid vivliostyle.config.js');
+  }
+
   return config;
 }
 
@@ -289,6 +298,8 @@ export async function mergeConfig<T extends CliFlags>(
       : false;
   const cover = contextResolve(context, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
+  const format = config?.format;
+
   const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
@@ -357,6 +368,7 @@ export async function mergeConfig<T extends CliFlags>(
     language,
     toc,
     cover,
+    format,
     verbose,
     timeout,
     sandbox,

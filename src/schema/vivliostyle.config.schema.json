@@ -1,0 +1,105 @@
+{
+  "definitions": {
+    "entry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entryObject": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "title": { "type": "string" },
+        "theme": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "coreProps": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title",
+          "minLength": 1
+        },
+        "author": {
+          "type": "string",
+          "description": "Author",
+          "minLength": 1
+        },
+        "theme": {
+          "description": "Theme package path or URL of css file.",
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 214,
+              "minLength": 1,
+              "pattern": "^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$"
+            },
+            {
+              "type": "string",
+              "pattern": "^.+/[^/]+(.css|\\w)$"
+            }
+          ]
+        },
+        "entry": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/entry" },
+              { "$ref": "#/definitions/entryObject" }
+            ]
+          }
+        },
+        "entryContext": {
+          "type": "string",
+          "description": "",
+          "minLength": 1
+        },
+        "size": {
+          "type": "string",
+          "description": "",
+          "minLength": 1
+        },
+        "format": {
+          "enum": ["pdf"]
+        },
+        "pressReady": {
+          "type": "boolean"
+        },
+        "outDir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outFile": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "outProps": {
+      "oneOf": [
+        {
+          "required": ["outDir"],
+          "not": { "required": ["outFile"] }
+        },
+        {
+          "required": ["outFile"],
+          "not": { "required": ["outDir"] }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/coreProps"
+    },
+    {
+      "anyOf": [
+        {},
+        {
+          "$ref": "#/definitions/outProps"
+        }
+      ]
+    }
+  ]
+}
