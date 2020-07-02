@@ -1,5 +1,11 @@
 ![Vivliostyle CLI](https://raw.githubusercontent.com/vivliostyle/vivliostyle-cli/master/assets/cover.jpg)
 
+[![npm](https://flat.badgen.net/npm/v/@vivliostyle/cli)][npm-url]
+![npm: version (tag)](https://flat.badgen.net/npm/v/@vivliostyle/cli/next)
+[![npm: total downloads](https://flat.badgen.net/npm/dt/@vivliostyle/cli)][npm-url]
+
+[npm-url]: https://npmjs.org/package/@vivliostyle/cli
+
 Supercharge your command-line publication workflow.
 
 > ✏️ You want README for the stable release? see <https://github.com/vivliostyle/vivliostyle-cli/tree/v2.1.0#readme>.
@@ -9,6 +15,8 @@ Supercharge your command-line publication workflow.
 ```
 npm install -g @vivliostyle/cli
 ```
+
+If you are yolo-minded person, try `npm install -g @vivliostyle/cli@next`, which will installs the latest pre-release of Vivliostyle CLI.
 
 ## Use
 
