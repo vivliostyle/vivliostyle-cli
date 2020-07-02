@@ -25,7 +25,7 @@ docker build -t vivliostyle/cli .
 ### Enter pre-release
 
 ```bash
-release-it --preRelease=beta
+release-it --preRelease=beta --npm.tag=next
 ```
 
 ### Bump pre-release version
