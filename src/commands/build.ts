@@ -20,63 +20,59 @@ program
   .name('vivliostyle build')
   .description('build and create PDF file')
   .arguments('<input>')
-  .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
+  .option(
+    '-c, --config <config_file>',
+    'path to vivliostyle.config.js [vivliostyle.config.js]',
+  )
   .option(
     '-o, --out-file <output file>',
-    `specify output file path (default ./output.pdf)`,
+    `specify output file path [output.pdf]`,
   )
   .option('-d, --out-dir <output directory>', `specify output directory`)
   .option('-t, --theme <theme>', 'theme path or package name')
   .option(
     '-s, --size <size>',
-    `output pdf size
-preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
-custom(ex): 182mm,257mm 8.5in,11in`,
+    `output pdf size [Letter]
+preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+custom(comma separated): 182mm,257mm or 8.5in,11in`,
+  )
+  .option(
+    '-p, --press-ready',
+    `make generated PDF compatible with press ready PDF/X-1a [false]`,
   )
   .option('--title <title>', 'title')
   .option('--author <author>', 'author')
   .option('--language <language>', 'language')
-  .option(
-    '--press-ready',
-    `make generated PDF compatible with press ready PDF/X-1a`,
-  )
-  .option(
-    '--entry-context <context directory>',
-    `specify assets root path (default directory of input file)`,
-  )
   .option('--verbose', 'verbose log output')
+  .option('--dist-dir', 'dist dir [.vivliostyle]')
   .option(
     '--timeout <seconds>',
-    `timeout limit for waiting Vivliostyle process (default: 60s)`,
+    `timeout limit for waiting Vivliostyle process [60s]`,
     validateTimeoutFlag,
   )
   .option(
-    '--force-document-mode',
-    `force document mode. Further reading: http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
-  )
-  .option(
     '--no-sandbox',
-    `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
+    `launch chrome without sandbox. use this option when ECONNREFUSED error occurred.`,
   )
   .option(
     '--executable-chromium <path>',
-    'specify a path of executable Chrome(Chromium) you installed',
+    'specify a path of executable Chrome (or Chromium) you installed',
   )
   .parse(process.argv);
 
 build({
+  input: program.args?.[0],
   configPath: program.config,
-  input: program.args?.[0] || program.input,
-  title: program.title,
-  author: program.author,
-  theme: program.theme,
-  size: program.size,
-  pressReady: program.pressReady,
   outDir: program.outDir,
   outFile: program.outFile,
+  theme: program.theme,
+  size: program.size,
+  title: program.title,
+  author: program.author,
   language: program.language,
-  entryContext: program.entryContext,
+  pressReady: program.pressReady,
   verbose: program.verbose,
+  distDir: program.distDir,
   timeout: program.timeout,
   sandbox: program.sandbox,
   executableChromium: program.executableChromium,

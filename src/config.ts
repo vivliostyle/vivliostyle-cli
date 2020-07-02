@@ -6,7 +6,7 @@ import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import { processMarkdown } from './markdown';
-import { LoadMode, PageSize } from './server';
+import { PageSize } from './server';
 import { debug, readJSON } from './util';
 
 export interface Entry {
@@ -56,29 +56,26 @@ export interface VivliostyleConfig {
   outDir?: string;
   outFile?: string; // output.pdf
   language?: string;
-  cover?: string;
   toc?: boolean | string;
-
-  timeout?: number;
+  cover?: string;
   distDir?: string; // .vivliostyle
+  timeout?: number;
 }
 
 export interface CliFlags {
-  configPath?: string;
   input?: string;
-  size?: number | string;
+  configPath?: string;
   outFile?: string;
   outDir?: string;
   theme?: string;
+  size?: string;
   pressReady?: boolean;
   title?: string;
   author?: string;
   language?: string;
-  entryContext?: string;
   verbose?: boolean;
-
+  distDir?: string; // .vivliostyle
   timeout?: number;
-  loadMode?: LoadMode;
   sandbox?: boolean;
   executableChromium?: string;
 }
@@ -89,16 +86,16 @@ export interface MergedConfig {
   distDir: string;
   outputPath: string;
   entries: ParsedEntry[];
-  themeIndex: ParsedTheme[];
-  toc: string | boolean;
+  themeIndexes: ParsedTheme[];
   size: PageSize | undefined;
   pressReady: boolean;
   projectTitle: string;
   projectAuthor: string;
   language: string;
+  toc: string | boolean;
+  cover: string | undefined;
   verbose: boolean;
   timeout: number;
-  loadMode: LoadMode;
   sandbox: boolean;
   executableChromium: string;
 }
@@ -190,8 +187,8 @@ function parseStyleLocator(
   return { name: packageJson.name, maybeStyle };
 }
 
-function parsePageSize(size: string | number): PageSize {
-  const [width, height, ...others] = size ? `${size}`.split(',') : [];
+function parsePageSize(size: string): PageSize {
+  const [width, height, ...others] = `${size}`.split(',');
   if (others.length) {
     throw new Error(`Cannot parse size: ${size}`);
   } else if (width && height) {
@@ -252,23 +249,22 @@ export async function mergeConfig<T extends CliFlags>(
   const pkgJsonPath = await pkgUp();
   const pkgJson = pkgJsonPath ? readJSON(pkgJsonPath) : undefined;
 
-  debug('cliFlags', cliFlags);
-
   const projectTitle = cliFlags.title ?? config?.title ?? pkgJson?.name;
   if (!projectTitle) {
     throw new Error('title not defined');
   }
   const projectAuthor = cliFlags.author ?? config?.author ?? pkgJson?.author;
 
+  debug('cliFlags', cliFlags);
+  debug('vivliostyle.config.js', config);
+
   const entryContextDir = path.resolve(
-    cliFlags.input
-      ? '.'
-      : cliFlags.entryContext ??
-          contextResolve(context, config?.entryContext) ??
-          '.',
+    cliFlags.input ? '.' : contextResolve(context, config?.entryContext) ?? '.',
   );
   const distDir = path.resolve(
-    contextResolve(context, config?.distDir) ?? '.vivliostyle',
+    cliFlags?.distDir ??
+      contextResolve(context, config?.distDir) ??
+      '.vivliostyle',
   );
   const artifactDir = path.join(distDir, 'artifacts');
 
@@ -281,7 +277,6 @@ export async function mergeConfig<T extends CliFlags>(
   const outputPath = outDir
     ? path.resolve(outDir, `${projectTitle}.pdf`)
     : outFile ?? path.resolve('./output.pdf');
-  debug('outputPath', outputPath);
 
   const language = config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
@@ -292,20 +287,20 @@ export async function mergeConfig<T extends CliFlags>(
       : config?.toc !== undefined
       ? config.toc
       : false;
+  const cover = config?.cover ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
   const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
-  const loadMode = cliFlags.loadMode ?? 'book';
   const executableChromium =
     cliFlags.executableChromium ?? puppeteer.executablePath();
 
-  const themeIndex: ParsedTheme[] = [];
+  const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
     parseTheme(cliFlags.theme, process.cwd()) ??
     parseTheme(config?.theme, context);
   if (rootTheme) {
-    themeIndex.push(rootTheme);
+    themeIndexes.push(rootTheme);
   }
 
   function parseEntry(entry: Entry): ParsedEntry {
@@ -322,10 +317,10 @@ export async function mergeConfig<T extends CliFlags>(
 
     const title = entry.title ?? metadata.title ?? projectTitle;
     const theme =
-      parseTheme(entry.theme, sourceDir) ?? metadata.theme ?? themeIndex[0];
+      parseTheme(entry.theme, sourceDir) ?? metadata.theme ?? themeIndexes[0];
 
-    if (theme && themeIndex.every((t) => t.location !== theme.location)) {
-      themeIndex.push(theme);
+    if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
+      themeIndexes.push(theme);
     }
 
     return {
@@ -354,16 +349,16 @@ export async function mergeConfig<T extends CliFlags>(
     distDir,
     outputPath,
     entries,
-    themeIndex,
-    toc,
-    size,
+    themeIndexes,
     pressReady,
+    size,
     projectTitle,
     projectAuthor,
     language,
+    toc,
+    cover,
     verbose,
     timeout,
-    loadMode,
     sandbox,
     executableChromium,
   };

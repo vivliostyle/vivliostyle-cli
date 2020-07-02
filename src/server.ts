@@ -27,7 +27,7 @@ export interface GetBrokerURLOption {
   sourcePort: number;
   sourceIndex: string;
   brokerPort: number;
-  loadMode: LoadMode;
+  loadMode?: LoadMode;
   outputSize?: PageSize;
 }
 

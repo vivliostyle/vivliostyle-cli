@@ -95,7 +95,7 @@ export async function buildArtifacts({
   entryContextDir,
   artifactDir,
   projectTitle,
-  themeIndex,
+  themeIndexes,
   entries,
   distDir,
   projectAuthor,
@@ -112,7 +112,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
   }
 
   debug('entries', entries);
-  debug('themeIndex', themeIndex);
+  debug('themes', themeIndexes);
 
   // populate entries
   shelljs.mkdir('-p', artifactDir);
@@ -158,7 +158,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
   // copy theme
   const themeRoot = path.join(distDir, 'themes');
   shelljs.mkdir('-p', path.join(themeRoot, 'packages'));
-  for (const theme of themeIndex) {
+  for (const theme of themeIndexes) {
     switch (theme.type) {
       case 'file':
         shelljs.cp(theme.location, themeRoot);

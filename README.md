@@ -1,6 +1,8 @@
 ![Vivliostyle CLI](https://raw.githubusercontent.com/vivliostyle/vivliostyle-cli/master/assets/cover.jpg)
 
-> Supercharge your command-line publication workflow.
+Supercharge your command-line publication workflow.
+
+> ✏️ You want README for the stable release? see <https://github.com/vivliostyle/vivliostyle-cli/tree/v2.1.0#readme>.
 
 ## Install
 
@@ -38,7 +40,7 @@ vivliostyle init
 
 Put [vivliostyle.config.js](https://github.com/vivliostyle/vivliostyle-cli/issues/38) in the root directory, then:
 
-```
+```bash
 vivliostyle build
 ```
 
@@ -48,36 +50,34 @@ vivliostyle build
 
 ```
 Options:
-  -c, --config <config_file>    path to vivliostyle.config.js
-  -o, --output <output_file>    specify output file path (default
-                                output.pdf)
-  -r, --root <root_directory>   specify assets root path (default
-                                directory of input file)
-  -t, --theme <theme>           theme path or package name
-  -s, --size <size>             output pdf size (ex: 'A4' 'JIS-B5'
-                                '182mm,257mm' '8.5in,11in')
-  --title <title>               title
-  --author <author>             author
-  --language <language>         language
-  --press-ready                 make generated PDF compatible with
-                                press ready PDF/X-1a
-  --verbose                     verbose log output
-  --timeout <seconds>           timeout limit for waiting Vivliostyle
-                                process (default: 60s)
-  --force-document-mode         force document mode. Further reading:
-                                http://vivliostyle.github.io/vivliostyle.js/docs/en/
-  --no-sandbox                  launch chrome without sandbox (use this
-                                option to avoid ECONNREFUSED error)
-  --executable-chromium <path>  specify a path of executable
-                                Chrome(Chromium) you installed
-  -h, --help                    display help for command
+  -c, --config <config_file>        path to vivliostyle.config.js [vivliostyle.config.js]
+  -o, --out-file <output file>      specify output file path [output.pdf]
+  -d, --out-dir <output directory>  specify output directory
+  -t, --theme <theme>               theme path or package name
+  -s, --size <size>                 output pdf size [Letter]
+                                    preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
+                                    ledger
+                                    custom(comma separated): 182mm,257mm or 8.5in,11in
+  -p, --press-ready                 make generated PDF compatible with press ready PDF/X-1a
+                                    [false]
+  --title <title>                   title
+  --author <author>                 author
+  --language <language>             language
+  --verbose                         verbose log output
+  --dist-dir                        dist dir [.vivliostyle]
+  --timeout <seconds>               timeout limit for waiting Vivliostyle process [60s]
+  --no-sandbox                      launch chrome without sandbox. use this option when
+                                    ECONNREFUSED error occurred.
+  --executable-chromium <path>      specify a path of executable Chrome (or Chromium) you
+                                    installed
+  -h, --help                        display help for command
 ```
 
 ### `preview`
 
-> Open preview page and save PDF interactively
+> open preview page and save PDF interactively.
 
-```
+```bash
 vivliostyle preview <input>
 ```
 
@@ -85,16 +85,26 @@ vivliostyle preview <input>
 
 ```
 Options:
-  -b, --book                    load document as book mode
-                               It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
-                               Please see also http://vivliostyle.github.io/vivliostyle.js/docs/en/
-  --no-sandbox                  launch chrome without sandbox (use this
-                                option to avoid ECONNREFUSED error)
-  -r, --root <root_directory>   specify assets root path (default
-                                directory of input file)
-  --executable-chromium <path>  specify a path of executable
-                                Chrome(Chromium) you installed
-  -h, --help                    display help for command
+  -c, --config <config_file>        path to vivliostyle.config.js
+  -o, --out-file <output file>      specify output file path (default ./output.pdf)
+  -d, --out-dir <output directory>  specify output directory
+  -t, --theme <theme>               theme path or package name
+  -s, --size <size>                 output pdf size [Letter]
+                                    preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
+                                    ledger
+                                    custom(comma separated): 182mm,257mm or 8.5in,11in
+  -p, --press-ready                 make generated PDF compatible with press ready PDF/X-1a
+  --title <title>                   title
+  --author <author>                 author
+  --language <language>             language
+  --verbose                         verbose log output
+  --timeout <seconds>               timeout limit for waiting Vivliostyle process (default:
+                                    60s)
+  --no-sandbox                      launch chrome without sandbox (use this option to avoid
+                                    ECONNREFUSED error)
+  --executable-chromium <path>      specify a path of executable Chrome(Chromium) you
+                                    installed
+  -h, --help                        display help for command
 ```
 
 ## Contribute

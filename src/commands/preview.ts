@@ -35,30 +35,22 @@ program
   .option('-t, --theme <theme>', 'theme path or package name')
   .option(
     '-s, --size <size>',
-    `output pdf size
-preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
-custom(ex): 182mm,257mm 8.5in,11in`,
+    `output pdf size [Letter]
+preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+custom(comma separated): 182mm,257mm or 8.5in,11in`,
+  )
+  .option(
+    '-p, --press-ready',
+    `make generated PDF compatible with press ready PDF/X-1a`,
   )
   .option('--title <title>', 'title')
   .option('--author <author>', 'author')
   .option('--language <language>', 'language')
-  .option(
-    '--press-ready',
-    `make generated PDF compatible with press ready PDF/X-1a`,
-  )
-  .option(
-    '--entry-context <context directory>',
-    `specify assets root path (default directory of input file)`,
-  )
   .option('--verbose', 'verbose log output')
   .option(
     '--timeout <seconds>',
     `timeout limit for waiting Vivliostyle process (default: 60s)`,
     validateTimeoutFlag,
-  )
-  .option(
-    '--force-document-mode',
-    `force document mode. Further reading: http://vivliostyle.github.io/vivliostyle.js/docs/en/`,
   )
   .option(
     '--no-sandbox',
@@ -73,16 +65,15 @@ custom(ex): 182mm,257mm 8.5in,11in`,
 let timer: NodeJS.Timeout;
 
 preview({
+  input: program.args?.[0],
   configPath: program.config,
-  input: program.args?.[0] || program.input,
-  title: program.title,
-  author: program.author,
-  theme: program.theme,
-  size: program.size,
   outDir: program.outDir,
   outFile: program.outFile,
+  theme: program.theme,
+  size: program.size,
+  title: program.title,
+  author: program.author,
   language: program.language,
-  entryContext: program.entryContext,
   verbose: program.verbose,
   timeout: program.timeout,
   sandbox: program.sandbox,
@@ -110,10 +101,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     sourceIndex: path.relative(config.distDir, manifestPath),
     sourcePort: source.port,
     brokerPort: broker.port,
-    loadMode: config.loadMode,
   });
 
-  debug(url);
   debug(
     `Executing Chromium path: ${
       config.executableChromium || puppeteer.executablePath()

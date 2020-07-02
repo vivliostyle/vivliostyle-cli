@@ -31,7 +31,6 @@ export async function buildPDF({
   distDir,
   outputPath,
   size,
-  loadMode,
   executableChromium,
   sandbox,
   verbose,
@@ -60,7 +59,6 @@ export async function buildPDF({
     sourcePort,
     sourceIndex,
     brokerPort,
-    loadMode,
     outputSize,
   });
   debug('brokerURL', navigateURL);
@@ -165,10 +163,9 @@ export async function buildPDF({
     preferCSSPageSize: true,
   });
 
-  logUpdate('Processing PDF');
-
   await browser.close();
-  debug(path.dirname(outputFile));
+
+  logUpdate('Processing PDF');
   shelljs.mkdir('-p', path.dirname(outputFile));
 
   const post = await PostProcess.load(pdf);
