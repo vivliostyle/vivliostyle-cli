@@ -1,4 +1,4 @@
-import build, { BuildOption } from './lib/build';
-import preview, { PreviewOption } from './lib/preview';
+import build, { BuildCliFlags } from './commands/build';
+import preview, { PreviewCliFlags } from './commands/preview';
 
-export { build, preview, BuildOption, PreviewOption };
+export { build, preview, BuildCliFlags, PreviewCliFlags };
