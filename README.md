@@ -62,7 +62,7 @@ vivliostyle build
 ```
 Options:
   -c, --config <config_file>        path to vivliostyle.config.js [vivliostyle.config.js]
-  -o, --out-file <output file>      specify output file path [output.pdf]
+  -o, --out-file <output file>      specify output file path [<title>.pdf]
   -d, --out-dir <output directory>  specify output directory
   -t, --theme <theme>               theme path or package name
   -s, --size <size>                 output pdf size [Letter]

@@ -26,7 +26,7 @@ program
   )
   .option(
     '-o, --out-file <output file>',
-    `specify output file path [output.pdf]`,
+    `specify output file path [<title>.pdf]`,
   )
   .option('-d, --out-dir <output directory>', `specify output directory`)
   .option('-t, --theme <theme>', 'theme path or package name')
