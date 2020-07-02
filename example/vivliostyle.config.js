@@ -16,5 +16,7 @@ module.exports = {
     'fragments/chapter2.md',
     'alice.md',
   ],
+  cover: 'manuscripts/logo.png',
   // toc: './toc.html',
+  // toc: true,
 };

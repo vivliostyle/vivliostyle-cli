@@ -287,7 +287,7 @@ export async function mergeConfig<T extends CliFlags>(
       : config?.toc !== undefined
       ? config.toc
       : false;
-  const cover = config?.cover ?? undefined;
+  const cover = contextResolve(context, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
   const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;

@@ -3,6 +3,8 @@ import fs from 'fs';
 import globby from 'globby';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
+import { imageSize } from 'image-size';
+import { lookup as mime } from 'mime-types';
 import path from 'path';
 import shelljs from 'shelljs';
 import { contextResolve, Entry, MergedConfig, ParsedEntry } from './config';
@@ -16,13 +18,14 @@ export interface ManifestOption {
   modified: string;
   entries: Entry[];
   toc?: boolean | string;
+  cover?: string;
 }
 
 export interface ManifestEntry {
   href: string;
   type: string;
-  title?: string;
   rel?: string;
+  [index: string]: number | string | undefined;
 }
 
 export function cleanup(location: string) {
@@ -36,6 +39,7 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
     type: 'text/html',
     title: entry.title,
   }));
+  const links: ManifestEntry[] = [];
   const resources: ManifestEntry[] = [];
 
   if (options.toc) {
@@ -47,6 +51,23 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
     });
   }
 
+  if (options.cover) {
+    const { width, height, type } = imageSize(options.cover);
+    if (type) {
+      const mimeType = mime(type);
+      if (mimeType) {
+        const coverPath = `cover.${type}`;
+        links.push({
+          rel: 'cover',
+          href: coverPath,
+          type: mimeType,
+          width,
+          height,
+        });
+      }
+    }
+  }
+
   const manifest = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
     metadata: {
@@ -56,7 +77,7 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
       language: options.language,
       modified: options.modified,
     },
-    links: [],
+    links,
     readingOrder: entries,
     resources,
   };
@@ -101,6 +122,7 @@ export async function buildArtifacts({
   projectAuthor,
   language,
   toc,
+  cover,
 }: MergedConfig) {
   if (entries.length === 0) {
     throw new Error(
@@ -187,6 +209,12 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
     shelljs.cp(asset, target);
   }
 
+  // copy cover
+  if (cover) {
+    const { ext } = path.parse(cover);
+    shelljs.cp(cover, path.join(distDir, `cover${ext}`));
+  }
+
   // generate manifest
   const manifestPath = path.join(distDir, 'manifest.json');
   generateManifest(manifestPath, {
@@ -194,6 +222,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
     author: projectAuthor,
     language,
     toc,
+    cover,
     entries: entries.map((entry) => ({
       title: entry.title,
       path: path.relative(distDir, entry.target.path),
