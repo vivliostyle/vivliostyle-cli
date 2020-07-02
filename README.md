@@ -34,6 +34,9 @@ Commands:
 vivliostyle init
 ```
 
+You are new to Vivliostyle? Check out our latest project [Create Book](https://github.com/vivliostyle/create-book#readme).
+With Create Book, you can easily bootstrap your book project and start writing without any extra effort.
+
 ### `build`
 
 > build and create PDF file.
