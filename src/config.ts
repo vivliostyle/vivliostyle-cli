@@ -1,11 +1,13 @@
 import Ajv from 'ajv';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
-import path from 'path';
+import { homedir } from 'os';
+import { basename, dirname, join, relative, resolve } from 'path';
 import pkgUp from 'pkg-up';
 import process from 'process';
 import puppeteer from 'puppeteer-core';
 import resolvePkg from 'resolve-pkg';
+import shelljs from 'shelljs';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
@@ -102,7 +104,9 @@ export interface MergedConfig {
   executableChromium: string;
 }
 
+export const VIVLIOSTYLE_CACHE_DIR = join(homedir(), '.vivliostyle');
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+const CHROMIUM_REVISION = '785203';
 
 export function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) && +val > 0 ? +val * 1000 : DEFAULT_TIMEOUT;
@@ -112,7 +116,7 @@ export function contextResolve(
   context: string,
   loc: string | undefined,
 ): string | undefined {
-  return loc && path.resolve(context, loc);
+  return loc && resolve(context, loc);
 }
 
 function normalizeEntry(e: string | Entry): Entry {
@@ -135,12 +139,12 @@ export function parseTheme(
   if (/^https?:\/\//.test(locator)) {
     return {
       type: 'uri',
-      name: path.basename(locator),
+      name: basename(locator),
       location: locator,
     };
   }
 
-  const stylePath = path.resolve(contextDir, locator);
+  const stylePath = resolve(contextDir, locator);
 
   // node_modules, local pkg
   const pkgRootDir = resolvePkg(locator, { cwd: contextDir });
@@ -159,7 +163,7 @@ export function parseTheme(
   // bare .css file
   return {
     type: 'file',
-    name: path.basename(locator),
+    name: basename(locator),
     location: stylePath,
   };
 }
@@ -168,7 +172,7 @@ function parseStyleLocator(
   pkgRootDir: string,
   locator: string,
 ): { name: string; maybeStyle: string } | undefined {
-  const pkgJsonPath = path.join(pkgRootDir, 'package.json');
+  const pkgJsonPath = join(pkgRootDir, 'package.json');
   if (!fs.existsSync(pkgJsonPath)) {
     return undefined;
   }
@@ -206,7 +210,7 @@ function parsePageSize(size: string): PageSize {
 }
 
 function parseFileMetadata(type: string, sourcePath: string) {
-  const sourceDir = path.dirname(sourcePath);
+  const sourceDir = dirname(sourcePath);
   let title: string | undefined;
   let theme: ParsedTheme | undefined;
   if (type === 'markdown') {
@@ -246,8 +250,8 @@ export function collectVivliostyleConfig(
 export function getVivliostyleConfigPath(configPath?: string) {
   const cwd = process.cwd();
   return configPath
-    ? path.resolve(cwd, configPath)
-    : path.join(cwd, 'vivliostyle.config.js');
+    ? resolve(cwd, configPath)
+    : join(cwd, 'vivliostyle.config.js');
 }
 
 export async function mergeConfig<T extends CliFlags>(
@@ -267,15 +271,15 @@ export async function mergeConfig<T extends CliFlags>(
   debug('cliFlags %O', cliFlags);
   debug('vivliostyle.config.js %O', config);
 
-  const entryContextDir = path.resolve(
+  const entryContextDir = resolve(
     cliFlags.input ? '.' : contextResolve(context, config?.entryContext) ?? '.',
   );
-  const distDir = path.resolve(
+  const distDir = resolve(
     cliFlags?.distDir ??
       contextResolve(context, config?.distDir) ??
       '.vivliostyle',
   );
-  const artifactDir = path.join(distDir, 'artifacts');
+  const artifactDir = join(distDir, 'artifacts');
 
   const format = config?.format ?? 'pdf';
   const outDir = cliFlags.outDir ?? contextResolve(context, config?.outDir);
@@ -286,8 +290,8 @@ export async function mergeConfig<T extends CliFlags>(
   }
   const outputFile = `${projectTitle}.${format}`;
   const outputPath = outDir
-    ? path.resolve(outDir, outputFile)
-    : outFile ?? path.resolve(outputFile);
+    ? resolve(outDir, outputFile)
+    : outFile ?? resolve(outputFile);
 
   const language = config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
@@ -316,13 +320,14 @@ export async function mergeConfig<T extends CliFlags>(
   }
 
   function parseEntry(entry: Entry): ParsedEntry {
-    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
-    const sourceDir = path.dirname(sourcePath); // abs
-    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
-    const targetPath = path
-      .resolve(artifactDir, contextEntryPath)
-      .replace(/\.md$/, '.html');
-    const targetDir = path.dirname(targetPath);
+    const sourcePath = resolve(entryContextDir, entry.path); // abs
+    const sourceDir = dirname(sourcePath); // abs
+    const contextEntryPath = relative(entryContextDir, sourcePath); // rel
+    const targetPath = resolve(artifactDir, contextEntryPath).replace(
+      /\.md$/,
+      '.html',
+    );
+    const targetDir = dirname(targetPath);
     const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
 
     const metadata = parseFileMetadata(type, sourcePath);
@@ -383,10 +388,16 @@ export async function mergeConfig<T extends CliFlags>(
 
 async function downloadChrome() {
   logUpdate('Downloading Chromium');
-  const browserFetcher = puppeteer.createBrowserFetcher();
+  const chromiumRoot = join(
+    VIVLIOSTYLE_CACHE_DIR,
+    'local-chromium',
+    CHROMIUM_REVISION,
+  );
+  shelljs.mkdir('-p', chromiumRoot);
+  const browserFetcher = puppeteer.createBrowserFetcher({ path: chromiumRoot });
   // NOTE: http://omahaproxy.appspot.com/
   // https://github.com/puppeteer/puppeteer/issues/4531
-  const revisionInfo = await browserFetcher.download('785203');
+  const revisionInfo = await browserFetcher.download(CHROMIUM_REVISION);
   debug('revisionInfo %O', revisionInfo);
   return revisionInfo;
 }
