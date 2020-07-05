@@ -4,7 +4,7 @@ import fs from 'fs';
 import oraConstructor from 'ora';
 import path from 'path';
 import portfinder from 'portfinder';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 import util from 'util';
 
 export const debug = debugConstructor('vs-cli');

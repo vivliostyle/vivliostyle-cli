@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import url from 'url';
@@ -131,7 +131,6 @@ export async function buildPDF({
 
     logError(chalk.red(`${response.status()}`, response.url()));
     startLogging();
-    // debug(chalk.red(`${response.status()}`, response.url()));
   });
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });

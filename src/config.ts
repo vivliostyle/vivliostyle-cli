@@ -4,12 +4,12 @@ import { JSDOM } from 'jsdom';
 import path from 'path';
 import pkgUp from 'pkg-up';
 import process from 'process';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 import resolvePkg from 'resolve-pkg';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import { debug, readJSON } from './util';
+import { debug, logUpdate, readJSON } from './util';
 
 export interface Entry {
   path: string;
@@ -305,7 +305,7 @@ export async function mergeConfig<T extends CliFlags>(
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
   const executableChromium =
-    cliFlags.executableChromium ?? puppeteer.executablePath();
+    cliFlags.executableChromium ?? (await downloadChrome()).executablePath;
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
@@ -379,4 +379,14 @@ export async function mergeConfig<T extends CliFlags>(
   debug('parsedConfig', parsedConfig);
 
   return parsedConfig;
+}
+
+async function downloadChrome() {
+  logUpdate('Downloading Chromium');
+  const browserFetcher = puppeteer.createBrowserFetcher();
+  // NOTE: http://omahaproxy.appspot.com/
+  // https://github.com/puppeteer/puppeteer/issues/4531
+  const revisionInfo = await browserFetcher.download('785203');
+  debug('revisionInfo %O', revisionInfo);
+  return revisionInfo;
 }
