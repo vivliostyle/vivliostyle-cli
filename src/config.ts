@@ -264,8 +264,8 @@ export async function mergeConfig<T extends CliFlags>(
   }
   const projectAuthor = cliFlags.author ?? config?.author ?? pkgJson?.author;
 
-  debug('cliFlags', cliFlags);
-  debug('vivliostyle.config.js', config);
+  debug('cliFlags %O', cliFlags);
+  debug('vivliostyle.config.js %O', config);
 
   const entryContextDir = path.resolve(
     cliFlags.input ? '.' : contextResolve(context, config?.entryContext) ?? '.',
@@ -376,7 +376,7 @@ export async function mergeConfig<T extends CliFlags>(
     executableChromium,
   };
 
-  debug('parsedConfig', parsedConfig);
+  debug('parsedConfig %O', parsedConfig);
 
   return parsedConfig;
 }

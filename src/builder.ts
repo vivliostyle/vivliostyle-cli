@@ -134,9 +134,6 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
     );
   }
 
-  debug('entries', entries);
-  debug('themes', themeIndexes);
-
   // populate entries
   shelljs.mkdir('-p', artifactDir);
   for (const entry of entries) {
@@ -229,7 +226,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
       extensions: ['png', 'jpg', 'jpeg', 'svg', 'gif'],
     },
   });
-  debug('images', assets);
+  debug('images %O', assets);
   for (const asset of assets) {
     const target = path.join(
       artifactDir,
