@@ -14,7 +14,7 @@ import {
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));
 const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
-const fixtureRoot = path.resolve(__dirname, 'fixtures/wood');
+const fixtureRoot = path.resolve(__dirname, 'fixtures/wood-without-config');
 const fixtureFile = path.join(fixtureRoot, 'index.html');
 
 const localTmpDir = path.join(rootPath, 'tmp');
@@ -39,7 +39,7 @@ it('show version', async () => {
   expect(stdout).toContain(packageJSON.version);
 });
 
-it.only('generate pdf without errors', async () => {
+it('generate pdf without errors', async () => {
   const outputPath = path.join(localTmpDir, 'test.pdf');
   cleanUp(outputPath);
 
@@ -85,7 +85,7 @@ it('generate press-ready pdf without errors', async () => {
   expect(type!.mime).toEqual('application/pdf');
 }, 20000);
 
-it('generates a PDF with metadata', async () => {
+it.skip('generates a PDF with metadata', async () => {
   const outputPath = path.join(localTmpDir, 'test-metadata.pdf');
 
   try {
@@ -115,6 +115,7 @@ it('generates a PDF with metadata', async () => {
   );
 
   // Outlines
+  console.log(catalog);
   const outlines = catalog.lookup(PDFName.of('Outlines'), PDFDict);
 
   const count = outlines.lookup(PDFName.of('Count'), PDFNumber);
