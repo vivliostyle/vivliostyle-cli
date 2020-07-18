@@ -112,6 +112,15 @@ Options:
   -h, --help                    display help for command
 ```
 
+## Q&A
+
+### Not working in Node v14.0.0
+
+`puppeteer` is not working in Node v14.0.0, ie `vivliostyle-cli` is not working same.
+See also: https://developers.google.com/web/tools/puppeteer/troubleshooting
+
+The error has been resolved by Node `>= v14.0.0` or `<= v12.0.0`.
+
 ## Contribute
 
 See [Contribution Guide](CONTRIBUTING.md).
