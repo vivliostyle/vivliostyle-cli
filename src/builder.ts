@@ -67,7 +67,6 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
             title: entry.title,
             style,
           }).toString();
-    console.log(compiledEntry);
 
     fs.writeFileSync(entry.target.path, compiledEntry);
   }
