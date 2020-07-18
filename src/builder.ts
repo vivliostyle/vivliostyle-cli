@@ -1,117 +1,13 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import globby from 'globby';
-import toHTML from 'hast-util-to-html';
-import h from 'hastscript';
-import { imageSize } from 'image-size';
-import { JSDOM } from 'jsdom';
-import { lookup as mime } from 'mime-types';
 import path from 'path';
 import shelljs from 'shelljs';
-import { contextResolve, Entry, MergedConfig, ParsedEntry } from './config';
+import { contextResolve, MergedConfig } from './config';
+import { generateToC, processHTML } from './html';
+import { generateManifest } from './manifest';
 import { processMarkdown } from './markdown';
 import { debug } from './util';
-
-export interface ManifestOption {
-  title?: string;
-  author?: string;
-  language?: string;
-  modified: string;
-  entries: Entry[];
-  toc?: boolean | string;
-  cover?: string;
-}
-
-export interface ManifestEntry {
-  href: string;
-  type: string;
-  rel?: string;
-  [index: string]: number | string | undefined;
-}
-
-export function cleanup(location: string) {
-  shelljs.rm('-rf', location);
-}
-
-// example: https://github.com/readium/webpub-manifest/blob/master/examples/MobyDick/manifest.json
-export function generateManifest(outputPath: string, options: ManifestOption) {
-  const entries: ManifestEntry[] = options.entries.map((entry) => ({
-    href: entry.path,
-    type: 'text/html',
-    title: entry.title,
-  }));
-  const links: ManifestEntry[] = [];
-  const resources: ManifestEntry[] = [];
-
-  if (options.toc) {
-    entries.splice(0, 0, {
-      href: 'toc.html',
-      rel: 'contents',
-      type: 'text/html',
-      title: 'Table of Contents',
-    });
-  }
-
-  if (options.cover) {
-    const { width, height, type } = imageSize(options.cover);
-    if (type) {
-      const mimeType = mime(type);
-      if (mimeType) {
-        const coverPath = `cover.${type}`;
-        links.push({
-          rel: 'cover',
-          href: coverPath,
-          type: mimeType,
-          width,
-          height,
-        });
-      }
-    }
-  }
-
-  const manifest = {
-    '@context': 'https://readium.org/webpub-manifest/context.jsonld',
-    metadata: {
-      '@type': 'http://schema.org/Book',
-      title: options.title,
-      author: options.author,
-      language: options.language,
-      modified: options.modified,
-    },
-    links,
-    readingOrder: entries,
-    resources,
-  };
-
-  fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
-}
-
-export function generateToC(entries: ParsedEntry[], distDir: string) {
-  const items = entries.map((entry) =>
-    h(
-      'li',
-      h(
-        'a',
-        { href: path.relative(distDir, entry.target.path) },
-        entry.title || path.basename(entry.target.path, '.html'),
-      ),
-    ),
-  );
-  const toc = h(
-    'html',
-    h(
-      'head',
-      h('title', 'Table of Contents'),
-      h('link', {
-        href: 'manifest.json',
-        rel: 'manifest',
-        type: 'application/webpub+json',
-      }),
-    ),
-    h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),
-  );
-  return toHTML(toc);
-}
 
 export async function buildArtifacts({
   entryContextDir,
@@ -164,39 +60,14 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
         );
     }
 
-    let compiledEntry;
-    if (entry.type === 'html') {
-      // compile html
-      const dom = new JSDOM(fs.readFileSync(entry.source.path, 'utf8'));
-      const {
-        window: { document },
-      } = dom;
-      if (!document) {
-        throw new Error('Invalid HTML document: ' + entry.source.path);
-      }
-
-      const titleEl = document.querySelector('title');
-      if (titleEl && entry.title) {
-        titleEl.innerHTML = entry.title;
-      }
-
-      const linkEl = document.querySelector<HTMLLinkElement>(
-        'link[rel="stylesheet"',
-      );
-      if (linkEl && style) {
-        linkEl.href = style;
-      }
-
-      const html = dom.serialize();
-      compiledEntry = html;
-    } else {
-      // compile markdown
-      const vfile = processMarkdown(entry.source.path, {
-        style,
-        title: entry.title,
-      });
-      compiledEntry = String(vfile);
-    }
+    const compiledEntry =
+      entry.type === 'html'
+        ? processHTML(entry, style).toString()
+        : processMarkdown(entry.source.path, {
+            title: entry.title,
+            style,
+          }).toString();
+    console.log(compiledEntry);
 
     fs.writeFileSync(entry.target.path, compiledEntry);
   }
@@ -268,4 +139,8 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
     }
   }
   return { manifestPath };
+}
+
+export function cleanup(location: string) {
+  shelljs.rm('-rf', location);
 }

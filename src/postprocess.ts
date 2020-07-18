@@ -18,6 +18,12 @@ export interface SaveOption {
   pressReady: boolean;
 }
 
+interface PDFTocItem extends TOCItem {
+  children: PDFTocItem[];
+  ref: PDFRef;
+  parentRef: PDFRef;
+}
+
 const prefixes = {
   dcterms: 'http://purl.org/dc/terms/',
   meta: 'http://idpf.org/epub/vocab/package/meta/#',
@@ -34,12 +40,6 @@ const metaTerms = {
   created: `${prefixes.meta}created`,
   date: `${prefixes.meta}date`,
 };
-
-interface PDFTocItem extends TOCItem {
-  children: PDFTocItem[];
-  ref: PDFRef;
-  parentRef: PDFRef;
-}
 
 export class PostProcess {
   static async load(pdf: Buffer): Promise<PostProcess> {

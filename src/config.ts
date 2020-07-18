@@ -360,7 +360,7 @@ export async function mergeConfig<T extends CliFlags>(
     : [];
   const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
 
-  const parsedConfig = {
+  const mergedConfig = {
     entryContextDir,
     artifactDir,
     distDir,
@@ -381,18 +381,14 @@ export async function mergeConfig<T extends CliFlags>(
     executableChromium,
   };
 
-  debug('parsedConfig %O', parsedConfig);
+  debug('mergedConfig %O', mergedConfig);
 
-  return parsedConfig;
+  return mergedConfig;
 }
 
 async function downloadChrome() {
-  logUpdate('Downloading Chromium');
-  const chromiumRoot = join(
-    VIVLIOSTYLE_CACHE_DIR,
-    'local-chromium',
-    CHROMIUM_REVISION,
-  );
+  logUpdate('Fetching Chromium');
+  const chromiumRoot = join(VIVLIOSTYLE_CACHE_DIR, 'local-chromium');
   shelljs.mkdir('-p', chromiumRoot);
   const browserFetcher = puppeteer.createBrowserFetcher({ path: chromiumRoot });
   // NOTE: http://omahaproxy.appspot.com/

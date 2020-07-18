@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 
 import program from 'commander';
-import fs from 'fs';
 import { join } from 'path';
 import resolvePkg from 'resolve-pkg';
 import { readJSON } from './util';
 
-const { version: cliVersion } = readJSON(join(__dirname, '../package.json'));
-const { version: coreVersion } = JSON.parse(
-  fs.readFileSync(
-    resolvePkg('@vivliostyle/core', { cwd: __dirname })! + '/package.json',
-    'utf8',
-  ),
+const { version: cliVersion } = readJSON(join(__dirname, '..', 'package.json'));
+const { version: coreVersion } = readJSON(
+  join(resolvePkg('@vivliostyle/core', { cwd: __dirname })!, 'package.json'),
 );
 
 const version = `cli: ${cliVersion}
