@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import program from 'commander';
 import fs from 'fs';
-import path from 'path';
+import path from 'upath';
 import { gracefulError, log } from '../util';
 
 export interface InitCliFlags {
