@@ -6,7 +6,7 @@ import h from 'hastscript';
 import { imageSize } from 'image-size';
 import { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
-import path from 'path';
+import path from 'upath';
 import shelljs from 'shelljs';
 import { contextResolve, Entry, MergedConfig, ParsedEntry } from './config';
 import { processMarkdown } from './markdown';

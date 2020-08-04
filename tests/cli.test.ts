@@ -1,7 +1,7 @@
 import execa from 'execa';
 import fileType from 'file-type';
 import fs from 'fs';
-import path from 'path';
+import path from 'upath';
 import {
   PDFCatalog,
   PDFDict,

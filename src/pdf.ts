@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs';
-import path from 'path';
+import path from 'upath';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';

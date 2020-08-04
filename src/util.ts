@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
 import oraConstructor from 'ora';
-import path from 'path';
+import path from 'upath';
 import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
 import util from 'util';
