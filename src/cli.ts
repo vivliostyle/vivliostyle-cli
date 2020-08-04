@@ -2,7 +2,7 @@
 
 import program from 'commander';
 import fs from 'fs';
-import { join } from 'path';
+import { join } from 'upath';
 import resolvePkg from 'resolve-pkg';
 import { readJSON } from './util';
 
