@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import program from 'commander';
-import path from 'path';
 import process from 'process';
 import terminalLink from 'terminal-link';
+import path from 'upath';
 import { buildArtifacts, cleanup } from '../builder';
 import {
   CliFlags,

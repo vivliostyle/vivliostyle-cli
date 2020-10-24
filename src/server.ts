@@ -1,8 +1,8 @@
 import fs from 'fs';
 import http, { RequestListener } from 'http';
 import https from 'https';
-import path from 'path';
 import handler from 'serve-handler';
+import path from 'upath';
 import url from 'url';
 import { debug, findAvailablePort } from './util';
 

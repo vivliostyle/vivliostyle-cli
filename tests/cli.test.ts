@@ -1,7 +1,6 @@
 import execa from 'execa';
 import fileType from 'file-type';
 import fs from 'fs';
-import path from 'path';
 import {
   PDFCatalog,
   PDFDict,
@@ -10,6 +9,7 @@ import {
   PDFName,
   PDFNumber,
 } from 'pdf-lib';
+import path from 'upath';
 
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));

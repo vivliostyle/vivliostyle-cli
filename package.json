@@ -1,7 +1,7 @@
 {
   "name": "@vivliostyle/cli",
   "description": "Save the pdf file via Headless Chrome and Vivliostyle.",
-  "version": "3.0.0-pre.2",
+  "version": "3.0.0-pre.3",
   "author": "spring_raining <harusamex.com@gmail.com>",
   "scripts": {
     "build": "yarn clean && run-p build:*",
@@ -49,6 +49,7 @@
     "shelljs": "^0.8.4",
     "terminal-link": "^2.1.1",
     "to-vfile": "^6.1.0",
+    "upath": "^1.2.0",
     "uuid": "^8.2.0",
     "vfile": "^4.1.1"
   },

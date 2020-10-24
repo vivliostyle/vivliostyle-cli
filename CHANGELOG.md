@@ -1,3 +1,13 @@
+# [3.0.0-pre.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.2...v3.0.0-pre.3) (2020-08-06)
+
+### Bug Fixes
+
+- Errors due to path problem on Windows ([8eeadee](https://github.com/vivliostyle/vivliostyle-cli/commit/8eeadeed053a1e665c94c95d5cc5b5f0debbecde))
+
+### Features
+
+- inject title and style into raw html as well ([d9afa06](https://github.com/vivliostyle/vivliostyle-cli/commit/d9afa06904b5b1abeef4763365d1814305cb9ed0))
+
 # [3.0.0-pre.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.1...v3.0.0-pre.2) (2020-07-02)
 
 ### Bug Fixes

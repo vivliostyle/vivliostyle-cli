@@ -2,9 +2,9 @@ import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
 import oraConstructor from 'ora';
-import path from 'path';
 import portfinder from 'portfinder';
 import puppeteer from 'puppeteer-core';
+import path from 'upath';
 import util from 'util';
 
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });

@@ -1,6 +1,5 @@
 import fs from 'fs';
 import os from 'os';
-import path from 'path';
 import {
   PDFDict,
   PDFDocument,
@@ -10,6 +9,7 @@ import {
   PDFRef,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
+import path from 'upath';
 import { v1 as uuid } from 'uuid';
 import { Meta, TOCItem } from './broker';
 import { startLogging, stopLogging } from './util';

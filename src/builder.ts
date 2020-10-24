@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import globby from 'globby';
-import path from 'path';
 import shelljs from 'shelljs';
+import path from 'upath';
 import { contextResolve, MergedConfig } from './config';
 import { generateToC, processHTML } from './html';
 import { generateManifest } from './manifest';

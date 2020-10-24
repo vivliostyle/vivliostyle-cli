@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import fs from 'fs';
-import path from 'path';
 import puppeteer from 'puppeteer-core';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
+import path from 'upath';
 import url from 'url';
 import { Meta, Payload, TOCItem } from './broker';
 import { MergedConfig, ParsedEntry } from './config';

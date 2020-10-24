@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import program from 'commander';
-import { join } from 'path';
 import resolvePkg from 'resolve-pkg';
+import { join } from 'upath';
 import { readJSON } from './util';
 
 const { version: cliVersion } = readJSON(join(__dirname, '..', 'package.json'));
