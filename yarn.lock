@@ -933,10 +933,10 @@
   dependencies:
     "@types/node" "*"
 
-"@vivliostyle/core@^2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.1.1.tgz#d0be87d6d62e8d48ccfb6773d67d3b6b898af5a0"
-  integrity sha512-Qdbinr6hT/D3wBB+MaaTUeh/XFH8XEspO8i3Jb8YuJAKKsXRplyYJMb55mJcfBWecbaS7a+R1T20+/UAnEqn/g==
+"@vivliostyle/core@2.1.4":
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.1.4.tgz#dcce0cfb2207d6f7f08fb81a7b7ddfdf6f11ae70"
+  integrity sha512-AFFUwNRHEA618QXbTinLu7OfxRi1XaYon43FWDHVSo6Oxvts34BvHlYHswbhLMybXP/YKryqK4EbWgQQAHz4wA==
   dependencies:
     fast-diff "^1.2.0"
 
