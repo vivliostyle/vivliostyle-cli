@@ -1,3 +1,5 @@
+# [3.0.0-pre.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.3...v3.0.0-pre.4) (2020-11-01)
+
 # [3.0.0-pre.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.2...v3.0.0-pre.3) (2020-08-06)
 
 ### Bug Fixes
