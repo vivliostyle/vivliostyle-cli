@@ -17,9 +17,9 @@ program
   .description('create vivliostyle config file')
   .option('--title <title>', 'title')
   .option('--author <author>', 'author')
-  .option('--language, -l <language>', 'language')
-  .option('--size, -s <size>', 'paper size')
-  .option('--theme, -t <theme>', 'theme')
+  .option('-l, --language <language>', 'language')
+  .option('-s, --size  <size>', 'paper size')
+  .option('-t, --theme <theme>', 'theme')
   .parse(process.argv);
 
 init({
