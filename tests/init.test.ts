@@ -19,9 +19,9 @@ function cleanUp(filePath: string) {
   }
 }
 
-function vivliostyleCLI(args: string[]) {
+function vivliostyleCLI(args: string[], cwd: string) {
   // Note that unlike other tests, it is not 'cwd: fixtureRoot'.
-  return execa(cliPath, args, { cwd: localTmpDir });
+  return execa(cliPath, args, { cwd: cwd });
 }
 
 /**
@@ -37,75 +37,81 @@ function unChalk(str: string) {
 
 it('test the init command', async () => {
   cleanUp(path.join(localTmpDir, 'vivliostyle.config.js'));
-  const response = await vivliostyleCLI(['init', localTmpDir]);
+  const response = await vivliostyleCLI(['init', localTmpDir], localTmpDir);
   expect(unChalk(response.stdout)).toBe(
     'Successfully created vivliostyle.config.js',
   );
 
-  const response2 = await vivliostyleCLI(['init', localTmpDir]);
+  const response2 = await vivliostyleCLI(['init', localTmpDir], localTmpDir);
   expect(unChalk(response2.stdout)).toBe(
     'vivliostyle.config.js already exists. aborting.',
   );
 });
 
 it('test the init command with long option', async () => {
-  cleanUp(path.join(localTmpDir, 'vivliostyle.config.js'));
-  const response = await vivliostyleCLI([
-    'init',
-    '--title',
-    'Sample Document',
-    '--author',
-    'Author Name <author@example.com>',
-    '--language',
-    'en',
-    '--size',
-    'A5',
-    '--theme',
-    'style.css',
-    localTmpDir,
-  ]);
+  const outputDir = path.join(localTmpDir, 'long');
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
+  cleanUp(path.join(outputDir, 'vivliostyle.config.js'));
+  const response = await vivliostyleCLI(
+    [
+      'init',
+      '--title',
+      'Sample Document',
+      '--author',
+      'Author Name <author@example.com>',
+      '--language',
+      'en',
+      '--size',
+      'A5',
+      '--theme',
+      'style.css',
+    ],
+    outputDir,
+  );
   expect(unChalk(response.stdout)).toBe(
     'Successfully created vivliostyle.config.js',
   );
 
-  const config = fs.readFileSync(
-    path.join(localTmpDir, 'vivliostyle.config.js'),
-    'utf-8',
-  );
-  expect(config).toContain("title: 'Sample Document'");
-  expect(config).toContain("author: 'Author Name <author@example.com>'");
-  expect(config).toContain("language: 'en'");
-  expect(config).toContain("size: 'A5'");
-  expect(config).toContain("theme: 'style.css'");
+  const config = require(path.join(outputDir, 'vivliostyle.config.js'));
+  expect(config.title).toBe('Sample Document');
+  expect(config.author).toBe('Author Name <author@example.com>');
+  expect(config.language).toBe('en');
+  expect(config.size).toBe('A5');
+  expect(config.theme).toBe('style.css');
 });
 
 it('test the init command with short option', async () => {
-  cleanUp(path.join(localTmpDir, 'vivliostyle.config.js'));
-  const response = await vivliostyleCLI([
-    'init',
-    '--title',
-    'Sample Document',
-    '--author',
-    'Author Name <author@example.com>',
-    '-l',
-    'en',
-    '-s',
-    'A5',
-    '-t',
-    'style.css',
-    localTmpDir,
-  ]);
+  const outputDir = path.join(localTmpDir, 'short');
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
+  cleanUp(path.join(outputDir, 'vivliostyle.config.js'));
+  const response = await vivliostyleCLI(
+    [
+      'init',
+      '--title',
+      'Sample Document2',
+      '--author',
+      'Author Name2 <author@example.com>',
+      '-l',
+      'jp',
+      '-s',
+      'A3',
+      '-t',
+      'theme.css',
+    ],
+    outputDir,
+  );
   expect(unChalk(response.stdout)).toBe(
     'Successfully created vivliostyle.config.js',
   );
 
-  const config = fs.readFileSync(
-    path.join(localTmpDir, 'vivliostyle.config.js'),
-    'utf-8',
-  );
-  expect(config).toContain("title: 'Sample Document'");
-  expect(config).toContain("author: 'Author Name <author@example.com>'");
-  expect(config).toContain("language: 'en'");
-  expect(config).toContain("size: 'A5'");
-  expect(config).toContain("theme: 'style.css'");
+  const config = require(path.join(outputDir, 'vivliostyle.config.js'));
+  expect(config.title).toBe('Sample Document2');
+  expect(config.author).toBe('Author Name2 <author@example.com>');
+  expect(config.language).toBe('jp');
+  expect(config.size).toBe('A3');
+  expect(config.theme).toBe('theme.css');
 });
