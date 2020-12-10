@@ -6,8 +6,8 @@ import h from 'hastscript';
 import { imageSize } from 'image-size';
 import { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
-import path from 'upath';
 import shelljs from 'shelljs';
+import path from 'upath';
 import { contextResolve, Entry, MergedConfig, ParsedEntry } from './config';
 import { processMarkdown } from './markdown';
 import { debug } from './util';
@@ -92,7 +92,7 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
       'li',
       h(
         'a',
-        { href: path.relative(distDir, entry.target.path) },
+        { href: path.posix.relative(distDir, entry.target.path) },
         entry.title || path.basename(entry.target.path, '.html'),
       ),
     ),
