@@ -58,8 +58,6 @@ it('test the init command with long option', async () => {
     'Author Name <author@example.com>',
     '--language',
     'en',
-    '--size',
-    'A5',
     '--theme',
     'style.css',
     localTmpDir,
@@ -75,7 +73,6 @@ it('test the init command with long option', async () => {
   expect(config).toContain("title: 'Sample Document'");
   expect(config).toContain("author: 'Author Name <author@example.com>'");
   expect(config).toContain("language: 'en'");
-  expect(config).toContain("size: 'A5'");
   expect(config).toContain("theme: 'style.css'");
 });
 
@@ -89,9 +86,7 @@ it('test the init command with short option', async () => {
     'Author Name <author@example.com>',
     '-l',
     'en',
-    '-s',
-    'A5',
-    '-t',
+    '-T',
     'style.css',
     localTmpDir,
   ]);
@@ -106,6 +101,37 @@ it('test the init command with short option', async () => {
   expect(config).toContain("title: 'Sample Document'");
   expect(config).toContain("author: 'Author Name <author@example.com>'");
   expect(config).toContain("language: 'en'");
-  expect(config).toContain("size: 'A5'");
   expect(config).toContain("theme: 'style.css'");
+});
+
+it('test the init command with help option', async () => {
+  // long option
+  const response = await vivliostyleCLI(['init', '--help']);
+  expect(response.stdout).toContain('Usage: vivliostyle init [options]');
+  expect(response.stdout).toContain('create vivliostyle config file');
+  expect(response.stdout).toMatch(/--title <title>\s+title/);
+  expect(response.stdout).toMatch(/--author <author>\s+author/);
+  expect(response.stdout).toMatch(
+    /-l, --language <language>\s+language \(en, ja, etc\.\), default to undefined/,
+  );
+  expect(response.stdout).toMatch(
+    /-T, --theme <theme>\s+theme path or package name/,
+  );
+  expect(response.stdout).toMatch(/-h, --help\s+display help for command/);
+
+  // short option
+  const response_short = await vivliostyleCLI(['init', '-h']);
+  expect(response_short.stdout).toContain('Usage: vivliostyle init [options]');
+  expect(response_short.stdout).toContain('create vivliostyle config file');
+  expect(response_short.stdout).toMatch(/--title <title>\s+title/);
+  expect(response_short.stdout).toMatch(/--author <author>\s+author/);
+  expect(response_short.stdout).toMatch(
+    /-l, --language <language>\s+language \(en, ja, etc\.\), default to undefined/,
+  );
+  expect(response_short.stdout).toMatch(
+    /-T, --theme <theme>\s+theme path or package name/,
+  );
+  expect(response_short.stdout).toMatch(
+    /-h, --help\s+display help for command/,
+  );
 });

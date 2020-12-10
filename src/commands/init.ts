@@ -17,9 +17,12 @@ program
   .description('create vivliostyle config file')
   .option('--title <title>', 'title')
   .option('--author <author>', 'author')
-  .option('-l, --language <language>', 'language')
-  .option('-s, --size  <size>', 'paper size')
-  .option('-t, --theme <theme>', 'theme')
+  .option(
+    '-l, --language <language>',
+    'language (en, ja, etc.), default to undefined',
+  )
+  .option('-T, --theme <theme>', 'theme path or package name')
+  .helpOption('-h, --help', 'display help for command')
   .parse(process.argv);
 
 init({
@@ -47,7 +50,6 @@ export default async function init(cliFlags: InitCliFlags) {
   title: '${ cliFlags.title || 'Principia'}', // populated into 'manifest.json', default to 'title' of the first entry or 'name' in 'package.json'.
   author: '${cliFlags.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
   language: '${cliFlags.language || 'la'}', // default to 'en'
-  size: '${cliFlags.size || 'A4'}',
   theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
   entry: [ // **required field**
     // 'introduction.md', // 'title' is automatically guessed from the file (frontmatter > first heading)
