@@ -2,12 +2,15 @@ import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
 import oraConstructor from 'ora';
-import path from 'upath';
 import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
+import path from 'upath';
 import util from 'util';
 
 export const debug = debugConstructor('vs-cli');
+
+// Display stacktrace on Error
+const verbose = true;
 
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
 
@@ -49,6 +52,9 @@ export function gracefulError(err: Error) {
     ora.fail(message);
   } else {
     console.error(message);
+  }
+  if (verbose) {
+    console.log(err.stack);
   }
   console.log(
     chalk.gray(`
