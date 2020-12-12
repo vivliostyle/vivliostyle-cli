@@ -2,14 +2,14 @@ import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
 import oraConstructor from 'ora';
-import path from 'upath';
 import portfinder from 'portfinder';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import path from 'upath';
 import util from 'util';
 
-export const debug = debugConstructor('vs-cli');
-
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
+
+export const debug = debugConstructor('vs-cli');
 
 export function startLogging(text?: string) {
   ora.start(text);
@@ -116,11 +116,13 @@ export async function launchBrowser(
     handleSIGHUP: false,
     ...options,
   });
-  (['SIGINT', 'SIGTERM', 'SIGHUP'] as NodeJS.Signals[]).forEach((sig) => {
+
+  ['SIGINT', 'SIGTERM', 'SIGHUP'].forEach((sig) => {
     process.on(sig, () => {
       browser.close();
       process.exit(1);
     });
   });
+
   return browser;
 }

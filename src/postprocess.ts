@@ -1,6 +1,5 @@
 import fs from 'fs';
 import os from 'os';
-import path from 'upath';
 import {
   PDFDict,
   PDFDocument,
@@ -10,12 +9,19 @@ import {
   PDFRef,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
+import path from 'upath';
 import { v1 as uuid } from 'uuid';
 import { Meta, TOCItem } from './broker';
 import { startLogging, stopLogging } from './util';
 
 export interface SaveOption {
   pressReady: boolean;
+}
+
+interface PDFTocItem extends TOCItem {
+  children: PDFTocItem[];
+  ref: PDFRef;
+  parentRef: PDFRef;
 }
 
 const prefixes = {
@@ -34,12 +40,6 @@ const metaTerms = {
   created: `${prefixes.meta}created`,
   date: `${prefixes.meta}date`,
 };
-
-interface PDFTocItem extends TOCItem {
-  children: PDFTocItem[];
-  ref: PDFRef;
-  parentRef: PDFRef;
-}
 
 export class PostProcess {
   static async load(pdf: Buffer): Promise<PostProcess> {
