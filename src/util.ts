@@ -9,9 +9,6 @@ import util from 'util';
 
 export const debug = debugConstructor('vs-cli');
 
-// Display stacktrace on Error
-const verbose = true;
-
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
 
 export function startLogging(text?: string) {
@@ -47,14 +44,14 @@ export function logInfo(...obj: string[]) {
 }
 
 export function gracefulError(err: Error) {
-  const message = `${chalk.red.bold('Error:')} ${err.message}`;
+  const message = err.stack
+    ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
+    : `${chalk.red.bold('Error:')} ${err.message}`;
+
   if (ora.isSpinning) {
     ora.fail(message);
   } else {
     console.error(message);
-  }
-  if (verbose) {
-    console.log(err.stack);
   }
   console.log(
     chalk.gray(`
