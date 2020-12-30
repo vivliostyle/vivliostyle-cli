@@ -1,3 +1,17 @@
+# [3.0.0-pre.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.4...v3.0.0-pre.5) (2020-12-30)
+
+### Bug Fixes
+
+- --language,--size, --theme options for init command is not working. ([6feec71](https://github.com/vivliostyle/vivliostyle-cli/commit/6feec71c13c5f0f2dce737c22d49d0b26a9fd610))
+- include yarn.lock ([605897e](https://github.com/vivliostyle/vivliostyle-cli/commit/605897ef6884a92d110fd8f3eb4004bfaf1dae5b))
+- remove .posix and update upath 2.0.1 ([594b8dd](https://github.com/vivliostyle/vivliostyle-cli/commit/594b8dd8099a57b677d2c713f6b06a8b136fff07))
+- toc test fails due to separator on Windows ([6a4ab12](https://github.com/vivliostyle/vivliostyle-cli/commit/6a4ab121f01f466fe43d7a0e233f77e69616def4))
+
+### Features
+
+- init command document to 3.0.0 specification ([32906ef](https://github.com/vivliostyle/vivliostyle-cli/commit/32906efa0726f23531862682c86878f5d91cfe05))
+- init command to 3.0.0 specification ([cf30818](https://github.com/vivliostyle/vivliostyle-cli/commit/cf308180565413399c0367f149d9e6eaa00942d7))
+
 # [3.0.0-pre.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.3...v3.0.0-pre.4) (2020-11-01)
 
 # [3.0.0-pre.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.2...v3.0.0-pre.3) (2020-08-06)
