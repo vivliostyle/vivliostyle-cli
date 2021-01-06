@@ -1,11 +1,11 @@
 import Ajv from 'ajv';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
-import path from 'upath';
 import pkgUp from 'pkg-up';
 import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
+import path from 'upath';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
@@ -43,7 +43,11 @@ export interface ParsedEntry {
   title?: string;
   theme?: ParsedTheme;
   source: { path: string; dir: string };
-  target: { path: string; dir: string };
+  target: {
+    path: string;
+    dir: string;
+    // format: 'pdf' | 'pub-manifest' | 'webbook';
+  };
 }
 
 export interface VivliostyleConfig {
@@ -69,6 +73,10 @@ export interface CliFlags {
   configPath?: string;
   outFile?: string;
   outDir?: string;
+  targets?: {
+    output: string;
+    format: string;
+  }[];
   theme?: string;
   size?: string;
   pressReady?: boolean;
