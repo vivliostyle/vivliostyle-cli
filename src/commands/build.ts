@@ -110,10 +110,7 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
   .parse(process.argv);
 
 try {
-  if (!program.output) {
-    gracefulError(new Error('Please specify output option(s).'));
-  }
-  const targets = inferenceTargetsOption(program.output);
+  const targets = program.output && inferenceTargetsOption(program.output);
 
   build({
     input: program.args?.[0],
@@ -153,6 +150,9 @@ export default async function build(cliFlags: BuildCliFlags) {
       context,
       tmpDir,
     );
+    if (!config.outputs.length) {
+      throw new Error('Please specify output option(s).');
+    }
 
     // build artifacts
     const { manifestPath } = await buildArtifacts(config);

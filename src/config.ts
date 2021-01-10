@@ -47,11 +47,6 @@ export interface ParsedEntry {
   type: 'markdown' | 'html';
   title?: string;
   theme?: ParsedTheme;
-  // source: { path: string; dir: string };
-  // target: {
-  //   path: string;
-  //   dir: string;
-  // };
   source: string;
   target: string;
 }
@@ -289,7 +284,9 @@ export async function mergeConfig<T extends CliFlags>(
   debug('vivliostyle.config.js', config);
 
   const entryContextDir = path.resolve(
-    cliFlags.input ? '.' : contextResolve(context, config?.entryContext) ?? '.',
+    cliFlags.input
+      ? '.'
+      : contextResolve(context, config?.entryContext) ?? context,
   );
   const artifactDir = path.join(workspaceDir, 'artifact');
 
@@ -326,7 +323,6 @@ export async function mergeConfig<T extends CliFlags>(
     const targetPath = path
       .resolve(artifactDir, contextEntryPath)
       .replace(/\.md$/, '.html');
-    const targetDir = path.dirname(targetPath);
     const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
 
     const metadata = parseFileMetadata(type, sourcePath);
