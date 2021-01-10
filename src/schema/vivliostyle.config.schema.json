@@ -13,6 +13,18 @@
       },
       "additionalProperties": false
     },
+    "output": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outputObject": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "format": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
     "coreProps": {
       "type": "object",
       "properties": {
@@ -42,64 +54,75 @@
           ]
         },
         "entry": {
-          "type": "array",
-          "items": {
-            "oneOf": [
-              { "$ref": "#/definitions/entry" },
-              { "$ref": "#/definitions/entryObject" }
-            ]
-          }
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/definitions/entry" },
+                  { "$ref": "#/definitions/entryObject" }
+                ]
+              }
+            },
+            { "$ref": "#/definitions/entry" },
+            { "$ref": "#/definitions/entryObject" }
+          ]
         },
         "entryContext": {
           "type": "string",
           "description": "",
           "minLength": 1
         },
+        "output": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/definitions/output" },
+                  { "$ref": "#/definitions/outputObject" }
+                ]
+              }
+            },
+            { "$ref": "#/definitions/output" },
+            { "$ref": "#/definitions/outputObject" }
+          ]
+        },
         "size": {
           "type": "string",
           "description": "",
           "minLength": 1
         },
-        "format": {
-          "enum": ["pdf"]
-        },
         "pressReady": {
           "type": "boolean"
         },
-        "outDir": {
+        "language": {
           "type": "string",
           "minLength": 1
         },
-        "outFile": {
+        "toc": {
+          "oneOf": [
+            { "type": "boolean" },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        },
+        "cover": {
           "type": "string",
           "minLength": 1
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 0
         }
       }
-    },
-    "outProps": {
-      "oneOf": [
-        {
-          "required": ["outDir"],
-          "not": { "required": ["outFile"] }
-        },
-        {
-          "required": ["outFile"],
-          "not": { "required": ["outDir"] }
-        }
-      ]
     }
   },
   "allOf": [
     {
       "$ref": "#/definitions/coreProps"
-    },
-    {
-      "anyOf": [
-        {},
-        {
-          "$ref": "#/definitions/outProps"
-        }
-      ]
     }
   ]
 }
