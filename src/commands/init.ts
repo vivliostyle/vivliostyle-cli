@@ -1,26 +1,11 @@
 import chalk from 'chalk';
-import program from 'commander';
 import fs from 'fs';
 import path from 'upath';
 import { gracefulError, log } from '../util';
+import { InitCliFlags, setupInitParserProgram } from './init.parser';
 
-export interface InitCliFlags {
-  title?: string;
-  author?: string;
-  language?: string;
-  theme?: string;
-  size?: string;
-}
-
-program
-  .name('vivliostyle init')
-  .description('create vivliostyle config file')
-  .option('--title <title>', 'title')
-  .option('--author <author>', 'author')
-  .option('-l, --language <language>', 'language')
-  .option('-s, --size  <size>', 'paper size')
-  .option('-t, --theme <theme>', 'theme')
-  .parse(process.argv);
+const program = setupInitParserProgram();
+program.parse(process.argv);
 
 init({
   title: program.title,

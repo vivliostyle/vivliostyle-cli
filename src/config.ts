@@ -193,8 +193,7 @@ function parseStyleLocator(
   const maybeStyle =
     packageJson?.vivliostyle?.theme?.style ??
     packageJson.style ??
-    packageJson.main ??
-    packageJson?.vivliostyle?.theme?.stylesheet; // TODO: remove theme.stylesheet
+    packageJson.main;
 
   if (!maybeStyle) {
     throw new Error(
@@ -290,7 +289,7 @@ export async function mergeConfig<T extends CliFlags>(
   );
   const artifactDir = path.join(workspaceDir, 'artifact');
 
-  const language = config?.language ?? 'en';
+  const language = cliFlags.language ?? config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const toc =
@@ -368,7 +367,7 @@ export async function mergeConfig<T extends CliFlags>(
             };
           }
           const format = target.format ?? inferenceFormatByName(target.path);
-          if (!(format in availableOutputFormat)) {
+          if (!availableOutputFormat.includes(format as OutputFormat)) {
             throw new Error(`Unknown format: ${format}`);
           }
           return {
