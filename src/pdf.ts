@@ -1,9 +1,8 @@
 import chalk from 'chalk';
-import fs from 'fs';
-import path from 'upath';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
+import path from 'upath';
 import url from 'url';
 import { Meta, Payload, TOCItem } from './broker';
 import { MergedConfig, ParsedEntry } from './config';
@@ -18,18 +17,17 @@ import {
   logSuccess,
   logUpdate,
   startLogging,
-  statFile,
 } from './util';
 
-export interface BuildPdfOptions extends MergedConfig {
+export type BuildPdfOptions = Omit<MergedConfig, 'outputs'> & {
   input: string;
-  entries: ParsedEntry[];
-}
+  output: string;
+};
 
 export async function buildPDF({
   input,
-  distDir,
-  outputPath,
+  output,
+  workspaceDir,
   size,
   executableChromium,
   sandbox,
@@ -40,15 +38,10 @@ export async function buildPDF({
   entries,
 }: BuildPdfOptions) {
   logUpdate(`Launching build environment`);
-  const stat = await statFile(input);
-  const root = distDir || (stat.isDirectory() ? input : path.dirname(input));
+  const root = workspaceDir;
 
   const sourceIndex = await findEntryPointFile(input, root);
 
-  const outputFile =
-    fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()
-      ? path.resolve(outputPath, 'output.pdf')
-      : outputPath;
   const outputSize = size;
 
   const [source, broker] = await launchSourceAndBrokerServer(root);
@@ -91,29 +84,26 @@ export async function buildPDF({
 
   function stringifyEntry(entry: ParsedEntry) {
     const formattedSourcePath = chalk.bold.cyan(
-      path.relative(entryContextDir, entry.source.path),
+      path.relative(entryContextDir, entry.source),
     );
-    return `${terminalLink(formattedSourcePath, 'file://' + entry.source.path, {
+    return `${terminalLink(formattedSourcePath, 'file://' + entry.source, {
       fallback: () => formattedSourcePath,
     })} ${entry.title ? chalk.gray(entry.title) : ''}`;
   }
 
-  const building = (e: ParsedEntry) => `${stringifyEntry(e)}`;
-  const built = (e: ParsedEntry) => `${stringifyEntry(e)}`;
-
   function handleEntry(response: puppeteer.Response) {
     const entry = entries.find(
       (entry) =>
-        path.relative(distDir, entry.target.path) ===
+        path.relative(workspaceDir, entry.target) ===
         url.parse(response.url()).pathname!.substring(1),
     );
     if (entry) {
       if (!lastEntry) {
         lastEntry = entry;
-        return logUpdate(building(entry));
+        return logUpdate(stringifyEntry(entry));
       }
-      logSuccess(built(lastEntry));
-      startLogging(building(entry));
+      logSuccess(stringifyEntry(lastEntry));
+      startLogging(stringifyEntry(entry));
       lastEntry = entry;
     }
   }
@@ -149,7 +139,7 @@ export async function buildPDF({
     },
   );
 
-  logSuccess(built(lastEntry!));
+  logSuccess(stringifyEntry(lastEntry!));
   startLogging('Building PDF');
 
   const pdf = await page.pdf({
@@ -166,14 +156,14 @@ export async function buildPDF({
   await browser.close();
 
   logUpdate('Processing PDF');
-  shelljs.mkdir('-p', path.dirname(outputFile));
+  shelljs.mkdir('-p', path.dirname(output));
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata);
   await post.toc(toc);
-  await post.save(outputFile, { pressReady });
+  await post.save(output, { pressReady });
 
-  return outputFile;
+  return output;
 }
 
 async function loadMetadata(page: puppeteer.Page): Promise<Meta> {

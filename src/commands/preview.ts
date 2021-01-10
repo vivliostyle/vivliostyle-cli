@@ -1,7 +1,7 @@
 import chokidar from 'chokidar';
 import program from 'commander';
-import path from 'upath';
 import puppeteer from 'puppeteer';
+import path from 'upath';
 import { buildArtifacts } from '../builder';
 import {
   CliFlags,
@@ -17,6 +17,7 @@ import {
   logSuccess,
   startLogging,
   stopLogging,
+  useTmpDirectory,
 } from '../util';
 
 export interface PreviewCliFlags extends CliFlags {}
@@ -52,8 +53,6 @@ let timer: NodeJS.Timeout;
 preview({
   input: program.args?.[0],
   configPath: program.config,
-  outDir: program.outDir,
-  outFile: program.outFile,
   theme: program.theme,
   size: program.size,
   title: program.title,
@@ -75,55 +74,70 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     ? path.dirname(vivliostyleConfigPath)
     : process.cwd();
 
-  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  const [tmpDir, clear] = await useTmpDirectory();
 
-  // build artifacts
-  const { manifestPath } = await buildArtifacts(config);
+  try {
+    const config = await mergeConfig(
+      cliFlags,
+      vivliostyleConfig,
+      context,
+      tmpDir,
+    );
 
-  const [source, broker] = await launchSourceAndBrokerServer(config.distDir);
+    // build artifacts
+    const { manifestPath } = await buildArtifacts(config);
 
-  const url = getBrokerUrl({
-    sourceIndex: path.relative(config.distDir, manifestPath),
-    sourcePort: source.port,
-    brokerPort: broker.port,
-  });
+    const [source, broker] = await launchSourceAndBrokerServer(
+      config.workspaceDir,
+    );
 
-  debug(
-    `Executing Chromium path: ${
-      config.executableChromium || puppeteer.executablePath()
-    }`,
-  );
-  const browser = await launchBrowser({
-    headless: false,
-    executablePath: config.executableChromium || puppeteer.executablePath(),
-    args: [config.sandbox ? '' : '--no-sandbox'],
-  });
-  const page = await browser.newPage();
-  await page.setViewport({ width: 0, height: 0 });
-  await page.goto(url);
-
-  stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
-
-  function handleChangeEvent(path: string) {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      startLogging(`Rebuilding ${path}`);
-      // build artifacts
-      buildArtifacts(config);
-      page.reload();
-      logSuccess(`Built ${path}`);
-    }, 2000);
-  }
-
-  chokidar
-    .watch('**', {
-      ignored: (p: string) => {
-        return /node_modules|\.git/.test(p) || p.startsWith(config.distDir);
-      },
-      cwd: context,
-    })
-    .on('all', (event, path) => {
-      if (!/\.(md|markdown|html?|css|jpe?g|png|gif|svg)$/i.test(path)) return;
-      handleChangeEvent(path);
+    const url = getBrokerUrl({
+      sourceIndex: path.relative(config.workspaceDir, manifestPath),
+      sourcePort: source.port,
+      brokerPort: broker.port,
     });
+
+    debug(
+      `Executing Chromium path: ${
+        config.executableChromium || puppeteer.executablePath()
+      }`,
+    );
+    const browser = await launchBrowser({
+      headless: false,
+      executablePath: config.executableChromium || puppeteer.executablePath(),
+      args: [config.sandbox ? '' : '--no-sandbox'],
+    });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 0, height: 0 });
+    await page.goto(url);
+
+    stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
+
+    function handleChangeEvent(path: string) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        startLogging(`Rebuilding ${path}`);
+        // build artifacts
+        buildArtifacts(config);
+        page.reload();
+        logSuccess(`Built ${path}`);
+      }, 2000);
+    }
+
+    chokidar
+      .watch('**', {
+        ignored: (p: string) => {
+          return (
+            /node_modules|\.git/.test(p) || p.startsWith(config.workspaceDir)
+          );
+        },
+        cwd: context,
+      })
+      .on('all', (event, path) => {
+        if (!/\.(md|markdown|html?|css|jpe?g|png|gif|svg)$/i.test(path)) return;
+        handleChangeEvent(path);
+      });
+  } finally {
+    clear();
+  }
 }

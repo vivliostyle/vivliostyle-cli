@@ -1,18 +1,28 @@
 import chalk from 'chalk';
 import program from 'commander';
 import process from 'process';
+import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { buildArtifacts, cleanup } from '../builder';
+import { buildArtifacts } from '../builder';
 import {
+  availableOutputFormat,
   CliFlags,
   collectVivliostyleConfig,
   getVivliostyleConfigPath,
+  inferenceFormatByName,
   mergeConfig,
+  OutputFormat,
   validateTimeoutFlag,
 } from '../config';
 import { buildPDF } from '../pdf';
-import { gracefulError, log, startLogging, stopLogging } from '../util';
+import {
+  gracefulError,
+  log,
+  startLogging,
+  stopLogging,
+  useTmpDirectory,
+} from '../util';
 
 export interface BuildCliFlags extends CliFlags {}
 
@@ -21,8 +31,10 @@ export interface BuildCliFlags extends CliFlags {}
 //    → [{output: "foo"}, {output:"bar", format: "baz"}]
 // ex: "-f foo -o bar -o baz -f piyo"
 //    → [{output: "bar", format: "foo"}, {output: "baz", format: "piyo"}]
-type TargetRecord = { output: string; format: string };
-const targets: Partial<TargetRecord>[] = [];
+const targets: {
+  output?: string;
+  format?: string;
+}[] = [];
 const outputOptionProcessor = (
   value: string,
   _previous: typeof targets,
@@ -107,8 +119,6 @@ try {
     input: program.args?.[0],
     configPath: program.config,
     targets,
-    outDir: program.outDir,
-    outFile: program.outFile,
     theme: program.theme,
     size: program.size,
     title: program.title,
@@ -116,7 +126,6 @@ try {
     language: program.language,
     pressReady: program.pressReady,
     verbose: program.verbose,
-    distDir: program.distDir,
     timeout: program.timeout,
     sandbox: program.sandbox,
     executableChromium: program.executableChromium,
@@ -135,59 +144,72 @@ export default async function build(cliFlags: BuildCliFlags) {
     ? path.dirname(vivliostyleConfigPath)
     : process.cwd();
 
-  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  const [tmpDir, clear] = await useTmpDirectory();
 
-  // build artifacts
-  cleanup(config.distDir);
-  const { manifestPath } = await buildArtifacts(config);
+  try {
+    const config = await mergeConfig(
+      cliFlags,
+      vivliostyleConfig,
+      context,
+      tmpDir,
+    );
 
-  // generate PDF
-  const output = await buildPDF({
-    ...config,
-    input: manifestPath,
-  });
+    // build artifacts
+    const { manifestPath } = await buildArtifacts(config);
 
-  stopLogging('Built successfully.', '🎉');
-
-  const formattedOutput = chalk.bold.green(
-    path.relative(process.cwd(), output),
-  );
-  log(
-    `\n${terminalLink(formattedOutput, 'file://' + output, {
-      fallback: () => formattedOutput,
-    })} has been created.`,
-  );
-
-  // TODO: gracefully exit broker & source server
-  process.exit(0);
-}
-
-function inferenceTargetsOption(parsed: typeof targets): TargetRecord[] {
-  return parsed.map(
-    ({ output, format }): TargetRecord => {
-      if (!output) {
-        // -f is an optional option but -o is required one
-        throw new Error(
-          `Cannot found output option corresponding --format ${format} option. Please check the command options.`,
+    // generate files
+    for (const target of config.outputs) {
+      let output: string | null = null;
+      if (target.format === 'pdf') {
+        output = await buildPDF({
+          ...config,
+          input: manifestPath,
+          output: target.path,
+        });
+      } else if (target.format === 'webbook') {
+        shelljs.cp('-r', config.workspaceDir, target.path);
+        output = target.path;
+      } else if (target.format === 'pub-manifest') {
+        // TODO
+      }
+      if (output) {
+        const formattedOutput = chalk.bold.green(
+          path.relative(process.cwd(), output),
+        );
+        log(
+          `\n${terminalLink(formattedOutput, 'file://' + output, {
+            fallback: () => formattedOutput,
+          })} has been created.`,
         );
       }
-      if (!format) {
-        const ext = path.extname(output);
-        switch (ext) {
-          case '.pdf':
-            format = 'pdf';
-            break;
-          case '.json':
-            format = 'pub-manifest';
-            break;
-          default:
-            format = 'webbook';
-            break;
-        }
-      } else if (!['pdf', 'pub-manifest', 'webbook'].includes(format)) {
-        throw new Error(`Unknown format: ${format}`);
-      }
-      return { output, format };
-    },
-  );
+    }
+
+    stopLogging('Built successfully.', '🎉');
+
+    process.exit(0);
+  } finally {
+    clear();
+  }
+}
+
+function inferenceTargetsOption(
+  parsed: typeof targets,
+): {
+  output: string;
+  format: OutputFormat;
+}[] {
+  return parsed.map(({ output, format }) => {
+    if (!output) {
+      // -f is an optional option but -o is required one
+      throw new Error(
+        `Couldn't find the output option corresponding --format ${format} option. Please check the command options.`,
+      );
+    }
+    if (!format) {
+      format = inferenceFormatByName(output);
+    } else if (!availableOutputFormat.includes(format as OutputFormat)) {
+      throw new Error(`Unknown format: ${format}`);
+    }
+    return { output, format: format as OutputFormat };
+  });
 }

@@ -17,6 +17,11 @@ export interface Entry {
   theme?: string;
 }
 
+export interface Output {
+  path: string;
+  format?: string;
+}
+
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
 export interface UriTheme {
@@ -42,12 +47,25 @@ export interface ParsedEntry {
   type: 'markdown' | 'html';
   title?: string;
   theme?: ParsedTheme;
-  source: { path: string; dir: string };
-  target: {
-    path: string;
-    dir: string;
-    // format: 'pdf' | 'pub-manifest' | 'webbook';
-  };
+  // source: { path: string; dir: string };
+  // target: {
+  //   path: string;
+  //   dir: string;
+  // };
+  source: string;
+  target: string;
+}
+
+export const availableOutputFormat = [
+  'pdf',
+  'pub-manifest',
+  'webbook',
+] as const;
+export type OutputFormat = typeof availableOutputFormat[number];
+
+export interface ParsedOutput {
+  path: string;
+  format: OutputFormat;
 }
 
 export interface VivliostyleConfig {
@@ -56,26 +74,21 @@ export interface VivliostyleConfig {
   theme?: string;
   entry: string | Entry | (string | Entry)[];
   entryContext?: string; // .
+  output?: string | Output | (string | Output)[];
   size?: string;
-  format?: 'pdf';
   pressReady?: boolean;
-  outDir?: string;
-  outFile?: string; // output.pdf
   language?: string;
   toc?: boolean | string;
   cover?: string;
-  distDir?: string; // .vivliostyle
   timeout?: number;
 }
 
 export interface CliFlags {
   input?: string;
   configPath?: string;
-  outFile?: string;
-  outDir?: string;
   targets?: {
     output: string;
-    format: string;
+    format: OutputFormat;
   }[];
   theme?: string;
   size?: string;
@@ -84,7 +97,6 @@ export interface CliFlags {
   author?: string;
   language?: string;
   verbose?: boolean;
-  distDir?: string; // .vivliostyle
   timeout?: number;
   sandbox?: boolean;
   executableChromium?: string;
@@ -92,10 +104,10 @@ export interface CliFlags {
 
 export interface MergedConfig {
   entryContextDir: string;
+  workspaceDir: string;
   artifactDir: string;
-  distDir: string;
-  outputPath: string;
   entries: ParsedEntry[];
+  outputs: ParsedOutput[];
   themeIndexes: ParsedTheme[];
   size: PageSize | undefined;
   pressReady: boolean;
@@ -262,6 +274,7 @@ export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfig | undefined,
   context: string,
+  workspaceDir: string,
 ): Promise<MergedConfig> {
   const pkgJsonPath = await pkgUp();
   const pkgJson = pkgJsonPath ? readJSON(pkgJsonPath) : undefined;
@@ -278,24 +291,7 @@ export async function mergeConfig<T extends CliFlags>(
   const entryContextDir = path.resolve(
     cliFlags.input ? '.' : contextResolve(context, config?.entryContext) ?? '.',
   );
-  const distDir = path.resolve(
-    cliFlags?.distDir ??
-      contextResolve(context, config?.distDir) ??
-      '.vivliostyle',
-  );
-  const artifactDir = path.join(distDir, 'artifacts');
-
-  const format = config?.format ?? 'pdf';
-  const outDir = cliFlags.outDir ?? contextResolve(context, config?.outDir);
-  const outFile = cliFlags.outFile ?? contextResolve(context, config?.outFile);
-
-  if (outDir && outFile) {
-    throw new Error('outDir and outFile cannot be combined.');
-  }
-  const outputFile = `${projectTitle}.${format}`;
-  const outputPath = outDir
-    ? path.resolve(outDir, outputFile)
-    : outFile ?? path.resolve(outputFile);
+  const artifactDir = path.join(workspaceDir, 'artifact');
 
   const language = config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
@@ -345,8 +341,8 @@ export async function mergeConfig<T extends CliFlags>(
 
     return {
       type,
-      source: { path: sourcePath, dir: sourceDir },
-      target: { path: targetPath, dir: targetDir },
+      source: sourcePath,
+      target: targetPath,
       title,
       theme,
     };
@@ -354,21 +350,45 @@ export async function mergeConfig<T extends CliFlags>(
 
   const rawEntries = cliFlags.input
     ? [cliFlags.input]
-    : config
+    : config?.entry
     ? Array.isArray(config.entry)
       ? config.entry
-      : config.entry
-      ? [config.entry]
-      : []
+      : [config.entry]
     : [];
   const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
 
+  const outputs: ParsedOutput[] = cliFlags.targets
+    ? cliFlags.targets.map(({ output, format }) => ({
+        path: path.resolve(output),
+        format,
+      }))
+    : config?.output
+    ? (Array.isArray(config.output) ? config.output : [config.output]).map(
+        (target) => {
+          if (typeof target === 'string') {
+            return {
+              path: path.resolve(context, target),
+              format: inferenceFormatByName(target),
+            };
+          }
+          const format = target.format ?? inferenceFormatByName(target.path);
+          if (!(format in availableOutputFormat)) {
+            throw new Error(`Unknown format: ${format}`);
+          }
+          return {
+            path: path.resolve(context, target.path),
+            format: format as OutputFormat,
+          };
+        },
+      )
+    : [];
+
   const parsedConfig = {
     entryContextDir,
+    workspaceDir,
     artifactDir,
-    distDir,
-    outputPath,
     entries,
+    outputs,
     themeIndexes,
     pressReady,
     size,
@@ -377,7 +397,6 @@ export async function mergeConfig<T extends CliFlags>(
     language,
     toc,
     cover,
-    format,
     verbose,
     timeout,
     sandbox,
@@ -387,4 +406,16 @@ export async function mergeConfig<T extends CliFlags>(
   debug('parsedConfig', parsedConfig);
 
   return parsedConfig;
+}
+
+export function inferenceFormatByName(filename: string): OutputFormat {
+  const ext = path.extname(filename);
+  switch (ext) {
+    case '.pdf':
+      return 'pdf';
+    case '.json':
+      return 'pub-manifest';
+    default:
+      return 'webbook';
+  }
 }
