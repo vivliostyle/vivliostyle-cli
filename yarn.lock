@@ -2404,10 +2404,10 @@ es6-object-assign@^1.0.3:
   resolved "https://registry.yarnpkg.com/es6-object-assign/-/es6-object-assign-1.1.0.tgz#c2c3582656247c39ea107cb1e6652b6f9f24523c"
   integrity sha1-wsNYJlYkfDnqEHyx5mUrb58kUjw=
 
-esbuild@^0.5.18:
-  version "0.5.18"
-  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.5.18.tgz#b82f575015c7f3d4326dab0deabf71e52e972122"
-  integrity sha512-kvU6VqPmS7zBN6fPz6zWzu3eHmCFMB92L2cDz6yOWsviz2nIcAnI6bpN7T0mRR+GXbheEIlOj+sjc5a+KxYy/Q==
+esbuild@^0.8.31:
+  version "0.8.31"
+  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.8.31.tgz#c21e7adb3ad283c951a53de7ad64a5ae2df2ed34"
+  integrity sha512-7EIU0VdUxltwivjVezX3HgeNzeIVR1snkrAo57WdUnuBMykdzin5rTrxwCDM6xQqj0RL/HjOEm3wFr2ijHKeaA==
 
 escape-goat@^2.0.0:
   version "2.1.1"

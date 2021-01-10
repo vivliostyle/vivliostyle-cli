@@ -60,7 +60,7 @@
     "@types/serve-handler": "^6.1.0",
     "@types/tmp": "^0.2.0",
     "@types/uuid": "^8.0.0",
-    "esbuild": "^0.5.18",
+    "esbuild": "^0.8.31",
     "execa": "^4.0.2",
     "file-type": "^14.6.2",
     "husky": "^4.2.5",
