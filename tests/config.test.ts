@@ -47,6 +47,11 @@ it('parse vivliostyle config', async () => {
     'fixtures/config/valid.2.config.js',
   );
   expect(validConfig2).toMatchSnapshot('valid.2.config.js');
+
+  const validConfig3 = await getMergedConfig(
+    'fixtures/config/valid.3.config.js',
+  );
+  expect(validConfig3).toMatchSnapshot('valid.3.config.js');
 });
 
 it('override option by CLI command', async () => {

@@ -170,3 +170,30 @@ Object {
   "workspaceDir": "/tmp/vs-cli/dummy",
 }
 `;
+
+exports[`parse vivliostyle config: valid.3.config.js 1`] = `
+Object {
+  "artifactDir": "/tmp/vs-cli/dummy/artifact",
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/example.pdf",
+    },
+  ],
+  "pressReady": false,
+  "projectAuthor": "spring_raining <harusamex.com@gmail.com>",
+  "projectTitle": "example",
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "/tmp/vs-cli/dummy",
+}
+`;

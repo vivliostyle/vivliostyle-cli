@@ -352,31 +352,43 @@ export async function mergeConfig<T extends CliFlags>(
     : [];
   const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
 
-  const outputs: ParsedOutput[] = cliFlags.targets
-    ? cliFlags.targets.map(({ output, format }) => ({
+  const outputs = ((): ParsedOutput[] => {
+    if (cliFlags.targets) {
+      return cliFlags.targets.map(({ output, format }) => ({
         path: path.resolve(output),
         format,
-      }))
-    : config?.output
-    ? (Array.isArray(config.output) ? config.output : [config.output]).map(
-        (target) => {
-          if (typeof target === 'string') {
-            return {
-              path: path.resolve(context, target),
-              format: inferenceFormatByName(target),
-            };
-          }
-          const format = target.format ?? inferenceFormatByName(target.path);
-          if (!availableOutputFormat.includes(format as OutputFormat)) {
-            throw new Error(`Unknown format: ${format}`);
-          }
+      }));
+    }
+    if (config?.output) {
+      return (Array.isArray(config.output)
+        ? config.output
+        : [config.output]
+      ).map((target) => {
+        if (typeof target === 'string') {
           return {
-            path: path.resolve(context, target.path),
-            format: format as OutputFormat,
+            path: path.resolve(context, target),
+            format: inferenceFormatByName(target),
           };
-        },
-      )
-    : [];
+        }
+        const format = target.format ?? inferenceFormatByName(target.path);
+        if (!availableOutputFormat.includes(format as OutputFormat)) {
+          throw new Error(`Unknown format: ${format}`);
+        }
+        return {
+          path: path.resolve(context, target.path),
+          format: format as OutputFormat,
+        };
+      });
+    }
+    // Outputs a pdf file if any output configuration is not set
+    const filename = config?.title ? `${config.title}.pdf` : 'output.pdf';
+    return [
+      {
+        path: path.resolve(context, filename),
+        format: 'pdf',
+      },
+    ];
+  })();
 
   const parsedConfig = {
     entryContextDir,

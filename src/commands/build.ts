@@ -57,9 +57,6 @@ export default async function build(cliFlags: BuildCliFlags) {
       context,
       tmpDir,
     );
-    if (!config.outputs.length) {
-      throw new Error('Please specify output option(s).');
-    }
 
     // build artifacts
     const { manifestPath } = await buildArtifacts(config);
