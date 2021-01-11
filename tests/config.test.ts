@@ -1,24 +1,40 @@
 import path from 'upath';
-import {
-  BuildCliFlags,
-  setupBuildParserProgram,
-} from '../src/commands/build.parser';
+import { setupBuildParserProgram } from '../src/commands/build.parser';
 import { collectVivliostyleConfig, mergeConfig } from '../src/config';
 
+const configFiles = ['valid.1', 'valid.2', 'valid.3', 'invalid.1'] as const;
+const configFilePath = configFiles.reduce(
+  (p, v) => ({
+    ...p,
+    [v]: path.resolve(__dirname, `fixtures/config/${v}.config.js`),
+  }),
+  {} as { [k in typeof configFiles[number]]: string },
+);
+
 const rootPath = path.resolve(__dirname, '..');
-const program = setupBuildParserProgram().parse([]);
-const emptyCliFlags: BuildCliFlags = {
-  ...program,
-  input: program.args?.[0],
-  configPath: program.config,
-};
-const getMergedConfig = async (test: string) => {
-  const configPath = path.resolve(__dirname, test);
-  const vivliostyleConfig = collectVivliostyleConfig(configPath);
-  const config = await mergeConfig(
-    emptyCliFlags,
+const getMergedConfig = async (args: string[]) => {
+  const program = setupBuildParserProgram().parse([
+    'vivliostyle',
+    'build',
+    ...args,
+  ]);
+  const {
     vivliostyleConfig,
-    path.dirname(configPath),
+    vivliostyleConfigPath,
+    cliFlags,
+  } = collectVivliostyleConfig({
+    ...program.opts(),
+    input: program.args?.[0],
+    configPath: program.config,
+    targets: program.targets,
+  });
+  const context = vivliostyleConfig
+    ? path.dirname(vivliostyleConfigPath)
+    : __dirname;
+  const config = await mergeConfig(
+    cliFlags,
+    vivliostyleConfig,
+    context,
     path.resolve('/tmp/vs-cli/dummy'),
   );
   maskConfig(config);
@@ -38,30 +54,20 @@ const maskConfig = (obj: any) => {
 };
 
 it('parse vivliostyle config', async () => {
-  const validConfig1 = await getMergedConfig(
-    'fixtures/config/valid.1.config.js',
-  );
+  const validConfig1 = await getMergedConfig(['-c', configFilePath['valid.1']]);
   expect(validConfig1).toMatchSnapshot('valid.1.config.js');
 
-  const validConfig2 = await getMergedConfig(
-    'fixtures/config/valid.2.config.js',
-  );
+  const validConfig2 = await getMergedConfig(['-c', configFilePath['valid.2']]);
   expect(validConfig2).toMatchSnapshot('valid.2.config.js');
 
-  const validConfig3 = await getMergedConfig(
-    'fixtures/config/valid.3.config.js',
-  );
+  const validConfig3 = await getMergedConfig(['-c', configFilePath['valid.3']]);
   expect(validConfig3).toMatchSnapshot('valid.3.config.js');
 });
 
 it('override option by CLI command', async () => {
-  const configPath = path.resolve(
-    __dirname,
-    'fixtures/config/valid.1.config.js',
-  );
-  const program = setupBuildParserProgram().parse([
+  const config = await getMergedConfig([
     '-c',
-    configPath,
+    configFilePath['valid.1'],
     '-o',
     'yuno.pdf',
     '-o',
@@ -83,24 +89,17 @@ it('override option by CLI command', async () => {
     '--executable-chromium',
     'myChromium',
   ]);
-  const cliFlags: BuildCliFlags = {
-    ...program,
-    input: program.args?.[0],
-    configPath: program.config,
-  };
-  const vivliostyleConfig = collectVivliostyleConfig(configPath);
-  const config = await mergeConfig(
-    cliFlags,
-    vivliostyleConfig,
-    path.dirname(configPath),
-    path.resolve('/tmp/vs-cli/dummy'),
-  );
-  maskConfig(config);
   expect(config).toMatchSnapshot('valid.1.config.js');
 });
 
 it('deny invalid config', () => {
   expect(
-    getMergedConfig('fixtures/config/invalid.1.config.js'),
+    getMergedConfig(['-c', configFilePath['invalid.1']]),
   ).rejects.toThrow();
+});
+
+it('Loads same config file on each way', async () => {
+  const config1 = await getMergedConfig(['-c', configFilePath['valid.1']]);
+  const config2 = await getMergedConfig([configFilePath['valid.1']]);
+  expect(config1).toEqual(config2);
 });

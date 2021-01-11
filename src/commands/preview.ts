@@ -2,11 +2,7 @@ import chokidar from 'chokidar';
 import puppeteer from 'puppeteer';
 import path from 'upath';
 import { buildArtifacts } from '../builder';
-import {
-  collectVivliostyleConfig,
-  getVivliostyleConfigPath,
-  mergeConfig,
-} from '../config';
+import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
 import {
   debug,
@@ -41,8 +37,9 @@ preview({
 export default async function preview(cliFlags: PreviewCliFlags) {
   startLogging('Preparing preview');
 
-  const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
-  const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
+  const loadedConf = collectVivliostyleConfig(cliFlags);
+  const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
+  cliFlags = loadedConf.cliFlags;
 
   const context = vivliostyleConfig
     ? path.dirname(vivliostyleConfigPath)

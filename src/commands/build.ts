@@ -4,11 +4,7 @@ import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import { buildArtifacts } from '../builder';
-import {
-  collectVivliostyleConfig,
-  getVivliostyleConfigPath,
-  mergeConfig,
-} from '../config';
+import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { buildPDF } from '../pdf';
 import {
   gracefulError,
@@ -41,8 +37,9 @@ build({
 export default async function build(cliFlags: BuildCliFlags) {
   startLogging('Collecting build config');
 
-  const vivliostyleConfigPath = getVivliostyleConfigPath(cliFlags.configPath);
-  const vivliostyleConfig = collectVivliostyleConfig(vivliostyleConfigPath);
+  const loadedConf = collectVivliostyleConfig(cliFlags);
+  const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
+  cliFlags = loadedConf.cliFlags;
 
   const context = vivliostyleConfig
     ? path.dirname(vivliostyleConfigPath)

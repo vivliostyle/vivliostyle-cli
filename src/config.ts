@@ -240,28 +240,52 @@ function parseFileMetadata(type: string, sourcePath: string) {
   return { title, theme };
 }
 
-export function collectVivliostyleConfig(
-  configPath: string,
-): VivliostyleConfig | undefined {
-  if (!fs.existsSync(configPath)) {
-    return undefined;
-  }
-  const config = require(configPath) as VivliostyleConfig;
+export function collectVivliostyleConfig<T extends CliFlags>(
+  cliFlags: T,
+): {
+  cliFlags: T;
+  vivliostyleConfig?: VivliostyleConfig;
+  vivliostyleConfigPath: string;
+} {
+  const load = (configPath: string) => {
+    if (!fs.existsSync(configPath)) {
+      return undefined;
+    }
+    const config = require(configPath) as VivliostyleConfig;
 
-  const ajv = Ajv();
-  const valid = ajv.validate(configSchema, config);
-  if (!valid) {
-    throw new Error('Invalid vivliostyle.config.js');
-  }
+    const ajv = Ajv();
+    const valid = ajv.validate(configSchema, config);
+    if (!valid) {
+      throw new Error('Invalid vivliostyle.config.js');
+    }
+    return config;
+  };
 
-  return config;
-}
-
-export function getVivliostyleConfigPath(configPath?: string) {
   const cwd = process.cwd();
-  return configPath
-    ? path.resolve(cwd, configPath)
+  let vivliostyleConfigPath = cliFlags.configPath
+    ? path.resolve(cwd, cliFlags.configPath)
     : path.join(cwd, 'vivliostyle.config.js');
+  let vivliostyleConfig = load(vivliostyleConfigPath);
+  if (!vivliostyleConfig && cliFlags.input) {
+    // Load an input argument as a Vivliostyle config
+    try {
+      const inputPath = path.resolve(process.cwd(), cliFlags.input);
+      const inputConfig = load(inputPath);
+      if (inputConfig) {
+        cliFlags = {
+          ...cliFlags,
+          input: undefined,
+        };
+        vivliostyleConfigPath = inputPath;
+        vivliostyleConfig = inputConfig;
+      }
+    } catch (_err) {}
+  }
+  return {
+    cliFlags,
+    vivliostyleConfig,
+    vivliostyleConfigPath,
+  };
 }
 
 export async function mergeConfig<T extends CliFlags>(
