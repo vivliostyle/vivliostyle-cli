@@ -2,9 +2,9 @@ import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
 import oraConstructor from 'ora';
-import path from 'upath';
 import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
+import path from 'upath';
 import util from 'util';
 
 export const debug = debugConstructor('vs-cli');
@@ -44,7 +44,10 @@ export function logInfo(...obj: string[]) {
 }
 
 export function gracefulError(err: Error) {
-  const message = `${chalk.red.bold('Error:')} ${err.message}`;
+  const message = err.stack
+    ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
+    : `${chalk.red.bold('Error:')} ${err.message}`;
+
   if (ora.isSpinning) {
     ora.fail(message);
   } else {
