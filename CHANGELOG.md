@@ -1,3 +1,13 @@
+# [3.0.0-pre.6](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.5...v3.0.0-pre.6) (2021-01-13)
+
+### Bug Fixes
+
+- Local theme package copied to wrong place when updated during preview ([ee05f3e](https://github.com/vivliostyle/vivliostyle-cli/commit/ee05f3e18932fc8f27c5343e9353cf16d2810359)), closes [#93](https://github.com/vivliostyle/vivliostyle-cli/issues/93)
+
+### Features
+
+- display stacktrace on error ([42ca8f1](https://github.com/vivliostyle/vivliostyle-cli/commit/42ca8f11c049758f6c2c30d640ce14caeae52216))
+
 # [3.0.0-pre.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.4...v3.0.0-pre.5) (2020-12-30)
 
 ### Bug Fixes
