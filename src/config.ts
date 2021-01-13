@@ -377,7 +377,7 @@ export async function mergeConfig<T extends CliFlags>(
   const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
 
   const outputs = ((): ParsedOutput[] => {
-    if (cliFlags.targets) {
+    if (cliFlags.targets?.length) {
       return cliFlags.targets.map(({ output, format }) => ({
         path: path.resolve(output),
         format,
