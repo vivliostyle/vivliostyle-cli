@@ -14,7 +14,7 @@
     "test": "yarn build && jest --coverage"
   },
   "dependencies": {
-    "@vivliostyle/core": "2.4.0",
+    "@vivliostyle/core": "2.4.1",
     "commander": "^5.1.0",
     "debug": "^4.1.1",
     "mathjax": "3.0.5",
