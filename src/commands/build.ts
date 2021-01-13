@@ -71,7 +71,16 @@ export default async function build(cliFlags: BuildCliFlags) {
           output: target.path,
         });
       } else if (target.format === 'webbook') {
-        shelljs.cp('-r', config.workspaceDir, target.path);
+        const silentMode = shelljs.config.silent;
+        shelljs.config.silent = true;
+        const stderr =
+          shelljs.mkdir('-p', target.path).stderr ||
+          shelljs.cp('-r', path.join(config.workspaceDir, '*'), target.path)
+            .stderr;
+        if (stderr) {
+          throw new Error(stderr);
+        }
+        shelljs.config.silent = silentMode;
         output = target.path;
       } else if (target.format === 'pub-manifest') {
         // TODO
