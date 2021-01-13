@@ -26,25 +26,25 @@ export function setupBuildParserProgram(): commander.Command {
   }[] = [];
   const outputOptionProcessor = (
     value: string,
-    _previous: typeof targets,
-  ): typeof targets => {
+    previous?: string[],
+  ): string[] => {
     if (targets.length === 0 || 'output' in targets[targets.length - 1]) {
       targets.push({ output: value });
     } else {
       targets[targets.length - 1].output = value;
     }
-    return targets;
+    return [...(previous || []), value];
   };
   const formatOptionProcessor = (
     value: string,
-    _previous: typeof targets,
-  ): typeof targets => {
+    previous?: string[],
+  ): string[] => {
     if (targets.length === 0 || 'format' in targets[targets.length - 1]) {
       targets.push({ format: value });
     } else {
       targets[targets.length - 1].format = value;
     }
-    return targets;
+    return [...(previous || []), value];
   };
 
   const program = new commander.Command();
@@ -98,7 +98,7 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
       'specify a path of executable Chrome (or Chromium) you installed',
     )
     .action((_arg: any, option: BuildCliFlags) => {
-      option.targets = option.output && inferenceTargetsOption(option.output);
+      option.targets = inferenceTargetsOption(targets);
     });
 
   return program;
