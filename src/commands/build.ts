@@ -15,24 +15,27 @@ import {
 } from '../util';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
-const program = setupBuildParserProgram();
-program.parse(process.argv);
-
-build({
-  input: program.args?.[0],
-  configPath: program.config,
-  targets: program.targets,
-  theme: program.theme,
-  size: program.size,
-  title: program.title,
-  author: program.author,
-  language: program.language,
-  pressReady: program.pressReady,
-  verbose: program.verbose,
-  timeout: program.timeout,
-  sandbox: program.sandbox,
-  executableChromium: program.executableChromium,
-}).catch(gracefulError);
+try {
+  const program = setupBuildParserProgram();
+  program.parse(process.argv);
+  build({
+    input: program.args?.[0],
+    configPath: program.config,
+    targets: program.targets,
+    theme: program.theme,
+    size: program.size,
+    title: program.title,
+    author: program.author,
+    language: program.language,
+    pressReady: program.pressReady,
+    verbose: program.verbose,
+    timeout: program.timeout,
+    sandbox: program.sandbox,
+    executableChromium: program.executableChromium,
+  }).catch(gracefulError);
+} catch (err) {
+  gracefulError(err);
+}
 
 export default async function build(cliFlags: BuildCliFlags) {
   startLogging('Collecting build config');

@@ -15,24 +15,27 @@ import {
 } from '../util';
 import { PreviewCliFlags, setupPreviewParserProgram } from './preview.parser';
 
-const program = setupPreviewParserProgram();
-program.parse(process.argv);
-
 let timer: NodeJS.Timeout;
 
-preview({
-  input: program.args?.[0],
-  configPath: program.config,
-  theme: program.theme,
-  size: program.size,
-  title: program.title,
-  author: program.author,
-  language: program.language,
-  verbose: program.verbose,
-  timeout: program.timeout,
-  sandbox: program.sandbox,
-  executableChromium: program.executableChromium,
-}).catch(gracefulError);
+try {
+  const program = setupPreviewParserProgram();
+  program.parse(process.argv);
+  preview({
+    input: program.args?.[0],
+    configPath: program.config,
+    theme: program.theme,
+    size: program.size,
+    title: program.title,
+    author: program.author,
+    language: program.language,
+    verbose: program.verbose,
+    timeout: program.timeout,
+    sandbox: program.sandbox,
+    executableChromium: program.executableChromium,
+  }).catch(gracefulError);
+} catch (err) {
+  gracefulError(err);
+}
 
 export default async function preview(cliFlags: PreviewCliFlags) {
   startLogging('Preparing preview');

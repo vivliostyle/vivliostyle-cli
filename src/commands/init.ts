@@ -4,16 +4,19 @@ import path from 'upath';
 import { gracefulError, log } from '../util';
 import { InitCliFlags, setupInitParserProgram } from './init.parser';
 
-const program = setupInitParserProgram();
-program.parse(process.argv);
-
-init({
-  title: program.title,
-  author: program.author,
-  language: program.language,
-  size: program.size,
-  theme: program.theme,
-}).catch(gracefulError);
+try {
+  const program = setupInitParserProgram();
+  program.parse(process.argv);
+  init({
+    title: program.title,
+    author: program.author,
+    language: program.language,
+    size: program.size,
+    theme: program.theme,
+  }).catch(gracefulError);
+} catch (err) {
+  gracefulError(err);
+}
 
 export default async function init(cliFlags: InitCliFlags) {
   const vivliostyleConfigPath = path.join(
