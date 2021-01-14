@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
+import chalk from 'chalk';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
-import pkgUp from 'pkg-up';
 import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
@@ -9,7 +9,7 @@ import path from 'upath';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import { debug, readJSON } from './util';
+import { debug, log, readJSON } from './util';
 
 export interface Entry {
   path: string;
@@ -294,14 +294,20 @@ export async function mergeConfig<T extends CliFlags>(
   context: string,
   workspaceDir: string,
 ): Promise<MergedConfig> {
-  const pkgJsonPath = await pkgUp();
-  const pkgJson = pkgJsonPath ? readJSON(pkgJsonPath) : undefined;
+  debug('context directory', context);
 
-  const projectTitle = cliFlags.title ?? config?.title ?? pkgJson?.name;
-  if (!projectTitle) {
-    throw new Error('title not defined');
+  const pkgJsonPath = path.resolve(context, 'package.json');
+  const pkgJson = fs.existsSync(pkgJsonPath)
+    ? readJSON(pkgJsonPath)
+    : undefined;
+  if (pkgJson) {
+    debug('located package.json path', pkgJsonPath);
   }
-  const projectAuthor = cliFlags.author ?? config?.author ?? pkgJson?.author;
+
+  const projectTitle: string | undefined =
+    cliFlags.title ?? config?.title ?? pkgJson?.name;
+  const projectAuthor: string | undefined =
+    cliFlags.author ?? config?.author ?? pkgJson?.author;
 
   debug('cliFlags', cliFlags);
   debug('vivliostyle.config.js', config);
@@ -414,6 +420,22 @@ export async function mergeConfig<T extends CliFlags>(
     ];
   })();
 
+  let fallbackProjectTitle: string = '';
+  if (!projectTitle) {
+    if (entries.length === 1 && entries[0].title) {
+      fallbackProjectTitle = entries[0].title;
+    } else {
+      fallbackProjectTitle = path.basename(outputs[0].path);
+      log(
+        `\n${chalk.yellow(
+          'Could not find any appropriate publication title. We set ',
+        )}${chalk.bold.yellow(`"${fallbackProjectTitle}"`)}${chalk.yellow(
+          ' as a fallback.',
+        )}`,
+      );
+    }
+  }
+
   const parsedConfig = {
     entryContextDir,
     workspaceDir,
@@ -423,8 +445,8 @@ export async function mergeConfig<T extends CliFlags>(
     themeIndexes,
     pressReady,
     size,
-    projectTitle,
-    projectAuthor,
+    projectTitle: projectTitle || fallbackProjectTitle,
+    projectAuthor: projectAuthor || '',
     language,
     toc,
     cover,

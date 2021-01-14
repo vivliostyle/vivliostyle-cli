@@ -34,7 +34,6 @@
     "mime-types": "^2.1.27",
     "ora": "^4.0.4",
     "pdf-lib": "^1.9.0",
-    "pkg-up": "^3.1.0",
     "portfinder": "^1.0.26",
     "preact": "^10.4.5",
     "press-ready": "^4.0.3",
