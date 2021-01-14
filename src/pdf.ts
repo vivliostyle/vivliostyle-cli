@@ -125,7 +125,7 @@ export async function buildPDF({
   });
 
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
-  await page.waitFor(() => !!window.coreViewer);
+  await page.waitForFunction(() => !!window.coreViewer);
 
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
