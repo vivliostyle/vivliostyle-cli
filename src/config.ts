@@ -1,11 +1,11 @@
 import Ajv from 'ajv';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
-import path from 'upath';
 import pkgUp from 'pkg-up';
 import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
+import path from 'upath';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
@@ -15,6 +15,11 @@ export interface Entry {
   path: string;
   title?: string;
   theme?: string;
+}
+
+export interface Output {
+  path: string;
+  format?: string;
 }
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
@@ -42,8 +47,20 @@ export interface ParsedEntry {
   type: 'markdown' | 'html';
   title?: string;
   theme?: ParsedTheme;
-  source: { path: string; dir: string };
-  target: { path: string; dir: string };
+  source: string;
+  target: string;
+}
+
+export const availableOutputFormat = [
+  'pdf',
+  'pub-manifest',
+  'webbook',
+] as const;
+export type OutputFormat = typeof availableOutputFormat[number];
+
+export interface ParsedOutput {
+  path: string;
+  format: OutputFormat;
 }
 
 export interface VivliostyleConfig {
@@ -52,23 +69,22 @@ export interface VivliostyleConfig {
   theme?: string;
   entry: string | Entry | (string | Entry)[];
   entryContext?: string; // .
+  output?: string | Output | (string | Output)[];
   size?: string;
-  format?: 'pdf';
   pressReady?: boolean;
-  outDir?: string;
-  outFile?: string; // output.pdf
   language?: string;
   toc?: boolean | string;
   cover?: string;
-  distDir?: string; // .vivliostyle
   timeout?: number;
 }
 
 export interface CliFlags {
   input?: string;
   configPath?: string;
-  outFile?: string;
-  outDir?: string;
+  targets?: {
+    output: string;
+    format: OutputFormat;
+  }[];
   theme?: string;
   size?: string;
   pressReady?: boolean;
@@ -76,7 +92,6 @@ export interface CliFlags {
   author?: string;
   language?: string;
   verbose?: boolean;
-  distDir?: string; // .vivliostyle
   timeout?: number;
   sandbox?: boolean;
   executableChromium?: string;
@@ -84,10 +99,10 @@ export interface CliFlags {
 
 export interface MergedConfig {
   entryContextDir: string;
+  workspaceDir: string;
   artifactDir: string;
-  distDir: string;
-  outputPath: string;
   entries: ParsedEntry[];
+  outputs: ParsedOutput[];
   themeIndexes: ParsedTheme[];
   size: PageSize | undefined;
   pressReady: boolean;
@@ -178,8 +193,7 @@ function parseStyleLocator(
   const maybeStyle =
     packageJson?.vivliostyle?.theme?.style ??
     packageJson.style ??
-    packageJson.main ??
-    packageJson?.vivliostyle?.theme?.stylesheet; // TODO: remove theme.stylesheet
+    packageJson.main;
 
   if (!maybeStyle) {
     throw new Error(
@@ -226,34 +240,59 @@ function parseFileMetadata(type: string, sourcePath: string) {
   return { title, theme };
 }
 
-export function collectVivliostyleConfig(
-  configPath: string,
-): VivliostyleConfig | undefined {
-  if (!fs.existsSync(configPath)) {
-    return undefined;
-  }
-  const config = require(configPath) as VivliostyleConfig;
+export function collectVivliostyleConfig<T extends CliFlags>(
+  cliFlags: T,
+): {
+  cliFlags: T;
+  vivliostyleConfig?: VivliostyleConfig;
+  vivliostyleConfigPath: string;
+} {
+  const load = (configPath: string) => {
+    if (!fs.existsSync(configPath)) {
+      return undefined;
+    }
+    const config = require(configPath) as VivliostyleConfig;
 
-  const ajv = Ajv();
-  const valid = ajv.validate(configSchema, config);
-  if (!valid) {
-    throw new Error('Invalid vivliostyle.config.js');
-  }
+    const ajv = Ajv();
+    const valid = ajv.validate(configSchema, config);
+    if (!valid) {
+      throw new Error('Invalid vivliostyle.config.js');
+    }
+    return config;
+  };
 
-  return config;
-}
-
-export function getVivliostyleConfigPath(configPath?: string) {
   const cwd = process.cwd();
-  return configPath
-    ? path.resolve(cwd, configPath)
+  let vivliostyleConfigPath = cliFlags.configPath
+    ? path.resolve(cwd, cliFlags.configPath)
     : path.join(cwd, 'vivliostyle.config.js');
+  let vivliostyleConfig = load(vivliostyleConfigPath);
+  if (!vivliostyleConfig && cliFlags.input) {
+    // Load an input argument as a Vivliostyle config
+    try {
+      const inputPath = path.resolve(process.cwd(), cliFlags.input);
+      const inputConfig = load(inputPath);
+      if (inputConfig) {
+        cliFlags = {
+          ...cliFlags,
+          input: undefined,
+        };
+        vivliostyleConfigPath = inputPath;
+        vivliostyleConfig = inputConfig;
+      }
+    } catch (_err) {}
+  }
+  return {
+    cliFlags,
+    vivliostyleConfig,
+    vivliostyleConfigPath,
+  };
 }
 
 export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfig | undefined,
   context: string,
+  workspaceDir: string,
 ): Promise<MergedConfig> {
   const pkgJsonPath = await pkgUp();
   const pkgJson = pkgJsonPath ? readJSON(pkgJsonPath) : undefined;
@@ -268,28 +307,13 @@ export async function mergeConfig<T extends CliFlags>(
   debug('vivliostyle.config.js', config);
 
   const entryContextDir = path.resolve(
-    cliFlags.input ? '.' : contextResolve(context, config?.entryContext) ?? '.',
+    cliFlags.input
+      ? '.'
+      : contextResolve(context, config?.entryContext) ?? context,
   );
-  const distDir = path.resolve(
-    cliFlags?.distDir ??
-      contextResolve(context, config?.distDir) ??
-      '.vivliostyle',
-  );
-  const artifactDir = path.join(distDir, 'artifacts');
+  const artifactDir = path.join(workspaceDir, 'artifact');
 
-  const format = config?.format ?? 'pdf';
-  const outDir = cliFlags.outDir ?? contextResolve(context, config?.outDir);
-  const outFile = cliFlags.outFile ?? contextResolve(context, config?.outFile);
-
-  if (outDir && outFile) {
-    throw new Error('outDir and outFile cannot be combined.');
-  }
-  const outputFile = `${projectTitle}.${format}`;
-  const outputPath = outDir
-    ? path.resolve(outDir, outputFile)
-    : outFile ?? path.resolve(outputFile);
-
-  const language = config?.language ?? 'en';
+  const language = cliFlags.language ?? config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const toc =
@@ -322,7 +346,6 @@ export async function mergeConfig<T extends CliFlags>(
     const targetPath = path
       .resolve(artifactDir, contextEntryPath)
       .replace(/\.md$/, '.html');
-    const targetDir = path.dirname(targetPath);
     const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
 
     const metadata = parseFileMetadata(type, sourcePath);
@@ -337,8 +360,8 @@ export async function mergeConfig<T extends CliFlags>(
 
     return {
       type,
-      source: { path: sourcePath, dir: sourceDir },
-      target: { path: targetPath, dir: targetDir },
+      source: sourcePath,
+      target: targetPath,
       title,
       theme,
     };
@@ -346,21 +369,57 @@ export async function mergeConfig<T extends CliFlags>(
 
   const rawEntries = cliFlags.input
     ? [cliFlags.input]
-    : config
+    : config?.entry
     ? Array.isArray(config.entry)
       ? config.entry
-      : config.entry
-      ? [config.entry]
-      : []
+      : [config.entry]
     : [];
   const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
 
+  const outputs = ((): ParsedOutput[] => {
+    if (cliFlags.targets?.length) {
+      return cliFlags.targets.map(({ output, format }) => ({
+        path: path.resolve(output),
+        format,
+      }));
+    }
+    if (config?.output) {
+      return (Array.isArray(config.output)
+        ? config.output
+        : [config.output]
+      ).map((target) => {
+        if (typeof target === 'string') {
+          return {
+            path: path.resolve(context, target),
+            format: inferenceFormatByName(target),
+          };
+        }
+        const format = target.format ?? inferenceFormatByName(target.path);
+        if (!availableOutputFormat.includes(format as OutputFormat)) {
+          throw new Error(`Unknown format: ${format}`);
+        }
+        return {
+          path: path.resolve(context, target.path),
+          format: format as OutputFormat,
+        };
+      });
+    }
+    // Outputs a pdf file if any output configuration is not set
+    const filename = config?.title ? `${config.title}.pdf` : 'output.pdf';
+    return [
+      {
+        path: path.resolve(context, filename),
+        format: 'pdf',
+      },
+    ];
+  })();
+
   const parsedConfig = {
     entryContextDir,
+    workspaceDir,
     artifactDir,
-    distDir,
-    outputPath,
     entries,
+    outputs,
     themeIndexes,
     pressReady,
     size,
@@ -369,7 +428,6 @@ export async function mergeConfig<T extends CliFlags>(
     language,
     toc,
     cover,
-    format,
     verbose,
     timeout,
     sandbox,
@@ -379,4 +437,16 @@ export async function mergeConfig<T extends CliFlags>(
   debug('parsedConfig', parsedConfig);
 
   return parsedConfig;
+}
+
+export function inferenceFormatByName(filename: string): OutputFormat {
+  const ext = path.extname(filename);
+  switch (ext) {
+    case '.pdf':
+      return 'pdf';
+    case '.json':
+      return 'pub-manifest';
+    default:
+      return 'webbook';
+  }
 }

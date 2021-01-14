@@ -2,7 +2,7 @@ import { generateToC } from '../src/builder';
 
 it('generateToC', () => {
   const toc = generateToC(
-    [{ target: { path: 'test.html' }, title: 'Title' }] as any,
+    [{ target: 'test.html', title: 'Title' }] as any,
     '.vivliostyle',
   );
   expect(toc).toBe(

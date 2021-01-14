@@ -1,0 +1,199 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`override option by CLI command: valid.1.config.js 1`] = `
+Object {
+  "artifactDir": "/tmp/vs-cli/dummy/artifact",
+  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "theme": Object {
+        "location": "https://myTheme.example.com",
+        "name": "myTheme.example.com",
+        "type": "uri",
+      },
+      "title": "myTitle",
+      "type": "markdown",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "theme": Object {
+        "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+        "name": "theme.css",
+        "type": "file",
+      },
+      "title": "title",
+      "type": "markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "myLanguage",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/yuno.pdf",
+    },
+    Object {
+      "format": "webbook",
+      "path": "__WORKSPACE__/yuno",
+    },
+  ],
+  "pressReady": true,
+  "projectAuthor": "myAuthor",
+  "projectTitle": "myTitle",
+  "sandbox": true,
+  "size": Object {
+    "format": "JIS-B5",
+  },
+  "themeIndexes": Array [
+    Object {
+      "location": "https://myTheme.example.com",
+      "name": "myTheme.example.com",
+      "type": "uri",
+    },
+    Object {
+      "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+      "name": "theme.css",
+      "type": "file",
+    },
+  ],
+  "timeout": 42000,
+  "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
+  "verbose": false,
+  "workspaceDir": "/tmp/vs-cli/dummy",
+}
+`;
+
+exports[`parse vivliostyle config: valid.1.config.js 1`] = `
+Object {
+  "artifactDir": "/tmp/vs-cli/dummy/artifact",
+  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "theme": Object {
+        "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "title",
+      "type": "markdown",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "theme": Object {
+        "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+        "name": "theme.css",
+        "type": "file",
+      },
+      "title": "title",
+      "type": "markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "language",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+    },
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output2.pdf",
+    },
+  ],
+  "pressReady": true,
+  "projectAuthor": "author",
+  "projectTitle": "title",
+  "sandbox": true,
+  "size": Object {
+    "format": "size",
+  },
+  "themeIndexes": Array [
+    Object {
+      "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+      "name": "debug-theme",
+      "style": "./theme.css",
+      "type": "package",
+    },
+    Object {
+      "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+      "name": "theme.css",
+      "type": "file",
+    },
+  ],
+  "timeout": 1,
+  "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
+  "verbose": false,
+  "workspaceDir": "/tmp/vs-cli/dummy",
+}
+`;
+
+exports[`parse vivliostyle config: valid.2.config.js 1`] = `
+Object {
+  "artifactDir": "/tmp/vs-cli/dummy/artifact",
+  "cover": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "theme": undefined,
+      "title": "@vivliostyle/cli",
+      "type": "markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+    },
+  ],
+  "pressReady": false,
+  "projectAuthor": "spring_raining <harusamex.com@gmail.com>",
+  "projectTitle": "@vivliostyle/cli",
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "/tmp/vs-cli/dummy",
+}
+`;
+
+exports[`parse vivliostyle config: valid.3.config.js 1`] = `
+Object {
+  "artifactDir": "/tmp/vs-cli/dummy/artifact",
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/example.pdf",
+    },
+  ],
+  "pressReady": false,
+  "projectAuthor": "spring_raining <harusamex.com@gmail.com>",
+  "projectTitle": "example",
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "/tmp/vs-cli/dummy",
+}
+`;

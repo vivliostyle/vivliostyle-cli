@@ -45,6 +45,18 @@ vivliostyle init
 You are new to Vivliostyle? Check out our latest project [Create Book](https://github.com/vivliostyle/create-book#readme).
 With Create Book, you can easily bootstrap your book project and start writing without any extra effort.
 
+#### CLI Options
+
+```
+Options:
+  --title <title>            title
+  --author <author>          author
+  -l, --language <language>  language
+  -s, --size  <size>         paper size
+  -t, --theme <theme>        theme
+  -h, --help                 display help for command
+```
+
 ### `build`
 
 > build and create PDF file.
@@ -61,27 +73,25 @@ vivliostyle build
 
 ```
 Options:
-  -c, --config <config_file>        path to vivliostyle.config.js [vivliostyle.config.js]
-  -o, --out-file <output file>      specify output file path [<title>.pdf]
-  -d, --out-dir <output directory>  specify output directory
-  -t, --theme <theme>               theme path or package name
-  -s, --size <size>                 output pdf size [Letter]
-                                    preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
-                                    ledger
-                                    custom(comma separated): 182mm,257mm or 8.5in,11in
-  -p, --press-ready                 make generated PDF compatible with press ready PDF/X-1a
-                                    [false]
-  --title <title>                   title
-  --author <author>                 author
-  --language <language>             language
-  --verbose                         verbose log output
-  --dist-dir                        dist dir [.vivliostyle]
-  --timeout <seconds>               timeout limit for waiting Vivliostyle process [60s]
-  --no-sandbox                      launch chrome without sandbox. use this option when
-                                    ECONNREFUSED error occurred.
-  --executable-chromium <path>      specify a path of executable Chrome (or Chromium) you
-                                    installed
-  -h, --help                        display help for command
+  -c, --config <config_file>    path to vivliostyle.config.js [vivliostyle.config.js]
+  -o, --output <path>           specify output file name or directory [<title>.pdf]
+                                This option can be specified multiple, then each -o options can be supplied one -f option.
+                                ex: -o output1 -f webbook -o output2.pdf -f pdf
+  -f, --format <format>         specify output format corresponding output target
+                                If an extension is specified on -o option, this field will be inferenced automatically.
+  -t, --theme <theme>           theme path or package name
+  -s, --size <size>             output pdf size [Letter]
+                                preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+                                custom(comma separated): 182mm,257mm or 8.5in,11in
+  -p, --press-ready             make generated PDF compatible with press ready PDF/X-1a [false]
+  --title <title>               title
+  --author <author>             author
+  --language <language>         language
+  --verbose                     verbose log output
+  --timeout <seconds>           timeout limit for waiting Vivliostyle process [60s]
+  --no-sandbox                  launch chrome without sandbox. use this option when ECONNREFUSED error occurred.
+  --executable-chromium <path>  specify a path of executable Chrome (or Chromium) you installed
+  -h, --help                    display help for command
 ```
 
 ### `preview`
@@ -99,15 +109,13 @@ Options:
   -c, --config <config_file>    path to vivliostyle.config.js
   -t, --theme <theme>           theme path or package name
   -s, --size <size>             output pdf size [Letter]
-                                preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
-                                ledger
+                                preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
                                 custom(comma separated): 182mm,257mm or 8.5in,11in
   --title <title>               title
   --author <author>             author
   --language <language>         language
   --verbose                     verbose log output
-  --no-sandbox                  launch chrome without sandbox (use this option to avoid
-                                ECONNREFUSED error)
+  --no-sandbox                  launch chrome without sandbox (use this option to avoid ECONNREFUSED error)
   --executable-chromium <path>  specify a path of executable Chrome(Chromium) you installed
   -h, --help                    display help for command
 ```

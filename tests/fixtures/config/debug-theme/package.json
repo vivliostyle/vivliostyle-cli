@@ -1,0 +1,9 @@
+{
+  "name": "debug-theme",
+  "vivliostyle": {
+    "theme": {
+      "name": "debug-theme",
+      "style": "./theme.css"
+    }
+  }
+}

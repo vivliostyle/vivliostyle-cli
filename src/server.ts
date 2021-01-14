@@ -1,8 +1,8 @@
 import fs from 'fs';
 import http, { RequestListener } from 'http';
 import https from 'https';
-import path from 'upath';
 import handler from 'serve-handler';
+import path from 'upath';
 import url from 'url';
 import { debug, findAvailablePort } from './util';
 
@@ -143,8 +143,9 @@ export function launchBrokerServer(): Promise<BrokerServer> {
       next(); // module not found
     };
 
+    const root = path.resolve(__dirname, '..');
     const server = startEndpoint({
-      root: path.resolve(__dirname, '..'),
+      root,
       before: [beforeHook],
     });
 
@@ -154,6 +155,7 @@ export function launchBrokerServer(): Promise<BrokerServer> {
           server.close();
         });
       });
+      debug(`Launched broker server hosting ${root}`);
       resolve({ server, port });
     });
   });
@@ -173,6 +175,7 @@ export function launchSourceServer(root: string): Promise<SourceServer> {
           server.close();
         });
       });
+      debug(`Launched source server hosting ${root}`);
       resolve({ server, port });
     });
   });
