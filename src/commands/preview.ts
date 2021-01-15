@@ -79,7 +79,10 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     const browser = await launchBrowser({
       headless: false,
       executablePath: config.executableChromium || puppeteer.executablePath(),
-      args: [config.sandbox ? '' : '--no-sandbox'],
+      args: [
+        '--allow-file-access-from-files',
+        config.sandbox ? '' : '--no-sandbox',
+      ],
     });
     const page = await browser.newPage();
     await page.setViewport({ width: 0, height: 0 });
