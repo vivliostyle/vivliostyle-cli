@@ -407,10 +407,10 @@ class App extends Component {
     super(props);
 
     let renderUrl = null;
-    const query = parseQuery(window.location.search);
-    if (query.render) {
+    const query = parseQuery(window.location.hash);
+    if (query.src) {
       // When vivliostyle loads document, we need to specify the html file.
-      renderUrl = query.render;
+      renderUrl = query.src;
     }
 
     this.state = {

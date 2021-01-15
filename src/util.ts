@@ -154,3 +154,20 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
     });
   });
 }
+
+export function encodeHashParameter(params: Record<string, string>): string {
+  return Object.entries(params)
+    .map(([k, v]) => {
+      if (!/^[a-zA-Z0-9_]+$/.test(k)) {
+        return '';
+      }
+      const value = v
+        .replace('%', '%25')
+        .replace('+', '%2B')
+        .replace('&', '%26')
+        .replace('=', '%3D')
+        .replace(' ', '+');
+      return `${k}=${value}`;
+    })
+    .join('&');
+}

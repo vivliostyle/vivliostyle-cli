@@ -3,8 +3,8 @@ import http, { RequestListener } from 'http';
 import https from 'https';
 import handler from 'serve-handler';
 import path from 'upath';
-import url from 'url';
-import { debug, findAvailablePort } from './util';
+import url, { URL } from 'url';
+import { debug, encodeHashParameter, findAvailablePort } from './util';
 
 export type LoadMode = 'document' | 'book';
 export type PageSize = { format: string } | { width: string; height: string };
@@ -38,24 +38,19 @@ export function getBrokerUrl({
   loadMode = 'book',
   outputSize,
 }: GetBrokerURLOption) {
-  const sourceURL = url.format({
-    protocol: 'http',
-    hostname: 'localhost',
-    port: sourcePort,
-    pathname: sourceIndex,
-  });
+  const sourceUrl = new URL('http://localhost');
+  sourceUrl.port = `${sourcePort}`;
+  sourceUrl.pathname = sourceIndex;
 
-  return url.format({
-    protocol: 'http',
-    hostname: 'localhost',
-    port: brokerPort,
-    pathname: '/broker/index.html',
-    query: {
-      render: sourceURL,
-      loadMode,
-      ...outputSize,
-    },
+  const brokerUrl = new URL('http://localhost');
+  brokerUrl.port = `${brokerPort}`;
+  brokerUrl.pathname = '/broker/index.html';
+  const hashParam = encodeHashParameter({
+    src: sourceUrl.href,
+    loadMode,
+    ...outputSize,
   });
+  return `${brokerUrl.href}#${hashParam}`;
 }
 
 export function startEndpoint({
