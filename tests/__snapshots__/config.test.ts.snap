@@ -2,12 +2,11 @@
 
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
-  "artifactDir": "/tmp/vs-cli/dummy/artifact",
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": Object {
         "location": "https://myTheme.example.com",
         "name": "myTheme.example.com",
@@ -18,7 +17,7 @@ Object {
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
         "name": "theme.css",
@@ -31,6 +30,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "language": "myLanguage",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -63,18 +63,17 @@ Object {
   "timeout": 42000,
   "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
   "verbose": false,
-  "workspaceDir": "/tmp/vs-cli/dummy",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
 
 exports[`parse vivliostyle config: valid.1.config.js 1`] = `
 Object {
-  "artifactDir": "/tmp/vs-cli/dummy/artifact",
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
         "name": "debug-theme",
@@ -86,7 +85,7 @@ Object {
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
         "name": "theme.css",
@@ -99,6 +98,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "language": "language",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -132,18 +132,17 @@ Object {
   "timeout": 1,
   "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
   "verbose": false,
-  "workspaceDir": "/tmp/vs-cli/dummy",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
 
 exports[`parse vivliostyle config: valid.2.config.js 1`] = `
 Object {
-  "artifactDir": "/tmp/vs-cli/dummy/artifact",
   "cover": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "/tmp/vs-cli/dummy/artifact/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": undefined,
       "title": "pkgName",
       "type": "markdown",
@@ -152,6 +151,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "language": "en",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -167,18 +167,18 @@ Object {
   "timeout": 120000,
   "toc": false,
   "verbose": false,
-  "workspaceDir": "/tmp/vs-cli/dummy",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
 
 exports[`parse vivliostyle config: valid.3.config.js 1`] = `
 Object {
-  "artifactDir": "/tmp/vs-cli/dummy/artifact",
   "cover": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "language": "en",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -194,6 +194,123 @@ Object {
   "timeout": 120000,
   "toc": false,
   "verbose": false,
-  "workspaceDir": "/tmp/vs-cli/dummy",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`yields a config with single html 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/sample.html",
+      "theme": undefined,
+      "title": "Miyako",
+      "type": "html",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/output.pdf",
+    },
+  ],
+  "pressReady": false,
+  "projectAuthor": "",
+  "projectTitle": "Miyako",
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`yields a config with single input and vivliostyle config 1`] = `
+Object {
+  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
+      "theme": Object {
+        "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "Yuno",
+      "type": "markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "language",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+    },
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output2.pdf",
+    },
+  ],
+  "pressReady": true,
+  "projectAuthor": "author",
+  "projectTitle": "title",
+  "sandbox": true,
+  "size": Object {
+    "format": "size",
+  },
+  "themeIndexes": Array [
+    Object {
+      "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+      "name": "debug-theme",
+      "style": "./theme.css",
+      "type": "package",
+    },
+  ],
+  "timeout": 1,
+  "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`yields a config with single markdown 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
+      "theme": undefined,
+      "title": "Yuno",
+      "type": "markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/output.pdf",
+    },
+  ],
+  "pressReady": false,
+  "projectAuthor": "",
+  "projectTitle": "Yuno",
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;

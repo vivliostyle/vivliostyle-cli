@@ -1,3 +1,4 @@
+import shelljs from 'shelljs';
 import path from 'upath';
 import { setupBuildParserProgram } from '../src/commands/build.parser';
 import { collectVivliostyleConfig, mergeConfig } from '../src/config';
@@ -31,12 +32,7 @@ const getMergedConfig = async (args: string[]) => {
   const context = vivliostyleConfig
     ? path.dirname(vivliostyleConfigPath)
     : __dirname;
-  const config = await mergeConfig(
-    cliFlags,
-    vivliostyleConfig,
-    context,
-    path.resolve('/tmp/vs-cli/dummy'),
-  );
+  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
   maskConfig(config);
   return config;
 };
@@ -52,6 +48,10 @@ const maskConfig = (obj: any) => {
     }
   });
 };
+
+afterAll(() => {
+  shelljs.rm('-f', path.resolve(__dirname, 'fixtures/config/.vs-*'));
+});
 
 it('parse vivliostyle config', async () => {
   const validConfig1 = await getMergedConfig(['-c', configFilePath['valid.1']]);
@@ -102,4 +102,51 @@ it('Loads same config file on each way', async () => {
   const config1 = await getMergedConfig(['-c', configFilePath['valid.1']]);
   const config2 = await getMergedConfig([configFilePath['valid.1']]);
   expect(config1).toEqual(config2);
+});
+
+it('yields a config with single markdown', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/config/sample.md'),
+  ]);
+  expect(config.entries[0].target).toMatch(
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.md$/,
+  );
+  expect(config.manifestPath).toMatch(
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
+  );
+  delete config.manifestPath;
+  delete config.entries[0].target;
+  expect(config).toMatchSnapshot();
+});
+
+it('yields a config with single html', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/config/sample.html'),
+  ]);
+  expect(config.entries[0].target).toMatch(
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
+  );
+  expect(config.manifestPath).toMatch(
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
+  );
+  delete config.manifestPath;
+  delete config.entries[0].target;
+  expect(config).toMatchSnapshot();
+});
+
+it('yields a config with single input and vivliostyle config', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/config/sample.md'),
+    '-c',
+    configFilePath['valid.1'],
+  ]);
+  expect(config.entries[0].target).toMatch(
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.md$/,
+  );
+  expect(config.manifestPath).toMatch(
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
+  );
+  delete config.manifestPath;
+  delete config.entries[0].target;
+  expect(config).toMatchSnapshot();
 });

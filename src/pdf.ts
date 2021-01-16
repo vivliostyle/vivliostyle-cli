@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import url from 'url';
+import { URL } from 'url';
 import { Meta, Payload, TOCItem } from './broker';
 import { MergedConfig, ParsedEntry } from './config';
 import { PostProcess } from './postprocess';
@@ -80,11 +80,13 @@ export async function buildPDF({
   }
 
   function handleEntry(response: puppeteer.Response) {
-    const entry = entries.find(
-      (entry) =>
-        path.relative(workspaceDir, entry.target) ===
-        url.parse(response.url()).pathname!.substring(1),
-    );
+    const entry = entries.find((entry) => {
+      const url = new URL(response.url());
+      return url.protocol === 'file:'
+        ? entry.target === url.pathname
+        : path.relative(workspaceDir, entry.target) ===
+            url.pathname.substring(1);
+    });
     if (entry) {
       if (!lastEntry) {
         lastEntry = entry;
@@ -106,6 +108,8 @@ export async function buildPDF({
     handleEntry(response);
 
     if (300 > response.status() && 200 <= response.status()) return;
+    // file protocol doesn't have status code
+    if (response.url().startsWith('file://') && response.ok()) return;
 
     logError(chalk.red(`${response.status()}`, response.url()));
     startLogging();
@@ -127,7 +131,9 @@ export async function buildPDF({
     },
   );
 
-  logSuccess(stringifyEntry(lastEntry!));
+  if (lastEntry) {
+    logSuccess(stringifyEntry(lastEntry));
+  }
   startLogging('Building PDF');
 
   const pdf = await page.pdf({
