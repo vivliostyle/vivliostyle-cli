@@ -7,10 +7,9 @@ import url from 'url';
 import { Meta, Payload, TOCItem } from './broker';
 import { MergedConfig, ParsedEntry } from './config';
 import { PostProcess } from './postprocess';
-import { getBrokerUrl, launchSourceAndBrokerServer } from './server';
+import { getBrokerUrl } from './server';
 import {
   debug,
-  findEntryPointFile,
   launchBrowser,
   logError,
   logInfo,
@@ -38,21 +37,10 @@ export async function buildPDF({
   entries,
 }: BuildPdfOptions) {
   logUpdate(`Launching build environment`);
-  const root = workspaceDir;
-
-  const sourceIndex = await findEntryPointFile(input, root);
-
-  const outputSize = size;
-
-  const [source, broker] = await launchSourceAndBrokerServer(root);
-  const sourcePort = source.port;
-  const brokerPort = broker.port;
 
   const navigateURL = getBrokerUrl({
-    sourcePort,
-    sourceIndex,
-    brokerPort,
-    outputSize,
+    sourceIndex: input,
+    outputSize: size,
   });
   debug('brokerURL', navigateURL);
 

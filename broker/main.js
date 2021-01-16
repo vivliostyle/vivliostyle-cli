@@ -520,14 +520,14 @@ class App extends Component {
         return;
       }
     };
-    xhr.open('GET', '/package.json', true);
+    xhr.open('GET', '../package.json', true);
     xhr.send();
   }
 
   componentDidMount() {
     this.fetchPackageInfo();
     window.coreViewer = new CoreViewer({
-      userAgentRootURL: '/node_modules/@vivliostyle/core/resources/',
+      userAgentRootURL: '../node_modules/@vivliostyle/core/resources/',
       viewportElement: document.getElementById('out'),
       debug: false,
     });

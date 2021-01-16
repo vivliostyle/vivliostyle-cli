@@ -2,11 +2,9 @@ import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
 import oraConstructor from 'ora';
-import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import tmp from 'tmp';
-import path from 'upath';
 import util from 'util';
 
 export const debug = debugConstructor('vs-cli');
@@ -89,34 +87,6 @@ export async function statFile(filePath: string) {
     }
     throw err;
   }
-}
-
-export function findAvailablePort(): Promise<number> {
-  portfinder.basePort = 13000;
-  return portfinder.getPortPromise();
-}
-
-export async function findEntryPointFile(
-  target: string,
-  root: string,
-): Promise<string> {
-  const stat = fs.statSync(target);
-  if (!stat.isDirectory()) {
-    return path.relative(root, target);
-  }
-  const files = fs.readdirSync(target);
-  const index = [
-    'index.html',
-    'index.htm',
-    'index.xhtml',
-    'index.xht',
-  ].find((n) => files.includes(n));
-  if (index) {
-    return path.relative(root, path.resolve(target, index));
-  }
-
-  // give up finding entrypoint
-  return path.relative(root, target);
 }
 
 export async function launchBrowser(

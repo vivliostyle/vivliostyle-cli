@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import path from 'upath';
 import { compile } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
-import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
+import { getBrokerUrl } from '../server';
 import {
   debug,
   gracefulError,
@@ -56,14 +56,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     // build artifacts
     await compile(config);
 
-    const [source, broker] = await launchSourceAndBrokerServer(
-      config.workspaceDir,
-    );
-
     const url = getBrokerUrl({
-      sourceIndex: path.relative(config.workspaceDir, config.manifestPath),
-      sourcePort: source.port,
-      brokerPort: broker.port,
+      sourceIndex: config.manifestPath,
     });
 
     debug(
