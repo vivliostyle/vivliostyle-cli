@@ -1,7 +1,7 @@
 import chokidar from 'chokidar';
 import puppeteer from 'puppeteer';
 import path from 'upath';
-import { buildArtifacts } from '../builder';
+import { compile } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { getBrokerUrl, launchSourceAndBrokerServer } from '../server';
 import {
@@ -51,22 +51,17 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   const [tmpDir, clear] = await useTmpDirectory();
 
   try {
-    const config = await mergeConfig(
-      cliFlags,
-      vivliostyleConfig,
-      context,
-      tmpDir,
-    );
+    const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
     // build artifacts
-    const { manifestPath } = await buildArtifacts(config);
+    await compile(config);
 
     const [source, broker] = await launchSourceAndBrokerServer(
       config.workspaceDir,
     );
 
     const url = getBrokerUrl({
-      sourceIndex: path.relative(config.workspaceDir, manifestPath),
+      sourceIndex: path.relative(config.workspaceDir, config.manifestPath),
       sourcePort: source.port,
       brokerPort: broker.port,
     });
@@ -95,7 +90,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
       timer = setTimeout(() => {
         startLogging(`Rebuilding ${path}`);
         // build artifacts
-        buildArtifacts(config);
+        compile(config);
         page.reload();
         logSuccess(`Built ${path}`);
       }, 2000);

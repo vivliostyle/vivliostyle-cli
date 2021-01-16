@@ -4,6 +4,7 @@ import fs from 'fs';
 import oraConstructor from 'ora';
 import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
+import shelljs from 'shelljs';
 import tmp from 'tmp';
 import path from 'upath';
 import util from 'util';
@@ -144,7 +145,7 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
       debug(`Created the temporary directory: ${path}`);
       const callback = () => {
         clear();
-        debug(`Cleared the temporary directory: ${path}`);
+        debug(`Removed the temporary directory: ${path}`);
         processAbortCallbacks = processAbortCallbacks.filter(
           (fn) => fn !== callback,
         );
@@ -153,6 +154,20 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
       res([path, callback]);
     });
   });
+}
+
+export async function touchTmpFile(path: string): Promise<() => void> {
+  shelljs.touch(path);
+  debug(`Created the temporary file: ${path}`);
+  const callback = () => {
+    shelljs.rm('-f', path);
+    debug(`Remove the temporary file: ${path}`);
+    processAbortCallbacks = processAbortCallbacks.filter(
+      (fn) => fn !== callback,
+    );
+  };
+  processAbortCallbacks.push(callback);
+  return callback;
 }
 
 export function encodeHashParameter(params: Record<string, string>): string {

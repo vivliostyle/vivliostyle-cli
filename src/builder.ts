@@ -1,10 +1,7 @@
-import chalk from 'chalk';
 import fs from 'fs';
-import globby from 'globby';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
 import { imageSize } from 'image-size';
-import { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
@@ -113,10 +110,10 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
   return toHTML(toc);
 }
 
-export async function buildArtifacts({
+export async function compile({
   entryContextDir,
   workspaceDir,
-  artifactDir,
+  manifestPath,
   projectTitle,
   themeIndexes,
   entries,
@@ -124,24 +121,11 @@ export async function buildArtifacts({
   language,
   toc,
   cover,
-}: MergedConfig) {
-  if (entries.length === 0) {
-    throw new Error(
-      `Missing entry.
-Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
-        'vivliostyle.config.js',
-      )}`,
-    );
-  }
-
+}: MergedConfig): Promise<void> {
   debug('entries', entries);
   debug('themes', themeIndexes);
 
-  // populate entries
-  shelljs.mkdir('-p', artifactDir);
   for (const entry of entries) {
-    shelljs.mkdir('-p', path.dirname(entry.target));
-
     // calculate style path
     let style;
     switch (entry?.theme?.type) {
@@ -166,42 +150,15 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
           ),
         );
     }
-
-    let compiledEntry;
-    if (entry.type === 'html') {
-      // compile html
-      const dom = new JSDOM(fs.readFileSync(entry.source, 'utf8'));
-      const {
-        window: { document },
-      } = dom;
-      if (!document) {
-        throw new Error('Invalid HTML document: ' + entry.source);
-      }
-
-      const titleEl = document.querySelector('title');
-      if (titleEl && entry.title) {
-        titleEl.innerHTML = entry.title;
-      }
-
-      const linkEl = document.querySelector<HTMLLinkElement>(
-        'link[rel="stylesheet"',
-      );
-      if (linkEl && style) {
-        linkEl.href = style;
-      }
-
-      const html = dom.serialize();
-      compiledEntry = html;
-    } else {
+    if (entry.type === 'markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
         style,
         title: entry.title,
       });
-      compiledEntry = String(vfile);
+      const compiledEntry = String(vfile);
+      fs.writeFileSync(entry.target, compiledEntry);
     }
-
-    fs.writeFileSync(entry.target, compiledEntry);
   }
 
   // copy theme
@@ -219,33 +176,7 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
     }
   }
 
-  // copy image assets
-  const assets = await globby(entryContextDir, {
-    caseSensitiveMatch: false,
-    followSymbolicLinks: false,
-    gitignore: true,
-    expandDirectories: {
-      extensions: ['png', 'jpg', 'jpeg', 'svg', 'gif'],
-    },
-  });
-  debug('images', assets);
-  for (const asset of assets) {
-    const target = path.join(
-      artifactDir,
-      path.relative(entryContextDir, asset),
-    );
-    shelljs.mkdir('-p', path.dirname(target));
-    shelljs.cp(asset, target);
-  }
-
-  // copy cover
-  if (cover) {
-    const { ext } = path.parse(cover);
-    shelljs.cp(cover, path.join(workspaceDir, `cover${ext}`));
-  }
-
   // generate manifest
-  const manifestPath = path.join(workspaceDir, 'manifest.json');
   generateManifest(manifestPath, {
     title: projectTitle,
     author: projectAuthor,
@@ -269,5 +200,4 @@ Run ${chalk.green.bold('vivliostyle init')} to create ${chalk.bold(
       fs.writeFileSync(distTocPath, tocString);
     }
   }
-  return { manifestPath };
 }

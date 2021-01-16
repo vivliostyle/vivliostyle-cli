@@ -3,7 +3,7 @@ import process from 'process';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { buildArtifacts } from '../builder';
+import { compile } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { buildPDF } from '../pdf';
 import {
@@ -51,15 +51,10 @@ export default async function build(cliFlags: BuildCliFlags) {
   const [tmpDir, clear] = await useTmpDirectory();
 
   try {
-    const config = await mergeConfig(
-      cliFlags,
-      vivliostyleConfig,
-      context,
-      tmpDir,
-    );
+    const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
     // build artifacts
-    const { manifestPath } = await buildArtifacts(config);
+    await compile(config);
 
     // generate files
     for (const target of config.outputs) {
@@ -67,7 +62,7 @@ export default async function build(cliFlags: BuildCliFlags) {
       if (target.format === 'pdf') {
         output = await buildPDF({
           ...config,
-          input: manifestPath,
+          input: config.manifestPath,
           output: target.path,
         });
       } else if (target.format === 'webbook') {

@@ -9,7 +9,7 @@ import path from 'upath';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import { debug, log, readJSON } from './util';
+import { debug, log, readJSON, touchTmpFile } from './util';
 
 export interface Entry {
   path: string;
@@ -100,7 +100,7 @@ export interface CliFlags {
 export interface MergedConfig {
   entryContextDir: string;
   workspaceDir: string;
-  artifactDir: string;
+  manifestPath: string;
   entries: ParsedEntry[];
   outputs: ParsedOutput[];
   themeIndexes: ParsedTheme[];
@@ -115,6 +115,7 @@ export interface MergedConfig {
   timeout: number;
   sandbox: boolean;
   executableChromium: string;
+  afterExportHooks: (() => void)[];
 }
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -292,7 +293,6 @@ export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfig | undefined,
   context: string,
-  workspaceDir: string,
 ): Promise<MergedConfig> {
   debug('context directory', context);
 
@@ -317,7 +317,8 @@ export async function mergeConfig<T extends CliFlags>(
       ? '.'
       : contextResolve(context, config?.entryContext) ?? context,
   );
-  const artifactDir = path.join(workspaceDir, 'artifact');
+  const workspaceDir = entryContextDir;
+  let manifestPath = path.join(workspaceDir, 'manifest.json');
 
   const language = cliFlags.language ?? config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
@@ -350,7 +351,7 @@ export async function mergeConfig<T extends CliFlags>(
     const sourceDir = path.dirname(sourcePath); // abs
     const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
     const targetPath = path
-      .resolve(artifactDir, contextEntryPath)
+      .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
     const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
 
@@ -373,14 +374,33 @@ export async function mergeConfig<T extends CliFlags>(
     };
   }
 
-  const rawEntries = cliFlags.input
-    ? [cliFlags.input]
-    : config?.entry
-    ? Array.isArray(config.entry)
-      ? config.entry
-      : [config.entry]
-    : [];
-  const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
+  let entries: ParsedEntry[] = [];
+  const afterExportHooks: (() => void)[] = [];
+  if (cliFlags.input) {
+    // Single input file; create temporary file
+    const tmpPrefix = `.vs-${Date.now()}.`;
+    const entry = parseEntry({ path: cliFlags.input });
+    const target = path.resolve(
+      workspaceDir,
+      `${tmpPrefix}${path.basename(entry.target)}`,
+    );
+    const clearTmpEntry = await touchTmpFile(target);
+    afterExportHooks.push(clearTmpEntry);
+    entries = [
+      {
+        ...entry,
+        target,
+      },
+    ];
+    // Create temporary manifest file
+    manifestPath = path.resolve(workspaceDir, `${tmpPrefix}manifest.json`);
+    const clearTmpManifest = await touchTmpFile(manifestPath);
+    afterExportHooks.push(clearTmpManifest);
+  } else if (config?.entry) {
+    entries = (Array.isArray(config.entry) ? config.entry : [config.entry])
+      .map(normalizeEntry)
+      .map(parseEntry);
+  }
 
   const outputs = ((): ParsedOutput[] => {
     if (cliFlags.targets?.length) {
@@ -439,7 +459,7 @@ export async function mergeConfig<T extends CliFlags>(
   const parsedConfig = {
     entryContextDir,
     workspaceDir,
-    artifactDir,
+    manifestPath,
     entries,
     outputs,
     themeIndexes,
@@ -454,6 +474,7 @@ export async function mergeConfig<T extends CliFlags>(
     timeout,
     sandbox,
     executableChromium,
+    afterExportHooks,
   };
 
   debug('parsedConfig', parsedConfig);
