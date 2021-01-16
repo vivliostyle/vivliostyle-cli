@@ -158,6 +158,10 @@ export async function compile({
       });
       const compiledEntry = String(vfile);
       fs.writeFileSync(entry.target, compiledEntry);
+    } else {
+      if (entry.source !== entry.target) {
+        shelljs.cp(entry.source, entry.target);
+      }
     }
   }
 
