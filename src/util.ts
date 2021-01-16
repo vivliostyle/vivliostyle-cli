@@ -11,12 +11,18 @@ export const debug = debugConstructor('vs-cli');
 
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
 
-let processAbortCallbacks: (() => void)[] = [];
-const abnormalSignals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
-abnormalSignals.forEach((sig) => {
+let beforeExitHandlers: (() => void)[] = [];
+const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
+exitSignals.forEach((sig) => {
   process.on(sig, () => {
-    processAbortCallbacks.forEach((fn) => fn());
-    process.exit(1);
+    while (beforeExitHandlers.length) {
+      try {
+        beforeExitHandlers[0]();
+        beforeExitHandlers.splice(0, 1);
+      } catch (e) {
+        // NOOP
+      }
+    }
   });
 });
 
@@ -100,7 +106,7 @@ export async function launchBrowser(
     handleSIGHUP: false,
     ...options,
   });
-  processAbortCallbacks.push(() => {
+  beforeExitHandlers.push(() => {
     browser.close();
   });
   return browser;
@@ -116,11 +122,8 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
       const callback = () => {
         clear();
         debug(`Removed the temporary directory: ${path}`);
-        processAbortCallbacks = processAbortCallbacks.filter(
-          (fn) => fn !== callback,
-        );
       };
-      processAbortCallbacks.push(callback);
+      beforeExitHandlers.push(callback);
       res([path, callback]);
     });
   });
@@ -132,11 +135,8 @@ export async function touchTmpFile(path: string): Promise<() => void> {
   const callback = () => {
     shelljs.rm('-f', path);
     debug(`Remove the temporary file: ${path}`);
-    processAbortCallbacks = processAbortCallbacks.filter(
-      (fn) => fn !== callback,
-    );
   };
-  processAbortCallbacks.push(callback);
+  beforeExitHandlers.push(callback);
   return callback;
 }
 

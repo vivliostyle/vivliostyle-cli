@@ -6,13 +6,7 @@ import path from 'upath';
 import { compile } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { buildPDF } from '../pdf';
-import {
-  gracefulError,
-  log,
-  startLogging,
-  stopLogging,
-  useTmpDirectory,
-} from '../util';
+import { gracefulError, log, startLogging, stopLogging } from '../util';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
 try {
@@ -48,54 +42,48 @@ export default async function build(cliFlags: BuildCliFlags) {
     ? path.dirname(vivliostyleConfigPath)
     : process.cwd();
 
-  const [tmpDir, clear] = await useTmpDirectory();
+  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
-  try {
-    const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  // build artifacts
+  await compile(config);
 
-    // build artifacts
-    await compile(config);
-
-    // generate files
-    for (const target of config.outputs) {
-      let output: string | null = null;
-      if (target.format === 'pdf') {
-        output = await buildPDF({
-          ...config,
-          input: config.manifestPath,
-          output: target.path,
-        });
-      } else if (target.format === 'webbook') {
-        const silentMode = shelljs.config.silent;
-        shelljs.config.silent = true;
-        const stderr =
-          shelljs.mkdir('-p', target.path).stderr ||
-          shelljs.cp('-r', path.join(config.workspaceDir, '*'), target.path)
-            .stderr;
-        if (stderr) {
-          throw new Error(stderr);
-        }
-        shelljs.config.silent = silentMode;
-        output = target.path;
-      } else if (target.format === 'pub-manifest') {
-        // TODO
+  // generate files
+  for (const target of config.outputs) {
+    let output: string | null = null;
+    if (target.format === 'pdf') {
+      output = await buildPDF({
+        ...config,
+        input: config.manifestPath,
+        output: target.path,
+      });
+    } else if (target.format === 'webbook') {
+      const silentMode = shelljs.config.silent;
+      shelljs.config.silent = true;
+      const stderr =
+        shelljs.mkdir('-p', target.path).stderr ||
+        shelljs.cp('-r', path.join(config.workspaceDir, '*'), target.path)
+          .stderr;
+      if (stderr) {
+        throw new Error(stderr);
       }
-      if (output) {
-        const formattedOutput = chalk.bold.green(
-          path.relative(process.cwd(), output),
-        );
-        log(
-          `\n${terminalLink(formattedOutput, 'file://' + output, {
-            fallback: () => formattedOutput,
-          })} has been created.`,
-        );
-      }
+      shelljs.config.silent = silentMode;
+      output = target.path;
+    } else if (target.format === 'pub-manifest') {
+      // TODO
     }
-
-    stopLogging('Built successfully.', '🎉');
-
-    process.exit(0);
-  } finally {
-    clear();
+    if (output) {
+      const formattedOutput = chalk.bold.green(
+        path.relative(process.cwd(), output),
+      );
+      log(
+        `\n${terminalLink(formattedOutput, 'file://' + output, {
+          fallback: () => formattedOutput,
+        })} has been created.`,
+      );
+    }
   }
+
+  stopLogging('Built successfully.', '🎉');
+
+  process.exit(0);
 }

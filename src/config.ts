@@ -115,7 +115,6 @@ export interface MergedConfig {
   timeout: number;
   sandbox: boolean;
   executableChromium: string;
-  afterExportHooks: (() => void)[];
 }
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -382,7 +381,6 @@ export async function mergeConfig<T extends CliFlags>(
     timeout,
     sandbox,
     executableChromium,
-    afterExportHooks: [],
   };
   const parsedConfig = cliFlags.input
     ? await composeSingleInputConfig(commonOpts, cliFlags, config)
@@ -414,7 +412,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     workspaceDir,
     `${tmpPrefix}${path.basename(sourcePath)}`,
   );
-  const clearTmpEntry = await touchTmpFile(target);
+  await touchTmpFile(target);
   const entries: ParsedEntry[] = [
     {
       type: sourcePath.endsWith('.html') ? 'html' : 'markdown',
@@ -426,11 +424,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   ];
   // Create temporary manifest file
   const manifestPath = path.resolve(workspaceDir, `${tmpPrefix}manifest.json`);
-  const clearTmpManifest = await touchTmpFile(manifestPath);
-  // const afterExportHooks = [
-  //   clearTmpEntry,
-  //   clearTmpManifest,
-  // ];
+  await touchTmpFile(manifestPath);
 
   return {
     ...otherConfig,

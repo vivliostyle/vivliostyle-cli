@@ -11,7 +11,6 @@ import {
   logSuccess,
   startLogging,
   stopLogging,
-  useTmpDirectory,
 } from '../util';
 import { PreviewCliFlags, setupPreviewParserProgram } from './preview.parser';
 
@@ -48,62 +47,56 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     ? path.dirname(vivliostyleConfigPath)
     : process.cwd();
 
-  const [tmpDir, clear] = await useTmpDirectory();
+  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
-  try {
-    const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  // build artifacts
+  await compile(config);
 
-    // build artifacts
-    await compile(config);
+  const url = getBrokerUrl({
+    sourceIndex: config.manifestPath,
+  });
 
-    const url = getBrokerUrl({
-      sourceIndex: config.manifestPath,
-    });
+  debug(
+    `Executing Chromium path: ${
+      config.executableChromium || puppeteer.executablePath()
+    }`,
+  );
+  const browser = await launchBrowser({
+    headless: false,
+    executablePath: config.executableChromium || puppeteer.executablePath(),
+    args: [
+      '--allow-file-access-from-files',
+      config.sandbox ? '' : '--no-sandbox',
+    ],
+  });
+  const page = await browser.newPage();
+  await page.setViewport({ width: 0, height: 0 });
+  await page.goto(url);
 
-    debug(
-      `Executing Chromium path: ${
-        config.executableChromium || puppeteer.executablePath()
-      }`,
-    );
-    const browser = await launchBrowser({
-      headless: false,
-      executablePath: config.executableChromium || puppeteer.executablePath(),
-      args: [
-        '--allow-file-access-from-files',
-        config.sandbox ? '' : '--no-sandbox',
-      ],
-    });
-    const page = await browser.newPage();
-    await page.setViewport({ width: 0, height: 0 });
-    await page.goto(url);
+  stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
 
-    stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
-
-    function handleChangeEvent(path: string) {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        startLogging(`Rebuilding ${path}`);
-        // build artifacts
-        compile(config);
-        page.reload();
-        logSuccess(`Built ${path}`);
-      }, 2000);
-    }
-
-    chokidar
-      .watch('**', {
-        ignored: (p: string) => {
-          return (
-            /node_modules|\.git/.test(p) || p.startsWith(config.workspaceDir)
-          );
-        },
-        cwd: context,
-      })
-      .on('all', (event, path) => {
-        if (!/\.(md|markdown|html?|css|jpe?g|png|gif|svg)$/i.test(path)) return;
-        handleChangeEvent(path);
-      });
-  } finally {
-    clear();
+  function handleChangeEvent(path: string) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      startLogging(`Rebuilding ${path}`);
+      // build artifacts
+      compile(config);
+      page.reload();
+      logSuccess(`Built ${path}`);
+    }, 2000);
   }
+
+  chokidar
+    .watch('**', {
+      ignored: (p: string) => {
+        return (
+          /node_modules|\.git/.test(p) || p.startsWith(config.workspaceDir)
+        );
+      },
+      cwd: context,
+    })
+    .on('all', (event, path) => {
+      if (!/\.(md|markdown|html?|css|jpe?g|png|gif|svg)$/i.test(path)) return;
+      handleChangeEvent(path);
+    });
 }
