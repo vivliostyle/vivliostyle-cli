@@ -1,6 +1,6 @@
 import shelljs from 'shelljs';
 import path from 'upath';
-import { compile, copyAssets } from '../src/builder';
+import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
 import { getMergedConfig } from './commandUtil';
 
 const resolve = (p: string) => path.resolve(__dirname, p);
@@ -17,6 +17,9 @@ it('generate workspace directory', async () => {
     '-c',
     resolve('fixtures/builder/workspace.config.js'),
   ]);
+  for (const target of config.outputs) {
+    checkOverwriteViolation(config, target.path, target.format);
+  }
   await compile(config);
   await copyAssets(config);
   const fileList = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
@@ -46,14 +49,11 @@ it('generate workspace directory', async () => {
     title: 'Table of Contents',
   });
 
-  // // try again and check idempotence
-  // await compile(config);
-  // await copyAssets(config);
-  // const fileList2 = shelljs.ls(
-  //   '-R',
-  //   resolve('fixtures/builder/.vs-workspace'),
-  // );
-  // expect([...fileList2]).toEqual([...fileList]);
+  // try again and check idempotence
+  await compile(config);
+  await copyAssets(config);
+  const fileList2 = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
+  expect([...fileList2]).toEqual([...fileList]);
 });
 
 it('generate files with entryContext', async () => {
@@ -61,6 +61,9 @@ it('generate files with entryContext', async () => {
     '-c',
     resolve('fixtures/builder/entryContext.config.js'),
   ]);
+  for (const target of config.outputs) {
+    checkOverwriteViolation(config, target.path, target.format);
+  }
   await compile(config);
   await copyAssets(config);
   const fileList = shelljs.ls(
@@ -92,12 +95,29 @@ it('generate files with entryContext', async () => {
     title: 'Table of Contents',
   });
 
-  // // try again and check idempotence
-  // await compile(config);
-  // await copyAssets(config);
-  // const fileList2 = shelljs.ls(
-  //   '-R',
-  //   resolve('fixtures/builder/.vs-entryContext'),
-  // );
-  // expect([...fileList2]).toEqual([...fileList]);
+  // try again and check idempotence
+  await compile(config);
+  await copyAssets(config);
+  const fileList2 = shelljs.ls(
+    '-R',
+    resolve('fixtures/builder/.vs-entryContext'),
+  );
+  expect([...fileList2]).toEqual([...fileList]);
+});
+
+it('check overwrite violation', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolve('fixtures/builder/overwriteViolation.config.js'),
+  ]);
+  expect(
+    new Promise<void>((res, rej) => {
+      try {
+        checkOverwriteViolation(config, config.outputs[0].path, '');
+        res();
+      } catch (err) {
+        rej(err);
+      }
+    }),
+  ).rejects.toThrow();
 });
