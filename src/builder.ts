@@ -198,10 +198,10 @@ export async function compile(
 
   // copy theme
   const themeRoot = path.join(workspaceDir, 'themes');
-  shelljs.mkdir('-p', path.join(themeRoot, 'packages'));
   for (const theme of themeIndexes) {
     switch (theme.type) {
       case 'file':
+        shelljs.mkdir('-p', themeRoot);
         shelljs.cp(theme.location, themeRoot);
         break;
       case 'package':

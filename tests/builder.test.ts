@@ -28,8 +28,6 @@ it('generate workspace directory', async () => {
     'manuscript',
     'manuscript/cover.png',
     'manuscript/soda.html',
-    'themes',
-    'themes/packages',
     'toc.html',
   ]);
   const manifest = require(resolve(
@@ -75,8 +73,6 @@ it('generate files with entryContext', async () => {
     'manifest.json',
     'soda.html',
     't-o-c.html',
-    'themes',
-    'themes/packages',
   ]);
   const manifest = require(resolve(
     'fixtures/builder/.vs-entryContext/manifest.json',
