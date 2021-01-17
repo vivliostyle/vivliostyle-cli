@@ -78,10 +78,11 @@ export default async function preview(cliFlags: PreviewCliFlags) {
 
   function handleChangeEvent(path: string) {
     clearTimeout(timer);
-    timer = setTimeout(() => {
+    timer = setTimeout(async () => {
       startLogging(`Rebuilding ${path}`);
       // build artifacts
-      compile(config);
+      await compile(config, { reload: true });
+      await copyAssets(config);
       page.reload();
       logSuccess(`Built ${path}`);
     }, 2000);

@@ -3,7 +3,7 @@ import process from 'process';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { compile, copyAssets } from '../builder';
+import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { buildPDF } from '../pdf';
 import { gracefulError, log, startLogging, stopLogging } from '../util';
@@ -43,6 +43,11 @@ export default async function build(cliFlags: BuildCliFlags) {
     : process.cwd();
 
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+
+  // check output path not to overwrite source files
+  for (const target of config.outputs) {
+    checkOverwriteViolation(config, target.path, target.format);
+  }
 
   // build artifacts
   await compile(config);

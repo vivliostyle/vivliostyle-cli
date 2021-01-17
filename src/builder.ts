@@ -29,6 +29,7 @@ export interface ManifestEntry {
 }
 
 export function cleanup(location: string) {
+  debug('cleanup file', location);
   shelljs.rm('-rf', location);
 }
 
@@ -127,20 +128,31 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
   return toHTML(toc);
 }
 
-export async function compile({
-  entryContextDir,
-  workspaceDir,
-  manifestPath,
-  projectTitle,
-  themeIndexes,
-  entries,
-  projectAuthor,
-  language,
-  toc,
-  cover,
-}: MergedConfig): Promise<void> {
+export async function compile(
+  {
+    entryContextDir,
+    workspaceDir,
+    manifestPath,
+    projectTitle,
+    themeIndexes,
+    entries,
+    projectAuthor,
+    language,
+    toc,
+    cover,
+  }: MergedConfig,
+  { reload = false }: { reload?: boolean } = {},
+): Promise<void> {
   debug('entries', entries);
   debug('themes', themeIndexes);
+
+  if (
+    !reload &&
+    path.relative(workspaceDir, entryContextDir).startsWith('..')
+  ) {
+    // workspaceDir is placed on different directory
+    cleanup(workspaceDir);
+  }
 
   for (const entry of entries) {
     shelljs.mkdir('-p', path.dirname(entry.target));
@@ -235,8 +247,10 @@ export async function copyAssets({
   if (entryContextDir === workspaceDir) {
     return;
   }
+  const relWorkspaceDir = path.relative(entryContextDir, workspaceDir);
   const assets = await globby(includeAssets, {
     cwd: entryContextDir,
+    ignore: relWorkspaceDir ? [path.join(relWorkspaceDir, '**/*')] : undefined,
     caseSensitiveMatch: false,
     followSymbolicLinks: false,
     gitignore: true,
@@ -246,5 +260,22 @@ export async function copyAssets({
     const target = path.join(workspaceDir, asset);
     shelljs.mkdir('-p', path.dirname(target));
     shelljs.cp(path.resolve(entryContextDir, asset), target);
+  }
+}
+
+export function checkOverwriteViolation(
+  { entryContextDir, workspaceDir }: MergedConfig,
+  target: string,
+  fileInformation: string,
+) {
+  if (!path.relative(target, entryContextDir).startsWith('..')) {
+    throw new Error(
+      `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the manuscript file(s). Please specify other paths.`,
+    );
+  }
+  if (!path.relative(target, workspaceDir).startsWith('..')) {
+    throw new Error(
+      `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the working directory of Vivliostyle. Please specify other paths.`,
+    );
   }
 }
