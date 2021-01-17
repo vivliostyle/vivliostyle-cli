@@ -1,7 +1,7 @@
 import chokidar from 'chokidar';
 import puppeteer from 'puppeteer';
 import path from 'upath';
-import { compile } from '../builder';
+import { compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { getBrokerUrl } from '../server';
 import {
@@ -51,6 +51,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
 
   // build artifacts
   await compile(config);
+  await copyAssets(config);
 
   const url = getBrokerUrl({
     sourceIndex: config.manifestPath,

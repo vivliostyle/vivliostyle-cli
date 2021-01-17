@@ -70,6 +70,8 @@ export interface VivliostyleConfig {
   entry: string | Entry | (string | Entry)[];
   entryContext?: string; // .
   output?: string | Output | (string | Output)[];
+  workspaceDir?: string;
+  includeAssets?: string | string[];
   size?: string;
   pressReady?: boolean;
   language?: string;
@@ -104,6 +106,7 @@ export interface MergedConfig {
   entries: ParsedEntry[];
   outputs: ParsedOutput[];
   themeIndexes: ParsedTheme[];
+  includeAssets: string[];
   size: PageSize | undefined;
   pressReady: boolean;
   projectTitle: string;
@@ -118,6 +121,20 @@ export interface MergedConfig {
 }
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+
+const DEFAULT_ASSETS = [
+  '**/*.png',
+  '**/*.jpg',
+  '**/*.jpeg',
+  '**/*.svg',
+  '**/*.gif',
+  '**/*.webp',
+  '**/*.apng',
+  '**/*.ttf',
+  '**/*.otf',
+  '**/*.woff',
+  '**/*.woff2',
+];
 
 export function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) && +val > 0 ? +val * 1000 : DEFAULT_TIMEOUT;
@@ -302,17 +319,24 @@ export async function mergeConfig<T extends CliFlags>(
       ? path.dirname(path.resolve(context, cliFlags.input))
       : contextResolve(context, config?.entryContext) ?? context,
   );
+  const workspaceDir =
+    contextResolve(context, config?.workspaceDir) ?? entryContextDir;
+  const includeAssets = config?.includeAssets
+    ? Array.isArray(config.includeAssets)
+      ? config.includeAssets
+      : [config.includeAssets]
+    : DEFAULT_ASSETS;
 
   const language = cliFlags.language ?? config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const toc =
     typeof config?.toc === 'string'
-      ? contextResolve(context, config?.toc)!
+      ? contextResolve(entryContextDir, config?.toc)!
       : config?.toc !== undefined
       ? config.toc
       : false;
-  const cover = contextResolve(context, config?.cover) ?? undefined;
+  const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
 
   const verbose = cliFlags.verbose ?? false;
@@ -369,7 +393,8 @@ export async function mergeConfig<T extends CliFlags>(
 
   const commonOpts: CommonOpts = {
     entryContextDir,
-    workspaceDir: entryContextDir,
+    workspaceDir,
+    includeAssets,
     outputs,
     themeIndexes,
     pressReady,
@@ -514,7 +539,7 @@ async function composeProjectConfig<T extends CliFlags>(
   return {
     ...otherConfig,
     entries,
-    manifestPath: path.join(entryContextDir, 'manifest.json'),
+    manifestPath: path.join(workspaceDir, 'manifest.json'),
     projectTitle: projectTitle || fallbackProjectTitle,
     projectAuthor: projectAuthor || '',
   };

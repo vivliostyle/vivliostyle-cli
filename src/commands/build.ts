@@ -3,7 +3,7 @@ import process from 'process';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { compile } from '../builder';
+import { compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { buildPDF } from '../pdf';
 import { gracefulError, log, startLogging, stopLogging } from '../util';
@@ -46,6 +46,7 @@ export default async function build(cliFlags: BuildCliFlags) {
 
   // build artifacts
   await compile(config);
+  await copyAssets(config);
 
   // generate files
   for (const target of config.outputs) {

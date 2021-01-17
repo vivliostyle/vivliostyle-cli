@@ -1,13 +1,15 @@
+import chalk from 'chalk';
 import fs from 'fs';
+import globby from 'globby';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { contextResolve, Entry, MergedConfig, ParsedEntry } from './config';
+import { Entry, MergedConfig, ParsedEntry } from './config';
 import { processMarkdown } from './markdown';
-import { debug } from './util';
+import { debug, log } from './util';
 
 export interface ManifestOption {
   title?: string;
@@ -15,7 +17,7 @@ export interface ManifestOption {
   language?: string;
   modified: string;
   entries: Entry[];
-  toc?: boolean | string;
+  toc?: string;
   cover?: string;
 }
 
@@ -31,7 +33,11 @@ export function cleanup(location: string) {
 }
 
 // example: https://github.com/readium/webpub-manifest/blob/master/examples/MobyDick/manifest.json
-export function generateManifest(outputPath: string, options: ManifestOption) {
+export function generateManifest(
+  outputPath: string,
+  entryContextDir: string,
+  options: ManifestOption,
+) {
   const entries: ManifestEntry[] = options.entries.map((entry) => ({
     href: entry.path,
     type: 'text/html',
@@ -42,7 +48,7 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
 
   if (options.toc) {
     entries.splice(0, 0, {
-      href: 'toc.html',
+      href: options.toc,
       rel: 'contents',
       type: 'text/html',
       title: 'Table of Contents',
@@ -50,19 +56,30 @@ export function generateManifest(outputPath: string, options: ManifestOption) {
   }
 
   if (options.cover) {
-    const { width, height, type } = imageSize(options.cover);
+    const { width, height, type } = imageSize(
+      path.resolve(entryContextDir, options.cover),
+    );
+    let mimeType: string | false = false;
     if (type) {
-      const mimeType = mime(type);
+      mimeType = mime(type);
       if (mimeType) {
-        const coverPath = `cover.${type}`;
         links.push({
           rel: 'cover',
-          href: coverPath,
+          href: options.cover,
           type: mimeType,
           width,
           height,
         });
       }
+    }
+    if (!type || !mimeType) {
+      log(
+        `\n${chalk.yellow('Cover image ')}${chalk.bold.yellow(
+          `"${options.cover}"`,
+        )}${chalk.yellow(
+          ' was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.',
+        )}`,
+      );
     }
   }
 
@@ -126,6 +143,8 @@ export async function compile({
   debug('themes', themeIndexes);
 
   for (const entry of entries) {
+    shelljs.mkdir('-p', path.dirname(entry.target));
+
     // calculate style path
     let style;
     switch (entry?.theme?.type) {
@@ -180,28 +199,52 @@ export async function compile({
     }
   }
 
+  // generate toc
+  let relativeTocPath: string | undefined;
+  if (toc) {
+    if (typeof toc === 'string') {
+      relativeTocPath = path.relative(entryContextDir, toc);
+      shelljs.cp(toc, path.join(workspaceDir, relativeTocPath));
+    } else {
+      relativeTocPath = 'toc.html';
+      const tocString = generateToC(entries, workspaceDir);
+      fs.writeFileSync(path.join(workspaceDir, relativeTocPath), tocString);
+    }
+  }
+
   // generate manifest
-  generateManifest(manifestPath, {
+  generateManifest(manifestPath, entryContextDir, {
     title: projectTitle,
     author: projectAuthor,
     language,
-    toc,
-    cover,
+    toc: relativeTocPath,
+    cover: cover && path.relative(entryContextDir, cover),
     entries: entries.map((entry) => ({
       title: entry.title,
       path: path.relative(workspaceDir, entry.target),
     })),
     modified: new Date().toISOString(),
   });
+}
 
-  // generate toc
-  if (toc) {
-    const distTocPath = path.join(workspaceDir, 'toc.html');
-    if (typeof toc === 'string') {
-      shelljs.cp(contextResolve(entryContextDir, toc)!, distTocPath);
-    } else {
-      const tocString = generateToC(entries, workspaceDir);
-      fs.writeFileSync(distTocPath, tocString);
-    }
+export async function copyAssets({
+  entryContextDir,
+  workspaceDir,
+  includeAssets,
+}: MergedConfig): Promise<void> {
+  if (entryContextDir === workspaceDir) {
+    return;
+  }
+  const assets = await globby(includeAssets, {
+    cwd: entryContextDir,
+    caseSensitiveMatch: false,
+    followSymbolicLinks: false,
+    gitignore: true,
+  });
+  debug('assets', assets);
+  for (const asset of assets) {
+    const target = path.join(workspaceDir, asset);
+    shelljs.mkdir('-p', path.dirname(target));
+    shelljs.cp(path.resolve(entryContextDir, asset), target);
   }
 }
