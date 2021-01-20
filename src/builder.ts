@@ -21,6 +21,20 @@ export interface ManifestOption {
   cover?: string;
 }
 
+export interface ManifestJsonScheme {
+  '@context': 'https://readium.org/webpub-manifest/context.jsonld';
+  metadata: {
+    '@type': 'http://schema.org/Book';
+    title: string;
+    author: string;
+    language: string;
+    modified: string;
+  };
+  links: ManifestEntry[];
+  readingOrder: ManifestEntry[];
+  resources: ManifestEntry[];
+}
+
 export interface ManifestEntry {
   href: string;
   type: string;
@@ -84,13 +98,13 @@ export function generateManifest(
     }
   }
 
-  const manifest = {
+  const manifest: ManifestJsonScheme = {
     '@context': 'https://readium.org/webpub-manifest/context.jsonld',
     metadata: {
       '@type': 'http://schema.org/Book',
-      title: options.title,
-      author: options.author,
-      language: options.language,
+      title: options.title ?? '',
+      author: options.author ?? '',
+      language: options.language ?? '',
       modified: options.modified,
     },
     links,

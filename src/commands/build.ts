@@ -64,6 +64,7 @@ export default async function build(cliFlags: BuildCliFlags) {
       });
     } else if (target.format === 'webbook') {
       output = await exportWebbook({
+        ...config,
         input: config.workspaceDir,
         output: target.path,
       });

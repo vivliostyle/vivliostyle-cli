@@ -107,6 +107,10 @@ export interface MergedConfig {
   outputs: ParsedOutput[];
   themeIndexes: ParsedTheme[];
   includeAssets: string[];
+  exportAliases: {
+    source: string;
+    target: string;
+  }[];
   size: PageSize | undefined;
   pressReady: boolean;
   projectTitle: string;
@@ -416,7 +420,11 @@ export async function mergeConfig<T extends CliFlags>(
 
 type CommonOpts = Omit<
   MergedConfig,
-  'entries' | 'manifestPath' | 'projectTitle' | 'projectAuthor'
+  | 'entries'
+  | 'exportAliases'
+  | 'manifestPath'
+  | 'projectTitle'
+  | 'projectAuthor'
 >;
 
 async function composeSingleInputConfig<T extends CliFlags>(
@@ -428,32 +436,44 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   const sourcePath = path.resolve(cliFlags.input);
   const workspaceDir = path.dirname(sourcePath);
+  const exportAliases: { source: string; target: string }[] = [];
 
   // Single input file; create temporary file
   const tmpPrefix = `.vs-${Date.now()}.`;
   const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
   const metadata = parseFileMetadata(type, sourcePath);
-  const target = path.resolve(
-    workspaceDir,
-    `${tmpPrefix}${path.basename(sourcePath)}`,
-  );
+  const target = path
+    .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+    .replace(/\.md$/, '.html');
   await touchTmpFile(target);
   const entries: ParsedEntry[] = [
     {
-      type: sourcePath.endsWith('.html') ? 'html' : 'markdown',
+      type,
       source: sourcePath,
       target,
       title: metadata.title,
       theme: metadata.theme ?? otherConfig.themeIndexes[0],
     },
   ];
-  // Create temporary manifest file
+  exportAliases.push({
+    source: target,
+    target: path.resolve(
+      workspaceDir,
+      path.basename(sourcePath).replace(/\.md$/, '.html'),
+    ),
+  });
+  // create temporary manifest file
   const manifestPath = path.resolve(workspaceDir, `${tmpPrefix}manifest.json`);
   await touchTmpFile(manifestPath);
+  exportAliases.push({
+    source: manifestPath,
+    target: path.resolve(workspaceDir, 'manifest.json'),
+  });
 
   return {
     ...otherConfig,
     entries,
+    exportAliases,
     manifestPath,
     projectTitle:
       cliFlags.title ??
@@ -539,6 +559,7 @@ async function composeProjectConfig<T extends CliFlags>(
   return {
     ...otherConfig,
     entries,
+    exportAliases: [],
     manifestPath: path.join(workspaceDir, 'manifest.json'),
     projectTitle: projectTitle || fallbackProjectTitle,
     projectAuthor: projectAuthor || '',
