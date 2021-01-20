@@ -14,15 +14,15 @@ const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
 let beforeExitHandlers: (() => void)[] = [];
 const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
 exitSignals.forEach((sig) => {
-  process.on(sig, () => {
+  process.on(sig, (code: number) => {
     while (beforeExitHandlers.length) {
       try {
-        beforeExitHandlers[0]();
-        beforeExitHandlers.splice(0, 1);
+        beforeExitHandlers.shift()?.();
       } catch (e) {
         // NOOP
       }
     }
+    process.exit(code);
   });
 });
 
