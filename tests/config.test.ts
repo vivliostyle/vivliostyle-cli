@@ -78,13 +78,26 @@ it('yields a config with single markdown', async () => {
   ]);
   maskConfig(config);
   expect(config.entries[0].target).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.md$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
   );
   expect(config.manifestPath).toMatch(
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
   );
-  delete config.manifestPath;
-  delete config.entries[0].target;
+  const entryAlias = config.exportAliases.find(
+    ({ source }) => source === config.entries[0].target,
+  );
+  expect(entryAlias?.target).toMatch(
+    '__WORKSPACE__/tests/fixtures/config/sample.html',
+  );
+  const manifestAlias = config.exportAliases.find(
+    ({ source }) => source === config.manifestPath,
+  );
+  expect(manifestAlias?.target).toMatch(
+    '__WORKSPACE__/tests/fixtures/config/manifest.json',
+  );
+  config.manifestPath = '__SNIP__';
+  config.entries[0].target = '__SNIP__';
+  (config.exportAliases as unknown) = '__SNIP__';
   expect(config).toMatchSnapshot();
 });
 
@@ -99,8 +112,9 @@ it('yields a config with single html', async () => {
   expect(config.manifestPath).toMatch(
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
   );
-  delete config.manifestPath;
-  delete config.entries[0].target;
+  config.manifestPath = '__SNIP__';
+  config.entries[0].target = '__SNIP__';
+  (config.exportAliases as unknown) = '__SNIP__';
   expect(config).toMatchSnapshot();
 });
 
@@ -112,12 +126,13 @@ it('yields a config with single input and vivliostyle config', async () => {
   ]);
   maskConfig(config);
   expect(config.entries[0].target).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.md$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
   );
   expect(config.manifestPath).toMatch(
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
   );
-  delete config.manifestPath;
-  delete config.entries[0].target;
+  config.manifestPath = '__SNIP__';
+  config.entries[0].target = '__SNIP__';
+  (config.exportAliases as unknown) = '__SNIP__';
   expect(config).toMatchSnapshot();
 });
