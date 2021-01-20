@@ -1,12 +1,12 @@
 import chalk from 'chalk';
 import process from 'process';
-import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { buildPDF } from '../pdf';
 import { gracefulError, log, startLogging, stopLogging } from '../util';
+import { exportWebbook } from '../webbook';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
 try {
@@ -63,17 +63,10 @@ export default async function build(cliFlags: BuildCliFlags) {
         output: target.path,
       });
     } else if (target.format === 'webbook') {
-      const silentMode = shelljs.config.silent;
-      shelljs.config.silent = true;
-      const stderr =
-        shelljs.mkdir('-p', target.path).stderr ||
-        shelljs.cp('-r', path.join(config.workspaceDir, '*'), target.path)
-          .stderr;
-      if (stderr) {
-        throw new Error(stderr);
-      }
-      shelljs.config.silent = silentMode;
-      output = target.path;
+      output = await exportWebbook({
+        input: config.workspaceDir,
+        output: target.path,
+      });
     } else if (target.format === 'pub-manifest') {
       // TODO
     }
