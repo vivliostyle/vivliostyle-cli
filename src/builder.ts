@@ -7,8 +7,9 @@ import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { Entry, MergedConfig, ParsedEntry } from './config';
+import { MergedConfig, ParsedEntry } from './config';
 import { processMarkdown } from './markdown';
+import type { EntryObject } from './schema/vivliostyle.config';
 import { debug, log } from './util';
 
 export interface ManifestOption {
@@ -16,7 +17,7 @@ export interface ManifestOption {
   author?: string;
   language?: string;
   modified: string;
-  entries: Entry[];
+  entries: EntryObject[];
   toc?: string;
   cover?: string;
 }

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/item-lists.schema.json",
+  "title": "Lists of ItemList",
+  "oneOf": [
+    {
+      "$ref": "ItemList.schema.json"
+    },
+    {
+      "type": "array",
+      "items": {
+        "$ref": "ItemList.schema.json"
+      }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/context.schema.json",
+  "title": "Publication Contexts",
+  "type": "array",
+  "items": [
+    {
+      "const": "https://schema.org"
+    },
+    {
+      "const": "https://www.w3.org/ns/pub-context"
+    }
+  ],
+  "additionalItems": {
+    "anyOf": [
+      {
+        "type": "string"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "language": {
+            "$ref": "bcp.schema.json"
+          },
+          "direction": false
+        },
+        "required": ["language"]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": ["ltr", "rtl"]
+          },
+          "language": false
+        },
+        "required": ["direction"]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "language": {
+            "$ref": "bcp.schema.json"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["ltr", "rtl"]
+          }
+        },
+        "required": ["language", "direction"]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "language": false,
+          "direction": false
+        }
+      }
+    ]
+  }
+}

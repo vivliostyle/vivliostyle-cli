@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/contributor.schema.json",
+  "title": "Contributor",
+  "anyOf": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "contributor-object.schema.json"
+          }
+        ]
+      }
+    },
+    {
+      "$ref": "contributor-object.schema.json"
+    }
+  ]
+}

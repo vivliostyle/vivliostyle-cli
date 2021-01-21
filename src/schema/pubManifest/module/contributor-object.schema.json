@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/contributor-object.schema.json",
+  "title": "Contributor Object",
+  "type": "object",
+  "properties": {
+    "name": {
+      "$ref": "localizable.schema.json"
+    },
+    "id": {
+      "$ref": "url.schema.json"
+    },
+    "type": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["Person", "Organization"],
+          "default": "Person"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "contains": {
+            "enum": ["Person", "Organization"]
+          }
+        }
+      ]
+    },
+    "url": {
+      "$ref": "url.schema.json"
+    },
+    "identifier": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["name"]
+}

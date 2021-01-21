@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/link.schema.json",
+  "title": "Publication Links",
+  "type": "object",
+  "properties": {
+    "type": {
+      "oneOf": [
+        {
+          "type": "string",
+          "const": "LinkedResource"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "contains": {
+            "const": "LinkedResource"
+          }
+        }
+      ]
+    },
+    "url": {
+      "$ref": "url.schema.json"
+    },
+    "encodingFormat": {
+      "type": "string"
+    },
+    "name": {
+      "$ref": "localizable.schema.json"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "localizable-object.schema.json"
+        }
+      ]
+    },
+    "rel": {
+      "type": ["string", "array"],
+      "items": {
+        "type": "string"
+      }
+    },
+    "integrity": {
+      "type": "string"
+    },
+    "duration": {
+      "$ref": "duration.schema.json"
+    },
+    "alternate": {
+      "$ref": "resource.categorization.schema.json"
+    }
+  },
+  "required": ["url"]
+}

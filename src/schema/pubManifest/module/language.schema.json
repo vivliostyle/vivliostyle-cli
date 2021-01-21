@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/language.schema.json",
+  "title": "Languages",
+  "oneOf": [
+    {
+      "$ref": "bcp.schema.json"
+    },
+    {
+      "type": "array",
+      "items": {
+        "$ref": "bcp.schema.json"
+      }
+    }
+  ]
+}

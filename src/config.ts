@@ -7,6 +7,10 @@ import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
 import { processMarkdown } from './markdown';
+import type {
+  EntryObject,
+  VivliostyleConfigSchema,
+} from './schema/vivliostyle.config';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
 import {
@@ -17,17 +21,6 @@ import {
   readJSON,
   touchTmpFile,
 } from './util';
-
-export interface Entry {
-  path: string;
-  title?: string;
-  theme?: string;
-}
-
-export interface Output {
-  path: string;
-  format?: string;
-}
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -68,23 +61,6 @@ export type OutputFormat = typeof availableOutputFormat[number];
 export interface ParsedOutput {
   path: string;
   format: OutputFormat;
-}
-
-export interface VivliostyleConfig {
-  title?: string;
-  author?: string;
-  theme?: string;
-  entry: string | Entry | (string | Entry)[];
-  entryContext?: string; // .
-  output?: string | Output | (string | Output)[];
-  workspaceDir?: string;
-  includeAssets?: string | string[];
-  size?: string;
-  pressReady?: boolean;
-  language?: string;
-  toc?: boolean | string;
-  cover?: string;
-  timeout?: number;
 }
 
 export interface CliFlags {
@@ -158,7 +134,7 @@ export function contextResolve(
   return loc && path.resolve(context, loc);
 }
 
-function normalizeEntry(e: string | Entry): Entry {
+function normalizeEntry(e: string | EntryObject): EntryObject {
   if (typeof e === 'object') {
     return e;
   }
@@ -272,14 +248,14 @@ export function collectVivliostyleConfig<T extends CliFlags>(
   cliFlags: T,
 ): {
   cliFlags: T;
-  vivliostyleConfig?: VivliostyleConfig;
+  vivliostyleConfig?: VivliostyleConfigSchema;
   vivliostyleConfigPath: string;
 } {
   const load = (configPath: string) => {
     if (!fs.existsSync(configPath)) {
       return undefined;
     }
-    const config = require(configPath) as VivliostyleConfig;
+    const config = require(configPath) as VivliostyleConfigSchema;
 
     const ajv = Ajv();
     const valid = ajv.validate(configSchema, config);
@@ -318,7 +294,7 @@ export function collectVivliostyleConfig<T extends CliFlags>(
 
 export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
-  config: VivliostyleConfig | undefined,
+  config: VivliostyleConfigSchema | undefined,
   context: string,
 ): Promise<MergedConfig> {
   debug('context directory', context);
@@ -437,7 +413,7 @@ type CommonOpts = Omit<
 async function composeSingleInputConfig<T extends CliFlags>(
   otherConfig: CommonOpts,
   cliFlags: T,
-  config: VivliostyleConfig | undefined,
+  config: VivliostyleConfigSchema | undefined,
 ): Promise<MergedConfig> {
   debug('entering single entry config mode');
 
@@ -494,7 +470,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
 async function composeProjectConfig<T extends CliFlags>(
   otherConfig: CommonOpts,
   cliFlags: T,
-  config: VivliostyleConfig | undefined,
+  config: VivliostyleConfigSchema | undefined,
   context: string,
 ): Promise<MergedConfig> {
   debug('entering project config mode');
@@ -513,7 +489,7 @@ async function composeProjectConfig<T extends CliFlags>(
   const projectAuthor: string | undefined =
     cliFlags.author ?? config?.author ?? pkgJson?.author;
 
-  function parseEntry(entry: Entry): ParsedEntry {
+  function parseEntry(entry: EntryObject): ParsedEntry {
     const sourcePath = path.resolve(entryContextDir, entry.path); // abs
     const sourceDir = path.dirname(sourcePath); // abs
     const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
