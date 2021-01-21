@@ -2,22 +2,27 @@ import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
 import oraConstructor from 'ora';
-import portfinder from 'portfinder';
 import puppeteer from 'puppeteer';
+import shelljs from 'shelljs';
 import tmp from 'tmp';
-import path from 'upath';
 import util from 'util';
 
 export const debug = debugConstructor('vs-cli');
 
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
 
-let processAbortCallbacks: (() => void)[] = [];
-const abnormalSignals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
-abnormalSignals.forEach((sig) => {
-  process.on(sig, () => {
-    processAbortCallbacks.forEach((fn) => fn());
-    process.exit(1);
+let beforeExitHandlers: (() => void)[] = [];
+const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
+exitSignals.forEach((sig) => {
+  process.on(sig, (code: number) => {
+    while (beforeExitHandlers.length) {
+      try {
+        beforeExitHandlers.shift()?.();
+      } catch (e) {
+        // NOOP
+      }
+    }
+    process.exit(code);
   });
 });
 
@@ -90,34 +95,6 @@ export async function statFile(filePath: string) {
   }
 }
 
-export function findAvailablePort(): Promise<number> {
-  portfinder.basePort = 13000;
-  return portfinder.getPortPromise();
-}
-
-export async function findEntryPointFile(
-  target: string,
-  root: string,
-): Promise<string> {
-  const stat = fs.statSync(target);
-  if (!stat.isDirectory()) {
-    return path.relative(root, target);
-  }
-  const files = fs.readdirSync(target);
-  const index = [
-    'index.html',
-    'index.htm',
-    'index.xhtml',
-    'index.xht',
-  ].find((n) => files.includes(n));
-  if (index) {
-    return path.relative(root, path.resolve(target, index));
-  }
-
-  // give up finding entrypoint
-  return path.relative(root, target);
-}
-
 export async function launchBrowser(
   options?: puppeteer.LaunchOptions,
 ): Promise<puppeteer.Browser> {
@@ -129,7 +106,7 @@ export async function launchBrowser(
     handleSIGHUP: false,
     ...options,
   });
-  processAbortCallbacks.push(() => {
+  beforeExitHandlers.push(() => {
     browser.close();
   });
   return browser;
@@ -144,13 +121,38 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
       debug(`Created the temporary directory: ${path}`);
       const callback = () => {
         clear();
-        debug(`Cleared the temporary directory: ${path}`);
-        processAbortCallbacks = processAbortCallbacks.filter(
-          (fn) => fn !== callback,
-        );
+        debug(`Removed the temporary directory: ${path}`);
       };
-      processAbortCallbacks.push(callback);
+      beforeExitHandlers.push(callback);
       res([path, callback]);
     });
   });
+}
+
+export async function touchTmpFile(path: string): Promise<() => void> {
+  shelljs.touch(path);
+  debug(`Created the temporary file: ${path}`);
+  const callback = () => {
+    shelljs.rm('-f', path);
+    debug(`Remove the temporary file: ${path}`);
+  };
+  beforeExitHandlers.push(callback);
+  return callback;
+}
+
+export function encodeHashParameter(params: Record<string, string>): string {
+  return Object.entries(params)
+    .map(([k, v]) => {
+      if (!/^[a-zA-Z0-9_]+$/.test(k)) {
+        return '';
+      }
+      const value = v
+        .replace('%', '%25')
+        .replace('+', '%2B')
+        .replace('&', '%26')
+        .replace('=', '%3D')
+        .replace(' ', '+');
+      return `${k}=${value}`;
+    })
+    .join('&');
 }

@@ -88,6 +88,20 @@
             { "$ref": "#/definitions/outputObject" }
           ]
         },
+        "workspaceDir": {
+          "type": "string",
+          "description": "",
+          "minLength": 1
+        },
+        "includeAssets": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "$ref": "#/definitions/entry" }
+            },
+            { "$ref": "#/definitions/entry" }
+          ]
+        },
         "size": {
           "type": "string",
           "description": "",

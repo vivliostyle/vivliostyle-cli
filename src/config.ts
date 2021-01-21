@@ -9,7 +9,7 @@ import path from 'upath';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import { debug, log, readJSON } from './util';
+import { debug, log, readJSON, touchTmpFile } from './util';
 
 export interface Entry {
   path: string;
@@ -70,6 +70,8 @@ export interface VivliostyleConfig {
   entry: string | Entry | (string | Entry)[];
   entryContext?: string; // .
   output?: string | Output | (string | Output)[];
+  workspaceDir?: string;
+  includeAssets?: string | string[];
   size?: string;
   pressReady?: boolean;
   language?: string;
@@ -100,10 +102,15 @@ export interface CliFlags {
 export interface MergedConfig {
   entryContextDir: string;
   workspaceDir: string;
-  artifactDir: string;
+  manifestPath: string;
   entries: ParsedEntry[];
   outputs: ParsedOutput[];
   themeIndexes: ParsedTheme[];
+  includeAssets: string[];
+  exportAliases: {
+    source: string;
+    target: string;
+  }[];
   size: PageSize | undefined;
   pressReady: boolean;
   projectTitle: string;
@@ -118,6 +125,20 @@ export interface MergedConfig {
 }
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+
+const DEFAULT_ASSETS = [
+  '**/*.png',
+  '**/*.jpg',
+  '**/*.jpeg',
+  '**/*.svg',
+  '**/*.gif',
+  '**/*.webp',
+  '**/*.apng',
+  '**/*.ttf',
+  '**/*.otf',
+  '**/*.woff',
+  '**/*.woff2',
+];
 
 export function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) && +val > 0 ? +val * 1000 : DEFAULT_TIMEOUT;
@@ -292,43 +313,34 @@ export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfig | undefined,
   context: string,
-  workspaceDir: string,
 ): Promise<MergedConfig> {
   debug('context directory', context);
-
-  const pkgJsonPath = path.resolve(context, 'package.json');
-  const pkgJson = fs.existsSync(pkgJsonPath)
-    ? readJSON(pkgJsonPath)
-    : undefined;
-  if (pkgJson) {
-    debug('located package.json path', pkgJsonPath);
-  }
-
-  const projectTitle: string | undefined =
-    cliFlags.title ?? config?.title ?? pkgJson?.name;
-  const projectAuthor: string | undefined =
-    cliFlags.author ?? config?.author ?? pkgJson?.author;
-
   debug('cliFlags', cliFlags);
   debug('vivliostyle.config.js', config);
 
   const entryContextDir = path.resolve(
     cliFlags.input
-      ? '.'
+      ? path.dirname(path.resolve(context, cliFlags.input))
       : contextResolve(context, config?.entryContext) ?? context,
   );
-  const artifactDir = path.join(workspaceDir, 'artifact');
+  const workspaceDir =
+    contextResolve(context, config?.workspaceDir) ?? entryContextDir;
+  const includeAssets = config?.includeAssets
+    ? Array.isArray(config.includeAssets)
+      ? config.includeAssets
+      : [config.includeAssets]
+    : DEFAULT_ASSETS;
 
   const language = cliFlags.language ?? config?.language ?? 'en';
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const toc =
     typeof config?.toc === 'string'
-      ? contextResolve(context, config?.toc)!
+      ? contextResolve(entryContextDir, config?.toc)!
       : config?.toc !== undefined
       ? config.toc
       : false;
-  const cover = contextResolve(context, config?.cover) ?? undefined;
+  const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
 
   const verbose = cliFlags.verbose ?? false;
@@ -344,43 +356,6 @@ export async function mergeConfig<T extends CliFlags>(
   if (rootTheme) {
     themeIndexes.push(rootTheme);
   }
-
-  function parseEntry(entry: Entry): ParsedEntry {
-    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
-    const sourceDir = path.dirname(sourcePath); // abs
-    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
-    const targetPath = path
-      .resolve(artifactDir, contextEntryPath)
-      .replace(/\.md$/, '.html');
-    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
-
-    const metadata = parseFileMetadata(type, sourcePath);
-
-    const title = entry.title ?? metadata.title ?? projectTitle;
-    const theme =
-      parseTheme(entry.theme, sourceDir) ?? metadata.theme ?? themeIndexes[0];
-
-    if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
-      themeIndexes.push(theme);
-    }
-
-    return {
-      type,
-      source: sourcePath,
-      target: targetPath,
-      title,
-      theme,
-    };
-  }
-
-  const rawEntries = cliFlags.input
-    ? [cliFlags.input]
-    : config?.entry
-    ? Array.isArray(config.entry)
-      ? config.entry
-      : [config.entry]
-    : [];
-  const entries: ParsedEntry[] = rawEntries.map(normalizeEntry).map(parseEntry);
 
   const outputs = ((): ParsedOutput[] => {
     if (cliFlags.targets?.length) {
@@ -420,6 +395,151 @@ export async function mergeConfig<T extends CliFlags>(
     ];
   })();
 
+  const commonOpts: CommonOpts = {
+    entryContextDir,
+    workspaceDir,
+    includeAssets,
+    outputs,
+    themeIndexes,
+    pressReady,
+    size,
+    language,
+    toc,
+    cover,
+    verbose,
+    timeout,
+    sandbox,
+    executableChromium,
+  };
+  const parsedConfig = cliFlags.input
+    ? await composeSingleInputConfig(commonOpts, cliFlags, config)
+    : await composeProjectConfig(commonOpts, cliFlags, config, context);
+  debug('parsedConfig', parsedConfig);
+  return parsedConfig;
+}
+
+type CommonOpts = Omit<
+  MergedConfig,
+  | 'entries'
+  | 'exportAliases'
+  | 'manifestPath'
+  | 'projectTitle'
+  | 'projectAuthor'
+>;
+
+async function composeSingleInputConfig<T extends CliFlags>(
+  otherConfig: CommonOpts,
+  cliFlags: T,
+  config: VivliostyleConfig | undefined,
+): Promise<MergedConfig> {
+  debug('entering single entry config mode');
+
+  const sourcePath = path.resolve(cliFlags.input);
+  const workspaceDir = path.dirname(sourcePath);
+  const exportAliases: { source: string; target: string }[] = [];
+
+  // Single input file; create temporary file
+  const tmpPrefix = `.vs-${Date.now()}.`;
+  const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
+  const metadata = parseFileMetadata(type, sourcePath);
+  const target = path
+    .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+    .replace(/\.md$/, '.html');
+  await touchTmpFile(target);
+  const entries: ParsedEntry[] = [
+    {
+      type,
+      source: sourcePath,
+      target,
+      title: metadata.title,
+      theme: metadata.theme ?? otherConfig.themeIndexes[0],
+    },
+  ];
+  exportAliases.push({
+    source: target,
+    target: path.resolve(
+      workspaceDir,
+      path.basename(sourcePath).replace(/\.md$/, '.html'),
+    ),
+  });
+  // create temporary manifest file
+  const manifestPath = path.resolve(workspaceDir, `${tmpPrefix}manifest.json`);
+  await touchTmpFile(manifestPath);
+  exportAliases.push({
+    source: manifestPath,
+    target: path.resolve(workspaceDir, 'manifest.json'),
+  });
+
+  return {
+    ...otherConfig,
+    entries,
+    exportAliases,
+    manifestPath,
+    projectTitle:
+      cliFlags.title ??
+      config?.title ??
+      metadata.title ??
+      path.basename(sourcePath),
+    projectAuthor: cliFlags.author ?? config?.author ?? '',
+  };
+}
+
+async function composeProjectConfig<T extends CliFlags>(
+  otherConfig: CommonOpts,
+  cliFlags: T,
+  config: VivliostyleConfig | undefined,
+  context: string,
+): Promise<MergedConfig> {
+  debug('entering project config mode');
+
+  const { entryContextDir, workspaceDir, themeIndexes, outputs } = otherConfig;
+  const pkgJsonPath = path.resolve(context, 'package.json');
+  const pkgJson = fs.existsSync(pkgJsonPath)
+    ? readJSON(pkgJsonPath)
+    : undefined;
+  if (pkgJson) {
+    debug('located package.json path', pkgJsonPath);
+  }
+
+  const projectTitle: string | undefined =
+    cliFlags.title ?? config?.title ?? pkgJson?.name;
+  const projectAuthor: string | undefined =
+    cliFlags.author ?? config?.author ?? pkgJson?.author;
+
+  function parseEntry(entry: Entry): ParsedEntry {
+    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
+    const sourceDir = path.dirname(sourcePath); // abs
+    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
+    const targetPath = path
+      .resolve(workspaceDir, contextEntryPath)
+      .replace(/\.md$/, '.html');
+    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
+
+    const metadata = parseFileMetadata(type, sourcePath);
+
+    const title = entry.title ?? metadata.title ?? projectTitle;
+    const theme =
+      parseTheme(entry.theme, sourceDir) ?? metadata.theme ?? themeIndexes[0];
+
+    if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
+      themeIndexes.push(theme);
+    }
+
+    return {
+      type,
+      source: sourcePath,
+      target: targetPath,
+      title,
+      theme,
+    };
+  }
+
+  const entries: ParsedEntry[] = config?.entry
+    ? (Array.isArray(config.entry) ? config.entry : [config.entry])
+        .map(normalizeEntry)
+        .map(parseEntry)
+    : [];
+
   let fallbackProjectTitle: string = '';
   if (!projectTitle) {
     if (entries.length === 1 && entries[0].title) {
@@ -436,29 +556,14 @@ export async function mergeConfig<T extends CliFlags>(
     }
   }
 
-  const parsedConfig = {
-    entryContextDir,
-    workspaceDir,
-    artifactDir,
+  return {
+    ...otherConfig,
     entries,
-    outputs,
-    themeIndexes,
-    pressReady,
-    size,
+    exportAliases: [],
+    manifestPath: path.join(workspaceDir, 'manifest.json'),
     projectTitle: projectTitle || fallbackProjectTitle,
     projectAuthor: projectAuthor || '',
-    language,
-    toc,
-    cover,
-    verbose,
-    timeout,
-    sandbox,
-    executableChromium,
   };
-
-  debug('parsedConfig', parsedConfig);
-
-  return parsedConfig;
 }
 
 export function inferenceFormatByName(filename: string): OutputFormat {

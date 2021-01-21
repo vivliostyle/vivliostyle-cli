@@ -1,18 +1,12 @@
 import chalk from 'chalk';
 import process from 'process';
-import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { buildArtifacts } from '../builder';
+import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { buildPDF } from '../pdf';
-import {
-  gracefulError,
-  log,
-  startLogging,
-  stopLogging,
-  useTmpDirectory,
-} from '../util';
+import { gracefulError, log, startLogging, stopLogging } from '../util';
+import { exportWebbook } from '../webbook';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
 try {
@@ -48,59 +42,48 @@ export default async function build(cliFlags: BuildCliFlags) {
     ? path.dirname(vivliostyleConfigPath)
     : process.cwd();
 
-  const [tmpDir, clear] = await useTmpDirectory();
+  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
-  try {
-    const config = await mergeConfig(
-      cliFlags,
-      vivliostyleConfig,
-      context,
-      tmpDir,
-    );
-
-    // build artifacts
-    const { manifestPath } = await buildArtifacts(config);
-
-    // generate files
-    for (const target of config.outputs) {
-      let output: string | null = null;
-      if (target.format === 'pdf') {
-        output = await buildPDF({
-          ...config,
-          input: manifestPath,
-          output: target.path,
-        });
-      } else if (target.format === 'webbook') {
-        const silentMode = shelljs.config.silent;
-        shelljs.config.silent = true;
-        const stderr =
-          shelljs.mkdir('-p', target.path).stderr ||
-          shelljs.cp('-r', path.join(config.workspaceDir, '*'), target.path)
-            .stderr;
-        if (stderr) {
-          throw new Error(stderr);
-        }
-        shelljs.config.silent = silentMode;
-        output = target.path;
-      } else if (target.format === 'pub-manifest') {
-        // TODO
-      }
-      if (output) {
-        const formattedOutput = chalk.bold.green(
-          path.relative(process.cwd(), output),
-        );
-        log(
-          `\n${terminalLink(formattedOutput, 'file://' + output, {
-            fallback: () => formattedOutput,
-          })} has been created.`,
-        );
-      }
-    }
-
-    stopLogging('Built successfully.', '🎉');
-
-    process.exit(0);
-  } finally {
-    clear();
+  // check output path not to overwrite source files
+  for (const target of config.outputs) {
+    checkOverwriteViolation(config, target.path, target.format);
   }
+
+  // build artifacts
+  await compile(config);
+  await copyAssets(config);
+
+  // generate files
+  for (const target of config.outputs) {
+    let output: string | null = null;
+    if (target.format === 'pdf') {
+      output = await buildPDF({
+        ...config,
+        input: config.manifestPath,
+        output: target.path,
+      });
+    } else if (target.format === 'webbook') {
+      output = await exportWebbook({
+        ...config,
+        input: config.workspaceDir,
+        output: target.path,
+      });
+    } else if (target.format === 'pub-manifest') {
+      // TODO
+    }
+    if (output) {
+      const formattedOutput = chalk.bold.green(
+        path.relative(process.cwd(), output),
+      );
+      log(
+        `\n${terminalLink(formattedOutput, 'file://' + output, {
+          fallback: () => formattedOutput,
+        })} has been created.`,
+      );
+    }
+  }
+
+  stopLogging('Built successfully.', '🎉');
+
+  process.exit(0);
 }

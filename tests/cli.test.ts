@@ -1,7 +1,6 @@
 import execa from 'execa';
 import fileType from 'file-type';
 import fs from 'fs';
-import path from 'upath';
 import {
   PDFCatalog,
   PDFDict,
@@ -10,6 +9,7 @@ import {
   PDFName,
   PDFNumber,
 } from 'pdf-lib';
+import path from 'upath';
 
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));
@@ -31,7 +31,7 @@ function cleanUp(filePath: string) {
 }
 
 function vivliostyleCLI(args: string[]) {
-  return execa(cliPath, args, { cwd: fixtureRoot });
+  return execa(cliPath, args, { cwd: fixtureRoot, env: { DEBUG: 'vs-cli' } });
 }
 
 it('show version', async () => {
