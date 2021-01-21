@@ -76,8 +76,8 @@ export async function exportWebbook({
         if (typeof e === 'string') {
           return e === entry.source ? entry.source : e;
         }
-        if (e.href === entry.source) {
-          e.href = entry.target;
+        if (e.url === entry.source) {
+          e.url = entry.target;
         }
         return e;
       };
