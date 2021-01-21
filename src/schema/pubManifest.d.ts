@@ -52,12 +52,7 @@ export type Contributor =
 export type URLs = string | string[];
 export type Duration = string;
 export type Languages = BCP47LanguageTag | BCP47LanguageTag[];
-export type Dates = Dates1 & Dates2;
-export type Dates1 = {
-  [k: string]: unknown;
-};
-export type Dates2 = string;
-export type Dates3 = Dates1 & Dates2;
+export type Dates = string;
 export type ResourceCategorization =
   | (URL | PublicationLinks)
   | (URL | PublicationLinks)[];
@@ -90,7 +85,7 @@ export interface PublicationManifest {
   duration?: Duration;
   inLanguage?: Languages;
   dateModified?: Dates;
-  datePublished?: Dates3;
+  datePublished?: Dates;
   name?: LocalizableStringOrObject;
   readingOrder?: ResourceCategorization;
   resources?: ResourceCategorization;

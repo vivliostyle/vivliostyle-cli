@@ -3,12 +3,5 @@
   "$id": "https://www.w3.org/ns/pub-schema/manifest/module/date.schema.json",
   "title": "Dates",
   "type": "string",
-  "anyOf": [
-    {
-      "format": "date"
-    },
-    {
-      "format": "date-time"
-    }
-  ]
+  "format": "date-time"
 }
