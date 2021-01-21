@@ -100,13 +100,15 @@ export function generateManifest(
     links,
   };
 
+  fs.writeFileSync(outputPath, JSON.stringify(publication, null, 2));
   const ajv = Ajv();
   ajv.addSchema(publicationSchemas);
   const valid = ajv.validate(publicationSchemaId, publication);
   if (!valid) {
-    throw new Error('Failed to validate the publication manifest');
+    throw new Error(
+      `Validation of pubManifest failed. Please check the schema: ${outputPath}`,
+    );
   }
-  fs.writeFileSync(outputPath, JSON.stringify(publication, null, 2));
 }
 
 export function generateToC(entries: ParsedEntry[], distDir: string) {

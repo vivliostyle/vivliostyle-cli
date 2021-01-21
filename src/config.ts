@@ -261,7 +261,9 @@ export function collectVivliostyleConfig<T extends CliFlags>(
     const ajv = Ajv();
     const valid = ajv.validate(configSchema, config);
     if (!valid) {
-      throw new Error('Invalid vivliostyle.config.js');
+      throw new Error(
+        `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`,
+      );
     }
     return config;
   };
