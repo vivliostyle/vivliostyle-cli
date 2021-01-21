@@ -156,3 +156,9 @@ export function encodeHashParameter(params: Record<string, string>): string {
     })
     .join('&');
 }
+
+export type EntryFileType = 'markdown' | 'html';
+export function detectEntryFileType(source: string): EntryFileType {
+  // FIXME: Read the file content to detect it
+  return source.endsWith('.md') ? 'markdown' : 'html';
+}
