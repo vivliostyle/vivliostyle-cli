@@ -93,7 +93,7 @@ it('yields a config with single markdown', async () => {
     ({ source }) => source === config.manifestPath,
   );
   expect(manifestAlias?.target).toMatch(
-    '__WORKSPACE__/tests/fixtures/config/manifest.json',
+    '__WORKSPACE__/tests/fixtures/config/publication.json',
   );
   config.manifestPath = '__SNIP__';
   config.entries[0].target = '__SNIP__';

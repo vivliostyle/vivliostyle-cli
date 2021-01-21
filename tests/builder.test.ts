@@ -24,14 +24,14 @@ it('generate workspace directory', async () => {
   await copyAssets(config);
   const fileList = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
   expect([...fileList]).toEqual([
-    'manifest.json',
+    'publication.json',
     'manuscript',
     'manuscript/cover.png',
     'manuscript/soda.html',
     'toc.html',
   ]);
   const manifest = require(resolve(
-    'fixtures/builder/.vs-workspace/manifest.json',
+    'fixtures/builder/.vs-workspace/publication.json',
   ));
   expect(manifest.links[0]).toEqual({
     rel: 'cover',
@@ -70,12 +70,12 @@ it('generate files with entryContext', async () => {
   );
   expect([...fileList]).toEqual([
     'cover.png',
-    'manifest.json',
+    'publication.json',
     'soda.html',
     't-o-c.html',
   ]);
   const manifest = require(resolve(
-    'fixtures/builder/.vs-entryContext/manifest.json',
+    'fixtures/builder/.vs-entryContext/publication.json',
   ));
   expect(manifest.links[0]).toEqual({
     rel: 'cover',

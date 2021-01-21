@@ -32,7 +32,7 @@ export default async function init(cliFlags: InitCliFlags) {
 
   // prettier-ignore
   const vivliostyleConfig = `module.exports = {
-  title: '${ cliFlags.title || 'Principia'}', // populated into 'manifest.json', default to 'title' of the first entry or 'name' in 'package.json'.
+  title: '${ cliFlags.title || 'Principia'}', // populated into 'publication.json', default to 'title' of the first entry or 'name' in 'package.json'.
   author: '${cliFlags.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
   ${cliFlags.language ? '' : '// '}language: '${cliFlags.language || 'la'}', // default to 'en'
   ${cliFlags.size ? '' : '// '}size: '${cliFlags.size || 'A4'}',
@@ -54,7 +54,7 @@ export default async function init(cliFlags: InitCliFlags) {
   //     format: 'webbook',
   //   },
   // ],
-  // toc: true, // whether generate and include toc.html or not (does not affect manifest.json), default to 'false'. if 'string' given, use it as a custom toc.html.
+  // toc: true, // whether generate and include toc.html or not (does not affect publication.json), default to 'false'. if 'string' given, use it as a custom toc.html.
   // cover: './cover.png', // cover image. default to undefined.
 };
 `;

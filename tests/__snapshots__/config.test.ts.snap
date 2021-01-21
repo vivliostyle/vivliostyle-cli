@@ -44,7 +44,7 @@ Object {
     "**/*.woff2",
   ],
   "language": "myLanguage",
-  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -126,7 +126,7 @@ Object {
     "**/*.woff2",
   ],
   "language": "language",
-  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -193,7 +193,7 @@ Object {
     "**/*.woff2",
   ],
   "language": "en",
-  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -234,7 +234,7 @@ Object {
     "**/*.woff2",
   ],
   "language": "en",
-  "manifestPath": "__WORKSPACE__/tests/fixtures/config/manifest.json",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
       "format": "pdf",

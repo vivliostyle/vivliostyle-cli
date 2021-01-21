@@ -6,6 +6,7 @@ import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
+import { MANIFEST_FILENAME } from './const';
 import { processMarkdown } from './markdown';
 import type {
   EntryObject,
@@ -446,11 +447,14 @@ async function composeSingleInputConfig<T extends CliFlags>(
     ),
   });
   // create temporary manifest file
-  const manifestPath = path.resolve(workspaceDir, `${tmpPrefix}manifest.json`);
+  const manifestPath = path.resolve(
+    workspaceDir,
+    `${tmpPrefix}${MANIFEST_FILENAME}`,
+  );
   await touchTmpFile(manifestPath);
   exportAliases.push({
     source: manifestPath,
-    target: path.resolve(workspaceDir, 'manifest.json'),
+    target: path.resolve(workspaceDir, MANIFEST_FILENAME),
   });
 
   return {
@@ -542,7 +546,7 @@ async function composeProjectConfig<T extends CliFlags>(
     ...otherConfig,
     entries,
     exportAliases: [],
-    manifestPath: path.join(workspaceDir, 'manifest.json'),
+    manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
     projectTitle: projectTitle || fallbackProjectTitle,
     projectAuthor: projectAuthor || '',
   };

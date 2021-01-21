@@ -126,9 +126,9 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
       'head',
       h('title', 'Table of Contents'),
       h('link', {
-        href: 'manifest.json',
-        rel: 'manifest',
-        type: 'application/webpub+json',
+        href: 'publication.json',
+        rel: 'publication',
+        type: 'application/ld+json',
       }),
     ),
     h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),

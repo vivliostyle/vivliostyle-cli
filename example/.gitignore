@@ -1,4 +1,4 @@
 /manuscripts/*.html
 /manuscripts/fragments/*.html
 /manuscripts/themes
-manifest.json
+publication.json

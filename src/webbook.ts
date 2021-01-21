@@ -66,8 +66,8 @@ export async function exportWebbook({
       }
     }
 
-    debug('webbook manifest.json', actualManifestPath);
-    // Overwrite copied manifest.json
+    debug('webbook publication.json', actualManifestPath);
+    // Overwrite copied publication.json
     const manifest = JSON.parse(
       fs.readFileSync(actualManifestPath, 'utf8'),
     ) as PublicationManifest;
