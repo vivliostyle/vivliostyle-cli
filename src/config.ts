@@ -9,7 +9,14 @@ import path from 'upath';
 import { processMarkdown } from './markdown';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import { debug, log, readJSON, touchTmpFile } from './util';
+import {
+  debug,
+  detectEntryFileType,
+  EntryFileType,
+  log,
+  readJSON,
+  touchTmpFile,
+} from './util';
 
 export interface Entry {
   path: string;
@@ -44,7 +51,7 @@ export interface PackageTheme {
 }
 
 export interface ParsedEntry {
-  type: 'markdown' | 'html';
+  type: EntryFileType;
   title?: string;
   theme?: ParsedTheme;
   source: string;
@@ -240,7 +247,7 @@ function parsePageSize(size: string): PageSize {
   }
 }
 
-function parseFileMetadata(type: string, sourcePath: string) {
+function parseFileMetadata(type: EntryFileType, sourcePath: string) {
   const sourceDir = path.dirname(sourcePath);
   let title: string | undefined;
   let theme: ParsedTheme | undefined;
@@ -440,7 +447,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   // Single input file; create temporary file
   const tmpPrefix = `.vs-${Date.now()}.`;
-  const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
+  const type = detectEntryFileType(sourcePath);
   const metadata = parseFileMetadata(type, sourcePath);
   const target = path
     .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
@@ -513,8 +520,7 @@ async function composeProjectConfig<T extends CliFlags>(
     const targetPath = path
       .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
-    const type = sourcePath.endsWith('.html') ? 'html' : 'markdown';
-
+    const type = detectEntryFileType(sourcePath);
     const metadata = parseFileMetadata(type, sourcePath);
 
     const title = entry.title ?? metadata.title ?? projectTitle;
