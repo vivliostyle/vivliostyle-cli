@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/strings.schema.json",
+  "title": "Unique strings",
+  "type": ["string", "array"],
+  "items": {
+    "type": "string"
+  }
+}

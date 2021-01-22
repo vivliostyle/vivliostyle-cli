@@ -2,8 +2,11 @@ import fs from 'fs';
 import globby from 'globby';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { ManifestEntry, ManifestJsonScheme } from './builder';
 import { MergedConfig } from './config';
+import type {
+  PublicationLinks,
+  PublicationManifest,
+} from './schema/pubManifest';
 import { debug } from './util';
 
 export async function exportWebbook({
@@ -63,22 +66,36 @@ export async function exportWebbook({
       }
     }
 
-    debug('webbook manifest.json', actualManifestPath);
-    // Overwrite copied manifest.json
+    debug('webbook publication.json', actualManifestPath);
+    // Overwrite copied publication.json
     const manifest = JSON.parse(
       fs.readFileSync(actualManifestPath, 'utf8'),
-    ) as ManifestJsonScheme;
+    ) as PublicationManifest;
     for (const entry of relExportAliases) {
-      const rewriteAliasPath = (entries: ManifestEntry[]) =>
-        entries.map<ManifestEntry>((e) => {
-          if (e.href === entry.source) {
-            e.href = entry.target;
-          }
-          return e;
-        });
-      manifest.links = rewriteAliasPath(manifest.links);
-      manifest.readingOrder = rewriteAliasPath(manifest.readingOrder);
-      manifest.resources = rewriteAliasPath(manifest.resources);
+      const rewriteAliasPath = (e: PublicationLinks | string) => {
+        if (typeof e === 'string') {
+          return e === entry.source ? entry.source : e;
+        }
+        if (e.url === entry.source) {
+          e.url = entry.target;
+        }
+        return e;
+      };
+      if (manifest.links) {
+        manifest.links = Array.isArray(manifest.links)
+          ? manifest.links.map(rewriteAliasPath)
+          : rewriteAliasPath(manifest.links);
+      }
+      if (manifest.readingOrder) {
+        manifest.readingOrder = Array.isArray(manifest.readingOrder)
+          ? manifest.readingOrder.map(rewriteAliasPath)
+          : rewriteAliasPath(manifest.readingOrder);
+      }
+      if (manifest.resources) {
+        manifest.resources = Array.isArray(manifest.resources)
+          ? manifest.resources.map(rewriteAliasPath)
+          : rewriteAliasPath(manifest.resources);
+      }
     }
     fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
   } catch (err) {

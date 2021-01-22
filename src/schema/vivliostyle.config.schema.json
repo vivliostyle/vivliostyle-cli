@@ -11,6 +11,7 @@
         "title": { "type": "string" },
         "theme": { "type": "string" }
       },
+      "required": ["path"],
       "additionalProperties": false
     },
     "output": {
@@ -23,6 +24,7 @@
         "path": { "type": "string" },
         "format": { "type": "string" }
       },
+      "required": ["path"],
       "additionalProperties": false
     },
     "coreProps": {

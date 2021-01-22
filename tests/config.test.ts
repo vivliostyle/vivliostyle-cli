@@ -81,7 +81,7 @@ it('yields a config with single markdown', async () => {
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
   );
   expect(config.manifestPath).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.publication\.json$/,
   );
   const entryAlias = config.exportAliases.find(
     ({ source }) => source === config.entries[0].target,
@@ -93,7 +93,7 @@ it('yields a config with single markdown', async () => {
     ({ source }) => source === config.manifestPath,
   );
   expect(manifestAlias?.target).toMatch(
-    '__WORKSPACE__/tests/fixtures/config/manifest.json',
+    '__WORKSPACE__/tests/fixtures/config/publication.json',
   );
   config.manifestPath = '__SNIP__';
   config.entries[0].target = '__SNIP__';
@@ -110,7 +110,7 @@ it('yields a config with single html', async () => {
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
   );
   expect(config.manifestPath).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.publication\.json$/,
   );
   config.manifestPath = '__SNIP__';
   config.entries[0].target = '__SNIP__';
@@ -129,7 +129,7 @@ it('yields a config with single input and vivliostyle config', async () => {
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
   );
   expect(config.manifestPath).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.manifest\.json$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.publication\.json$/,
   );
   config.manifestPath = '__SNIP__';
   config.entries[0].target = '__SNIP__';

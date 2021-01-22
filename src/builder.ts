@@ -1,3 +1,4 @@
+import Ajv from 'ajv';
 import chalk from 'chalk';
 import fs from 'fs';
 import globby from 'globby';
@@ -7,8 +8,17 @@ import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { Entry, MergedConfig, ParsedEntry } from './config';
+import { MergedConfig, ParsedEntry } from './config';
 import { processMarkdown } from './markdown';
+import type {
+  PublicationLinks,
+  PublicationManifest,
+} from './schema/pubManifest';
+import {
+  publicationSchemaId,
+  publicationSchemas,
+} from './schema/pubManifest.schema';
+import type { EntryObject } from './schema/vivliostyle.config';
 import { debug, log } from './util';
 
 export interface ManifestOption {
@@ -16,30 +26,9 @@ export interface ManifestOption {
   author?: string;
   language?: string;
   modified: string;
-  entries: Entry[];
+  entries: EntryObject[];
   toc?: string;
   cover?: string;
-}
-
-export interface ManifestJsonScheme {
-  '@context': 'https://readium.org/webpub-manifest/context.jsonld';
-  metadata: {
-    '@type': 'http://schema.org/Book';
-    title: string;
-    author: string;
-    language: string;
-    modified: string;
-  };
-  links: ManifestEntry[];
-  readingOrder: ManifestEntry[];
-  resources: ManifestEntry[];
-}
-
-export interface ManifestEntry {
-  href: string;
-  type: string;
-  rel?: string;
-  [index: string]: number | string | undefined;
 }
 
 export function cleanup(location: string) {
@@ -47,25 +36,25 @@ export function cleanup(location: string) {
   shelljs.rm('-rf', location);
 }
 
-// example: https://github.com/readium/webpub-manifest/blob/master/examples/MobyDick/manifest.json
+// https://www.w3.org/TR/pub-manifest/
 export function generateManifest(
   outputPath: string,
   entryContextDir: string,
   options: ManifestOption,
 ) {
-  const entries: ManifestEntry[] = options.entries.map((entry) => ({
-    href: entry.path,
-    type: 'text/html',
+  const entries: PublicationLinks[] = options.entries.map((entry) => ({
+    url: entry.path,
+    encodingFormat: 'text/html',
     title: entry.title,
   }));
-  const links: ManifestEntry[] = [];
-  const resources: ManifestEntry[] = [];
+  const links: PublicationLinks[] = [];
+  const resources: PublicationLinks[] = [];
 
   if (options.toc) {
     entries.splice(0, 0, {
-      href: options.toc,
+      url: options.toc,
       rel: 'contents',
-      type: 'text/html',
+      encodingFormat: 'text/html',
       title: 'Table of Contents',
     });
   }
@@ -80,8 +69,8 @@ export function generateManifest(
       if (mimeType) {
         links.push({
           rel: 'cover',
-          href: options.cover,
-          type: mimeType,
+          url: options.cover,
+          encodingFormat: mimeType,
           width,
           height,
         });
@@ -98,21 +87,28 @@ export function generateManifest(
     }
   }
 
-  const manifest: ManifestJsonScheme = {
-    '@context': 'https://readium.org/webpub-manifest/context.jsonld',
-    metadata: {
-      '@type': 'http://schema.org/Book',
-      title: options.title ?? '',
-      author: options.author ?? '',
-      language: options.language ?? '',
-      modified: options.modified,
-    },
-    links,
+  const publication: PublicationManifest = {
+    '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],
+    type: 'Book',
+    conformsTo: 'https://github.com/vivliostyle/vivliostyle-cli',
+    author: options.author,
+    inLanguage: options.language,
+    dateModified: options.modified,
+    name: options.title,
     readingOrder: entries,
     resources,
+    links,
   };
 
-  fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
+  fs.writeFileSync(outputPath, JSON.stringify(publication, null, 2));
+  const ajv = Ajv();
+  ajv.addSchema(publicationSchemas);
+  const valid = ajv.validate(publicationSchemaId, publication);
+  if (!valid) {
+    throw new Error(
+      `Validation of pubManifest failed. Please check the schema: ${outputPath}`,
+    );
+  }
 }
 
 export function generateToC(entries: ParsedEntry[], distDir: string) {
@@ -132,9 +128,9 @@ export function generateToC(entries: ParsedEntry[], distDir: string) {
       'head',
       h('title', 'Table of Contents'),
       h('link', {
-        href: 'manifest.json',
-        rel: 'manifest',
-        type: 'application/webpub+json',
+        href: 'publication.json',
+        rel: 'publication',
+        type: 'application/ld+json',
       }),
     ),
     h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),

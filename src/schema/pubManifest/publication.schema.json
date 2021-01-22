@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/publication.schema.json",
+  "title": "Publication Manifest",
+  "type": "object",
+  "properties": {
+    "@context": {
+      "$ref": "module/context.schema.json"
+    },
+    "type": {
+      "type": ["string", "array"],
+      "items": {
+        "type": "string"
+      }
+    },
+    "conformsTo": {
+      "oneOf": [
+        {
+          "$ref": "module/url.schema.json"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "module/url.schema.json"
+          }
+        }
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "abridged": {
+      "type": "boolean"
+    },
+    "accessMode": {
+      "$ref": "module/strings.schema.json"
+    },
+    "accessModeSufficient": {
+      "$ref": "module/item-lists.schema.json"
+    },
+    "accessibilityFeature": {
+      "$ref": "module/strings.schema.json"
+    },
+    "accessibilityHazard": {
+      "$ref": "module/strings.schema.json"
+    },
+    "accessibilitySummary": {
+      "$ref": "module/localizable.schema.json"
+    },
+    "artist": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "author": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "colorist": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "contributor": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "creator": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "editor": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "illustrator": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "inker": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "letterer": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "penciler": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "publisher": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "readBy": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "translator": {
+      "$ref": "module/contributor.schema.json"
+    },
+    "url": {
+      "$ref": "module/urls.schema.json"
+    },
+    "duration": {
+      "$ref": "module/duration.schema.json"
+    },
+    "inLanguage": {
+      "$ref": "module/language.schema.json"
+    },
+    "dateModified": {
+      "$ref": "module/date.schema.json"
+    },
+    "datePublished": {
+      "$ref": "module/date.schema.json"
+    },
+    "name": {
+      "$ref": "module/localizable.schema.json"
+    },
+    "readingOrder": {
+      "$ref": "module/resource.categorization.schema.json"
+    },
+    "resources": {
+      "$ref": "module/resource.categorization.schema.json"
+    },
+    "links": {
+      "$ref": "module/resource.categorization.schema.json"
+    }
+  },
+  "required": ["@context", "conformsTo"]
+}

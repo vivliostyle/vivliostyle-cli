@@ -24,27 +24,27 @@ it('generate workspace directory', async () => {
   await copyAssets(config);
   const fileList = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
   expect([...fileList]).toEqual([
-    'manifest.json',
     'manuscript',
     'manuscript/cover.png',
     'manuscript/soda.html',
+    'publication.json',
     'toc.html',
   ]);
   const manifest = require(resolve(
-    'fixtures/builder/.vs-workspace/manifest.json',
+    'fixtures/builder/.vs-workspace/publication.json',
   ));
   expect(manifest.links[0]).toEqual({
+    encodingFormat: 'image/png',
     rel: 'cover',
-    href: 'manuscript/cover.png',
-    type: 'image/png',
+    url: 'manuscript/cover.png',
     width: 512,
     height: 512,
   });
   expect(manifest.readingOrder[0]).toEqual({
-    href: 'toc.html',
+    encodingFormat: 'text/html',
     rel: 'contents',
-    type: 'text/html',
     title: 'Table of Contents',
+    url: 'toc.html',
   });
 
   // try again and check idempotence
@@ -70,25 +70,25 @@ it('generate files with entryContext', async () => {
   );
   expect([...fileList]).toEqual([
     'cover.png',
-    'manifest.json',
+    'publication.json',
     'soda.html',
     't-o-c.html',
   ]);
   const manifest = require(resolve(
-    'fixtures/builder/.vs-entryContext/manifest.json',
+    'fixtures/builder/.vs-entryContext/publication.json',
   ));
   expect(manifest.links[0]).toEqual({
+    encodingFormat: 'image/png',
     rel: 'cover',
-    href: 'cover.png',
-    type: 'image/png',
+    url: 'cover.png',
     width: 512,
     height: 512,
   });
   expect(manifest.readingOrder[0]).toEqual({
-    href: 't-o-c.html',
+    encodingFormat: 'text/html',
     rel: 'contents',
-    type: 'text/html',
     title: 'Table of Contents',
+    url: 't-o-c.html',
   });
 
   // try again and check idempotence
