@@ -1,9 +1,17 @@
+import assert from 'assert';
 import shelljs from 'shelljs';
 import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
+import { MergedConfig } from '../src/config';
 import { getMergedConfig } from './commandUtil';
 
 const resolve = (p: string) => path.resolve(__dirname, p);
+
+function assertManifestPath(
+  config: MergedConfig,
+): asserts config is MergedConfig & { manifestPath: string } {
+  assert(!!config.manifestPath);
+}
 
 afterAll(() => {
   shelljs.rm('-rf', [
@@ -20,6 +28,7 @@ it('generate workspace directory', async () => {
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
+  assertManifestPath(config);
   await compile(config);
   await copyAssets(config);
   const fileList = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
@@ -62,6 +71,7 @@ it('generate files with entryContext', async () => {
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
+  assertManifestPath(config);
   await compile(config);
   await copyAssets(config);
   const fileList = shelljs.ls(

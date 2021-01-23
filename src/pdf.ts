@@ -18,7 +18,7 @@ import {
   startLogging,
 } from './util';
 
-export type BuildPdfOptions = Omit<MergedConfig, 'outputs'> & {
+export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;
   output: string;
 };

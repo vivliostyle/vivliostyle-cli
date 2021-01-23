@@ -39,6 +39,7 @@ export interface EntryObject {
   path: string;
   title?: string;
   theme?: string;
+  encodingFormat?: string;
 }
 export interface OutputObject {
   path: string;

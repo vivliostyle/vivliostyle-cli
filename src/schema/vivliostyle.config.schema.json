@@ -9,7 +9,8 @@
       "properties": {
         "path": { "type": "string" },
         "title": { "type": "string" },
-        "theme": { "type": "string" }
+        "theme": { "type": "string" },
+        "encodingFormat": { "type": "string" }
       },
       "required": ["path"],
       "additionalProperties": false

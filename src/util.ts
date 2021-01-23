@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
+import StreamZip from 'node-stream-zip';
 import oraConstructor from 'ora';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
@@ -95,6 +96,24 @@ export async function statFile(filePath: string) {
   }
 }
 
+export async function inflateZip(filePath: string, dest: string) {
+  return await new Promise<void>((res, rej) => {
+    const zip = new StreamZip({
+      file: filePath,
+      storeEntries: true,
+    });
+    zip.on('error', (err) => {
+      rej(err);
+    });
+    zip.on('entry', async () => {
+      await util.promisify(zip.extract)(null, dest);
+      await util.promisify(zip.close)();
+      debug(`Unzipped ${filePath} to ${dest}`);
+      res();
+    });
+  });
+}
+
 export async function launchBrowser(
   options?: puppeteer.LaunchOptions,
 ): Promise<puppeteer.Browser> {
@@ -155,10 +174,4 @@ export function encodeHashParameter(params: Record<string, string>): string {
       return `${k}=${value}`;
     })
     .join('&');
-}
-
-export type EntryFileType = 'markdown' | 'html';
-export function detectEntryFileType(source: string): EntryFileType {
-  // FIXME: Read the file content to detect it
-  return source.endsWith('.md') ? 'markdown' : 'html';
 }

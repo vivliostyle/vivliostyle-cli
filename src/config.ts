@@ -7,6 +7,12 @@ import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
 import { MANIFEST_FILENAME } from './const';
+import {
+  detectInputFormat,
+  detectManuscriptMediaType,
+  InputFormat,
+  ManuscriptMediaType,
+} from './input';
 import { processMarkdown } from './markdown';
 import type {
   EntryObject,
@@ -14,14 +20,7 @@ import type {
 } from './schema/vivliostyle.config';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import {
-  debug,
-  detectEntryFileType,
-  EntryFileType,
-  log,
-  readJSON,
-  touchTmpFile,
-} from './util';
+import { debug, log, readJSON, touchTmpFile } from './util';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -45,7 +44,7 @@ export interface PackageTheme {
 }
 
 export interface ParsedEntry {
-  type: EntryFileType;
+  type: ManuscriptMediaType;
   title?: string;
   theme?: ParsedTheme;
   source: string;
@@ -83,11 +82,11 @@ export interface CliFlags {
   executableChromium?: string;
 }
 
-export interface MergedConfig {
+export type MergedConfig = {
   entryContextDir: string;
   workspaceDir: string;
-  manifestPath: string;
   entries: ParsedEntry[];
+  input: InputFormat;
   outputs: ParsedOutput[];
   themeIndexes: ParsedTheme[];
   includeAssets: string[];
@@ -106,7 +105,16 @@ export interface MergedConfig {
   timeout: number;
   sandbox: boolean;
   executableChromium: string;
-}
+} & (
+  | {
+      manifestPath: string;
+      epubOpfPath?: never;
+    }
+  | {
+      manifestPath?: never;
+      epubOpfPath: string;
+    }
+);
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
 
@@ -224,11 +232,11 @@ function parsePageSize(size: string): PageSize {
   }
 }
 
-function parseFileMetadata(type: EntryFileType, sourcePath: string) {
+function parseFileMetadata(type: ManuscriptMediaType, sourcePath: string) {
   const sourceDir = path.dirname(sourcePath);
   let title: string | undefined;
   let theme: ParsedTheme | undefined;
-  if (type === 'markdown') {
+  if (type === 'text/markdown') {
     const file = processMarkdown(sourcePath);
     title = file.data.title;
     theme = parseTheme(file.data.theme, sourceDir);
@@ -406,9 +414,11 @@ export async function mergeConfig<T extends CliFlags>(
 
 type CommonOpts = Omit<
   MergedConfig,
+  | 'input'
   | 'entries'
   | 'exportAliases'
   | 'manifestPath'
+  | 'epubOpfPath'
   | 'projectTitle'
   | 'projectAuthor'
 >;
@@ -422,53 +432,76 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   const sourcePath = path.resolve(cliFlags.input);
   const workspaceDir = path.dirname(sourcePath);
+  const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
-
-  // Single input file; create temporary file
   const tmpPrefix = `.vs-${Date.now()}.`;
-  const type = detectEntryFileType(sourcePath);
-  const metadata = parseFileMetadata(type, sourcePath);
-  const target = path
-    .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
-    .replace(/\.md$/, '.html');
-  await touchTmpFile(target);
-  const entries: ParsedEntry[] = [
-    {
+  const input = detectInputFormat(sourcePath);
+
+  const hasEntry =
+    input.format === 'markdown' ||
+    input.format === 'html' ||
+    input.format === 'webbook';
+  if (hasEntry) {
+    // Single input file; create temporary file
+    const type = detectManuscriptMediaType(sourcePath);
+    const metadata = parseFileMetadata(type, sourcePath);
+    const target = path
+      .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+      .replace(/\.md$/, '.html');
+    await touchTmpFile(target);
+    entries.push({
       type,
       source: sourcePath,
       target,
       title: metadata.title,
       theme: metadata.theme ?? otherConfig.themeIndexes[0],
-    },
-  ];
-  exportAliases.push({
-    source: target,
-    target: path.resolve(
-      workspaceDir,
-      path.basename(sourcePath).replace(/\.md$/, '.html'),
-    ),
-  });
-  // create temporary manifest file
-  const manifestPath = path.resolve(
-    workspaceDir,
-    `${tmpPrefix}${MANIFEST_FILENAME}`,
-  );
-  await touchTmpFile(manifestPath);
-  exportAliases.push({
-    source: manifestPath,
-    target: path.resolve(workspaceDir, MANIFEST_FILENAME),
-  });
+    });
+    exportAliases.push({
+      source: target,
+      target: path.resolve(
+        workspaceDir,
+        path.basename(sourcePath).replace(/\.md$/, '.html'),
+      ),
+    });
+  }
+
+  const manifestDeclaration = await (async () => {
+    if (hasEntry) {
+      // create temporary manifest file
+      const manifestPath = path.resolve(
+        workspaceDir,
+        `${tmpPrefix}${MANIFEST_FILENAME}`,
+      );
+      await touchTmpFile(manifestPath);
+      exportAliases.push({
+        source: manifestPath,
+        target: path.resolve(workspaceDir, MANIFEST_FILENAME),
+      });
+      return { manifestPath };
+    } else if (input.format === 'pub-manifest') {
+      return { manifestPath: input.entry };
+    } else if (input.format === 'epub-opf') {
+      return { epubOpfPath: input.entry };
+    } else if (input.format === 'epub') {
+      // TODO: Unzip EPUB and locate OPF file
+      throw new Error('Not implemented');
+    } else {
+      throw new Error('Failed to export manifest declaration');
+    }
+  })();
 
   return {
     ...otherConfig,
+    ...manifestDeclaration,
     entries,
+    input,
     exportAliases,
-    manifestPath,
     projectTitle:
       cliFlags.title ??
       config?.title ??
-      metadata.title ??
-      path.basename(sourcePath),
+      (entries.length === 1 && entries[0].title
+        ? (entries[0].title as string)
+        : path.basename(sourcePath)),
     projectAuthor: cliFlags.author ?? config?.author ?? '',
   };
 }
@@ -502,7 +535,7 @@ async function composeProjectConfig<T extends CliFlags>(
     const targetPath = path
       .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
-    const type = detectEntryFileType(sourcePath);
+    const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata(type, sourcePath);
 
     const title = entry.title ?? metadata.title ?? projectTitle;
@@ -547,6 +580,10 @@ async function composeProjectConfig<T extends CliFlags>(
   return {
     ...otherConfig,
     entries,
+    input: {
+      format: 'pub-manifest',
+      entry: path.join(workspaceDir, MANIFEST_FILENAME),
+    },
     exportAliases: [],
     manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
     projectTitle: projectTitle || fallbackProjectTitle,

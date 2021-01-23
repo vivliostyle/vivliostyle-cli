@@ -44,7 +44,7 @@ export function generateManifest(
 ) {
   const entries: PublicationLinks[] = options.entries.map((entry) => ({
     url: entry.path,
-    encodingFormat: 'text/html',
+    ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
     title: entry.title,
   }));
   const links: PublicationLinks[] = [];
@@ -150,7 +150,7 @@ export async function compile(
     language,
     toc,
     cover,
-  }: MergedConfig,
+  }: MergedConfig & { manifestPath: string },
   { reload = false }: { reload?: boolean } = {},
 ): Promise<void> {
   debug('entries', entries);
@@ -191,7 +191,7 @@ export async function compile(
           ),
         );
     }
-    if (entry.type === 'markdown') {
+    if (entry.type === 'text/markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
         style,
@@ -244,6 +244,10 @@ export async function compile(
     entries: entries.map((entry) => ({
       title: entry.title,
       path: path.relative(workspaceDir, entry.target),
+      encodingFormat:
+        entry.type === 'text/markdown' || entry.type === 'text/html'
+          ? undefined
+          : entry.type,
     })),
     modified: new Date().toISOString(),
   });

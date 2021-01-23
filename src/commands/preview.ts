@@ -50,11 +50,13 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
-  await compile(config);
-  await copyAssets(config);
+  if (config.manifestPath) {
+    await compile(config);
+    await copyAssets(config);
+  }
 
   const url = getBrokerUrl({
-    sourceIndex: config.manifestPath,
+    sourceIndex: config.manifestPath ?? config.epubOpfPath,
   });
 
   debug(
@@ -81,8 +83,10 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     timer = setTimeout(async () => {
       startLogging(`Rebuilding ${path}`);
       // build artifacts
-      await compile(config, { reload: true });
-      await copyAssets(config);
+      if (config.manifestPath) {
+        await compile(config, { reload: true });
+        await copyAssets(config);
+      }
       page.reload();
       logSuccess(`Built ${path}`);
     }, 2000);

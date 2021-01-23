@@ -13,7 +13,7 @@ Object {
         "type": "uri",
       },
       "title": "myTitle",
-      "type": "markdown",
+      "type": "text/markdown",
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -24,7 +24,7 @@ Object {
         "type": "file",
       },
       "title": "title",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -43,6 +43,10 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "myLanguage",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
@@ -95,7 +99,7 @@ Object {
         "type": "package",
       },
       "title": "title",
-      "type": "markdown",
+      "type": "text/markdown",
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -106,7 +110,7 @@ Object {
         "type": "file",
       },
       "title": "title",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -125,6 +129,10 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "language",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
@@ -173,7 +181,7 @@ Object {
       "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": undefined,
       "title": "pkgName",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -192,6 +200,10 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "en",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
@@ -233,6 +245,10 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "en",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
@@ -263,7 +279,7 @@ Object {
       "target": "__SNIP__",
       "theme": undefined,
       "title": "Miyako",
-      "type": "html",
+      "type": "text/html",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -282,6 +298,10 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.html",
+    "format": "webbook",
+  },
   "language": "en",
   "manifestPath": "__SNIP__",
   "outputs": Array [
@@ -317,7 +337,7 @@ Object {
         "type": "package",
       },
       "title": "Yuno",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -336,6 +356,10 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
+    "format": "markdown",
+  },
   "language": "language",
   "manifestPath": "__SNIP__",
   "outputs": Array [
@@ -379,7 +403,7 @@ Object {
       "target": "__SNIP__",
       "theme": undefined,
       "title": "Yuno",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -398,6 +422,10 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
+    "format": "markdown",
+  },
   "language": "en",
   "manifestPath": "__SNIP__",
   "outputs": Array [

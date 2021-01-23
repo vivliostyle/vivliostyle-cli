@@ -14,9 +14,10 @@ export async function exportWebbook({
   manifestPath,
   input,
   output,
-}: Pick<MergedConfig, 'exportAliases' | 'manifestPath'> & {
+}: Pick<MergedConfig, 'exportAliases'> & {
   input: string;
   output: string;
+  manifestPath: string;
 }): Promise<string> {
   if (fs.existsSync(output)) {
     debug('going to remove existing webbook', output);
