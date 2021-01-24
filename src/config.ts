@@ -15,6 +15,11 @@ import {
   ManuscriptMediaType,
 } from './input';
 import { processMarkdown } from './markdown';
+import {
+  availableOutputFormat,
+  detectOutputFormat,
+  OutputFormat,
+} from './output';
 import type {
   EntryObject,
   VivliostyleConfigSchema,
@@ -52,25 +57,10 @@ export interface ParsedEntry {
   target: string;
 }
 
-export const availableOutputFormat = [
-  'pdf',
-  'pub-manifest',
-  'webbook',
-] as const;
-export type OutputFormat = typeof availableOutputFormat[number];
-
-export interface ParsedOutput {
-  path: string;
-  format: OutputFormat;
-}
-
 export interface CliFlags {
   input?: string;
   configPath?: string;
-  targets?: {
-    output: string;
-    format: OutputFormat;
-  }[];
+  targets?: OutputFormat[];
   theme?: string;
   size?: string;
   pressReady?: boolean;
@@ -88,7 +78,7 @@ export type MergedConfig = {
   workspaceDir: string;
   entries: ParsedEntry[];
   input: InputFormat;
-  outputs: ParsedOutput[];
+  outputs: OutputFormat[];
   themeIndexes: ParsedTheme[];
   includeAssets: string[];
   exportAliases: {
@@ -352,10 +342,10 @@ export async function mergeConfig<T extends CliFlags>(
     themeIndexes.push(rootTheme);
   }
 
-  const outputs = ((): ParsedOutput[] => {
+  const outputs = ((): OutputFormat[] => {
     if (cliFlags.targets?.length) {
-      return cliFlags.targets.map(({ output, format }) => ({
-        path: path.resolve(output),
+      return cliFlags.targets.map(({ path: outputPath, format }) => ({
+        path: path.resolve(outputPath),
         format,
       }));
     }
@@ -365,19 +355,20 @@ export async function mergeConfig<T extends CliFlags>(
         : [config.output]
       ).map((target) => {
         if (typeof target === 'string') {
-          return {
-            path: path.resolve(context, target),
-            format: inferenceFormatByName(target),
-          };
+          return detectOutputFormat(path.resolve(context, target));
         }
-        const format = target.format ?? inferenceFormatByName(target.path);
-        if (!availableOutputFormat.includes(format as OutputFormat)) {
-          throw new Error(`Unknown format: ${format}`);
+        const outputPath = path.resolve(context, target.path);
+        if (!target.format) {
+          return { ...target, ...detectOutputFormat(outputPath) };
         }
-        return {
-          path: path.resolve(context, target.path),
-          format: format as OutputFormat,
-        };
+        if (
+          !availableOutputFormat.includes(
+            target.format as typeof availableOutputFormat[number],
+          )
+        ) {
+          throw new Error(`Unknown format: ${target.format}`);
+        }
+        return { ...target, path: outputPath } as OutputFormat;
       });
     }
     // Outputs a pdf file if any output configuration is not set
@@ -590,16 +581,4 @@ async function composeProjectConfig<T extends CliFlags>(
     projectTitle: projectTitle || fallbackProjectTitle,
     projectAuthor: projectAuthor || '',
   };
-}
-
-export function inferenceFormatByName(filename: string): OutputFormat {
-  const ext = path.extname(filename);
-  switch (ext) {
-    case '.pdf':
-      return 'pdf';
-    case '.json':
-      return 'pub-manifest';
-    default:
-      return 'webbook';
-  }
 }

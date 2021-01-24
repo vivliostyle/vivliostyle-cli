@@ -78,8 +78,6 @@ export default async function build(cliFlags: BuildCliFlags) {
         input: config.workspaceDir,
         output: target.path,
       });
-    } else if (target.format === 'pub-manifest') {
-      // TODO
     }
     if (output) {
       const formattedOutput = chalk.bold.green(

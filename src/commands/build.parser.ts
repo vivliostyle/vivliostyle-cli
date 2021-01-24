@@ -1,11 +1,10 @@
 import commander from 'commander';
+import { CliFlags, validateTimeoutFlag } from '../config';
 import {
   availableOutputFormat,
-  CliFlags,
-  inferenceFormatByName,
+  detectOutputFormat,
   OutputFormat,
-  validateTimeoutFlag,
-} from '../config';
+} from '../output';
 
 export interface BuildCliFlags extends CliFlags {
   output?: {
@@ -109,10 +108,7 @@ export function inferenceTargetsOption(
     output?: string;
     format?: string;
   }[],
-): {
-  output: string;
-  format: OutputFormat;
-}[] {
+): OutputFormat[] {
   return parsed.map(({ output, format }) => {
     if (!output) {
       // -f is an optional option but -o is required one
@@ -121,10 +117,14 @@ export function inferenceTargetsOption(
       );
     }
     if (!format) {
-      format = inferenceFormatByName(output);
-    } else if (!availableOutputFormat.includes(format as OutputFormat)) {
+      return detectOutputFormat(output);
+    } else if (
+      !availableOutputFormat.includes(
+        format as typeof availableOutputFormat[number],
+      )
+    ) {
       throw new Error(`Unknown format: ${format}`);
     }
-    return { output, format: format as OutputFormat };
+    return { path: output, format } as OutputFormat;
   });
 }
