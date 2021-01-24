@@ -17,6 +17,7 @@ afterAll(() => {
   shelljs.rm('-rf', [
     resolve('fixtures/builder/.vs-workspace'),
     resolve('fixtures/builder/.vs-entryContext'),
+    resolve('fixtures/builder/.vs-variousManuscriptFormat'),
   ]);
 });
 
@@ -111,15 +112,72 @@ it('generate files with entryContext', async () => {
   expect([...fileList2]).toEqual([...fileList]);
 });
 
-it('check overwrite violation', async () => {
+it('generate from various manuscript formats', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolve('fixtures/builder/overwriteViolation.config.js'),
+    resolve('fixtures/builder/variousManuscriptFormat.config.js'),
+  ]);
+  for (const target of config.outputs) {
+    checkOverwriteViolation(config, target.path, target.format);
+  }
+  assertManifestPath(config);
+  await compile(config);
+  await copyAssets(config);
+  const fileList = shelljs.ls(
+    '-R',
+    resolve('fixtures/builder/.vs-variousManuscriptFormat'),
+  );
+  expect([...fileList]).toEqual([
+    'manuscript',
+    'manuscript/cover.png',
+    'manuscript/sample-html.html',
+    'manuscript/sample-xhtml.xhtml',
+    'manuscript/soda.html',
+    'publication.json',
+  ]);
+  const manifest = require(resolve(
+    'fixtures/builder/.vs-variousManuscriptFormat/publication.json',
+  ));
+  expect(manifest.readingOrder).toEqual([
+    {
+      title: 'SODA',
+      url: 'manuscript/soda.html',
+    },
+    {
+      title: 'Sample HTML',
+      url: 'manuscript/sample-html.html',
+    },
+    {
+      encodingFormat: 'application/xhtml+xml',
+      title: 'Sample XHTML',
+      url: 'manuscript/sample-xhtml.xhtml',
+    },
+  ]);
+});
+
+it('check overwrite violation', async () => {
+  const config1 = await getMergedConfig([
+    '-c',
+    resolve('fixtures/builder/overwriteViolation.1.config.js'),
   ]);
   expect(
     new Promise<void>((res, rej) => {
       try {
-        checkOverwriteViolation(config, config.outputs[0].path, '');
+        checkOverwriteViolation(config1, config1.outputs[0].path, '');
+        res();
+      } catch (err) {
+        rej(err);
+      }
+    }),
+  ).rejects.toThrow();
+  const config2 = await getMergedConfig([
+    '-c',
+    resolve('fixtures/builder/overwriteViolation.2.config.js'),
+  ]);
+  expect(
+    new Promise<void>((res, rej) => {
+      try {
+        checkOverwriteViolation(config2, config2.outputs[0].path, '');
         res();
       } catch (err) {
         rej(err);
