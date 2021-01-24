@@ -7,6 +7,7 @@ import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
 import { MANIFEST_FILENAME } from './const';
+import { openEpubToTmpDirectory } from './epub';
 import {
   detectInputFormat,
   detectManuscriptMediaType,
@@ -483,8 +484,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
     } else if (input.format === 'epub-opf') {
       return { epubOpfPath: input.entry };
     } else if (input.format === 'epub') {
-      // TODO: Unzip EPUB and locate OPF file
-      throw new Error('Not implemented');
+      const { epubOpfPath } = await openEpubToTmpDirectory(input.entry);
+      return { epubOpfPath };
     } else {
       throw new Error('Failed to export manifest declaration');
     }

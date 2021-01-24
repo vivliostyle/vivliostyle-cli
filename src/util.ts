@@ -98,19 +98,23 @@ export async function statFile(filePath: string) {
 
 export async function inflateZip(filePath: string, dest: string) {
   return await new Promise<void>((res, rej) => {
-    const zip = new StreamZip({
-      file: filePath,
-      storeEntries: true,
-    });
-    zip.on('error', (err) => {
+    try {
+      const zip = new StreamZip({
+        file: filePath,
+        storeEntries: true,
+      });
+      zip.on('error', (err) => {
+        rej(err);
+      });
+      zip.on('ready', async () => {
+        await util.promisify(zip.extract)(null, dest);
+        await util.promisify(zip.close)();
+        debug(`Unzipped ${filePath} to ${dest}`);
+        res();
+      });
+    } catch (err) {
       rej(err);
-    });
-    zip.on('entry', async () => {
-      await util.promisify(zip.extract)(null, dest);
-      await util.promisify(zip.close)();
-      debug(`Unzipped ${filePath} to ${dest}`);
-      res();
-    });
+    }
   });
 }
 
@@ -133,13 +137,15 @@ export async function launchBrowser(
 
 export function useTmpDirectory(): Promise<[string, () => void]> {
   return new Promise<[string, () => void]>((res, rej) => {
-    tmp.dir((err, path, clear) => {
+    tmp.dir({ unsafeCleanup: true }, (err, path, clear) => {
       if (err) {
         return rej(err);
       }
       debug(`Created the temporary directory: ${path}`);
       const callback = () => {
-        clear();
+        // clear function doesn't work well?
+        // clear();
+        shelljs.rm('-rf', path);
         debug(`Removed the temporary directory: ${path}`);
       };
       beforeExitHandlers.push(callback);
@@ -153,7 +159,7 @@ export async function touchTmpFile(path: string): Promise<() => void> {
   debug(`Created the temporary file: ${path}`);
   const callback = () => {
     shelljs.rm('-f', path);
-    debug(`Remove the temporary file: ${path}`);
+    debug(`Removed the temporary file: ${path}`);
   };
   beforeExitHandlers.push(callback);
   return callback;
