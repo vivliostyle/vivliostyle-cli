@@ -136,3 +136,25 @@ it('yields a config with single input and vivliostyle config', async () => {
   (config.exportAliases as unknown) = '__SNIP__';
   expect(config).toMatchSnapshot();
 });
+
+it('imports a EPUB file', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/epubs/adaptive.epub'),
+    '-o',
+    'epub.pdf',
+  ]);
+  maskConfig(config);
+  expect(config.epubOpfPath).toMatch(/OPS\/content\.opf$/);
+  config.epubOpfPath = '__SNIP__';
+  expect(config).toMatchSnapshot();
+});
+
+it('imports a EPUB OPF file', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/epubs/adaptive/OPS/content.opf'),
+    '-o',
+    'epub-opf.pdf',
+  ]);
+  maskConfig(config);
+  expect(config).toMatchSnapshot();
+});
