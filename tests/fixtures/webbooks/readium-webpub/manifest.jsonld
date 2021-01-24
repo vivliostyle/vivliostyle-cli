@@ -1,0 +1,19 @@
+{
+  "@context": "https://readium.org/webpub-manifest/context.jsonld",
+  "metadata": {
+    "@type": "http://schema.org/Book",
+    "title": "Example Book",
+    "author": "Vivliostyle Foundation",
+    "language": "en",
+    "dateModified": "2021-01-23T14:39:43.618Z"
+  },
+  "readingOrder": [
+    {
+      "href": "introduction.html",
+      "type": "text/html",
+      "title": "Vivliostyle"
+    }
+  ],
+  "resources": [],
+  "links": []
+}

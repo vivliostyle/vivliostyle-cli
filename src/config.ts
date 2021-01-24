@@ -73,6 +73,21 @@ export interface CliFlags {
   executableChromium?: string;
 }
 
+export interface WebPublicationManifestConfig {
+  manifestPath: string;
+  manifestAutoGenerate: {
+    title: string;
+    author: string;
+  } | null;
+}
+export interface EpubManifestConfig {
+  epubOpfPath: string;
+}
+export type ManifestConfig = XOR<
+  WebPublicationManifestConfig,
+  EpubManifestConfig
+>;
+
 export type MergedConfig = {
   entryContextDir: string;
   workspaceDir: string;
@@ -87,8 +102,6 @@ export type MergedConfig = {
   }[];
   size: PageSize | undefined;
   pressReady: boolean;
-  projectTitle: string;
-  projectAuthor: string;
   language: string;
   toc: string | boolean;
   cover: string | undefined;
@@ -96,16 +109,7 @@ export type MergedConfig = {
   timeout: number;
   sandbox: boolean;
   executableChromium: string;
-} & (
-  | {
-      manifestPath: string;
-      epubOpfPath?: never;
-    }
-  | {
-      manifestPath?: never;
-      epubOpfPath: string;
-    }
-);
+} & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
 
@@ -272,7 +276,11 @@ export function collectVivliostyleConfig<T extends CliFlags>(
     ? path.resolve(cwd, cliFlags.configPath)
     : path.join(cwd, 'vivliostyle.config.js');
   let vivliostyleConfig = load(vivliostyleConfigPath);
-  if (!vivliostyleConfig && cliFlags.input) {
+  if (
+    !vivliostyleConfig &&
+    cliFlags.input &&
+    path.basename(cliFlags.input).startsWith('vivliostyle.config')
+  ) {
     // Load an input argument as a Vivliostyle config
     try {
       const inputPath = path.resolve(process.cwd(), cliFlags.input);
@@ -410,6 +418,7 @@ type CommonOpts = Omit<
   | 'entries'
   | 'exportAliases'
   | 'manifestPath'
+  | 'manifestAutoGenerate'
   | 'epubOpfPath'
   | 'projectTitle'
   | 'projectAuthor'
@@ -457,7 +466,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     });
   }
 
-  const manifestDeclaration = await (async () => {
+  const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
     if (hasEntry) {
       // create temporary manifest file
       const manifestPath = path.resolve(
@@ -469,9 +478,20 @@ async function composeSingleInputConfig<T extends CliFlags>(
         source: manifestPath,
         target: path.resolve(workspaceDir, MANIFEST_FILENAME),
       });
-      return { manifestPath };
+      return {
+        manifestPath,
+        manifestAutoGenerate: {
+          title:
+            cliFlags.title ??
+            config?.title ??
+            (entries.length === 1 && entries[0].title
+              ? (entries[0].title as string)
+              : path.basename(sourcePath)),
+          author: cliFlags.author ?? config?.author ?? '',
+        },
+      };
     } else if (input.format === 'pub-manifest') {
-      return { manifestPath: input.entry };
+      return { manifestPath: input.entry, manifestAutoGenerate: null };
     } else if (input.format === 'epub-opf') {
       return { epubOpfPath: input.entry };
     } else if (input.format === 'epub') {
@@ -488,13 +508,6 @@ async function composeSingleInputConfig<T extends CliFlags>(
     entries,
     input,
     exportAliases,
-    projectTitle:
-      cliFlags.title ??
-      config?.title ??
-      (entries.length === 1 && entries[0].title
-        ? (entries[0].title as string)
-        : path.basename(sourcePath)),
-    projectAuthor: cliFlags.author ?? config?.author ?? '',
   };
 }
 
@@ -578,7 +591,9 @@ async function composeProjectConfig<T extends CliFlags>(
     },
     exportAliases: [],
     manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
-    projectTitle: projectTitle || fallbackProjectTitle,
-    projectAuthor: projectAuthor || '',
+    manifestAutoGenerate: {
+      title: projectTitle || fallbackProjectTitle,
+      author: projectAuthor || '',
+    },
   };
 }

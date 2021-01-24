@@ -33,8 +33,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "",
-  "projectTitle": "content.opf",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -78,8 +76,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "",
-  "projectTitle": "adaptive.epub",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -87,6 +83,94 @@ Object {
   "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
+}
+`;
+
+exports[`imports a webbook compliant to Readium Web publication 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
+    "format": "pub-manifest",
+  },
+  "language": "en",
+  "manifestAutoGenerate": null,
+  "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
+  "outputs": Array [
+    Object {
+      "format": "webbook",
+      "path": "__WORKSPACE__/readium-webpub",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
+}
+`;
+
+exports[`imports a webbook compliant to W3C Web publication 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": "en",
+  "manifestAutoGenerate": null,
+  "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "webbook",
+      "path": "__WORKSPACE__/w3c-webpub",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
 }
 `;
 
@@ -138,6 +222,10 @@ Object {
     "format": "pub-manifest",
   },
   "language": "myLanguage",
+  "manifestAutoGenerate": Object {
+    "author": "myAuthor",
+    "title": "myTitle",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -150,8 +238,6 @@ Object {
     },
   ],
   "pressReady": true,
-  "projectAuthor": "myAuthor",
-  "projectTitle": "myTitle",
   "sandbox": true,
   "size": Object {
     "format": "JIS-B5",
@@ -224,6 +310,10 @@ Object {
     "format": "pub-manifest",
   },
   "language": "language",
+  "manifestAutoGenerate": Object {
+    "author": "author",
+    "title": "title",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -236,8 +326,6 @@ Object {
     },
   ],
   "pressReady": true,
-  "projectAuthor": "author",
-  "projectTitle": "title",
   "sandbox": true,
   "size": Object {
     "format": "size",
@@ -295,6 +383,10 @@ Object {
     "format": "pub-manifest",
   },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "pkgName",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -303,8 +395,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "pkgAuthor",
-  "projectTitle": "pkgName",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -340,6 +430,10 @@ Object {
     "format": "pub-manifest",
   },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "example",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -348,8 +442,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "pkgAuthor",
-  "projectTitle": "example",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -393,6 +485,10 @@ Object {
     "format": "webbook",
   },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "",
+    "title": "Miyako",
+  },
   "manifestPath": "__SNIP__",
   "outputs": Array [
     Object {
@@ -401,8 +497,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "",
-  "projectTitle": "Miyako",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -451,6 +545,10 @@ Object {
     "format": "markdown",
   },
   "language": "language",
+  "manifestAutoGenerate": Object {
+    "author": "author",
+    "title": "title",
+  },
   "manifestPath": "__SNIP__",
   "outputs": Array [
     Object {
@@ -463,8 +561,6 @@ Object {
     },
   ],
   "pressReady": true,
-  "projectAuthor": "author",
-  "projectTitle": "title",
   "sandbox": true,
   "size": Object {
     "format": "size",
@@ -517,6 +613,10 @@ Object {
     "format": "markdown",
   },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "",
+    "title": "Yuno",
+  },
   "manifestPath": "__SNIP__",
   "outputs": Array [
     Object {
@@ -525,8 +625,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "",
-  "projectTitle": "Yuno",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],

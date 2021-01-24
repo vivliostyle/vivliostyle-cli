@@ -8,7 +8,11 @@ import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { MergedConfig, ParsedEntry } from './config';
+import {
+  MergedConfig,
+  ParsedEntry,
+  WebPublicationManifestConfig,
+} from './config';
 import { processMarkdown } from './markdown';
 import type {
   PublicationLinks,
@@ -143,14 +147,14 @@ export async function compile(
     entryContextDir,
     workspaceDir,
     manifestPath,
-    projectTitle,
+    manifestAutoGenerate,
     themeIndexes,
     entries,
-    projectAuthor,
     language,
     toc,
     cover,
-  }: MergedConfig & { manifestPath: string },
+    input,
+  }: MergedConfig & WebPublicationManifestConfig,
   { reload = false }: { reload?: boolean } = {},
 ): Promise<void> {
   debug('entries', entries);
@@ -235,22 +239,23 @@ export async function compile(
   }
 
   // generate manifest
-  generateManifest(manifestPath, entryContextDir, {
-    title: projectTitle,
-    author: projectAuthor,
-    language,
-    toc: relativeTocPath,
-    cover: cover && path.relative(entryContextDir, cover),
-    entries: entries.map((entry) => ({
-      title: entry.title,
-      path: path.relative(workspaceDir, entry.target),
-      encodingFormat:
-        entry.type === 'text/markdown' || entry.type === 'text/html'
-          ? undefined
-          : entry.type,
-    })),
-    modified: new Date().toISOString(),
-  });
+  if (manifestAutoGenerate) {
+    generateManifest(manifestPath, entryContextDir, {
+      ...manifestAutoGenerate,
+      language,
+      toc: relativeTocPath,
+      cover: cover && path.relative(entryContextDir, cover),
+      entries: entries.map((entry) => ({
+        title: entry.title,
+        path: path.relative(workspaceDir, entry.target),
+        encodingFormat:
+          entry.type === 'text/markdown' || entry.type === 'text/html'
+            ? undefined
+            : entry.type,
+      })),
+      modified: new Date().toISOString(),
+    });
+  }
 }
 
 export async function copyAssets({
