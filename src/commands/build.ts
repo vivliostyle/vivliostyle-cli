@@ -50,8 +50,10 @@ export default async function build(cliFlags: BuildCliFlags) {
   }
 
   // build artifacts
-  await compile(config);
-  await copyAssets(config);
+  if (config.manifestPath) {
+    await compile(config);
+    await copyAssets(config);
+  }
 
   // generate files
   for (const target of config.outputs) {
@@ -59,17 +61,23 @@ export default async function build(cliFlags: BuildCliFlags) {
     if (target.format === 'pdf') {
       output = await buildPDF({
         ...config,
-        input: config.manifestPath,
+        input: config.manifestPath ?? config.epubOpfPath,
         output: target.path,
       });
     } else if (target.format === 'webbook') {
+      if (!config.manifestPath) {
+        log(
+          `\n${chalk.yellow(
+            'Exporting webbook format from EPUB or OPF file is not supported. Skipping.',
+          )}`,
+        );
+        continue;
+      }
       output = await exportWebbook({
         ...config,
         input: config.workspaceDir,
         output: target.path,
       });
-    } else if (target.format === 'pub-manifest') {
-      // TODO
     }
     if (output) {
       const formattedOutput = chalk.bold.green(

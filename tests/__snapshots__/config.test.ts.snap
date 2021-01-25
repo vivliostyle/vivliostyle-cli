@@ -1,5 +1,179 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`imports a EPUB OPF file 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
+  "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
+    "format": "epub-opf",
+  },
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/epub-opf.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
+}
+`;
+
+exports[`imports a EPUB file 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs",
+  "epubOpfPath": "__SNIP__",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive.epub",
+    "format": "epub",
+  },
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/epub.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
+}
+`;
+
+exports[`imports a webbook compliant to Readium Web publication 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
+    "format": "pub-manifest",
+  },
+  "language": "en",
+  "manifestAutoGenerate": null,
+  "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
+  "outputs": Array [
+    Object {
+      "format": "webbook",
+      "path": "__WORKSPACE__/readium-webpub",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
+}
+`;
+
+exports[`imports a webbook compliant to W3C Web publication 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": "en",
+  "manifestAutoGenerate": null,
+  "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "webbook",
+      "path": "__WORKSPACE__/w3c-webpub",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "toc": false,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
+}
+`;
+
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -13,7 +187,7 @@ Object {
         "type": "uri",
       },
       "title": "myTitle",
-      "type": "markdown",
+      "type": "text/markdown",
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -24,7 +198,7 @@ Object {
         "type": "file",
       },
       "title": "title",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -43,7 +217,15 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "myLanguage",
+  "manifestAutoGenerate": Object {
+    "author": "myAuthor",
+    "title": "myTitle",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -56,8 +238,6 @@ Object {
     },
   ],
   "pressReady": true,
-  "projectAuthor": "myAuthor",
-  "projectTitle": "myTitle",
   "sandbox": true,
   "size": Object {
     "format": "JIS-B5",
@@ -95,7 +275,7 @@ Object {
         "type": "package",
       },
       "title": "title",
-      "type": "markdown",
+      "type": "text/markdown",
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -106,7 +286,7 @@ Object {
         "type": "file",
       },
       "title": "title",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -125,7 +305,15 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "language",
+  "manifestAutoGenerate": Object {
+    "author": "author",
+    "title": "title",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -138,8 +326,6 @@ Object {
     },
   ],
   "pressReady": true,
-  "projectAuthor": "author",
-  "projectTitle": "title",
   "sandbox": true,
   "size": Object {
     "format": "size",
@@ -173,7 +359,7 @@ Object {
       "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": undefined,
       "title": "pkgName",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -192,7 +378,15 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "pkgName",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -201,8 +395,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "pkgAuthor",
-  "projectTitle": "pkgName",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -233,7 +425,15 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "example",
+  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -242,8 +442,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "pkgAuthor",
-  "projectTitle": "example",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -263,7 +461,7 @@ Object {
       "target": "__SNIP__",
       "theme": undefined,
       "title": "Miyako",
-      "type": "html",
+      "type": "text/html",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -282,7 +480,15 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.html",
+    "format": "webbook",
+  },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "",
+    "title": "Miyako",
+  },
   "manifestPath": "__SNIP__",
   "outputs": Array [
     Object {
@@ -291,8 +497,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "",
-  "projectTitle": "Miyako",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],
@@ -317,7 +521,7 @@ Object {
         "type": "package",
       },
       "title": "Yuno",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -336,7 +540,15 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
+    "format": "markdown",
+  },
   "language": "language",
+  "manifestAutoGenerate": Object {
+    "author": "author",
+    "title": "title",
+  },
   "manifestPath": "__SNIP__",
   "outputs": Array [
     Object {
@@ -349,8 +561,6 @@ Object {
     },
   ],
   "pressReady": true,
-  "projectAuthor": "author",
-  "projectTitle": "title",
   "sandbox": true,
   "size": Object {
     "format": "size",
@@ -379,7 +589,7 @@ Object {
       "target": "__SNIP__",
       "theme": undefined,
       "title": "Yuno",
-      "type": "markdown",
+      "type": "text/markdown",
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -398,7 +608,15 @@ Object {
     "**/*.woff",
     "**/*.woff2",
   ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
+    "format": "markdown",
+  },
   "language": "en",
+  "manifestAutoGenerate": Object {
+    "author": "",
+    "title": "Yuno",
+  },
   "manifestPath": "__SNIP__",
   "outputs": Array [
     Object {
@@ -407,8 +625,6 @@ Object {
     },
   ],
   "pressReady": false,
-  "projectAuthor": "",
-  "projectTitle": "Yuno",
   "sandbox": true,
   "size": undefined,
   "themeIndexes": Array [],

@@ -1,0 +1,17 @@
+{
+  "@context": ["https://schema.org", "https://www.w3.org/ns/pub-context"],
+  "type": "Book",
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "author": "Vivliostyle Foundation",
+  "inLanguage": "en",
+  "dateModified": "2021-01-23T14:39:43.618Z",
+  "name": "Example Book",
+  "readingOrder": [
+    {
+      "url": "introduction.html",
+      "title": "Vivliostyle"
+    }
+  ],
+  "resources": [],
+  "links": []
+}

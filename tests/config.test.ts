@@ -6,7 +6,7 @@ const configFiles = ['valid.1', 'valid.2', 'valid.3', 'invalid.1'] as const;
 const configFilePath = configFiles.reduce(
   (p, v) => ({
     ...p,
-    [v]: path.resolve(__dirname, `fixtures/config/${v}.config.js`),
+    [v]: path.resolve(__dirname, `fixtures/config/vivliostyle.config.${v}.js`),
   }),
   {} as { [k in typeof configFiles[number]]: string },
 );
@@ -134,5 +134,47 @@ it('yields a config with single input and vivliostyle config', async () => {
   config.manifestPath = '__SNIP__';
   config.entries[0].target = '__SNIP__';
   (config.exportAliases as unknown) = '__SNIP__';
+  expect(config).toMatchSnapshot();
+});
+
+it('imports a EPUB file', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/epubs/adaptive.epub'),
+    '-o',
+    'epub.pdf',
+  ]);
+  maskConfig(config);
+  expect(config.epubOpfPath).toMatch(/OPS\/content\.opf$/);
+  config.epubOpfPath = '__SNIP__';
+  expect(config).toMatchSnapshot();
+});
+
+it('imports a EPUB OPF file', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/epubs/adaptive/OPS/content.opf'),
+    '-o',
+    'epub-opf.pdf',
+  ]);
+  maskConfig(config);
+  expect(config).toMatchSnapshot();
+});
+
+it('imports a webbook compliant to W3C Web publication', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/webbooks/w3c-webpub/publication.json'),
+    '-o',
+    'w3c-webpub',
+  ]);
+  maskConfig(config);
+  expect(config).toMatchSnapshot();
+});
+
+it('imports a webbook compliant to Readium Web publication', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/webbooks/readium-webpub/manifest.jsonld'),
+    '-o',
+    'readium-webpub',
+  ]);
+  maskConfig(config);
   expect(config).toMatchSnapshot();
 });

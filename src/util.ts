@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
+import StreamZip from 'node-stream-zip';
 import oraConstructor from 'ora';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
@@ -95,6 +96,28 @@ export async function statFile(filePath: string) {
   }
 }
 
+export async function inflateZip(filePath: string, dest: string) {
+  return await new Promise<void>((res, rej) => {
+    try {
+      const zip = new StreamZip({
+        file: filePath,
+        storeEntries: true,
+      });
+      zip.on('error', (err) => {
+        rej(err);
+      });
+      zip.on('ready', async () => {
+        await util.promisify(zip.extract)(null, dest);
+        await util.promisify(zip.close)();
+        debug(`Unzipped ${filePath} to ${dest}`);
+        res();
+      });
+    } catch (err) {
+      rej(err);
+    }
+  });
+}
+
 export async function launchBrowser(
   options?: puppeteer.LaunchOptions,
 ): Promise<puppeteer.Browser> {
@@ -114,13 +137,15 @@ export async function launchBrowser(
 
 export function useTmpDirectory(): Promise<[string, () => void]> {
   return new Promise<[string, () => void]>((res, rej) => {
-    tmp.dir((err, path, clear) => {
+    tmp.dir({ unsafeCleanup: true }, (err, path, clear) => {
       if (err) {
         return rej(err);
       }
       debug(`Created the temporary directory: ${path}`);
       const callback = () => {
-        clear();
+        // clear function doesn't work well?
+        // clear();
+        shelljs.rm('-rf', path);
         debug(`Removed the temporary directory: ${path}`);
       };
       beforeExitHandlers.push(callback);
@@ -134,7 +159,7 @@ export async function touchTmpFile(path: string): Promise<() => void> {
   debug(`Created the temporary file: ${path}`);
   const callback = () => {
     shelljs.rm('-f', path);
-    debug(`Remove the temporary file: ${path}`);
+    debug(`Removed the temporary file: ${path}`);
   };
   beforeExitHandlers.push(callback);
   return callback;
@@ -155,10 +180,4 @@ export function encodeHashParameter(params: Record<string, string>): string {
       return `${k}=${value}`;
     })
     .join('&');
-}
-
-export type EntryFileType = 'markdown' | 'html';
-export function detectEntryFileType(source: string): EntryFileType {
-  // FIXME: Read the file content to detect it
-  return source.endsWith('.md') ? 'markdown' : 'html';
 }
