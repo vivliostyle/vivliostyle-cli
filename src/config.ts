@@ -535,7 +535,6 @@ async function composeProjectConfig<T extends CliFlags>(
 
   function parseEntry(entry: EntryObject): ParsedEntry {
     const sourcePath = path.resolve(entryContextDir, entry.path); // abs
-    const sourceDir = path.dirname(sourcePath); // abs
     const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
     const targetPath = path
       .resolve(workspaceDir, contextEntryPath)
@@ -545,7 +544,7 @@ async function composeProjectConfig<T extends CliFlags>(
 
     const title = entry.title ?? metadata.title ?? projectTitle;
     const theme =
-      parseTheme(entry.theme, sourceDir) ?? metadata.theme ?? themeIndexes[0];
+      parseTheme(entry.theme, context) ?? metadata.theme ?? themeIndexes[0];
 
     if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
       themeIndexes.push(theme);

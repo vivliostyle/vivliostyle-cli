@@ -269,7 +269,7 @@ Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
       "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": Object {
-        "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "name": "debug-theme",
         "style": "./theme.css",
         "type": "package",
@@ -332,7 +332,7 @@ Object {
   },
   "themeIndexes": Array [
     Object {
-      "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+      "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "name": "debug-theme",
       "style": "./theme.css",
       "type": "package",
@@ -515,7 +515,7 @@ Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
       "target": "__SNIP__",
       "theme": Object {
-        "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "name": "debug-theme",
         "style": "./theme.css",
         "type": "package",
@@ -567,7 +567,7 @@ Object {
   },
   "themeIndexes": Array [
     Object {
-      "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+      "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "name": "debug-theme",
       "style": "./theme.css",
       "type": "package",

@@ -1,9 +1,14 @@
 module.exports = {
   title: 'title',
   author: 'author',
+  theme: 'https://example.com',
   entry: [
     'manuscript/soda.md',
-    'manuscript/sample-html.html',
+    {
+      path: 'manuscript/sample-html.html',
+      title: 'ABCDEF',
+      theme: '../themes/debug-theme',
+    },
     'manuscript/sample-xhtml.xhtml',
   ],
   output: [

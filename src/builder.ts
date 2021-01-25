@@ -2,17 +2,16 @@ import Ajv from 'ajv';
 import chalk from 'chalk';
 import fs from 'fs';
 import globby from 'globby';
-import toHTML from 'hast-util-to-html';
-import h from 'hastscript';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
 import {
   MergedConfig,
-  ParsedEntry,
+  ParsedTheme,
   WebPublicationManifestConfig,
 } from './config';
+import { generateTocHtml, processManuscriptHtml } from './html';
 import { processMarkdown } from './markdown';
 import type {
   PublicationLinks,
@@ -115,33 +114,6 @@ export function generateManifest(
   }
 }
 
-export function generateToC(entries: ParsedEntry[], distDir: string) {
-  const items = entries.map((entry) =>
-    h(
-      'li',
-      h(
-        'a',
-        { href: path.relative(distDir, entry.target) },
-        entry.title || path.basename(entry.target, '.html'),
-      ),
-    ),
-  );
-  const toc = h(
-    'html',
-    h(
-      'head',
-      h('title', 'Table of Contents'),
-      h('link', {
-        href: 'publication.json',
-        rel: 'publication',
-        type: 'application/ld+json',
-      }),
-    ),
-    h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),
-  );
-  return toHTML(toc);
-}
-
 export async function compile(
   {
     entryContextDir,
@@ -168,33 +140,37 @@ export async function compile(
     cleanup(workspaceDir);
   }
 
-  for (const entry of entries) {
-    shelljs.mkdir('-p', path.dirname(entry.target));
-
-    // calculate style path
-    let style;
-    switch (entry?.theme?.type) {
+  const locateThemePath = (
+    from: string,
+    theme?: ParsedTheme,
+  ): string | undefined => {
+    switch (theme?.type) {
       case 'uri':
-        style = entry.theme.location;
-        break;
+        return theme.location;
       case 'file':
-        style = path.relative(
-          path.dirname(entry.target),
-          path.join(workspaceDir, 'themes', entry.theme.name),
+        return path.relative(
+          from,
+          path.join(workspaceDir, 'themes', theme.name),
         );
-        break;
       case 'package':
-        style = path.relative(
-          path.dirname(entry.target),
+        return path.relative(
+          from,
           path.join(
             workspaceDir,
             'themes',
             'packages',
-            entry.theme.name,
-            entry.theme.style,
+            theme.name,
+            theme.style,
           ),
         );
     }
+  };
+
+  for (const entry of entries) {
+    shelljs.mkdir('-p', path.dirname(entry.target));
+
+    // calculate style path
+    const style = locateThemePath(path.dirname(entry.target), entry.theme);
     if (entry.type === 'text/markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
@@ -203,6 +179,18 @@ export async function compile(
       });
       const compiledEntry = String(vfile);
       fs.writeFileSync(entry.target, compiledEntry);
+    } else if (
+      entry.type === 'text/html' ||
+      entry.type === 'application/xhtml+xml'
+    ) {
+      if (entry.source !== entry.target) {
+        const html = processManuscriptHtml(entry.source, {
+          style,
+          title: entry.title,
+          contentType: entry.type,
+        });
+        fs.writeFileSync(entry.target, html);
+      }
     } else {
       if (entry.source !== entry.target) {
         shelljs.cp(entry.source, entry.target);
@@ -232,8 +220,14 @@ export async function compile(
       relativeTocPath = path.relative(entryContextDir, toc);
       shelljs.cp(toc, path.join(workspaceDir, relativeTocPath));
     } else {
+      const rootTheme = themeIndexes[0];
+      const style = locateThemePath(workspaceDir, rootTheme);
       relativeTocPath = 'toc.html';
-      const tocString = generateToC(entries, workspaceDir);
+      const tocString = generateTocHtml({
+        entries,
+        distDir: workspaceDir,
+        style,
+      });
       fs.writeFileSync(path.join(workspaceDir, relativeTocPath), tocString);
     }
   }

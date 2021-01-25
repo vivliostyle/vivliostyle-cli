@@ -1,4 +1,6 @@
 import assert from 'assert';
+import fs from 'fs';
+import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
 import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
@@ -38,6 +40,12 @@ it('generate workspace directory', async () => {
     'manuscript/cover.png',
     'manuscript/soda.html',
     'publication.json',
+    'themes',
+    'themes/file.css',
+    'themes/packages',
+    'themes/packages/debug-theme',
+    'themes/packages/debug-theme/package.json',
+    'themes/packages/debug-theme/theme.css',
     'toc.html',
   ]);
   const manifest = require(resolve(
@@ -56,6 +64,26 @@ it('generate workspace directory', async () => {
     title: 'Table of Contents',
     url: 'toc.html',
   });
+
+  const tocHtml = new JSDOM(
+    fs.readFileSync(resolve('fixtures/builder/.vs-workspace/toc.html')),
+  );
+  expect(
+    tocHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
+    ),
+  ).toBeTruthy();
+
+  const manuscriptHtml = new JSDOM(
+    fs.readFileSync(
+      resolve('fixtures/builder/.vs-workspace/manuscript/soda.html'),
+    ),
+  );
+  expect(
+    manuscriptHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="../themes/file.css"]',
+    ),
+  ).toBeTruthy();
 
   // try again and check idempotence
   await compile(config);
@@ -134,6 +162,11 @@ it('generate from various manuscript formats', async () => {
     'manuscript/sample-xhtml.xhtml',
     'manuscript/soda.html',
     'publication.json',
+    'themes',
+    'themes/packages',
+    'themes/packages/debug-theme',
+    'themes/packages/debug-theme/package.json',
+    'themes/packages/debug-theme/theme.css',
   ]);
   const manifest = require(resolve(
     'fixtures/builder/.vs-variousManuscriptFormat/publication.json',
@@ -144,7 +177,7 @@ it('generate from various manuscript formats', async () => {
       url: 'manuscript/soda.html',
     },
     {
-      title: 'Sample HTML',
+      title: 'ABCDEF',
       url: 'manuscript/sample-html.html',
     },
     {
@@ -153,6 +186,45 @@ it('generate from various manuscript formats', async () => {
       url: 'manuscript/sample-xhtml.xhtml',
     },
   ]);
+  const doc1 = new JSDOM(
+    fs.readFileSync(
+      resolve(
+        'fixtures/builder/.vs-variousManuscriptFormat/manuscript/soda.html',
+      ),
+    ),
+  );
+  expect(
+    doc1.window.document.querySelector(
+      'link[rel="stylesheet"][href="https://example.com"]',
+    ),
+  ).toBeTruthy();
+  expect(doc1.window.document.querySelector('title')?.text).toEqual('SODA');
+  const doc2 = new JSDOM(
+    fs.readFileSync(
+      resolve(
+        'fixtures/builder/.vs-variousManuscriptFormat/manuscript/sample-html.html',
+      ),
+    ),
+  );
+  expect(
+    doc2.window.document.querySelector(
+      'link[rel="stylesheet"][href="../themes/packages/debug-theme/theme.css"]',
+    ),
+  ).toBeTruthy();
+  expect(doc2.window.document.querySelector('title')?.text).toEqual('ABCDEF');
+  const doc3 = new JSDOM(
+    fs.readFileSync(
+      resolve(
+        'fixtures/builder/.vs-variousManuscriptFormat/manuscript/sample-xhtml.xhtml',
+      ),
+    ),
+    { contentType: 'application/xhtml+xml' },
+  );
+  expect(
+    doc3.window.document.querySelector(
+      'link[rel="stylesheet"][href="https://example.com"]',
+    ),
+  ).toBeTruthy();
 });
 
 it('check overwrite violation', async () => {
