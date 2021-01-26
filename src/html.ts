@@ -1,7 +1,7 @@
+import cheerio from 'cheerio';
 import fs from 'fs';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
-import { JSDOM } from 'jsdom';
 import path from 'upath';
 import { ParsedEntry } from './config';
 
@@ -49,38 +49,25 @@ export function processManuscriptHtml(
     title,
     style,
     contentType,
-  }: { title?: string; style?: string; contentType?: string },
+  }: {
+    title?: string;
+    style?: string;
+    contentType?: 'text/html' | 'application/xhtml+xml';
+  },
 ): string {
-  const sourceHtml = fs.readFileSync(filepath, 'utf8');
-  const dom = new JSDOM(fs.readFileSync(filepath, 'utf8'), { contentType });
-  const {
-    window: { document },
-  } = dom;
-  if (!document) {
-    throw new Error(`Invalid HTML document: ${filepath}`);
-  }
+  const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'), {
+    xmlMode: contentType === 'application/xhtml+xml',
+  });
   if (title) {
-    const titleEl = document.querySelector('title');
-    if (titleEl) {
-      titleEl.textContent = title;
-    } else {
-      const titleNode = document.createElement('title');
-      titleNode.textContent = title;
-      document.head.appendChild(titleNode);
+    if (!$('title')) {
+      $('head').append($('<title></title>'));
     }
+    $('title').text(title);
   }
   if (style) {
-    const styleNode = document.createElement('link');
-    styleNode.setAttribute('rel', 'stylesheet');
-    styleNode.setAttribute('href', style);
-    document.head.appendChild(styleNode);
+    $('head').append(`<link rel="stylesheet" />`);
+    $('head > *:last-child').attr('href', style);
   }
-  let processed = dom.serialize();
-
-  // https://github.com/jsdom/jsdom/issues/2615
-  const xmlDeclarationMatch = sourceHtml.match(/^<\?xml[^?]+\?>/gi);
-  if (xmlDeclarationMatch && !processed.match(/^<\?xml/i)) {
-    processed = `${xmlDeclarationMatch[0]}\n${processed}`;
-  }
+  let processed = $.html();
   return processed;
 }

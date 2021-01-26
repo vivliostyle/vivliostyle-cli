@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 import chalk from 'chalk';
+import cheerio from 'cheerio';
 import fs from 'fs';
-import { JSDOM } from 'jsdom';
 import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
@@ -227,7 +227,10 @@ function parsePageSize(size: string): PageSize {
   }
 }
 
-function parseFileMetadata(type: ManuscriptMediaType, sourcePath: string) {
+function parseFileMetadata(
+  type: ManuscriptMediaType,
+  sourcePath: string,
+): { title?: string; theme?: ParsedTheme } {
   const sourceDir = path.dirname(sourcePath);
   let title: string | undefined;
   let theme: ParsedTheme | undefined;
@@ -236,14 +239,8 @@ function parseFileMetadata(type: ManuscriptMediaType, sourcePath: string) {
     title = file.data.title;
     theme = parseTheme(file.data.theme, sourceDir);
   } else {
-    const {
-      window: { document },
-    } = new JSDOM(fs.readFileSync(sourcePath));
-    title = document.querySelector('title')?.textContent ?? undefined;
-    const link = document.querySelector<HTMLLinkElement>(
-      'link[rel="stylesheet"]',
-    );
-    theme = parseTheme(link?.href, sourceDir);
+    const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
+    title = $('title')?.text() ?? undefined;
   }
   return { title, theme };
 }
