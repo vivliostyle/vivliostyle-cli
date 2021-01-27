@@ -58,6 +58,7 @@ it('generate workspace directory', async () => {
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
     title: 'Table of Contents',
+    type: 'LinkedResource',
     url: 'index.html',
   });
 
@@ -119,6 +120,7 @@ it('generate files with entryContext', async () => {
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
     title: 'Table of Contents',
+    type: 'LinkedResource',
     url: 't-o-c.html',
   });
 

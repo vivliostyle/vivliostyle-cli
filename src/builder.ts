@@ -49,17 +49,10 @@ export function generateManifest(
     title: entry.title,
     ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
     ...(entry.rel && { rel: entry.rel }),
+    ...(entry.rel === 'contents' && { type: 'LinkedResource' }),
   }));
   const links: PublicationLinks[] = [];
   const resources: PublicationLinks[] = [];
-
-  const contentsEntry = entries.find((e) => e.rel === 'contents');
-  if (contentsEntry) {
-    resources.push({
-      type: 'LinkedResource',
-      ...contentsEntry,
-    });
-  }
 
   if (options.cover) {
     const { width, height, type } = imageSize(

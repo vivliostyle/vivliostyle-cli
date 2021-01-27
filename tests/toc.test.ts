@@ -15,9 +15,9 @@ function assertManifestPath(
 
 afterAll(() => {
   shelljs.rm('-rf', [
-    resolveFixture('builder/.vs-valid.1'),
-    resolveFixture('builder/.vs-valid.2'),
-    resolveFixture('builder/.vs-valid.3'),
+    resolveFixture('toc/.vs-valid.1'),
+    resolveFixture('toc/.vs-valid.2'),
+    resolveFixture('toc/.vs-valid.3'),
   ]);
 });
 
@@ -52,12 +52,7 @@ it('toc: true', async () => {
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
     title: 'Table of Contents',
-    url: 'index.html',
-  });
-  expect(manifest.resources[0]).toEqual({
     type: 'LinkedResource',
-    rel: 'contents',
-    title: 'Table of Contents',
     url: 'index.html',
   });
   const tocHtml = new JSDOM(
@@ -95,12 +90,7 @@ it("toc: 'manuscript/contents.html'", async () => {
   expect(manifest.readingOrder[3]).toEqual({
     rel: 'contents',
     title: 'もくじ',
-    url: 'manuscript/contents.html',
-  });
-  expect(manifest.resources[0]).toEqual({
     type: 'LinkedResource',
-    rel: 'contents',
-    title: 'もくじ',
     url: 'manuscript/contents.html',
   });
   const tocHtml = new JSDOM(
@@ -147,12 +137,7 @@ it('Write ToC by myself', async () => {
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
     title: 'Hand-written ToC',
-    url: 'manuscript/ToC.html',
-  });
-  expect(manifest.resources[0]).toEqual({
     type: 'LinkedResource',
-    rel: 'contents',
-    title: 'Hand-written ToC',
     url: 'manuscript/ToC.html',
   });
   const tocHtml = new JSDOM(
