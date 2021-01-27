@@ -7,11 +7,13 @@ import { ManuscriptEntry } from './config';
 
 export function generateTocHtml({
   entries,
+  manifestPath,
   distDir,
   title,
   style,
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
+  manifestPath: string;
   distDir: string;
   title: string;
   style?: string;
@@ -33,7 +35,7 @@ export function generateTocHtml({
       ...[
         h('title', title),
         h('link', {
-          href: 'publication.json',
+          href: path.relative(distDir, manifestPath),
           rel: 'publication',
           type: 'application/ld+json',
         }),
@@ -77,7 +79,9 @@ export function processManuscriptHtml(
 export function isTocHtml(filepath: string): boolean {
   try {
     const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'));
-    return !!$('[role="doc-toc"], [role="directory"], nav, .toc, #toc');
+    return (
+      $('[role="doc-toc"], [role="directory"], nav, .toc, #toc').length > 0
+    );
   } catch (err) {
     // seems not to be a html file
     return false;

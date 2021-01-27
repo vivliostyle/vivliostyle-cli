@@ -37,3 +37,6 @@ export const maskConfig = (obj: any) => {
     }
   });
 };
+
+export const resolveFixture = (p: string) =>
+  path.resolve(__dirname, 'fixtures', p);

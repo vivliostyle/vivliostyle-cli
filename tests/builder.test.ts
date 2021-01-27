@@ -2,12 +2,9 @@ import assert from 'assert';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
-import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
 import { MergedConfig } from '../src/config';
-import { getMergedConfig } from './commandUtil';
-
-const resolve = (p: string) => path.resolve(__dirname, p);
+import { getMergedConfig, resolveFixture } from './commandUtil';
 
 function assertManifestPath(
   config: MergedConfig,
@@ -17,16 +14,16 @@ function assertManifestPath(
 
 afterAll(() => {
   shelljs.rm('-rf', [
-    resolve('fixtures/builder/.vs-workspace'),
-    resolve('fixtures/builder/.vs-entryContext'),
-    resolve('fixtures/builder/.vs-variousManuscriptFormat'),
+    resolveFixture('builder/.vs-workspace'),
+    resolveFixture('builder/.vs-entryContext'),
+    resolveFixture('builder/.vs-variousManuscriptFormat'),
   ]);
 });
 
 it('generate workspace directory', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolve('fixtures/builder/workspace.config.js'),
+    resolveFixture('builder/workspace.config.js'),
   ]);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
@@ -34,7 +31,7 @@ it('generate workspace directory', async () => {
   assertManifestPath(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
+  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-workspace'));
   expect([...fileList]).toEqual([
     'index.html',
     'manuscript',
@@ -48,8 +45,8 @@ it('generate workspace directory', async () => {
     'themes/packages/debug-theme/package.json',
     'themes/packages/debug-theme/theme.css',
   ]);
-  const manifest = require(resolve(
-    'fixtures/builder/.vs-workspace/publication.json',
+  const manifest = require(resolveFixture(
+    'builder/.vs-workspace/publication.json',
   ));
   expect(manifest.links[0]).toEqual({
     encodingFormat: 'image/png',
@@ -65,7 +62,7 @@ it('generate workspace directory', async () => {
   });
 
   const tocHtml = new JSDOM(
-    fs.readFileSync(resolve('fixtures/builder/.vs-workspace/index.html')),
+    fs.readFileSync(resolveFixture('builder/.vs-workspace/index.html')),
   );
   expect(
     tocHtml.window.document.querySelector(
@@ -75,7 +72,7 @@ it('generate workspace directory', async () => {
 
   const manuscriptHtml = new JSDOM(
     fs.readFileSync(
-      resolve('fixtures/builder/.vs-workspace/manuscript/soda.html'),
+      resolveFixture('builder/.vs-workspace/manuscript/soda.html'),
     ),
   );
   expect(
@@ -87,14 +84,14 @@ it('generate workspace directory', async () => {
   // try again and check idempotence
   await compile(config);
   await copyAssets(config);
-  const fileList2 = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
+  const fileList2 = shelljs.ls('-R', resolveFixture('builder/.vs-workspace'));
   expect([...fileList2]).toEqual([...fileList]);
 });
 
 it('generate files with entryContext', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolve('fixtures/builder/entryContext.config.js'),
+    resolveFixture('builder/entryContext.config.js'),
   ]);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
@@ -102,18 +99,15 @@ it('generate files with entryContext', async () => {
   assertManifestPath(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = shelljs.ls(
-    '-R',
-    resolve('fixtures/builder/.vs-entryContext'),
-  );
+  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-entryContext'));
   expect([...fileList]).toEqual([
     'cover.png',
     'publication.json',
     'soda.html',
     't-o-c.html',
   ]);
-  const manifest = require(resolve(
-    'fixtures/builder/.vs-entryContext/publication.json',
+  const manifest = require(resolveFixture(
+    'builder/.vs-entryContext/publication.json',
   ));
   expect(manifest.links[0]).toEqual({
     encodingFormat: 'image/png',
@@ -133,7 +127,7 @@ it('generate files with entryContext', async () => {
   await copyAssets(config);
   const fileList2 = shelljs.ls(
     '-R',
-    resolve('fixtures/builder/.vs-entryContext'),
+    resolveFixture('builder/.vs-entryContext'),
   );
   expect([...fileList2]).toEqual([...fileList]);
 });
@@ -141,7 +135,7 @@ it('generate files with entryContext', async () => {
 it('generate from various manuscript formats', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolve('fixtures/builder/variousManuscriptFormat.config.js'),
+    resolveFixture('builder/variousManuscriptFormat.config.js'),
   ]);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
@@ -151,7 +145,7 @@ it('generate from various manuscript formats', async () => {
   await copyAssets(config);
   const fileList = shelljs.ls(
     '-R',
-    resolve('fixtures/builder/.vs-variousManuscriptFormat'),
+    resolveFixture('builder/.vs-variousManuscriptFormat'),
   );
   expect([...fileList]).toEqual([
     'manuscript',
@@ -166,8 +160,8 @@ it('generate from various manuscript formats', async () => {
     'themes/packages/debug-theme/package.json',
     'themes/packages/debug-theme/theme.css',
   ]);
-  const manifest = require(resolve(
-    'fixtures/builder/.vs-variousManuscriptFormat/publication.json',
+  const manifest = require(resolveFixture(
+    'builder/.vs-variousManuscriptFormat/publication.json',
   ));
   expect(manifest.readingOrder).toEqual([
     {
@@ -186,8 +180,8 @@ it('generate from various manuscript formats', async () => {
   ]);
   const doc1 = new JSDOM(
     fs.readFileSync(
-      resolve(
-        'fixtures/builder/.vs-variousManuscriptFormat/manuscript/soda.html',
+      resolveFixture(
+        'builder/.vs-variousManuscriptFormat/manuscript/soda.html',
       ),
     ),
   );
@@ -199,8 +193,8 @@ it('generate from various manuscript formats', async () => {
   expect(doc1.window.document.querySelector('title')?.text).toEqual('SODA');
   const doc2 = new JSDOM(
     fs.readFileSync(
-      resolve(
-        'fixtures/builder/.vs-variousManuscriptFormat/manuscript/sample-html.html',
+      resolveFixture(
+        'builder/.vs-variousManuscriptFormat/manuscript/sample-html.html',
       ),
     ),
   );
@@ -212,8 +206,8 @@ it('generate from various manuscript formats', async () => {
   expect(doc2.window.document.querySelector('title')?.text).toEqual('ABCDEF');
   const doc3 = new JSDOM(
     fs.readFileSync(
-      resolve(
-        'fixtures/builder/.vs-variousManuscriptFormat/manuscript/sample-xhtml.xhtml',
+      resolveFixture(
+        'builder/.vs-variousManuscriptFormat/manuscript/sample-xhtml.xhtml',
       ),
     ),
     { contentType: 'application/xhtml+xml' },
@@ -228,7 +222,7 @@ it('generate from various manuscript formats', async () => {
 it('check overwrite violation', async () => {
   const config1 = await getMergedConfig([
     '-c',
-    resolve('fixtures/builder/overwriteViolation.1.config.js'),
+    resolveFixture('builder/overwriteViolation.1.config.js'),
   ]);
   expect(
     new Promise<void>((res, rej) => {
@@ -242,7 +236,7 @@ it('check overwrite violation', async () => {
   ).rejects.toThrow();
   const config2 = await getMergedConfig([
     '-c',
-    resolve('fixtures/builder/overwriteViolation.2.config.js'),
+    resolveFixture('builder/overwriteViolation.2.config.js'),
   ]);
   expect(
     new Promise<void>((res, rej) => {

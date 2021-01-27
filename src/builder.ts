@@ -173,7 +173,7 @@ export async function compile(
     !isTocHtml(generativeContentsEntry.target)
   ) {
     throw new Error(
-      `${generativeContentsEntry.target} is set to create a ToC HTML file, but there are already documents other than the ToC file in this location. Please move this file, or set a entry in vivliostyle.config.js manually to specify another destination for the ToC file.`,
+      `${generativeContentsEntry.target} is set as a destination to create a ToC HTML file, but there is already a document other than the ToC file in this location. Please move this file, or set a 'toc' option in vivliostyle.config.js to specify another destination for the ToC file.`,
     );
   }
 
@@ -232,7 +232,8 @@ export async function compile(
     const style = locateThemePath(workspaceDir, generativeContentsEntry.theme);
     const tocString = generateTocHtml({
       entries: contentEntries,
-      distDir: workspaceDir,
+      manifestPath,
+      distDir: path.dirname(generativeContentsEntry.target),
       title: generativeContentsEntry.title ?? TOC_TITLE,
       style,
     });

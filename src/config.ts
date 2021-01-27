@@ -575,6 +575,7 @@ async function composeProjectConfig<T extends CliFlags>(
       target: targetPath,
       title,
       theme,
+      ...(entry.rel && { rel: entry.rel }),
     } as ManuscriptEntry;
   }
 
