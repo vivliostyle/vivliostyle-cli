@@ -7,11 +7,13 @@ import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
 import {
+  ManuscriptEntry,
   MergedConfig,
   ParsedTheme,
   WebPublicationManifestConfig,
 } from './config';
-import { generateTocHtml, processManuscriptHtml } from './html';
+import { TOC_TITLE } from './const';
+import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html';
 import { processMarkdown } from './markdown';
 import type {
   PublicationLinks,
@@ -24,16 +26,6 @@ import {
 import type { EntryObject } from './schema/vivliostyle.config';
 import { debug, log } from './util';
 
-export interface ManifestOption {
-  title?: string;
-  author?: string;
-  language?: string;
-  modified: string;
-  entries: EntryObject[];
-  toc?: string;
-  cover?: string;
-}
-
 export function cleanup(location: string) {
   debug('cleanup file', location);
   shelljs.rm('-rf', location);
@@ -43,22 +35,29 @@ export function cleanup(location: string) {
 export function generateManifest(
   outputPath: string,
   entryContextDir: string,
-  options: ManifestOption,
+  options: {
+    title?: string;
+    author?: string;
+    language?: string;
+    modified: string;
+    entries: EntryObject[];
+    cover?: string;
+  },
 ) {
   const entries: PublicationLinks[] = options.entries.map((entry) => ({
     url: entry.path,
-    ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
     title: entry.title,
+    ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
+    ...(entry.rel && { rel: entry.rel }),
   }));
   const links: PublicationLinks[] = [];
   const resources: PublicationLinks[] = [];
 
-  if (options.toc) {
-    entries.splice(0, 0, {
-      url: options.toc,
-      rel: 'contents',
-      encodingFormat: 'text/html',
-      title: 'Table of Contents',
+  const contentsEntry = entries.find((e) => e.rel === 'contents');
+  if (contentsEntry) {
+    resources.push({
+      type: 'LinkedResource',
+      ...contentsEntry,
     });
   }
 
@@ -123,7 +122,6 @@ export async function compile(
     themeIndexes,
     entries,
     language,
-    toc,
     cover,
     input,
   }: MergedConfig & WebPublicationManifestConfig,
@@ -166,7 +164,23 @@ export async function compile(
     }
   };
 
-  for (const entry of entries) {
+  const generativeContentsEntry = entries.find(
+    (e) => !('source' in e) && e.rel === 'contents',
+  );
+  if (
+    generativeContentsEntry &&
+    fs.existsSync(generativeContentsEntry.target) &&
+    !isTocHtml(generativeContentsEntry.target)
+  ) {
+    throw new Error(
+      `${generativeContentsEntry.target} is set to create a ToC HTML file, but there are already documents other than the ToC file in this location. Please move this file, or set a entry in vivliostyle.config.js manually to specify another destination for the ToC file.`,
+    );
+  }
+
+  const contentEntries = entries.filter(
+    (e): e is ManuscriptEntry => 'source' in e,
+  );
+  for (const entry of contentEntries) {
     shelljs.mkdir('-p', path.dirname(entry.target));
 
     // calculate style path
@@ -214,22 +228,15 @@ export async function compile(
   }
 
   // generate toc
-  let relativeTocPath: string | undefined;
-  if (toc) {
-    if (typeof toc === 'string') {
-      relativeTocPath = path.relative(entryContextDir, toc);
-      shelljs.cp(toc, path.join(workspaceDir, relativeTocPath));
-    } else {
-      const rootTheme = themeIndexes[0];
-      const style = locateThemePath(workspaceDir, rootTheme);
-      relativeTocPath = 'toc.html';
-      const tocString = generateTocHtml({
-        entries,
-        distDir: workspaceDir,
-        style,
-      });
-      fs.writeFileSync(path.join(workspaceDir, relativeTocPath), tocString);
-    }
+  if (generativeContentsEntry) {
+    const style = locateThemePath(workspaceDir, generativeContentsEntry.theme);
+    const tocString = generateTocHtml({
+      entries: contentEntries,
+      distDir: workspaceDir,
+      title: generativeContentsEntry.title ?? TOC_TITLE,
+      style,
+    });
+    fs.writeFileSync(generativeContentsEntry.target, tocString);
   }
 
   // generate manifest
@@ -237,15 +244,17 @@ export async function compile(
     generateManifest(manifestPath, entryContextDir, {
       ...manifestAutoGenerate,
       language,
-      toc: relativeTocPath,
       cover: cover && path.relative(entryContextDir, cover),
       entries: entries.map((entry) => ({
         title: entry.title,
         path: path.relative(workspaceDir, entry.target),
         encodingFormat:
-          entry.type === 'text/markdown' || entry.type === 'text/html'
+          !('type' in entry) ||
+          entry.type === 'text/markdown' ||
+          entry.type === 'text/html'
             ? undefined
             : entry.type,
+        rel: entry.rel,
       })),
       modified: new Date().toISOString(),
     });

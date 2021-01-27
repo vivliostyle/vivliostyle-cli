@@ -36,6 +36,7 @@ it('generate workspace directory', async () => {
   await copyAssets(config);
   const fileList = shelljs.ls('-R', resolve('fixtures/builder/.vs-workspace'));
   expect([...fileList]).toEqual([
+    'index.html',
     'manuscript',
     'manuscript/cover.png',
     'manuscript/soda.html',
@@ -46,7 +47,6 @@ it('generate workspace directory', async () => {
     'themes/packages/debug-theme',
     'themes/packages/debug-theme/package.json',
     'themes/packages/debug-theme/theme.css',
-    'toc.html',
   ]);
   const manifest = require(resolve(
     'fixtures/builder/.vs-workspace/publication.json',
@@ -59,14 +59,13 @@ it('generate workspace directory', async () => {
     height: 512,
   });
   expect(manifest.readingOrder[0]).toEqual({
-    encodingFormat: 'text/html',
     rel: 'contents',
     title: 'Table of Contents',
-    url: 'toc.html',
+    url: 'index.html',
   });
 
   const tocHtml = new JSDOM(
-    fs.readFileSync(resolve('fixtures/builder/.vs-workspace/toc.html')),
+    fs.readFileSync(resolve('fixtures/builder/.vs-workspace/index.html')),
   );
   expect(
     tocHtml.window.document.querySelector(
@@ -124,7 +123,6 @@ it('generate files with entryContext', async () => {
     height: 512,
   });
   expect(manifest.readingOrder[0]).toEqual({
-    encodingFormat: 'text/html',
     rel: 'contents',
     title: 'Table of Contents',
     url: 't-o-c.html',

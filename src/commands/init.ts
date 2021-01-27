@@ -54,7 +54,7 @@ export default async function init(cliFlags: InitCliFlags) {
   //     format: 'webbook',
   //   },
   // ],
-  // toc: true, // whether generate and include toc.html or not (does not affect publication.json), default to 'false'. if 'string' given, use it as a custom toc.html.
+  // toc: true, // whether generate and include ToC HTML or not, default to 'false'.
   // cover: './cover.png', // cover image. default to undefined.
 };
 `;

@@ -10,9 +10,28 @@
         "path": { "type": "string" },
         "title": { "type": "string" },
         "theme": { "type": "string" },
-        "encodingFormat": { "type": "string" }
+        "encodingFormat": { "type": "string" },
+        "rel": {
+          "type": ["string", "array"],
+          "items": {
+            "type": "string"
+          }
+        }
       },
       "required": ["path"],
+      "additionalProperties": false
+    },
+    "contentsEntryObject": {
+      "type": "object",
+      "properties": {
+        "rel": {
+          "type": "string",
+          "const": "contents"
+        },
+        "title": { "type": "string" },
+        "theme": { "type": "string" }
+      },
+      "required": ["rel"],
       "additionalProperties": false
     },
     "output": {
@@ -63,7 +82,8 @@
               "items": {
                 "oneOf": [
                   { "$ref": "#/definitions/entry" },
-                  { "$ref": "#/definitions/entryObject" }
+                  { "$ref": "#/definitions/entryObject" },
+                  { "$ref": "#/definitions/contentsEntryObject" }
                 ]
               }
             },
@@ -125,6 +145,10 @@
               "minLength": 1
             }
           ]
+        },
+        "tocTitle": {
+          "type": "string",
+          "minLength": 1
         },
         "cover": {
           "type": "string",

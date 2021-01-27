@@ -3,15 +3,17 @@ import fs from 'fs';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
 import path from 'upath';
-import { ParsedEntry } from './config';
+import { ManuscriptEntry } from './config';
 
 export function generateTocHtml({
   entries,
   distDir,
+  title,
   style,
 }: {
-  entries: Pick<ParsedEntry, 'target' | 'title'>[];
+  entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   distDir: string;
+  title: string;
   style?: string;
 }): string {
   const items = entries.map((entry) =>
@@ -29,7 +31,7 @@ export function generateTocHtml({
     h(
       'head',
       ...[
-        h('title', 'Table of Contents'),
+        h('title', title),
         h('link', {
           href: 'publication.json',
           rel: 'publication',
@@ -70,4 +72,14 @@ export function processManuscriptHtml(
   }
   let processed = $.html();
   return processed;
+}
+
+export function isTocHtml(filepath: string): boolean {
+  try {
+    const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'));
+    return !!$('[role="doc-toc"], [role="directory"], nav, .toc, #toc');
+  } catch (err) {
+    // seems not to be a html file
+    return false;
+  }
 }

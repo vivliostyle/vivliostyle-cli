@@ -22,7 +22,7 @@ export interface CoreProps {
    * Theme package path or URL of css file.
    */
   theme?: string;
-  entry?: (Entry | EntryObject)[] | Entry | EntryObject;
+  entry?: (Entry | EntryObject | ContentsEntryObject)[] | Entry | EntryObject;
   entryContext?: string;
   output?: (Output | OutputObject)[] | Output | OutputObject;
   workspaceDir?: string;
@@ -31,6 +31,7 @@ export interface CoreProps {
   pressReady?: boolean;
   language?: string;
   toc?: boolean | string;
+  tocTitle?: string;
   cover?: string;
   timeout?: number;
   [k: string]: unknown;
@@ -40,6 +41,12 @@ export interface EntryObject {
   title?: string;
   theme?: string;
   encodingFormat?: string;
+  rel?: string | string[];
+}
+export interface ContentsEntryObject {
+  rel: 'contents';
+  title?: string;
+  theme?: string;
 }
 export interface OutputObject {
   path: string;
