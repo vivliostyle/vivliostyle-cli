@@ -36,7 +36,7 @@ export default async function init(cliFlags: InitCliFlags) {
   author: '${cliFlags.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
   ${cliFlags.language ? '' : '// '}language: '${cliFlags.language || 'la'}', // default to 'en'
   ${cliFlags.size ? '' : '// '}size: '${cliFlags.size || 'A4'}',
-  theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
+  ${cliFlags.theme ? '' : '// '}theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
   entry: [ // **required field**
     // 'introduction.md', // 'title' is automatically guessed from the file (frontmatter > first heading)
     // {
