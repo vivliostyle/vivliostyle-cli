@@ -1,7 +1,7 @@
 module.exports = {
   title: 'title',
   author: 'author',
-  theme: 'debug-theme',
+  theme: '../themes/debug-theme',
   entry: [
     'manuscript.md',
     {

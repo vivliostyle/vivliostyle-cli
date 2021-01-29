@@ -36,7 +36,7 @@ export default async function init(cliFlags: InitCliFlags) {
   author: '${cliFlags.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
   ${cliFlags.language ? '' : '// '}language: '${cliFlags.language || 'la'}', // default to 'en'
   ${cliFlags.size ? '' : '// '}size: '${cliFlags.size || 'A4'}',
-  theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
+  ${cliFlags.theme ? '' : '// '}theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
   entry: [ // **required field**
     // 'introduction.md', // 'title' is automatically guessed from the file (frontmatter > first heading)
     // {
@@ -54,7 +54,7 @@ export default async function init(cliFlags: InitCliFlags) {
   //     format: 'webbook',
   //   },
   // ],
-  // toc: true, // whether generate and include toc.html or not (does not affect publication.json), default to 'false'. if 'string' given, use it as a custom toc.html.
+  // toc: true, // whether generate and include ToC HTML or not, default to 'false'.
   // cover: './cover.png', // cover image. default to undefined.
 };
 `;

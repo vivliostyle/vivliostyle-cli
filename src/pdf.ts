@@ -5,7 +5,7 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { URL } from 'url';
 import { Meta, Payload, TOCItem } from './broker';
-import { MergedConfig, ParsedEntry } from './config';
+import { ManuscriptEntry, MergedConfig } from './config';
 import { PostProcess } from './postprocess';
 import { getBrokerUrl } from './server';
 import {
@@ -68,9 +68,9 @@ export async function buildPDF({
     logInfo(msg.text());
   });
 
-  let lastEntry: ParsedEntry | undefined;
+  let lastEntry: ManuscriptEntry | undefined;
 
-  function stringifyEntry(entry: ParsedEntry) {
+  function stringifyEntry(entry: ManuscriptEntry) {
     const formattedSourcePath = chalk.bold.cyan(
       path.relative(entryContextDir, entry.source),
     );
@@ -80,7 +80,10 @@ export async function buildPDF({
   }
 
   function handleEntry(response: puppeteer.Response) {
-    const entry = entries.find((entry) => {
+    const entry = entries.find((entry): entry is ManuscriptEntry => {
+      if (!('source' in entry)) {
+        return false;
+      }
       const url = new URL(response.url());
       return url.protocol === 'file:'
         ? entry.target === url.pathname

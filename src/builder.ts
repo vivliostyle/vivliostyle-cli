@@ -2,17 +2,18 @@ import Ajv from 'ajv';
 import chalk from 'chalk';
 import fs from 'fs';
 import globby from 'globby';
-import toHTML from 'hast-util-to-html';
-import h from 'hastscript';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import shelljs from 'shelljs';
 import path from 'upath';
 import {
+  ManuscriptEntry,
   MergedConfig,
-  ParsedEntry,
+  ParsedTheme,
   WebPublicationManifestConfig,
 } from './config';
+import { TOC_TITLE } from './const';
+import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html';
 import { processMarkdown } from './markdown';
 import type {
   PublicationLinks,
@@ -25,16 +26,6 @@ import {
 import type { EntryObject } from './schema/vivliostyle.config';
 import { debug, log } from './util';
 
-export interface ManifestOption {
-  title?: string;
-  author?: string;
-  language?: string;
-  modified: string;
-  entries: EntryObject[];
-  toc?: string;
-  cover?: string;
-}
-
 export function cleanup(location: string) {
   debug('cleanup file', location);
   shelljs.rm('-rf', location);
@@ -44,24 +35,24 @@ export function cleanup(location: string) {
 export function generateManifest(
   outputPath: string,
   entryContextDir: string,
-  options: ManifestOption,
+  options: {
+    title?: string;
+    author?: string;
+    language?: string;
+    modified: string;
+    entries: EntryObject[];
+    cover?: string;
+  },
 ) {
   const entries: PublicationLinks[] = options.entries.map((entry) => ({
     url: entry.path,
-    ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
     title: entry.title,
+    ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
+    ...(entry.rel && { rel: entry.rel }),
+    ...(entry.rel === 'contents' && { type: 'LinkedResource' }),
   }));
   const links: PublicationLinks[] = [];
   const resources: PublicationLinks[] = [];
-
-  if (options.toc) {
-    entries.splice(0, 0, {
-      url: options.toc,
-      rel: 'contents',
-      encodingFormat: 'text/html',
-      title: 'Table of Contents',
-    });
-  }
 
   if (options.cover) {
     const { width, height, type } = imageSize(
@@ -115,33 +106,6 @@ export function generateManifest(
   }
 }
 
-export function generateToC(entries: ParsedEntry[], distDir: string) {
-  const items = entries.map((entry) =>
-    h(
-      'li',
-      h(
-        'a',
-        { href: path.relative(distDir, entry.target) },
-        entry.title || path.basename(entry.target, '.html'),
-      ),
-    ),
-  );
-  const toc = h(
-    'html',
-    h(
-      'head',
-      h('title', 'Table of Contents'),
-      h('link', {
-        href: 'publication.json',
-        rel: 'publication',
-        type: 'application/ld+json',
-      }),
-    ),
-    h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),
-  );
-  return toHTML(toc);
-}
-
 export async function compile(
   {
     entryContextDir,
@@ -151,7 +115,6 @@ export async function compile(
     themeIndexes,
     entries,
     language,
-    toc,
     cover,
     input,
   }: MergedConfig & WebPublicationManifestConfig,
@@ -168,33 +131,53 @@ export async function compile(
     cleanup(workspaceDir);
   }
 
-  for (const entry of entries) {
-    shelljs.mkdir('-p', path.dirname(entry.target));
-
-    // calculate style path
-    let style;
-    switch (entry?.theme?.type) {
+  const locateThemePath = (
+    from: string,
+    theme?: ParsedTheme,
+  ): string | undefined => {
+    switch (theme?.type) {
       case 'uri':
-        style = entry.theme.location;
-        break;
+        return theme.location;
       case 'file':
-        style = path.relative(
-          path.dirname(entry.target),
-          path.join(workspaceDir, 'themes', entry.theme.name),
+        return path.relative(
+          from,
+          path.join(workspaceDir, 'themes', theme.name),
         );
-        break;
       case 'package':
-        style = path.relative(
-          path.dirname(entry.target),
+        return path.relative(
+          from,
           path.join(
             workspaceDir,
             'themes',
             'packages',
-            entry.theme.name,
-            entry.theme.style,
+            theme.name,
+            theme.style,
           ),
         );
     }
+  };
+
+  const generativeContentsEntry = entries.find(
+    (e) => !('source' in e) && e.rel === 'contents',
+  );
+  if (
+    generativeContentsEntry &&
+    fs.existsSync(generativeContentsEntry.target) &&
+    !isTocHtml(generativeContentsEntry.target)
+  ) {
+    throw new Error(
+      `${generativeContentsEntry.target} is set as a destination to create a ToC HTML file, but there is already a document other than the ToC file in this location. Please move this file, or set a 'toc' option in vivliostyle.config.js to specify another destination for the ToC file.`,
+    );
+  }
+
+  const contentEntries = entries.filter(
+    (e): e is ManuscriptEntry => 'source' in e,
+  );
+  for (const entry of contentEntries) {
+    shelljs.mkdir('-p', path.dirname(entry.target));
+
+    // calculate style path
+    const style = locateThemePath(path.dirname(entry.target), entry.theme);
     if (entry.type === 'text/markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
@@ -203,6 +186,18 @@ export async function compile(
       });
       const compiledEntry = String(vfile);
       fs.writeFileSync(entry.target, compiledEntry);
+    } else if (
+      entry.type === 'text/html' ||
+      entry.type === 'application/xhtml+xml'
+    ) {
+      if (entry.source !== entry.target) {
+        const html = processManuscriptHtml(entry.source, {
+          style,
+          title: entry.title,
+          contentType: entry.type,
+        });
+        fs.writeFileSync(entry.target, html);
+      }
     } else {
       if (entry.source !== entry.target) {
         shelljs.cp(entry.source, entry.target);
@@ -226,16 +221,17 @@ export async function compile(
   }
 
   // generate toc
-  let relativeTocPath: string | undefined;
-  if (toc) {
-    if (typeof toc === 'string') {
-      relativeTocPath = path.relative(entryContextDir, toc);
-      shelljs.cp(toc, path.join(workspaceDir, relativeTocPath));
-    } else {
-      relativeTocPath = 'toc.html';
-      const tocString = generateToC(entries, workspaceDir);
-      fs.writeFileSync(path.join(workspaceDir, relativeTocPath), tocString);
-    }
+  if (generativeContentsEntry) {
+    const style = locateThemePath(workspaceDir, generativeContentsEntry.theme);
+    const tocString = generateTocHtml({
+      entries: contentEntries,
+      manifestPath,
+      distDir: path.dirname(generativeContentsEntry.target),
+      title: manifestAutoGenerate?.title,
+      tocTitle: generativeContentsEntry.title ?? TOC_TITLE,
+      style,
+    });
+    fs.writeFileSync(generativeContentsEntry.target, tocString);
   }
 
   // generate manifest
@@ -243,15 +239,17 @@ export async function compile(
     generateManifest(manifestPath, entryContextDir, {
       ...manifestAutoGenerate,
       language,
-      toc: relativeTocPath,
       cover: cover && path.relative(entryContextDir, cover),
       entries: entries.map((entry) => ({
         title: entry.title,
         path: path.relative(workspaceDir, entry.target),
         encodingFormat:
-          entry.type === 'text/markdown' || entry.type === 'text/html'
+          !('type' in entry) ||
+          entry.type === 'text/markdown' ||
+          entry.type === 'text/html'
             ? undefined
             : entry.type,
+        rel: entry.rel,
       })),
       modified: new Date().toISOString(),
     });

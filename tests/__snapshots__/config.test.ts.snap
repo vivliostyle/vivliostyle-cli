@@ -37,7 +37,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
 }
@@ -80,7 +79,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
 }
@@ -124,7 +122,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
 }
@@ -168,7 +165,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
 }
@@ -178,6 +174,16 @@ exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "entries": Array [
+    Object {
+      "rel": "contents",
+      "target": "__WORKSPACE__/tests/fixtures/config/toc.html",
+      "theme": Object {
+        "location": "https://myTheme.example.com",
+        "name": "myTheme.example.com",
+        "type": "uri",
+      },
+      "title": "Table of Contents",
+    },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
       "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
@@ -255,7 +261,6 @@ Object {
     },
   ],
   "timeout": 42000,
-  "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -266,10 +271,21 @@ Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "entries": Array [
     Object {
+      "rel": "contents",
+      "target": "__WORKSPACE__/tests/fixtures/config/toc.html",
+      "theme": Object {
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "Table of Contents",
+    },
+    Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
       "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
       "theme": Object {
-        "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "name": "debug-theme",
         "style": "./theme.css",
         "type": "package",
@@ -332,7 +348,7 @@ Object {
   },
   "themeIndexes": Array [
     Object {
-      "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+      "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "name": "debug-theme",
       "style": "./theme.css",
       "type": "package",
@@ -344,7 +360,6 @@ Object {
     },
   ],
   "timeout": 1,
-  "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -399,7 +414,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -446,7 +460,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -501,7 +514,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -515,7 +527,7 @@ Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
       "target": "__SNIP__",
       "theme": Object {
-        "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "name": "debug-theme",
         "style": "./theme.css",
         "type": "package",
@@ -567,14 +579,13 @@ Object {
   },
   "themeIndexes": Array [
     Object {
-      "location": "__WORKSPACE__/tests/fixtures/config/debug-theme",
+      "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "name": "debug-theme",
       "style": "./theme.css",
       "type": "package",
     },
   ],
   "timeout": 1,
-  "toc": "__WORKSPACE__/tests/fixtures/config/toc.html",
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -629,7 +640,6 @@ Object {
   "size": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "toc": false,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
