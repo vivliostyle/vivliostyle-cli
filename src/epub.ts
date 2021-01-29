@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'upath';
 import { inflateZip, useTmpDirectory } from './util';
 
+const pickFirstOne = <T>(arg: T | T[]): T =>
+  Array.isArray(arg) ? arg[0] : arg;
+
 export async function openEpubToTmpDirectory(
   filePath: string,
 ): Promise<{
@@ -20,9 +23,7 @@ export async function openEpubToTmpDirectory(
       ignoreAttributes: false,
     },
   );
-  const rootfile = Array.isArray(container.rootfiles.rootfile)
-    ? container.rootfiles.rootfile[0] // Only supports a default rendition
-    : container.rootfiles.rootfile;
+  const rootfile = pickFirstOne(container.rootfiles.rootfile); // Only supports a default rendition
   const epubOpfPath = path.join(tmpDir, rootfile['@_full-path']);
   return { dest: tmpDir, epubOpfPath, deleteEpub };
 }

@@ -26,10 +26,11 @@ it('generateTocHtml', () => {
     entries: [{ target: 'test.html', title: 'Title' }],
     manifestPath: '.vivliostyle/publication.json',
     distDir: '.vivliostyle',
-    title: 'Table of Contents',
+    title: 'Book title',
+    tocTitle: 'Table of Contents',
   });
   expect(toc).toBe(
-    '<html><head><title>Table of Contents</title><link href="publication.json" rel="publication" type="application/ld+json"></head><body><nav id="toc" role="doc-toc"><ul><li><a href="../test.html">Title</a></li></ul></nav></body></html>',
+    '<html><head><title>Book title</title><link href="publication.json" rel="publication" type="application/ld+json"></head><body><h1>Book title</h1><nav id="toc" role="doc-toc"><h2>Table of Contents</h2><ol><li><a href="../test.html">Title</a></li></ol></nav></body></html>',
   );
 });
 
@@ -59,11 +60,15 @@ it('toc: true', async () => {
     fs.readFileSync(resolveFixture('toc/.vs-valid.1/index.html'), 'utf8'),
   );
   const { document } = tocHtml.window;
-  expect(document.querySelector('title')!.text).toBe('Table of Contents');
+  expect(document.querySelector('title')!.text).toBe('yuno');
   expect(
     document.querySelector('link[rel="publication"]')!.getAttribute('href'),
   ).toBe('publication.json');
-  const li = document.querySelectorAll('nav[role="doc-toc"] > ul > li')!;
+  const h1 = document.querySelector('body > h1')!;
+  expect(h1.innerHTML).toBe('yuno');
+  const h2 = document.querySelector('nav[role="doc-toc"] > h2')!;
+  expect(h2.innerHTML).toBe('Table of Contents');
+  const li = document.querySelectorAll('nav[role="doc-toc"] > ol > li')!;
   expect(li).toHaveLength(3);
   expect(li.item(0).innerHTML).toBe('<a href="a.html">A</a>');
   expect(li.item(1).innerHTML).toBe('<a href="b.html">B</a>');
@@ -100,11 +105,15 @@ it("toc: 'manuscript/contents.html'", async () => {
     ),
   );
   const { document } = tocHtml.window;
-  expect(document.querySelector('title')!.text).toBe('もくじ');
+  expect(document.querySelector('title')!.text).toBe('yuno');
   expect(
     document.querySelector('link[rel="publication"]')!.getAttribute('href'),
   ).toBe('../publication.json');
-  const li = document.querySelectorAll('nav[role="doc-toc"] > ul > li')!;
+  const h1 = document.querySelector('body > h1')!;
+  expect(h1.innerHTML).toBe('yuno');
+  const h2 = document.querySelector('nav[role="doc-toc"] > h2')!;
+  expect(h2.innerHTML).toBe('もくじ');
+  const li = document.querySelectorAll('nav[role="doc-toc"] > ol > li')!;
   expect(li).toHaveLength(3);
   expect(li.item(0).innerHTML).toBe('<a href="a.html">A</a>');
   expect(li.item(1).innerHTML).toBe('<a href="b.html">B</a>');

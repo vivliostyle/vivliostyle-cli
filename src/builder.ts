@@ -227,7 +227,8 @@ export async function compile(
       entries: contentEntries,
       manifestPath,
       distDir: path.dirname(generativeContentsEntry.target),
-      title: generativeContentsEntry.title ?? TOC_TITLE,
+      title: manifestAutoGenerate?.title,
+      tocTitle: generativeContentsEntry.title ?? TOC_TITLE,
       style,
     });
     fs.writeFileSync(generativeContentsEntry.target, tocString);

@@ -10,12 +10,14 @@ export function generateTocHtml({
   manifestPath,
   distDir,
   title,
+  tocTitle,
   style,
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   manifestPath: string;
   distDir: string;
-  title: string;
+  title?: string;
+  tocTitle: string;
   style?: string;
 }): string {
   const items = entries.map((entry) =>
@@ -33,7 +35,7 @@ export function generateTocHtml({
     h(
       'head',
       ...[
-        h('title', title),
+        h('title', title ?? ''),
         h('link', {
           href: path.relative(distDir, manifestPath),
           rel: 'publication',
@@ -42,7 +44,11 @@ export function generateTocHtml({
         style && h('link', { href: style, rel: 'stylesheet' }),
       ].filter((n) => !!n),
     ),
-    h('body', h('nav#toc', { role: 'doc-toc' }, h('ul', items))),
+    h(
+      'body',
+      h('h1', title || ''),
+      h('nav#toc', { role: 'doc-toc' }, h('h2', tocTitle), h('ol', items)),
+    ),
   );
   return toHTML(toc);
 }
