@@ -51,7 +51,7 @@ export default async function init(cliFlags: InitCliFlags) {
   //   './output.pdf', // the output format will be inferred from the name.
   //   {
   //     path: './book',
-  //     format: 'webbook',
+  //     format: 'webpub',
   //   },
   // ],
   // toc: true, // whether generate and include ToC HTML or not, default to 'false'.

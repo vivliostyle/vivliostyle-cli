@@ -38,7 +38,7 @@ it('override option by CLI command', async () => {
     '-o',
     'yuno',
     '-f',
-    'webbook',
+    'webpub',
     '-t',
     'https://myTheme.example.com',
     '-s',

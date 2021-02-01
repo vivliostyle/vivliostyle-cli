@@ -113,7 +113,7 @@ Object {
   "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
   "outputs": Array [
     Object {
-      "format": "webbook",
+      "format": "webpub",
       "path": "__WORKSPACE__/readium-webpub",
     },
   ],
@@ -156,7 +156,7 @@ Object {
   "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
   "outputs": Array [
     Object {
-      "format": "webbook",
+      "format": "webpub",
       "path": "__WORKSPACE__/w3c-webpub",
     },
   ],
@@ -281,7 +281,7 @@ Object {
       "path": "__WORKSPACE__/yuno.pdf",
     },
     Object {
-      "format": "webbook",
+      "format": "webpub",
       "path": "__WORKSPACE__/yuno",
     },
   ],

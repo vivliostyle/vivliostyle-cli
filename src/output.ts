@@ -13,14 +13,14 @@ export interface PdfOutput extends OutputFormatTrait<'pdf'> {
 }
 
 /** A directory including publication.json, series of (X)HTML files and assets */
-export interface WebbookOutput extends OutputFormatTrait<'webbook'> {
+export interface WebPublicationOutput extends OutputFormatTrait<'webpub'> {
   path: string;
 }
 
-export type OutputFormat = PdfOutput | WebbookOutput;
+export type OutputFormat = PdfOutput | WebPublicationOutput;
 export const availableOutputFormat: ReadonlyArray<OutputFormat['format']> = [
   'pdf',
-  'webbook',
+  'webpub',
 ] as const;
 
 export function detectOutputFormat(outputPath: string): OutputFormat {
@@ -28,6 +28,6 @@ export function detectOutputFormat(outputPath: string): OutputFormat {
   if (lowerCasedExt === '.pdf') {
     return { format: 'pdf', path: outputPath };
   } else {
-    return { format: 'webbook', path: outputPath };
+    return { format: 'webpub', path: outputPath };
   }
 }

@@ -59,7 +59,7 @@ export function setupBuildParserProgram(): commander.Command {
       '-o, --output <path>',
       `specify output file name or directory [<title>.pdf]
 This option can be specified multiple, then each -o options can be supplied one -f option.
-ex: -o output1 -f webbook -o output2.pdf -f pdf`,
+ex: -o output1 -f webpub -o output2.pdf -f pdf`,
       outputOptionProcessor,
     )
     .option(
