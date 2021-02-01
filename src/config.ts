@@ -94,9 +94,11 @@ export interface WebPublicationManifestConfig {
 export interface EpubManifestConfig {
   epubOpfPath: string;
 }
+export interface WebbookEntryConfig {
+  webbookEntryPath: string;
+}
 export type ManifestConfig = XOR<
-  WebPublicationManifestConfig,
-  EpubManifestConfig
+  [WebPublicationManifestConfig, WebbookEntryConfig, EpubManifestConfig]
 >;
 
 export type MergedConfig = {
@@ -422,6 +424,7 @@ type CommonOpts = Omit<
   | 'manifestPath'
   | 'manifestAutoGenerate'
   | 'epubOpfPath'
+  | 'webbookEntryPath'
   | 'projectTitle'
   | 'projectAuthor'
 >;
@@ -440,11 +443,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   const tmpPrefix = `.vs-${Date.now()}.`;
   const input = detectInputFormat(sourcePath);
 
-  const hasEntry =
-    input.format === 'markdown' ||
-    input.format === 'html' ||
-    input.format === 'webbook';
-  if (hasEntry) {
+  if (input.format === 'markdown') {
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata(type, sourcePath);
@@ -469,7 +468,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   }
 
   const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
-    if (hasEntry) {
+    if (input.format === 'markdown') {
       // create temporary manifest file
       const manifestPath = path.resolve(
         workspaceDir,
@@ -492,6 +491,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
           author: cliFlags.author ?? config?.author ?? '',
         },
       };
+    } else if (input.format === 'html' || input.format === 'webbook') {
+      return { webbookEntryPath: input.entry };
     } else if (input.format === 'pub-manifest') {
       return { manifestPath: input.entry, manifestAutoGenerate: null };
     } else if (input.format === 'epub-opf') {

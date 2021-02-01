@@ -170,6 +170,48 @@ Object {
 }
 `;
 
+exports[`imports single html file 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.html",
+    "format": "webbook",
+  },
+  "language": "en",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/output.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -453,60 +495,6 @@ Object {
     Object {
       "format": "pdf",
       "path": "__WORKSPACE__/tests/fixtures/config/example.pdf",
-    },
-  ],
-  "pressReady": false,
-  "sandbox": true,
-  "size": undefined,
-  "themeIndexes": Array [],
-  "timeout": 120000,
-  "verbose": false,
-  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
-}
-`;
-
-exports[`yields a config with single html 1`] = `
-Object {
-  "cover": undefined,
-  "entries": Array [
-    Object {
-      "source": "__WORKSPACE__/tests/fixtures/config/sample.html",
-      "target": "__SNIP__",
-      "theme": undefined,
-      "title": "Miyako",
-      "type": "text/html",
-    },
-  ],
-  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
-  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
-  "exportAliases": "__SNIP__",
-  "includeAssets": Array [
-    "**/*.png",
-    "**/*.jpg",
-    "**/*.jpeg",
-    "**/*.svg",
-    "**/*.gif",
-    "**/*.webp",
-    "**/*.apng",
-    "**/*.ttf",
-    "**/*.otf",
-    "**/*.woff",
-    "**/*.woff2",
-  ],
-  "input": Object {
-    "entry": "__WORKSPACE__/tests/fixtures/config/sample.html",
-    "format": "webbook",
-  },
-  "language": "en",
-  "manifestAutoGenerate": Object {
-    "author": "",
-    "title": "Miyako",
-  },
-  "manifestPath": "__SNIP__",
-  "outputs": Array [
-    Object {
-      "format": "pdf",
-      "path": "__WORKSPACE__/tests/output.pdf",
     },
   ],
   "pressReady": false,
