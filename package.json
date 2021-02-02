@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@vivliostyle/core": "2.4.1",
-    "@vivliostyle/vfm": "v1.0.0-alpha.10",
+    "@vivliostyle/vfm": "v1.0.0-alpha.16",
     "ajv": "^6.12.2",
     "chalk": "^4.1.0",
     "cheerio": "^1.0.0-rc.5",

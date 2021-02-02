@@ -123,6 +123,7 @@ it('generate files with entryContext', async () => {
     type: 'LinkedResource',
     url: 't-o-c.html',
   });
+  expect(manifest.inLanguage).toBe('en');
 
   // try again and check idempotence
   await compile(config);
@@ -180,6 +181,7 @@ it('generate from various manuscript formats', async () => {
       url: 'manuscript/sample-xhtml.xhtml',
     },
   ]);
+  expect(manifest.inLanguage).toBe('ja');
   const doc1 = new JSDOM(
     fs.readFileSync(
       resolveFixture(
@@ -193,6 +195,9 @@ it('generate from various manuscript formats', async () => {
     ),
   ).toBeTruthy();
   expect(doc1.window.document.querySelector('title')?.text).toEqual('SODA');
+  expect(
+    doc1.window.document.querySelector('html')?.getAttribute('lang'),
+  ).toEqual('ja');
   const doc2 = new JSDOM(
     fs.readFileSync(
       resolveFixture(
@@ -206,6 +211,9 @@ it('generate from various manuscript formats', async () => {
     ),
   ).toBeTruthy();
   expect(doc2.window.document.querySelector('title')?.text).toEqual('ABCDEF');
+  expect(
+    doc2.window.document.querySelector('html')?.getAttribute('lang'),
+  ).toEqual('en');
   const doc3 = new JSDOM(
     fs.readFileSync(
       resolveFixture(
@@ -219,6 +227,12 @@ it('generate from various manuscript formats', async () => {
       'link[rel="stylesheet"][href="https://example.com"]',
     ),
   ).toBeTruthy();
+  expect(
+    doc3.window.document.querySelector('html')?.getAttribute('lang'),
+  ).toEqual('ja');
+  expect(
+    doc3.window.document.querySelector('html')?.getAttribute('xml:lang'),
+  ).toEqual('ja');
 });
 
 it('check overwrite violation', async () => {
