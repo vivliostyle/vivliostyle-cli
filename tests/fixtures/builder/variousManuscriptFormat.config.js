@@ -2,6 +2,7 @@ module.exports = {
   title: 'title',
   author: 'author',
   theme: 'https://example.com',
+  language: 'ja',
   entry: [
     'manuscript/soda.md',
     {

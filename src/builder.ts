@@ -183,6 +183,7 @@ export async function compile(
       const vfile = processMarkdown(entry.source, {
         style,
         title: entry.title,
+        language,
       });
       const compiledEntry = String(vfile);
       fs.writeFileSync(entry.target, compiledEntry);
@@ -195,6 +196,7 @@ export async function compile(
           style,
           title: entry.title,
           contentType: entry.type,
+          language,
         });
         fs.writeFileSync(entry.target, html);
       }

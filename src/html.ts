@@ -60,10 +60,12 @@ export function processManuscriptHtml(
     title,
     style,
     contentType,
+    language,
   }: {
     title?: string;
     style?: string;
     contentType?: 'text/html' | 'application/xhtml+xml';
+    language?: string;
   },
 ): string {
   const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'), {
@@ -78,6 +80,18 @@ export function processManuscriptHtml(
   if (style) {
     $('head').append(`<link rel="stylesheet" />`);
     $('head > *:last-child').attr('href', style);
+  }
+  if (language) {
+    if (contentType === 'application/xhtml+xml') {
+      if (!$('html').attr('xml:lang')) {
+        $('html').attr('lang', language);
+        $('html').attr('xml:lang', language);
+      }
+    } else {
+      if (!$('html').attr('lang')) {
+        $('html').attr('lang', language);
+      }
+    }
   }
   let processed = $.html();
   return processed;
