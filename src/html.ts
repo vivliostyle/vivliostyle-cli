@@ -2,6 +2,7 @@ import cheerio from 'cheerio';
 import fs from 'fs';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
+import prettier from 'prettier';
 import path from 'upath';
 import { ManuscriptEntry } from './config';
 
@@ -50,7 +51,7 @@ export function generateTocHtml({
       h('nav#toc', { role: 'doc-toc' }, h('h2', tocTitle), h('ol', items)),
     ),
   );
-  return toHTML(toc);
+  return prettier.format(toHTML(toc), { parser: 'html' });
 }
 
 export function processManuscriptHtml(
