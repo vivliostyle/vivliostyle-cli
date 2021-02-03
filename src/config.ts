@@ -115,7 +115,7 @@ export type MergedConfig = {
   }[];
   size: PageSize | undefined;
   pressReady: boolean;
-  language: string;
+  language: string | null;
   cover: string | undefined;
   verbose: boolean;
   timeout: number;
@@ -335,7 +335,7 @@ export async function mergeConfig<T extends CliFlags>(
       : [config.includeAssets]
     : DEFAULT_ASSETS;
 
-  const language = cliFlags.language ?? config?.language ?? 'en';
+  const language = cliFlags.language ?? config?.language ?? null;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
