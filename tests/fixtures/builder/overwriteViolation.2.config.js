@@ -3,6 +3,6 @@ module.exports = {
   workspaceDir: '.vs-overriddenWorkspace',
   output: {
     path: '.vs-overriddenWorkspace',
-    format: 'webbook',
+    format: 'webpub',
   },
 };

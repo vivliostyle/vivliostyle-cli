@@ -94,9 +94,11 @@ export interface WebPublicationManifestConfig {
 export interface EpubManifestConfig {
   epubOpfPath: string;
 }
+export interface WebbookEntryConfig {
+  webbookEntryPath: string;
+}
 export type ManifestConfig = XOR<
-  WebPublicationManifestConfig,
-  EpubManifestConfig
+  [WebPublicationManifestConfig, WebbookEntryConfig, EpubManifestConfig]
 >;
 
 export type MergedConfig = {
@@ -411,6 +413,7 @@ export async function mergeConfig<T extends CliFlags>(
     ? await composeSingleInputConfig(commonOpts, cliFlags, config)
     : await composeProjectConfig(commonOpts, cliFlags, config, context);
   debug('parsedConfig', parsedConfig);
+  checkUnusedCliFlags(parsedConfig, cliFlags);
   return parsedConfig;
 }
 
@@ -422,6 +425,7 @@ type CommonOpts = Omit<
   | 'manifestPath'
   | 'manifestAutoGenerate'
   | 'epubOpfPath'
+  | 'webbookEntryPath'
   | 'projectTitle'
   | 'projectAuthor'
 >;
@@ -440,11 +444,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   const tmpPrefix = `.vs-${Date.now()}.`;
   const input = detectInputFormat(sourcePath);
 
-  const hasEntry =
-    input.format === 'markdown' ||
-    input.format === 'html' ||
-    input.format === 'webbook';
-  if (hasEntry) {
+  if (input.format === 'markdown') {
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata(type, sourcePath);
@@ -469,7 +469,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   }
 
   const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
-    if (hasEntry) {
+    if (input.format === 'markdown') {
       // create temporary manifest file
       const manifestPath = path.resolve(
         workspaceDir,
@@ -492,6 +492,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
           author: cliFlags.author ?? config?.author ?? '',
         },
       };
+    } else if (input.format === 'html' || input.format === 'webbook') {
+      return { webbookEntryPath: input.entry };
     } else if (input.format === 'pub-manifest') {
       return { manifestPath: input.entry, manifestAutoGenerate: null };
     } else if (input.format === 'epub-opf') {
@@ -623,4 +625,35 @@ async function composeProjectConfig<T extends CliFlags>(
       author: projectAuthor || '',
     },
   };
+}
+
+export function checkUnusedCliFlags<T extends CliFlags>(
+  config: MergedConfig,
+  cliFlags: T,
+) {
+  const unusedFlags: string[] = [];
+  if (!config.manifestPath) {
+    if (cliFlags.theme) {
+      unusedFlags.push('--theme');
+    }
+    if (cliFlags.title) {
+      unusedFlags.push('--title');
+    }
+    if (cliFlags.author) {
+      unusedFlags.push('--author');
+    }
+    if (cliFlags.language) {
+      unusedFlags.push('--language');
+    }
+  }
+  if (unusedFlags.length) {
+    log('\n');
+    unusedFlags.forEach((flag) => {
+      log(
+        `${chalk.bold.yellow(flag)}${chalk.bold.yellow(
+          ` flag seems to be set but the current export setting doesn't support this. This option will be ignored.`,
+        )}`,
+      );
+    });
+  }
 }

@@ -76,7 +76,7 @@ Options:
   -c, --config <config_file>    path to vivliostyle.config.js [vivliostyle.config.js]
   -o, --output <path>           specify output file name or directory [<title>.pdf]
                                 This option can be specified multiple, then each -o options can be supplied one -f option.
-                                ex: -o output1 -f webbook -o output2.pdf -f pdf
+                                ex: -o output1 -f webpub -o output2.pdf -f pdf
   -f, --format <format>         specify output format corresponding output target
                                 If an extension is specified on -o option, this field will be inferenced automatically.
   -t, --theme <theme>           theme path or package name

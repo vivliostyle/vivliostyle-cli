@@ -56,7 +56,9 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   }
 
   const url = getBrokerUrl({
-    sourceIndex: config.manifestPath ?? config.epubOpfPath,
+    sourceIndex: (config.manifestPath ??
+      config.webbookEntryPath ??
+      config.epubOpfPath) as string,
   });
 
   debug(

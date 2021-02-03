@@ -3,10 +3,10 @@ import process from 'process';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
-import { collectVivliostyleConfig, mergeConfig } from '../config';
+import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
 import { buildPDF } from '../pdf';
 import { gracefulError, log, startLogging, stopLogging } from '../util';
-import { exportWebbook } from '../webbook';
+import { exportWebPublication } from '../webbook';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
 try {
@@ -43,6 +43,7 @@ export default async function build(cliFlags: BuildCliFlags) {
     : process.cwd();
 
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  checkUnsupportedOutputs(config);
 
   // check output path not to overwrite source files
   for (const target of config.outputs) {
@@ -61,19 +62,16 @@ export default async function build(cliFlags: BuildCliFlags) {
     if (target.format === 'pdf') {
       output = await buildPDF({
         ...config,
-        input: config.manifestPath ?? config.epubOpfPath,
+        input: (config.manifestPath ??
+          config.webbookEntryPath ??
+          config.epubOpfPath) as string,
         output: target.path,
       });
-    } else if (target.format === 'webbook') {
+    } else if (target.format === 'webpub') {
       if (!config.manifestPath) {
-        log(
-          `\n${chalk.yellow(
-            'Exporting webbook format from EPUB or OPF file is not supported. Skipping.',
-          )}`,
-        );
         continue;
       }
-      output = await exportWebbook({
+      output = await exportWebPublication({
         ...config,
         input: config.workspaceDir,
         output: target.path,
@@ -94,4 +92,20 @@ export default async function build(cliFlags: BuildCliFlags) {
   stopLogging('Built successfully.', '🎉');
 
   process.exit(0);
+}
+
+export function checkUnsupportedOutputs({
+  webbookEntryPath,
+  epubOpfPath,
+  outputs,
+}: MergedConfig) {
+  if (webbookEntryPath && outputs.some((t) => t.format === 'webpub')) {
+    throw new Error(
+      'Exporting webpub format from single HTML input is not supported.',
+    );
+  } else if (epubOpfPath && outputs.some((t) => t.format === 'webpub')) {
+    throw new Error(
+      'Exporting webpub format from EPUB or OPF file is not supported.',
+    );
+  }
 }

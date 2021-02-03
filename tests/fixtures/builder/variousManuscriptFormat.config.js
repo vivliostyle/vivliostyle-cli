@@ -15,7 +15,7 @@ module.exports = {
   output: [
     {
       path: 'variousManuscriptFormat',
-      format: 'webbook',
+      format: 'webpub',
     },
   ],
   workspaceDir: '.vs-variousManuscriptFormat',

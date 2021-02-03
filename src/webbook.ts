@@ -9,7 +9,7 @@ import type {
 } from './schema/pubManifest';
 import { debug } from './util';
 
-export async function exportWebbook({
+export async function exportWebPublication({
   exportAliases,
   manifestPath,
   input,
@@ -20,7 +20,7 @@ export async function exportWebbook({
   manifestPath: string;
 }): Promise<string> {
   if (fs.existsSync(output)) {
-    debug('going to remove existing webbook', output);
+    debug('going to remove existing webpub', output);
     shelljs.rm('-rf', output);
   }
   const silentMode = shelljs.config.silent;

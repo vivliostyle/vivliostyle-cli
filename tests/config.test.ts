@@ -38,7 +38,7 @@ it('override option by CLI command', async () => {
     '-o',
     'yuno',
     '-f',
-    'webbook',
+    'webpub',
     '-t',
     'https://myTheme.example.com',
     '-s',
@@ -101,20 +101,11 @@ it('yields a config with single markdown', async () => {
   expect(config).toMatchSnapshot();
 });
 
-it('yields a config with single html', async () => {
+it('imports single html file', async () => {
   const config = await getMergedConfig([
     path.resolve(__dirname, 'fixtures/config/sample.html'),
   ]);
   maskConfig(config);
-  expect(config.entries[0].target).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
-  );
-  expect(config.manifestPath).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.publication\.json$/,
-  );
-  config.manifestPath = '__SNIP__';
-  config.entries[0].target = '__SNIP__';
-  (config.exportAliases as unknown) = '__SNIP__';
   expect(config).toMatchSnapshot();
 });
 

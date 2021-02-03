@@ -76,8 +76,8 @@
     "pretty-quick": "^2.0.1",
     "release-it": "^13.6.4",
     "shx": "^0.3.2",
-    "ts-jest": "^26.1.1",
-    "typescript": "^3.9.6"
+    "ts-jest": "^26.5.0",
+    "typescript": "^4.1.3"
   },
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
