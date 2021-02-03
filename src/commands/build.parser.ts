@@ -68,7 +68,6 @@ ex: -o output1 -f webpub -o output2.pdf -f pdf`,
 If an extension is specified on -o option, this field will be inferenced automatically.`,
       formatOptionProcessor,
     )
-    .option('-t, --theme <theme>', 'theme path or package name')
     .option(
       '-s, --size <size>',
       `output pdf size [Letter]
@@ -79,15 +78,16 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
       '-p, --press-ready',
       `make generated PDF compatible with press ready PDF/X-1a [false]`,
     )
-    .option('--title <title>', 'title')
-    .option('--author <author>', 'author')
-    .option('--language <language>', 'language')
-    .option('--verbose', 'verbose log output')
     .option(
-      '--timeout <seconds>',
+      '-t, --timeout <seconds>',
       `timeout limit for waiting Vivliostyle process [60s]`,
       validateTimeoutFlag,
     )
+    .option('-T, --theme <theme>', 'theme path or package name')
+    .option('--title <title>', 'title')
+    .option('--author <author>', 'author')
+    .option('-l, --language <language>', 'language')
+    .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',
       `launch chrome without sandbox. use this option when ECONNREFUSED error occurred.`,
