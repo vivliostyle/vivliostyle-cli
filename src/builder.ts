@@ -38,7 +38,7 @@ export function generateManifest(
   options: {
     title?: string;
     author?: string;
-    language?: string;
+    language?: string | null;
     modified: string;
     entries: EntryObject[];
     cover?: string;
@@ -87,7 +87,7 @@ export function generateManifest(
     type: 'Book',
     conformsTo: 'https://github.com/vivliostyle/vivliostyle-cli',
     author: options.author,
-    inLanguage: options.language,
+    ...(options.language && { inLanguage: options.language }),
     dateModified: options.modified,
     name: options.title,
     readingOrder: entries,
@@ -183,7 +183,7 @@ export async function compile(
       const vfile = processMarkdown(entry.source, {
         style,
         title: entry.title,
-        language,
+        language: language ?? undefined,
       });
       const compiledEntry = String(vfile);
       fs.writeFileSync(entry.target, compiledEntry);

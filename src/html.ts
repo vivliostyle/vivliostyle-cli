@@ -65,7 +65,7 @@ export function processManuscriptHtml(
     title?: string;
     style?: string;
     contentType?: 'text/html' | 'application/xhtml+xml';
-    language?: string;
+    language?: string | null;
   },
 ): string {
   const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'), {

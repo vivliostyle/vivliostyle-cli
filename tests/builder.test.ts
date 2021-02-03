@@ -123,7 +123,7 @@ it('generate files with entryContext', async () => {
     type: 'LinkedResource',
     url: 't-o-c.html',
   });
-  expect(manifest.inLanguage).toBe('en');
+  expect(manifest.inLanguage).toBeUndefined();
 
   // try again and check idempotence
   await compile(config);
