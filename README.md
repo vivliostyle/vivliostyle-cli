@@ -99,7 +99,7 @@ Options:
 > open preview page and save PDF interactively.
 
 ```bash
-vivliostyle preview <input>
+vivliostyle preview
 ```
 
 #### CLI options
