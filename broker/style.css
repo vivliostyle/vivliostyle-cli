@@ -49,6 +49,7 @@ body {
     line-height: 1.4;
     -webkit-font-smoothing: antialiased;
     hyphens: auto;
+    pointer-events: none;
   }
 
   #ui a,
@@ -223,6 +224,7 @@ body {
     flex-direction: column;
     background-color: #eaeaea;
     box-shadow: -9px 0 10px -7px rgba(0, 0, 0, 0.2) inset;
+    pointer-events: auto;
   }
 
   #ui .Menu h3 {
@@ -304,12 +306,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    opacity: 0;
-    transition: opacity 0.08s linear;
-  }
-  #ui .PageNavigator:hover {
-    opacity: 1;
   }
 
   #ui .PageNavigator_navigation-left,

@@ -30,7 +30,26 @@ it('generateTocHtml', () => {
     tocTitle: 'Table of Contents',
   });
   expect(toc).toBe(
-    '<html><head><title>Book title</title><link href="publication.json" rel="publication" type="application/ld+json"></head><body><h1>Book title</h1><nav id="toc" role="doc-toc"><h2>Table of Contents</h2><ol><li><a href="../test.html">Title</a></li></ol></nav></body></html>',
+    `<html>
+  <head>
+    <title>Book title</title>
+    <link
+      href="publication.json"
+      rel="publication"
+      type="application/ld+json"
+    />
+  </head>
+  <body>
+    <h1>Book title</h1>
+    <nav id="toc" role="doc-toc">
+      <h2>Table of Contents</h2>
+      <ol>
+        <li><a href="../test.html">Title</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>
+`,
   );
 });
 

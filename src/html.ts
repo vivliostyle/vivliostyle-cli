@@ -2,6 +2,7 @@ import cheerio from 'cheerio';
 import fs from 'fs';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
+import prettier from 'prettier';
 import path from 'upath';
 import { ManuscriptEntry } from './config';
 
@@ -50,7 +51,7 @@ export function generateTocHtml({
       h('nav#toc', { role: 'doc-toc' }, h('h2', tocTitle), h('ol', items)),
     ),
   );
-  return toHTML(toc);
+  return prettier.format(toHTML(toc), { parser: 'html' });
 }
 
 export function processManuscriptHtml(
@@ -59,10 +60,12 @@ export function processManuscriptHtml(
     title,
     style,
     contentType,
+    language,
   }: {
     title?: string;
     style?: string;
     contentType?: 'text/html' | 'application/xhtml+xml';
+    language?: string;
   },
 ): string {
   const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'), {
@@ -77,6 +80,18 @@ export function processManuscriptHtml(
   if (style) {
     $('head').append(`<link rel="stylesheet" />`);
     $('head > *:last-child').attr('href', style);
+  }
+  if (language) {
+    if (contentType === 'application/xhtml+xml') {
+      if (!$('html').attr('xml:lang')) {
+        $('html').attr('lang', language);
+        $('html').attr('xml:lang', language);
+      }
+    } else {
+      if (!$('html').attr('lang')) {
+        $('html').attr('lang', language);
+      }
+    }
   }
   let processed = $.html();
   return processed;
