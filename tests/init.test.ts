@@ -99,7 +99,7 @@ it('test the init command with short option', async () => {
       'jp',
       '-s',
       'A3',
-      '-t',
+      '-T',
       'theme.css',
     ],
     outputDir,

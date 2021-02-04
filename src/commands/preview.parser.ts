@@ -10,7 +10,7 @@ export function setupPreviewParserProgram(): commander.Command {
     .description('launch preview server')
     .arguments('[input]')
     .option('-c, --config <config_file>', 'path to vivliostyle.config.js')
-    .option('-t, --theme <theme>', 'theme path or package name')
+    .option('-T, --theme <theme>', 'theme path or package name')
     .option(
       '-s, --size <size>',
       `output pdf size [Letter]
@@ -19,7 +19,7 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     )
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
-    .option('--language <language>', 'language')
+    .option('-l, --language <language>', 'language')
     .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',

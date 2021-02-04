@@ -53,7 +53,7 @@ Options:
   --author <author>          author
   -l, --language <language>  language
   -s, --size  <size>         paper size
-  -t, --theme <theme>        theme
+  -T, --theme <theme>        theme
   -h, --help                 display help for command
 ```
 
@@ -79,16 +79,16 @@ Options:
                                 ex: -o output1 -f webpub -o output2.pdf -f pdf
   -f, --format <format>         specify output format corresponding output target
                                 If an extension is specified on -o option, this field will be inferenced automatically.
-  -t, --theme <theme>           theme path or package name
   -s, --size <size>             output pdf size [Letter]
                                 preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
                                 custom(comma separated): 182mm,257mm or 8.5in,11in
   -p, --press-ready             make generated PDF compatible with press ready PDF/X-1a [false]
+  -t, --timeout <seconds>       timeout limit for waiting Vivliostyle process [60s]
+  -T, --theme <theme>           theme path or package name
   --title <title>               title
   --author <author>             author
-  --language <language>         language
+  -l, --language <language>     language
   --verbose                     verbose log output
-  --timeout <seconds>           timeout limit for waiting Vivliostyle process [60s]
   --no-sandbox                  launch chrome without sandbox. use this option when ECONNREFUSED error occurred.
   --executable-chromium <path>  specify a path of executable Chrome (or Chromium) you installed
   -h, --help                    display help for command
@@ -99,7 +99,7 @@ Options:
 > open preview page and save PDF interactively.
 
 ```bash
-vivliostyle preview <input>
+vivliostyle preview
 ```
 
 #### CLI options
@@ -107,13 +107,13 @@ vivliostyle preview <input>
 ```
 Options:
   -c, --config <config_file>    path to vivliostyle.config.js
-  -t, --theme <theme>           theme path or package name
+  -T, --theme <theme>           theme path or package name
   -s, --size <size>             output pdf size [Letter]
                                 preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
                                 custom(comma separated): 182mm,257mm or 8.5in,11in
   --title <title>               title
   --author <author>             author
-  --language <language>         language
+  -l, --language <language>     language
   --verbose                     verbose log output
   --no-sandbox                  launch chrome without sandbox (use this option to avoid ECONNREFUSED error)
   --executable-chromium <path>  specify a path of executable Chrome(Chromium) you installed

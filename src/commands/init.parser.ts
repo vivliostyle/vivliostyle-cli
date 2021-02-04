@@ -17,6 +17,6 @@ export function setupInitParserProgram(): commander.Command {
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
     .option('-s, --size  <size>', 'paper size')
-    .option('-t, --theme <theme>', 'theme');
+    .option('-T, --theme <theme>', 'theme');
   return program;
 }
