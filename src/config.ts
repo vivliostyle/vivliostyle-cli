@@ -437,12 +437,22 @@ async function composeSingleInputConfig<T extends CliFlags>(
 ): Promise<MergedConfig> {
   debug('entering single entry config mode');
 
-  const sourcePath = path.resolve(cliFlags.input);
-  const workspaceDir = path.dirname(sourcePath);
+  let sourcePath: string;
+  let workspaceDir: string;
+  let input: InputFormat;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
   const tmpPrefix = `.vs-${Date.now()}.`;
-  const input = detectInputFormat(sourcePath);
+
+  if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
+    sourcePath = cliFlags.input;
+    input = { format: 'html', entry: sourcePath };
+    workspaceDir = '.';
+  } else {
+    sourcePath = path.resolve(cliFlags.input);
+    workspaceDir = path.dirname(sourcePath);
+    input = detectInputFormat(sourcePath);
+  }
 
   if (input.format === 'markdown') {
     // Single input file; create temporary file
