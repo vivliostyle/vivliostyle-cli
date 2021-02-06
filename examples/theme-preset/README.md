@@ -1,6 +1,6 @@
 # Preset theme
 
-![Preset theme example](image.png)
+<img src="image.png" alt="Preset theme example" width="400">
 
 Vivliostyle provides various themes which has a name starts with `@vivliostyle/theme-`. By setting a `theme` option, we can apply these themes.
 
