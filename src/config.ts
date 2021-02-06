@@ -321,14 +321,21 @@ export async function mergeConfig<T extends CliFlags>(
   debug('context directory', context);
   debug('cliFlags', cliFlags);
   debug('vivliostyle.config.js', config);
+  let entryContextDir: string;
+  let workspaceDir: string;
 
-  const entryContextDir = path.resolve(
-    cliFlags.input
-      ? path.dirname(path.resolve(context, cliFlags.input))
-      : contextResolve(context, config?.entryContext) ?? context,
-  );
-  const workspaceDir =
-    contextResolve(context, config?.workspaceDir) ?? entryContextDir;
+  if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
+    workspaceDir = entryContextDir = process.cwd();
+  } else {
+    entryContextDir = path.resolve(
+      cliFlags.input
+        ? path.dirname(path.resolve(context, cliFlags.input))
+        : contextResolve(context, config?.entryContext) ?? context,
+    );
+    workspaceDir =
+      contextResolve(context, config?.workspaceDir) ?? entryContextDir;
+  }
+
   const includeAssets = config?.includeAssets
     ? Array.isArray(config.includeAssets)
       ? config.includeAssets
@@ -446,8 +453,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
     sourcePath = cliFlags.input;
-    input = { format: 'html', entry: sourcePath };
-    workspaceDir = '.';
+    workspaceDir = process.cwd();
+    input = { format: 'webbook', entry: sourcePath };
   } else {
     sourcePath = path.resolve(cliFlags.input);
     workspaceDir = path.dirname(sourcePath);

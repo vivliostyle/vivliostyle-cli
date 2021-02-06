@@ -84,6 +84,48 @@ Object {
 }
 `;
 
+exports[`imports a https URL 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
+    "format": "webbook",
+  },
+  "language": null,
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/output.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
+  "workspaceDir": "__WORKSPACE__",
+}
+`;
+
 exports[`imports a webbook compliant to Readium Web publication 1`] = `
 Object {
   "cover": undefined,
