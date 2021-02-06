@@ -1,3 +1,51 @@
+# [3.0.0-rc.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.6...v3.0.0-rc.0) (2021-02-06)
+
+### Bug Fixes
+
+- Cancel to set toc as resources ([3bd5bdc](https://github.com/vivliostyle/vivliostyle-cli/commit/3bd5bdc2676a3e70bb694d1eadd5061f9922974f))
+- Correct the behavior of exporting webbook ([f5c9ae2](https://github.com/vivliostyle/vivliostyle-cli/commit/f5c9ae292db7236a2763fb9b564518ace36fcd66))
+- Delete the default language config ([b40f75f](https://github.com/vivliostyle/vivliostyle-cli/commit/b40f75fce9d6f698396fed4cdff8a5d0b06eafb9))
+- Ensure to exit a process ([b59a39d](https://github.com/vivliostyle/vivliostyle-cli/commit/b59a39df47d9f54da5cccdf2a40baf1f406ea581))
+- Fix build option parser ([5a1767a](https://github.com/vivliostyle/vivliostyle-cli/commit/5a1767a5e9dcff51c914d3b3176bc30b93a5e658))
+- Fix judging method to detect entry file type ([ef63e7d](https://github.com/vivliostyle/vivliostyle-cli/commit/ef63e7d0cff546963183e9b80877518975b6341e))
+- Fix process of removing tmp file ([8b1f4ba](https://github.com/vivliostyle/vivliostyle-cli/commit/8b1f4ba9cb382cfb5da53528a8fc9a3596cfcfc6))
+- Fix the context resolver on specifying a config file ([918099a](https://github.com/vivliostyle/vivliostyle-cli/commit/918099aed9a001780d429ad801d6c912d9c1a143))
+- Fix to reflect language settings to manuscript outputs ([35253d3](https://github.com/vivliostyle/vivliostyle-cli/commit/35253d30f9069e7007aabc42ed9709053f45a015))
+- Make element selectable on broker UI ([5adf95c](https://github.com/vivliostyle/vivliostyle-cli/commit/5adf95c82e1245981436a31adeaafb6b145a6ef4))
+- Merge output config correctly ([8b3b518](https://github.com/vivliostyle/vivliostyle-cli/commit/8b3b51809720e3ed1eb6d0fd81d8f7ea3b47b7cc))
+- More graceful webbook exports ([07d89d5](https://github.com/vivliostyle/vivliostyle-cli/commit/07d89d5161f5196f4b17d8bcb6ce970205e4da03))
+- Set project names from input context ([2358f65](https://github.com/vivliostyle/vivliostyle-cli/commit/2358f65052867ce0dd2fa0c860cd20c42e220064))
+- Support implicit exports ([34a3a40](https://github.com/vivliostyle/vivliostyle-cli/commit/34a3a4018aa0c3f2326beec2a5e14ff593b91560))
+- Support themes for HTML inputs and toc ([baeff19](https://github.com/vivliostyle/vivliostyle-cli/commit/baeff1924353bf2a4bff010283c6ab5c5fda5f14))
+- Use Cheerio for (X)HTML parser ([1188952](https://github.com/vivliostyle/vivliostyle-cli/commit/118895217fc88884a845697ba0600b8d582c3619))
+- Webbook export ([4eeb30a](https://github.com/vivliostyle/vivliostyle-cli/commit/4eeb30a53b864b9c17f43548718d1b5fee8fe234))
+
+### Features
+
+- Add `workspaceDir` `includeAssets` configs ([d1ce8b2](https://github.com/vivliostyle/vivliostyle-cli/commit/d1ce8b2081f7637f37c92454ec89dddc5f8aee8f))
+- Add tests for config parser codes ([f123ee5](https://github.com/vivliostyle/vivliostyle-cli/commit/f123ee50b2e677bed08f934fbaa0e7eb89bb6efb))
+- Add validator not to overwrite source files ([4fe2244](https://github.com/vivliostyle/vivliostyle-cli/commit/4fe22440b680d376b5756e78171fcbe044801234))
+- Change to use hash by passing broker parameters ([1ea1ddd](https://github.com/vivliostyle/vivliostyle-cli/commit/1ea1ddd760b144802d1e5403b6572d88fb660f56))
+- Drop supports of exporting web manifest from single HTML ([2494dc5](https://github.com/vivliostyle/vivliostyle-cli/commit/2494dc52faf5758fd143a157a0345a76fbc03756))
+- Enable to set vivliostyle.config.js as an input argument ([860fed1](https://github.com/vivliostyle/vivliostyle-cli/commit/860fed1d73c463d3bce894aed1d6458ad5939968))
+- Format auto-generated HTMLs ([399690d](https://github.com/vivliostyle/vivliostyle-cli/commit/399690d4cb9f1b49fe119ed34bf35fc9effe1f79))
+- Implement in-place file transform ([b8eb374](https://github.com/vivliostyle/vivliostyle-cli/commit/b8eb37440e971c00e03257192192ba60ff10b38d))
+- Implement multiple target outputs ([8603dbf](https://github.com/vivliostyle/vivliostyle-cli/commit/8603dbfd529bd596cfc3d5b465e19eee2c66b367))
+- Import Publication Manifest schema ([1ef8483](https://github.com/vivliostyle/vivliostyle-cli/commit/1ef84833a3dadcdcdfa4240423e6c6abeb3e455e))
+- Rename manifest.json to publication.json ([5556932](https://github.com/vivliostyle/vivliostyle-cli/commit/555693265f866708b692df50b1cfd7f9c7d3530f))
+- Rename output format; webbook -> webpub ([04472ed](https://github.com/vivliostyle/vivliostyle-cli/commit/04472edbaa475391d3e720764926f07313520320))
+- Revise CLI options ([aca9cf3](https://github.com/vivliostyle/vivliostyle-cli/commit/aca9cf3285ff4cec28dd341c34dd185ac11ef8cc))
+- Support multiple -o and -f options ([50f57ca](https://github.com/vivliostyle/vivliostyle-cli/commit/50f57cad8016b41d5c4c97dc4635141425f459cd))
+- Support to input publication manifests directly ([23a5ec7](https://github.com/vivliostyle/vivliostyle-cli/commit/23a5ec7762d0549d2ceead85261fae61d77c5169))
+- Support various input formats ([4e75580](https://github.com/vivliostyle/vivliostyle-cli/commit/4e75580d5ba5e79b487d42d6db6bc19d0b7334f4))
+- Support webbook export of single entry ([71d3fb2](https://github.com/vivliostyle/vivliostyle-cli/commit/71d3fb228e0ec9f3b9cb4a1fa128b483daafdea1))
+- Support zipped EPUB inputs ([dac8afc](https://github.com/vivliostyle/vivliostyle-cli/commit/dac8afc07795910e188f5e17ee27d4dbace527e5))
+- Update config schema ([b8f4be4](https://github.com/vivliostyle/vivliostyle-cli/commit/b8f4be41b736ac52e592783b79201a5eb8e36e9e))
+- Update manifest schema ([fb6d955](https://github.com/vivliostyle/vivliostyle-cli/commit/fb6d955bc4c5f3026330776a3f391a779403a69e))
+- Update the config template ([e09a898](https://github.com/vivliostyle/vivliostyle-cli/commit/e09a898842fffc749f47aae2839209fcf02a2440))
+- Update toc APIs ([78e2d1b](https://github.com/vivliostyle/vivliostyle-cli/commit/78e2d1bef4daee343ab75aa9010a1446269bd37d))
+- Use file-based protocol to serve the broker page ([b10f446](https://github.com/vivliostyle/vivliostyle-cli/commit/b10f44688102e0dbcc5ae63a63ed15d47661ee68))
+
 # [3.0.0-pre.6](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.5...v3.0.0-pre.6) (2021-01-13)
 
 ### Bug Fixes
