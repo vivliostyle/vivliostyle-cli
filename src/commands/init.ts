@@ -7,12 +7,13 @@ import { InitCliFlags, setupInitParserProgram } from './init.parser';
 try {
   const program = setupInitParserProgram();
   program.parse(process.argv);
+  const options = program.opts();
   init({
-    title: program.title,
-    author: program.author,
-    language: program.language,
-    size: program.size,
-    theme: program.theme,
+    title: options.title,
+    author: options.author,
+    language: options.language,
+    size: options.size,
+    theme: options.theme,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);

@@ -12,20 +12,21 @@ import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 try {
   const program = setupBuildParserProgram();
   program.parse(process.argv);
+  const options = program.opts();
   build({
     input: program.args?.[0],
-    configPath: program.config,
-    targets: program.targets,
-    theme: program.theme,
-    size: program.size,
-    title: program.title,
-    author: program.author,
-    language: program.language,
-    pressReady: program.pressReady,
-    verbose: program.verbose,
-    timeout: program.timeout,
-    sandbox: program.sandbox,
-    executableChromium: program.executableChromium,
+    configPath: options.config,
+    targets: options.targets,
+    theme: options.theme,
+    size: options.size,
+    title: options.title,
+    author: options.author,
+    language: options.language,
+    pressReady: options.pressReady,
+    verbose: options.verbose,
+    timeout: options.timeout,
+    sandbox: options.sandbox,
+    executableChromium: options.executableChromium,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);

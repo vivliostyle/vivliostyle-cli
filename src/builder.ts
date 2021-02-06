@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import chalk from 'chalk';
 import fs from 'fs';
 import globby from 'globby';
@@ -96,7 +97,8 @@ export function generateManifest(
   };
 
   fs.writeFileSync(outputPath, JSON.stringify(publication, null, 2));
-  const ajv = Ajv();
+  const ajv = new Ajv({ strict: false });
+  addFormats(ajv);
   ajv.addSchema(publicationSchemas);
   const valid = ajv.validate(publicationSchemaId, publication);
   if (!valid) {
