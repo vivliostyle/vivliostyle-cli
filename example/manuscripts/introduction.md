@@ -1,3 +1,0 @@
-# Vivliostyle
-
-![](./logo.png)

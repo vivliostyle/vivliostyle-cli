@@ -1,0 +1,7 @@
+{
+  "name": "theme-preset",
+  "version": "1.0.0",
+  "dependencies": {
+    "@vivliostyle/theme-bunko": "^0.3.0"
+  }
+}
