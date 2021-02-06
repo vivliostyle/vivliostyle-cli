@@ -453,7 +453,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
     sourcePath = cliFlags.input;
-    workspaceDir = process.cwd();
+    workspaceDir = otherConfig.workspaceDir;
     input = { format: 'webbook', entry: sourcePath };
   } else {
     sourcePath = path.resolve(cliFlags.input);
