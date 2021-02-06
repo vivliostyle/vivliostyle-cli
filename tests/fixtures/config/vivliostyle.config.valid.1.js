@@ -24,4 +24,5 @@ module.exports = {
   toc: './toc.html',
   cover: './cover.png',
   timeout: 1,
+  workspaceDir: 'workspaceDir',
 };

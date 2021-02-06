@@ -42,12 +42,14 @@ export interface FileTheme {
   type: 'file';
   name: string;
   location: string;
+  destination: string;
 }
 
 export interface PackageTheme {
   type: 'package';
   name: string;
   location: string;
+  destination: string;
   style: string;
 }
 
@@ -164,6 +166,7 @@ function normalizeEntry(
 export function parseTheme(
   locator: string | undefined,
   contextDir: string,
+  workspaceDir: string,
 ): ParsedTheme | undefined {
   if (typeof locator !== 'string' || locator == '') {
     return undefined;
@@ -189,16 +192,19 @@ export function parseTheme(
         type: 'package',
         name: style.name,
         location: pkgRootDir ?? stylePath,
+        destination: path.join(workspaceDir, 'themes/packages', style.name),
         style: style.maybeStyle,
       };
     }
   }
 
   // bare .css file
+  const sourceRelPath = path.relative(contextDir, stylePath);
   return {
     type: 'file',
     name: path.basename(locator),
     location: stylePath,
+    destination: path.resolve(workspaceDir, sourceRelPath),
   };
 }
 
@@ -245,6 +251,7 @@ function parsePageSize(size: string): PageSize {
 function parseFileMetadata(
   type: ManuscriptMediaType,
   sourcePath: string,
+  workspaceDir: string,
 ): { title?: string; theme?: ParsedTheme } {
   const sourceDir = path.dirname(sourcePath);
   let title: string | undefined;
@@ -252,7 +259,7 @@ function parseFileMetadata(
   if (type === 'text/markdown') {
     const file = processMarkdown(sourcePath);
     title = file.data.title;
-    theme = parseTheme(file.data.theme, sourceDir);
+    theme = parseTheme(file.data.theme, sourceDir, workspaceDir);
   } else {
     const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
     title = $('title')?.text() ?? undefined;
@@ -351,8 +358,8 @@ export async function mergeConfig<T extends CliFlags>(
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
-    parseTheme(cliFlags.theme, process.cwd()) ??
-    parseTheme(config?.theme, context);
+    parseTheme(cliFlags.theme, process.cwd(), workspaceDir) ??
+    parseTheme(config?.theme, context, workspaceDir);
   if (rootTheme) {
     themeIndexes.push(rootTheme);
   }
@@ -449,7 +456,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   if (input.format === 'markdown') {
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
-    const metadata = parseFileMetadata(type, sourcePath);
+    const metadata = parseFileMetadata(type, sourcePath, workspaceDir);
     const target = path
       .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
       .replace(/\.md$/, '.html');
@@ -546,7 +553,8 @@ async function composeProjectConfig<T extends CliFlags>(
 
   function parseEntry(entry: EntryObject | ContentsEntryObject): ParsedEntry {
     if (!('path' in entry)) {
-      const theme = parseTheme(entry.theme, context) ?? themeIndexes[0];
+      const theme =
+        parseTheme(entry.theme, context, workspaceDir) ?? themeIndexes[0];
       if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
         themeIndexes.push(theme);
       }
@@ -563,11 +571,13 @@ async function composeProjectConfig<T extends CliFlags>(
       .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
     const type = detectManuscriptMediaType(sourcePath);
-    const metadata = parseFileMetadata(type, sourcePath);
+    const metadata = parseFileMetadata(type, sourcePath, workspaceDir);
 
     const title = entry.title ?? metadata.title ?? projectTitle;
     const theme =
-      parseTheme(entry.theme, context) ?? metadata.theme ?? themeIndexes[0];
+      parseTheme(entry.theme, context, workspaceDir) ??
+      metadata.theme ??
+      themeIndexes[0];
 
     if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
       themeIndexes.push(theme);

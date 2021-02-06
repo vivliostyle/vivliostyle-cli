@@ -218,7 +218,7 @@ Object {
   "entries": Array [
     Object {
       "rel": "contents",
-      "target": "__WORKSPACE__/tests/fixtures/config/toc.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "theme": Object {
         "location": "https://myTheme.example.com",
         "name": "myTheme.example.com",
@@ -228,7 +228,7 @@ Object {
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
       "theme": Object {
         "location": "https://myTheme.example.com",
         "name": "myTheme.example.com",
@@ -239,8 +239,9 @@ Object {
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
       "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
         "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
         "name": "theme.css",
         "type": "file",
@@ -266,7 +267,7 @@ Object {
     "**/*.woff2",
   ],
   "input": Object {
-    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
     "format": "pub-manifest",
   },
   "language": "myLanguage",
@@ -274,7 +275,7 @@ Object {
     "author": "myAuthor",
     "title": "myTitle",
   },
-  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -297,6 +298,7 @@ Object {
       "type": "uri",
     },
     Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
       "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
       "name": "theme.css",
       "type": "file",
@@ -304,7 +306,7 @@ Object {
   ],
   "timeout": 42000,
   "verbose": false,
-  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
 
@@ -314,8 +316,9 @@ Object {
   "entries": Array [
     Object {
       "rel": "contents",
-      "target": "__WORKSPACE__/tests/fixtures/config/toc.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "name": "debug-theme",
         "style": "./theme.css",
@@ -325,8 +328,9 @@ Object {
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
       "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "name": "debug-theme",
         "style": "./theme.css",
@@ -337,8 +341,9 @@ Object {
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
-      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
       "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
         "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
         "name": "theme.css",
         "type": "file",
@@ -364,7 +369,7 @@ Object {
     "**/*.woff2",
   ],
   "input": Object {
-    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
     "format": "pub-manifest",
   },
   "language": "language",
@@ -372,7 +377,7 @@ Object {
     "author": "author",
     "title": "title",
   },
-  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -390,12 +395,14 @@ Object {
   },
   "themeIndexes": Array [
     Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
       "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "name": "debug-theme",
       "style": "./theme.css",
       "type": "package",
     },
     Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
       "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
       "name": "theme.css",
       "type": "file",
@@ -403,7 +410,7 @@ Object {
   ],
   "timeout": 1,
   "verbose": false,
-  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
 
@@ -515,6 +522,7 @@ Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
       "target": "__SNIP__",
       "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "name": "debug-theme",
         "style": "./theme.css",
@@ -567,6 +575,7 @@ Object {
   },
   "themeIndexes": Array [
     Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
       "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "name": "debug-theme",
       "style": "./theme.css",
@@ -575,7 +584,7 @@ Object {
   ],
   "timeout": 1,
   "verbose": false,
-  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
 

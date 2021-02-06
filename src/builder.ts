@@ -141,21 +141,9 @@ export async function compile(
       case 'uri':
         return theme.location;
       case 'file':
-        return path.relative(
-          from,
-          path.join(workspaceDir, 'themes', theme.name),
-        );
+        return path.relative(from, theme.destination);
       case 'package':
-        return path.relative(
-          from,
-          path.join(
-            workspaceDir,
-            'themes',
-            'packages',
-            theme.name,
-            theme.style,
-          ),
-        );
+        return path.relative(from, path.join(theme.destination, theme.style));
     }
   };
 
@@ -210,17 +198,15 @@ export async function compile(
   }
 
   // copy theme
-  const themeRoot = path.join(workspaceDir, 'themes');
   for (const theme of themeIndexes) {
-    switch (theme.type) {
-      case 'file':
-        shelljs.mkdir('-p', themeRoot);
-        shelljs.cp(theme.location, themeRoot);
-        break;
-      case 'package':
-        const target = path.join(themeRoot, 'packages', theme.name);
-        shelljs.mkdir('-p', target);
-        shelljs.cp('-r', path.join(theme.location, '*'), target);
+    if (theme.type === 'file') {
+      if (theme.location !== theme.destination) {
+        shelljs.mkdir('-p', path.dirname(theme.destination));
+        shelljs.cp(theme.location, theme.destination);
+      }
+    } else if (theme.type === 'package') {
+      shelljs.mkdir('-p', theme.destination);
+      shelljs.cp('-r', path.join(theme.location, '*'), theme.destination);
     }
   }
 

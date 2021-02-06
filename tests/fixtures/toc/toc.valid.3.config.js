@@ -4,7 +4,7 @@ module.exports = {
     {
       rel: 'contents',
       path: 'manuscript/ToC.html',
-      theme: '../themes/file.css',
+      theme: 'sample-theme.css',
     },
     'manuscript/a.md',
     'manuscript/b.md',

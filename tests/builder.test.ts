@@ -36,10 +36,10 @@ it('generate workspace directory', async () => {
     'index.html',
     'manuscript',
     'manuscript/cover.png',
+    'manuscript/sample-theme.css',
     'manuscript/soda.html',
     'publication.json',
     'themes',
-    'themes/file.css',
     'themes/packages',
     'themes/packages/debug-theme',
     'themes/packages/debug-theme/package.json',
@@ -78,7 +78,7 @@ it('generate workspace directory', async () => {
   );
   expect(
     manuscriptHtml.window.document.querySelector(
-      'link[rel="stylesheet"][href="../themes/file.css"]',
+      'link[rel="stylesheet"][href="sample-theme.css"]',
     ),
   ).toBeTruthy();
 
@@ -103,6 +103,8 @@ it('generate files with entryContext', async () => {
   const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-entryContext'));
   expect([...fileList]).toEqual([
     'cover.png',
+    'manuscript',
+    'manuscript/sample-theme.css',
     'publication.json',
     'soda.html',
     't-o-c.html',
@@ -124,6 +126,23 @@ it('generate files with entryContext', async () => {
     url: 't-o-c.html',
   });
   expect(manifest.inLanguage).toBeUndefined();
+
+  const tocHtml = new JSDOM(
+    fs.readFileSync(resolveFixture('builder/.vs-entryContext/t-o-c.html')),
+  );
+  expect(
+    tocHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="manuscript/sample-theme.css"]',
+    ),
+  ).toBeTruthy();
+  const manuscriptHtml = new JSDOM(
+    fs.readFileSync(resolveFixture('builder/.vs-entryContext/soda.html')),
+  );
+  expect(
+    manuscriptHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="manuscript/sample-theme.css"]',
+    ),
+  ).toBeTruthy();
 
   // try again and check idempotence
   await compile(config);

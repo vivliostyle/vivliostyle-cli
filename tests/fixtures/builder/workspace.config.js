@@ -4,7 +4,7 @@ module.exports = {
   entry: [
     {
       path: 'manuscript/soda.md',
-      theme: '../themes/file.css',
+      theme: 'manuscript/sample-theme.css',
     },
   ],
   output: ['output1.pdf'],

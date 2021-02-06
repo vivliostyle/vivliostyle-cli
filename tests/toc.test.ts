@@ -154,8 +154,8 @@ it('Write ToC by myself', async () => {
     'manuscript/c.html',
     'manuscript/ToC.html',
     'publication.json',
+    'sample-theme.css',
     'themes',
-    'themes/file.css',
     'themes/packages',
     'themes/packages/debug-theme',
     'themes/packages/debug-theme/package.json',
@@ -178,7 +178,7 @@ it('Write ToC by myself', async () => {
   expect(document.querySelector('title')!.text).toBe('Hand-written ToC');
   expect(
     document.querySelector('link[rel="stylesheet"]')!.getAttribute('href'),
-  ).toBe('../themes/file.css');
+  ).toBe('../sample-theme.css');
 });
 
 it('check ToC overwrite violation', async () => {
