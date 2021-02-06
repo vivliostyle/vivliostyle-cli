@@ -1,4 +1,4 @@
-![Vivliostyle CLI](https://raw.githubusercontent.com/vivliostyle/vivliostyle-cli/master/assets/cover.jpg)
+![Vivliostyle CLI](assets/cover.jpg)
 
 [![npm](https://flat.badgen.net/npm/v/@vivliostyle/cli)][npm-url]
 ![npm: version (tag)](https://flat.badgen.net/npm/v/@vivliostyle/cli/next)
