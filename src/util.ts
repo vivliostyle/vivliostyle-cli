@@ -118,9 +118,9 @@ export async function inflateZip(filePath: string, dest: string) {
   });
 }
 
-export async function launchBrowser(
-  options?: puppeteer.LaunchOptions,
-): Promise<puppeteer.Browser> {
+type PuppeteerLaunchOptions = Parameters<typeof puppeteer.launch>[0];
+type Browser = ReturnType<typeof puppeteer.launch>;
+export async function launchBrowser(options?: PuppeteerLaunchOptions): Browser {
   // process listener of puppeteer won't handle signal
   // because it doesn't support subprocess which is spawned by CLI
   const browser = await puppeteer.launch({

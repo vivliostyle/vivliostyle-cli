@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
@@ -272,7 +273,8 @@ export function collectVivliostyleConfig<T extends CliFlags>(
     }
     const config = require(configPath) as VivliostyleConfigSchema;
 
-    const ajv = Ajv();
+    const ajv = new Ajv({ strict: false });
+    addFormats(ajv);
     const valid = ajv.validate(configSchema, config);
     if (!valid) {
       throw new Error(

@@ -19,18 +19,19 @@ let timer: NodeJS.Timeout;
 try {
   const program = setupPreviewParserProgram();
   program.parse(process.argv);
+  const options = program.opts();
   preview({
     input: program.args?.[0],
-    configPath: program.config,
-    theme: program.theme,
-    size: program.size,
-    title: program.title,
-    author: program.author,
-    language: program.language,
-    verbose: program.verbose,
-    timeout: program.timeout,
-    sandbox: program.sandbox,
-    executableChromium: program.executableChromium,
+    configPath: options.config,
+    theme: options.theme,
+    size: options.size,
+    title: options.title,
+    author: options.author,
+    language: options.language,
+    verbose: options.verbose,
+    timeout: options.timeout,
+    sandbox: options.sandbox,
+    executableChromium: options.executableChromium,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);

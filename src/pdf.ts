@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
@@ -17,6 +16,10 @@ import {
   logUpdate,
   startLogging,
 } from './util';
+
+type PuppeteerPage = Resolved<
+  ReturnType<Resolved<ReturnType<typeof launchBrowser>>['newPage']>
+>;
 
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;
@@ -79,7 +82,7 @@ export async function buildPDF({
     })} ${entry.title ? chalk.gray(entry.title) : ''}`;
   }
 
-  function handleEntry(response: puppeteer.Response) {
+  function handleEntry(response: any) {
     const entry = entries.find((entry): entry is ManuscriptEntry => {
       if (!('source' in entry)) {
         return false;
@@ -163,14 +166,14 @@ export async function buildPDF({
   return output;
 }
 
-async function loadMetadata(page: puppeteer.Page): Promise<Meta> {
+async function loadMetadata(page: PuppeteerPage): Promise<Meta> {
   return page.evaluate(() => window.coreViewer.getMetadata());
 }
 
 // Show and hide the TOC in order to read its contents.
 // Chromium needs to see the TOC links in the DOM to add
 // the PDF destinations used during postprocessing.
-async function loadTOC(page: puppeteer.Page): Promise<TOCItem[]> {
+async function loadTOC(page: PuppeteerPage): Promise<TOCItem[]> {
   return page.evaluate(
     () =>
       new Promise<TOCItem[]>((resolve) => {

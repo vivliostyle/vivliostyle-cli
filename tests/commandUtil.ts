@@ -8,6 +8,7 @@ export const getMergedConfig = async (args: string[]) => {
     'build',
     ...args,
   ]);
+  const options = program.opts();
   const {
     vivliostyleConfig,
     vivliostyleConfigPath,
@@ -15,8 +16,8 @@ export const getMergedConfig = async (args: string[]) => {
   } = collectVivliostyleConfig({
     ...program.opts(),
     input: program.args?.[0],
-    configPath: program.config,
-    targets: program.targets,
+    configPath: options.config,
+    targets: options.targets,
   });
   const context = vivliostyleConfig
     ? path.dirname(vivliostyleConfigPath)
