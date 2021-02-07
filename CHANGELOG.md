@@ -1,3 +1,25 @@
+# :tada: [3.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v2.1.3...v3.0.0) (2021-02-07)
+
+## Introduce of the new configure file, `vivliostyle.config.js`!
+
+We added support for a new config file format that allows you to save and share the build settings of your publications. See [examples](examples/) for a detailed description of what you can do with this config file.
+
+## Revise the command line options (multiple output etc.)
+
+The CLI command line options have been revised to allow for more flexible I/O configuration. The biggest topic is that we can now set multiple output destinations simultaneously!
+
+```
+vivliostyle build -o publication/ -f webpub -o draft.pdf -f pdf
+```
+
+## Support official Vivliostyle themes
+
+We can now easily apply the various preset themes provided by Vivliostyle. Of course, you can also load your own CSS as a theme.
+
+```
+vivliostyle build input.md -T @vivliostyle/theme-techbook -o draft.pdf
+```
+
 # [3.0.0-rc.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-rc.0...v3.0.0-rc.1) (2021-02-07)
 
 ### Bug Fixes
