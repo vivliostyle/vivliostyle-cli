@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/ns/pub-schema/manifest/module/resource.categorization.schema.json",
+  "title": "Resource Categorization",
+  "oneOf": [
+    {
+      "oneOf": [
+        {
+          "$ref": "url.schema.json"
+        },
+        {
+          "$ref": "link.schema.json"
+        }
+      ]
+    },
+    {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "url.schema.json"
+          },
+          {
+            "$ref": "link.schema.json"
+          }
+        ]
+      },
+      "uniqueItems": true
+    }
+  ]
+}

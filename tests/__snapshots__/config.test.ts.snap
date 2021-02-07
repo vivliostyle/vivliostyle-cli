@@ -1,0 +1,685 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`imports a EPUB OPF file 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
+  "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
+    "format": "epub-opf",
+  },
+  "language": null,
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/epub-opf.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
+}
+`;
+
+exports[`imports a EPUB file 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs",
+  "epubOpfPath": "__SNIP__",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive.epub",
+    "format": "epub",
+  },
+  "language": null,
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/epub.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
+}
+`;
+
+exports[`imports a https URL 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
+    "format": "webbook",
+  },
+  "language": null,
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/output.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
+  "workspaceDir": "__WORKSPACE__",
+}
+`;
+
+exports[`imports a webbook compliant to Readium Web publication 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": null,
+  "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
+  "outputs": Array [
+    Object {
+      "format": "webpub",
+      "path": "__WORKSPACE__/readium-webpub",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
+}
+`;
+
+exports[`imports a webbook compliant to W3C Web publication 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": null,
+  "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "webpub",
+      "path": "__WORKSPACE__/w3c-webpub",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
+}
+`;
+
+exports[`imports single html file 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.html",
+    "format": "webbook",
+  },
+  "language": null,
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/output.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`override option by CLI command: valid.1.config.js 1`] = `
+Object {
+  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "entries": Array [
+    Object {
+      "rel": "contents",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
+      "theme": Object {
+        "location": "https://myTheme.example.com",
+        "name": "myTheme.example.com",
+        "type": "uri",
+      },
+      "title": "Table of Contents",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "theme": Object {
+        "location": "https://myTheme.example.com",
+        "name": "myTheme.example.com",
+        "type": "uri",
+      },
+      "title": "myTitle",
+      "type": "text/markdown",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
+        "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+        "name": "theme.css",
+        "type": "file",
+      },
+      "title": "title",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": "myLanguage",
+  "manifestAutoGenerate": Object {
+    "author": "myAuthor",
+    "title": "myTitle",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/yuno.pdf",
+    },
+    Object {
+      "format": "webpub",
+      "path": "__WORKSPACE__/yuno",
+    },
+  ],
+  "pressReady": true,
+  "sandbox": true,
+  "size": Object {
+    "format": "JIS-B5",
+  },
+  "themeIndexes": Array [
+    Object {
+      "location": "https://myTheme.example.com",
+      "name": "myTheme.example.com",
+      "type": "uri",
+    },
+    Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
+      "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+      "name": "theme.css",
+      "type": "file",
+    },
+  ],
+  "timeout": 42000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
+}
+`;
+
+exports[`parse vivliostyle config: valid.1.config.js 1`] = `
+Object {
+  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "entries": Array [
+    Object {
+      "rel": "contents",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "Table of Contents",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "title",
+      "type": "text/markdown",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
+        "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+        "name": "theme.css",
+        "type": "file",
+      },
+      "title": "title",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": "language",
+  "manifestAutoGenerate": Object {
+    "author": "author",
+    "title": "title",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+    },
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output2.pdf",
+    },
+  ],
+  "pressReady": true,
+  "sandbox": true,
+  "size": Object {
+    "format": "size",
+  },
+  "themeIndexes": Array [
+    Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+      "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+      "name": "debug-theme",
+      "style": "./theme.css",
+      "type": "package",
+    },
+    Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
+      "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+      "name": "theme.css",
+      "type": "file",
+    },
+  ],
+  "timeout": 1,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
+}
+`;
+
+exports[`parse vivliostyle config: valid.2.config.js 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "theme": undefined,
+      "title": "pkgName",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "pkgName",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`parse vivliostyle config: valid.3.config.js 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "example",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/example.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`yields a config with single input and vivliostyle config 1`] = `
+Object {
+  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
+      "target": "__SNIP__",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "Yuno",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": "__SNIP__",
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
+    "format": "markdown",
+  },
+  "language": "language",
+  "manifestAutoGenerate": Object {
+    "author": "author",
+    "title": "title",
+  },
+  "manifestPath": "__SNIP__",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+    },
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output2.pdf",
+    },
+  ],
+  "pressReady": true,
+  "sandbox": true,
+  "size": Object {
+    "format": "size",
+  },
+  "themeIndexes": Array [
+    Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+      "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+      "name": "debug-theme",
+      "style": "./theme.css",
+      "type": "package",
+    },
+  ],
+  "timeout": 1,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
+}
+`;
+
+exports[`yields a config with single markdown 1`] = `
+Object {
+  "cover": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
+      "target": "__SNIP__",
+      "theme": undefined,
+      "title": "Yuno",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": "__SNIP__",
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
+    "format": "markdown",
+  },
+  "language": null,
+  "manifestAutoGenerate": Object {
+    "author": "",
+    "title": "Yuno",
+  },
+  "manifestPath": "__SNIP__",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/output.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;

@@ -1,1 +1,7 @@
 node_modules/
+.envrc
+.env
+tests/
+example/
+coverage/
+.github/

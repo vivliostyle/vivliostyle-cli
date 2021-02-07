@@ -1,21 +1,21 @@
-import fs from 'fs';
-import path from 'path';
 import execa from 'execa';
 import fileType from 'file-type';
+import fs from 'fs';
 import {
   PDFCatalog,
   PDFDict,
   PDFDocument,
+  PDFHexString,
   PDFName,
   PDFNumber,
-  PDFHexString,
 } from 'pdf-lib';
+import path from 'upath';
 
 const rootPath = path.resolve(__dirname, '..');
 const packageJSON = require(path.join(rootPath, 'package.json'));
 const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
-const fixturePath = path.resolve(__dirname, 'fixtures');
-const fixtureProjectPath = path.join(fixturePath, 'wood');
+const fixtureRoot = path.resolve(__dirname, 'fixtures/wood');
+const fixtureFile = path.join(fixtureRoot, 'index.html');
 
 const localTmpDir = path.join(rootPath, 'tmp');
 fs.mkdirSync(localTmpDir, { recursive: true });
@@ -31,7 +31,7 @@ function cleanUp(filePath: string) {
 }
 
 function vivliostyleCLI(args: string[]) {
-  return execa(cliPath, args, { cwd: rootPath });
+  return execa(cliPath, args, { cwd: fixtureRoot, env: { DEBUG: 'vs-cli' } });
 }
 
 it('show version', async () => {
@@ -39,21 +39,20 @@ it('show version', async () => {
   expect(stdout).toContain(packageJSON.version);
 });
 
-it('generate pdf without errors', async () => {
+it.only('generate pdf without errors', async () => {
   const outputPath = path.join(localTmpDir, 'test.pdf');
   cleanUp(outputPath);
 
   try {
     const response = await vivliostyleCLI([
       'build',
-      fixtureProjectPath,
-      '-b',
       '-s',
       'A4',
       '-o',
       outputPath,
+      fixtureFile,
     ]);
-    expect(response.stdout).toContain('Generating PDF');
+    expect(response.stdout).toContain('has been created');
   } catch (err) {
     throw err.stderr;
   }
@@ -70,13 +69,12 @@ it('generate press-ready pdf without errors', async () => {
   try {
     const response = await vivliostyleCLI([
       'build',
-      fixtureProjectPath,
-      '-b',
       '-s',
       'A4',
       '-o',
       outputPath,
       '--press-ready',
+      fixtureFile,
     ]);
   } catch (err) {
     throw err.stderr;
@@ -93,14 +91,15 @@ it('generates a PDF with metadata', async () => {
   try {
     const response = await vivliostyleCLI([
       'build',
-      fixtureProjectPath,
-      '-b',
       '-s',
       'Letter',
+      '--title',
+      'Wood Engraving',
       '-o',
       outputPath,
+      fixtureFile,
     ]);
-    expect(response.stdout).toContain('Processing PDF');
+    expect(response.stdout).toContain('has been created');
   } catch (err) {
     throw err.stderr;
   }
@@ -108,13 +107,7 @@ it('generates a PDF with metadata', async () => {
   const bytes = fs.readFileSync(outputPath);
   const document = await PDFDocument.load(bytes);
 
-  // Document metadata
-  const metadata = document.context.lookup(
-    document.context.trailerInfo.Info,
-    PDFDict,
-  );
-  const metaTitle = metadata.lookup(PDFName.of('Title'), PDFHexString);
-  expect(metaTitle.sizeInBytes()).toBe(62); // 'Wood Engraving' as hex, with BOM
+  expect(document.getTitle()).toBe('Wood Engraving');
 
   const catalog = document.context.lookup(
     document.context.trailerInfo.Root,
@@ -129,5 +122,5 @@ it('generates a PDF with metadata', async () => {
 
   const intro = outlines.lookup(PDFName.of('First'), PDFDict);
   const introTitle = intro.lookup(PDFName.of('Title'), PDFHexString);
-  expect(introTitle.sizeInBytes()).toBe(78);
+  expect(introTitle.sizeInBytes()).toBe(62);
 }, 20000);

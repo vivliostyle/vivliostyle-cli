@@ -1,5 +1,5 @@
-FROM node:12-slim
-LABEL maintainer "Vivliostyle Foundation <mail@vivliostyle.org>"
+FROM node:14-slim
+LABEL maintainer "spring_raining <harusamex.com@gmail.com>"
 
 RUN set -x \
   && apt-get update \

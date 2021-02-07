@@ -1,6 +1,14 @@
-# Vivliostyle CLI
+![Vivliostyle CLI](assets/cover.jpg)
 
-Save the pdf file via Headless Chrome and Vivliostyle.
+[![npm](https://flat.badgen.net/npm/v/@vivliostyle/cli)][npm-url]
+![npm: version (tag)](https://flat.badgen.net/npm/v/@vivliostyle/cli/next)
+[![npm: total downloads](https://flat.badgen.net/npm/dt/@vivliostyle/cli)][npm-url]
+
+[npm-url]: https://npmjs.org/package/@vivliostyle/cli
+
+Supercharge your command-line publication workflow.
+
+> ✏️ You want README for the stable release? see <https://github.com/vivliostyle/vivliostyle-cli/tree/v2.1.0#readme>.
 
 ## Install
 
@@ -8,80 +16,124 @@ Save the pdf file via Headless Chrome and Vivliostyle.
 npm install -g @vivliostyle/cli
 ```
 
-## Usage
+If you are yolo-minded person, try `npm install -g @vivliostyle/cli@next`, which will installs the latest pre-release of Vivliostyle CLI.
+
+## Use
 
 ```
 Usage: vivliostyle [options] [command]
 
 Options:
-  -v, --version    output the version number
-  -h, --help       output usage information
+  -v, --version   output the version number
+  -h, --help      display help for command
 
 Commands:
-  build <input>    Launch headless Chrome and build PDF file
-  preview <input>  Open preview page
-  help [cmd]       display help for [cmd]
+  init            create vivliostyle config
+  build           build and create PDF file
+  preview         launch preview server
+  help [command]  display help for command
 ```
 
-### `build` command
+### `init`
 
-> Launch headless Chrome and save PDF file
+> create vivliostyle config file.
+
+```bash
+vivliostyle init
+```
+
+You are new to Vivliostyle? Check out our latest project [Create Book](https://github.com/vivliostyle/create-book#readme).
+With Create Book, you can easily bootstrap your book project and start writing without any extra effort.
+
+#### CLI Options
 
 ```
-Usage: vivliostyle build [options] <input>
-
-Launch headless Chrome and save PDF file
-
 Options:
-  -b, --book                    load document as book mode
-                               It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
-                               Please see also http://vivliostyle.github.io/vivliostyle.js/docs/en/
-  --no-sandbox                  launch chrome without sandbox (use this option to avoid ECONNREFUSED error)
-  -r, --root <root_directory>   specify assets root path (default directory of input file)
-  -o, --output <output_file>    specify output file path (default output.pdf) (default: "output.pdf")
-  -s, --size <size>             output pdf size (ex: 'A4' 'JIS-B5' '182mm,257mm' '8.5in,11in')
-  -t, --timeout <time>          timeout times for waiting Vivliostyle process (default: 60s)
-  --press-ready                 make generated PDF compatible with press ready PDF/X-1a
-  --executable-chromium <path>  specify a path of executable Chrome(Chromium) you installed
+  --title <title>            title
+  --author <author>          author
+  -l, --language <language>  language
+  -s, --size  <size>         paper size
+  -T, --theme <theme>        theme
+  -h, --help                 display help for command
+```
+
+### `build`
+
+> build and create PDF file.
+
+Put [vivliostyle.config.js](https://github.com/vivliostyle/vivliostyle-cli/issues/38) in the root directory, then:
+
+```bash
+vivliostyle build
+```
+
+![build](assets/build.gif)
+
+#### CLI options
+
+```
+Options:
+  -c, --config <config_file>    path to vivliostyle.config.js [vivliostyle.config.js]
+  -o, --output <path>           specify output file name or directory [<title>.pdf]
+                                This option can be specified multiple, then each -o options can be supplied one -f option.
+                                ex: -o output1 -f webpub -o output2.pdf -f pdf
+  -f, --format <format>         specify output format corresponding output target
+                                If an extension is specified on -o option, this field will be inferenced automatically.
+  -s, --size <size>             output pdf size [Letter]
+                                preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+                                custom(comma separated): 182mm,257mm or 8.5in,11in
+  -p, --press-ready             make generated PDF compatible with press ready PDF/X-1a [false]
+  -t, --timeout <seconds>       timeout limit for waiting Vivliostyle process [60s]
+  -T, --theme <theme>           theme path or package name
+  --title <title>               title
+  --author <author>             author
+  -l, --language <language>     language
   --verbose                     verbose log output
-  -h, --help                    output usage information
+  --no-sandbox                  launch chrome without sandbox. use this option when ECONNREFUSED error occurred.
+  --executable-chromium <path>  specify a path of executable Chrome (or Chromium) you installed
+  -h, --help                    display help for command
 ```
 
-### `preview` command
+### `preview`
 
-> Open preview page and save PDF interactively
+> open preview page and save PDF interactively.
+
+```bash
+vivliostyle preview
+```
+
+#### CLI options
 
 ```
-Usage: vivliostyle preview [options] <input>
-
-Open preview page and save PDF interactively
-
 Options:
-  -b, --book                    load document as book mode
-                               It can load multi-HTML documents such as an unzipped EPUB and a Web Publication.
-                               Please see also http://vivliostyle.github.io/vivliostyle.js/docs/en/
+  -c, --config <config_file>    path to vivliostyle.config.js
+  -T, --theme <theme>           theme path or package name
+  -s, --size <size>             output pdf size [Letter]
+                                preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+                                custom(comma separated): 182mm,257mm or 8.5in,11in
+  --title <title>               title
+  --author <author>             author
+  -l, --language <language>     language
+  --verbose                     verbose log output
   --no-sandbox                  launch chrome without sandbox (use this option to avoid ECONNREFUSED error)
-  -r, --root <root_directory>   specify assets root path (default directory of input file)
   --executable-chromium <path>  specify a path of executable Chrome(Chromium) you installed
-  -h, --help                    output usage information
+  -h, --help                    display help for command
 ```
+
+## Q&A
+
+### Not working in Node v14.0.0
+
+`puppeteer` is not working in Node v14.0.0, ie `vivliostyle-cli` is not working same.
+See also: https://developers.google.com/web/tools/puppeteer/troubleshooting
+
+The error has been resolved by Node `>= v14.1.0` or `<= v12.0.0`.
 
 ## Contribute
 
-### Build
+See [Contribution Guide](CONTRIBUTING.md).
 
-```
-yarn install
-yarn build
-yarn link
-vivliostyle --version
-```
-
-### Docker Build
-
-```
-docker build -t vivliostyle/cli .
-```
+[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/0)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/0)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/1)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/1)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/2)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/2)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/3)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/3)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/4)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/4)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/5)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/5)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/6)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/6)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/7)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/7)
 
 ## License
 

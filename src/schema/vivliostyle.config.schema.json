@@ -1,0 +1,169 @@
+{
+  "definitions": {
+    "entry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entryObject": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "title": { "type": "string" },
+        "theme": { "type": "string" },
+        "encodingFormat": { "type": "string" },
+        "rel": {
+          "type": ["string", "array"],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    },
+    "contentsEntryObject": {
+      "type": "object",
+      "properties": {
+        "rel": {
+          "type": "string",
+          "const": "contents"
+        },
+        "title": { "type": "string" },
+        "theme": { "type": "string" }
+      },
+      "required": ["rel"],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outputObject": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "format": { "type": "string" }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    },
+    "coreProps": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title",
+          "minLength": 1
+        },
+        "author": {
+          "type": "string",
+          "description": "Author",
+          "minLength": 1
+        },
+        "theme": {
+          "description": "Theme package path or URL of css file.",
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 214,
+              "minLength": 1,
+              "pattern": "^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$"
+            },
+            {
+              "type": "string",
+              "pattern": "^.+/[^/]+(.css|\\w)$"
+            }
+          ]
+        },
+        "entry": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/definitions/entry" },
+                  { "$ref": "#/definitions/entryObject" },
+                  { "$ref": "#/definitions/contentsEntryObject" }
+                ]
+              }
+            },
+            { "$ref": "#/definitions/entry" },
+            { "$ref": "#/definitions/entryObject" }
+          ]
+        },
+        "entryContext": {
+          "type": "string",
+          "description": "",
+          "minLength": 1
+        },
+        "output": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/definitions/output" },
+                  { "$ref": "#/definitions/outputObject" }
+                ]
+              }
+            },
+            { "$ref": "#/definitions/output" },
+            { "$ref": "#/definitions/outputObject" }
+          ]
+        },
+        "workspaceDir": {
+          "type": "string",
+          "description": "",
+          "minLength": 1
+        },
+        "includeAssets": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "$ref": "#/definitions/entry" }
+            },
+            { "$ref": "#/definitions/entry" }
+          ]
+        },
+        "size": {
+          "type": "string",
+          "description": "",
+          "minLength": 1
+        },
+        "pressReady": {
+          "type": "boolean"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "toc": {
+          "oneOf": [
+            { "type": "boolean" },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        },
+        "tocTitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cover": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/coreProps"
+    }
+  ]
+}

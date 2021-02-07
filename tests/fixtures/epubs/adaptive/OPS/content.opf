@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" xml:lang="en" unique-identifier="bookid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title id="title">Adaptive Layout sample</dc:title>
+    <dc:creator id="creator">Peter Sorotokin</dc:creator>
+    <dc:identifier id="bookid">urn:uuid:897FDA48-73A6-4857-861B-0166ECCA0756</dc:identifier>
+    <dc:language>en-US</dc:language>
+    <meta property="dcterms:modified">2014-03-25</meta>
+  </metadata>
+  <manifest>
+    <item id="main_xhtml" href="main.xhtml" media-type="application/xhtml+xml"/>
+    <item id="style_css" href="style.css" media-type="text/css"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />
+    <item id="toc" href="toc.xhtml" media-type="application/xhtml+xml" properties="nav" />
+    <item id="image1" href="arch.jpg" media-type="image/jpeg"/>
+    <item id="image2" href="main.jpg" media-type="image/jpeg"/>
+    <item id="image3" href="rabbit.jpg" media-type="image/jpeg"/>
+    <item id="fnt1" href="fonts/ChaparralPro-Regular.otf" media-type="application/vnd.ms-opentype"/>
+    <item id="fnt2" href="fonts/ChaparralPro-Bold.otf" media-type="application/vnd.ms-opentype"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="main_xhtml"/>
+  </spine>
+</package>
+
