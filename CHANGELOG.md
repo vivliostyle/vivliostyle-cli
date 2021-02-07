@@ -1,3 +1,14 @@
+# [3.0.0-rc.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-rc.0...v3.0.0-rc.1) (2021-02-07)
+
+### Bug Fixes
+
+- Can't load from Web URL ([e0e6689](https://github.com/vivliostyle/vivliostyle-cli/commit/e0e668951613ac49e5c253cf235f54e8af07c445))
+- set process.cwd() to workspaceDir and entryContextDir ([811d879](https://github.com/vivliostyle/vivliostyle-cli/commit/811d8799f3a65ba472d01ee7212d0f2d4f270a5e))
+
+### Features
+
+- Add examples ([faca5c9](https://github.com/vivliostyle/vivliostyle-cli/commit/faca5c9bd30f6a7da4cecc4ff4095e72271b8b1d))
+
 # [3.0.0-rc.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0-pre.6...v3.0.0-rc.0) (2021-02-06)
 
 ### Bug Fixes
