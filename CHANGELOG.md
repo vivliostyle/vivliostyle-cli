@@ -1,3 +1,9 @@
+## [3.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0...v3.0.1) (2021-02-07)
+
+### Bug Fixes
+
+- Fix to raise errors on falsy input ([a38dd85](https://github.com/vivliostyle/vivliostyle-cli/commit/a38dd851ab232e6ee949b593b3579f88954fa2c5))
+
 # :tada: [3.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v2.1.3...v3.0.0) (2021-02-07)
 
 ## Introduce of the new configure file, `vivliostyle.config.js`!
