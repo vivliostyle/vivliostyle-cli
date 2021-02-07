@@ -8,15 +8,11 @@
 
 Supercharge your command-line publication workflow.
 
-> ✏️ You want README for the stable release? see <https://github.com/vivliostyle/vivliostyle-cli/tree/v2.1.0#readme>.
-
 ## Install
 
 ```
 npm install -g @vivliostyle/cli
 ```
-
-If you are yolo-minded person, try `npm install -g @vivliostyle/cli@next`, which will installs the latest pre-release of Vivliostyle CLI.
 
 ## Use
 
