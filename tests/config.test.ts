@@ -2,7 +2,13 @@ import shelljs from 'shelljs';
 import path from 'upath';
 import { getMergedConfig, maskConfig } from './commandUtil';
 
-const configFiles = ['valid.1', 'valid.2', 'valid.3', 'invalid.1'] as const;
+const configFiles = [
+  'valid.1',
+  'valid.2',
+  'valid.3',
+  'invalid.1',
+  'invalid.2',
+] as const;
 const configFilePath = configFiles.reduce(
   (p, v) => ({
     ...p,
@@ -62,6 +68,16 @@ it('deny invalid config', () => {
   expect(
     getMergedConfig(['-c', configFilePath['invalid.1']]),
   ).rejects.toThrow();
+});
+
+it('deny config which has no entry', () => {
+  expect(
+    getMergedConfig(['-c', configFilePath['invalid.2']]),
+  ).rejects.toThrow();
+});
+
+it('deny if any config file or input file is not set', () => {
+  expect(getMergedConfig([])).rejects.toThrow();
 });
 
 it('Loads same config file on each way', async () => {

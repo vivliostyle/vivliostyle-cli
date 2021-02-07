@@ -425,6 +425,11 @@ export async function mergeConfig<T extends CliFlags>(
     sandbox,
     executableChromium,
   };
+  if (!cliFlags.input && !config) {
+    throw new Error(
+      'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
+    );
+  }
   const parsedConfig = cliFlags.input
     ? await composeSingleInputConfig(commonOpts, cliFlags, config)
     : await composeProjectConfig(commonOpts, cliFlags, config, context);
@@ -615,6 +620,11 @@ async function composeProjectConfig<T extends CliFlags>(
         .map(normalizeEntry)
         .map(parseEntry)
     : [];
+  if (!entries.length) {
+    throw new Error(
+      'The entry fields seems to be empty. Make sure your Vivliostyle configuration.',
+    );
+  }
 
   let fallbackProjectTitle: string = '';
   if (!projectTitle) {
