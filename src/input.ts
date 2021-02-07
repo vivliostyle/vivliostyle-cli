@@ -44,10 +44,6 @@ export type InputFormat =
   | EpubOpfInput;
 
 export function detectInputFormat(entry: string): InputFormat {
-  if (/^https?:\/\//.test(entry)) {
-    return { format: 'html', entry };
-  }
-
   const lowerCasedExt = path.extname(entry).toLowerCase();
   if (lowerCasedExt === '.md' || lowerCasedExt === '.markdown') {
     return { format: 'markdown', entry };
