@@ -513,7 +513,15 @@ Object {
 exports[`parse vivliostyle config: valid.3.config.js 1`] = `
 Object {
   "cover": undefined,
-  "entries": Array [],
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "theme": undefined,
+      "title": "example",
+      "type": "text/markdown",
+    },
+  ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
