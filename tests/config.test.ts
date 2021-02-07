@@ -169,3 +169,11 @@ it('imports a webbook compliant to Readium Web publication', async () => {
   maskConfig(config);
   expect(config).toMatchSnapshot();
 });
+
+it('imports a https URL', async () => {
+  const config = await getMergedConfig([
+    'https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/',
+  ]);
+  maskConfig(config);
+  expect(config).toMatchSnapshot();
+});

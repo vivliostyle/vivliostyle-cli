@@ -330,14 +330,21 @@ export async function mergeConfig<T extends CliFlags>(
   debug('context directory', context);
   debug('cliFlags', cliFlags);
   debug('vivliostyle.config.js', config);
+  let entryContextDir: string;
+  let workspaceDir: string;
 
-  const entryContextDir = path.resolve(
-    cliFlags.input
-      ? path.dirname(path.resolve(context, cliFlags.input))
-      : contextResolve(context, config?.entryContext) ?? context,
-  );
-  const workspaceDir =
-    contextResolve(context, config?.workspaceDir) ?? entryContextDir;
+  if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
+    workspaceDir = entryContextDir = process.cwd();
+  } else {
+    entryContextDir = path.resolve(
+      cliFlags.input
+        ? path.dirname(path.resolve(context, cliFlags.input))
+        : contextResolve(context, config?.entryContext) ?? context,
+    );
+    workspaceDir =
+      contextResolve(context, config?.workspaceDir) ?? entryContextDir;
+  }
+
   const includeAssets = config?.includeAssets
     ? Array.isArray(config.includeAssets)
       ? config.includeAssets
@@ -446,12 +453,22 @@ async function composeSingleInputConfig<T extends CliFlags>(
 ): Promise<MergedConfig> {
   debug('entering single entry config mode');
 
-  const sourcePath = path.resolve(cliFlags.input);
-  const workspaceDir = path.dirname(sourcePath);
+  let sourcePath: string;
+  let workspaceDir: string;
+  let input: InputFormat;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
   const tmpPrefix = `.vs-${Date.now()}.`;
-  const input = detectInputFormat(sourcePath);
+
+  if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
+    sourcePath = cliFlags.input;
+    workspaceDir = otherConfig.workspaceDir;
+    input = { format: 'webbook', entry: sourcePath };
+  } else {
+    sourcePath = path.resolve(cliFlags.input);
+    workspaceDir = path.dirname(sourcePath);
+    input = detectInputFormat(sourcePath);
+  }
 
   if (input.format === 'markdown') {
     // Single input file; create temporary file

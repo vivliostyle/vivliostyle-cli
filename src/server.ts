@@ -14,8 +14,13 @@ export function getBrokerUrl({
   loadMode?: LoadMode;
   outputSize?: PageSize;
 }) {
-  const sourceUrl = new URL('file://');
-  sourceUrl.pathname = sourceIndex;
+  let sourceUrl: URL;
+  if (/https?:\/\//.test(sourceIndex)) {
+    sourceUrl = new URL(sourceIndex);
+  } else {
+    sourceUrl = new URL('file://');
+    sourceUrl.pathname = sourceIndex;
+  }
 
   const brokerUrl = new URL('file://');
   brokerUrl.pathname = path.resolve(__dirname, '../broker/index.html');
