@@ -1,3 +1,9 @@
+## [3.0.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.2...v3.0.3) (2021-02-09)
+
+### Bug Fixes
+
+- Update core deps ([f7ab4d3](https://github.com/vivliostyle/vivliostyle-cli/commit/f7ab4d346986cbb3d091fc3b6b51deb38e1dab15))
+
 ## [3.0.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.1...v3.0.2) (2021-02-09)
 
 ### Bug Fixes
