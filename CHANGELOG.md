@@ -1,3 +1,9 @@
+## [3.0.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.1...v3.0.2) (2021-02-09)
+
+### Bug Fixes
+
+- Place resources file on build time ([56a5e8b](https://github.com/vivliostyle/vivliostyle-cli/commit/56a5e8b9e4206a52a2456a0e84bbeed7549c4b6a))
+
 ## [3.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0...v3.0.1) (2021-02-07)
 
 ### Bug Fixes
