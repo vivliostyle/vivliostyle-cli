@@ -1,5 +1,7 @@
 /dist
 /broker/dist
+/broker/thirdparty/*
+!/broker/thirdparty/.gitkeep
 /tmp
 *.pdf
 .vscode
