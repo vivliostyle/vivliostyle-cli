@@ -1,3 +1,13 @@
+# [3.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.3...v3.1.0) (2021-02-27)
+
+### Bug Fixes
+
+- exmaples/theme-preset size(JIS-B6 -> A5) ([a50fe02](https://github.com/vivliostyle/vivliostyle-cli/commit/a50fe0223795241b36afd5f630bf9eb6f54ac2ba))
+
+### Features
+
+- Update vivliostyle core version to 2.5 ([7b49393](https://github.com/vivliostyle/vivliostyle-cli/commit/7b493934d4258722ffa403ec636e1ee11069fb9b))
+
 ## [3.0.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.2...v3.0.3) (2021-02-09)
 
 ### Bug Fixes
