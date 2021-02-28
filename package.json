@@ -23,7 +23,7 @@
     "test": "jest --coverage"
   },
   "dependencies": {
-    "@vivliostyle/core": "2.5.0",
+    "@vivliostyle/core": "2.5.1",
     "@vivliostyle/vfm": "v1.0.0-alpha.17",
     "ajv": "^7.0.4",
     "ajv-formats": "^1.5.1",
