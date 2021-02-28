@@ -73,6 +73,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     args: [
       '--allow-file-access-from-files',
       config.sandbox ? '' : '--no-sandbox',
+      '--disable-web-security',
     ],
   });
   const page = await browser.newPage();
