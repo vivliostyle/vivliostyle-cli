@@ -52,7 +52,11 @@ export async function buildPDF({
     headless: true,
     executablePath: executableChromium,
     // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
-    args: ['--allow-file-access-from-files', sandbox ? '' : '--no-sandbox'],
+    args: [
+      '--allow-file-access-from-files',
+      sandbox ? '' : '--no-sandbox',
+      '--disable-web-security',
+    ],
   });
   const version = await browser.version();
   debug(chalk.green('success'), `version=${version}`);
