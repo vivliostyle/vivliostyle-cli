@@ -1,14 +1,16 @@
 import chokidar from 'chokidar';
 import puppeteer from 'puppeteer';
-import path from 'upath';
+import upath from 'upath';
 import { compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { getBrokerUrl } from '../server';
 import {
+  cwd,
   debug,
   gracefulError,
   launchBrowser,
   logSuccess,
+  pathStartsWith,
   startLogging,
   stopLogging,
 } from '../util';
@@ -45,8 +47,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   cliFlags = loadedConf.cliFlags;
 
   const context = vivliostyleConfig
-    ? path.dirname(vivliostyleConfigPath)
-    : process.cwd();
+    ? upath.dirname(vivliostyleConfigPath)
+    : cwd;
 
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
@@ -96,17 +98,52 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     }, 2000);
   }
 
-  chokidar
-    .watch('**', {
-      ignored: (p: string) => {
-        return (
-          /node_modules|\.git/.test(p) || p.startsWith(config.workspaceDir)
-        );
-      },
-      cwd: context,
-    })
-    .on('all', (event, path) => {
-      if (!/\.(md|markdown|html?|css|jpe?g|png|gif|svg)$/i.test(path)) return;
-      handleChangeEvent(path);
-    });
+  if (!/https?:\/\//.test(config.input.entry)) {
+    chokidar
+      .watch('**', {
+        ignored: (path: string) => {
+          if (/^node_modules$|^\.git/.test(upath.basename(path))) {
+            return true;
+          }
+          if (
+            config.entryContextDir !== config.workspaceDir &&
+            pathStartsWith(path, config.workspaceDir)
+          ) {
+            return true; // ignore saved intermediate files
+          }
+          if (config.manifestAutoGenerate && path === config.manifestPath) {
+            return true; // ignore generated pub-manifest
+          }
+          if (
+            config.entries.length &&
+            /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
+            !config.entries.find(
+              (entry) => path === (entry as { source: string }).source,
+            )
+          ) {
+            return true; // ignore md or html files not in entries source
+          }
+          if (
+            config.themeIndexes.find((theme) =>
+              theme.type === 'file'
+                ? path === theme.destination
+                : theme.type === 'package' &&
+                  pathStartsWith(path, theme.destination),
+            )
+          ) {
+            return true; // ignore copied theme files
+          }
+          return false;
+        },
+        cwd: config.entries.length ? context : config.entryContextDir,
+      })
+      .on('all', (event, path) => {
+        if (
+          upath.join(config.entryContextDir, path) === config.input.entry ||
+          /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
+        ) {
+          handleChangeEvent(path);
+        }
+      });
+  }
 }
