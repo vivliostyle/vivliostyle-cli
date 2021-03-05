@@ -185,7 +185,7 @@ export function encodeHashParameter(params: Record<string, string>): string {
 }
 
 export function pathStartsWith(path1: string, path2: string): boolean {
-  const path1n = upath.normalizeTrim(path1) + '/';
-  const path2n = upath.normalizeTrim(path2) + '/';
+  const path1n = upath.normalize(path1).replace(/\/?$/, '/');
+  const path2n = upath.normalize(path2).replace(/\/?$/, '/');
   return path1n.startsWith(path2n);
 }
