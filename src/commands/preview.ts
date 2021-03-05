@@ -98,52 +98,54 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     }, 2000);
   }
 
-  if (!/https?:\/\//.test(config.input.entry)) {
-    chokidar
-      .watch('**', {
-        ignored: (path: string) => {
-          if (/^node_modules$|^\.git/.test(upath.basename(path))) {
-            return true;
-          }
-          if (
-            config.entryContextDir !== config.workspaceDir &&
-            pathStartsWith(path, config.workspaceDir)
-          ) {
-            return true; // ignore saved intermediate files
-          }
-          if (config.manifestAutoGenerate && path === config.manifestPath) {
-            return true; // ignore generated pub-manifest
-          }
-          if (
-            config.entries.length &&
-            /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
-            !config.entries.find(
-              (entry) => path === (entry as { source: string }).source,
-            )
-          ) {
-            return true; // ignore md or html files not in entries source
-          }
-          if (
-            config.themeIndexes.find((theme) =>
-              theme.type === 'file'
-                ? path === theme.destination
-                : theme.type === 'package' &&
-                  pathStartsWith(path, theme.destination),
-            )
-          ) {
-            return true; // ignore copied theme files
-          }
-          return false;
-        },
-        cwd: config.entries.length ? context : config.entryContextDir,
-      })
-      .on('all', (event, path) => {
-        if (
-          upath.join(config.entryContextDir, path) === config.input.entry ||
-          /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
-        ) {
-          handleChangeEvent(path);
-        }
-      });
+  if (/https?:\/\//.test(config.input.entry)) {
+    return;
   }
+
+  chokidar
+    .watch('**', {
+      ignored: (path: string) => {
+        if (/^node_modules$|^\.git/.test(upath.basename(path))) {
+          return true;
+        }
+        if (
+          config.entryContextDir !== config.workspaceDir &&
+          pathStartsWith(path, config.workspaceDir)
+        ) {
+          return true; // ignore saved intermediate files
+        }
+        if (config.manifestAutoGenerate && path === config.manifestPath) {
+          return true; // ignore generated pub-manifest
+        }
+        if (
+          config.entries.length &&
+          /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
+          !config.entries.find(
+            (entry) => path === (entry as { source: string }).source,
+          )
+        ) {
+          return true; // ignore md or html files not in entries source
+        }
+        if (
+          config.themeIndexes.find((theme) =>
+            theme.type === 'file'
+              ? path === theme.destination
+              : theme.type === 'package' &&
+                pathStartsWith(path, theme.destination),
+          )
+        ) {
+          return true; // ignore copied theme files
+        }
+        return false;
+      },
+      cwd: config.entries.length ? context : config.entryContextDir,
+    })
+    .on('all', (event, path) => {
+      if (
+        upath.join(config.entryContextDir, path) === config.input.entry ||
+        /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
+      ) {
+        handleChangeEvent(path);
+      }
+    });
 }
