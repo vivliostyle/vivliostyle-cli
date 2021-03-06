@@ -1,3 +1,14 @@
+## [3.1.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.1.1...v3.1.2) (2021-03-06)
+
+### Bug Fixes
+
+- Failed to load from web because of CORS error ([1cb1baf](https://github.com/vivliostyle/vivliostyle-cli/commit/1cb1baf756d4ecb9466db6b17d7e1b58dfaa9dd3))
+- Preview watch not working as expected ([7607d74](https://github.com/vivliostyle/vivliostyle-cli/commit/7607d744bbb37d690f8f5478e9f301886ddba2b9))
+
+### Features
+
+- Update vivliostyle core version to 2.5.2 ([b5ad780](https://github.com/vivliostyle/vivliostyle-cli/commit/b5ad78039edbe33be1b4fef97572b2b67274fb42))
+
 ## [3.1.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.1.0...v3.1.1) (2021-02-28)
 
 # [3.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.3...v3.1.0) (2021-02-27)
