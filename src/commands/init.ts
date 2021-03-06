@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'upath';
-import { gracefulError, log } from '../util';
+import { cwd, gracefulError, log } from '../util';
 import { InitCliFlags, setupInitParserProgram } from './init.parser';
 
 try {
@@ -20,10 +20,7 @@ try {
 }
 
 export default async function init(cliFlags: InitCliFlags) {
-  const vivliostyleConfigPath = path.join(
-    process.cwd(),
-    'vivliostyle.config.js',
-  );
+  const vivliostyleConfigPath = path.join(cwd, 'vivliostyle.config.js');
 
   if (fs.existsSync(vivliostyleConfigPath)) {
     return log(

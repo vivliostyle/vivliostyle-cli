@@ -3,7 +3,6 @@ import addFormats from 'ajv-formats';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
-import process from 'process';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
@@ -28,7 +27,7 @@ import type {
 } from './schema/vivliostyle.config';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import { debug, log, readJSON, touchTmpFile } from './util';
+import { cwd, debug, log, readJSON, touchTmpFile } from './util';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -291,7 +290,6 @@ export function collectVivliostyleConfig<T extends CliFlags>(
     return config;
   };
 
-  const cwd = process.cwd();
   let vivliostyleConfigPath = cliFlags.configPath
     ? path.resolve(cwd, cliFlags.configPath)
     : path.join(cwd, 'vivliostyle.config.js');
@@ -303,7 +301,7 @@ export function collectVivliostyleConfig<T extends CliFlags>(
   ) {
     // Load an input argument as a Vivliostyle config
     try {
-      const inputPath = path.resolve(process.cwd(), cliFlags.input);
+      const inputPath = path.resolve(cwd, cliFlags.input);
       const inputConfig = load(inputPath);
       if (inputConfig) {
         cliFlags = {
@@ -334,7 +332,7 @@ export async function mergeConfig<T extends CliFlags>(
   let workspaceDir: string;
 
   if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
-    workspaceDir = entryContextDir = process.cwd();
+    workspaceDir = entryContextDir = cwd;
   } else {
     entryContextDir = path.resolve(
       cliFlags.input
@@ -365,7 +363,7 @@ export async function mergeConfig<T extends CliFlags>(
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
-    parseTheme(cliFlags.theme, process.cwd(), workspaceDir) ??
+    parseTheme(cliFlags.theme, cwd, workspaceDir) ??
     parseTheme(config?.theme, context, workspaceDir);
   if (rootTheme) {
     themeIndexes.push(rootTheme);
