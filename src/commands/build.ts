@@ -5,7 +5,7 @@ import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
 import { buildPDF } from '../pdf';
-import { gracefulError, log, startLogging, stopLogging } from '../util';
+import { cwd, gracefulError, log, startLogging, stopLogging } from '../util';
 import { exportWebPublication } from '../webbook';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
@@ -39,9 +39,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
   cliFlags = loadedConf.cliFlags;
 
-  const context = vivliostyleConfig
-    ? path.dirname(vivliostyleConfigPath)
-    : process.cwd();
+  const context = vivliostyleConfig ? path.dirname(vivliostyleConfigPath) : cwd;
 
   const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
   checkUnsupportedOutputs(config);
@@ -79,9 +77,7 @@ export default async function build(cliFlags: BuildCliFlags) {
       });
     }
     if (output) {
-      const formattedOutput = chalk.bold.green(
-        path.relative(process.cwd(), output),
-      );
+      const formattedOutput = chalk.bold.green(path.relative(cwd, output));
       log(
         `\n${terminalLink(formattedOutput, 'file://' + output, {
           fallback: () => formattedOutput,

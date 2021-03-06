@@ -6,9 +6,11 @@ import oraConstructor from 'ora';
 import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import tmp from 'tmp';
+import upath from 'upath';
 import util from 'util';
 
 export const debug = debugConstructor('vs-cli');
+export const cwd = upath.normalize(process.cwd());
 
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
 
@@ -180,4 +182,10 @@ export function encodeHashParameter(params: Record<string, string>): string {
       return `${k}=${value}`;
     })
     .join('&');
+}
+
+export function pathStartsWith(path1: string, path2: string): boolean {
+  const path1n = upath.normalize(path1).replace(/\/?$/, '/');
+  const path2n = upath.normalize(path2).replace(/\/?$/, '/');
+  return path1n.startsWith(path2n);
 }
