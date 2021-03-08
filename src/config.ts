@@ -283,8 +283,13 @@ export function collectVivliostyleConfig<T extends CliFlags>(
     addFormats(ajv);
     const valid = ajv.validate(configSchema, config);
     if (!valid) {
+      const errors = ajv.errors
+        ?.map((value, index, array) => {
+          return `${value.dataPath} ${value.message}`;
+        })
+        .join('\n');
       throw new Error(
-        `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`,
+        `Validation of vivliostyle.config failed. Please check the schema: ${configPath}\n${errors}`,
       );
     }
     return config;

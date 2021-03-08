@@ -102,8 +102,13 @@ export function generateManifest(
   ajv.addSchema(publicationSchemas);
   const valid = ajv.validate(publicationSchemaId, publication);
   if (!valid) {
+    const errors = ajv.errors
+      ?.map((value, index, array) => {
+        return `${value.dataPath} ${value.message}`;
+      })
+      .join('\n');
     throw new Error(
-      `Validation of pubManifest failed. Please check the schema: ${outputPath}`,
+      `Validation of pubManifest failed. Please check the schema: ${outputPath}\n${errors}`,
     );
   }
 }
