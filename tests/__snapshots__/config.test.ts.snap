@@ -2,6 +2,7 @@
 
 exports[`imports a EPUB OPF file 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
@@ -44,6 +45,7 @@ Object {
 
 exports[`imports a EPUB file 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs",
@@ -86,6 +88,7 @@ Object {
 
 exports[`imports a https URL 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__",
@@ -128,6 +131,7 @@ Object {
 
 exports[`imports a webbook compliant to Readium Web publication 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
@@ -171,6 +175,7 @@ Object {
 
 exports[`imports a webbook compliant to W3C Web publication 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
@@ -214,6 +219,7 @@ Object {
 
 exports[`imports single html file 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
@@ -256,6 +262,7 @@ Object {
 
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
+  "config_version": 0,
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "entries": Array [
     Object {
@@ -354,6 +361,7 @@ Object {
 
 exports[`parse vivliostyle config: valid.1.config.js 1`] = `
 Object {
+  "config_version": 0,
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "entries": Array [
     Object {
@@ -458,6 +466,7 @@ Object {
 
 exports[`parse vivliostyle config: valid.2.config.js 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [
     Object {
@@ -512,6 +521,62 @@ Object {
 
 exports[`parse vivliostyle config: valid.3.config.js 1`] = `
 Object {
+  "config_version": 0,
+  "cover": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "theme": undefined,
+      "title": "example",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "example",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/example.pdf",
+    },
+  ],
+  "pressReady": false,
+  "sandbox": true,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`parse vivliostyle config: valid.4.config.js 1`] = `
+Object {
+  "config_version": 3,
   "cover": undefined,
   "entries": Array [
     Object {
@@ -566,6 +631,7 @@ Object {
 
 exports[`yields a config with single input and vivliostyle config 1`] = `
 Object {
+  "config_version": 0,
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "entries": Array [
     Object {
@@ -640,6 +706,7 @@ Object {
 
 exports[`yields a config with single markdown 1`] = `
 Object {
+  "config_version": 0,
   "cover": undefined,
   "entries": Array [
     Object {

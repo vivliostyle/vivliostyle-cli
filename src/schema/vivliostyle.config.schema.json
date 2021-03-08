@@ -157,6 +157,11 @@
         "timeout": {
           "type": "number",
           "minimum": 0
+        },
+        "config_version": {
+          "type": "number",
+          "minimum": 3.0,
+          "maximum": 3.0
         }
       }
     }

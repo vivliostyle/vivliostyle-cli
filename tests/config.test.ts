@@ -6,8 +6,10 @@ const configFiles = [
   'valid.1',
   'valid.2',
   'valid.3',
+  'valid.4',
   'invalid.1',
   'invalid.2',
+  'invalid.3',
 ] as const;
 const configFilePath = configFiles.reduce(
   (p, v) => ({
@@ -33,6 +35,10 @@ it('parse vivliostyle config', async () => {
   const validConfig3 = await getMergedConfig(['-c', configFilePath['valid.3']]);
   maskConfig(validConfig3);
   expect(validConfig3).toMatchSnapshot('valid.3.config.js');
+
+  const validConfig4 = await getMergedConfig(['-c', configFilePath['valid.4']]);
+  maskConfig(validConfig4);
+  expect(validConfig4).toMatchSnapshot('valid.4.config.js');
 });
 
 it('override option by CLI command', async () => {
@@ -73,6 +79,12 @@ it('deny invalid config', () => {
 it('deny config which has no entry', () => {
   expect(
     getMergedConfig(['-c', configFilePath['invalid.2']]),
+  ).rejects.toThrow();
+});
+
+it('deny config version mismatch', () => {
+  expect(
+    getMergedConfig(['-c', configFilePath['invalid.3']]),
   ).rejects.toThrow();
 });
 

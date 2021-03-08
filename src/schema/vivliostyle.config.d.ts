@@ -11,6 +11,10 @@ export type Output = string;
 
 export interface CoreProps {
   /**
+   * Config version
+   */
+  config_version: number;
+  /**
    * Title
    */
   title?: string;

@@ -104,6 +104,7 @@ export type ManifestConfig = XOR<
 >;
 
 export type MergedConfig = {
+  config_version: number;
   entryContextDir: string;
   workspaceDir: string;
   entries: ParsedEntry[];
@@ -349,6 +350,7 @@ export async function mergeConfig<T extends CliFlags>(
       : [config.includeAssets]
     : DEFAULT_ASSETS;
 
+  const config_version = config?.config_version ?? 0;
   const language = cliFlags.language ?? config?.language ?? null;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
@@ -409,6 +411,7 @@ export async function mergeConfig<T extends CliFlags>(
   })();
 
   const commonOpts: CommonOpts = {
+    config_version,
     entryContextDir,
     workspaceDir,
     includeAssets,
