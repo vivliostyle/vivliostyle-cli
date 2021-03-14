@@ -999,10 +999,10 @@
   dependencies:
     "@types/node" "*"
 
-"@vivliostyle/core@2.5.2":
-  version "2.5.2"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.5.2.tgz#1cc41697d6d374766302c23e3baf35c906955422"
-  integrity sha512-arkNbAqMJjf96TD/0TH3wwb7xvpetk8kYQLyKCvdLRCFdwGKULMi3/MK1oGbGo3soSGXMMHo3Z1aPl9pKBXG4w==
+"@vivliostyle/core@^2.6.0":
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.6.0.tgz#ecbd349dfdd492ce1af2f41241e6a09d318ba90a"
+  integrity sha512-Mf58FfLkgHnaZ5PboZPekABtEURdgHFZPwwwdLQFXpZ1zHY1b3tZXDqssNqEYVb0J/g8vV7cDs3xlaVsuhqOqw==
   dependencies:
     fast-diff "^1.2.0"
 
@@ -1044,6 +1044,15 @@
     unist-util-select "^3.0.4"
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
+
+"@vivliostyle/viewer@2.6.0":
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.6.0.tgz#8f447db2ff111e746d4c5dcd184028a55bbbd0ce"
+  integrity sha512-qTxeaNkTIjPltzq7JyPz/be1M+xjWO+lQZRKttuTWGms17yCx0a4lgN0PFzNAXJUVFWfxw1kHL/JVNCqpH9reg==
+  dependencies:
+    "@vivliostyle/core" "^2.6.0"
+    font-awesome "^4.7.0"
+    knockout "^3.5.0"
 
 JSONStream@^1.0.4:
   version "1.3.5"
@@ -3003,6 +3012,11 @@ flat@^5.0.2:
   resolved "https://registry.yarnpkg.com/flat/-/flat-5.0.2.tgz#8ca6fe332069ffa9d324c327198c598259ceb241"
   integrity sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==
 
+font-awesome@^4.7.0:
+  version "4.7.0"
+  resolved "https://registry.yarnpkg.com/font-awesome/-/font-awesome-4.7.0.tgz#8fa8cf0411a1a31afd07b06d2902bb9fc815a133"
+  integrity sha1-j6jPBBGhoxr9B7BtKQK7n8gVoTM=
+
 for-in@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/for-in/-/for-in-1.0.2.tgz#81068d295a8142ec0ac726c6e2200c30fb6d5e80"
@@ -4815,6 +4829,11 @@ kleur@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/kleur/-/kleur-3.0.3.tgz#a79c9ecc86ee1ce3fa6206d1216c501f147fc07e"
   integrity sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==
+
+knockout@^3.5.0:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/knockout/-/knockout-3.5.1.tgz#62c81e81843bea2008fd23c575edd9ca978e75cf"
+  integrity sha512-wRJ9I4az0QcsH7A4v4l0enUpkS++MBx0BnL/68KaLzJg7x1qmbjSlwEoCNol7KTYZ+pmtI7Eh2J0Nu6/2Z5J/Q==
 
 latest-version@^5.0.0, latest-version@^5.1.0:
   version "5.1.0"

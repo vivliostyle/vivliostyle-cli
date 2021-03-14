@@ -9,7 +9,7 @@ import { readJSON } from './util';
 const { version: cliVersion } = readJSON(join(__dirname, '../package.json'));
 const { version: coreVersion } = JSON.parse(
   fs.readFileSync(
-    resolvePkg('@vivliostyle/core', { cwd: __dirname })! + '/package.json',
+    resolvePkg('@vivliostyle/viewer', { cwd: __dirname })! + '/package.json',
     'utf8',
   ),
 );

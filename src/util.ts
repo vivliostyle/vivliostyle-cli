@@ -167,23 +167,6 @@ export async function touchTmpFile(path: string): Promise<() => void> {
   return callback;
 }
 
-export function encodeHashParameter(params: Record<string, string>): string {
-  return Object.entries(params)
-    .map(([k, v]) => {
-      if (!/^[a-zA-Z0-9_]+$/.test(k)) {
-        return '';
-      }
-      const value = v
-        .replace('%', '%25')
-        .replace('+', '%2B')
-        .replace('&', '%26')
-        .replace('=', '%3D')
-        .replace(' ', '+');
-      return `${k}=${value}`;
-    })
-    .join('&');
-}
-
 export function pathStartsWith(path1: string, path2: string): boolean {
   const path1n = upath.normalize(path1).replace(/\/?$/, '/');
   const path2n = upath.normalize(path2).replace(/\/?$/, '/');
