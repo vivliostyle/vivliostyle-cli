@@ -35,8 +35,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
 }
@@ -77,8 +79,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
 }
@@ -118,8 +122,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
   "workspaceDir": "__WORKSPACE__",
@@ -162,8 +168,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
 }
@@ -205,8 +213,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
 }
@@ -246,8 +256,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
@@ -333,6 +345,7 @@ Object {
   "size": Object {
     "format": "JIS-B5",
   },
+  "style": undefined,
   "themeIndexes": Array [
     Object {
       "location": "https://myTheme.example.com",
@@ -347,6 +360,7 @@ Object {
     },
   ],
   "timeout": 42000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -435,6 +449,7 @@ Object {
   "size": Object {
     "format": "size",
   },
+  "style": undefined,
   "themeIndexes": Array [
     Object {
       "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
@@ -451,6 +466,7 @@ Object {
     },
   ],
   "timeout": 1,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -503,8 +519,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -557,8 +575,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -623,6 +643,7 @@ Object {
   "size": Object {
     "format": "size",
   },
+  "style": undefined,
   "themeIndexes": Array [
     Object {
       "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
@@ -633,6 +654,7 @@ Object {
     },
   ],
   "timeout": 1,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -685,8 +707,10 @@ Object {
   "pressReady": false,
   "sandbox": true,
   "size": undefined,
+  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
+  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
