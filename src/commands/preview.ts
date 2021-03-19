@@ -8,6 +8,7 @@ import {
   cwd,
   debug,
   gracefulError,
+  isUrlString,
   launchBrowser,
   logSuccess,
   pathStartsWith,
@@ -27,6 +28,8 @@ try {
     configPath: options.config,
     theme: options.theme,
     size: options.size,
+    style: options.style,
+    userStyle: options.userStyle,
     title: options.title,
     author: options.author,
     language: options.language,
@@ -63,6 +66,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
       config.webbookEntryPath ??
       config.epubOpfPath) as string,
     outputSize: config.size,
+    style: cliFlags.style,
+    userStyle: cliFlags.userStyle,
   });
 
   debug(
@@ -99,7 +104,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     }, 2000);
   }
 
-  if (/https?:\/\//.test(config.input.entry)) {
+  if (isUrlString(config.input.entry)) {
     return;
   }
 

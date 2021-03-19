@@ -172,3 +172,7 @@ export function pathStartsWith(path1: string, path2: string): boolean {
   const path2n = upath.normalize(path2).replace(/\/?$/, '/');
   return path1n.startsWith(path2n);
 }
+
+export function isUrlString(str: string): boolean {
+  return /^(https?|file|data):/i.test(str);
+}

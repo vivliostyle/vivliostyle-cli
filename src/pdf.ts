@@ -31,6 +31,8 @@ export async function buildPDF({
   output,
   workspaceDir,
   size,
+  style,
+  userStyle,
   executableChromium,
   sandbox,
   verbose,
@@ -44,6 +46,8 @@ export async function buildPDF({
   const navigateURL = getBrokerUrl({
     sourceIndex: input,
     outputSize: size,
+    style,
+    userStyle,
   });
   debug('brokerURL', navigateURL);
 
