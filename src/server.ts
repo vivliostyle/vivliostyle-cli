@@ -39,17 +39,26 @@ export function getBrokerUrl({
         (outputSize as { height: string }).height
       }`);
 
-  let viewerParams = `src=${sourceUrl.href}&bookMode=${loadMode === 'book'}`;
+  function escapeParam(url: string) {
+    return url.replace(/&/g, '%26');
+  }
+
+  let viewerParams = `src=${escapeParam(sourceUrl.href)}&bookMode=${
+    loadMode === 'book'
+  }`;
 
   if (style) {
     viewerParams +=
-      '&style=' + (isUrlString(style) ? style : pathToFileURL(style).href);
+      '&style=' +
+      escapeParam(isUrlString(style) ? style : pathToFileURL(style).href);
   }
 
   if (userStyle) {
     viewerParams +=
       '&userStyle=' +
-      (isUrlString(userStyle) ? userStyle : pathToFileURL(userStyle).href);
+      escapeParam(
+        isUrlString(userStyle) ? userStyle : pathToFileURL(userStyle).href,
+      );
   }
 
   if (pageSizeValue) {
