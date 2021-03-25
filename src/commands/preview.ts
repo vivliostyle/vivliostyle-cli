@@ -62,6 +62,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     sourceIndex: (config.manifestPath ??
       config.webbookEntryPath ??
       config.epubOpfPath) as string,
+    outputSize: config.size,
   });
 
   debug(

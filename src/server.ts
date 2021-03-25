@@ -1,6 +1,6 @@
-import path from 'upath';
+import resolvePkg from 'resolve-pkg';
+import upath from 'upath';
 import { URL } from 'url';
-import { encodeHashParameter } from './util';
 
 export type LoadMode = 'document' | 'book';
 export type PageSize = { format: string } | { width: string; height: string };
@@ -22,12 +22,26 @@ export function getBrokerUrl({
     sourceUrl.pathname = sourceIndex;
   }
 
-  const brokerUrl = new URL('file://');
-  brokerUrl.pathname = path.resolve(__dirname, '../broker/index.html');
-  const hashParam = encodeHashParameter({
-    src: sourceUrl.href,
-    loadMode,
-    ...outputSize,
-  });
-  return `${brokerUrl.href}#${hashParam}`;
+  const viewerUrl = new URL('file://');
+  viewerUrl.pathname = upath.join(
+    resolvePkg('@vivliostyle/viewer', { cwd: __dirname })!,
+    'lib/index.html',
+  );
+
+  const pageSizeValue =
+    outputSize &&
+    ('format' in outputSize
+      ? outputSize.format
+      : `${outputSize.width} ${outputSize.height}`);
+
+  let viewerParams = `src=${sourceUrl.href}&bookMode=${loadMode === 'book'}`;
+
+  if (pageSizeValue) {
+    viewerParams +=
+      '&userStyle=data:,/*<viewer>*/' +
+      encodeURIComponent(`@page{size:${pageSizeValue}!important;}`) +
+      '/*</viewer>*/';
+  }
+
+  return `${viewerUrl.href}#${viewerParams}`;
 }
