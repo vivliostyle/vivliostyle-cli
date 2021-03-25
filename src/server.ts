@@ -34,10 +34,9 @@ export function getBrokerUrl({
 
   const pageSizeValue =
     outputSize &&
-    ((outputSize as { format: string }).format ||
-      `${(outputSize as { width: string }).width} ${
-        (outputSize as { height: string }).height
-      }`);
+    ('format' in outputSize
+      ? outputSize.format
+      : `${outputSize.width} ${outputSize.height}`);
 
   function escapeParam(url: string) {
     return url.replace(/&/g, '%26');
