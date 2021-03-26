@@ -78,6 +78,8 @@ export interface CliFlags {
   size?: string;
   style?: string;
   userStyle?: string;
+  singleDoc?: boolean;
+  quick?: boolean;
   pressReady?: boolean;
   title?: string;
   author?: string;
@@ -120,6 +122,8 @@ export type MergedConfig = {
   size: PageSize | undefined;
   style: string | undefined;
   userStyle: string | undefined;
+  singleDoc: boolean;
+  quick: boolean;
   pressReady: boolean;
   language: string | null;
   cover: string | undefined;
@@ -358,6 +362,8 @@ export async function mergeConfig<T extends CliFlags>(
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const style = cliFlags.style;
   const userStyle = cliFlags.userStyle;
+  const singleDoc = cliFlags.singleDoc ?? false;
+  const quick = cliFlags.quick ?? false;
   const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
 
@@ -424,6 +430,8 @@ export async function mergeConfig<T extends CliFlags>(
     size,
     style,
     userStyle,
+    singleDoc,
+    quick,
     language,
     cover,
     verbose,

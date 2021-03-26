@@ -30,6 +30,8 @@ try {
     size: options.size,
     style: options.style,
     userStyle: options.userStyle,
+    singleDoc: options.singleDoc,
+    quick: options.quick,
     title: options.title,
     author: options.author,
     language: options.language,
@@ -68,6 +70,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     outputSize: config.size,
     style: cliFlags.style,
     userStyle: cliFlags.userStyle,
+    singleDoc: cliFlags.singleDoc ?? false,
+    quick: cliFlags.quick ?? false,
   });
 
   debug(
