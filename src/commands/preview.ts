@@ -128,11 +128,13 @@ export default async function preview(cliFlags: PreviewCliFlags) {
           return true; // ignore md or html files not in entries source
         }
         if (
-          config.themeIndexes.find((theme) =>
-            theme.type === 'file'
-              ? path === theme.destination
-              : theme.type === 'package' &&
-                pathStartsWith(path, theme.destination),
+          config.themeIndexes.find(
+            (theme) =>
+              (theme.type === 'file' || theme.type === 'package') &&
+              theme.destination !== theme.location &&
+              (theme.type === 'file'
+                ? path === theme.destination
+                : pathStartsWith(path, theme.destination)),
           )
         ) {
           return true; // ignore copied theme files
