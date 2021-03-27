@@ -129,11 +129,11 @@ export default async function preview(cliFlags: PreviewCliFlags) {
         if (
           config.themeIndexes.find(
             (theme) =>
-              (theme as any).destination !== theme.location &&
+              (theme.type === 'file' || theme.type === 'package') &&
+              theme.destination !== theme.location &&
               (theme.type === 'file'
                 ? path === theme.destination
-                : theme.type === 'package' &&
-                  pathStartsWith(path, theme.destination)),
+                : pathStartsWith(path, theme.destination)),
           )
         ) {
           return true; // ignore copied theme files
