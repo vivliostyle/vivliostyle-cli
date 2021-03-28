@@ -6,6 +6,7 @@ import fs from 'fs';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
+import { pathToFileURL } from 'url';
 import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const';
 import { openEpubToTmpDirectory } from './epub';
 import {
@@ -118,8 +119,8 @@ export type MergedConfig = {
     target: string;
   }[];
   size: PageSize | undefined;
-  style: string | undefined;
-  userStyle: string | undefined;
+  customStyle: string | undefined;
+  customUserStyle: string | undefined;
   pressReady: boolean;
   language: string | null;
   cover: string | undefined;
@@ -356,8 +357,16 @@ export async function mergeConfig<T extends CliFlags>(
   const language = cliFlags.language ?? config?.language ?? null;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
-  const style = cliFlags.style;
-  const userStyle = cliFlags.userStyle;
+  const customStyle =
+    cliFlags.style &&
+    (isUrlString(cliFlags.style)
+      ? cliFlags.style
+      : pathToFileURL(cliFlags.style).href);
+  const customUserStyle =
+    cliFlags.userStyle &&
+    (isUrlString(cliFlags.userStyle)
+      ? cliFlags.userStyle
+      : pathToFileURL(cliFlags.userStyle).href);
   const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
 
@@ -422,8 +431,8 @@ export async function mergeConfig<T extends CliFlags>(
     themeIndexes,
     pressReady,
     size,
-    style,
-    userStyle,
+    customStyle,
+    customUserStyle,
     language,
     cover,
     verbose,

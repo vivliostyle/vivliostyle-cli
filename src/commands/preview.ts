@@ -66,8 +66,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
       config.webbookEntryPath ??
       config.epubOpfPath) as string,
     outputSize: config.size,
-    style: cliFlags.style,
-    userStyle: cliFlags.userStyle,
+    style: config.customStyle,
+    userStyle: config.customUserStyle,
   });
 
   debug(

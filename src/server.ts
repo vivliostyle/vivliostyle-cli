@@ -47,17 +47,11 @@ export function getBrokerUrl({
   }`;
 
   if (style) {
-    viewerParams +=
-      '&style=' +
-      escapeParam(isUrlString(style) ? style : pathToFileURL(style).href);
+    viewerParams += `&style=${escapeParam(style)}`;
   }
 
   if (userStyle) {
-    viewerParams +=
-      '&userStyle=' +
-      escapeParam(
-        isUrlString(userStyle) ? userStyle : pathToFileURL(userStyle).href,
-      );
+    viewerParams += `&userStyle=${escapeParam(userStyle)}`;
   }
 
   if (pageSizeValue) {

@@ -67,8 +67,8 @@ export default async function build(cliFlags: BuildCliFlags) {
           config.webbookEntryPath ??
           config.epubOpfPath) as string,
         output: target.path,
-        style: cliFlags.style,
-        userStyle: cliFlags.userStyle,
+        customStyle: config.customStyle,
+        customUserStyle: config.customUserStyle,
       });
     } else if (target.format === 'webpub') {
       if (!config.manifestPath) {
