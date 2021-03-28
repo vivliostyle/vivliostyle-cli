@@ -269,8 +269,8 @@ Object {
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
-  "customStyle": undefined,
-  "customUserStyle": undefined,
+  "customStyle": "https://vivlostyle.org",
+  "customUserStyle": "file://__WORKSPACE__/user/style/dummy.css",
   "entries": Array [
     Object {
       "rel": "contents",
