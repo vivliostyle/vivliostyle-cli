@@ -19,6 +19,9 @@ try {
     targets: options.targets,
     theme: options.theme,
     size: options.size,
+    style: options.style,
+    userStyle: options.userStyle,
+    singleDoc: options.singleDoc,
     title: options.title,
     author: options.author,
     language: options.language,
@@ -65,6 +68,9 @@ export default async function build(cliFlags: BuildCliFlags) {
           config.webbookEntryPath ??
           config.epubOpfPath) as string,
         output: target.path,
+        customStyle: config.customStyle,
+        customUserStyle: config.customUserStyle,
+        singleDoc: config.singleDoc,
       });
     } else if (target.format === 'webpub') {
       if (!config.manifestPath) {

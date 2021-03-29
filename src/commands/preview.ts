@@ -8,6 +8,7 @@ import {
   cwd,
   debug,
   gracefulError,
+  isUrlString,
   launchBrowser,
   logSuccess,
   pathStartsWith,
@@ -27,6 +28,10 @@ try {
     configPath: options.config,
     theme: options.theme,
     size: options.size,
+    style: options.style,
+    userStyle: options.userStyle,
+    singleDoc: options.singleDoc,
+    quick: options.quick,
     title: options.title,
     author: options.author,
     language: options.language,
@@ -62,6 +67,11 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     sourceIndex: (config.manifestPath ??
       config.webbookEntryPath ??
       config.epubOpfPath) as string,
+    outputSize: config.size,
+    style: config.customStyle,
+    userStyle: config.customUserStyle,
+    singleDoc: config.singleDoc,
+    quick: config.quick,
   });
 
   debug(
@@ -98,7 +108,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     }, 2000);
   }
 
-  if (/https?:\/\//.test(config.input.entry)) {
+  if (isUrlString(config.input.entry)) {
     return;
   }
 
@@ -127,11 +137,13 @@ export default async function preview(cliFlags: PreviewCliFlags) {
           return true; // ignore md or html files not in entries source
         }
         if (
-          config.themeIndexes.find((theme) =>
-            theme.type === 'file'
-              ? path === theme.destination
-              : theme.type === 'package' &&
-                pathStartsWith(path, theme.destination),
+          config.themeIndexes.find(
+            (theme) =>
+              (theme.type === 'file' || theme.type === 'package') &&
+              theme.destination !== theme.location &&
+              (theme.type === 'file'
+                ? path === theme.destination
+                : pathStartsWith(path, theme.destination)),
           )
         ) {
           return true; // ignore copied theme files

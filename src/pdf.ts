@@ -31,6 +31,9 @@ export async function buildPDF({
   output,
   workspaceDir,
   size,
+  customStyle,
+  customUserStyle,
+  singleDoc,
   executableChromium,
   sandbox,
   verbose,
@@ -44,6 +47,10 @@ export async function buildPDF({
   const navigateURL = getBrokerUrl({
     sourceIndex: input,
     outputSize: size,
+    style: customStyle,
+    userStyle: customUserStyle,
+    singleDoc,
+    quick: false,
   });
   debug('brokerURL', navigateURL);
 
@@ -70,9 +77,27 @@ export async function buildPDF({
   });
 
   page.on('console', (msg) => {
-    if (/time slice/.test(msg.text())) return;
-    if (!verbose) return;
-    logInfo(msg.text());
+    switch (msg.type()) {
+      case 'error':
+        if (/\/vivliostyle-viewer\.js$/.test(msg.location().url)) {
+          logError(msg.text());
+          throw msg.text();
+        }
+        return;
+      case 'debug':
+        if (/time slice/.test(msg.text())) {
+          return;
+        }
+        break;
+    }
+    if (!verbose) {
+      return;
+    }
+    if (msg.type() === 'error') {
+      logError(msg.text());
+    } else {
+      logInfo(msg.text());
+    }
   });
 
   let lastEntry: ManuscriptEntry | undefined;
@@ -126,6 +151,7 @@ export async function buildPDF({
     // debug(chalk.red(`${response.status()}`, response.url()));
   });
 
+  await page.setDefaultNavigationTimeout(timeout);
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => !!window.coreViewer);
 

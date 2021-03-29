@@ -6,6 +6,7 @@ import fs from 'fs';
 import puppeteer from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
+import { pathToFileURL } from 'url';
 import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const';
 import { openEpubToTmpDirectory } from './epub';
 import {
@@ -27,7 +28,7 @@ import type {
 } from './schema/vivliostyle.config';
 import configSchema from './schema/vivliostyle.config.schema.json';
 import { PageSize } from './server';
-import { cwd, debug, log, readJSON, touchTmpFile } from './util';
+import { cwd, debug, isUrlString, log, readJSON, touchTmpFile } from './util';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -76,6 +77,10 @@ export interface CliFlags {
   targets?: OutputFormat[];
   theme?: string;
   size?: string;
+  style?: string;
+  userStyle?: string;
+  singleDoc?: boolean;
+  quick?: boolean;
   pressReady?: boolean;
   title?: string;
   author?: string;
@@ -116,6 +121,10 @@ export type MergedConfig = {
     target: string;
   }[];
   size: PageSize | undefined;
+  customStyle: string | undefined;
+  customUserStyle: string | undefined;
+  singleDoc: boolean;
+  quick: boolean;
   pressReady: boolean;
   language: string | null;
   cover: string | undefined;
@@ -172,7 +181,7 @@ export function parseTheme(
   }
 
   // url
-  if (/^https?:\/\//.test(locator)) {
+  if (isUrlString(locator)) {
     return {
       type: 'uri',
       name: path.basename(locator),
@@ -331,7 +340,7 @@ export async function mergeConfig<T extends CliFlags>(
   let entryContextDir: string;
   let workspaceDir: string;
 
-  if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
+  if (cliFlags.input && isUrlString(cliFlags.input)) {
     workspaceDir = entryContextDir = cwd;
   } else {
     entryContextDir = path.resolve(
@@ -352,6 +361,18 @@ export async function mergeConfig<T extends CliFlags>(
   const language = cliFlags.language ?? config?.language ?? null;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
+  const customStyle =
+    cliFlags.style &&
+    (isUrlString(cliFlags.style)
+      ? cliFlags.style
+      : pathToFileURL(cliFlags.style).href);
+  const customUserStyle =
+    cliFlags.userStyle &&
+    (isUrlString(cliFlags.userStyle)
+      ? cliFlags.userStyle
+      : pathToFileURL(cliFlags.userStyle).href);
+  const singleDoc = cliFlags.singleDoc ?? false;
+  const quick = cliFlags.quick ?? false;
   const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
 
@@ -416,6 +437,10 @@ export async function mergeConfig<T extends CliFlags>(
     themeIndexes,
     pressReady,
     size,
+    customStyle,
+    customUserStyle,
+    singleDoc,
+    quick,
     language,
     cover,
     verbose,
@@ -463,7 +488,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   const exportAliases: { source: string; target: string }[] = [];
   const tmpPrefix = `.vs-${Date.now()}.`;
 
-  if (cliFlags.input && /https?:\/\//.test(cliFlags.input)) {
+  if (cliFlags.input && isUrlString(cliFlags.input)) {
     sourcePath = cliFlags.input;
     workspaceDir = otherConfig.workspaceDir;
     input = { format: 'webbook', entry: sourcePath };
