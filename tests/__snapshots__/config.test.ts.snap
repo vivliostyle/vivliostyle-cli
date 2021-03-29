@@ -3,6 +3,8 @@
 exports[`imports a EPUB OPF file 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
   "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
@@ -45,6 +47,8 @@ Object {
 exports[`imports a EPUB file 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs",
   "epubOpfPath": "__SNIP__",
@@ -87,6 +91,8 @@ Object {
 exports[`imports a https URL 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -129,6 +135,8 @@ Object {
 exports[`imports a webbook compliant to Readium Web publication 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -172,6 +180,8 @@ Object {
 exports[`imports a webbook compliant to W3C Web publication 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -215,6 +225,8 @@ Object {
 exports[`imports single html file 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -257,6 +269,8 @@ Object {
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "customStyle": "https://vivlostyle.org",
+  "customUserStyle": "file://__WORKSPACE__/user/style/dummy.css",
   "entries": Array [
     Object {
       "rel": "contents",
@@ -355,6 +369,8 @@ Object {
 exports[`parse vivliostyle config: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "rel": "contents",
@@ -459,6 +475,8 @@ Object {
 exports[`parse vivliostyle config: valid.2.config.js 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -513,6 +531,8 @@ Object {
 exports[`parse vivliostyle config: valid.3.config.js 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -567,6 +587,8 @@ Object {
 exports[`yields a config with single input and vivliostyle config 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
@@ -641,6 +663,8 @@ Object {
 exports[`yields a config with single markdown 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",

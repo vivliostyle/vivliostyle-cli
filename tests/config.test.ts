@@ -59,6 +59,10 @@ it('override option by CLI command', async () => {
     '42',
     '--executable-chromium',
     'myChromium',
+    '--style',
+    'https://vivlostyle.org',
+    '--user-style',
+    './user/style/dummy.css',
   ]);
   maskConfig(config);
   expect(config).toMatchSnapshot('valid.1.config.js');
