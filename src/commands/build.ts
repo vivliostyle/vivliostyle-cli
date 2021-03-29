@@ -21,6 +21,7 @@ try {
     size: options.size,
     style: options.style,
     userStyle: options.userStyle,
+    singleDoc: options.singleDoc,
     title: options.title,
     author: options.author,
     language: options.language,
@@ -69,6 +70,7 @@ export default async function build(cliFlags: BuildCliFlags) {
         output: target.path,
         customStyle: config.customStyle,
         customUserStyle: config.customUserStyle,
+        singleDoc: config.singleDoc,
       });
     } else if (target.format === 'webpub') {
       if (!config.manifestPath) {

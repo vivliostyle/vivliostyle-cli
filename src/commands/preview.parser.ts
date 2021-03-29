@@ -19,6 +19,8 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     )
     .option('--style <stylesheet>', 'additional stylesheet URL or path')
     .option('--user-style <user_stylesheet>', 'user stylesheet URL or path')
+    .option('-d, --single-doc', 'single HTML document input')
+    .option('-q, --quick', 'quick loading with rough page count')
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')

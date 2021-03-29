@@ -76,6 +76,7 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     )
     .option('--style <stylesheet>', 'additional stylesheet URL or path')
     .option('--user-style <user_stylesheet>', 'user stylesheet URL or path')
+    .option('-d, --single-doc', 'single HTML document input')
     .option(
       '-p, --press-ready',
       `make generated PDF compatible with press ready PDF/X-1a [false]`,

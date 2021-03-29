@@ -3,21 +3,22 @@ import upath from 'upath';
 import { pathToFileURL, URL } from 'url';
 import { isUrlString } from './util';
 
-export type LoadMode = 'document' | 'book';
 export type PageSize = { format: string } | { width: string; height: string };
 
 export function getBrokerUrl({
   sourceIndex,
-  loadMode = 'book',
   outputSize,
   style,
   userStyle,
+  singleDoc,
+  quick,
 }: {
   sourceIndex: string;
-  loadMode?: LoadMode;
   outputSize?: PageSize;
   style?: string;
   userStyle?: string;
+  singleDoc?: boolean;
+  quick?: boolean;
 }) {
   let sourceUrl: URL;
   if (isUrlString(sourceIndex)) {
@@ -42,9 +43,9 @@ export function getBrokerUrl({
     return url.replace(/&/g, '%26');
   }
 
-  let viewerParams = `src=${escapeParam(sourceUrl.href)}&bookMode=${
-    loadMode === 'book'
-  }`;
+  let viewerParams = `src=${escapeParam(
+    sourceUrl.href,
+  )}&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
   if (style) {
     viewerParams += `&style=${escapeParam(style)}`;

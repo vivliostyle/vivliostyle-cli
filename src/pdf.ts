@@ -33,6 +33,7 @@ export async function buildPDF({
   size,
   customStyle,
   customUserStyle,
+  singleDoc,
   executableChromium,
   sandbox,
   verbose,
@@ -48,6 +49,8 @@ export async function buildPDF({
     outputSize: size,
     style: customStyle,
     userStyle: customUserStyle,
+    singleDoc,
+    quick: false,
   });
   debug('brokerURL', navigateURL);
 
