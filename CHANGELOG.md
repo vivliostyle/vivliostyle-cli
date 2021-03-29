@@ -1,3 +1,16 @@
+# [3.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.1.2...v3.2.0) (2021-03-29)
+
+### Bug Fixes
+
+- Non-ASCII directory/file is not available. Error: Validation of pubManifest failed ([f84fca4](https://github.com/vivliostyle/vivliostyle-cli/commit/f84fca4aae6aa71ed37d2948b55de53535ab0429)), closes [#155](https://github.com/vivliostyle/vivliostyle-cli/issues/155)
+- Preview watch not refreshed when CSS file is changed ([298ecf7](https://github.com/vivliostyle/vivliostyle-cli/commit/298ecf7da7fee9c7840f8c6d02e91621c7e314b9))
+
+### Features
+
+- Add --single-doc and --quick options ([6ccd68f](https://github.com/vivliostyle/vivliostyle-cli/commit/6ccd68fc36f30ce07e7bdfb7180d0e7f2d1b4daf))
+- Add additional/user stylesheet options ([026306a](https://github.com/vivliostyle/vivliostyle-cli/commit/026306adbf7050103f3b2d265e62d5f3a013bc01)), closes [#112](https://github.com/vivliostyle/vivliostyle-cli/issues/112)
+- Replace preview UI with Vivliostyle Viewer ([18265f2](https://github.com/vivliostyle/vivliostyle-cli/commit/18265f2f8999195e06cfbf976b021fd6de99888f)), closes [#41](https://github.com/vivliostyle/vivliostyle-cli/issues/41)
+
 ## [3.1.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.1.1...v3.1.2) (2021-03-06)
 
 ### Bug Fixes
