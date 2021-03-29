@@ -1,3 +1,44 @@
+## [3.1.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.1.1...v3.1.2) (2021-03-06)
+
+### Bug Fixes
+
+- Failed to load from web because of CORS error ([1cb1baf](https://github.com/vivliostyle/vivliostyle-cli/commit/1cb1baf756d4ecb9466db6b17d7e1b58dfaa9dd3))
+- Preview watch not working as expected ([7607d74](https://github.com/vivliostyle/vivliostyle-cli/commit/7607d744bbb37d690f8f5478e9f301886ddba2b9))
+
+### Features
+
+- Update vivliostyle core version to 2.5.2 ([b5ad780](https://github.com/vivliostyle/vivliostyle-cli/commit/b5ad78039edbe33be1b4fef97572b2b67274fb42))
+
+## [3.1.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.1.0...v3.1.1) (2021-02-28)
+
+# [3.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.3...v3.1.0) (2021-02-27)
+
+### Bug Fixes
+
+- exmaples/theme-preset size(JIS-B6 -> A5) ([a50fe02](https://github.com/vivliostyle/vivliostyle-cli/commit/a50fe0223795241b36afd5f630bf9eb6f54ac2ba))
+
+### Features
+
+- Update vivliostyle core version to 2.5 ([7b49393](https://github.com/vivliostyle/vivliostyle-cli/commit/7b493934d4258722ffa403ec636e1ee11069fb9b))
+
+## [3.0.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.2...v3.0.3) (2021-02-09)
+
+### Bug Fixes
+
+- Update core deps ([f7ab4d3](https://github.com/vivliostyle/vivliostyle-cli/commit/f7ab4d346986cbb3d091fc3b6b51deb38e1dab15))
+
+## [3.0.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.1...v3.0.2) (2021-02-09)
+
+### Bug Fixes
+
+- Place resources file on build time ([56a5e8b](https://github.com/vivliostyle/vivliostyle-cli/commit/56a5e8b9e4206a52a2456a0e84bbeed7549c4b6a))
+
+## [3.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.0.0...v3.0.1) (2021-02-07)
+
+### Bug Fixes
+
+- Fix to raise errors on falsy input ([a38dd85](https://github.com/vivliostyle/vivliostyle-cli/commit/a38dd851ab232e6ee949b593b3579f88954fa2c5))
+
 # :tada: [3.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v2.1.3...v3.0.0) (2021-02-07)
 
 ## Introduce of the new configure file, `vivliostyle.config.js`!
