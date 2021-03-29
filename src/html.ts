@@ -26,7 +26,7 @@ export function generateTocHtml({
       'li',
       h(
         'a',
-        { href: path.relative(distDir, entry.target) },
+        { href: encodeURI(path.relative(distDir, entry.target)) },
         entry.title || path.basename(entry.target, '.html'),
       ),
     ),
@@ -38,7 +38,7 @@ export function generateTocHtml({
       ...[
         h('title', title ?? ''),
         h('link', {
-          href: path.relative(distDir, manifestPath),
+          href: encodeURI(path.relative(distDir, manifestPath)),
           rel: 'publication',
           type: 'application/ld+json',
         }),
