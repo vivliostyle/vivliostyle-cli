@@ -3,6 +3,8 @@
 exports[`imports a EPUB OPF file 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
   "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
@@ -37,10 +39,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
 }
@@ -49,6 +49,8 @@ Object {
 exports[`imports a EPUB file 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs",
   "epubOpfPath": "__SNIP__",
@@ -83,10 +85,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
 }
@@ -95,6 +95,8 @@ Object {
 exports[`imports a https URL 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -128,10 +130,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
   "workspaceDir": "__WORKSPACE__",
@@ -141,6 +141,8 @@ Object {
 exports[`imports a webbook compliant to Readium Web publication 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -176,10 +178,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
 }
@@ -188,6 +188,8 @@ Object {
 exports[`imports a webbook compliant to W3C Web publication 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -223,10 +225,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
 }
@@ -235,6 +235,8 @@ Object {
 exports[`imports single html file 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -268,10 +270,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
@@ -281,6 +281,8 @@ Object {
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "customStyle": "https://vivlostyle.org",
+  "customUserStyle": "file://__WORKSPACE__/user/style/dummy.css",
   "entries": Array [
     Object {
       "rel": "contents",
@@ -359,7 +361,6 @@ Object {
   "size": Object {
     "format": "JIS-B5",
   },
-  "style": undefined,
   "themeIndexes": Array [
     Object {
       "location": "https://myTheme.example.com",
@@ -374,7 +375,6 @@ Object {
     },
   ],
   "timeout": 42000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -383,6 +383,8 @@ Object {
 exports[`parse vivliostyle config: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "rel": "contents",
@@ -465,7 +467,6 @@ Object {
   "size": Object {
     "format": "size",
   },
-  "style": undefined,
   "themeIndexes": Array [
     Object {
       "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
@@ -482,7 +483,6 @@ Object {
     },
   ],
   "timeout": 1,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -491,6 +491,8 @@ Object {
 exports[`parse vivliostyle config: valid.2.config.js 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -537,10 +539,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -549,6 +549,8 @@ Object {
 exports[`parse vivliostyle config: valid.3.config.js 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -595,10 +597,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -607,6 +607,8 @@ Object {
 exports[`yields a config with single input and vivliostyle config 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
@@ -665,7 +667,6 @@ Object {
   "size": Object {
     "format": "size",
   },
-  "style": undefined,
   "themeIndexes": Array [
     Object {
       "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
@@ -676,7 +677,6 @@ Object {
     },
   ],
   "timeout": 1,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -685,6 +685,8 @@ Object {
 exports[`yields a config with single markdown 1`] = `
 Object {
   "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
@@ -731,10 +733,8 @@ Object {
   "sandbox": true,
   "singleDoc": false,
   "size": undefined,
-  "style": undefined,
   "themeIndexes": Array [],
   "timeout": 120000,
-  "userStyle": undefined,
   "verbose": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }

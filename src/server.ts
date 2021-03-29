@@ -17,8 +17,8 @@ export function getBrokerUrl({
   outputSize?: PageSize;
   style?: string;
   userStyle?: string;
-  singleDoc: boolean;
-  quick: boolean;
+  singleDoc?: boolean;
+  quick?: boolean;
 }) {
   let sourceUrl: URL;
   if (isUrlString(sourceIndex)) {
@@ -48,17 +48,11 @@ export function getBrokerUrl({
   )}&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
   if (style) {
-    viewerParams +=
-      '&style=' +
-      escapeParam(isUrlString(style) ? style : pathToFileURL(style).href);
+    viewerParams += `&style=${escapeParam(style)}`;
   }
 
   if (userStyle) {
-    viewerParams +=
-      '&userStyle=' +
-      escapeParam(
-        isUrlString(userStyle) ? userStyle : pathToFileURL(userStyle).href,
-      );
+    viewerParams += `&userStyle=${escapeParam(userStyle)}`;
   }
 
   if (pageSizeValue) {
