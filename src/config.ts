@@ -127,8 +127,10 @@ export type MergedConfig = {
   quick: boolean;
   pressReady: boolean;
   language: string | null;
-  hardLineBreaks: boolean | undefined;
-  disableFormatHtml: boolean | undefined;
+  vfmOptions: {
+    hardLineBreaks: boolean;
+    disableFormatHtml: boolean;
+  };
   cover: string | undefined;
   verbose: boolean;
   timeout: number;
@@ -378,8 +380,10 @@ export async function mergeConfig<T extends CliFlags>(
   const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
 
-  const hardLineBreaks = config?.hardLineBreaks ?? undefined;
-  const disableFormatHtml = config?.disableFormatHtml ?? undefined;
+  const vfmOptions = {
+    hardLineBreaks: config?.vfm?.hardLineBreaks ?? false,
+    disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
+  };
 
   const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
@@ -447,8 +451,7 @@ export async function mergeConfig<T extends CliFlags>(
     singleDoc,
     quick,
     language,
-    hardLineBreaks,
-    disableFormatHtml,
+    vfmOptions,
     cover,
     verbose,
     timeout,

@@ -118,8 +118,7 @@ export async function compile(
     entries,
     language,
     cover,
-    hardLineBreaks,
-    disableFormatHtml,
+    vfmOptions,
     input,
   }: MergedConfig & WebPublicationManifestConfig,
   { reload = false }: { reload?: boolean } = {},
@@ -170,11 +169,10 @@ export async function compile(
     if (entry.type === 'text/markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
+        ...vfmOptions,
         style,
         title: entry.title,
         language: language ?? undefined,
-        hardLineBreaks: hardLineBreaks ?? undefined,
-        disableFormatHtml: disableFormatHtml ?? undefined,
       });
       const compiledEntry = String(vfile);
       fs.writeFileSync(entry.target, compiledEntry);

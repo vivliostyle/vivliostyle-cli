@@ -158,11 +158,17 @@
           "type": "number",
           "minimum": 0
         },
-        "hardLineBreaks": {
-          "type": "boolean"
-        },
-        "disableFormatHtml": {
-          "type": "boolean"
+        "vfm": {
+          "type": "object",
+          "properties": {
+            "hardLineBreaks": {
+              "type": "boolean"
+            },
+            "disableFormatHtml": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
         }
       }
     }

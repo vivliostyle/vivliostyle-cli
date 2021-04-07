@@ -34,8 +34,10 @@ export interface CoreProps {
   tocTitle?: string;
   cover?: string;
   timeout?: number;
-  hardLineBreaks?: boolean;
-  disableFormatHtml?: boolean;
+  vfm?: {
+    hardLineBreaks?: boolean;
+    disableFormatHtml?: boolean;
+  };
   [k: string]: unknown;
 }
 export interface EntryObject {

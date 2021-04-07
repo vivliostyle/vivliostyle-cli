@@ -5,13 +5,11 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
   "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -44,6 +42,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
 }
 `;
@@ -53,13 +55,11 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs",
   "epubOpfPath": "__SNIP__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -92,6 +92,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
 }
 `;
@@ -101,12 +105,10 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -139,6 +141,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
   "workspaceDir": "__WORKSPACE__",
 }
@@ -149,12 +155,10 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -189,6 +193,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
 }
 `;
@@ -198,12 +206,10 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -238,6 +244,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
 }
 `;
@@ -247,12 +257,10 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -285,6 +293,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -295,7 +307,6 @@ Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "customStyle": "https://vivlostyle.org",
   "customUserStyle": "file://__WORKSPACE__/user/style/dummy.css",
-  "disableFormatHtml": undefined,
   "entries": Array [
     Object {
       "rel": "contents",
@@ -334,7 +345,6 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -390,6 +400,10 @@ Object {
   ],
   "timeout": 42000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -399,7 +413,6 @@ Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [
     Object {
       "rel": "contents",
@@ -442,7 +455,6 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -500,6 +512,10 @@ Object {
   ],
   "timeout": 1,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -509,7 +525,6 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -522,7 +537,6 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -560,6 +574,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -569,7 +587,6 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -582,7 +599,6 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -620,6 +636,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -629,7 +649,6 @@ Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
@@ -648,7 +667,6 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": "__SNIP__",
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -700,6 +718,10 @@ Object {
   ],
   "timeout": 1,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -709,7 +731,6 @@ Object {
   "cover": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "disableFormatHtml": undefined,
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
@@ -722,7 +743,6 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": "__SNIP__",
-  "hardLineBreaks": undefined,
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -760,6 +780,10 @@ Object {
   "themeIndexes": Array [],
   "timeout": 120000,
   "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
