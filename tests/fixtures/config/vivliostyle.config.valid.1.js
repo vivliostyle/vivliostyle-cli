@@ -25,4 +25,8 @@ module.exports = {
   cover: './cover.png',
   timeout: 1,
   workspaceDir: 'workspaceDir',
+  vfm: {
+    hardLineBreaks: true,
+    disableFormatHtml: true,
+  },
 };
