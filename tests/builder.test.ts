@@ -17,6 +17,7 @@ afterAll(() => {
     resolveFixture('builder/.vs-workspace'),
     resolveFixture('builder/.vs-entryContext'),
     resolveFixture('builder/.vs-variousManuscriptFormat'),
+    resolveFixture('builder/.vs-vfm'),
   ]);
 });
 
@@ -252,6 +253,32 @@ it('generate from various manuscript formats', async () => {
   expect(
     doc3.window.document.querySelector('html')?.getAttribute('xml:lang'),
   ).toEqual('ja');
+});
+
+it('generate with VFM options', async () => {
+  const configWithoutOption = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/workspace.config.js'),
+  ]);
+  assertManifestPath(configWithoutOption);
+  await compile(configWithoutOption);
+  const output1 = fs.readFileSync(
+    resolveFixture('builder/.vs-workspace/manuscript/soda.html'),
+    'utf8',
+  );
+  expect(output1).toMatch('hardLineBreaks option test\n        foo');
+
+  const configWithOption = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/vfm.config.js'),
+  ]);
+  assertManifestPath(configWithOption);
+  await compile(configWithOption);
+  const output2 = fs.readFileSync(
+    resolveFixture('builder/.vs-vfm/manuscript/soda.html'),
+    'utf8',
+  );
+  expect(output2).toMatch('hardLineBreaks option test<br>\nfoo');
 });
 
 it('check overwrite violation', async () => {

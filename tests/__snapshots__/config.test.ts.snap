@@ -401,8 +401,8 @@ Object {
   "timeout": 42000,
   "verbose": false,
   "vfmOptions": Object {
-    "disableFormatHtml": false,
-    "hardLineBreaks": false,
+    "disableFormatHtml": true,
+    "hardLineBreaks": true,
   },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -513,8 +513,8 @@ Object {
   "timeout": 1,
   "verbose": false,
   "vfmOptions": Object {
-    "disableFormatHtml": false,
-    "hardLineBreaks": false,
+    "disableFormatHtml": true,
+    "hardLineBreaks": true,
   },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
@@ -719,8 +719,8 @@ Object {
   "timeout": 1,
   "verbose": false,
   "vfmOptions": Object {
-    "disableFormatHtml": false,
-    "hardLineBreaks": false,
+    "disableFormatHtml": true,
+    "hardLineBreaks": true,
   },
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
