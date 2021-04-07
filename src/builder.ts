@@ -118,6 +118,7 @@ export async function compile(
     entries,
     language,
     cover,
+    vfmOptions,
     input,
   }: MergedConfig & WebPublicationManifestConfig,
   { reload = false }: { reload?: boolean } = {},
@@ -168,6 +169,7 @@ export async function compile(
     if (entry.type === 'text/markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
+        ...vfmOptions,
         style,
         title: entry.title,
         language: language ?? undefined,

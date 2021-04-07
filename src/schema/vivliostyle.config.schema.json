@@ -157,6 +157,18 @@
         "timeout": {
           "type": "number",
           "minimum": 0
+        },
+        "vfm": {
+          "type": "object",
+          "properties": {
+            "hardLineBreaks": {
+              "type": "boolean"
+            },
+            "disableFormatHtml": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
         }
       }
     }
