@@ -1,3 +1,15 @@
+# [3.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.2.1...v3.3.0) (2021-04-07)
+
+### Bug Fixes
+
+- lack of test snapshot ([53600e1](https://github.com/vivliostyle/vivliostyle-cli/commit/53600e1bbaace88725362238bf58d9bff66aae84))
+
+### Features
+
+- add VFM options (hardLineBreaks, disableFormatHtml) to vivliostyle.config.js ([e4ec8f6](https://github.com/vivliostyle/vivliostyle-cli/commit/e4ec8f60063dd9465fb38d3e5110a6c2f8b9e8b6))
+- Update option structure ([de6ae25](https://github.com/vivliostyle/vivliostyle-cli/commit/de6ae25980ee0c92a2fcd9e30a8fb3fe91b0e6f2))
+- Update Vivliostyle version to 2.7.0 ([8dab20f](https://github.com/vivliostyle/vivliostyle-cli/commit/8dab20f9fca651dff89b50585841d70eed5cb4cb))
+
 ## [3.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.2.0...v3.2.1) (2021-03-29)
 
 ### Bug Fixes
