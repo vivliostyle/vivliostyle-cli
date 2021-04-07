@@ -55,6 +55,10 @@ export default async function init(cliFlags: InitCliFlags) {
   // workspaceDir: '.vivliostyle', // directory which is saved intermediate files.
   // toc: true, // whether generate and include ToC HTML or not, default to 'false'.
   // cover: './cover.png', // cover image. default to undefined.
+  // vfm: { // options of VFM processor
+  //   hardLineBreaks: true, // converts line breaks of VFM to <br> tags. default to 'false'.
+  //   disableFormatHtml: true, // disables HTML formatting. default to 'false'.
+  // },
 };
 `;
 
