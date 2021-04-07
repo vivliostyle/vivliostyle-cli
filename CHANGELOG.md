@@ -1,3 +1,9 @@
+## [3.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.2.0...v3.2.1) (2021-03-29)
+
+### Bug Fixes
+
+- Update Vivliostyle version to 2.6.2 ([fe058df](https://github.com/vivliostyle/vivliostyle-cli/commit/fe058df59a6802ea054db78571dadeeab229933f))
+
 # [3.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.1.2...v3.2.0) (2021-03-29)
 
 ### Bug Fixes
