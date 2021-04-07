@@ -118,6 +118,8 @@ export async function compile(
     entries,
     language,
     cover,
+    hardLineBreaks,
+    disableFormatHtml,
     input,
   }: MergedConfig & WebPublicationManifestConfig,
   { reload = false }: { reload?: boolean } = {},
@@ -171,6 +173,8 @@ export async function compile(
         style,
         title: entry.title,
         language: language ?? undefined,
+        hardLineBreaks: hardLineBreaks ?? undefined,
+        disableFormatHtml: disableFormatHtml ?? undefined,
       });
       const compiledEntry = String(vfile);
       fs.writeFileSync(entry.target, compiledEntry);

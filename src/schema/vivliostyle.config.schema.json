@@ -157,6 +157,12 @@
         "timeout": {
           "type": "number",
           "minimum": 0
+        },
+        "hardLineBreaks": {
+          "type": "boolean"
+        },
+        "disableFormatHtml": {
+          "type": "boolean"
         }
       }
     }
