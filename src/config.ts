@@ -286,6 +286,7 @@ export function collectVivliostyleConfig<T extends CliFlags>(
     if (!fs.existsSync(configPath)) {
       return undefined;
     }
+    delete require.cache[configPath]; // clear require cache
     const config = require(configPath) as VivliostyleConfigSchema;
 
     const ajv = new Ajv({ strict: false });

@@ -55,7 +55,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     ? upath.dirname(vivliostyleConfigPath)
     : cwd;
 
-  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  let config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
   if (config.manifestPath) {
@@ -98,6 +98,13 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     clearTimeout(timer);
     timer = setTimeout(async () => {
       startLogging(`Rebuilding ${path}`);
+      const confPath = upath.basename(vivliostyleConfigPath);
+      // reload vivliostyle config
+      if (path === confPath) {
+        const loadedConf = collectVivliostyleConfig(cliFlags);
+        const { vivliostyleConfig } = loadedConf;
+        config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+      }
       // build artifacts
       if (config.manifestPath) {
         await compile(config, { reload: true });
@@ -155,7 +162,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     .on('all', (event, path) => {
       if (
         upath.join(config.entryContextDir, path) === config.input.entry ||
-        /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
+        /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg|js)$/i.test(path)
       ) {
         handleChangeEvent(path);
       }
