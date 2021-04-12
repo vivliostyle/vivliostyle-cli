@@ -55,7 +55,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     ? upath.dirname(vivliostyleConfigPath)
     : cwd;
 
-  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  let config = await mergeConfig(cliFlags, vivliostyleConfig, context);
 
   // build artifacts
   if (config.manifestPath) {
@@ -93,6 +93,24 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   await page.goto(url);
 
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
+
+  function reloadConfig(path: string) {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      startLogging(`Config file change detected. Reloading ${path}`);
+      // reload vivliostyle config
+      const loadedConf = collectVivliostyleConfig(cliFlags);
+      const { vivliostyleConfig } = loadedConf;
+      config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+      // build artifacts
+      if (config.manifestPath) {
+        await compile(config, { reload: true });
+        await copyAssets(config);
+      }
+      page.reload();
+      logSuccess(`Reloaded ${path}`);
+    }, 2000);
+  }
 
   function handleChangeEvent(path: string) {
     clearTimeout(timer);
@@ -158,6 +176,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
         /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
       ) {
         handleChangeEvent(path);
+      } else if (path === upath.basename(vivliostyleConfigPath)) {
+        reloadConfig(path);
       }
     });
 }
