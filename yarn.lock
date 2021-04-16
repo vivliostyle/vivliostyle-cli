@@ -999,17 +999,17 @@
   dependencies:
     "@types/node" "*"
 
-"@vivliostyle/core@^2.7.0":
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.7.0.tgz#3d89ab0647797673c67c153da4734147fbcefc27"
-  integrity sha512-mdz8KBV3L3va9kqH/3DDqrBwSMdklrbcpWaktrktM5uNgrpSQi07DGSfwtx2gmz6sqQj5NJ7KVJc4LymtCtOvQ==
+"@vivliostyle/core@^2.8.0":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.8.0.tgz#c83dc60b5678b8e382dba3c12ded47b8ce4ec954"
+  integrity sha512-7OJaOMdkUk6Jv1c/93oyBoGQBeBW11ApHgIFfwO9X3dcvxADQNNbkwnxyZx7eeRqHVVIjNWDWu58Yv5G1jcAYw==
   dependencies:
     fast-diff "^1.2.0"
 
-"@vivliostyle/vfm@v1.0.0-alpha.17":
-  version "1.0.0-alpha.17"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.17.tgz#38942a0998ed3f8faa70dbeaba89bb060a65b8ec"
-  integrity sha512-HC/7VX55vl8D8XCgLkwSGH5K7gfxvQElGt4WgoIuYou9+JINF8LdfxWYphMsSo2y1JF216sBJjBMrsoW3QY4fA==
+"@vivliostyle/vfm@v1.0.0-alpha.18":
+  version "1.0.0-alpha.18"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.18.tgz#b334d5a26a117607474ac9a0158f964c767b4b0a"
+  integrity sha512-e6ZiFdCAxUohNZDZ3dzP2eW8qR7J5lbVFhHkK5ZEFQdk06axQYxaw9tbiaY+IDRZMbw5tcXKJLBE3yzAu8a5nw==
   dependencies:
     debug "^4.3.1"
     hast-util-find-and-replace "^3.2.0"
@@ -1045,12 +1045,12 @@
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
 
-"@vivliostyle/viewer@2.7.0":
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.7.0.tgz#de636238082f650916e2ce87426b3d8d0ad652e4"
-  integrity sha512-1wTmVFNyV8N47lVBLVXnCYPXShKmlT2Kom1Caj20D+05vhTOFiVpUu+JQ28Xjd5E/pokGUaDc0E8jqY0a5IYLQ==
+"@vivliostyle/viewer@2.8.0":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.8.0.tgz#80e9884dea9a879d54f0bffba6483775bb5702b5"
+  integrity sha512-IeJXRjq2/iMTt+O7NFAIVp5GoHcyhUV9SoBxuVrxUyehvwKElRKSsFWnZ0ZPZ3K+y+0iIMn+EQ79oz5cFpTq1g==
   dependencies:
-    "@vivliostyle/core" "^2.7.0"
+    "@vivliostyle/core" "^2.8.0"
     font-awesome "^4.7.0"
     knockout "^3.5.0"
 
