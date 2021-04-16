@@ -19,8 +19,8 @@
     "test": "jest --coverage"
   },
   "dependencies": {
-    "@vivliostyle/vfm": "v1.0.0-alpha.17",
-    "@vivliostyle/viewer": "2.7.0",
+    "@vivliostyle/vfm": "v1.0.0-alpha.18",
+    "@vivliostyle/viewer": "2.8.0",
     "ajv": "^7.0.4",
     "ajv-formats": "^1.5.1",
     "chalk": "^4.1.0",
