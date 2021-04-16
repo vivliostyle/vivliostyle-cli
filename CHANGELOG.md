@@ -1,3 +1,14 @@
+# [3.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.3.0...v3.4.0) (2021-04-16)
+
+### Bug Fixes
+
+- extract function that reloads the configuration file ([40b5b83](https://github.com/vivliostyle/vivliostyle-cli/commit/40b5b83220a54e17a925bc28046cced988bc121e))
+
+### Features
+
+- Update vivliostyle (core@2.8.0, vfm@v1.0.0-alpha.18) ([23f940d](https://github.com/vivliostyle/vivliostyle-cli/commit/23f940d2e13a5588bc06aa11f104732800856d9e))
+- vivliostyle preview reload when vivliostyle.config.js updated ([3079688](https://github.com/vivliostyle/vivliostyle-cli/commit/30796886124136332b08a3776cccaf2ba6fc7c26))
+
 # [3.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.2.1...v3.3.0) (2021-04-07)
 
 ### Bug Fixes
