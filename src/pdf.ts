@@ -79,7 +79,7 @@ export async function buildPDF({
   page.on('console', (msg) => {
     switch (msg.type()) {
       case 'error':
-        if (/\/vivliostyle-viewer\.js$/.test(msg.location().url)) {
+        if (/\/vivliostyle-viewer\.js$/.test(msg.location().url ?? '')) {
           logError(msg.text());
           throw msg.text();
         }

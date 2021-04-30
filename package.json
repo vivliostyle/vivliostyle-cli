@@ -39,7 +39,7 @@
     "pdf-lib": "^1.16.0",
     "press-ready": "^4.0.3",
     "prettier": "^2.2.1",
-    "puppeteer": "7.0.1",
+    "puppeteer": "9.0.0",
     "resolve-pkg": "^2.0.0",
     "shelljs": "^0.8.4",
     "terminal-link": "^2.1.1",

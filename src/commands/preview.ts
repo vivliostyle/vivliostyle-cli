@@ -1,5 +1,5 @@
 import chokidar from 'chokidar';
-import puppeteer from 'puppeteer';
+import puppeteer, { PuppeteerNode } from 'puppeteer';
 import upath from 'upath';
 import { compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
@@ -76,12 +76,15 @@ export default async function preview(cliFlags: PreviewCliFlags) {
 
   debug(
     `Executing Chromium path: ${
-      config.executableChromium || puppeteer.executablePath()
+      config.executableChromium ||
+      ((puppeteer as unknown) as PuppeteerNode).executablePath()
     }`,
   );
   const browser = await launchBrowser({
     headless: false,
-    executablePath: config.executableChromium || puppeteer.executablePath(),
+    executablePath:
+      config.executableChromium ||
+      ((puppeteer as unknown) as PuppeteerNode).executablePath(),
     args: [
       '--allow-file-access-from-files',
       config.sandbox ? '' : '--no-sandbox',

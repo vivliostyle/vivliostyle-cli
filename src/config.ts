@@ -3,7 +3,7 @@ import addFormats from 'ajv-formats';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
-import puppeteer from 'puppeteer';
+import puppeteer, { PuppeteerNode } from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
 import { pathToFileURL } from 'url';
@@ -390,7 +390,8 @@ export async function mergeConfig<T extends CliFlags>(
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
   const executableChromium =
-    cliFlags.executableChromium ?? puppeteer.executablePath();
+    cliFlags.executableChromium ??
+    ((puppeteer as unknown) as PuppeteerNode).executablePath();
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
