@@ -1006,16 +1006,17 @@
   dependencies:
     fast-diff "^1.2.0"
 
-"@vivliostyle/vfm@v1.0.0-alpha.18":
-  version "1.0.0-alpha.18"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.18.tgz#b334d5a26a117607474ac9a0158f964c767b4b0a"
-  integrity sha512-e6ZiFdCAxUohNZDZ3dzP2eW8qR7J5lbVFhHkK5ZEFQdk06axQYxaw9tbiaY+IDRZMbw5tcXKJLBE3yzAu8a5nw==
+"@vivliostyle/vfm@v1.0.0-alpha.19":
+  version "1.0.0-alpha.19"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.0.0-alpha.19.tgz#3dc801674bbe8ca72f50ea297f32683e0bb78cdd"
+  integrity sha512-f9ac8SpJ3gs+h73jxz75qTfv0lYEen0ILgRJZvYEJD/x8rtP8V7NxQe7j6/GXA2734clmQOJl9HZie6cxPPbdw==
   dependencies:
     debug "^4.3.1"
     hast-util-find-and-replace "^3.2.0"
     hast-util-is-element "^1.1.0"
     hastscript "^6.0.0"
     js-yaml "^4.0.0"
+    mdast-util-find-and-replace "^1.1.1"
     mdast-util-to-hast "^10.1.1"
     mdast-util-to-string "^2.0.0"
     meow "^9.0.0"
@@ -5174,6 +5175,15 @@ mdast-util-definitions@^4.0.0:
   integrity sha512-k8AJ6aNnUkB7IE+5azR9h81O5EQ/cTDXtWdMq9Kk5KcEW/8ritU5CeLg/9HhOC++nALHBlaogJ5jz0Ybk3kPMQ==
   dependencies:
     unist-util-visit "^2.0.0"
+
+mdast-util-find-and-replace@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/mdast-util-find-and-replace/-/mdast-util-find-and-replace-1.1.1.tgz#b7db1e873f96f66588c321f1363069abf607d1b5"
+  integrity sha512-9cKl33Y21lyckGzpSmEQnIDjEfeeWelN5s1kUW1LwdB0Fkuq2u+4GdqcGEygYxJE8GVqCl0741bYXHgamfWAZA==
+  dependencies:
+    escape-string-regexp "^4.0.0"
+    unist-util-is "^4.0.0"
+    unist-util-visit-parents "^3.0.0"
 
 mdast-util-to-hast@^10.0.0, mdast-util-to-hast@^10.1.1:
   version "10.1.1"
