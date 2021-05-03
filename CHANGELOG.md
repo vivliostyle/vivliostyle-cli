@@ -1,3 +1,11 @@
+# [3.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.4.0...v3.5.0) (2021-05-03)
+
+### Features
+
+- Update @vivliostyle/vfm to v1.0.0-alpha.19 ([8979762](https://github.com/vivliostyle/vivliostyle-cli/commit/8979762b002209cf74e79b088db9444b509de346))
+- Update @vivliostyle/vfm to v1.0.0-alpha.21 ([e66190b](https://github.com/vivliostyle/vivliostyle-cli/commit/e66190b62acaef94f52db4d3f02627b4bd8257fe))
+- Update puppeteer to 9.0.0 ([af39584](https://github.com/vivliostyle/vivliostyle-cli/commit/af39584f6d64e72b4079a7d453fd6c1fade07edc))
+
 # [3.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.3.0...v3.4.0) (2021-04-16)
 
 ### Bug Fixes
