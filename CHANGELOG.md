@@ -1,3 +1,9 @@
+## [3.5.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.5.0...v3.5.1) (2021-07-14)
+
+### Bug Fixes
+
+- Support new VFM API ([770e108](https://github.com/vivliostyle/vivliostyle-cli/commit/770e10848e0dc4276e1819f9afed627f93263d4c))
+
 # [3.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.4.0...v3.5.0) (2021-05-03)
 
 ### Features
