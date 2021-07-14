@@ -15,7 +15,7 @@ import {
   InputFormat,
   ManuscriptMediaType,
 } from './input';
-import { processMarkdown } from './markdown';
+import { readMarkdownMetadata } from './markdown';
 import {
   availableOutputFormat,
   detectOutputFormat,
@@ -269,9 +269,9 @@ function parseFileMetadata(
   let title: string | undefined;
   let theme: ParsedTheme | undefined;
   if (type === 'text/markdown') {
-    const file = processMarkdown(sourcePath);
-    title = file.data.title;
-    theme = parseTheme(file.data.theme, sourceDir, workspaceDir);
+    const metadata = readMarkdownMetadata(sourcePath);
+    title = metadata.title;
+    theme = parseTheme(metadata.vfm?.theme, sourceDir, workspaceDir);
   } else {
     const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
     title = $('title')?.text() ?? undefined;

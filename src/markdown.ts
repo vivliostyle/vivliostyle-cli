@@ -1,4 +1,9 @@
-import { StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
+import {
+  Metadata,
+  readMetadata,
+  StringifyMarkdownOptions,
+  VFM,
+} from '@vivliostyle/vfm';
 import fs from 'fs';
 import vfile, { VFile } from 'vfile';
 
@@ -18,4 +23,8 @@ export function processMarkdown(
     vfile({ path: filepath, contents: fs.readFileSync(filepath, 'utf8') }),
   ) as VSFile;
   return processed;
+}
+
+export function readMarkdownMetadata(filepath: string): Metadata {
+  return readMetadata(fs.readFileSync(filepath, 'utf8'));
 }
