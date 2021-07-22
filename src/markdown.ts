@@ -18,9 +18,10 @@ export function processMarkdown(
   filepath: string,
   options: StringifyMarkdownOptions = {},
 ): VSFile {
-  const vfm = VFM(options);
+  const markdownString = fs.readFileSync(filepath, 'utf8');
+  const vfm = VFM(options, readMetadata(markdownString));
   const processed = vfm.processSync(
-    vfile({ path: filepath, contents: fs.readFileSync(filepath, 'utf8') }),
+    vfile({ path: filepath, contents: markdownString }),
   ) as VSFile;
   return processed;
 }

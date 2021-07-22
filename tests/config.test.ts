@@ -197,3 +197,11 @@ it('imports a https URL', async () => {
   maskConfig(config);
   expect(config).toMatchSnapshot();
 });
+
+it('yields a config from frontmatter', async () => {
+  const config = await getMergedConfig([
+    path.resolve(__dirname, 'fixtures/config/frontmatter.md'),
+  ]);
+  maskConfig(config);
+  expect(config.entries[0].title).toBe('Frontmatter');
+});
