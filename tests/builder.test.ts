@@ -274,11 +274,43 @@ it('generate with VFM options', async () => {
   ]);
   assertManifestPath(configWithOption);
   await compile(configWithOption);
+  const manifest = require(resolveFixture('builder/.vs-vfm/publication.json'));
+  expect(manifest.readingOrder).toEqual([
+    {
+      url: 'index.html',
+      title: 'Table of Contents',
+      rel: 'contents',
+      type: 'LinkedResource',
+    },
+    {
+      title: 'SODA',
+      url: 'manuscript/soda.html',
+    },
+    {
+      title: 'Hello',
+      url: 'manuscript/frontmatter.html',
+    },
+  ]);
   const output2 = fs.readFileSync(
     resolveFixture('builder/.vs-vfm/manuscript/soda.html'),
     'utf8',
   );
   expect(output2).toMatch('hardLineBreaks option test<br>\nfoo');
+  const doc1 = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-vfm/manuscript/frontmatter.html'),
+    ),
+  );
+  expect(doc1.window.document.querySelector('title')?.textContent).toBe(
+    'Hello',
+  );
+  expect(doc1.window.document.documentElement.lang).toBe('la');
+  expect(doc1.window.document.documentElement.className).toBe('Foo');
+  expect(
+    doc1.window.document
+      .querySelector('meta[name="author"]')
+      ?.getAttribute('content'),
+  ).toBe('Bar');
 });
 
 it('check overwrite violation', async () => {
