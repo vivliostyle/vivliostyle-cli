@@ -1,3 +1,9 @@
+## [3.5.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.5.1...v3.5.2) (2021-07-23)
+
+### Bug Fixes
+
+- VFM frontmatter not processed ([68deef2](https://github.com/vivliostyle/vivliostyle-cli/commit/68deef2effdec36252ef4548b30867438bdd4d5a)), closes [#196](https://github.com/vivliostyle/vivliostyle-cli/issues/196)
+
 ## [3.5.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.5.0...v3.5.1) (2021-07-14)
 
 ### Bug Fixes
