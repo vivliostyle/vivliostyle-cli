@@ -4,6 +4,7 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
+import { checkContainerEnvironment } from '../container';
 import { buildPDF } from '../pdf';
 import { cwd, gracefulError, log, startLogging, stopLogging } from '../util';
 import { exportWebPublication } from '../webbook';
@@ -26,17 +27,22 @@ try {
     author: options.author,
     language: options.language,
     pressReady: options.pressReady,
+    renderMode: options.renderMode || 'local',
     verbose: options.verbose,
     timeout: options.timeout,
     sandbox: options.sandbox,
     executableChromium: options.executableChromium,
+    skipCompile: options.skipCompile,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);
 }
 
 export default async function build(cliFlags: BuildCliFlags) {
-  startLogging('Collecting build config');
+  const isInContainer = await checkContainerEnvironment();
+  if (!isInContainer) {
+    startLogging('Collecting build config');
+  }
 
   const loadedConf = collectVivliostyleConfig(cliFlags);
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
@@ -53,7 +59,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   }
 
   // build artifacts
-  if (config.manifestPath) {
+  if (config.manifestPath && !cliFlags.skipCompile) {
     await compile(config);
     await copyAssets(config);
   }
@@ -68,6 +74,7 @@ export default async function build(cliFlags: BuildCliFlags) {
           config.webbookEntryPath ??
           config.epubOpfPath) as string,
         output: target.path,
+        renderMode: cliFlags.renderMode,
         customStyle: config.customStyle,
         customUserStyle: config.customUserStyle,
         singleDoc: config.singleDoc,
@@ -92,7 +99,9 @@ export default async function build(cliFlags: BuildCliFlags) {
     }
   }
 
-  stopLogging('Built successfully.', '🎉');
+  if (!isInContainer) {
+    stopLogging('Built successfully.', '🎉');
+  }
 
   process.exit(0);
 }

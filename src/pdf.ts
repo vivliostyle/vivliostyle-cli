@@ -5,6 +5,12 @@ import path from 'upath';
 import { URL } from 'url';
 import { Meta, Payload, TOCItem } from './broker';
 import { ManuscriptEntry, MergedConfig } from './config';
+import {
+  checkContainerEnvironment,
+  collectVolumeArgs,
+  runContainer,
+  toContainerPath,
+} from './container';
 import { PostProcess } from './postprocess';
 import { getBrokerUrl } from './server';
 import {
@@ -24,7 +30,26 @@ type PuppeteerPage = Resolved<
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;
   output: string;
+  renderMode: 'local' | 'docker';
 };
+
+export async function buildPDFWithContainer({
+  workspaceDir,
+  input,
+  output,
+}: Pick<BuildPdfOptions, 'workspaceDir' | 'input' | 'output'>) {
+  await runContainer({
+    userVolumeArgs: collectVolumeArgs([workspaceDir, path.dirname(output)]),
+    commandArgs: [
+      'build',
+      '--no-sandbox',
+      '--skip-compile',
+      '-o',
+      toContainerPath(output),
+      toContainerPath(input),
+    ],
+  });
+}
 
 export async function buildPDF({
   input,
@@ -41,7 +66,14 @@ export async function buildPDF({
   pressReady,
   entryContextDir,
   entries,
-}: BuildPdfOptions) {
+  renderMode,
+}: BuildPdfOptions): Promise<string | null> {
+  const isInContainer = await checkContainerEnvironment();
+  if (!isInContainer && renderMode === 'docker') {
+    await buildPDFWithContainer({ workspaceDir, input, output });
+    return null;
+  }
+
   logUpdate(`Launching build environment`);
 
   const navigateURL = getBrokerUrl({
@@ -58,11 +90,13 @@ export async function buildPDF({
   const browser = await launchBrowser({
     headless: true,
     executablePath: executableChromium,
-    // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
     args: [
       '--allow-file-access-from-files',
+      // FIXME: We seem have to disable sandbox now
+      // https://github.com/vivliostyle/vivliostyle-cli/issues/186
       sandbox ? '' : '--no-sandbox',
       '--disable-web-security',
+      isInContainer ? '--disable-dev-shm-usage' : '',
     ],
   });
   const version = await browser.version();
@@ -70,6 +104,9 @@ export async function buildPDF({
 
   logUpdate('Building pages');
 
+  // FIXME: This issue was reported but all workaround didn't fix
+  // https://github.com/puppeteer/puppeteer/issues/4039
+  await new Promise((res) => setTimeout(res, 1000));
   const page = await browser.newPage();
 
   page.on('pageerror', (error) => {

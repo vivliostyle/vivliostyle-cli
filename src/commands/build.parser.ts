@@ -11,6 +11,8 @@ export interface BuildCliFlags extends CliFlags {
     output?: string;
     format?: string;
   }[];
+  renderMode: 'local' | 'docker';
+  skipCompile?: boolean;
 }
 
 export function setupBuildParserProgram(): commander.Command {
@@ -90,6 +92,12 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
+    .addOption(
+      new commander.Option(
+        '--render-mode <mode>',
+        'if docker is set, Vivliostyle try to render PDF on Docker container',
+      ).choices(['local', 'docker']),
+    )
     .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',
@@ -99,6 +107,7 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
       '--executable-chromium <path>',
       'specify a path of executable Chrome (or Chromium) you installed',
     )
+    .addOption(new commander.Option('--skip-compile').hideHelp())
     .action((_arg: any, option: BuildCliFlags) => {
       option.targets = inferenceTargetsOption(targets);
     });
