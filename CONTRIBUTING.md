@@ -14,12 +14,6 @@ DEBUG=vs-cli vivliostyle build
 
 After setup, run `yarn dev` to watch files.
 
-### Docker Build
-
-```
-docker build -t vivliostyle/cli .
-```
-
 ## Release Guide (Maintainers only)
 
 ### Enter pre-release
