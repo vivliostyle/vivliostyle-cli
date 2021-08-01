@@ -28,10 +28,13 @@ try {
     language: options.language,
     pressReady: options.pressReady,
     renderMode: options.renderMode || 'local',
+    preflight: options.preflight,
+    preflightOption: options.preflightOption,
     verbose: options.verbose,
     timeout: options.timeout,
     sandbox: options.sandbox,
     executableChromium: options.executableChromium,
+    image: options.image,
     skipCompile: options.skipCompile,
   }).catch(gracefulError);
 } catch (err) {
@@ -73,8 +76,7 @@ export default async function build(cliFlags: BuildCliFlags) {
         input: (config.manifestPath ??
           config.webbookEntryPath ??
           config.epubOpfPath) as string,
-        output: target.path,
-        renderMode: cliFlags.renderMode,
+        target,
         customStyle: config.customStyle,
         customUserStyle: config.customUserStyle,
         singleDoc: config.singleDoc,

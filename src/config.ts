@@ -8,6 +8,7 @@ import resolvePkg from 'resolve-pkg';
 import path from 'upath';
 import { pathToFileURL } from 'url';
 import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const';
+import { CONTAINER_IMAGE } from './container';
 import { openEpubToTmpDirectory } from './epub';
 import {
   detectInputFormat,
@@ -17,7 +18,9 @@ import {
 } from './input';
 import { readMarkdownMetadata } from './markdown';
 import {
-  availableOutputFormat,
+  checkOutputFormat,
+  checkPreflightMode,
+  checkRenderMode,
   detectOutputFormat,
   OutputFormat,
 } from './output';
@@ -74,7 +77,7 @@ export type ParsedEntry = ManuscriptEntry | ContentsEntry;
 export interface CliFlags {
   input?: string;
   configPath?: string;
-  targets?: OutputFormat[];
+  targets?: Pick<OutputFormat, 'path' | 'format'>[];
   theme?: string;
   size?: string;
   style?: string;
@@ -87,8 +90,12 @@ export interface CliFlags {
   language?: string;
   verbose?: boolean;
   timeout?: number;
+  renderMode?: 'local' | 'docker';
+  preflight?: 'press-ready' | 'press-ready-local';
+  preflightOption?: string[];
   sandbox?: boolean;
   executableChromium?: string;
+  image?: string;
 }
 
 export interface WebPublicationManifestConfig {
@@ -125,7 +132,6 @@ export type MergedConfig = {
   customUserStyle: string | undefined;
   singleDoc: boolean;
   quick: boolean;
-  pressReady: boolean;
   language: string | null;
   vfmOptions: {
     hardLineBreaks: boolean;
@@ -136,6 +142,7 @@ export type MergedConfig = {
   timeout: number;
   sandbox: boolean;
   executableChromium: string;
+  image: string;
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -380,6 +387,9 @@ export async function mergeConfig<T extends CliFlags>(
   const quick = cliFlags.quick ?? false;
   const cover = contextResolve(entryContextDir, config?.cover) ?? undefined;
   const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
+  const renderMode = cliFlags.renderMode ?? 'local';
+  const preflight = cliFlags.preflight ?? (pressReady ? 'press-ready' : null);
+  const preflightOption = cliFlags.preflightOption ?? [];
 
   const vfmOptions = {
     hardLineBreaks: config?.vfm?.hardLineBreaks ?? false,
@@ -392,6 +402,7 @@ export async function mergeConfig<T extends CliFlags>(
   const executableChromium =
     cliFlags.executableChromium ??
     ((puppeteer as unknown) as PuppeteerNode).executablePath();
+  const image = cliFlags.image ?? CONTAINER_IMAGE;
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
@@ -403,31 +414,58 @@ export async function mergeConfig<T extends CliFlags>(
 
   const outputs = ((): OutputFormat[] => {
     if (cliFlags.targets?.length) {
-      return cliFlags.targets.map(({ path: outputPath, format }) => ({
-        path: path.resolve(outputPath),
-        format,
-      }));
+      return cliFlags.targets.map(({ path: outputPath, format }) => {
+        if (format === 'pdf') {
+          return {
+            path: path.resolve(outputPath),
+            format,
+            renderMode,
+            preflight,
+            preflightOption,
+          };
+        } else {
+          return {
+            path: path.resolve(outputPath),
+            format,
+          };
+        }
+      });
     }
     if (config?.output) {
       return (Array.isArray(config.output)
         ? config.output
         : [config.output]
       ).map((target) => {
-        if (typeof target === 'string') {
-          return detectOutputFormat(path.resolve(context, target));
+        const targetObj =
+          typeof target === 'string' ? { path: target } : target;
+        const outputPath = path.resolve(context, targetObj.path);
+        const format = targetObj.format ?? detectOutputFormat(outputPath);
+        if (!checkOutputFormat(format)) {
+          throw new Error(`Unknown format: ${format}`);
         }
-        const outputPath = path.resolve(context, target.path);
-        if (!target.format) {
-          return { ...target, ...detectOutputFormat(outputPath) };
+        if (format === 'pdf') {
+          const outputRenderMode = targetObj.renderMode ?? renderMode;
+          const outputPreflight = targetObj.preflight ?? preflight;
+          if (!checkRenderMode(outputRenderMode)) {
+            throw new Error(`Unknown renderMode: ${outputRenderMode}`);
+          }
+          if (
+            outputPreflight !== null &&
+            !checkPreflightMode(outputPreflight)
+          ) {
+            throw new Error(`Unknown preflight: ${outputPreflight}`);
+          }
+          return {
+            ...targetObj,
+            path: outputPath,
+            format,
+            renderMode: outputRenderMode,
+            preflight: outputPreflight,
+            preflightOption: targetObj.preflightOption ?? preflightOption,
+          };
+        } else {
+          return { ...targetObj, path: outputPath, format } as OutputFormat;
         }
-        if (
-          !availableOutputFormat.includes(
-            target.format as typeof availableOutputFormat[number],
-          )
-        ) {
-          throw new Error(`Unknown format: ${target.format}`);
-        }
-        return { ...target, path: outputPath } as OutputFormat;
       });
     }
     // Outputs a pdf file if any output configuration is not set
@@ -436,6 +474,9 @@ export async function mergeConfig<T extends CliFlags>(
       {
         path: path.resolve(context, filename),
         format: 'pdf',
+        renderMode,
+        preflight,
+        preflightOption,
       },
     ];
   })();
@@ -446,7 +487,6 @@ export async function mergeConfig<T extends CliFlags>(
     includeAssets,
     outputs,
     themeIndexes,
-    pressReady,
     size,
     customStyle,
     customUserStyle,
@@ -459,6 +499,7 @@ export async function mergeConfig<T extends CliFlags>(
     timeout,
     sandbox,
     executableChromium,
+    image,
   };
   if (!cliFlags.input && !config) {
     throw new Error(

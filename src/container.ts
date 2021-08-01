@@ -1,8 +1,12 @@
 import execa from 'execa';
 import { promises as fs } from 'fs';
+import isInteractive from 'is-interactive';
 import process from 'process';
 import path from 'upath';
+import { cliVersion } from './const';
+import { debug, startLogging, stopLogging } from './util';
 
+export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
 export const CONTAINER_ROOT_DIR = '/data';
 
 export function toContainerPath(absPath: string): string {
@@ -42,27 +46,36 @@ export async function checkContainerEnvironment(): Promise<boolean> {
 }
 
 export async function runContainer({
+  image,
   userVolumeArgs,
   commandArgs,
+  entrypoint,
 }: {
+  image: string;
   userVolumeArgs: string[];
   commandArgs: string[];
+  entrypoint?: string;
 }): Promise<execa.ExecaReturnValue> {
-  execa;
-  const proc = execa('docker', [
+  stopLogging('Launching docker container', '📦');
+  const args = [
     'run',
+    ...(isInteractive() ? ['-it'] : []),
     '--rm',
+    ...(entrypoint ? ['--entrypoint', entrypoint] : []),
     ...(process.env.DEBUG
       ? ['-e', `DEBUG=${process.env.DEBUG}`] // escape seems to work well
       : []),
-    '-u',
-    'node',
     ...userVolumeArgs.flatMap((arg) => ['-v', arg]),
-    'test',
-    'vivliostyle',
+    image,
     ...commandArgs,
-  ]);
+  ];
+  debug(`docker ${args.join(' ')}`);
+  const proc = execa('docker', args, {
+    stdio: 'inherit',
+  });
   proc.stdout?.pipe(process.stdout);
   proc.stderr?.pipe(process.stderr);
-  return await proc;
+  const ret = await proc;
+  startLogging();
+  return ret;
 }

@@ -1,8 +1,6 @@
 FROM node:16-slim
 LABEL maintainer "spring_raining <harusamex.com@gmail.com>"
 
-ENV VS_CLI_VERSION 3.5.2
-
 RUN set -x \
   && apt-get update \
   && apt-get install -y wget gnupg \
@@ -16,16 +14,21 @@ RUN set -x \
     ghostscript poppler-utils \
   && rm -rf /var/lib/apt/lists/*
 
+ARG VS_CLI_VERSION
+RUN test $VS_CLI_VERSION
+
 WORKDIR /opt/vivliostyle-cli
 COPY package.json yarn.lock /opt/vivliostyle-cli/
 RUN yarn install --frozen-lockfile
 COPY . /opt/vivliostyle-cli
 RUN yarn build \
   && yarn link \
+  && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
+  && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm \
   && echo $VS_CLI_VERSION > .vs-cli-version
 RUN usermod -a -G audio,video node \
   && mkdir -p /home/node/Downloads \
   && chown -R node:node /home/node
 
 USER node
-CMD [ "vivliostyle" ]
+ENTRYPOINT [ "vivliostyle" ]

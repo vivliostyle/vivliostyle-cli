@@ -42,7 +42,13 @@
       "type": "object",
       "properties": {
         "path": { "type": "string" },
-        "format": { "type": "string" }
+        "format": { "type": "string" },
+        "renderMode": { "type": "string" },
+        "preflight": { "type": "string" },
+        "preflightOption": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       },
       "required": ["path"],
       "additionalProperties": false
@@ -169,6 +175,10 @@
             }
           },
           "additionalProperties": false
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

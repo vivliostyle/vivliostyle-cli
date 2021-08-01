@@ -38,6 +38,7 @@ export interface CoreProps {
     hardLineBreaks?: boolean;
     disableFormatHtml?: boolean;
   };
+  image?: string;
   [k: string]: unknown;
 }
 export interface EntryObject {
@@ -55,4 +56,7 @@ export interface ContentsEntryObject {
 export interface OutputObject {
   path: string;
   format?: string;
+  renderMode?: string;
+  preflight?: string;
+  preflightOption?: string[];
 }

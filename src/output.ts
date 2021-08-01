@@ -7,9 +7,9 @@ interface OutputFormatTrait<T extends string = string> {
 /** A single file of PDF */
 export interface PdfOutput extends OutputFormatTrait<'pdf'> {
   path: string;
-  // TODO
-  // pressReady: boolean;
-  // grayscale: boolean;
+  renderMode: 'local' | 'docker';
+  preflight: 'press-ready' | 'press-ready-local' | null;
+  preflightOption: string[];
 }
 
 /** A directory including publication.json, series of (X)HTML files and assets */
@@ -18,16 +18,23 @@ export interface WebPublicationOutput extends OutputFormatTrait<'webpub'> {
 }
 
 export type OutputFormat = PdfOutput | WebPublicationOutput;
-export const availableOutputFormat: ReadonlyArray<OutputFormat['format']> = [
-  'pdf',
-  'webpub',
-] as const;
+export const checkOutputFormat = (v: unknown): v is OutputFormat['format'] => {
+  return ['pdf', 'webpub'].includes(v as string);
+};
 
-export function detectOutputFormat(outputPath: string): OutputFormat {
+export const checkRenderMode = (v: unknown): v is PdfOutput['renderMode'] => {
+  return ['local', 'docker'].includes(v as string);
+};
+
+export const checkPreflightMode = (v: unknown): v is PdfOutput['preflight'] => {
+  return ['press-ready', 'press-ready-local'].includes(v as string);
+};
+
+export function detectOutputFormat(outputPath: string): OutputFormat['format'] {
   const lowerCasedExt = path.extname(outputPath);
   if (lowerCasedExt === '.pdf') {
-    return { format: 'pdf', path: outputPath };
+    return 'pdf';
   } else {
-    return { format: 'webpub', path: outputPath };
+    return 'webpub';
   }
 }

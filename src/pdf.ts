@@ -11,6 +11,7 @@ import {
   runContainer,
   toContainerPath,
 } from './container';
+import { PdfOutput } from './output';
 import { PostProcess } from './postprocess';
 import { getBrokerUrl } from './server';
 import {
@@ -29,23 +30,31 @@ type PuppeteerPage = Resolved<
 
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;
-  output: string;
-  renderMode: 'local' | 'docker';
+  target: PdfOutput;
 };
 
 export async function buildPDFWithContainer({
   workspaceDir,
   input,
-  output,
-}: Pick<BuildPdfOptions, 'workspaceDir' | 'input' | 'output'>) {
+  target,
+  image,
+}: Pick<BuildPdfOptions, 'workspaceDir' | 'input' | 'target' | 'image'>) {
   await runContainer({
-    userVolumeArgs: collectVolumeArgs([workspaceDir, path.dirname(output)]),
+    image,
+    userVolumeArgs: collectVolumeArgs([
+      workspaceDir,
+      path.dirname(target.path),
+    ]),
     commandArgs: [
       'build',
       '--no-sandbox',
       '--skip-compile',
+      ...(target.preflight ? ['--preflight', target.preflight] : []),
+      ...(target.preflightOption.length > 0
+        ? ['--preflight-option', ...target.preflightOption]
+        : []),
       '-o',
-      toContainerPath(output),
+      toContainerPath(target.path),
       toContainerPath(input),
     ],
   });
@@ -53,24 +62,23 @@ export async function buildPDFWithContainer({
 
 export async function buildPDF({
   input,
-  output,
+  target,
   workspaceDir,
   size,
   customStyle,
   customUserStyle,
   singleDoc,
   executableChromium,
+  image,
   sandbox,
   verbose,
   timeout,
-  pressReady,
   entryContextDir,
   entries,
-  renderMode,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = await checkContainerEnvironment();
-  if (!isInContainer && renderMode === 'docker') {
-    await buildPDFWithContainer({ workspaceDir, input, output });
+  if (!isInContainer && target.renderMode === 'docker') {
+    await buildPDFWithContainer({ workspaceDir, input, target, image });
     return null;
   }
 
@@ -223,14 +231,18 @@ export async function buildPDF({
   await browser.close();
 
   logUpdate('Processing PDF');
-  shelljs.mkdir('-p', path.dirname(output));
+  shelljs.mkdir('-p', path.dirname(target.path));
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata);
   await post.toc(toc);
-  await post.save(output, { pressReady });
+  await post.save(target.path, {
+    preflight: target.preflight,
+    preflightOption: target.preflightOption,
+    image,
+  });
 
-  return output;
+  return target.path;
 }
 
 async function loadMetadata(page: PuppeteerPage): Promise<Meta> {
