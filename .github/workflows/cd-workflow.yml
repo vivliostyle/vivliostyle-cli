@@ -1,7 +1,14 @@
 name: cd-workflow
 
 on:
-  - push
+  push:
+    branches:
+      - main
+    tags:
+      - v*.*.*
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-and-push-image:
@@ -22,6 +29,11 @@ jobs:
             ghcr.io/vivliostyle/cli
           # generate Docker tags based on the following events/attributes
           tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=sha
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
