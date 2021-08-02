@@ -1,10 +1,10 @@
-name: Test
+name: test
 
 on:
   - push
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,3 +18,29 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: yarn install
       - run: yarn test
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
+    steps:
+      - uses: actions/checkout@v2
+      - name: Output current package version
+        id: package
+        run: |
+          VERSION=$(cat package.json | jq -r '.version')
+          echo "::set-output name=version::$VERSION"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build container
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          build-args: |
+            VS_CLI_VERSION=${{ steps.package.outputs.version }}
+          tags: localhost:5000/vivliostyle/cli:latest
