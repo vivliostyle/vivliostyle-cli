@@ -8,8 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Output current package version
+        id: package
+        run: |
+          VERSION=(cat package.json | jq -r '.version')
+          echo "::set-output name=version::$VERSION"
       - name: Docker meta
-        id: meta
+        id: docker_meta
         uses: docker/metadata-action@v3
         with:
           # list of Docker images to use as base name for tags
@@ -27,6 +32,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VS_CLI_VERSION=${{ steps.package.outputs.version }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
           
