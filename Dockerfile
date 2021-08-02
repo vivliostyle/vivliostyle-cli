@@ -1,4 +1,4 @@
-FROM node:16-slim
+FROM node:16-slim AS base
 LABEL maintainer "spring_raining <harusamex.com@gmail.com>"
 
 RUN set -x \
@@ -13,19 +13,33 @@ RUN set -x \
     # dependencies for press-ready
     ghostscript poppler-utils \
   && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/vivliostyle-cli
 
+# Build stage
+FROM base AS builder
 ARG VS_CLI_VERSION
 RUN test $VS_CLI_VERSION
 
-WORKDIR /opt/vivliostyle-cli
 COPY package.json yarn.lock /opt/vivliostyle-cli/
 RUN yarn install --frozen-lockfile
 COPY . /opt/vivliostyle-cli
 RUN yarn build \
+  && echo $VS_CLI_VERSION > .vs-cli-version
+
+# Runtime stage
+FROM base AS runtime
+COPY --from=builder \
+  /opt/vivliostyle-cli/package.json \
+  /opt/vivliostyle-cli/yarn.lock \
+  /opt/vivliostyle-cli/.vs-cli-version \
+  /opt/vivliostyle-cli/
+COPY --from=builder \
+  /opt/vivliostyle-cli/dist/ \
+  /opt/vivliostyle-cli/dist/
+RUN yarn install --frozen-lockfile --production \
   && yarn link \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
-  && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm \
-  && echo $VS_CLI_VERSION > .vs-cli-version
+  && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm
 RUN usermod -a -G audio,video node \
   && mkdir -p /home/node/Downloads \
   && chown -R node:node /home/node
