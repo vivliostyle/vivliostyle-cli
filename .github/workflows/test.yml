@@ -36,6 +36,8 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
       - name: Build container
         uses: docker/build-push-action@v2
         with:
@@ -44,3 +46,6 @@ jobs:
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
           tags: localhost:5000/vivliostyle/cli:latest
+      - name: Inspect
+        run: |
+          docker buildx imagetools inspect localhost:5000/vivliostyle/cli:latest
