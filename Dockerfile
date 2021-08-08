@@ -8,10 +8,12 @@ RUN set -x \
   && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
-    # dependencies for puppeteergconf-service
+    # dependencies for puppeteer
     google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
     # dependencies for press-ready
     ghostscript poppler-utils \
+  # remove chrome without removing dependencies
+  && dpkg -r --force-depends google-chrome-stable \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /opt/vivliostyle-cli
 
