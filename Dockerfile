@@ -45,4 +45,5 @@ RUN usermod -a -G audio,video node \
   && chown -R node:node /home/node
 
 USER node
+WORKDIR /data
 ENTRYPOINT [ "vivliostyle" ]
