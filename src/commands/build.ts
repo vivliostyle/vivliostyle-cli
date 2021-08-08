@@ -4,7 +4,7 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
-import { checkContainerEnvironment } from '../container';
+import { checkContainerEnvironment, CONTAINER_ROOT_DIR } from '../container';
 import { buildPDF } from '../pdf';
 import { cwd, gracefulError, log, startLogging, stopLogging } from '../util';
 import { exportWebPublication } from '../webbook';
@@ -92,12 +92,19 @@ export default async function build(cliFlags: BuildCliFlags) {
       });
     }
     if (output) {
-      const formattedOutput = chalk.bold.green(path.relative(cwd, output));
-      log(
-        `\n${terminalLink(formattedOutput, 'file://' + output, {
-          fallback: () => formattedOutput,
-        })} has been created.`,
-      );
+      if (isInContainer) {
+        const formattedOutput = chalk.bold.green(
+          `/${path.relative(CONTAINER_ROOT_DIR, output)}`,
+        );
+        log(`\n${formattedOutput} has been created.`);
+      } else {
+        const formattedOutput = chalk.bold.green(path.relative(cwd, output));
+        log(
+          `\n${terminalLink(formattedOutput, 'file://' + output, {
+            fallback: () => formattedOutput,
+          })} has been created.`,
+        );
+      }
     }
   }
 
