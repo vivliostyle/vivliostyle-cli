@@ -1,3 +1,5 @@
+import chalk from 'chalk';
+import commandExists from 'command-exists';
 import execa from 'execa';
 import { promises as fs } from 'fs';
 import isInteractive from 'is-interactive';
@@ -56,6 +58,12 @@ export async function runContainer({
   commandArgs: string[];
   entrypoint?: string;
 }): Promise<execa.ExecaReturnValue> {
+  if (!(await commandExists('docker'))) {
+    throw new Error(
+      `Docker isn't be installed. To use this feature, you'll need to install Docker.`,
+    );
+  }
+
   stopLogging('Launching docker container', '📦');
   const args = [
     'run',
@@ -70,12 +78,21 @@ export async function runContainer({
     ...commandArgs,
   ];
   debug(`docker ${args.join(' ')}`);
-  const proc = execa('docker', args, {
-    stdio: 'inherit',
-  });
-  proc.stdout?.pipe(process.stdout);
-  proc.stderr?.pipe(process.stderr);
-  const ret = await proc;
-  startLogging();
-  return ret;
+  try {
+    const proc = execa('docker', args, {
+      stdio: 'inherit',
+    });
+    proc.stdout?.pipe(process.stdout);
+    proc.stderr?.pipe(process.stderr);
+    const ret = await proc;
+    startLogging();
+    return ret;
+  } catch (error) {
+    log(
+      `\n${chalk.red.bold(
+        'Error:',
+      )} An error occurred on the running container. Please see logs above.`,
+    );
+    process.exit(1);
+  }
 }
