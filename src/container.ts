@@ -6,7 +6,7 @@ import isInteractive from 'is-interactive';
 import process from 'process';
 import path from 'upath';
 import { cliVersion } from './const';
-import { debug, startLogging, stopLogging } from './util';
+import { debug, log, startLogging, stopLogging } from './util';
 
 export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
 export const CONTAINER_ROOT_DIR = '/data';
