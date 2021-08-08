@@ -1,6 +1,6 @@
 import chokidar from 'chokidar';
-import puppeteer, { PuppeteerNode } from 'puppeteer';
 import upath from 'upath';
+import { launchBrowser } from '../browser';
 import { compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { getBrokerUrl } from '../server';
@@ -9,7 +9,6 @@ import {
   debug,
   gracefulError,
   isUrlString,
-  launchBrowser,
   logSuccess,
   pathStartsWith,
   startLogging,
@@ -45,7 +44,7 @@ try {
 }
 
 export default async function preview(cliFlags: PreviewCliFlags) {
-  startLogging('Preparing preview');
+  startLogging('Collecting preview config');
 
   const loadedConf = collectVivliostyleConfig(cliFlags);
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
@@ -56,6 +55,8 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     : cwd;
 
   let config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+
+  startLogging('Preparing preview');
 
   // build artifacts
   if (config.manifestPath) {
@@ -74,17 +75,10 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     quick: config.quick,
   });
 
-  debug(
-    `Executing Chromium path: ${
-      config.executableChromium ||
-      ((puppeteer as unknown) as PuppeteerNode).executablePath()
-    }`,
-  );
+  debug(`Executing Chromium path: ${config.executableChromium}`);
   const browser = await launchBrowser({
     headless: false,
-    executablePath:
-      config.executableChromium ||
-      ((puppeteer as unknown) as PuppeteerNode).executablePath(),
+    executablePath: config.executableChromium,
     args: [
       '--allow-file-access-from-files',
       config.sandbox ? '' : '--no-sandbox',

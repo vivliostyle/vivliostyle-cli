@@ -39,6 +39,7 @@ COPY --from=builder \
   /opt/vivliostyle-cli/dist/ \
   /opt/vivliostyle-cli/dist/
 RUN yarn install --frozen-lockfile --production \
+  && node node_modules/puppeteer-core/install.js \
   && yarn link \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm

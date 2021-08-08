@@ -3,10 +3,10 @@ import addFormats from 'ajv-formats';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
-import puppeteer, { PuppeteerNode } from 'puppeteer';
 import resolvePkg from 'resolve-pkg';
 import path from 'upath';
 import { pathToFileURL } from 'url';
+import { checkAvailableBrowserPath, downloadBrowser } from './browser';
 import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const';
 import { CONTAINER_IMAGE } from './container';
 import { openEpubToTmpDirectory } from './epub';
@@ -399,9 +399,6 @@ export async function mergeConfig<T extends CliFlags>(
   const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
-  const executableChromium =
-    cliFlags.executableChromium ??
-    ((puppeteer as unknown) as PuppeteerNode).executablePath();
   const image = cliFlags.image ?? CONTAINER_IMAGE;
 
   const themeIndexes: ParsedTheme[] = [];
@@ -480,6 +477,11 @@ export async function mergeConfig<T extends CliFlags>(
       },
     ];
   })();
+
+  const executableChromium =
+    cliFlags.executableChromium ??
+    checkAvailableBrowserPath() ??
+    (await downloadBrowser());
 
   const commonOpts: CommonOpts = {
     entryContextDir,

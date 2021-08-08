@@ -4,6 +4,7 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { URL } from 'url';
 import { Meta, Payload, TOCItem } from './broker';
+import { launchBrowser } from './browser';
 import { ManuscriptEntry, MergedConfig } from './config';
 import {
   checkContainerEnvironment,
@@ -16,7 +17,6 @@ import { PostProcess } from './postprocess';
 import { getBrokerUrl } from './server';
 import {
   debug,
-  launchBrowser,
   log,
   logError,
   logInfo,
