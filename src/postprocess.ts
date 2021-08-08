@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import decamelize from 'decamelize';
 import fs from 'fs';
 import os from 'os';
@@ -21,7 +22,7 @@ import {
   toContainerPath,
 } from './container';
 import { PdfOutput } from './output';
-import { startLogging, stopLogging } from './util';
+import { log, startLogging, stopLogging } from './util';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
   Pick<MergedConfig, 'image'>;
@@ -60,24 +61,33 @@ export async function pressReadyWithContainer({
   preflightOption: string[];
   image: string;
 }) {
-  await runContainer({
-    image,
-    entrypoint: 'press-ready',
-    userVolumeArgs: collectVolumeArgs([
-      path.dirname(input),
-      path.dirname(output),
-    ]),
-    commandArgs: [
-      'build',
-      '-i',
-      toContainerPath(input),
-      '-o',
-      toContainerPath(output),
-      ...preflightOption
-        .map((opt) => `--${decamelize(opt, { separator: '-' })}`)
-        .filter((str) => /^[\w-]+/.test(str)),
-    ],
-  });
+  try {
+    await runContainer({
+      image,
+      entrypoint: 'press-ready',
+      userVolumeArgs: collectVolumeArgs([
+        path.dirname(input),
+        path.dirname(output),
+      ]),
+      commandArgs: [
+        'build',
+        '-i',
+        toContainerPath(input),
+        '-o',
+        toContainerPath(output),
+        ...preflightOption
+          .map((opt) => `--${decamelize(opt, { separator: '-' })}`)
+          .filter((str) => /^[\w-]+/.test(str)),
+      ],
+    });
+  } catch (error) {
+    log(
+      `\n${chalk.red.bold(
+        'Error:',
+      )} An error occurred on the running container. Please see logs above.`,
+    );
+    process.exit(1);
+  }
 }
 
 export class PostProcess {

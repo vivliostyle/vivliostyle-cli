@@ -17,6 +17,7 @@ import { getBrokerUrl } from './server';
 import {
   debug,
   launchBrowser,
+  log,
   logError,
   logInfo,
   logSuccess,
@@ -39,25 +40,34 @@ export async function buildPDFWithContainer({
   target,
   image,
 }: Pick<BuildPdfOptions, 'workspaceDir' | 'input' | 'target' | 'image'>) {
-  await runContainer({
-    image,
-    userVolumeArgs: collectVolumeArgs([
-      workspaceDir,
-      path.dirname(target.path),
-    ]),
-    commandArgs: [
-      'build',
-      '--no-sandbox',
-      '--skip-compile',
-      ...(target.preflight ? ['--preflight', target.preflight] : []),
-      ...(target.preflightOption.length > 0
-        ? ['--preflight-option', ...target.preflightOption]
-        : []),
-      '-o',
-      toContainerPath(target.path),
-      toContainerPath(input),
-    ],
-  });
+  try {
+    await runContainer({
+      image,
+      userVolumeArgs: collectVolumeArgs([
+        workspaceDir,
+        path.dirname(target.path),
+      ]),
+      commandArgs: [
+        'build',
+        '--no-sandbox',
+        '--skip-compile',
+        ...(target.preflight ? ['--preflight', target.preflight] : []),
+        ...(target.preflightOption.length > 0
+          ? ['--preflight-option', ...target.preflightOption]
+          : []),
+        '-o',
+        toContainerPath(target.path),
+        toContainerPath(input),
+      ],
+    });
+  } catch (error) {
+    log(
+      `\n${chalk.red.bold(
+        'Error:',
+      )} An error occurred on the running container. Please see logs above.`,
+    );
+    process.exit(1);
+  }
 }
 
 export async function buildPDF({
