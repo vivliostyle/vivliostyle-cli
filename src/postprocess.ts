@@ -106,13 +106,18 @@ export class PostProcess {
     ) {
       stopLogging('Running press-ready', '🚀');
       await pressReadyModule.build({
-        ...preflightOption.reduce(
-          (acc, opt) => ({
-            ...acc,
-            [decamelize(opt, { separator: '-' })]: true,
-          }),
-          {},
-        ),
+        ...preflightOption.reduce((acc, opt) => {
+          const optName = decamelize(opt, { separator: '-' });
+          return optName.startsWith('no-')
+            ? {
+                ...acc,
+                [optName.slice(3)]: false,
+              }
+            : {
+                ...acc,
+                [optName]: true,
+              };
+        }, {}),
         input,
         output,
       });
