@@ -7,7 +7,7 @@ export interface BuildCliFlags extends CliFlags {
     output?: string;
     format?: string;
   }[];
-  skipCompile?: boolean;
+  bypassedPdfBuilderOption?: string;
 }
 
 export function setupBuildParserProgram(): commander.Command {
@@ -116,7 +116,9 @@ https://github.com/vibranthq/press-ready`,
       'specify a path of executable Chrome (or Chromium) you installed',
     )
     .option('--image <image>', 'specify a docker image to render')
-    .addOption(new commander.Option('--skip-compile').hideHelp())
+    .addOption(
+      new commander.Option('--bypassed-pdf-builder-option <json>').hideHelp(),
+    )
     .action((_arg: any, option: BuildCliFlags) => {
       option.targets = inferenceTargetsOption(targets);
     });

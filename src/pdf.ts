@@ -33,31 +33,38 @@ export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   target: PdfOutput;
 };
 
-export async function buildPDFWithContainer({
-  workspaceDir,
-  input,
-  target,
-  image,
-}: Pick<BuildPdfOptions, 'workspaceDir' | 'input' | 'target' | 'image'>) {
+export async function buildPDFWithContainer(
+  option: BuildPdfOptions,
+): Promise<string | null> {
+  const bypassedOption = {
+    ...option,
+    input: toContainerPath(option.input),
+    target: {
+      ...option.target,
+      path: toContainerPath(option.target.path),
+    },
+    entryContextDir: toContainerPath(option.entryContextDir),
+    workspaceDir: toContainerPath(option.workspaceDir),
+    customStyle: option.customStyle && toContainerPath(option.customStyle),
+    customUserStyle:
+      option.customUserStyle && toContainerPath(option.customUserStyle),
+    sandbox: false,
+  };
+
   await runContainer({
-    image,
+    image: option.image,
     userVolumeArgs: collectVolumeArgs([
-      workspaceDir,
-      path.dirname(target.path),
+      option.workspaceDir,
+      path.dirname(option.target.path),
     ]),
     commandArgs: [
       'build',
-      '--no-sandbox',
-      '--skip-compile',
-      ...(target.preflight ? ['--preflight', target.preflight] : []),
-      ...(target.preflightOption.length > 0
-        ? ['--preflight-option', ...target.preflightOption]
-        : []),
-      '-o',
-      toContainerPath(target.path),
-      toContainerPath(input),
+      '--bypassed-pdf-builder-option',
+      JSON.stringify(bypassedOption),
     ],
   });
+
+  return option.target.path;
 }
 
 export async function buildPDF({
@@ -77,11 +84,6 @@ export async function buildPDF({
   entries,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = await checkContainerEnvironment();
-  if (!isInContainer && target.renderMode === 'docker') {
-    await buildPDFWithContainer({ workspaceDir, input, target, image });
-    return null;
-  }
-
   logUpdate(`Launching build environment`);
 
   const navigateURL = getBrokerUrl({

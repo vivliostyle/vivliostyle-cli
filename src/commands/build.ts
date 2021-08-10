@@ -2,11 +2,19 @@ import chalk from 'chalk';
 import process from 'process';
 import terminalLink from 'terminal-link';
 import path from 'upath';
+import { checkAvailableBrowserPath } from '../browser';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
-import { checkContainerEnvironment, CONTAINER_ROOT_DIR } from '../container';
-import { buildPDF } from '../pdf';
-import { cwd, gracefulError, log, startLogging, stopLogging } from '../util';
+import { checkContainerEnvironment } from '../container';
+import { buildPDF, buildPDFWithContainer } from '../pdf';
+import {
+  cwd,
+  debug,
+  gracefulError,
+  log,
+  startLogging,
+  stopLogging,
+} from '../util';
 import { exportWebPublication } from '../webbook';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
@@ -35,13 +43,24 @@ try {
     sandbox: options.sandbox,
     executableChromium: options.executableChromium,
     image: options.image,
-    skipCompile: options.skipCompile,
+    bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);
 }
 
 export default async function build(cliFlags: BuildCliFlags) {
+  if (cliFlags.bypassedPdfBuilderOption) {
+    const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
+    // Host doesn't know inside path of chromium path
+    option.executableChromium = checkAvailableBrowserPath();
+    debug('bypassedPdfBuilderOption', option);
+
+    await buildPDF(option);
+    log();
+    process.exit(0);
+  }
+
   const isInContainer = await checkContainerEnvironment();
   if (!isInContainer) {
     startLogging('Collecting build config');
@@ -62,7 +81,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   }
 
   // build artifacts
-  if (config.manifestPath && !cliFlags.skipCompile) {
+  if (config.manifestPath) {
     await compile(config);
     await copyAssets(config);
   }
@@ -71,16 +90,23 @@ export default async function build(cliFlags: BuildCliFlags) {
   for (const target of config.outputs) {
     let output: string | null = null;
     if (target.format === 'pdf') {
-      output = await buildPDF({
-        ...config,
-        input: (config.manifestPath ??
-          config.webbookEntryPath ??
-          config.epubOpfPath) as string,
-        target,
-        customStyle: config.customStyle,
-        customUserStyle: config.customUserStyle,
-        singleDoc: config.singleDoc,
-      });
+      if (!isInContainer && target.renderMode === 'docker') {
+        output = await buildPDFWithContainer({
+          ...config,
+          input: (config.manifestPath ??
+            config.webbookEntryPath ??
+            config.epubOpfPath) as string,
+          target,
+        });
+      } else {
+        output = await buildPDF({
+          ...config,
+          input: (config.manifestPath ??
+            config.webbookEntryPath ??
+            config.epubOpfPath) as string,
+          target,
+        });
+      }
     } else if (target.format === 'webpub') {
       if (!config.manifestPath) {
         continue;
@@ -92,19 +118,12 @@ export default async function build(cliFlags: BuildCliFlags) {
       });
     }
     if (output) {
-      if (isInContainer) {
-        const formattedOutput = chalk.bold.green(
-          `/${path.relative(CONTAINER_ROOT_DIR, output)}`,
-        );
-        log(`\n${formattedOutput} has been created.`);
-      } else {
-        const formattedOutput = chalk.bold.green(path.relative(cwd, output));
-        log(
-          `\n${terminalLink(formattedOutput, 'file://' + output, {
-            fallback: () => formattedOutput,
-          })} has been created.`,
-        );
-      }
+      const formattedOutput = chalk.bold.green(path.relative(cwd, output));
+      log(
+        `\n${terminalLink(formattedOutput, 'file://' + output, {
+          fallback: () => formattedOutput,
+        })} has been created.`,
+      );
     }
   }
 

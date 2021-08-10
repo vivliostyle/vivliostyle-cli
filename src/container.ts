@@ -5,16 +5,29 @@ import { promises as fs } from 'fs';
 import isInteractive from 'is-interactive';
 import process from 'process';
 import path from 'upath';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { cliVersion } from './const';
-import { debug, log, startLogging, stopLogging } from './util';
+import { debug, isUrlString, log, startLogging, stopLogging } from './util';
 
 export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
 export const CONTAINER_ROOT_DIR = '/data';
 
-export function toContainerPath(absPath: string): string {
+export function toContainerPath(urlOrAbsPath: string): string {
+  if (isUrlString(urlOrAbsPath)) {
+    if (urlOrAbsPath.toLowerCase().startsWith('file')) {
+      return pathToFileURL(
+        path.posix.join(
+          CONTAINER_ROOT_DIR,
+          path.toUnix(fileURLToPath(urlOrAbsPath)).replace(/^\w:/, ''),
+        ),
+      ).href;
+    } else {
+      return urlOrAbsPath;
+    }
+  }
   return path.posix.join(
     CONTAINER_ROOT_DIR,
-    path.toUnix(absPath).replace(/^\w:/, ''),
+    path.toUnix(urlOrAbsPath).replace(/^\w:/, ''),
   );
 }
 
