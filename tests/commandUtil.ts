@@ -33,6 +33,8 @@ export const maskConfig = (obj: any) => {
       maskConfig(v);
     } else if (k === 'executableChromium') {
       obj[k] = '__EXECUTABLE_CHROMIUM_PATH__';
+    } else if (k === 'image') {
+      obj[k] = '__IMAGE__';
     } else if (typeof v === 'string') {
       obj[k] = v.replace(rootPath, '__WORKSPACE__');
     }

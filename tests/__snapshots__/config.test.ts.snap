@@ -10,7 +10,7 @@ Object {
   "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -63,7 +63,7 @@ Object {
   "epubOpfPath": "__SNIP__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -115,7 +115,7 @@ Object {
   "entryContextDir": "__WORKSPACE__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -168,7 +168,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -219,7 +219,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -270,7 +270,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -357,7 +357,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -470,7 +470,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -558,7 +558,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -623,7 +623,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -694,7 +694,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": "__SNIP__",
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
@@ -776,7 +776,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": "__SNIP__",
-  "image": "ghcr.io/vivliostyle/cli:3.5.2",
+  "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
     "**/*.jpg",
