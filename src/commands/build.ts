@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import process from 'process';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { checkAvailableBrowserPath } from '../browser';
+import { getExecutableBrowserPath } from '../browser';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
 import { checkContainerEnvironment } from '../container';
@@ -53,7 +53,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   if (cliFlags.bypassedPdfBuilderOption) {
     const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
     // Host doesn't know inside path of chromium path
-    option.executableChromium = checkAvailableBrowserPath();
+    option.executableChromium = getExecutableBrowserPath();
     debug('bypassedPdfBuilderOption', option);
 
     await buildPDF(option);

@@ -27,9 +27,12 @@ export async function launchBrowser(options?: PuppeteerLaunchOptions): Browser {
   return browser;
 }
 
-export function checkAvailableBrowserPath(): string | undefined {
-  const executablePath = ((puppeteer as unknown) as PuppeteerNode).executablePath();
-  return fs.existsSync(executablePath) ? executablePath : undefined;
+export function getExecutableBrowserPath(): string {
+  return ((puppeteer as unknown) as PuppeteerNode).executablePath();
+}
+
+export function checkBrowserAvailability(path: string): boolean {
+  return fs.existsSync(path);
 }
 
 export async function downloadBrowser(): Promise<string> {

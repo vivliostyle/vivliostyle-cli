@@ -4,7 +4,11 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { URL } from 'url';
 import { Meta, Payload, TOCItem } from './broker';
-import { launchBrowser } from './browser';
+import {
+  checkBrowserAvailability,
+  downloadBrowser,
+  launchBrowser,
+} from './browser';
 import { ManuscriptEntry, MergedConfig } from './config';
 import {
   checkContainerEnvironment,
@@ -97,6 +101,20 @@ export async function buildPDF({
   debug('brokerURL', navigateURL);
 
   debug(`Executing Chromium path: ${executableChromium}`);
+  if (!checkBrowserAvailability(executableChromium)) {
+    const puppeteerDir = path.dirname(
+      require.resolve('puppeteer-core/package.json'),
+    );
+    if (!path.relative(puppeteerDir, executableChromium).startsWith('..')) {
+      // The browser on puppeteer-core isn't downloaded first time starting CLI so try to download it
+      await downloadBrowser();
+    } else {
+      // executableChromium seems to be specified explicitly
+      throw new Error(
+        `Cannot find the browser. Please check the executable chromium path: ${executableChromium}`,
+      );
+    }
+  }
   const browser = await launchBrowser({
     headless: true,
     executablePath: executableChromium,
