@@ -50,7 +50,7 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/ppc64le,linux/s390x,linux/arm/v7
+          platforms: linux/amd64
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
           tags: ${{ steps.docker_meta.outputs.tags }}
