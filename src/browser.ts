@@ -1,6 +1,8 @@
 import fs from 'fs';
+import os from 'os';
 import { performance } from 'perf_hooks';
 import puppeteer, { PuppeteerNode } from 'puppeteer-core';
+import { checkContainerEnvironment } from './container';
 import {
   beforeExitHandlers,
   debug,
@@ -28,6 +30,12 @@ export async function launchBrowser(options?: PuppeteerLaunchOptions): Browser {
 }
 
 export function getExecutableBrowserPath(): string {
+  const isInContainer = checkContainerEnvironment();
+  if (isInContainer && os.arch() === 'arm64') {
+    // Use the Debian packages until puppeteer supports
+    // https://github.com/puppeteer/puppeteer/blob/159d2835450697dabea6f9adf6e67d158b5b8ae3/src/node/BrowserFetcher.ts#L298-L303
+    return '/usr/bin/chromium';
+  }
   return ((puppeteer as unknown) as PuppeteerNode).executablePath();
 }
 

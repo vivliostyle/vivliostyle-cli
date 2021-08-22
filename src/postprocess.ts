@@ -92,7 +92,7 @@ export class PostProcess {
     output: string,
     { preflight, preflightOption, image }: SaveOption,
   ) {
-    const isInContainer = await checkContainerEnvironment();
+    const isInContainer = checkContainerEnvironment();
     const input = preflight
       ? path.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
       : output;

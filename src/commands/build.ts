@@ -61,7 +61,7 @@ export default async function build(cliFlags: BuildCliFlags) {
     process.exit(0);
   }
 
-  const isInContainer = await checkContainerEnvironment();
+  const isInContainer = checkContainerEnvironment();
   if (!isInContainer) {
     startLogging('Collecting build config');
   }

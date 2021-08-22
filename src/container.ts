@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import commandExists from 'command-exists';
 import execa from 'execa';
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import isInteractive from 'is-interactive';
 import process from 'process';
 import path from 'upath';
@@ -51,13 +51,8 @@ export function collectVolumeArgs(mountPoints: string[]): string[] {
     .map((p) => `${p}:${toContainerPath(p)}`);
 }
 
-export async function checkContainerEnvironment(): Promise<boolean> {
-  try {
-    return !!(await fs.stat('/opt/vivliostyle-cli/.vs-cli-version'));
-  } catch {
-    // not exist
-    return false;
-  }
+export function checkContainerEnvironment(): boolean {
+  return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
 }
 
 export async function runContainer({

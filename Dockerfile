@@ -9,12 +9,9 @@ RUN set -x \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
     # dependencies for puppeteer
-    chromium fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+    fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
     # dependencies for press-ready
-    ghostscript poppler-utils \
-  # remove chrome without removing dependencies
-  && dpkg -r --force-depends chromium \
-  && rm -rf /var/lib/apt/lists/*
+    ghostscript poppler-utils
 WORKDIR /opt/vivliostyle-cli
 
 # Build stage
@@ -38,8 +35,14 @@ COPY --from=builder \
 COPY --from=builder \
   /opt/vivliostyle-cli/dist/ \
   /opt/vivliostyle-cli/dist/
+COPY --from=builder \
+  /opt/vivliostyle-cli/scripts/ \
+  /opt/vivliostyle-cli/scripts/
 RUN yarn install --frozen-lockfile --production \
-  && node node_modules/puppeteer-core/install.js \
+  && npx zx scripts/installBrowserForDocker.mjs \
+  && rm -rf \
+    /var/lib/apt/lists/* \
+    `npm config get cache`/_npx \
   && yarn link \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm

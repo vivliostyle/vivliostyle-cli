@@ -87,7 +87,7 @@ export async function buildPDF({
   entryContextDir,
   entries,
 }: BuildPdfOptions): Promise<string | null> {
-  const isInContainer = await checkContainerEnvironment();
+  const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
 
   const navigateURL = getBrokerUrl({
