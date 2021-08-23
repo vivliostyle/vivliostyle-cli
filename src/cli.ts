@@ -1,18 +1,7 @@
 #!/usr/bin/env node
 
 import program from 'commander';
-import fs from 'fs';
-import resolvePkg from 'resolve-pkg';
-import { join } from 'upath';
-import { readJSON } from './util';
-
-const { version: cliVersion } = readJSON(join(__dirname, '../package.json'));
-const { version: coreVersion } = JSON.parse(
-  fs.readFileSync(
-    resolvePkg('@vivliostyle/viewer', { cwd: __dirname })! + '/package.json',
-    'utf8',
-  ),
-);
+import { cliVersion, coreVersion } from './const';
 
 const version = `cli: ${cliVersion}
 core: ${coreVersion}`;

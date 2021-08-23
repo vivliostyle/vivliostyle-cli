@@ -1,3 +1,4 @@
+import decamelize from 'decamelize';
 import fs from 'fs';
 import os from 'os';
 import {
@@ -12,11 +13,18 @@ import * as pressReadyModule from 'press-ready';
 import path from 'upath';
 import { v1 as uuid } from 'uuid';
 import { Meta, TOCItem } from './broker';
+import { MergedConfig } from './config';
+import {
+  checkContainerEnvironment,
+  collectVolumeArgs,
+  runContainer,
+  toContainerPath,
+} from './container';
+import { PdfOutput } from './output';
 import { startLogging, stopLogging } from './util';
 
-export interface SaveOption {
-  pressReady: boolean;
-}
+export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
+  Pick<MergedConfig, 'image'>;
 
 const prefixes = {
   dcterms: 'http://purl.org/dc/terms/',
@@ -41,6 +49,37 @@ interface PDFTocItem extends TOCItem {
   parentRef: PDFRef;
 }
 
+export async function pressReadyWithContainer({
+  input,
+  output,
+  preflightOption,
+  image,
+}: {
+  input: string;
+  output: string;
+  preflightOption: string[];
+  image: string;
+}) {
+  await runContainer({
+    image,
+    entrypoint: 'press-ready',
+    userVolumeArgs: collectVolumeArgs([
+      path.dirname(input),
+      path.dirname(output),
+    ]),
+    commandArgs: [
+      'build',
+      '-i',
+      toContainerPath(input),
+      '-o',
+      toContainerPath(output),
+      ...preflightOption
+        .map((opt) => `--${decamelize(opt, { separator: '-' })}`)
+        .filter((str) => /^[\w-]+/.test(str)),
+    ],
+  });
+}
+
 export class PostProcess {
   static async load(pdf: Buffer): Promise<PostProcess> {
     const document = await PDFDocument.load(pdf);
@@ -49,17 +88,48 @@ export class PostProcess {
 
   private constructor(private document: PDFDocument) {}
 
-  async save(output: string, { pressReady = false }: SaveOption) {
-    const input = pressReady
+  async save(
+    output: string,
+    { preflight, preflightOption, image }: SaveOption,
+  ) {
+    const isInContainer = checkContainerEnvironment();
+    const input = preflight
       ? path.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
       : output;
 
     const pdf = await this.document.save();
     await fs.promises.writeFile(input, pdf);
 
-    if (pressReady) {
+    if (
+      preflight === 'press-ready-local' ||
+      (preflight === 'press-ready' && isInContainer)
+    ) {
       stopLogging('Running press-ready', '🚀');
-      await pressReadyModule.build({ input, output });
+      await pressReadyModule.build({
+        ...preflightOption.reduce((acc, opt) => {
+          const optName = decamelize(opt, { separator: '-' });
+          return optName.startsWith('no-')
+            ? {
+                ...acc,
+                [optName.slice(3)]: false,
+              }
+            : {
+                ...acc,
+                [optName]: true,
+              };
+        }, {}),
+        input,
+        output,
+      });
+      startLogging();
+    } else if (preflight === 'press-ready') {
+      stopLogging('Running press-ready', '🚀');
+      await pressReadyWithContainer({
+        input,
+        output,
+        preflightOption,
+        image,
+      });
       startLogging();
     }
   }

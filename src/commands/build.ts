@@ -2,10 +2,19 @@ import chalk from 'chalk';
 import process from 'process';
 import terminalLink from 'terminal-link';
 import path from 'upath';
+import { getExecutableBrowserPath } from '../browser';
 import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
-import { buildPDF } from '../pdf';
-import { cwd, gracefulError, log, startLogging, stopLogging } from '../util';
+import { checkContainerEnvironment } from '../container';
+import { buildPDF, buildPDFWithContainer } from '../pdf';
+import {
+  cwd,
+  debug,
+  gracefulError,
+  log,
+  startLogging,
+  stopLogging,
+} from '../util';
 import { exportWebPublication } from '../webbook';
 import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
 
@@ -26,17 +35,36 @@ try {
     author: options.author,
     language: options.language,
     pressReady: options.pressReady,
+    renderMode: options.renderMode || 'local',
+    preflight: options.preflight,
+    preflightOption: options.preflightOption,
     verbose: options.verbose,
     timeout: options.timeout,
     sandbox: options.sandbox,
     executableChromium: options.executableChromium,
+    image: options.image,
+    bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);
 }
 
 export default async function build(cliFlags: BuildCliFlags) {
-  startLogging('Collecting build config');
+  if (cliFlags.bypassedPdfBuilderOption) {
+    const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
+    // Host doesn't know inside path of chromium path
+    option.executableChromium = getExecutableBrowserPath();
+    debug('bypassedPdfBuilderOption', option);
+
+    await buildPDF(option);
+    log();
+    process.exit(0);
+  }
+
+  const isInContainer = checkContainerEnvironment();
+  if (!isInContainer) {
+    startLogging('Collecting build config');
+  }
 
   const loadedConf = collectVivliostyleConfig(cliFlags);
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
@@ -62,16 +90,23 @@ export default async function build(cliFlags: BuildCliFlags) {
   for (const target of config.outputs) {
     let output: string | null = null;
     if (target.format === 'pdf') {
-      output = await buildPDF({
-        ...config,
-        input: (config.manifestPath ??
-          config.webbookEntryPath ??
-          config.epubOpfPath) as string,
-        output: target.path,
-        customStyle: config.customStyle,
-        customUserStyle: config.customUserStyle,
-        singleDoc: config.singleDoc,
-      });
+      if (!isInContainer && target.renderMode === 'docker') {
+        output = await buildPDFWithContainer({
+          ...config,
+          input: (config.manifestPath ??
+            config.webbookEntryPath ??
+            config.epubOpfPath) as string,
+          target,
+        });
+      } else {
+        output = await buildPDF({
+          ...config,
+          input: (config.manifestPath ??
+            config.webbookEntryPath ??
+            config.epubOpfPath) as string,
+          target,
+        });
+      }
     } else if (target.format === 'webpub') {
       if (!config.manifestPath) {
         continue;
@@ -92,7 +127,9 @@ export default async function build(cliFlags: BuildCliFlags) {
     }
   }
 
-  stopLogging('Built successfully.', '🎉');
+  if (!isInContainer) {
+    stopLogging('Built successfully.', '🎉');
+  }
 
   process.exit(0);
 }

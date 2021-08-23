@@ -4,12 +4,23 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { URL } from 'url';
 import { Meta, Payload, TOCItem } from './broker';
+import {
+  checkBrowserAvailability,
+  downloadBrowser,
+  launchBrowser,
+} from './browser';
 import { ManuscriptEntry, MergedConfig } from './config';
+import {
+  checkContainerEnvironment,
+  collectVolumeArgs,
+  runContainer,
+  toContainerPath,
+} from './container';
+import { PdfOutput } from './output';
 import { PostProcess } from './postprocess';
 import { getBrokerUrl } from './server';
 import {
   debug,
-  launchBrowser,
   logError,
   logInfo,
   logSuccess,
@@ -23,25 +34,60 @@ type PuppeteerPage = Resolved<
 
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;
-  output: string;
+  target: PdfOutput;
 };
+
+export async function buildPDFWithContainer(
+  option: BuildPdfOptions,
+): Promise<string | null> {
+  const bypassedOption = {
+    ...option,
+    input: toContainerPath(option.input),
+    target: {
+      ...option.target,
+      path: toContainerPath(option.target.path),
+    },
+    entryContextDir: toContainerPath(option.entryContextDir),
+    workspaceDir: toContainerPath(option.workspaceDir),
+    customStyle: option.customStyle && toContainerPath(option.customStyle),
+    customUserStyle:
+      option.customUserStyle && toContainerPath(option.customUserStyle),
+    sandbox: false,
+  };
+
+  await runContainer({
+    image: option.image,
+    userVolumeArgs: collectVolumeArgs([
+      option.workspaceDir,
+      path.dirname(option.target.path),
+    ]),
+    commandArgs: [
+      'build',
+      '--bypassed-pdf-builder-option',
+      JSON.stringify(bypassedOption),
+    ],
+  });
+
+  return option.target.path;
+}
 
 export async function buildPDF({
   input,
-  output,
+  target,
   workspaceDir,
   size,
   customStyle,
   customUserStyle,
   singleDoc,
   executableChromium,
+  image,
   sandbox,
   verbose,
   timeout,
-  pressReady,
   entryContextDir,
   entries,
-}: BuildPdfOptions) {
+}: BuildPdfOptions): Promise<string | null> {
+  const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
 
   const navigateURL = getBrokerUrl({
@@ -55,14 +101,30 @@ export async function buildPDF({
   debug('brokerURL', navigateURL);
 
   debug(`Executing Chromium path: ${executableChromium}`);
+  if (!checkBrowserAvailability(executableChromium)) {
+    const puppeteerDir = path.dirname(
+      require.resolve('puppeteer-core/package.json'),
+    );
+    if (!path.relative(puppeteerDir, executableChromium).startsWith('..')) {
+      // The browser on puppeteer-core isn't downloaded first time starting CLI so try to download it
+      await downloadBrowser();
+    } else {
+      // executableChromium seems to be specified explicitly
+      throw new Error(
+        `Cannot find the browser. Please check the executable chromium path: ${executableChromium}`,
+      );
+    }
+  }
   const browser = await launchBrowser({
     headless: true,
     executablePath: executableChromium,
-    // Why `--no-sandbox` flag? Running Chrome as root without --no-sandbox is not supported. See https://crbug.com/638180.
     args: [
       '--allow-file-access-from-files',
+      // FIXME: We seem have to disable sandbox now
+      // https://github.com/vivliostyle/vivliostyle-cli/issues/186
       sandbox ? '' : '--no-sandbox',
       '--disable-web-security',
+      isInContainer ? '--disable-dev-shm-usage' : '',
     ],
   });
   const version = await browser.version();
@@ -70,6 +132,9 @@ export async function buildPDF({
 
   logUpdate('Building pages');
 
+  // FIXME: This issue was reported but all workaround didn't fix
+  // https://github.com/puppeteer/puppeteer/issues/4039
+  await new Promise((res) => setTimeout(res, 1000));
   const page = await browser.newPage();
 
   page.on('pageerror', (error) => {
@@ -186,14 +251,18 @@ export async function buildPDF({
   await browser.close();
 
   logUpdate('Processing PDF');
-  shelljs.mkdir('-p', path.dirname(output));
+  shelljs.mkdir('-p', path.dirname(target.path));
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata);
   await post.toc(toc);
-  await post.save(output, { pressReady });
+  await post.save(target.path, {
+    preflight: target.preflight,
+    preflightOption: target.preflightOption,
+    image,
+  });
 
-  return output;
+  return target.path;
 }
 
 async function loadMetadata(page: PuppeteerPage): Promise<Meta> {

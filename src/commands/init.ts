@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'upath';
+import { CONTAINER_IMAGE } from '../container';
 import { cwd, gracefulError, log } from '../util';
 import { InitCliFlags, setupInitParserProgram } from './init.parser';
 
@@ -35,6 +36,7 @@ export default async function init(cliFlags: InitCliFlags) {
   ${cliFlags.language ? '' : '// '}language: '${cliFlags.language || 'la'}',
   ${cliFlags.size ? '' : '// '}size: '${cliFlags.size || 'A4'}',
   ${cliFlags.theme ? '' : '// '}theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
+  image: '${CONTAINER_IMAGE}',
   entry: [ // **required field**
     // 'introduction.md', // 'title' is automatically guessed from the file (frontmatter > first heading)
     // {

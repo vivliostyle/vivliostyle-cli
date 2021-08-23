@@ -1,16 +1,13 @@
 import commander from 'commander';
 import { CliFlags, validateTimeoutFlag } from '../config';
-import {
-  availableOutputFormat,
-  detectOutputFormat,
-  OutputFormat,
-} from '../output';
+import { checkOutputFormat, detectOutputFormat, OutputFormat } from '../output';
 
 export interface BuildCliFlags extends CliFlags {
   output?: {
     output?: string;
     format?: string;
   }[];
+  bypassedPdfBuilderOption?: string;
 }
 
 export function setupBuildParserProgram(): commander.Command {
@@ -79,7 +76,8 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option('-d, --single-doc', 'single HTML document input')
     .option(
       '-p, --press-ready',
-      `make generated PDF compatible with press ready PDF/X-1a [false]`,
+      `make generated PDF compatible with press ready PDF/X-1a [false]
+This option is equivalent with "--preflight press-ready"`,
     )
     .option(
       '-t, --timeout <seconds>',
@@ -90,6 +88,24 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
+    .addOption(
+      new commander.Option(
+        '--render-mode <mode>',
+        'if docker is set, Vivliostyle try to render PDF on Docker container [local]',
+      ).choices(['local', 'docker']),
+    )
+    .addOption(
+      new commander.Option(
+        '--preflight <mode>',
+        'apply the process to generate PDF for printing',
+      ).choices(['press-ready', 'press-ready-local']),
+    )
+    .option(
+      '--preflight-option <options...>',
+      `options for preflight process (ex: gray-scale, enforce-outline)
+Please refer the document of press-ready for further information.
+https://github.com/vibranthq/press-ready`,
+    )
     .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',
@@ -98,6 +114,10 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option(
       '--executable-chromium <path>',
       'specify a path of executable Chrome (or Chromium) you installed',
+    )
+    .option('--image <image>', 'specify a docker image to render')
+    .addOption(
+      new commander.Option('--bypassed-pdf-builder-option <json>').hideHelp(),
     )
     .action((_arg: any, option: BuildCliFlags) => {
       option.targets = inferenceTargetsOption(targets);
@@ -111,7 +131,7 @@ export function inferenceTargetsOption(
     output?: string;
     format?: string;
   }[],
-): OutputFormat[] {
+): Pick<OutputFormat, 'path' | 'format'>[] {
   return parsed.map(({ output, format }) => {
     if (!output) {
       // -f is an optional option but -o is required one
@@ -119,15 +139,10 @@ export function inferenceTargetsOption(
         `Couldn't find the output option corresponding --format ${format} option. Please check the command options.`,
       );
     }
-    if (!format) {
-      return detectOutputFormat(output);
-    } else if (
-      !availableOutputFormat.includes(
-        format as typeof availableOutputFormat[number],
-      )
-    ) {
+    const detectedFormat = format ?? detectOutputFormat(output);
+    if (!checkOutputFormat(detectedFormat)) {
       throw new Error(`Unknown format: ${format}`);
     }
-    return { path: output, format } as OutputFormat;
+    return { path: output, format: detectedFormat };
   });
 }

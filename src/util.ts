@@ -3,7 +3,6 @@ import debugConstructor from 'debug';
 import fs from 'fs';
 import StreamZip from 'node-stream-zip';
 import oraConstructor from 'ora';
-import puppeteer from 'puppeteer';
 import shelljs from 'shelljs';
 import tmp from 'tmp';
 import upath from 'upath';
@@ -14,7 +13,7 @@ export const cwd = upath.normalize(process.cwd());
 
 const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
 
-let beforeExitHandlers: (() => void)[] = [];
+export let beforeExitHandlers: (() => void)[] = [];
 const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
 exitSignals.forEach((sig) => {
   process.on(sig, (code: number) => {
@@ -118,23 +117,6 @@ export async function inflateZip(filePath: string, dest: string) {
       rej(err);
     }
   });
-}
-
-type PuppeteerLaunchOptions = Parameters<typeof puppeteer.launch>[0];
-type Browser = ReturnType<typeof puppeteer.launch>;
-export async function launchBrowser(options?: PuppeteerLaunchOptions): Browser {
-  // process listener of puppeteer won't handle signal
-  // because it doesn't support subprocess which is spawned by CLI
-  const browser = await puppeteer.launch({
-    handleSIGINT: false,
-    handleSIGTERM: false,
-    handleSIGHUP: false,
-    ...options,
-  });
-  beforeExitHandlers.push(() => {
-    browser.close();
-  });
-  return browser;
 }
 
 export function useTmpDirectory(): Promise<[string, () => void]> {
