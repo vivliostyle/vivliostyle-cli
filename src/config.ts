@@ -401,7 +401,7 @@ export async function mergeConfig<T extends CliFlags>(
   const sandbox = cliFlags.sandbox ?? true;
   const executableChromium =
     cliFlags.executableChromium ?? getExecutableBrowserPath();
-  const image = cliFlags.image ?? CONTAINER_IMAGE;
+  const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
