@@ -1,4 +1,4 @@
-# Render on Docker
+# Preflight
 
 Set the `preflight` option to apply post-processing to the PDF for special purposes such as printing-related requirements. Currently, Vivliostyle supports post-processing converts to PDF/X-1a by setting `press-ready` that's powered by [vibranthq/press-ready](https://github.com/vibranthq/press-ready).
 
