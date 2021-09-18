@@ -1,6 +1,11 @@
 import chokidar from 'chokidar';
 import upath from 'upath';
-import { launchBrowser } from '../browser';
+import {
+  checkBrowserAvailability,
+  downloadBrowser,
+  getExecutableBrowserPath,
+  launchBrowser,
+} from '../browser';
 import { compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
 import { getBrokerUrl } from '../server';
@@ -76,6 +81,22 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   });
 
   debug(`Executing Chromium path: ${config.executableChromium}`);
+  const executableChromium =
+    cliFlags.executableChromium ?? getExecutableBrowserPath();
+  if (!checkBrowserAvailability(executableChromium)) {
+    const puppeteerDir = upath.dirname(
+      require.resolve('puppeteer-core/package.json'),
+    );
+    if (!upath.relative(puppeteerDir, executableChromium).startsWith('..')) {
+      // The browser on puppeteer-core isn't downloaded first time starting CLI so try to download it
+      await downloadBrowser();
+    } else {
+      // executableChromium seems to be specified explicitly
+      throw new Error(
+        `Cannot find the browser. Please check the executable chromium path: ${executableChromium}`,
+      );
+    }
+  }
   const browser = await launchBrowser({
     headless: false,
     executablePath: config.executableChromium,

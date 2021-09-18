@@ -1,3 +1,26 @@
+# [4.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.0.0...v4.1.0) (2021-09-11)
+
+### Features
+
+- Update vivliostyle.js to 2.9.1 ([f19b085](https://github.com/vivliostyle/vivliostyle-cli/commit/f19b085e4e61c9f38f88933b4bfcdbac17857b6c))
+
+# [4.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.5.2...v4.0.0) (2021-08-28)
+
+### chore
+
+- Update node engines ([30abdfa](https://github.com/vivliostyle/vivliostyle-cli/commit/30abdfac9d7bb563c9831059d8b564bee55ec358))
+
+### Features
+
+- Add render mode supports docker ([b2931b3](https://github.com/vivliostyle/vivliostyle-cli/commit/b2931b3e4c230633acb794c673e79cde93bd6d3d))
+- Lazy install chromium ([966f02c](https://github.com/vivliostyle/vivliostyle-cli/commit/966f02ca4c406155bab69c9d65c9c6b4d2f2ea17))
+- Support preflight options ([1c78975](https://github.com/vivliostyle/vivliostyle-cli/commit/1c789753dff747fe1f23e8eb3ca573ce7214944f))
+
+### BREAKING CHANGES
+
+- Node v12 is now the minimum supported version
+- Switched to use puppeteer-core rather than puppeteer. If you're using vivliostyle-cli in any containers, you should run puppeteer's install.js and contain the browser runtime.
+
 ## [3.5.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v3.5.1...v3.5.2) (2021-07-23)
 
 ### Bug Fixes
