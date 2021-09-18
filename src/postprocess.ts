@@ -14,6 +14,7 @@ import path from 'upath';
 import { v1 as uuid } from 'uuid';
 import { Meta, TOCItem } from './broker';
 import { MergedConfig } from './config';
+import { coreVersion } from './const';
 import {
   checkContainerEnvironment,
   collectVolumeArgs,
@@ -82,7 +83,7 @@ export async function pressReadyWithContainer({
 
 export class PostProcess {
   static async load(pdf: Buffer): Promise<PostProcess> {
-    const document = await PDFDocument.load(pdf);
+    const document = await PDFDocument.load(pdf, { updateMetadata: false });
     return new PostProcess(document);
   }
 
@@ -135,8 +136,6 @@ export class PostProcess {
   }
 
   async metadata(tree: Meta) {
-    this.document.setProducer('Vivliostyle');
-
     const title = tree[metaTerms.title]?.[0].v;
     if (title) {
       this.document.setTitle(title);
@@ -157,12 +156,12 @@ export class PostProcess {
       this.document.setKeywords(keywords);
     }
 
-    const creator = tree[metaTerms.contributor]?.find(
-      (item) => item.r?.[metaTerms.role]?.[0].v === 'bkp',
-    )?.v;
+    let creatorOpt = `Vivliostyle.js ${coreVersion}`;
+    const creator = this.document.getCreator();
     if (creator) {
-      this.document.setCreator(creator);
+      creatorOpt += `; ${creator}`;
     }
+    this.document.setCreator(`Vivliostyle (${creatorOpt})`);
 
     const language = tree[metaTerms.language]?.[0].v;
     if (language) {
