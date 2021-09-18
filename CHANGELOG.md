@@ -1,3 +1,10 @@
+# [4.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.1.0...v4.2.0) (2021-09-18)
+
+
+### Features
+
+* Update vivliostyle.js to 2.10.0 ([219eab1](https://github.com/vivliostyle/vivliostyle-cli/commit/219eab125a577465a64b22a0f2b2ba739b9ba556))
+
 # [4.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.0.0...v4.1.0) (2021-09-11)
 
 ### Features
