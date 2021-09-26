@@ -1,3 +1,10 @@
+## [4.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.2.0...v4.2.1) (2021-09-26)
+
+
+### Bug Fixes
+
+* TypeError: Cannot read properties of null (reading 'getMetadata') ([2ee3faa](https://github.com/vivliostyle/vivliostyle-cli/commit/2ee3faa7935f2af497e71bbb016671369736f7f7)), closes [/github.com/vivliostyle/vivliostyle-cli/issues/214#issuecomment-924811171](https://github.com//github.com/vivliostyle/vivliostyle-cli/issues/214/issues/issuecomment-924811171) [#214](https://github.com/vivliostyle/vivliostyle-cli/issues/214)
+
 # [4.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.1.0...v4.2.0) (2021-09-18)
 
 
