@@ -220,9 +220,6 @@ export async function buildPDF({
   await page.goto(navigateURL, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => !!window.coreViewer);
 
-  const metadata = await loadMetadata(page);
-  const toc = await loadTOC(page);
-
   await page.emulateMediaType('print');
   await page.waitForFunction(
     () => window.coreViewer.readyState === 'complete',
@@ -235,6 +232,10 @@ export async function buildPDF({
   if (lastEntry) {
     logSuccess(stringifyEntry(lastEntry));
   }
+
+  const metadata = await loadMetadata(page);
+  const toc = await loadTOC(page);
+
   startLogging('Building PDF');
 
   const pdf = await page.pdf({
