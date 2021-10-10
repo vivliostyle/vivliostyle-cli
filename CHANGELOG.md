@@ -1,16 +1,21 @@
-## [4.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.2.0...v4.2.1) (2021-09-26)
-
-
-### Bug Fixes
-
-* TypeError: Cannot read properties of null (reading 'getMetadata') ([2ee3faa](https://github.com/vivliostyle/vivliostyle-cli/commit/2ee3faa7935f2af497e71bbb016671369736f7f7)), closes [/github.com/vivliostyle/vivliostyle-cli/issues/214#issuecomment-924811171](https://github.com//github.com/vivliostyle/vivliostyle-cli/issues/214/issues/issuecomment-924811171) [#214](https://github.com/vivliostyle/vivliostyle-cli/issues/214)
-
-# [4.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.1.0...v4.2.0) (2021-09-18)
-
+# [4.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.2.1...v4.3.0) (2021-10-10)
 
 ### Features
 
-* Update vivliostyle.js to 2.10.0 ([219eab1](https://github.com/vivliostyle/vivliostyle-cli/commit/219eab125a577465a64b22a0f2b2ba739b9ba556))
+- Improve PDF metadata ([#97](https://github.com/vivliostyle/vivliostyle-cli/issues/97)) ([6020f29](https://github.com/vivliostyle/vivliostyle-cli/commit/6020f293de710f94e12e2b77298e6f3a9c68d404))
+- Update vivliostyle.js to 2.11.1 ([10ba1a6](https://github.com/vivliostyle/vivliostyle-cli/commit/10ba1a616319e90c32ef1c33bcfb938330dbd38f))
+
+## [4.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.2.0...v4.2.1) (2021-09-26)
+
+### Bug Fixes
+
+- TypeError: Cannot read properties of null (reading 'getMetadata') ([2ee3faa](https://github.com/vivliostyle/vivliostyle-cli/commit/2ee3faa7935f2af497e71bbb016671369736f7f7)), closes [/github.com/vivliostyle/vivliostyle-cli/issues/214#issuecomment-924811171](https://github.com//github.com/vivliostyle/vivliostyle-cli/issues/214/issues/issuecomment-924811171) [#214](https://github.com/vivliostyle/vivliostyle-cli/issues/214)
+
+# [4.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.1.0...v4.2.0) (2021-09-18)
+
+### Features
+
+- Update vivliostyle.js to 2.10.0 ([219eab1](https://github.com/vivliostyle/vivliostyle-cli/commit/219eab125a577465a64b22a0f2b2ba739b9ba556))
 
 # [4.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.0.0...v4.1.0) (2021-09-11)
 
