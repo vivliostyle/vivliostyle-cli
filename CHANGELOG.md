@@ -1,3 +1,5 @@
+## [4.3.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.3.1...v4.3.2) (2021-11-01)
+
 ## [4.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.3.0...v4.3.1) (2021-10-18)
 
 # [4.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.2.1...v4.3.0) (2021-10-10)
