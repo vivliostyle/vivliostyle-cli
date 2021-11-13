@@ -1,3 +1,9 @@
+# [4.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.3.2...v4.4.0) (2021-11-13)
+
+### Features
+
+- Update Vivliostyle.js to 2.12.0: support text-spacing and hanging-punctuation ([dea228b](https://github.com/vivliostyle/vivliostyle-cli/commit/dea228b4c59486ae2af328d890c083f059e4eb87))
+
 ## [4.3.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.3.1...v4.3.2) (2021-11-01)
 
 ## [4.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.3.0...v4.3.1) (2021-10-18)
