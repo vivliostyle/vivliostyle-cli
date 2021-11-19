@@ -1,3 +1,9 @@
+## [4.4.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.4.0...v4.4.1) (2021-11-19)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.12.1: Fix bugs on math and text with ruby ([e5f0346](https://github.com/vivliostyle/vivliostyle-cli/commit/e5f0346c793fd282b1e9b31c6155e70060072794))
+
 # [4.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.3.2...v4.4.0) (2021-11-13)
 
 ### Features
