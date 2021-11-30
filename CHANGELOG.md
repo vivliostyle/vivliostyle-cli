@@ -1,3 +1,9 @@
+# [4.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.4.1...v4.5.0) (2021-11-30)
+
+### Features
+
+- Update Puppetter-core to 12.0.1 ([2eb4e45](https://github.com/vivliostyle/vivliostyle-cli/commit/2eb4e454c0d4104cc0e9d94b3a503cff8c521aec))
+
 ## [4.4.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.4.0...v4.4.1) (2021-11-19)
 
 ### Bug Fixes
