@@ -39,6 +39,7 @@ export interface CoreProps {
     disableFormatHtml?: boolean;
   };
   image?: string;
+  httpServer?: boolean;
   [k: string]: unknown;
 }
 export interface EntryObject {

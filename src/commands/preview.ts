@@ -8,7 +8,7 @@ import {
 } from '../browser';
 import { compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig } from '../config';
-import { getBrokerUrl } from '../server';
+import { prepareServer } from '../server';
 import {
   cwd,
   debug,
@@ -43,6 +43,7 @@ try {
     timeout: options.timeout,
     sandbox: options.sandbox,
     executableChromium: options.executableChromium,
+    http: options.http,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);
@@ -69,11 +70,13 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     await copyAssets(config);
   }
 
-  const url = getBrokerUrl({
-    sourceIndex: (config.manifestPath ??
+  const { brokerUrl } = await prepareServer({
+    input: (config.manifestPath ??
       config.webbookEntryPath ??
       config.epubOpfPath) as string,
-    outputSize: config.size,
+    workspaceDir: config.workspaceDir,
+    httpServer: config.httpServer,
+    size: config.size,
     style: config.customStyle,
     userStyle: config.customUserStyle,
     singleDoc: config.singleDoc,
@@ -108,7 +111,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 0, height: 0 });
-  await page.goto(url);
+  await page.goto(brokerUrl);
 
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
 

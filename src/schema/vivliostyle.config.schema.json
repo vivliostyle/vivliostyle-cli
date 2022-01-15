@@ -179,6 +179,9 @@
         "image": {
           "type": "string",
           "minLength": 1
+        },
+        "httpServer": {
+          "type": "boolean"
         }
       }
     }

@@ -18,7 +18,7 @@ import {
 } from './container';
 import { PdfOutput } from './output';
 import { PostProcess } from './postprocess';
-import { getBrokerUrl } from './server';
+import { prepareServer } from './server';
 import {
   debug,
   logError,
@@ -86,19 +86,22 @@ export async function buildPDF({
   timeout,
   entryContextDir,
   entries,
+  httpServer,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
 
-  const navigateURL = getBrokerUrl({
-    sourceIndex: input,
-    outputSize: size,
+  const { brokerUrl } = await prepareServer({
+    input,
+    workspaceDir,
+    httpServer,
+    size,
     style: customStyle,
     userStyle: customUserStyle,
     singleDoc,
     quick: false,
   });
-  debug('brokerURL', navigateURL);
+  debug('brokerURL', brokerUrl);
 
   debug(`Executing Chromium path: ${executableChromium}`);
   if (!checkBrowserAvailability(executableChromium)) {
@@ -217,7 +220,7 @@ export async function buildPDF({
   });
 
   await page.setDefaultNavigationTimeout(timeout);
-  await page.goto(navigateURL, { waitUntil: 'networkidle0' });
+  await page.goto(brokerUrl, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => !!window.coreViewer);
 
   await page.emulateMediaType('print');

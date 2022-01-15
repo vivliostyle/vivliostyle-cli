@@ -32,6 +32,11 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option(
       '--executable-chromium <path>',
       'specify a path of executable Chrome(Chromium) you installed',
+    )
+    .option(
+      '--http',
+      `launch an HTTP server hosting contents instead of file protocol
+It is useful that requires CORS such as external web fonts.`,
     );
   return program;
 }
