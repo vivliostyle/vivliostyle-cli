@@ -1,5 +1,7 @@
 import http from 'http';
 import portfinder from 'portfinder';
+import path from 'upath';
+import { pathToFileURL } from 'url';
 import { getBrokerUrl, prepareServer, teardownServer } from '../src/server';
 import { maskConfig } from './commandUtil';
 
@@ -30,6 +32,11 @@ const mockedGetPortPromise = portfinder.getPortPromise as jest.MockedFunction<
   typeof portfinder.getPortPromise
 >;
 
+beforeEach(() => {
+  mockedCreateServer.mockClear();
+  mockedGetPortPromise.mockClear();
+});
+
 afterEach(() => {
   teardownServer();
 });
@@ -37,12 +44,16 @@ afterEach(() => {
 it('converts to valid broker url', async () => {
   const validOut1 = {
     url: getBrokerUrl(
-      {
-        input: '/absolute/path/to/manifest/file.json',
-        workspaceDir: 'DUMMY',
-        httpServer: false,
-      },
       {},
+      {
+        viewerUrl: pathToFileURL(
+          path.resolve(
+            __dirname,
+            '../node_modules/@vivliostyle/viewer/lib/index.html',
+          ),
+        ),
+        sourceUrl: pathToFileURL('/absolute/path/to/manifest/file.json'),
+      },
     ),
   };
   maskConfig(validOut1);
@@ -53,9 +64,6 @@ it('converts to valid broker url', async () => {
   const validOut2 = {
     url: getBrokerUrl(
       {
-        input: '/absolute/path/to/something',
-        workspaceDir: 'DUMMY',
-        httpServer: false,
         singleDoc: true,
         quick: true,
         size: {
@@ -67,7 +75,15 @@ it('converts to valid broker url', async () => {
         userStyle:
           'file://path/to/local/style/file/which/might/include/white space/&/special#?character.css',
       },
-      {},
+      {
+        viewerUrl: pathToFileURL(
+          path.resolve(
+            __dirname,
+            '../node_modules/@vivliostyle/viewer/lib/index.html',
+          ),
+        ),
+        sourceUrl: pathToFileURL('/absolute/path/to/something'),
+      },
     ),
   };
   maskConfig(validOut2);
@@ -77,13 +93,11 @@ it('converts to valid broker url', async () => {
 });
 
 it('starts up broker and source servers', async () => {
-  mockedCreateServer.mockClear();
-  mockedGetPortPromise.mockClear();
-
   const validOut1 = await prepareServer({
     input: '/absolute/path/to/manifest/file.json',
     workspaceDir: '/absolute/path',
     httpServer: true,
+    viewer: undefined,
   });
   maskConfig(validOut1);
   expect(validOut1.brokerUrl).toBe(
@@ -94,19 +108,47 @@ it('starts up broker and source servers', async () => {
 });
 
 it('starts up a broker server', async () => {
-  mockedCreateServer.mockClear();
-  mockedGetPortPromise.mockClear();
-
-  const validOut2 = await prepareServer({
+  const validOut1 = await prepareServer({
     input:
       'https://vivliostyle.github.io/vivliostyle_doc/samples/gon/index.html',
     workspaceDir: '/absolute/path',
     httpServer: true,
+    viewer: undefined,
   });
-  maskConfig(validOut2);
-  expect(validOut2.brokerUrl).toBe(
+  maskConfig(validOut1);
+  expect(validOut1.brokerUrl).toBe(
     'http://localhost:33333/lib/index.html#src=https://vivliostyle.github.io/vivliostyle_doc/samples/gon/index.html&bookMode=true&renderAllPages=true',
   );
   expect(mockedCreateServer.mock.calls.length).toBe(1);
   expect(mockedGetPortPromise.mock.calls.length).toBe(1);
+});
+
+it('starts up a source server with custom viewer', async () => {
+  const validOut1 = await prepareServer({
+    input: '/absolute/path/to/manifest/file.json',
+    workspaceDir: '/absolute/path',
+    httpServer: false,
+    viewer: 'https://vivliostyle.vercel.app/',
+  });
+  maskConfig(validOut1);
+  expect(validOut1.brokerUrl).toBe(
+    'https://vivliostyle.vercel.app/#src=http://localhost:33333/to/manifest/file.json&bookMode=true&renderAllPages=true',
+  );
+  expect(mockedCreateServer.mock.calls.length).toBe(1);
+  expect(mockedGetPortPromise.mock.calls.length).toBe(1);
+});
+
+it('starts up with no http server', async () => {
+  const validOut1 = await prepareServer({
+    input: '/absolute/path/to/manifest/file.json',
+    workspaceDir: '/absolute/path',
+    httpServer: false,
+    viewer: 'file:///something/viewer',
+  });
+  maskConfig(validOut1);
+  expect(validOut1.brokerUrl).toBe(
+    'file:///something/viewer#src=file:///absolute/path/to/manifest/file.json&bookMode=true&renderAllPages=true',
+  );
+  expect(mockedCreateServer.mock.calls.length).toBe(0);
+  expect(mockedGetPortPromise.mock.calls.length).toBe(0);
 });

@@ -17,17 +17,20 @@ export interface Server {
   port: number;
 }
 
-export interface ServerOption {
-  input: string;
-  workspaceDir: string;
-  httpServer: boolean;
-  viewer: string | undefined;
+export type ViewerUrlOption = {
   size?: PageSize;
   style?: string;
   userStyle?: string;
   singleDoc?: boolean;
   quick?: boolean;
-}
+};
+
+export type ServerOption = ViewerUrlOption & {
+  input: string;
+  workspaceDir: string;
+  httpServer: boolean;
+  viewer: string | undefined;
+};
 
 let _brokerServer: Server | undefined;
 let _sourceServer: Server | undefined;
@@ -94,7 +97,7 @@ export function teardownServer() {
 }
 
 export function getBrokerUrl(
-  { size, style, userStyle, singleDoc, quick }: ServerOption,
+  { size, style, userStyle, singleDoc, quick }: ViewerUrlOption,
   { viewerUrl, sourceUrl }: { viewerUrl: URL; sourceUrl: URL },
 ): string {
   const pageSizeValue =

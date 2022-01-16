@@ -64,6 +64,8 @@ it('override option by CLI command', async () => {
     '--user-style',
     './user/style/dummy.css',
     '--http',
+    '--viewer',
+    'https://vivliostyle.org/viewer/',
   ]);
   maskConfig(config);
   expect(config).toMatchSnapshot('valid.1.config.js');

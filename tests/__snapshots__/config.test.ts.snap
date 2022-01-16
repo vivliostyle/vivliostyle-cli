@@ -50,6 +50,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
 }
 `;
@@ -104,6 +105,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
 }
 `;
@@ -157,6 +159,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
   "workspaceDir": "__WORKSPACE__",
 }
@@ -210,6 +213,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
 }
 `;
@@ -262,6 +266,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
 }
 `;
@@ -315,6 +320,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -426,6 +432,7 @@ Object {
     "disableFormatHtml": true,
     "hardLineBreaks": true,
   },
+  "viewer": "https://vivliostyle.org/viewer/",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -545,6 +552,7 @@ Object {
     "disableFormatHtml": true,
     "hardLineBreaks": true,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -611,6 +619,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -677,6 +686,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -766,6 +776,7 @@ Object {
     "disableFormatHtml": true,
     "hardLineBreaks": true,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -832,6 +843,7 @@ Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
   },
+  "viewer": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
