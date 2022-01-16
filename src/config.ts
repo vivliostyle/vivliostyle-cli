@@ -406,7 +406,7 @@ export async function mergeConfig<T extends CliFlags>(
   const executableChromium =
     cliFlags.executableChromium ?? getExecutableBrowserPath();
   const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
-  const httpServer = cliFlags.http ?? config?.httpServer ?? false;
+  const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
 
   const themeIndexes: ParsedTheme[] = [];

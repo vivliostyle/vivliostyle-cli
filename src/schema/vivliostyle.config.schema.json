@@ -180,7 +180,7 @@
           "type": "string",
           "minLength": 1
         },
-        "httpServer": {
+        "http": {
           "type": "boolean"
         },
         "viewer": {

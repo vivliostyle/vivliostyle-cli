@@ -39,7 +39,7 @@ export interface CoreProps {
     disableFormatHtml?: boolean;
   };
   image?: string;
-  httpServer?: boolean;
+  http?: boolean;
   viewer?: string;
   [k: string]: unknown;
 }
