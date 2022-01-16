@@ -3,7 +3,6 @@ import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import { URL } from 'url';
-import { Meta, Payload, TOCItem } from './broker';
 import {
   checkBrowserAvailability,
   downloadBrowser,
@@ -16,6 +15,7 @@ import {
   runContainer,
   toContainerPath,
 } from './container';
+import { Meta, Payload, TOCItem } from './global-viewer';
 import { PdfOutput } from './output';
 import { PostProcess } from './postprocess';
 import { prepareServer } from './server';
@@ -92,7 +92,7 @@ export async function buildPDF({
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
 
-  const { brokerUrl } = await prepareServer({
+  const { viewerFullUrl } = await prepareServer({
     input,
     workspaceDir,
     httpServer,
@@ -103,7 +103,7 @@ export async function buildPDF({
     singleDoc,
     quick: false,
   });
-  debug('brokerURL', brokerUrl);
+  debug('viewerFullUrl', viewerFullUrl);
 
   debug(`Executing Chromium path: ${executableChromium}`);
   if (!checkBrowserAvailability(executableChromium)) {
@@ -205,7 +205,7 @@ export async function buildPDF({
 
   page.on('response', (response) => {
     debug(
-      chalk.gray('broker:response'),
+      chalk.gray('viewer:response'),
       chalk.green(response.status().toString()),
       response.url(),
     );
@@ -222,7 +222,7 @@ export async function buildPDF({
   });
 
   await page.setDefaultNavigationTimeout(timeout);
-  await page.goto(brokerUrl, { waitUntil: 'networkidle0' });
+  await page.goto(viewerFullUrl, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => !!window.coreViewer);
 
   await page.emulateMediaType('print');

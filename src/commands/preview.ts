@@ -71,7 +71,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
     await copyAssets(config);
   }
 
-  const { brokerUrl } = await prepareServer({
+  const { viewerFullUrl } = await prepareServer({
     input: (config.manifestPath ??
       config.webbookEntryPath ??
       config.epubOpfPath) as string,
@@ -113,7 +113,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 0, height: 0 });
-  await page.goto(brokerUrl);
+  await page.goto(viewerFullUrl);
 
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
 

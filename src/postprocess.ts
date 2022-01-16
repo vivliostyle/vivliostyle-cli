@@ -12,7 +12,6 @@ import {
 import * as pressReadyModule from 'press-ready';
 import path from 'upath';
 import { v1 as uuid } from 'uuid';
-import { Meta, TOCItem } from './broker';
 import { MergedConfig } from './config';
 import { coreVersion } from './const';
 import {
@@ -21,6 +20,7 @@ import {
   runContainer,
   toContainerPath,
 } from './container';
+import { Meta, TOCItem } from './global-viewer';
 import { PdfOutput } from './output';
 import { startLogging, stopLogging } from './util';
 

@@ -2,7 +2,7 @@ import http from 'http';
 import portfinder from 'portfinder';
 import path from 'upath';
 import { pathToFileURL } from 'url';
-import { getBrokerUrl, prepareServer, teardownServer } from '../src/server';
+import { getViewerFullUrl, prepareServer, teardownServer } from '../src/server';
 import { maskConfig } from './commandUtil';
 
 jest.mock('http', () => ({
@@ -43,7 +43,7 @@ afterEach(() => {
 
 it('converts to valid broker url', async () => {
   const validOut1 = {
-    url: getBrokerUrl(
+    url: getViewerFullUrl(
       {},
       {
         viewerUrl: pathToFileURL(
@@ -62,7 +62,7 @@ it('converts to valid broker url', async () => {
   );
 
   const validOut2 = {
-    url: getBrokerUrl(
+    url: getViewerFullUrl(
       {
         singleDoc: true,
         quick: true,
@@ -100,7 +100,7 @@ it('starts up broker and source servers', async () => {
     viewer: undefined,
   });
   maskConfig(validOut1);
-  expect(validOut1.brokerUrl).toBe(
+  expect(validOut1.viewerFullUrl).toBe(
     'http://localhost:33333/lib/index.html#src=http://localhost:33333/to/manifest/file.json&bookMode=true&renderAllPages=true',
   );
   expect(mockedCreateServer.mock.calls.length).toBe(2);
@@ -116,7 +116,7 @@ it('starts up a broker server', async () => {
     viewer: undefined,
   });
   maskConfig(validOut1);
-  expect(validOut1.brokerUrl).toBe(
+  expect(validOut1.viewerFullUrl).toBe(
     'http://localhost:33333/lib/index.html#src=https://vivliostyle.github.io/vivliostyle_doc/samples/gon/index.html&bookMode=true&renderAllPages=true',
   );
   expect(mockedCreateServer.mock.calls.length).toBe(1);
@@ -131,7 +131,7 @@ it('starts up a source server with custom viewer', async () => {
     viewer: 'https://vivliostyle.vercel.app/',
   });
   maskConfig(validOut1);
-  expect(validOut1.brokerUrl).toBe(
+  expect(validOut1.viewerFullUrl).toBe(
     'https://vivliostyle.vercel.app/#src=http://localhost:33333/to/manifest/file.json&bookMode=true&renderAllPages=true',
   );
   expect(mockedCreateServer.mock.calls.length).toBe(1);
@@ -146,7 +146,7 @@ it('starts up with no http server', async () => {
     viewer: 'file:///something/viewer',
   });
   maskConfig(validOut1);
-  expect(validOut1.brokerUrl).toBe(
+  expect(validOut1.viewerFullUrl).toBe(
     'file:///something/viewer#src=file:///absolute/path/to/manifest/file.json&bookMode=true&renderAllPages=true',
   );
   expect(mockedCreateServer.mock.calls.length).toBe(0);

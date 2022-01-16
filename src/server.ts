@@ -32,23 +32,23 @@ export type ServerOption = ViewerUrlOption & {
   viewer: string | undefined;
 };
 
-let _brokerServer: Server | undefined;
+let _viewerServer: Server | undefined;
 let _sourceServer: Server | undefined;
 
 export async function prepareServer(option: ServerOption): Promise<{
-  brokerUrl: string;
+  viewerFullUrl: string;
 }> {
   const viewerUrl = await (option.viewer && isUrlString(option.viewer)
     ? new URL(option.viewer)
     : option.httpServer
     ? (async () => {
-        const brokerRoot = resolvePkg('@vivliostyle/viewer', {
+        const viewerRoot = resolvePkg('@vivliostyle/viewer', {
           cwd: __dirname,
         })!;
-        _brokerServer = _brokerServer || (await launchServer(brokerRoot));
+        _viewerServer = _viewerServer || (await launchServer(viewerRoot));
 
         const viewerUrl = new URL('http://localhost');
-        viewerUrl.port = `${_brokerServer.port}`;
+        viewerUrl.port = `${_viewerServer.port}`;
         viewerUrl.pathname = '/lib/index.html';
         return viewerUrl;
       })()
@@ -78,7 +78,7 @@ export async function prepareServer(option: ServerOption): Promise<{
     : pathToFileURL(option.input));
 
   return {
-    brokerUrl: getBrokerUrl(option, {
+    viewerFullUrl: getViewerFullUrl(option, {
       viewerUrl,
       sourceUrl,
     }),
@@ -86,9 +86,9 @@ export async function prepareServer(option: ServerOption): Promise<{
 }
 
 export function teardownServer() {
-  if (_brokerServer) {
-    _brokerServer.server.close();
-    _brokerServer = undefined;
+  if (_viewerServer) {
+    _viewerServer.server.close();
+    _viewerServer = undefined;
   }
   if (_sourceServer) {
     _sourceServer.server.close();
@@ -96,7 +96,7 @@ export function teardownServer() {
   }
 }
 
-export function getBrokerUrl(
+export function getViewerFullUrl(
   { size, style, userStyle, singleDoc, quick }: ViewerUrlOption,
   { viewerUrl, sourceUrl }: { viewerUrl: URL; sourceUrl: URL },
 ): string {
