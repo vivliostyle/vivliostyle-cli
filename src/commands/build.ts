@@ -45,6 +45,7 @@ try {
     executableChromium: options.executableChromium,
     image: options.image,
     http: options.http,
+    viewer: options.viewer,
     bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
   }).catch(gracefulError);
 } catch (err) {
