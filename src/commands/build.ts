@@ -7,6 +7,7 @@ import { checkOverwriteViolation, compile, copyAssets } from '../builder';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
 import { checkContainerEnvironment } from '../container';
 import { buildPDF, buildPDFWithContainer } from '../pdf';
+import { teardownServer } from '../server';
 import {
   cwd,
   debug,
@@ -132,6 +133,7 @@ export default async function build(cliFlags: BuildCliFlags) {
     stopLogging('Built successfully.', '🎉');
   }
 
+  teardownServer();
   process.exit(0);
 }
 

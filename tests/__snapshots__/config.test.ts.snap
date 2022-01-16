@@ -10,6 +10,7 @@ Object {
   "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -63,6 +64,7 @@ Object {
   "epubOpfPath": "__SNIP__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -115,6 +117,7 @@ Object {
   "entryContextDir": "__WORKSPACE__",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -168,6 +171,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -219,6 +223,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -270,6 +275,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -357,6 +363,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": true,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -470,6 +477,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -558,6 +566,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -623,6 +632,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -694,6 +704,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": "__SNIP__",
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",
@@ -776,6 +787,7 @@ Object {
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": "__SNIP__",
+  "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
     "**/*.png",

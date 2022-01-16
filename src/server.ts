@@ -28,8 +28,8 @@ export interface ServerOption {
   quick?: boolean;
 }
 
-let _brokerServer: Server;
-let _sourceServer: Server;
+let _brokerServer: Server | undefined;
+let _sourceServer: Server | undefined;
 
 export async function prepareServer(option: ServerOption): Promise<{
   brokerUrl: string;
@@ -55,7 +55,18 @@ export async function prepareServer(option: ServerOption): Promise<{
   };
 }
 
-function getBrokerUrl(
+export function teardownServer() {
+  if (_brokerServer) {
+    _brokerServer.server.close();
+    _brokerServer = undefined;
+  }
+  if (_sourceServer) {
+    _sourceServer.server.close();
+    _sourceServer = undefined;
+  }
+}
+
+export function getBrokerUrl(
   {
     input,
     workspaceDir,
