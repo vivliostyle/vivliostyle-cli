@@ -179,6 +179,13 @@
         "image": {
           "type": "string",
           "minLength": 1
+        },
+        "http": {
+          "type": "boolean"
+        },
+        "viewer": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

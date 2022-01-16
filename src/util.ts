@@ -3,6 +3,7 @@ import debugConstructor from 'debug';
 import fs from 'fs';
 import StreamZip from 'node-stream-zip';
 import oraConstructor from 'ora';
+import portfinder from 'portfinder';
 import shelljs from 'shelljs';
 import tmp from 'tmp';
 import upath from 'upath';
@@ -157,4 +158,9 @@ export function pathStartsWith(path1: string, path2: string): boolean {
 
 export function isUrlString(str: string): boolean {
   return /^(https?|file|data):/i.test(str);
+}
+
+export function findAvailablePort(): Promise<number> {
+  portfinder.basePort = 13000;
+  return portfinder.getPortPromise();
 }

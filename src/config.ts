@@ -96,6 +96,8 @@ export interface CliFlags {
   sandbox?: boolean;
   executableChromium?: string;
   image?: string;
+  http?: boolean;
+  viewer?: string;
 }
 
 export interface WebPublicationManifestConfig {
@@ -143,6 +145,8 @@ export type MergedConfig = {
   sandbox: boolean;
   executableChromium: string;
   image: string;
+  httpServer: boolean;
+  viewer: string | undefined;
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -402,6 +406,8 @@ export async function mergeConfig<T extends CliFlags>(
   const executableChromium =
     cliFlags.executableChromium ?? getExecutableBrowserPath();
   const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
+  const httpServer = cliFlags.http ?? config?.http ?? false;
+  const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme =
@@ -431,9 +437,8 @@ export async function mergeConfig<T extends CliFlags>(
       });
     }
     if (config?.output) {
-      return (Array.isArray(config.output)
-        ? config.output
-        : [config.output]
+      return (
+        Array.isArray(config.output) ? config.output : [config.output]
       ).map((target) => {
         const targetObj =
           typeof target === 'string' ? { path: target } : target;
@@ -499,6 +504,8 @@ export async function mergeConfig<T extends CliFlags>(
     sandbox,
     executableChromium,
     image,
+    httpServer,
+    viewer,
   };
   if (!cliFlags.input && !config) {
     throw new Error(

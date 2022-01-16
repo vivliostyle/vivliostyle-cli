@@ -3,7 +3,6 @@ import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import { URL } from 'url';
-import { Meta, Payload, TOCItem } from './broker';
 import {
   checkBrowserAvailability,
   downloadBrowser,
@@ -16,9 +15,10 @@ import {
   runContainer,
   toContainerPath,
 } from './container';
+import { Meta, Payload, TOCItem } from './global-viewer';
 import { PdfOutput } from './output';
 import { PostProcess } from './postprocess';
-import { getBrokerUrl } from './server';
+import { prepareServer } from './server';
 import {
   debug,
   logError,
@@ -86,19 +86,24 @@ export async function buildPDF({
   timeout,
   entryContextDir,
   entries,
+  httpServer,
+  viewer,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
 
-  const navigateURL = getBrokerUrl({
-    sourceIndex: input,
-    outputSize: size,
+  const { viewerFullUrl } = await prepareServer({
+    input,
+    workspaceDir,
+    httpServer,
+    viewer,
+    size,
     style: customStyle,
     userStyle: customUserStyle,
     singleDoc,
     quick: false,
   });
-  debug('brokerURL', navigateURL);
+  debug('viewerFullUrl', viewerFullUrl);
 
   debug(`Executing Chromium path: ${executableChromium}`);
   if (!checkBrowserAvailability(executableChromium)) {
@@ -200,7 +205,7 @@ export async function buildPDF({
 
   page.on('response', (response) => {
     debug(
-      chalk.gray('broker:response'),
+      chalk.gray('viewer:response'),
       chalk.green(response.status().toString()),
       response.url(),
     );
@@ -217,7 +222,7 @@ export async function buildPDF({
   });
 
   await page.setDefaultNavigationTimeout(timeout);
-  await page.goto(navigateURL, { waitUntil: 'networkidle0' });
+  await page.goto(viewerFullUrl, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => !!window.coreViewer);
 
   await page.emulateMediaType('print');
@@ -255,7 +260,10 @@ export async function buildPDF({
   shelljs.mkdir('-p', path.dirname(target.path));
 
   const post = await PostProcess.load(pdf);
-  await post.metadata(metadata);
+  await post.metadata(metadata, {
+    // If custom viewer is set, there is no guarantee that the default creator option is correct.
+    disableCreatorOption: !!viewer,
+  });
   await post.toc(toc);
   await post.save(target.path, {
     preflight: target.preflight,

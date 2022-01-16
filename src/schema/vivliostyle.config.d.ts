@@ -39,6 +39,8 @@ export interface CoreProps {
     disableFormatHtml?: boolean;
   };
   image?: string;
+  http?: boolean;
+  viewer?: string;
   [k: string]: unknown;
 }
 export interface EntryObject {
@@ -49,7 +51,7 @@ export interface EntryObject {
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
-  rel: 'contents';
+  rel: "contents";
   title?: string;
   theme?: string;
 }
