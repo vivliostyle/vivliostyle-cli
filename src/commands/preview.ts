@@ -44,6 +44,7 @@ try {
     sandbox: options.sandbox,
     executableChromium: options.executableChromium,
     http: options.http,
+    viewer: options.viewer,
   }).catch(gracefulError);
 } catch (err) {
   gracefulError(err);
@@ -76,6 +77,7 @@ export default async function preview(cliFlags: PreviewCliFlags) {
       config.epubOpfPath) as string,
     workspaceDir: config.workspaceDir,
     httpServer: config.httpServer,
+    viewer: config.viewer,
     size: config.size,
     style: config.customStyle,
     userStyle: config.customUserStyle,

@@ -121,6 +121,11 @@ https://github.com/vibranthq/press-ready`,
       `launch an HTTP server hosting contents instead of file protocol
 It is useful that requires CORS such as external web fonts.`,
     )
+    .option(
+      '--viewer <URL>',
+      `specify a URL of displaying viewer instead of vivliostyle-cli's one
+It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)`,
+    )
     .addOption(
       new commander.Option('--bypassed-pdf-builder-option <json>').hideHelp(),
     )

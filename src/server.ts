@@ -21,6 +21,7 @@ export interface ServerOption {
   input: string;
   workspaceDir: string;
   httpServer: boolean;
+  viewer: string | undefined;
   size?: PageSize;
   style?: string;
   userStyle?: string;
@@ -34,23 +35,49 @@ let _sourceServer: Server | undefined;
 export async function prepareServer(option: ServerOption): Promise<{
   brokerUrl: string;
 }> {
-  let brokerServer: Server | undefined;
-  if (option.httpServer) {
-    const brokerRoot = resolvePkg('@vivliostyle/viewer', { cwd: __dirname })!;
-    _brokerServer = _brokerServer || (await launchServer(brokerRoot));
-    brokerServer = _brokerServer;
-  }
+  const viewerUrl = await (option.viewer && isUrlString(option.viewer)
+    ? new URL(option.viewer)
+    : option.httpServer
+    ? (async () => {
+        const brokerRoot = resolvePkg('@vivliostyle/viewer', {
+          cwd: __dirname,
+        })!;
+        _brokerServer = _brokerServer || (await launchServer(brokerRoot));
 
-  let sourceServer: Server | undefined;
-  if (brokerServer && !isUrlString(option.input)) {
-    _sourceServer = _sourceServer || (await launchServer(option.workspaceDir));
-    sourceServer = _sourceServer;
-  }
+        const viewerUrl = new URL('http://localhost');
+        viewerUrl.port = `${_brokerServer.port}`;
+        viewerUrl.pathname = '/lib/index.html';
+        return viewerUrl;
+      })()
+    : (() => {
+        const viewerUrl = new URL('file://');
+        viewerUrl.pathname = upath.join(
+          resolvePkg('@vivliostyle/viewer', { cwd: __dirname })!,
+          'lib/index.html',
+        );
+        return viewerUrl;
+      })());
+
+  const sourceUrl = await (isUrlString(option.input)
+    ? new URL(option.input)
+    : option.httpServer ||
+      // Use http server because http viewer cannot access to file protocol
+      (option.viewer && /^https?:/i.test(option.viewer))
+    ? (async () => {
+        _sourceServer =
+          _sourceServer || (await launchServer(option.workspaceDir));
+
+        const sourceUrl = new URL('http://localhost');
+        sourceUrl.port = `${_sourceServer.port}`;
+        sourceUrl.pathname = upath.relative(option.workspaceDir, option.input);
+        return sourceUrl;
+      })()
+    : pathToFileURL(option.input));
 
   return {
     brokerUrl: getBrokerUrl(option, {
-      brokerServer,
-      sourceServer,
+      viewerUrl,
+      sourceUrl,
     }),
   };
 }
@@ -67,36 +94,9 @@ export function teardownServer() {
 }
 
 export function getBrokerUrl(
-  {
-    input,
-    workspaceDir,
-    size,
-    style,
-    userStyle,
-    singleDoc,
-    quick,
-  }: ServerOption,
-  {
-    brokerServer,
-    sourceServer,
-  }: { brokerServer?: Server; sourceServer?: Server },
+  { size, style, userStyle, singleDoc, quick }: ServerOption,
+  { viewerUrl, sourceUrl }: { viewerUrl: URL; sourceUrl: URL },
 ): string {
-  const viewerUrl = brokerServer
-    ? (() => {
-        const viewerUrl = new URL('http://localhost');
-        viewerUrl.port = `${brokerServer.port}`;
-        viewerUrl.pathname = '/lib/index.html';
-        return viewerUrl;
-      })()
-    : (() => {
-        const viewerUrl = new URL('file://');
-        viewerUrl.pathname = upath.join(
-          resolvePkg('@vivliostyle/viewer', { cwd: __dirname })!,
-          'lib/index.html',
-        );
-        return viewerUrl;
-      })();
-
   const pageSizeValue =
     size && ('format' in size ? size.format : `${size.width} ${size.height}`);
 
@@ -104,19 +104,7 @@ export function getBrokerUrl(
     return url.replace(/&/g, '%26');
   }
 
-  let viewerParams = '';
-  if (sourceServer) {
-    const sourceUrl = new URL('http://localhost');
-    sourceUrl.port = `${sourceServer.port}`;
-    sourceUrl.pathname = upath.relative(workspaceDir, input);
-    viewerParams += `src=${escapeParam(sourceUrl.href)}`;
-  } else {
-    const sourceUrl = isUrlString(input)
-      ? new URL(input)
-      : pathToFileURL(input);
-    viewerParams += `src=${escapeParam(sourceUrl.href)}`;
-  }
-
+  let viewerParams = `src=${escapeParam(sourceUrl.href)}`;
   viewerParams += `&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
   if (style) {

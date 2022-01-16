@@ -40,6 +40,7 @@ export interface CoreProps {
   };
   image?: string;
   httpServer?: boolean;
+  viewer?: string;
   [k: string]: unknown;
 }
 export interface EntryObject {
@@ -50,7 +51,7 @@ export interface EntryObject {
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
-  rel: 'contents';
+  rel: "contents";
   title?: string;
   theme?: string;
 }

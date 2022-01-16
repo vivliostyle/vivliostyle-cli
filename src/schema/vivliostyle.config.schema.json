@@ -182,6 +182,10 @@
         },
         "httpServer": {
           "type": "boolean"
+        },
+        "viewer": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

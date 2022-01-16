@@ -87,6 +87,7 @@ export async function buildPDF({
   entryContextDir,
   entries,
   httpServer,
+  viewer,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
@@ -95,6 +96,7 @@ export async function buildPDF({
     input,
     workspaceDir,
     httpServer,
+    viewer,
     size,
     style: customStyle,
     userStyle: customUserStyle,
