@@ -260,7 +260,10 @@ export async function buildPDF({
   shelljs.mkdir('-p', path.dirname(target.path));
 
   const post = await PostProcess.load(pdf);
-  await post.metadata(metadata);
+  await post.metadata(metadata, {
+    // If custom viewer is set, there is no guarantee that the default creator option is correct.
+    disableCreatorOption: !!viewer,
+  });
   await post.toc(toc);
   await post.save(target.path, {
     preflight: target.preflight,
