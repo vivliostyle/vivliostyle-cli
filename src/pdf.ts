@@ -221,6 +221,9 @@ export async function buildPDF({
     // debug(chalk.red(`${response.status()}`, response.url()));
   });
 
+  let remainTime = timeout;
+  const startTime = Date.now();
+
   await page.setDefaultNavigationTimeout(timeout);
   await page.goto(viewerFullUrl, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => !!window.coreViewer);
@@ -241,6 +244,12 @@ export async function buildPDF({
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
 
+  remainTime -= Date.now() - startTime;
+  if (remainTime <= 0) {
+    throw new Error('Typesetting process timed out');
+  }
+  debug('Remaining timeout:', remainTime);
+
   startLogging('Building PDF');
 
   const pdf = await page.pdf({
@@ -252,6 +261,7 @@ export async function buildPDF({
     },
     printBackground: true,
     preferCSSPageSize: true,
+    timeout: remainTime,
   });
 
   await browser.close();
