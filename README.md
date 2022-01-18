@@ -96,6 +96,10 @@ Options:
   --no-sandbox                     launch chrome without sandbox. use this option when ECONNREFUSED error occurred.
   --executable-chromium <path>     specify a path of executable Chrome (or Chromium) you installed
   --image <image>                  specify a docker image to render
+  --http                           launch an HTTP server hosting contents instead of file protocol
+                                   It is useful that requires CORS such as external web fonts.
+  --viewer <URL>                   specify a URL of displaying viewer instead of vivliostyle-cli's one
+                                   It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   -h, --help                       display help for command
 ```
 
@@ -126,6 +130,10 @@ Options:
   --verbose                       verbose log output
   --no-sandbox                    launch chrome without sandbox (use this option to avoid ECONNREFUSED error)
   --executable-chromium <path>    specify a path of executable Chrome(Chromium) you installed
+  --http                          launch an HTTP server hosting contents instead of file protocol
+                                  It is useful that requires CORS such as external web fonts.
+  --viewer <URL>                  specify a URL of displaying viewer instead of vivliostyle-cli's one
+                                  It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   -h, --help                      display help for command
 ```
 
