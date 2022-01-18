@@ -1,3 +1,16 @@
+# [4.6.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.5.0...v4.6.0) (2022-01-18)
+
+### Bug Fixes
+
+- Make timeout building PDF configurable ([7ad2c40](https://github.com/vivliostyle/vivliostyle-cli/commit/7ad2c4051ef1026de0a9c107cb9f7c5a14f35441))
+
+### Features
+
+- Add http server mode ([f3407ad](https://github.com/vivliostyle/vivliostyle-cli/commit/f3407ade71e6ecc7cd57bc223cbdf9a876666d95))
+- Add viewer option ([011f834](https://github.com/vivliostyle/vivliostyle-cli/commit/011f834cfc5bea3ab7df521b9ef7a2a5ecc25496))
+- Update @vivliostyle/vfm to v1.1.0 ([3abf1ad](https://github.com/vivliostyle/vivliostyle-cli/commit/3abf1adb90b6f8a219b7b6f11986b1eb594a11db))
+- Update Vivliostyle.js to 2.13.0: Allow JavaScript in documents, etc. ([ae790aa](https://github.com/vivliostyle/vivliostyle-cli/commit/ae790aa3578c75d9bf137a6c81f824881ca65f8d))
+
 # [4.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.4.1...v4.5.0) (2021-11-30)
 
 ### Features
