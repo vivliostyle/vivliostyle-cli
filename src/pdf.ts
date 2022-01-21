@@ -241,6 +241,13 @@ export async function buildPDF({
     logSuccess(stringifyEntry(lastEntry));
   }
 
+  const pageProgression = await page.evaluate(() =>
+    document
+      .querySelector('#vivliostyle-viewer-viewport')
+      ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
+      ? 'rtl'
+      : 'ltr',
+  );
   const viewerCoreVersion = await page.evaluate(() =>
     document
       .querySelector('#vivliostyle-menu_settings .version')
@@ -276,6 +283,7 @@ export async function buildPDF({
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata, {
+    pageProgression,
     browserVersion,
     viewerCoreVersion,
     // If custom viewer is set and its version info is not available,
