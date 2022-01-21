@@ -137,7 +137,15 @@ export class PostProcess {
 
   async metadata(
     tree: Meta,
-    { disableCreatorOption }: { disableCreatorOption?: boolean } = {},
+    {
+      browserVersion,
+      viewerCoreVersion,
+      disableCreatorOption,
+    }: {
+      browserVersion?: string;
+      viewerCoreVersion?: string;
+      disableCreatorOption?: boolean;
+    } = {},
   ) {
     const title = tree[metaTerms.title]?.[0].v;
     if (title) {
@@ -159,10 +167,9 @@ export class PostProcess {
       this.document.setKeywords(keywords);
     }
 
-    let creatorOpt = `Vivliostyle.js ${coreVersion}`;
-    const creator = this.document.getCreator();
-    if (creator) {
-      creatorOpt += `; ${creator}`;
+    let creatorOpt = `Vivliostyle.js ${viewerCoreVersion ?? coreVersion}`;
+    if (browserVersion) {
+      creatorOpt += `; ${browserVersion}`;
     }
     this.document.setCreator(
       disableCreatorOption ? 'Vivliostyle' : `Vivliostyle (${creatorOpt})`,

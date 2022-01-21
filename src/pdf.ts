@@ -132,8 +132,8 @@ export async function buildPDF({
       isInContainer ? '--disable-dev-shm-usage' : '',
     ],
   });
-  const version = await browser.version();
-  debug(chalk.green('success'), `version=${version}`);
+  const browserVersion = await browser.version();
+  debug(chalk.green('success'), `browserVersion=${browserVersion}`);
 
   logUpdate('Building pages');
 
@@ -241,6 +241,11 @@ export async function buildPDF({
     logSuccess(stringifyEntry(lastEntry));
   }
 
+  const viewerCoreVersion = await page.evaluate(() =>
+    document
+      .querySelector('#vivliostyle-menu_settings .version')
+      ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
+  );
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
 
@@ -271,8 +276,11 @@ export async function buildPDF({
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata, {
-    // If custom viewer is set, there is no guarantee that the default creator option is correct.
-    disableCreatorOption: !!viewer,
+    browserVersion,
+    viewerCoreVersion,
+    // If custom viewer is set and its version info is not available,
+    // there is no guarantee that the default creator option is correct.
+    disableCreatorOption: !!viewer && !viewerCoreVersion,
   });
   await post.toc(toc);
   await post.save(target.path, {
