@@ -40,6 +40,7 @@ export function generateManifest(
     title?: string;
     author?: string;
     language?: string | null;
+    readingProgression?: 'ltr' | 'rtl';
     modified: string;
     entries: EntryObject[];
     cover?: string;
@@ -89,6 +90,9 @@ export function generateManifest(
     conformsTo: 'https://github.com/vivliostyle/vivliostyle-cli',
     author: options.author,
     ...(options.language && { inLanguage: options.language }),
+    ...(options.readingProgression && {
+      readingProgression: options.readingProgression,
+    }),
     dateModified: options.modified,
     name: options.title,
     readingOrder: entries,
@@ -117,6 +121,7 @@ export async function compile(
     themeIndexes,
     entries,
     language,
+    readingProgression,
     cover,
     vfmOptions,
     input,
@@ -228,6 +233,7 @@ export async function compile(
     generateManifest(manifestPath, entryContextDir, {
       ...manifestAutoGenerate,
       language,
+      readingProgression,
       cover: cover && path.relative(entryContextDir, cover),
       entries: entries.map((entry) => ({
         title: entry.title,

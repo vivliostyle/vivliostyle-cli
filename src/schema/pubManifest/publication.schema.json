@@ -112,6 +112,11 @@
     },
     "links": {
       "$ref": "module/resource.categorization.schema.json"
+    },
+    "readingProgression": {
+      "type": "string",
+      "enum": ["ltr", "rtl"],
+      "default": "ltr"
     }
   },
   "required": ["@context", "conformsTo"]

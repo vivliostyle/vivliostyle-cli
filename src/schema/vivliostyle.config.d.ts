@@ -30,6 +30,7 @@ export interface CoreProps {
   size?: string;
   pressReady?: boolean;
   language?: string;
+  readingProgression?: 'ltr' | 'rtl';
   toc?: boolean | string;
   tocTitle?: string;
   cover?: string;
@@ -51,7 +52,7 @@ export interface EntryObject {
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
-  rel: "contents";
+  rel: 'contents';
   title?: string;
   theme?: string;
 }

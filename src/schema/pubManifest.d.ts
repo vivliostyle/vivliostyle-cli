@@ -90,6 +90,7 @@ export interface PublicationManifest {
   readingOrder?: ResourceCategorization;
   resources?: ResourceCategorization;
   links?: ResourceCategorization;
+  readingProgression?: 'ltr' | 'rtl';
   [k: string]: unknown;
 }
 export interface SchemaOrgItemListObject {
