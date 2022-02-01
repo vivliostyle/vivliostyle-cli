@@ -414,7 +414,7 @@ Object {
     },
   ],
   "quick": false,
-  "readingProgression": undefined,
+  "readingProgression": "rtl",
   "sandbox": true,
   "singleDoc": false,
   "size": Object {
@@ -533,7 +533,7 @@ Object {
     },
   ],
   "quick": false,
-  "readingProgression": undefined,
+  "readingProgression": "rtl",
   "sandbox": true,
   "singleDoc": false,
   "size": Object {
@@ -766,7 +766,7 @@ Object {
     },
   ],
   "quick": false,
-  "readingProgression": undefined,
+  "readingProgression": "rtl",
   "sandbox": true,
   "singleDoc": false,
   "size": Object {

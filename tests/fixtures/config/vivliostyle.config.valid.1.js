@@ -29,4 +29,5 @@ module.exports = {
     hardLineBreaks: true,
     disableFormatHtml: true,
   },
+  readingProgression: 'rtl',
 };
