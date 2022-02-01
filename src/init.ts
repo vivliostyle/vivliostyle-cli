@@ -1,24 +1,9 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'upath';
-import { InitCliFlags, setupInitParserProgram } from './commands/init.parser';
+import { InitCliFlags } from './commands/init.parser';
 import { CONTAINER_IMAGE } from './container';
-import { cwd, gracefulError, log } from './util';
-
-try {
-  const program = setupInitParserProgram();
-  program.parse(process.argv);
-  const options = program.opts();
-  init({
-    title: options.title,
-    author: options.author,
-    language: options.language,
-    size: options.size,
-    theme: options.theme,
-  }).catch(gracefulError);
-} catch (err) {
-  gracefulError(err);
-}
+import { cwd, log } from './util';
 
 export default async function init(cliFlags: InitCliFlags) {
   const vivliostyleConfigPath = path.join(cwd, 'vivliostyle.config.js');

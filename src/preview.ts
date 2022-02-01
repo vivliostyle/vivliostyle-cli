@@ -7,16 +7,12 @@ import {
   launchBrowser,
 } from './browser';
 import { compile, copyAssets } from './builder';
-import {
-  PreviewCliFlags,
-  setupPreviewParserProgram,
-} from './commands/preview.parser';
+import { PreviewCliFlags } from './commands/preview.parser';
 import { collectVivliostyleConfig, mergeConfig } from './config';
 import { prepareServer } from './server';
 import {
   cwd,
   debug,
-  gracefulError,
   isUrlString,
   logSuccess,
   pathStartsWith,
@@ -25,33 +21,6 @@ import {
 } from './util';
 
 let timer: NodeJS.Timeout;
-
-try {
-  const program = setupPreviewParserProgram();
-  program.parse(process.argv);
-  const options = program.opts();
-  preview({
-    input: program.args?.[0],
-    configPath: options.config,
-    theme: options.theme,
-    size: options.size,
-    style: options.style,
-    userStyle: options.userStyle,
-    singleDoc: options.singleDoc,
-    quick: options.quick,
-    title: options.title,
-    author: options.author,
-    language: options.language,
-    verbose: options.verbose,
-    timeout: options.timeout,
-    sandbox: options.sandbox,
-    executableChromium: options.executableChromium,
-    http: options.http,
-    viewer: options.viewer,
-  }).catch(gracefulError);
-} catch (err) {
-  gracefulError(err);
-}
 
 export default async function preview(cliFlags: PreviewCliFlags) {
   startLogging('Collecting preview config');

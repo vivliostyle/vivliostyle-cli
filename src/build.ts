@@ -1,59 +1,15 @@
 import chalk from 'chalk';
-import process from 'process';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import { getExecutableBrowserPath } from './browser';
 import { checkOverwriteViolation, compile, copyAssets } from './builder';
-import {
-  BuildCliFlags,
-  setupBuildParserProgram,
-} from './commands/build.parser';
+import { BuildCliFlags } from './commands/build.parser';
 import { collectVivliostyleConfig, mergeConfig, MergedConfig } from './config';
 import { checkContainerEnvironment } from './container';
 import { buildPDF, buildPDFWithContainer } from './pdf';
 import { teardownServer } from './server';
-import {
-  cwd,
-  debug,
-  gracefulError,
-  log,
-  startLogging,
-  stopLogging,
-} from './util';
+import { cwd, debug, log, startLogging, stopLogging } from './util';
 import { exportWebPublication } from './webbook';
-
-try {
-  const program = setupBuildParserProgram();
-  program.parse(process.argv);
-  const options = program.opts();
-  build({
-    input: program.args?.[0],
-    configPath: options.config,
-    targets: options.targets,
-    theme: options.theme,
-    size: options.size,
-    style: options.style,
-    userStyle: options.userStyle,
-    singleDoc: options.singleDoc,
-    title: options.title,
-    author: options.author,
-    language: options.language,
-    pressReady: options.pressReady,
-    renderMode: options.renderMode || 'local',
-    preflight: options.preflight,
-    preflightOption: options.preflightOption,
-    verbose: options.verbose,
-    timeout: options.timeout,
-    sandbox: options.sandbox,
-    executableChromium: options.executableChromium,
-    image: options.image,
-    http: options.http,
-    viewer: options.viewer,
-    bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
-  }).catch(gracefulError);
-} catch (err) {
-  gracefulError(err);
-}
 
 export default async function build(cliFlags: BuildCliFlags) {
   if (cliFlags.bypassedPdfBuilderOption) {
@@ -64,7 +20,7 @@ export default async function build(cliFlags: BuildCliFlags) {
 
     await buildPDF(option);
     log();
-    process.exit(0);
+    return;
   }
 
   const isInContainer = checkContainerEnvironment();
@@ -138,7 +94,6 @@ export default async function build(cliFlags: BuildCliFlags) {
   }
 
   teardownServer();
-  process.exit(0);
 }
 
 export function checkUnsupportedOutputs({

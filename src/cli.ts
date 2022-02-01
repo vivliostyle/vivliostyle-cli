@@ -11,12 +11,12 @@ program
   .name('vivliostyle')
   .version(version, '-v, --version')
   .command('init', 'create vivliostyle config', {
-    executableFile: 'init',
+    executableFile: 'commands/init',
   })
   .command('build', 'build and create PDF file', {
-    executableFile: 'build',
+    executableFile: 'commands/build',
   })
   .command('preview', 'launch preview server', {
-    executableFile: 'preview',
+    executableFile: 'commands/preview',
   })
   .parse(process.argv);
