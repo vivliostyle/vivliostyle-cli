@@ -71,7 +71,7 @@ it('toc: true', async () => {
   const manifest = require(resolveFixture('toc/.vs-valid.1/publication.json'));
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
-    title: 'Table of Contents',
+    name: 'Table of Contents',
     type: 'LinkedResource',
     url: 'index.html',
   });
@@ -113,7 +113,7 @@ it("toc: 'manuscript/contents.html'", async () => {
   const manifest = require(resolveFixture('toc/.vs-valid.2/publication.json'));
   expect(manifest.readingOrder[3]).toEqual({
     rel: 'contents',
-    title: 'もくじ',
+    name: 'もくじ',
     type: 'LinkedResource',
     url: 'manuscript/contents.html',
   });
@@ -164,7 +164,7 @@ it('Write ToC by myself', async () => {
   const manifest = require(resolveFixture('toc/.vs-valid.3/publication.json'));
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
-    title: 'Hand-written ToC',
+    name: 'Hand-written ToC',
     type: 'LinkedResource',
     url: 'manuscript/ToC.html',
   });
