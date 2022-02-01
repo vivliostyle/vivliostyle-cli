@@ -1,7 +1,4 @@
 import commander from 'commander';
-import { CliFlags } from '../config';
-
-export interface PreviewCliFlags extends CliFlags {}
 
 export function setupPreviewParserProgram(): commander.Command {
   const program = new commander.Command();

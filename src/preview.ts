@@ -7,8 +7,7 @@ import {
   launchBrowser,
 } from './browser';
 import { compile, copyAssets } from './builder';
-import { PreviewCliFlags } from './commands/preview.parser';
-import { collectVivliostyleConfig, mergeConfig } from './config';
+import { CliFlags, collectVivliostyleConfig, mergeConfig } from './config';
 import { prepareServer } from './server';
 import {
   cwd,
@@ -22,7 +21,9 @@ import {
 
 let timer: NodeJS.Timeout;
 
-export default async function preview(cliFlags: PreviewCliFlags) {
+export interface PreviewCliFlags extends CliFlags {}
+
+export async function preview(cliFlags: PreviewCliFlags) {
   startLogging('Collecting preview config');
 
   const loadedConf = collectVivliostyleConfig(cliFlags);

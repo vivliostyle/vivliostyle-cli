@@ -1,11 +1,18 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'upath';
-import { InitCliFlags } from './commands/init.parser';
 import { CONTAINER_IMAGE } from './container';
 import { cwd, log } from './util';
 
-export default async function init(cliFlags: InitCliFlags) {
+export interface InitCliFlags {
+  title?: string;
+  author?: string;
+  language?: string;
+  theme?: string;
+  size?: string;
+}
+
+export async function init(cliFlags: InitCliFlags) {
   const vivliostyleConfigPath = path.join(cwd, 'vivliostyle.config.js');
 
   if (fs.existsSync(vivliostyleConfigPath)) {

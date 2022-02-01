@@ -3,15 +3,27 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { getExecutableBrowserPath } from './browser';
 import { checkOverwriteViolation, compile, copyAssets } from './builder';
-import { BuildCliFlags } from './commands/build.parser';
-import { collectVivliostyleConfig, mergeConfig, MergedConfig } from './config';
+import {
+  CliFlags,
+  collectVivliostyleConfig,
+  mergeConfig,
+  MergedConfig,
+} from './config';
 import { checkContainerEnvironment } from './container';
 import { buildPDF, buildPDFWithContainer } from './pdf';
 import { teardownServer } from './server';
 import { cwd, debug, log, startLogging, stopLogging } from './util';
 import { exportWebPublication } from './webbook';
 
-export default async function build(cliFlags: BuildCliFlags) {
+export interface BuildCliFlags extends CliFlags {
+  output?: {
+    output?: string;
+    format?: string;
+  }[];
+  bypassedPdfBuilderOption?: string;
+}
+
+export async function build(cliFlags: BuildCliFlags) {
   if (cliFlags.bypassedPdfBuilderOption) {
     const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
     // Host doesn't know inside path of chromium path
@@ -96,7 +108,7 @@ export default async function build(cliFlags: BuildCliFlags) {
   teardownServer();
 }
 
-export function checkUnsupportedOutputs({
+function checkUnsupportedOutputs({
   webbookEntryPath,
   epubOpfPath,
   outputs,

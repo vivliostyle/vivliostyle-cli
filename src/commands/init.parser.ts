@@ -1,13 +1,5 @@
 import commander from 'commander';
 
-export interface InitCliFlags {
-  title?: string;
-  author?: string;
-  language?: string;
-  theme?: string;
-  size?: string;
-}
-
 export function setupInitParserProgram(): commander.Command {
   const program = new commander.Command();
   program

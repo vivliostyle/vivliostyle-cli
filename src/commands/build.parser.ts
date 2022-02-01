@@ -1,14 +1,7 @@
 import commander from 'commander';
-import { CliFlags, validateTimeoutFlag } from '../config';
+import { BuildCliFlags } from '../build';
+import { validateTimeoutFlag } from '../config';
 import { checkOutputFormat, detectOutputFormat, OutputFormat } from '../output';
-
-export interface BuildCliFlags extends CliFlags {
-  output?: {
-    output?: string;
-    format?: string;
-  }[];
-  bypassedPdfBuilderOption?: string;
-}
 
 export function setupBuildParserProgram(): commander.Command {
   // Provide an order-sensitive command parser
