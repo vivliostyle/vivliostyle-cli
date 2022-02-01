@@ -58,7 +58,7 @@ it('generate workspace directory', async () => {
   });
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
-    title: 'Table of Contents',
+    name: 'Table of Contents',
     type: 'LinkedResource',
     url: 'index.html',
   });
@@ -122,7 +122,7 @@ it('generate files with entryContext', async () => {
   });
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
-    title: 'Table of Contents',
+    name: 'Table of Contents',
     type: 'LinkedResource',
     url: 't-o-c.html',
   });
@@ -188,16 +188,16 @@ it('generate from various manuscript formats', async () => {
   ));
   expect(manifest.readingOrder).toEqual([
     {
-      title: 'SODA',
+      name: 'SODA',
       url: 'manuscript/soda.html',
     },
     {
-      title: 'ABCDEF',
+      name: 'ABCDEF',
       url: 'manuscript/sample-html.html',
     },
     {
       encodingFormat: 'application/xhtml+xml',
-      title: 'Sample XHTML',
+      name: 'Sample XHTML',
       url: 'manuscript/sample-xhtml.xhtml',
     },
   ]);
@@ -278,16 +278,16 @@ it('generate with VFM options', async () => {
   expect(manifest.readingOrder).toEqual([
     {
       url: 'index.html',
-      title: 'Table of Contents',
+      name: 'Table of Contents',
       rel: 'contents',
       type: 'LinkedResource',
     },
     {
-      title: 'SODA',
+      name: 'SODA',
       url: 'manuscript/soda.html',
     },
     {
-      title: 'Hello',
+      name: 'Hello',
       url: 'manuscript/frontmatter.html',
     },
   ]);
