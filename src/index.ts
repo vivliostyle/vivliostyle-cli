@@ -1,6 +1,6 @@
-import build from './commands/build';
+import build from './build';
 import { BuildCliFlags } from './commands/build.parser';
-import preview from './commands/preview';
 import { PreviewCliFlags } from './commands/preview.parser';
+import preview from './preview';
 
 export { build, preview, BuildCliFlags, PreviewCliFlags };

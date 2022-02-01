@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'upath';
-import { CONTAINER_IMAGE } from '../container';
-import { cwd, gracefulError, log } from '../util';
-import { InitCliFlags, setupInitParserProgram } from './init.parser';
+import { InitCliFlags, setupInitParserProgram } from './commands/init.parser';
+import { CONTAINER_IMAGE } from './container';
+import { cwd, gracefulError, log } from './util';
 
 try {
   const program = setupInitParserProgram();

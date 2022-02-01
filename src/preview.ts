@@ -5,10 +5,14 @@ import {
   downloadBrowser,
   getExecutableBrowserPath,
   launchBrowser,
-} from '../browser';
-import { compile, copyAssets } from '../builder';
-import { collectVivliostyleConfig, mergeConfig } from '../config';
-import { prepareServer } from '../server';
+} from './browser';
+import { compile, copyAssets } from './builder';
+import {
+  PreviewCliFlags,
+  setupPreviewParserProgram,
+} from './commands/preview.parser';
+import { collectVivliostyleConfig, mergeConfig } from './config';
+import { prepareServer } from './server';
 import {
   cwd,
   debug,
@@ -18,8 +22,7 @@ import {
   pathStartsWith,
   startLogging,
   stopLogging,
-} from '../util';
-import { PreviewCliFlags, setupPreviewParserProgram } from './preview.parser';
+} from './util';
 
 let timer: NodeJS.Timeout;
 

@@ -2,12 +2,16 @@ import chalk from 'chalk';
 import process from 'process';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { getExecutableBrowserPath } from '../browser';
-import { checkOverwriteViolation, compile, copyAssets } from '../builder';
-import { collectVivliostyleConfig, mergeConfig, MergedConfig } from '../config';
-import { checkContainerEnvironment } from '../container';
-import { buildPDF, buildPDFWithContainer } from '../pdf';
-import { teardownServer } from '../server';
+import { getExecutableBrowserPath } from './browser';
+import { checkOverwriteViolation, compile, copyAssets } from './builder';
+import {
+  BuildCliFlags,
+  setupBuildParserProgram,
+} from './commands/build.parser';
+import { collectVivliostyleConfig, mergeConfig, MergedConfig } from './config';
+import { checkContainerEnvironment } from './container';
+import { buildPDF, buildPDFWithContainer } from './pdf';
+import { teardownServer } from './server';
 import {
   cwd,
   debug,
@@ -15,9 +19,8 @@ import {
   log,
   startLogging,
   stopLogging,
-} from '../util';
-import { exportWebPublication } from '../webbook';
-import { BuildCliFlags, setupBuildParserProgram } from './build.parser';
+} from './util';
+import { exportWebPublication } from './webbook';
 
 try {
   const program = setupBuildParserProgram();
