@@ -143,6 +143,11 @@
           "type": "string",
           "minLength": 1
         },
+        "readingProgression": {
+          "type": "string",
+          "enum": ["ltr", "rtl"],
+          "default": "ltr"
+        },
         "toc": {
           "oneOf": [
             { "type": "boolean" },

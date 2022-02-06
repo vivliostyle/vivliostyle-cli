@@ -8,6 +8,7 @@ import {
   PDFName,
   PDFNumber,
   PDFRef,
+  ReadingDirection,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
 import path from 'upath';
@@ -138,10 +139,12 @@ export class PostProcess {
   async metadata(
     tree: Meta,
     {
+      pageProgression,
       browserVersion,
       viewerCoreVersion,
       disableCreatorOption,
     }: {
+      pageProgression?: 'ltr' | 'rtl';
       browserVersion?: string;
       viewerCoreVersion?: string;
       disableCreatorOption?: boolean;
@@ -184,6 +187,10 @@ export class PostProcess {
     const creationDate = creation && new Date(creation);
     if (creationDate) {
       this.document.setCreationDate(creationDate);
+    }
+    if (pageProgression === 'rtl') {
+      const viewerPrefs = this.document.catalog.getOrCreateViewerPreferences();
+      viewerPrefs.setReadingDirection(ReadingDirection.R2L);
     }
   }
 

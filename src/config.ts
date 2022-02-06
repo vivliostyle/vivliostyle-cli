@@ -135,6 +135,7 @@ export type MergedConfig = {
   singleDoc: boolean;
   quick: boolean;
   language: string | null;
+  readingProgression: 'ltr' | 'rtl' | undefined;
   vfmOptions: {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
@@ -375,6 +376,7 @@ export async function mergeConfig<T extends CliFlags>(
     : DEFAULT_ASSETS;
 
   const language = cliFlags.language ?? config?.language ?? null;
+  const readingProgression = config?.readingProgression ?? undefined;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const customStyle =
@@ -497,6 +499,7 @@ export async function mergeConfig<T extends CliFlags>(
     singleDoc,
     quick,
     language,
+    readingProgression,
     vfmOptions,
     cover,
     verbose,

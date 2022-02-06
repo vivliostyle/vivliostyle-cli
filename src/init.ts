@@ -26,6 +26,7 @@ export async function init(cliFlags: InitCliFlags) {
   title: '${ cliFlags.title || 'Principia'}', // populated into 'publication.json', default to 'title' of the first entry or 'name' in 'package.json'.
   author: '${cliFlags.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
   ${cliFlags.language ? '' : '// '}language: '${cliFlags.language || 'la'}',
+  // readingProgression: 'rtl', // reading progression direction, 'ltr' or 'rtl'.
   ${cliFlags.size ? '' : '// '}size: '${cliFlags.size || 'A4'}',
   ${cliFlags.theme ? '' : '// '}theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
   image: '${CONTAINER_IMAGE}',
@@ -34,7 +35,7 @@ export async function init(cliFlags: InitCliFlags) {
     // {
     //   path: 'epigraph.md',
     //   title: 'おわりに', // title can be overwritten (entry > file),
-    //   theme: '@vivliostyle/theme-whatever' // theme can be set indivisually. default to root 'theme'
+    //   theme: '@vivliostyle/theme-whatever' // theme can be set individually. default to root 'theme'
     // },
     // 'glossary.html' // html is also acceptable
   ], // 'entry' can be 'string' or 'object' if there's only single markdown file
