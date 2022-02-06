@@ -1,6 +1,3 @@
-import build from './commands/build';
-import { BuildCliFlags } from './commands/build.parser';
-import preview from './commands/preview';
-import { PreviewCliFlags } from './commands/preview.parser';
-
-export { build, preview, BuildCliFlags, PreviewCliFlags };
+export { build, BuildCliFlags } from './build';
+export { init, InitCliFlags } from './init';
+export { preview, PreviewCliFlags } from './preview';

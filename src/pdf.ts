@@ -226,10 +226,13 @@ export async function buildPDF({
 
   await page.setDefaultNavigationTimeout(timeout);
   await page.goto(viewerFullUrl, { waitUntil: 'networkidle0' });
-  await page.waitForFunction(() => !!window.coreViewer);
+  await page.waitForFunction(
+    /* istanbul ignore next */ () => !!window.coreViewer,
+  );
 
   await page.emulateMediaType('print');
   await page.waitForFunction(
+    /* istanbul ignore next */
     () => window.coreViewer.readyState === 'complete',
     {
       polling: 1000,
@@ -241,17 +244,19 @@ export async function buildPDF({
     logSuccess(stringifyEntry(lastEntry));
   }
 
-  const pageProgression = await page.evaluate(() =>
-    document
-      .querySelector('#vivliostyle-viewer-viewport')
-      ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
-      ? 'rtl'
-      : 'ltr',
+  const pageProgression = await page.evaluate(
+    /* istanbul ignore next */ () =>
+      document
+        .querySelector('#vivliostyle-viewer-viewport')
+        ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
+        ? 'rtl'
+        : 'ltr',
   );
-  const viewerCoreVersion = await page.evaluate(() =>
-    document
-      .querySelector('#vivliostyle-menu_settings .version')
-      ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
+  const viewerCoreVersion = await page.evaluate(
+    /* istanbul ignore next */ () =>
+      document
+        .querySelector('#vivliostyle-menu_settings .version')
+        ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
   );
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
@@ -301,7 +306,9 @@ export async function buildPDF({
 }
 
 async function loadMetadata(page: PuppeteerPage): Promise<Meta> {
-  return page.evaluate(() => window.coreViewer.getMetadata());
+  return page.evaluate(
+    /* istanbul ignore next */ () => window.coreViewer.getMetadata(),
+  );
 }
 
 // Show and hide the TOC in order to read its contents.
@@ -309,7 +316,7 @@ async function loadMetadata(page: PuppeteerPage): Promise<Meta> {
 // the PDF destinations used during postprocessing.
 async function loadTOC(page: PuppeteerPage): Promise<TOCItem[]> {
   return page.evaluate(
-    () =>
+    /* istanbul ignore next */ () =>
       new Promise<TOCItem[]>((resolve) => {
         function listener(payload: Payload) {
           if (payload.a !== 'toc') {
