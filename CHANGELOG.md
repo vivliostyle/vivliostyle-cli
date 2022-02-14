@@ -1,20 +1,28 @@
-# [4.7.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.6.0...v4.7.0) (2022-02-06)
-
+# [4.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.7.0...v4.8.0) (2022-02-14)
 
 ### Bug Fixes
 
-* Correct "title" to "name" in publication.json readingOrder ([9a4b6a0](https://github.com/vivliostyle/vivliostyle-cli/commit/9a4b6a0f9a9f275839bb4c48f0ca21d28fd8e686)), closes [#241](https://github.com/vivliostyle/vivliostyle-cli/issues/241)
-* export cli flags interfaces ([d7ff892](https://github.com/vivliostyle/vivliostyle-cli/commit/d7ff8921760306373b3b0c3bb604f121c95ddf11))
-* importing command api causes process exit ([bed6183](https://github.com/vivliostyle/vivliostyle-cli/commit/bed618317584bb280484544931c380cc3e3e2e86))
-
+- Update Vivliostyle.js to 2.14.2: bug fixes ([615560f](https://github.com/vivliostyle/vivliostyle-cli/commit/615560f4cc3dabf87593268c7d82f9602d81527a))
 
 ### Features
 
-* Add readingProgression config option ([6b1193e](https://github.com/vivliostyle/vivliostyle-cli/commit/6b1193ea3af8deec82f9b65ed92baee7d58eccb4)), closes [#221](https://github.com/vivliostyle/vivliostyle-cli/issues/221)
-* Improve Vivliostyle.js/Chromium version info in output PDF ([2b48c29](https://github.com/vivliostyle/vivliostyle-cli/commit/2b48c29ad7dced68b2062ce9e7a0cac18f036731)), closes [#220](https://github.com/vivliostyle/vivliostyle-cli/issues/220) [#238](https://github.com/vivliostyle/vivliostyle-cli/issues/238)
-* Set ReadingDirection in output PDF ([3d023e2](https://github.com/vivliostyle/vivliostyle-cli/commit/3d023e20f2fb013aef9873a2b0f2e626ccaf8094)), closes [#221](https://github.com/vivliostyle/vivliostyle-cli/issues/221)
-* Update @vivliostyle/vfm to v1.2.1 ([02b68ed](https://github.com/vivliostyle/vivliostyle-cli/commit/02b68ed4e7dd37bb046979c1b9eedfabc2e76700))
-* Update Vivliostyle.js to 2.14.1: Improved text-spacing support ([4bcdbb7](https://github.com/vivliostyle/vivliostyle-cli/commit/4bcdbb76575854ec17c222f68fcc7d9514c07238))
+- Update Puppeteer-core to 13.3.1 (Chromium 99) ([456c4b8](https://github.com/vivliostyle/vivliostyle-cli/commit/456c4b8d0a3a61ff54d8ff97c6238e4e072d1914))
+
+# [4.7.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.6.0...v4.7.0) (2022-02-06)
+
+### Bug Fixes
+
+- Correct "title" to "name" in publication.json readingOrder ([9a4b6a0](https://github.com/vivliostyle/vivliostyle-cli/commit/9a4b6a0f9a9f275839bb4c48f0ca21d28fd8e686)), closes [#241](https://github.com/vivliostyle/vivliostyle-cli/issues/241)
+- export cli flags interfaces ([d7ff892](https://github.com/vivliostyle/vivliostyle-cli/commit/d7ff8921760306373b3b0c3bb604f121c95ddf11))
+- importing command api causes process exit ([bed6183](https://github.com/vivliostyle/vivliostyle-cli/commit/bed618317584bb280484544931c380cc3e3e2e86))
+
+### Features
+
+- Add readingProgression config option ([6b1193e](https://github.com/vivliostyle/vivliostyle-cli/commit/6b1193ea3af8deec82f9b65ed92baee7d58eccb4)), closes [#221](https://github.com/vivliostyle/vivliostyle-cli/issues/221)
+- Improve Vivliostyle.js/Chromium version info in output PDF ([2b48c29](https://github.com/vivliostyle/vivliostyle-cli/commit/2b48c29ad7dced68b2062ce9e7a0cac18f036731)), closes [#220](https://github.com/vivliostyle/vivliostyle-cli/issues/220) [#238](https://github.com/vivliostyle/vivliostyle-cli/issues/238)
+- Set ReadingDirection in output PDF ([3d023e2](https://github.com/vivliostyle/vivliostyle-cli/commit/3d023e20f2fb013aef9873a2b0f2e626ccaf8094)), closes [#221](https://github.com/vivliostyle/vivliostyle-cli/issues/221)
+- Update @vivliostyle/vfm to v1.2.1 ([02b68ed](https://github.com/vivliostyle/vivliostyle-cli/commit/02b68ed4e7dd37bb046979c1b9eedfabc2e76700))
+- Update Vivliostyle.js to 2.14.1: Improved text-spacing support ([4bcdbb7](https://github.com/vivliostyle/vivliostyle-cli/commit/4bcdbb76575854ec17c222f68fcc7d9514c07238))
 
 # [4.6.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.5.0...v4.6.0) (2022-01-18)
 
