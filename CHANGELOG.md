@@ -1,3 +1,9 @@
+## [4.8.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.0...v4.8.1) (2022-02-18)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.14.3: Fix bugs on links in output PDF ([790c8ae](https://github.com/vivliostyle/vivliostyle-cli/commit/790c8aeca975e88f5ced32fc4250bfed4d1dc29e))
+
 # [4.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.7.0...v4.8.0) (2022-02-14)
 
 ### Bug Fixes
