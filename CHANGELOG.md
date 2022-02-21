@@ -1,3 +1,9 @@
+## [4.8.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.1...v4.8.2) (2022-02-21)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.14.4: Fix wrong page break with ruby ([68be62e](https://github.com/vivliostyle/vivliostyle-cli/commit/68be62e1f3eff896b5f19fcb6905172f4c426c2a))
+
 ## [4.8.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.0...v4.8.1) (2022-02-18)
 
 ### Bug Fixes
