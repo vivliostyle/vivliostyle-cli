@@ -1,3 +1,5 @@
+## [4.8.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.2...v4.8.3) (2022-04-11)
+
 ## [4.8.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.1...v4.8.2) (2022-02-21)
 
 ### Bug Fixes
