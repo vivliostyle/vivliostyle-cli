@@ -1,3 +1,13 @@
+# [4.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.3...v4.9.0) (2022-04-11)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.14.5: Fix text-spacing caused wrong page break ([1b6f13f](https://github.com/vivliostyle/vivliostyle-cli/commit/1b6f13f5f96187e8196b55183421a8b9011590e0))
+
+### Features
+
+- Update Puppeteer-core to 13.5.2 (Chromium 100) ([89645cf](https://github.com/vivliostyle/vivliostyle-cli/commit/89645cf1592640a44e5812ce63424252d54a2309))
+
 ## [4.8.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.2...v4.8.3) (2022-04-11)
 
 ## [4.8.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.1...v4.8.2) (2022-02-21)
