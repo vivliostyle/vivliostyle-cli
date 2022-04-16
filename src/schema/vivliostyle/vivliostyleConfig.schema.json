@@ -4,7 +4,7 @@
       "type": "string",
       "minLength": 1
     },
-    "entryObject": {
+    "articleEntryObject": {
       "type": "object",
       "properties": {
         "path": { "type": "string" },
@@ -33,6 +33,12 @@
       },
       "required": ["rel"],
       "additionalProperties": false
+    },
+    "entryObject": {
+      "oneOf": [
+        { "$ref": "#/definitions/contentsEntryObject" },
+        { "$ref": "#/definitions/articleEntryObject" }
+      ]
     },
     "output": {
       "type": "string",
@@ -114,18 +120,18 @@
         "entry": {
           "description": "Entry file(s) of document.",
           "oneOf": [
+            { "$ref": "#/definitions/entry" },
+            { "$ref": "#/definitions/articleEntryObject" },
             {
               "type": "array",
               "items": {
                 "oneOf": [
                   { "$ref": "#/definitions/entry" },
-                  { "$ref": "#/definitions/entryObject" },
-                  { "$ref": "#/definitions/contentsEntryObject" }
+                  { "$ref": "#/definitions/entryObject" }
                 ]
-              }
-            },
-            { "$ref": "#/definitions/entry" },
-            { "$ref": "#/definitions/entryObject" }
+              },
+              "uniqueItems": true
+            }
           ]
         },
         "entryContext": {
@@ -262,7 +268,8 @@
           "type": "string",
           "minLength": 1
         }
-      }
+      },
+      "required": ["entry"]
     }
   },
   "allOf": [

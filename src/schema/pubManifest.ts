@@ -36,4 +36,4 @@ export const publicationSchemas = [
   publicationSchema,
 ] as const;
 
-export const publicationSchemaId = publicationSchema['$id'];
+export { publicationSchema };

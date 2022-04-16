@@ -7,6 +7,7 @@
 
 export type VivliostyleConfigSchema = CoreProps;
 export type Entry = string;
+export type EntryObject = ContentsEntryObject | ArticleEntryObject;
 export type Output = string;
 
 export interface CoreProps {
@@ -25,7 +26,7 @@ export interface CoreProps {
   /**
    * Entry file(s) of document.
    */
-  entry?: (Entry | EntryObject | ContentsEntryObject)[] | Entry | EntryObject;
+  entry: Entry | ArticleEntryObject | (Entry | EntryObject)[];
   /**
    * Directory of referencing entry file(s).
    */
@@ -108,7 +109,7 @@ export interface CoreProps {
   viewer?: string;
   [k: string]: unknown;
 }
-export interface EntryObject {
+export interface ArticleEntryObject {
   path: string;
   title?: string;
   theme?: string;

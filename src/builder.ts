@@ -1,5 +1,6 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import fs from 'fs';
 import globby from 'globby';
@@ -20,9 +21,15 @@ import type {
   PublicationLinks,
   PublicationManifest,
 } from './schema/publication.schema';
-import { publicationSchemaId, publicationSchemas } from './schema/pubManifest';
-import type { EntryObject } from './schema/vivliostyleConfig.schema';
-import { debug, log, pathStartsWith } from './util';
+import { publicationSchema, publicationSchemas } from './schema/pubManifest';
+import type { ArticleEntryObject } from './schema/vivliostyleConfig.schema';
+import {
+  debug,
+  DetailError,
+  filterRelevantAjvErrors,
+  log,
+  pathStartsWith,
+} from './util';
 
 export function cleanup(location: string) {
   debug('cleanup file', location);
@@ -39,7 +46,7 @@ export function generateManifest(
     language?: string | null;
     readingProgression?: 'ltr' | 'rtl';
     modified: string;
-    entries: EntryObject[];
+    entries: ArticleEntryObject[];
     cover?: string;
   },
 ) {
@@ -97,15 +104,28 @@ export function generateManifest(
     links,
   };
 
-  fs.writeFileSync(outputPath, JSON.stringify(publication, null, 2));
+  const publicationJson = JSON.stringify(publication, null, 2);
+  fs.writeFileSync(outputPath, publicationJson);
   const ajv = new Ajv({ strict: false });
   addFormats(ajv);
   ajv.addSchema(publicationSchemas);
-  const valid = ajv.validate(publicationSchemaId, publication);
+  const validate = ajv.compile(publicationSchema);
+  const valid = validate(publication);
   if (!valid) {
-    throw new Error(
-      `Validation of pubManifest failed. Please check the schema: ${outputPath}`,
-    );
+    const message = `Validation of pubManifest failed. Please check the schema: ${outputPath}`;
+    const detailMessage =
+      validate.errors &&
+      betterAjvErrors(
+        publicationSchemas,
+        publication,
+        filterRelevantAjvErrors(validate.errors),
+        {
+          json: publicationJson,
+        },
+      );
+    throw detailMessage
+      ? new DetailError(message, detailMessage)
+      : new Error(message);
   }
 }
 
