@@ -5,6 +5,7 @@ import shelljs from 'shelljs';
 import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
 import { MergedConfig } from '../src/config';
 import {
+  assertArray,
   assertSingleItem,
   getMergedConfig,
   resolveFixture,
@@ -22,6 +23,7 @@ afterAll(() => {
     resolveFixture('builder/.vs-entryContext'),
     resolveFixture('builder/.vs-variousManuscriptFormat'),
     resolveFixture('builder/.vs-vfm'),
+    resolveFixture('builder/.vs-multipleEntry'),
   ]);
 });
 
@@ -320,6 +322,45 @@ it('generate with VFM options', async () => {
       .querySelector('meta[name="author"]')
       ?.getAttribute('content'),
   ).toBe('Bar');
+});
+
+it('generate from multiple config entries', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/multipleEntry.config.js'),
+  ]);
+  assertArray(config);
+  expect(config).toHaveLength(2);
+
+  assertManifestPath(config[0]);
+  await compile(config[0]);
+  const manifest1 = require(resolveFixture(
+    'builder/.vs-multipleEntry/one/publication.json',
+  ));
+  expect(manifest1.readingOrder).toEqual([
+    {
+      name: 'SODA',
+      url: 'manuscript/soda.html',
+    },
+  ]);
+
+  assertManifestPath(config[1]);
+  await compile(config[1]);
+  const manifest2 = require(resolveFixture(
+    'builder/.vs-multipleEntry/two/publication.json',
+  ));
+  expect(manifest2.readingOrder).toEqual([
+    {
+      url: 'manuscript/frontmatter.html',
+      name: 'Hello',
+    },
+    {
+      url: 'index.html',
+      name: 'Table of Contents',
+      rel: 'contents',
+      type: 'LinkedResource',
+    },
+  ]);
 });
 
 it('check overwrite violation', async () => {

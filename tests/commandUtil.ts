@@ -57,3 +57,7 @@ export function assertSingleItem<T = unknown>(
 ): asserts value is T {
   return assert(!Array.isArray(value));
 }
+
+export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
+  return assert(Array.isArray(value));
+}
