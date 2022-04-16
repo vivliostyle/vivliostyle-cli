@@ -128,7 +128,7 @@ export async function buildPDF({
       // FIXME: We seem have to disable sandbox now
       // https://github.com/vivliostyle/vivliostyle-cli/issues/186
       sandbox ? '' : '--no-sandbox',
-      '--disable-web-security',
+      viewer ? '' : '--disable-web-security',
       isInContainer ? '--disable-dev-shm-usage' : '',
     ],
   });

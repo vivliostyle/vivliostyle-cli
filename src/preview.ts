@@ -81,7 +81,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     args: [
       '--allow-file-access-from-files',
       config.sandbox ? '' : '--no-sandbox',
-      '--disable-web-security',
+      config.viewer ? '' : '--disable-web-security',
     ],
   });
   const page = await browser.newPage();
