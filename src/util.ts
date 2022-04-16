@@ -175,9 +175,9 @@ export function readJSON(path: string) {
   }
 }
 
-export async function statFile(filePath: string) {
+export function statFileSync(filePath: string) {
   try {
-    return util.promisify(fs.stat)(filePath);
+    return fs.statSync(filePath);
   } catch (err) {
     if ((err as any).code === 'ENOENT') {
       throw new Error(`Specified input doesn't exists: ${filePath}`);

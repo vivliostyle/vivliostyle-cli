@@ -39,6 +39,7 @@ import {
   isUrlString,
   log,
   readJSON,
+  statFileSync,
   touchTmpFile,
 } from './util';
 
@@ -584,6 +585,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
     sourcePath = path.resolve(cliFlags.input);
     workspaceDir = path.dirname(sourcePath);
     input = detectInputFormat(sourcePath);
+    // Check file exists
+    statFileSync(sourcePath);
   }
 
   if (input.format === 'markdown') {
@@ -703,6 +706,10 @@ async function composeProjectConfig<T extends CliFlags>(
     const targetPath = path
       .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
+    if (!isUrlString(sourcePath)) {
+      // Check file exists
+      statFileSync(sourcePath);
+    }
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata(type, sourcePath, workspaceDir);
 
