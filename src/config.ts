@@ -24,12 +24,12 @@ import {
   detectOutputFormat,
   OutputFormat,
 } from './output';
+import { vivliostyleConfigSchema } from './schema/vivliostyle';
 import type {
   ContentsEntryObject,
   EntryObject,
   VivliostyleConfigSchema,
-} from './schema/vivliostyle.config';
-import configSchema from './schema/vivliostyle.config.schema.json';
+} from './schema/vivliostyleConfig.schema';
 import { PageSize } from './server';
 import { cwd, debug, isUrlString, log, readJSON, touchTmpFile } from './util';
 
@@ -307,7 +307,7 @@ export function collectVivliostyleConfig<T extends CliFlags>(
 
     const ajv = new Ajv({ strict: false });
     addFormats(ajv);
-    const valid = ajv.validate(configSchema, config);
+    const valid = ajv.validate(vivliostyleConfigSchema, config);
     if (!valid) {
       throw new Error(
         `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`,

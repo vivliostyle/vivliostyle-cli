@@ -22,7 +22,9 @@ export async function init(cliFlags: InitCliFlags) {
   }
 
   // prettier-ignore
-  const vivliostyleConfig = `module.exports = {
+  const vivliostyleConfig = `// @ts-check
+/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
+const vivliostyleConfig = {
   title: '${ cliFlags.title || 'Principia'}', // populated into 'publication.json', default to 'title' of the first entry or 'name' in 'package.json'.
   author: '${cliFlags.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
   ${cliFlags.language ? '' : '// '}language: '${cliFlags.language || 'la'}',
@@ -51,10 +53,22 @@ export async function init(cliFlags: InitCliFlags) {
   // toc: true, // whether generate and include ToC HTML or not, default to 'false'.
   // cover: './cover.png', // cover image. default to undefined.
   // vfm: { // options of VFM processor
+  //   replace: [ // specify replace handlers to modify HTML outputs
+  //     {
+  //       // This handler replaces {current_time} to a current local time tag.
+  //       test: /{current_time}/,
+  //       match: (_, h) => {
+  //         const currentTime = new Date().toLocaleString();
+  //         return h('time', { datetime: currentTime }, currentTime);
+  //       },
+  //     },
+  //   ],
   //   hardLineBreaks: true, // converts line breaks of VFM to <br> tags. default to 'false'.
   //   disableFormatHtml: true, // disables HTML formatting. default to 'false'.
   // },
 };
+
+module.exports = vivliostyleConfig;
 `;
 
   fs.writeFileSync(vivliostyleConfigPath, vivliostyleConfig);

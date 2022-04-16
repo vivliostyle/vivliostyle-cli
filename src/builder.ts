@@ -19,12 +19,9 @@ import { processMarkdown } from './markdown';
 import type {
   PublicationLinks,
   PublicationManifest,
-} from './schema/pubManifest';
-import {
-  publicationSchemaId,
-  publicationSchemas,
-} from './schema/pubManifest.schema';
-import type { EntryObject } from './schema/vivliostyle.config';
+} from './schema/publication.schema';
+import { publicationSchemaId, publicationSchemas } from './schema/pubManifest';
+import type { EntryObject } from './schema/vivliostyleConfig.schema';
 import { debug, log, pathStartsWith } from './util';
 
 export function cleanup(location: string) {

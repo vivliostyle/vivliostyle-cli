@@ -48,7 +48,7 @@ export interface CoreProps {
    * Language
    */
   language?: string;
-  readingProgression?: 'ltr' | 'rtl';
+  readingProgression?: "ltr" | "rtl";
   toc?: boolean | string;
   tocTitle?: string;
   cover?: string;
@@ -116,7 +116,7 @@ export interface EntryObject {
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
-  rel: 'contents';
+  rel: "contents";
   title?: string;
   theme?: string;
 }
@@ -132,11 +132,11 @@ export interface OutputObject {
   /**
    * if docker is set, Vivliostyle try to render PDF on Docker container [local].
    */
-  renderMode?: 'local' | 'docker';
+  renderMode?: "local" | "docker";
   /**
    * Apply the process to generate PDF for printing.
    */
-  preflight?: 'press-ready' | 'press-ready-local';
+  preflight?: "press-ready" | "press-ready-local";
   /**
    * Options for preflight process (ex: gray-scale, enforce-outline). Please refer the document of press-ready for further information. https://github.com/vibranthq/press-ready
    */

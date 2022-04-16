@@ -6,7 +6,7 @@ import { MergedConfig } from './config';
 import type {
   PublicationLinks,
   PublicationManifest,
-} from './schema/pubManifest';
+} from './schema/publication.schema';
 import { debug } from './util';
 
 export async function exportWebPublication({
