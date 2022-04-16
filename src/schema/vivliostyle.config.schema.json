@@ -178,8 +178,7 @@
             "disableFormatHtml": {
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         "image": {
           "type": "string",

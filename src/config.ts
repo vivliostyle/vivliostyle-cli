@@ -398,6 +398,7 @@ export async function mergeConfig<T extends CliFlags>(
   const preflightOption = cliFlags.preflightOption ?? [];
 
   const vfmOptions = {
+    ...config?.vfm,
     hardLineBreaks: config?.vfm?.hardLineBreaks ?? false,
     disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
   };

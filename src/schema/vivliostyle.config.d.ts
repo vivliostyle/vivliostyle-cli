@@ -38,6 +38,7 @@ export interface CoreProps {
   vfm?: {
     hardLineBreaks?: boolean;
     disableFormatHtml?: boolean;
+    [k: string]: unknown;
   };
   image?: string;
   http?: boolean;
