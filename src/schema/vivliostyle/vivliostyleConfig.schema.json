@@ -89,7 +89,7 @@
       "required": ["test", "match"],
       "additionalProperties": false
     },
-    "coreProps": {
+    "vivliostyleConfigEntry": {
       "type": "object",
       "properties": {
         "title": {
@@ -272,9 +272,16 @@
       "required": ["entry"]
     }
   },
-  "allOf": [
+  "oneOf": [
     {
-      "$ref": "#/definitions/coreProps"
+      "$ref": "#/definitions/vivliostyleConfigEntry"
+    },
+    {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/vivliostyleConfigEntry"
+      },
+      "minItems": 1
     }
   ]
 }

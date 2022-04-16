@@ -4,7 +4,11 @@ import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
 import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
 import { MergedConfig } from '../src/config';
-import { getMergedConfig, resolveFixture } from './commandUtil';
+import {
+  assertSingleItem,
+  getMergedConfig,
+  resolveFixture,
+} from './commandUtil';
 
 function assertManifestPath(
   config: MergedConfig,
@@ -26,6 +30,7 @@ it('generate workspace directory', async () => {
     '-c',
     resolveFixture('builder/workspace.config.js'),
   ]);
+  assertSingleItem(config);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
@@ -95,6 +100,7 @@ it('generate files with entryContext', async () => {
     '-c',
     resolveFixture('builder/entryContext.config.js'),
   ]);
+  assertSingleItem(config);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
@@ -160,6 +166,7 @@ it('generate from various manuscript formats', async () => {
     '-c',
     resolveFixture('builder/variousManuscriptFormat.config.js'),
   ]);
+  assertSingleItem(config);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
@@ -260,6 +267,7 @@ it('generate with VFM options', async () => {
     '-c',
     resolveFixture('builder/workspace.config.js'),
   ]);
+  assertSingleItem(configWithoutOption);
   assertManifestPath(configWithoutOption);
   await compile(configWithoutOption);
   const output1 = fs.readFileSync(
@@ -272,6 +280,7 @@ it('generate with VFM options', async () => {
     '-c',
     resolveFixture('builder/vfm.config.js'),
   ]);
+  assertSingleItem(configWithOption);
   assertManifestPath(configWithOption);
   await compile(configWithOption);
   const manifest = require(resolveFixture('builder/.vs-vfm/publication.json'));
@@ -318,6 +327,7 @@ it('check overwrite violation', async () => {
     '-c',
     resolveFixture('builder/overwriteViolation.1.config.js'),
   ]);
+  assertSingleItem(config1);
   expect(
     new Promise<void>((res, rej) => {
       try {
@@ -332,6 +342,7 @@ it('check overwrite violation', async () => {
     '-c',
     resolveFixture('builder/overwriteViolation.2.config.js'),
   ]);
+  assertSingleItem(config2);
   expect(
     new Promise<void>((res, rej) => {
       try {

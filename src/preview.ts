@@ -34,7 +34,12 @@ export async function preview(cliFlags: PreviewCliFlags) {
     ? upath.dirname(vivliostyleConfigPath)
     : cwd;
 
-  let config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+  let config = await mergeConfig(
+    cliFlags,
+    // Only show preview of first entry
+    vivliostyleConfig?.[0],
+    context,
+  );
 
   startLogging('Preparing preview');
 
@@ -97,7 +102,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
       // reload vivliostyle config
       const loadedConf = collectVivliostyleConfig(cliFlags);
       const { vivliostyleConfig } = loadedConf;
-      config = await mergeConfig(cliFlags, vivliostyleConfig, context);
+      config = await mergeConfig(cliFlags, vivliostyleConfig?.[0], context);
       // build artifacts
       if (config.manifestPath) {
         await compile(config, { reload: true });

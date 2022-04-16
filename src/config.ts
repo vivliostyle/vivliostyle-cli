@@ -28,6 +28,7 @@ import {
 import { vivliostyleConfigSchema } from './schema/vivliostyle';
 import type {
   EntryObject,
+  VivliostyleConfigEntry,
   VivliostyleConfigSchema,
 } from './schema/vivliostyleConfig.schema';
 import { PageSize } from './server';
@@ -303,7 +304,7 @@ export function collectVivliostyleConfig<T extends CliFlags>(
   cliFlags: T,
 ): {
   cliFlags: T;
-  vivliostyleConfig?: VivliostyleConfigSchema;
+  vivliostyleConfig?: VivliostyleConfigEntry[];
   vivliostyleConfigPath: string;
 } {
   const load = (configPath: string) => {
@@ -367,14 +368,19 @@ export function collectVivliostyleConfig<T extends CliFlags>(
   }
   return {
     cliFlags,
-    vivliostyleConfig,
+    vivliostyleConfig:
+      vivliostyleConfig &&
+      // Config file allows both single input and list of inputs
+      (Array.isArray(vivliostyleConfig)
+        ? vivliostyleConfig
+        : [vivliostyleConfig]),
     vivliostyleConfigPath,
   };
 }
 
 export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
-  config: VivliostyleConfigSchema | undefined,
+  config: VivliostyleConfigEntry | undefined,
   context: string,
 ): Promise<MergedConfig> {
   debug('context directory', context);
@@ -566,7 +572,7 @@ type CommonOpts = Omit<
 async function composeSingleInputConfig<T extends CliFlags>(
   otherConfig: CommonOpts,
   cliFlags: T,
-  config: VivliostyleConfigSchema | undefined,
+  config: VivliostyleConfigEntry | undefined,
 ): Promise<MergedConfig> {
   debug('entering single entry config mode');
 
@@ -663,7 +669,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
 async function composeProjectConfig<T extends CliFlags>(
   otherConfig: CommonOpts,
   cliFlags: T,
-  config: VivliostyleConfigSchema | undefined,
+  config: VivliostyleConfigEntry | undefined,
   context: string,
 ): Promise<MergedConfig> {
   debug('entering project config mode');

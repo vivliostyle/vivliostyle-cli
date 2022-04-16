@@ -5,12 +5,14 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type VivliostyleConfigSchema = CoreProps;
+export type VivliostyleConfigSchema =
+  | VivliostyleConfigEntry
+  | [VivliostyleConfigEntry, ...VivliostyleConfigEntry[]];
 export type Entry = string;
 export type EntryObject = ContentsEntryObject | ArticleEntryObject;
 export type Output = string;
 
-export interface CoreProps {
+export interface VivliostyleConfigEntry {
   /**
    * Title
    */

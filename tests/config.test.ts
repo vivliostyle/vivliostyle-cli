@@ -1,6 +1,6 @@
 import shelljs from 'shelljs';
 import path from 'upath';
-import { getMergedConfig, maskConfig } from './commandUtil';
+import { assertSingleItem, getMergedConfig, maskConfig } from './commandUtil';
 
 const configFiles = [
   'valid.1',
@@ -100,6 +100,7 @@ it('yields a config with single markdown', async () => {
     path.resolve(__dirname, 'fixtures/config/sample.md'),
   ]);
   maskConfig(config);
+  assertSingleItem(config);
   expect(config.entries[0].target).toMatch(
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
   );
@@ -139,6 +140,7 @@ it('yields a config with single input and vivliostyle config', async () => {
     configFilePath['valid.1'],
   ]);
   maskConfig(config);
+  assertSingleItem(config);
   expect(config.entries[0].target).toMatch(
     /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
   );
@@ -158,6 +160,7 @@ it('imports a EPUB file', async () => {
     'epub.pdf',
   ]);
   maskConfig(config);
+  assertSingleItem(config);
   expect(config.epubOpfPath).toMatch(/OPS\/content\.opf$/);
   config.epubOpfPath = '__SNIP__';
   expect(config).toMatchSnapshot();
@@ -206,5 +209,6 @@ it('yields a config from frontmatter', async () => {
     path.resolve(__dirname, 'fixtures/config/frontmatter.md'),
   ]);
   maskConfig(config);
+  assertSingleItem(config);
   expect(config.entries[0].title).toBe('Frontmatter');
 });
