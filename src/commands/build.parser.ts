@@ -74,7 +74,7 @@ This option is equivalent with "--preflight press-ready"`,
     )
     .option(
       '-t, --timeout <seconds>',
-      `timeout limit for waiting Vivliostyle process [60s]`,
+      `timeout limit for waiting Vivliostyle process [120]`,
       validateTimeoutFlag,
     )
     .option('-T, --theme <theme>', 'theme path or package name')
