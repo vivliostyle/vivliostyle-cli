@@ -9,10 +9,16 @@ import {
   mergeConfig,
   MergedConfig,
 } from './config';
-import { checkContainerEnvironment } from './container';
 import { buildPDF, buildPDFWithContainer } from './pdf';
 import { teardownServer } from './server';
-import { cwd, debug, log, startLogging, stopLogging } from './util';
+import {
+  checkContainerEnvironment,
+  cwd,
+  debug,
+  log,
+  startLogging,
+  stopLogging,
+} from './util';
 import { exportWebPublication } from './webbook';
 
 export interface BuildCliFlags extends CliFlags {
@@ -30,15 +36,15 @@ export async function build(cliFlags: BuildCliFlags) {
     option.executableChromium = getExecutableBrowserPath();
     debug('bypassedPdfBuilderOption', option);
 
+    startLogging();
     await buildPDF(option);
-    log();
+    // Stop remaining stream output and kill process
+    stopLogging();
     return;
   }
 
   const isInContainer = checkContainerEnvironment();
-  if (!isInContainer) {
-    startLogging('Collecting build config');
-  }
+  startLogging('Collecting build config');
 
   const loadedConf = collectVivliostyleConfig(cliFlags);
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
@@ -109,9 +115,7 @@ export async function build(cliFlags: BuildCliFlags) {
     teardownServer();
   }
 
-  if (!isInContainer) {
-    stopLogging('Built successfully.', '🎉');
-  }
+  stopLogging('Built successfully.', '🎉');
 }
 
 function checkUnsupportedOutputs({

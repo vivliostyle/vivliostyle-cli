@@ -2,9 +2,9 @@ import fs from 'fs';
 import os from 'os';
 import { performance } from 'perf_hooks';
 import puppeteer, { PuppeteerNode } from 'puppeteer-core';
-import { checkContainerEnvironment } from './container';
 import {
   beforeExitHandlers,
+  checkContainerEnvironment,
   debug,
   logInfo,
   logSuccess,
@@ -36,7 +36,7 @@ export function getExecutableBrowserPath(): string {
     // https://github.com/puppeteer/puppeteer/blob/159d2835450697dabea6f9adf6e67d158b5b8ae3/src/node/BrowserFetcher.ts#L298-L303
     return '/usr/bin/chromium';
   }
-  return ((puppeteer as unknown) as PuppeteerNode).executablePath();
+  return (puppeteer as unknown as PuppeteerNode).executablePath();
 }
 
 export function checkBrowserAvailability(path: string): boolean {
@@ -44,10 +44,10 @@ export function checkBrowserAvailability(path: string): boolean {
 }
 
 export async function downloadBrowser(): Promise<string> {
-  const browserFetcher = ((puppeteer as unknown) as PuppeteerNode).createBrowserFetcher(
-    {},
-  );
-  const revision = ((puppeteer as unknown) as PuppeteerNode)._preferredRevision;
+  const browserFetcher = (
+    puppeteer as unknown as PuppeteerNode
+  ).createBrowserFetcher({});
+  const revision = (puppeteer as unknown as PuppeteerNode)._preferredRevision;
   const revisionInfo = browserFetcher.revisionInfo(revision);
   debug('trying download browser, revision info', revisionInfo);
 
@@ -56,7 +56,7 @@ export async function downloadBrowser(): Promise<string> {
   let time = performance.now();
   const onProgress = (downloadedBytes: number, totalBytes: number) => {
     const now = performance.now();
-    if (now - time < 100) {
+    if (now - time < 500) {
       return;
     }
     time = now;

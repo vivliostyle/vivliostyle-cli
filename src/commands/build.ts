@@ -31,11 +31,7 @@ try {
     http: options.http,
     viewer: options.viewer,
     bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
-  })
-    .then(() => {
-      process.exit(0);
-    })
-    .catch(gracefulError);
+  }).catch(gracefulError);
 } catch (err) {
   if (err instanceof Error) {
     gracefulError(err);

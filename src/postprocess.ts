@@ -15,15 +15,10 @@ import path from 'upath';
 import { v1 as uuid } from 'uuid';
 import { MergedConfig } from './config';
 import { coreVersion } from './const';
-import {
-  checkContainerEnvironment,
-  collectVolumeArgs,
-  runContainer,
-  toContainerPath,
-} from './container';
+import { collectVolumeArgs, runContainer, toContainerPath } from './container';
 import { Meta, TOCItem } from './global-viewer';
 import { PdfOutput } from './output';
-import { startLogging, stopLogging } from './util';
+import { checkContainerEnvironment, startLogging, stopLogging } from './util';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
   Pick<MergedConfig, 'image'>;
