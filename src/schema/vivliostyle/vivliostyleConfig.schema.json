@@ -206,7 +206,7 @@
           "minLength": 1
         },
         "timeout": {
-          "description": "Timeout limit for waiting Vivliostyle process [60s]",
+          "description": "Timeout limit for waiting Vivliostyle process [120000]",
           "type": "number",
           "minimum": 0
         },
