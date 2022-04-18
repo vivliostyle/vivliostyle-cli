@@ -444,6 +444,263 @@ Object {
 }
 `;
 
+exports[`parse array of config: valid.1.config.js 1`] = `
+Object {
+  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "customStyle": undefined,
+  "customUserStyle": undefined,
+  "entries": Array [
+    Object {
+      "rel": "contents",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "Table of Contents",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+        "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+        "name": "debug-theme",
+        "style": "./theme.css",
+        "type": "package",
+      },
+      "title": "title",
+      "type": "text/markdown",
+    },
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "theme": Object {
+        "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
+        "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+        "name": "theme.css",
+        "type": "file",
+      },
+      "title": "title",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "httpServer": false,
+  "image": "__IMAGE__",
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": "language",
+  "manifestAutoGenerate": Object {
+    "author": "author",
+    "title": "title",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+      "preflight": "press-ready",
+      "preflightOption": Array [],
+      "renderMode": "local",
+    },
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output2.pdf",
+      "preflight": "press-ready",
+      "preflightOption": Array [],
+      "renderMode": "local",
+    },
+  ],
+  "quick": false,
+  "readingProgression": "rtl",
+  "sandbox": true,
+  "singleDoc": false,
+  "size": Object {
+    "format": "size",
+  },
+  "themeIndexes": Array [
+    Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+      "location": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+      "name": "debug-theme",
+      "style": "./theme.css",
+      "type": "package",
+    },
+    Object {
+      "destination": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
+      "location": "__WORKSPACE__/tests/fixtures/config/theme.css",
+      "name": "theme.css",
+      "type": "file",
+    },
+  ],
+  "timeout": 1,
+  "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": true,
+    "hardLineBreaks": true,
+  },
+  "viewer": undefined,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
+}
+`;
+
+exports[`parse array of config: valid.2.config.js 1`] = `
+Object {
+  "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "theme": undefined,
+      "title": "pkgName",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "httpServer": false,
+  "image": "__IMAGE__",
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "pkgName",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+      "preflight": null,
+      "preflightOption": Array [],
+      "renderMode": "local",
+    },
+  ],
+  "quick": false,
+  "readingProgression": undefined,
+  "sandbox": true,
+  "singleDoc": false,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
+  "viewer": undefined,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
+exports[`parse array of config: valid.3.config.js 1`] = `
+Object {
+  "cover": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "theme": undefined,
+      "title": "example",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableChromium": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "httpServer": false,
+  "image": "__IMAGE__",
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "example",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/example.pdf",
+      "preflight": null,
+      "preflightOption": Array [],
+      "renderMode": "local",
+    },
+  ],
+  "quick": false,
+  "readingProgression": undefined,
+  "sandbox": true,
+  "singleDoc": false,
+  "size": undefined,
+  "themeIndexes": Array [],
+  "timeout": 120000,
+  "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
+  "viewer": undefined,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
 exports[`parse vivliostyle config: valid.1.config.js 1`] = `
 Object {
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",

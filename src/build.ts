@@ -46,66 +46,72 @@ export async function build(cliFlags: BuildCliFlags) {
 
   const context = vivliostyleConfig ? path.dirname(vivliostyleConfigPath) : cwd;
 
-  const config = await mergeConfig(cliFlags, vivliostyleConfig, context);
-  checkUnsupportedOutputs(config);
+  const configEntries: MergedConfig[] = [];
+  for (const entry of vivliostyleConfig ?? [vivliostyleConfig]) {
+    const config = await mergeConfig(cliFlags, entry, context);
+    checkUnsupportedOutputs(config);
 
-  // check output path not to overwrite source files
-  for (const target of config.outputs) {
-    checkOverwriteViolation(config, target.path, target.format);
+    // check output path not to overwrite source files
+    for (const target of config.outputs) {
+      checkOverwriteViolation(config, target.path, target.format);
+    }
+    configEntries.push(config);
   }
 
-  // build artifacts
-  if (config.manifestPath) {
-    await compile(config);
-    await copyAssets(config);
-  }
+  for (const config of configEntries) {
+    // build artifacts
+    if (config.manifestPath) {
+      await compile(config);
+      await copyAssets(config);
+    }
 
-  // generate files
-  for (const target of config.outputs) {
-    let output: string | null = null;
-    if (target.format === 'pdf') {
-      if (!isInContainer && target.renderMode === 'docker') {
-        output = await buildPDFWithContainer({
+    // generate files
+    for (const target of config.outputs) {
+      let output: string | null = null;
+      if (target.format === 'pdf') {
+        if (!isInContainer && target.renderMode === 'docker') {
+          output = await buildPDFWithContainer({
+            ...config,
+            input: (config.manifestPath ??
+              config.webbookEntryPath ??
+              config.epubOpfPath) as string,
+            target,
+          });
+        } else {
+          output = await buildPDF({
+            ...config,
+            input: (config.manifestPath ??
+              config.webbookEntryPath ??
+              config.epubOpfPath) as string,
+            target,
+          });
+        }
+      } else if (target.format === 'webpub') {
+        if (!config.manifestPath) {
+          continue;
+        }
+        output = await exportWebPublication({
           ...config,
-          input: (config.manifestPath ??
-            config.webbookEntryPath ??
-            config.epubOpfPath) as string,
-          target,
-        });
-      } else {
-        output = await buildPDF({
-          ...config,
-          input: (config.manifestPath ??
-            config.webbookEntryPath ??
-            config.epubOpfPath) as string,
-          target,
+          input: config.workspaceDir,
+          output: target.path,
         });
       }
-    } else if (target.format === 'webpub') {
-      if (!config.manifestPath) {
-        continue;
+      if (output) {
+        const formattedOutput = chalk.bold.green(path.relative(cwd, output));
+        log(
+          `\n${terminalLink(formattedOutput, 'file://' + output, {
+            fallback: () => formattedOutput,
+          })} has been created.`,
+        );
       }
-      output = await exportWebPublication({
-        ...config,
-        input: config.workspaceDir,
-        output: target.path,
-      });
     }
-    if (output) {
-      const formattedOutput = chalk.bold.green(path.relative(cwd, output));
-      log(
-        `\n${terminalLink(formattedOutput, 'file://' + output, {
-          fallback: () => formattedOutput,
-        })} has been created.`,
-      );
-    }
+
+    teardownServer();
   }
 
   if (!isInContainer) {
     stopLogging('Built successfully.', '🎉');
   }
-
-  teardownServer();
 }
 
 function checkUnsupportedOutputs({
