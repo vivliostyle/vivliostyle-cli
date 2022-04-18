@@ -26,5 +26,7 @@ try {
     viewer: options.viewer,
   }).catch(gracefulError);
 } catch (err) {
-  gracefulError(err);
+  if (err instanceof Error) {
+    gracefulError(err);
+  }
 }

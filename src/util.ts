@@ -1,3 +1,4 @@
+import { ErrorObject } from 'ajv';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fs from 'fs';
@@ -61,10 +62,19 @@ export function logInfo(...obj: string[]) {
   ora.info(obj.join(' '));
 }
 
-export function gracefulError(err: Error) {
-  const message = err.stack
-    ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
-    : `${chalk.red.bold('Error:')} ${err.message}`;
+export class DetailError extends Error {
+  constructor(message: string | undefined, public detail: string | undefined) {
+    super(message);
+  }
+}
+
+export function gracefulError<T extends Error>(err: T) {
+  const message =
+    err instanceof DetailError
+      ? `${chalk.red.bold('Error:')} ${err.message}\n${err.detail}`
+      : err.stack
+      ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
+      : `${chalk.red.bold('Error:')} ${err.message}`;
 
   if (ora.isSpinning) {
     ora.fail(message);
@@ -79,6 +89,84 @@ If you think this is a bug, please report at https://github.com/vivliostyle/vivl
   process.exit(1);
 }
 
+// Filter errors for human readability
+// ref. https://github.com/atlassian/better-ajv-errors/issues/76
+export function filterRelevantAjvErrors(
+  allErrors: ErrorObject[],
+): ErrorObject[] {
+  function split<T>(items: T[], splitFn: (item: T) => boolean): [T[], T[]] {
+    return [items.filter(splitFn), items.filter((error) => !splitFn(error))];
+  }
+  function removeShadowingErrors(
+    singleErrors: ErrorObject[],
+    metaErrors: ErrorObject[],
+  ): ErrorObject[] {
+    return singleErrors.filter((error) => {
+      if (
+        metaErrors.some((metaError) =>
+          error.dataPath.startsWith(metaError.dataPath),
+        )
+      ) {
+        return !singleErrors.some(
+          (otherError) =>
+            otherError.dataPath.startsWith(error.dataPath) &&
+            otherError.dataPath.length > error.dataPath.length,
+        );
+      } else {
+        return true;
+      }
+    });
+  }
+  function mergeTypeErrorsByPath(typeErrors: ErrorObject[]): ErrorObject[] {
+    const typeErrorsByPath = typeErrors.reduce((acc, error) => {
+      const key = error.dataPath;
+      return {
+        ...acc,
+        [key]: [...(acc[key] ?? []), error],
+      };
+    }, {} as Record<string, ErrorObject[]>);
+    return Object.values(typeErrorsByPath).map(mergeTypeErrors);
+
+    function mergeTypeErrors(typeErrors: ErrorObject[]): ErrorObject {
+      const params = {
+        type: typeErrors.map((error) => error.params.type).join(','),
+      };
+      return {
+        ...typeErrors[0],
+        params,
+      };
+    }
+  }
+
+  const META_SCHEMA_KEYWORDS = Object.freeze(['anyOf', 'allOf', 'oneOf']);
+
+  // Split the meta errors from what I call "single errors" (the real errors)
+  const [metaErrors, singleErrors] = split(allErrors, (error) =>
+    META_SCHEMA_KEYWORDS.includes(error.keyword),
+  );
+  // Filter out the single errors we want to show
+  const nonShadowedSingleErrors = removeShadowingErrors(
+    singleErrors,
+    metaErrors,
+  );
+  // We're handling type errors differently, split them out
+  const [typeErrors, nonTypeErrors] = split(
+    nonShadowedSingleErrors,
+    (error) => error.keyword === 'type',
+  );
+  // Filter out the type errors that already have other errors as well.
+  // For example when setting `logLevel: 4`, we don't want to see the error specifying that logLevel should be a string,
+  // if the other error already specified that it should be one of the enum values.
+  const nonShadowingTypeErrors = typeErrors.filter(
+    (typeError) =>
+      !nonTypeErrors.some(
+        (nonTypeError) => nonTypeError.dataPath === typeError.dataPath,
+      ),
+  );
+  const typeErrorsMerged = mergeTypeErrorsByPath(nonShadowingTypeErrors);
+  return [...nonTypeErrors, ...typeErrorsMerged];
+}
+
 export function readJSON(path: string) {
   try {
     return JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -87,11 +175,11 @@ export function readJSON(path: string) {
   }
 }
 
-export async function statFile(filePath: string) {
+export function statFileSync(filePath: string) {
   try {
-    return util.promisify(fs.stat)(filePath);
+    return fs.statSync(filePath);
   } catch (err) {
-    if (err.code === 'ENOENT') {
+    if ((err as any).code === 'ENOENT') {
       throw new Error(`Specified input doesn't exists: ${filePath}`);
     }
     throw err;

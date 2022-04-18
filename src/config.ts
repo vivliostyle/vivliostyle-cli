@@ -1,5 +1,6 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
@@ -24,14 +25,23 @@ import {
   detectOutputFormat,
   OutputFormat,
 } from './output';
+import { vivliostyleConfigSchema } from './schema/vivliostyle';
 import type {
-  ContentsEntryObject,
   EntryObject,
   VivliostyleConfigSchema,
-} from './schema/vivliostyle.config';
-import configSchema from './schema/vivliostyle.config.schema.json';
+} from './schema/vivliostyleConfig.schema';
 import { PageSize } from './server';
-import { cwd, debug, isUrlString, log, readJSON, touchTmpFile } from './util';
+import {
+  cwd,
+  debug,
+  DetailError,
+  filterRelevantAjvErrors,
+  isUrlString,
+  log,
+  readJSON,
+  statFileSync,
+  touchTmpFile,
+} from './util';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -177,9 +187,7 @@ export function contextResolve(
   return loc && path.resolve(context, loc);
 }
 
-function normalizeEntry(
-  e: string | EntryObject | ContentsEntryObject,
-): EntryObject | ContentsEntryObject {
+function normalizeEntry(e: string | EntryObject): EntryObject {
   if (typeof e === 'object') {
     return e;
   }
@@ -307,11 +315,29 @@ export function collectVivliostyleConfig<T extends CliFlags>(
 
     const ajv = new Ajv({ strict: false });
     addFormats(ajv);
-    const valid = ajv.validate(configSchema, config);
+    const validate = ajv.compile(vivliostyleConfigSchema);
+    const valid = validate(config);
     if (!valid) {
-      throw new Error(
-        `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`,
-      );
+      let jsonRaw: string | undefined;
+      try {
+        jsonRaw = fs.readFileSync(configPath, 'utf8');
+        // Check JSON validity
+        JSON.parse(jsonRaw);
+      } catch {
+        jsonRaw = undefined;
+      }
+      const message = `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`;
+      const detailMessage =
+        validate.errors &&
+        betterAjvErrors(
+          vivliostyleConfigSchema,
+          config,
+          filterRelevantAjvErrors(validate.errors),
+          typeof jsonRaw === 'string' ? { json: jsonRaw } : { indent: 2 },
+        );
+      throw detailMessage
+        ? new DetailError(message, detailMessage)
+        : new Error(message);
     }
     return config;
   };
@@ -398,6 +424,7 @@ export async function mergeConfig<T extends CliFlags>(
   const preflightOption = cliFlags.preflightOption ?? [];
 
   const vfmOptions = {
+    ...config?.vfm,
     hardLineBreaks: config?.vfm?.hardLineBreaks ?? false,
     disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
   };
@@ -558,6 +585,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
     sourcePath = path.resolve(cliFlags.input);
     workspaceDir = path.dirname(sourcePath);
     input = detectInputFormat(sourcePath);
+    // Check file exists
+    statFileSync(sourcePath);
   }
 
   if (input.format === 'markdown') {
@@ -658,7 +687,7 @@ async function composeProjectConfig<T extends CliFlags>(
   const projectAuthor: string | undefined =
     cliFlags.author ?? config?.author ?? pkgJson?.author;
 
-  function parseEntry(entry: EntryObject | ContentsEntryObject): ParsedEntry {
+  function parseEntry(entry: EntryObject): ParsedEntry {
     if (!('path' in entry)) {
       const theme =
         parseTheme(entry.theme, context, workspaceDir) ?? themeIndexes[0];
@@ -677,6 +706,10 @@ async function composeProjectConfig<T extends CliFlags>(
     const targetPath = path
       .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
+    if (!isUrlString(sourcePath)) {
+      // Check file exists
+      statFileSync(sourcePath);
+    }
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata(type, sourcePath, workspaceDir);
 

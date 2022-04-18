@@ -4,7 +4,7 @@
       "type": "string",
       "minLength": 1
     },
-    "entryObject": {
+    "articleEntryObject": {
       "type": "object",
       "properties": {
         "path": { "type": "string" },
@@ -34,6 +34,12 @@
       "required": ["rel"],
       "additionalProperties": false
     },
+    "entryObject": {
+      "oneOf": [
+        { "$ref": "#/definitions/contentsEntryObject" },
+        { "$ref": "#/definitions/articleEntryObject" }
+      ]
+    },
     "output": {
       "type": "string",
       "minLength": 1
@@ -41,16 +47,46 @@
     "outputObject": {
       "type": "object",
       "properties": {
-        "path": { "type": "string" },
-        "format": { "type": "string" },
-        "renderMode": { "type": "string" },
-        "preflight": { "type": "string" },
+        "path": {
+          "description": "Specify output file name or directory [<title>.pdf].",
+          "type": "string"
+        },
+        "format": {
+          "description": "Specify output format.",
+          "type": "string"
+        },
+        "renderMode": {
+          "description": "if docker is set, Vivliostyle try to render PDF on Docker container [local].",
+          "type": "string",
+          "enum": ["local", "docker"]
+        },
+        "preflight": {
+          "description": "Apply the process to generate PDF for printing.",
+          "type": "string",
+          "enum": ["press-ready", "press-ready-local"]
+        },
         "preflightOption": {
+          "description": "Options for preflight process (ex: gray-scale, enforce-outline). Please refer the document of press-ready for further information. https://github.com/vibranthq/press-ready",
           "type": "array",
           "items": { "type": "string" }
         }
       },
       "required": ["path"],
+      "additionalProperties": false
+    },
+    "vfmReplaceRule": {
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "object",
+          "tsType": "RegExp"
+        },
+        "match": {
+          "instanceOf": "Function",
+          "tsType": "(result: RegExpMatchArray, h: any) => Object | string"
+        }
+      },
+      "required": ["test", "match"],
       "additionalProperties": false
     },
     "coreProps": {
@@ -82,27 +118,29 @@
           ]
         },
         "entry": {
+          "description": "Entry file(s) of document.",
           "oneOf": [
+            { "$ref": "#/definitions/entry" },
+            { "$ref": "#/definitions/articleEntryObject" },
             {
               "type": "array",
               "items": {
                 "oneOf": [
                   { "$ref": "#/definitions/entry" },
-                  { "$ref": "#/definitions/entryObject" },
-                  { "$ref": "#/definitions/contentsEntryObject" }
+                  { "$ref": "#/definitions/entryObject" }
                 ]
-              }
-            },
-            { "$ref": "#/definitions/entry" },
-            { "$ref": "#/definitions/entryObject" }
+              },
+              "uniqueItems": true
+            }
           ]
         },
         "entryContext": {
+          "description": "Directory of referencing entry file(s).",
           "type": "string",
-          "description": "",
           "minLength": 1
         },
         "output": {
+          "description": "Options about outputs.",
           "oneOf": [
             {
               "type": "array",
@@ -132,14 +170,16 @@
           ]
         },
         "size": {
+          "description": "Output pdf size [Letter]. preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger. custom(comma separated): 182mm,257mm or 8.5in,11in.",
           "type": "string",
-          "description": "",
           "minLength": 1
         },
         "pressReady": {
+          "description": "Make generated PDF compatible with press ready PDF/X-1a [false]. This option is equivalent with \"preflight\": \"press-ready\"",
           "type": "boolean"
         },
         "language": {
+          "description": "Language",
           "type": "string",
           "minLength": 1
         },
@@ -166,33 +206,70 @@
           "minLength": 1
         },
         "timeout": {
+          "description": "Timeout limit for waiting Vivliostyle process [120000]",
           "type": "number",
           "minimum": 0
         },
         "vfm": {
+          "description": "Option for convert Markdown to a stringify (HTML).",
           "type": "object",
           "properties": {
+            "style": {
+              "description": "Custom stylesheet path/URL.",
+              "type": ["string", "array"],
+              "items": {
+                "type": "string"
+              }
+            },
+            "partial": {
+              "description": "Output markdown fragments.",
+              "type": "boolean"
+            },
+            "title": {
+              "description": "Document title (ignored in partial mode).",
+              "type": "string"
+            },
+            "language": {
+              "description": "Document language (ignored in partial mode).",
+              "type": "string"
+            },
+            "replace": {
+              "description": "Replacement handler for HTML string.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/vfmReplaceRule"
+              }
+            },
             "hardLineBreaks": {
+              "description": "Add `<br>` at the position of hard line breaks, without needing spaces.",
               "type": "boolean"
             },
             "disableFormatHtml": {
+              "description": "Disable automatic HTML format.",
+              "type": "boolean"
+            },
+            "math": {
+              "description": "Enable math syntax.",
               "type": "boolean"
             }
-          },
-          "additionalProperties": false
+          }
         },
         "image": {
+          "description": "Specify a docker image to render.",
           "type": "string",
           "minLength": 1
         },
         "http": {
+          "description": "Launch an HTTP server hosting contents instead of file protocol. It is useful that requires CORS such as external web fonts.",
           "type": "boolean"
         },
         "viewer": {
+          "description": "Specify a URL of displaying viewer instead of vivliostyle-cli's one. It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)",
           "type": "string",
           "minLength": 1
         }
-      }
+      },
+      "required": ["entry"]
     }
   },
   "allOf": [
