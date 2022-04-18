@@ -54,7 +54,7 @@ export interface CoreProps {
   tocTitle?: string;
   cover?: string;
   /**
-   * Timeout limit for waiting Vivliostyle process [60s]
+   * Timeout limit for waiting Vivliostyle process [120000]
    */
   timeout?: number;
   /**
