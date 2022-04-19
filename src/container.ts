@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import commandExists from 'command-exists';
 import execa from 'execa';
-import fs from 'fs';
 import isInteractive from 'is-interactive';
 import process from 'process';
 import path from 'upath';
@@ -49,10 +48,6 @@ export function collectVolumeArgs(mountPoints: string[]): string[] {
       return true;
     })
     .map((p) => `${p}:${toContainerPath(p)}`);
-}
-
-export function checkContainerEnvironment(): boolean {
-  return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
 }
 
 export async function runContainer({

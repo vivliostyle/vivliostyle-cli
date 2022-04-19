@@ -13,7 +13,13 @@ import util from 'util';
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());
 
-const ora = oraConstructor({ color: 'blue', spinner: 'circle' });
+const ora = oraConstructor({
+  color: 'blue',
+  spinner: 'circle',
+  // Prevent stream output in docker so that not to spawn process
+  // In other environment, check TTY context
+  isEnabled: checkContainerEnvironment() ? false : undefined,
+});
 
 export let beforeExitHandlers: (() => void)[] = [];
 const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
@@ -31,7 +37,8 @@ exitSignals.forEach((sig) => {
 });
 
 export function startLogging(text?: string) {
-  ora.start(text);
+  // If text is not set, erase previous log with space character
+  ora.start(text ?? ' ');
 }
 
 export function stopLogging(text?: string, symbol?: string) {
@@ -47,7 +54,11 @@ export function log(...obj: any) {
 }
 
 export function logUpdate(...obj: string[]) {
-  ora.text = obj.join(' ');
+  if (ora.isSpinning) {
+    ora.text = obj.join(' ');
+  } else {
+    ora.info(obj.join(' '));
+  }
 }
 
 export function logSuccess(...obj: string[]) {
@@ -251,4 +262,8 @@ export function isUrlString(str: string): boolean {
 export function findAvailablePort(): Promise<number> {
   portfinder.basePort = 13000;
   return portfinder.getPortPromise();
+}
+
+export function checkContainerEnvironment(): boolean {
+  return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
 }

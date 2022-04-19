@@ -9,17 +9,13 @@ import {
   launchBrowser,
 } from './browser';
 import { ManuscriptEntry, MergedConfig } from './config';
-import {
-  checkContainerEnvironment,
-  collectVolumeArgs,
-  runContainer,
-  toContainerPath,
-} from './container';
+import { collectVolumeArgs, runContainer, toContainerPath } from './container';
 import { Meta, Payload, TOCItem } from './global-viewer';
 import { PdfOutput } from './output';
 import { PostProcess } from './postprocess';
 import { prepareServer } from './server';
 import {
+  checkContainerEnvironment,
   debug,
   logError,
   logInfo,
@@ -267,7 +263,7 @@ export async function buildPDF({
   }
   debug('Remaining timeout:', remainTime);
 
-  startLogging('Building PDF');
+  logUpdate('Building PDF');
 
   const pdf = await page.pdf({
     margin: {
