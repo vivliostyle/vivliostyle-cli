@@ -4,7 +4,12 @@ import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
 import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
 import { MergedConfig } from '../src/config';
-import { getMergedConfig, resolveFixture } from './commandUtil';
+import {
+  assertArray,
+  assertSingleItem,
+  getMergedConfig,
+  resolveFixture,
+} from './commandUtil';
 
 function assertManifestPath(
   config: MergedConfig,
@@ -18,6 +23,7 @@ afterAll(() => {
     resolveFixture('builder/.vs-entryContext'),
     resolveFixture('builder/.vs-variousManuscriptFormat'),
     resolveFixture('builder/.vs-vfm'),
+    resolveFixture('builder/.vs-multipleEntry'),
   ]);
 });
 
@@ -26,6 +32,7 @@ it('generate workspace directory', async () => {
     '-c',
     resolveFixture('builder/workspace.config.js'),
   ]);
+  assertSingleItem(config);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
@@ -95,6 +102,7 @@ it('generate files with entryContext', async () => {
     '-c',
     resolveFixture('builder/entryContext.config.js'),
   ]);
+  assertSingleItem(config);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
@@ -160,6 +168,7 @@ it('generate from various manuscript formats', async () => {
     '-c',
     resolveFixture('builder/variousManuscriptFormat.config.js'),
   ]);
+  assertSingleItem(config);
   for (const target of config.outputs) {
     checkOverwriteViolation(config, target.path, target.format);
   }
@@ -260,6 +269,7 @@ it('generate with VFM options', async () => {
     '-c',
     resolveFixture('builder/workspace.config.js'),
   ]);
+  assertSingleItem(configWithoutOption);
   assertManifestPath(configWithoutOption);
   await compile(configWithoutOption);
   const output1 = fs.readFileSync(
@@ -272,6 +282,7 @@ it('generate with VFM options', async () => {
     '-c',
     resolveFixture('builder/vfm.config.js'),
   ]);
+  assertSingleItem(configWithOption);
   assertManifestPath(configWithOption);
   await compile(configWithOption);
   const manifest = require(resolveFixture('builder/.vs-vfm/publication.json'));
@@ -313,11 +324,51 @@ it('generate with VFM options', async () => {
   ).toBe('Bar');
 });
 
+it('generate from multiple config entries', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/multipleEntry.config.js'),
+  ]);
+  assertArray(config);
+  expect(config).toHaveLength(2);
+
+  assertManifestPath(config[0]);
+  await compile(config[0]);
+  const manifest1 = require(resolveFixture(
+    'builder/.vs-multipleEntry/one/publication.json',
+  ));
+  expect(manifest1.readingOrder).toEqual([
+    {
+      name: 'SODA',
+      url: 'manuscript/soda.html',
+    },
+  ]);
+
+  assertManifestPath(config[1]);
+  await compile(config[1]);
+  const manifest2 = require(resolveFixture(
+    'builder/.vs-multipleEntry/two/publication.json',
+  ));
+  expect(manifest2.readingOrder).toEqual([
+    {
+      url: 'manuscript/frontmatter.html',
+      name: 'Hello',
+    },
+    {
+      url: 'index.html',
+      name: 'Table of Contents',
+      rel: 'contents',
+      type: 'LinkedResource',
+    },
+  ]);
+});
+
 it('check overwrite violation', async () => {
   const config1 = await getMergedConfig([
     '-c',
     resolveFixture('builder/overwriteViolation.1.config.js'),
   ]);
+  assertSingleItem(config1);
   expect(
     new Promise<void>((res, rej) => {
       try {
@@ -332,6 +383,7 @@ it('check overwrite violation', async () => {
     '-c',
     resolveFixture('builder/overwriteViolation.2.config.js'),
   ]);
+  assertSingleItem(config2);
   expect(
     new Promise<void>((res, rej) => {
       try {

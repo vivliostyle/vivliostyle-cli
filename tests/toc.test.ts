@@ -5,7 +5,11 @@ import shelljs from 'shelljs';
 import { compile } from '../src/builder';
 import { MergedConfig } from '../src/config';
 import { generateTocHtml } from '../src/html';
-import { getMergedConfig, resolveFixture } from './commandUtil';
+import {
+  assertSingleItem,
+  getMergedConfig,
+  resolveFixture,
+} from './commandUtil';
 
 function assertManifestPath(
   config: MergedConfig,
@@ -58,6 +62,7 @@ it('toc: true', async () => {
     '-c',
     resolveFixture('toc/toc.valid.1.config.js'),
   ]);
+  assertSingleItem(config);
   assertManifestPath(config);
   await compile(config);
   const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.1'));
@@ -99,6 +104,7 @@ it("toc: 'manuscript/contents.html'", async () => {
     '-c',
     resolveFixture('toc/toc.valid.2.config.js'),
   ]);
+  assertSingleItem(config);
   assertManifestPath(config);
   await compile(config);
   const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.2'));
@@ -144,6 +150,7 @@ it('Write ToC by myself', async () => {
     '-c',
     resolveFixture('toc/toc.valid.3.config.js'),
   ]);
+  assertSingleItem(config);
   assertManifestPath(config);
   await compile(config);
   const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.3'));
@@ -186,6 +193,7 @@ it('check ToC overwrite violation', async () => {
     '-c',
     resolveFixture('toc/toc.invalid.1.config.js'),
   ]);
+  assertSingleItem(config);
   assertManifestPath(config);
   expect(async () => {
     await compile(config);
