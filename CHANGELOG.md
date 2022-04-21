@@ -1,20 +1,24 @@
-# [4.10.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.9.0...v4.10.0) (2022-04-20)
-
-
-### Bug Fixes
-
-* closes [#261](https://github.com/vivliostyle/vivliostyle-cli/issues/261); Allow arbitrary VFM options ([7507e7b](https://github.com/vivliostyle/vivliostyle-cli/commit/7507e7b8d82178b0ae4cccfaddf71eae9c931f67))
-* Failed to load document when --viewer option is specified ([706accf](https://github.com/vivliostyle/vivliostyle-cli/commit/706accf7a6d865bf7a49c3820936d0b121024deb)), closes [#265](https://github.com/vivliostyle/vivliostyle-cli/issues/265)
-* Process not terminated in docker mode ([b15d828](https://github.com/vivliostyle/vivliostyle-cli/commit/b15d82881b2879f352fd55f43d41c4f210c87fd8)), closes [#269](https://github.com/vivliostyle/vivliostyle-cli/issues/269)
-* Update Vivliostyle.js to 2.14.6: Bug Fixes ([ea9c3ef](https://github.com/vivliostyle/vivliostyle-cli/commit/ea9c3ef9e8b89fafed325243f8e3e3fd55536393))
-* Use appropreate teardown and logging ([36aa617](https://github.com/vivliostyle/vivliostyle-cli/commit/36aa61788f9a9c704b4c2fcc3e8cc060eca9a6cb))
-
+# [4.11.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.10.0...v4.11.0) (2022-04-21)
 
 ### Features
 
-* closes [#229](https://github.com/vivliostyle/vivliostyle-cli/issues/229); support multiple entries of config ([5b0ffbb](https://github.com/vivliostyle/vivliostyle-cli/commit/5b0ffbb8d0139510ef08ef99ed4ea6bc04a4b935))
-* closes [#244](https://github.com/vivliostyle/vivliostyle-cli/issues/244); Clarify schema errors on console ([4409106](https://github.com/vivliostyle/vivliostyle-cli/commit/4409106be77f8d4653394353c2842513ec859c15))
-* Expose config schemas ([fc5ab43](https://github.com/vivliostyle/vivliostyle-cli/commit/fc5ab43852b0d5e8009c562fd5fe69d69ada745d))
+- Update Puppeteer-core to 13.6.0 (Chromium 101) ([4e94326](https://github.com/vivliostyle/vivliostyle-cli/commit/4e9432631e7cbe3c7238b8c3f182207a00fce32c))
+
+# [4.10.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.9.0...v4.10.0) (2022-04-20)
+
+### Bug Fixes
+
+- closes [#261](https://github.com/vivliostyle/vivliostyle-cli/issues/261); Allow arbitrary VFM options ([7507e7b](https://github.com/vivliostyle/vivliostyle-cli/commit/7507e7b8d82178b0ae4cccfaddf71eae9c931f67))
+- Failed to load document when --viewer option is specified ([706accf](https://github.com/vivliostyle/vivliostyle-cli/commit/706accf7a6d865bf7a49c3820936d0b121024deb)), closes [#265](https://github.com/vivliostyle/vivliostyle-cli/issues/265)
+- Process not terminated in docker mode ([b15d828](https://github.com/vivliostyle/vivliostyle-cli/commit/b15d82881b2879f352fd55f43d41c4f210c87fd8)), closes [#269](https://github.com/vivliostyle/vivliostyle-cli/issues/269)
+- Update Vivliostyle.js to 2.14.6: Bug Fixes ([ea9c3ef](https://github.com/vivliostyle/vivliostyle-cli/commit/ea9c3ef9e8b89fafed325243f8e3e3fd55536393))
+- Use appropreate teardown and logging ([36aa617](https://github.com/vivliostyle/vivliostyle-cli/commit/36aa61788f9a9c704b4c2fcc3e8cc060eca9a6cb))
+
+### Features
+
+- closes [#229](https://github.com/vivliostyle/vivliostyle-cli/issues/229); support multiple entries of config ([5b0ffbb](https://github.com/vivliostyle/vivliostyle-cli/commit/5b0ffbb8d0139510ef08ef99ed4ea6bc04a4b935))
+- closes [#244](https://github.com/vivliostyle/vivliostyle-cli/issues/244); Clarify schema errors on console ([4409106](https://github.com/vivliostyle/vivliostyle-cli/commit/4409106be77f8d4653394353c2842513ec859c15))
+- Expose config schemas ([fc5ab43](https://github.com/vivliostyle/vivliostyle-cli/commit/fc5ab43852b0d5e8009c562fd5fe69d69ada745d))
 
 # [4.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.8.3...v4.9.0) (2022-04-11)
 
