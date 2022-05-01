@@ -117,7 +117,7 @@ export async function buildPDF({
     }
   }
   const browser = await launchBrowser({
-    headless: true,
+    headless: 'chrome',
     executablePath: executableChromium,
     args: [
       '--allow-file-access-from-files',
