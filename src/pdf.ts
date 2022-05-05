@@ -12,7 +12,7 @@ import { ManuscriptEntry, MergedConfig } from './config';
 import { collectVolumeArgs, runContainer, toContainerPath } from './container';
 import { Meta, Payload, TOCItem } from './global-viewer';
 import { PdfOutput } from './output';
-import { PostProcess } from './postprocess';
+import { PageSizeData, PostProcess } from './postprocess';
 import { prepareServer } from './server';
 import {
   checkContainerEnvironment,
@@ -256,6 +256,7 @@ export async function buildPDF({
   );
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
+  const pageSizeData = await loadPageSizeData(page);
 
   remainTime -= Date.now() - startTime;
   if (remainTime <= 0) {
@@ -292,6 +293,7 @@ export async function buildPDF({
     disableCreatorOption: !!viewer && !viewerCoreVersion,
   });
   await post.toc(toc);
+  await post.setPageBoxes(pageSizeData);
   await post.save(target.path, {
     preflight: target.preflight,
     preflightOption: target.preflightOption,
@@ -325,5 +327,29 @@ async function loadTOC(page: PuppeteerPage): Promise<TOCItem[]> {
         window.coreViewer.addListener('done', listener);
         window.coreViewer.showTOC(true);
       }),
+  );
+}
+
+async function loadPageSizeData(page: PuppeteerPage): Promise<PageSizeData[]> {
+  return page.evaluate(
+    /* istanbul ignore next */ () => {
+      const sizeData: PageSizeData[] = [];
+      const pageContainers = document.querySelectorAll(
+        '#vivliostyle-viewer-viewport > div > div > div[data-vivliostyle-page-container]',
+      ) as NodeListOf<HTMLElement>;
+
+      for (const pageContainer of pageContainers) {
+        const bleedBox = pageContainer.querySelector(
+          'div[data-vivliostyle-bleed-box]',
+        ) as HTMLElement;
+        sizeData.push({
+          mediaWidth: parseFloat(pageContainer.style.width) * 0.75,
+          mediaHeight: parseFloat(pageContainer.style.height) * 0.75,
+          bleedOffset: parseFloat(bleedBox?.style.left) * 0.75,
+          bleedSize: parseFloat(bleedBox?.style.paddingLeft) * 0.75,
+        });
+      }
+      return sizeData;
+    },
   );
 }

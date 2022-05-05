@@ -46,6 +46,13 @@ interface PDFTocItem extends TOCItem {
   parentRef: PDFRef;
 }
 
+export interface PageSizeData {
+  mediaWidth: number;
+  mediaHeight: number;
+  bleedOffset: number;
+  bleedSize: number;
+}
+
 export async function pressReadyWithContainer({
   input,
   output,
@@ -246,5 +253,41 @@ export class PostProcess {
     outline.set(PDFName.of('Count'), PDFNumber.of(countAll(itemsWithRefs)));
     this.document.context.assign(outlineRef, outline);
     this.document.catalog.set(PDFName.of('Outlines'), outlineRef);
+  }
+
+  async setPageBoxes(pageSizeData: PageSizeData[]) {
+    if (pageSizeData.length !== this.document.getPageCount()) {
+      return;
+    }
+    for (let i = 0; i < pageSizeData.length; i++) {
+      const page = this.document.getPage(i);
+      const sizeData = pageSizeData[i];
+      if (
+        !sizeData.mediaWidth ||
+        !sizeData.mediaHeight ||
+        isNaN(sizeData.bleedOffset) ||
+        isNaN(sizeData.bleedSize)
+      ) {
+        continue;
+      }
+      const yOffset = page.getHeight() - sizeData.mediaHeight;
+      page.setMediaBox(0, yOffset, sizeData.mediaWidth, sizeData.mediaHeight);
+      if (!sizeData.bleedOffset && !sizeData.bleedSize) {
+        continue;
+      }
+      page.setBleedBox(
+        sizeData.bleedOffset,
+        yOffset + sizeData.bleedOffset,
+        sizeData.mediaWidth - sizeData.bleedOffset * 2,
+        sizeData.mediaHeight - sizeData.bleedOffset * 2,
+      );
+      const trimOffset = sizeData.bleedOffset + sizeData.bleedSize;
+      page.setTrimBox(
+        trimOffset,
+        yOffset + trimOffset,
+        sizeData.mediaWidth - trimOffset * 2,
+        sizeData.mediaHeight - trimOffset * 2,
+      );
+    }
   }
 }
