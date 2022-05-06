@@ -1,3 +1,12 @@
+# [4.12.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.11.0...v4.12.0) (2022-05-06)
+
+### Features
+
+- Add TrimBox and BleedBox to output PDF ([f301d2a](https://github.com/vivliostyle/vivliostyle-cli/commit/f301d2a2cef409f0ba2dfe1d3c409204baed2f4f)), closes [#277](https://github.com/vivliostyle/vivliostyle-cli/issues/277)
+- Update Puppeteer-core to 13.7.0: support chrome headless mode ([a0266d0](https://github.com/vivliostyle/vivliostyle-cli/commit/a0266d0ba55e0dae05632305f2ef17d95265c5b4))
+- Update Vivliostyle.js to 2.15.0: Improve printing support ([5504a95](https://github.com/vivliostyle/vivliostyle-cli/commit/5504a95e9d6b9535f7fe09a29b3253cc5946052f))
+- Use new chrome headless mode ([e8d570b](https://github.com/vivliostyle/vivliostyle-cli/commit/e8d570b042e63daa2b97d76fcae6b0a67e70aafc))
+
 # [4.11.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.10.0...v4.11.0) (2022-04-21)
 
 ### Features
