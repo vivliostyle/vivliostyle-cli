@@ -1,3 +1,9 @@
+## [4.12.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.0...v4.12.1) (2022-05-06)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.15.1: Fix page size problem ([1ff2c40](https://github.com/vivliostyle/vivliostyle-cli/commit/1ff2c40bf7f4e4229b057d5e9180c227361cb966))
+
 # [4.12.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.11.0...v4.12.0) (2022-05-06)
 
 ### Features
