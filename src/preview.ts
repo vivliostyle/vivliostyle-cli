@@ -170,6 +170,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
         return false;
       },
       cwd: config.entries.length ? context : config.entryContextDir,
+      ignoreInitial: true,
     })
     .on('all', (event, path) => {
       if (
