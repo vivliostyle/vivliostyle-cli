@@ -1,3 +1,10 @@
+## [4.12.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.1...v4.12.2) (2022-05-23)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.15.2: Bug Fixes ([07be017](https://github.com/vivliostyle/vivliostyle-cli/commit/07be01726c3f2190b93bc182cc87eda6a89b244a))
+- wrong "Built …" message and unnecessary reloading on preview ([e752402](https://github.com/vivliostyle/vivliostyle-cli/commit/e7524024fd209f453914e1d9e2f72bae50c51ee2)), closes [#284](https://github.com/vivliostyle/vivliostyle-cli/issues/284)
+
 ## [4.12.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.0...v4.12.1) (2022-05-06)
 
 ### Bug Fixes
