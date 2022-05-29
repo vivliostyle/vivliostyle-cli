@@ -30,9 +30,6 @@ COPY --from=builder \
 COPY --from=builder \
   /opt/vivliostyle-cli/dist/ \
   /opt/vivliostyle-cli/dist/
-COPY --from=builder \
-  /opt/vivliostyle-cli/scripts/ \
-  /opt/vivliostyle-cli/scripts/
 RUN yarn install --frozen-lockfile --production \
   && rm -rf \
     /var/lib/apt/lists/* \
