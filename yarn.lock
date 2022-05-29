@@ -1265,10 +1265,10 @@
   dependencies:
     fast-diff "^1.2.0"
 
-"@vivliostyle/vfm@1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.2.1.tgz#ff8993696212fd9dfe7c02bc3f84f855bf506d23"
-  integrity sha512-dmE1kn1a0J+gnZ2gCULTI13sJc3YqlNMJeaAcjTqK7eh5AV04qebioeIJeiMelFz4uqOSKX4vnnDj5Jpbz09LA==
+"@vivliostyle/vfm@1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.2.2.tgz#ae8fa4ed44b3bcf2d033e74f2b61d115994645fe"
+  integrity sha512-M8iGJ2wbJfrYUlvciZj1N234qnJIuX6ui7sywZr0RXlh7SbhKvOEQsezLKy00/TT2VSF0R+pVRnxMVBDSy6iag==
   dependencies:
     debug "^4.3.1"
     doctype "^2.0.4"
