@@ -1,3 +1,12 @@
+## [4.12.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.2...v4.12.3) (2022-05-29)
+
+
+### Bug Fixes
+
+* Disable timeout of browser startup ([33dd2e2](https://github.com/vivliostyle/vivliostyle-cli/commit/33dd2e23b81e0ec9193a7336a1c80dc8ac8bbf3c))
+* Update VFM to 1.2.2 ([c9208f0](https://github.com/vivliostyle/vivliostyle-cli/commit/c9208f02dee6b67861ce1f6fec5a581504e092d7))
+* Update Vivliostyle.js to 2.15.3: Bug Fixes ([41a5254](https://github.com/vivliostyle/vivliostyle-cli/commit/41a525486e47ad52ace398e5cd22f77a74e32060))
+
 ## [4.12.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.1...v4.12.2) (2022-05-23)
 
 ### Bug Fixes
