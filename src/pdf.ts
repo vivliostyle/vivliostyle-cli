@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { Page } from 'playwright-core';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
@@ -6,6 +7,7 @@ import { URL } from 'url';
 import {
   checkBrowserAvailability,
   downloadBrowser,
+  isPlaywrightExecutable,
   launchBrowser,
 } from './browser';
 import { ManuscriptEntry, MergedConfig } from './config';
@@ -23,10 +25,6 @@ import {
   logUpdate,
   startLogging,
 } from './util';
-
-type PuppeteerPage = Resolved<
-  ReturnType<Resolved<ReturnType<typeof launchBrowser>>['newPage']>
->;
 
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;
@@ -103,11 +101,8 @@ export async function buildPDF({
 
   debug(`Executing Chromium path: ${executableChromium}`);
   if (!checkBrowserAvailability(executableChromium)) {
-    const puppeteerDir = path.dirname(
-      require.resolve('puppeteer-core/package.json'),
-    );
-    if (!path.relative(puppeteerDir, executableChromium).startsWith('..')) {
-      // The browser on puppeteer-core isn't downloaded first time starting CLI so try to download it
+    if (isPlaywrightExecutable(executableChromium)) {
+      // The browser isn't downloaded first time starting CLI so try to download it
       await downloadBrowser();
     } else {
       // executableChromium seems to be specified explicitly
@@ -117,29 +112,18 @@ export async function buildPDF({
     }
   }
   const browser = await launchBrowser({
-    headless: 'chrome',
-    executablePath: executableChromium,
     args: [
       '--allow-file-access-from-files',
-      // FIXME: We seem have to disable sandbox now
-      // https://github.com/vivliostyle/vivliostyle-cli/issues/186
       sandbox ? '' : '--no-sandbox',
       viewer ? '' : '--disable-web-security',
       isInContainer ? '--disable-dev-shm-usage' : '',
     ],
-    // Workaround that disable timeout of browser startup
-    // Confirmed the startup is extremely slow in some CI environment
-    // https://github.com/puppeteer/puppeteer/issues/4796
-    timeout: 0,
   });
   const browserVersion = await browser.version();
   debug(chalk.green('success'), `browserVersion=${browserVersion}`);
 
   logUpdate('Building pages');
 
-  // FIXME: This issue was reported but all workaround didn't fix
-  // https://github.com/puppeteer/puppeteer/issues/4039
-  await new Promise((res) => setTimeout(res, 1000));
   const page = await browser.newPage();
 
   page.on('pageerror', (error) => {
@@ -224,20 +208,18 @@ export async function buildPDF({
   let remainTime = timeout;
   const startTime = Date.now();
 
-  await page.setDefaultNavigationTimeout(timeout);
-  await page.goto(viewerFullUrl, { waitUntil: 'networkidle0' });
+  await page.setDefaultTimeout(timeout);
+  await page.goto(viewerFullUrl, { waitUntil: 'networkidle' });
   await page.waitForFunction(
     /* istanbul ignore next */ () => !!window.coreViewer,
   );
 
-  await page.emulateMediaType('print');
+  await page.emulateMedia({ media: 'print' });
   await page.waitForFunction(
     /* istanbul ignore next */
     () => window.coreViewer.readyState === 'complete',
-    {
-      polling: 1000,
-      timeout,
-    },
+    undefined,
+    { polling: 1000 },
   );
 
   if (lastEntry) {
@@ -279,7 +261,7 @@ export async function buildPDF({
     },
     printBackground: true,
     preferCSSPageSize: true,
-    timeout: remainTime,
+    // timeout: remainTime,
   });
 
   await browser.close();
@@ -307,7 +289,7 @@ export async function buildPDF({
   return target.path;
 }
 
-async function loadMetadata(page: PuppeteerPage): Promise<Meta> {
+async function loadMetadata(page: Page): Promise<Meta> {
   return page.evaluate(
     /* istanbul ignore next */ () => window.coreViewer.getMetadata(),
   );
@@ -316,7 +298,7 @@ async function loadMetadata(page: PuppeteerPage): Promise<Meta> {
 // Show and hide the TOC in order to read its contents.
 // Chromium needs to see the TOC links in the DOM to add
 // the PDF destinations used during postprocessing.
-async function loadTOC(page: PuppeteerPage): Promise<TOCItem[]> {
+async function loadTOC(page: Page): Promise<TOCItem[]> {
   return page.evaluate(
     /* istanbul ignore next */ () =>
       new Promise<TOCItem[]>((resolve) => {
@@ -334,7 +316,7 @@ async function loadTOC(page: PuppeteerPage): Promise<TOCItem[]> {
   );
 }
 
-async function loadPageSizeData(page: PuppeteerPage): Promise<PageSizeData[]> {
+async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
   return page.evaluate(
     /* istanbul ignore next */ () => {
       const sizeData: PageSizeData[] = [];

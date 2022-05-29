@@ -4,6 +4,7 @@ import {
   checkBrowserAvailability,
   downloadBrowser,
   getExecutableBrowserPath,
+  isPlaywrightExecutable,
   launchBrowser,
 } from './browser';
 import { compile, copyAssets } from './builder';
@@ -67,11 +68,8 @@ export async function preview(cliFlags: PreviewCliFlags) {
   const executableChromium =
     cliFlags.executableChromium ?? getExecutableBrowserPath();
   if (!checkBrowserAvailability(executableChromium)) {
-    const puppeteerDir = upath.dirname(
-      require.resolve('puppeteer-core/package.json'),
-    );
-    if (!upath.relative(puppeteerDir, executableChromium).startsWith('..')) {
-      // The browser on puppeteer-core isn't downloaded first time starting CLI so try to download it
+    if (isPlaywrightExecutable(executableChromium)) {
+      // The browser isn't downloaded first time starting CLI so try to download it
       await downloadBrowser();
     } else {
       // executableChromium seems to be specified explicitly
@@ -82,7 +80,6 @@ export async function preview(cliFlags: PreviewCliFlags) {
   }
   const browser = await launchBrowser({
     headless: false,
-    executablePath: config.executableChromium,
     args: [
       '--allow-file-access-from-files',
       config.sandbox ? '' : '--no-sandbox',
@@ -90,7 +87,6 @@ export async function preview(cliFlags: PreviewCliFlags) {
     ],
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: 0, height: 0 });
   await page.goto(viewerFullUrl);
 
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
