@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/use-playwright
     tags:
       - v*.*.*
 
@@ -17,6 +18,12 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq -r '.version')
           echo "::set-output name=version::$VERSION"
+      - name: Output current image tag of Playwright
+        id: playwright
+        run: |
+          yarn install --frozen-lockfile
+          VERSION=$(node -e 'console.log(require("playwright-core/package.json").version)')
+          echo "::set-output name=image_tag::v${VERSION}-focal"
       - name: Docker meta
         id: docker_meta
         uses: docker/metadata-action@v3
@@ -50,5 +57,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
+            PLAYWRIGHT_TAG=${{ steps.playwright.outputs.image_tag }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}

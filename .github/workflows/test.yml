@@ -32,6 +32,12 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq -r '.version')
           echo "::set-output name=version::$VERSION"
+      - name: Output current image tag of Playwright
+        id: playwright
+        run: |
+          yarn install --frozen-lockfile
+          VERSION=$(node -e 'console.log(require("playwright-core/package.json").version)')
+          echo "::set-output name=image_tag::v${VERSION}-focal"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -45,6 +51,7 @@ jobs:
           push: true
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
+            PLAYWRIGHT_TAG=${{ steps.playwright.outputs.image_tag }}
           tags: localhost:5000/vivliostyle/cli:latest
       - name: Inspect
         run: |
