@@ -130,7 +130,7 @@ export async function buildPDF({
     // Workaround that disable timeout of browser startup
     // Confirmed the startup is extremely slow in some CI environment
     // https://github.com/puppeteer/puppeteer/issues/4796
-    timeout: 0,
+    timeout: 3600000,
   });
   const browserVersion = await browser.version();
   debug(chalk.green('success'), `browserVersion=${browserVersion}`);
