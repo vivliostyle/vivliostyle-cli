@@ -7,6 +7,7 @@ import { URL } from 'url';
 import {
   checkBrowserAvailability,
   downloadBrowser,
+  getFullBrowserName,
   isPlaywrightExecutable,
   launchBrowser,
 } from './browser';
@@ -103,7 +104,7 @@ export async function buildPDF({
   if (!checkBrowserAvailability(executableChromium)) {
     if (isPlaywrightExecutable(executableChromium)) {
       // The browser isn't downloaded first time starting CLI so try to download it
-      await downloadBrowser();
+      await downloadBrowser('chromium');
     } else {
       // executableChromium seems to be specified explicitly
       throw new Error(
@@ -111,7 +112,7 @@ export async function buildPDF({
       );
     }
   }
-  const browser = await launchBrowser({
+  const browser = await launchBrowser('chromium', {
     args: [
       '--allow-file-access-from-files',
       sandbox ? '' : '--no-sandbox',
@@ -119,7 +120,8 @@ export async function buildPDF({
       isInContainer ? '--disable-dev-shm-usage' : '',
     ],
   });
-  const browserVersion = await browser.version();
+  const browserName = getFullBrowserName('chromium');
+  const browserVersion = `${browserName}/${await browser.version()}`;
   debug(chalk.green('success'), `browserVersion=${browserVersion}`);
 
   logUpdate('Building pages');

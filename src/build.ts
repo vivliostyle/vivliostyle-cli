@@ -33,7 +33,7 @@ export async function build(cliFlags: BuildCliFlags) {
   if (cliFlags.bypassedPdfBuilderOption) {
     const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
     // Host doesn't know inside path of chromium path
-    option.executableChromium = getExecutableBrowserPath();
+    option.executableChromium = getExecutableBrowserPath('chromium');
     debug('bypassedPdfBuilderOption', option);
 
     startLogging();

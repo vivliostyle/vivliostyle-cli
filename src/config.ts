@@ -439,7 +439,7 @@ export async function mergeConfig<T extends CliFlags>(
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
   const executableChromium =
-    cliFlags.executableChromium ?? getExecutableBrowserPath();
+    cliFlags.executableChromium ?? getExecutableBrowserPath('chromium');
   const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
   const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;

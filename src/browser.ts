@@ -9,10 +9,13 @@ import {
   stopLogging,
 } from './util';
 
+export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+
 export async function launchBrowser(
+  browserName: BrowserName,
   options?: playwright.LaunchOptions,
 ): Promise<playwright.Browser> {
-  const browser = await playwright.chromium.launch({
+  const browser = await playwright[browserName].launch({
     ...options,
   });
   beforeExitHandlers.push(() => {
@@ -21,8 +24,16 @@ export async function launchBrowser(
   return browser;
 }
 
-export function getExecutableBrowserPath(): string {
-  return playwright.chromium.executablePath();
+export function getExecutableBrowserPath(browserName: BrowserName): string {
+  return playwright[browserName].executablePath();
+}
+
+export function getFullBrowserName(browserName: BrowserName): string {
+  return {
+    chromium: 'Chromium',
+    firefox: 'Firefox',
+    webkit: 'Webkit',
+  }[browserName];
 }
 
 export function checkBrowserAvailability(path: string): boolean {
@@ -33,8 +44,10 @@ export function isPlaywrightExecutable(path: string): boolean {
   return registry.executables().some((exe) => exe.executablePath() === path);
 }
 
-export async function downloadBrowser(): Promise<string> {
-  const executable = registry.findExecutable('chromium');
+export async function downloadBrowser(
+  browserName: BrowserName,
+): Promise<string> {
+  const executable = registry.findExecutable(browserName);
   logInfo('Rendering browser is not installed yet. Downloading now...');
   stopLogging();
   await registry.install([executable], false);

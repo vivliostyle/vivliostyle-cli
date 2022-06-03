@@ -66,11 +66,11 @@ export async function preview(cliFlags: PreviewCliFlags) {
 
   debug(`Executing Chromium path: ${config.executableChromium}`);
   const executableChromium =
-    cliFlags.executableChromium ?? getExecutableBrowserPath();
+    cliFlags.executableChromium ?? getExecutableBrowserPath('chromium');
   if (!checkBrowserAvailability(executableChromium)) {
     if (isPlaywrightExecutable(executableChromium)) {
       // The browser isn't downloaded first time starting CLI so try to download it
-      await downloadBrowser();
+      await downloadBrowser('chromium');
     } else {
       // executableChromium seems to be specified explicitly
       throw new Error(
@@ -78,7 +78,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
       );
     }
   }
-  const browser = await launchBrowser({
+  const browser = await launchBrowser('chromium', {
     headless: false,
     args: [
       '--allow-file-access-from-files',
