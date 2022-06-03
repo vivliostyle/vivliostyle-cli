@@ -39,7 +39,7 @@ export const maskConfig = (obj: any) => {
   Object.entries(obj).forEach(([k, v]) => {
     if (v && typeof v === 'object') {
       maskConfig(v);
-    } else if (k === 'executableChromium') {
+    } else if (k === 'executableBrowser' || k === 'executableChromium') {
       obj[k] = '__EXECUTABLE_CHROMIUM_PATH__';
     } else if (k === 'image') {
       obj[k] = '__IMAGE__';

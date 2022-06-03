@@ -30,4 +30,5 @@ module.exports = {
     disableFormatHtml: true,
   },
   readingProgression: 'rtl',
+  browser: 'firefox',
 };
