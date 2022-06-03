@@ -1258,17 +1258,17 @@
   dependencies:
     "@types/node" "*"
 
-"@vivliostyle/core@^2.15.2":
-  version "2.15.2"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.15.2.tgz#ad28658a43218ca904f5baa43a8a185252a6d2c4"
-  integrity sha512-ZEBYxdnWYa0+/SgZ0nGkO90AjzlZzAIYzdtSyWNlyb3/nlMi1h/6R5bSA0FGdzmFa/WRkqv2CuEB2Dj7mzCdMQ==
+"@vivliostyle/core@^2.15.4":
+  version "2.15.4"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.15.4.tgz#c4f88d22bf3ae82ef63839964d8104eca5583a41"
+  integrity sha512-3gwvh9G4MjdgzPgecsaznZM+6Zo3X+7egcgexXU3nmrlOf2bRVjLYMtY2JxeydwXOyjTvTZWaZ3mdavDjyPRjA==
   dependencies:
     fast-diff "^1.2.0"
 
-"@vivliostyle/vfm@1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.2.1.tgz#ff8993696212fd9dfe7c02bc3f84f855bf506d23"
-  integrity sha512-dmE1kn1a0J+gnZ2gCULTI13sJc3YqlNMJeaAcjTqK7eh5AV04qebioeIJeiMelFz4uqOSKX4vnnDj5Jpbz09LA==
+"@vivliostyle/vfm@1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.2.2.tgz#ae8fa4ed44b3bcf2d033e74f2b61d115994645fe"
+  integrity sha512-M8iGJ2wbJfrYUlvciZj1N234qnJIuX6ui7sywZr0RXlh7SbhKvOEQsezLKy00/TT2VSF0R+pVRnxMVBDSy6iag==
   dependencies:
     debug "^4.3.1"
     doctype "^2.0.4"
@@ -1304,12 +1304,12 @@
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
 
-"@vivliostyle/viewer@2.15.2":
-  version "2.15.2"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.15.2.tgz#3d4b9c4c86c81663c77fb3ccb9189f076dbcf13c"
-  integrity sha512-dFLzuVPT3I+5gjkFK3QBMvFAIHgyxHm8qf+uByVApW554P8apEuU/4WCChfaF8WgJ7QPKpnwlrxao0v7ebX6ag==
+"@vivliostyle/viewer@2.15.4":
+  version "2.15.4"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.15.4.tgz#f0c5970d27d3590331e6d4307664ba072409b2a2"
+  integrity sha512-ixCOYCSwYSIto+VLLay0FAagrww2y+vf+QmKVYK1oSc1EGpcgjJ3O8snNGcK39P4XKoPIP9zT/P5IX/11uUHOA==
   dependencies:
-    "@vivliostyle/core" "^2.15.2"
+    "@vivliostyle/core" "^2.15.4"
     font-awesome "^4.7.0"
     knockout "^3.5.0"
 
