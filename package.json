@@ -13,7 +13,7 @@
     "dev": "run-p dev:*",
     "dev:cli": "tsc -w --preserveWatchOutput",
     "example": "yarn --cwd example build",
-    "pretest": "yarn build && node ./node_modules/puppeteer-core/install.js",
+    "pretest": "yarn build && playwright install chromium",
     "release": "release-it",
     "release:pre": "release-it --preRelease --npm.tag=next",
     "test": "jest --coverage"
