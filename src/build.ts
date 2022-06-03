@@ -56,7 +56,7 @@ export async function build(cliFlags: BuildCliFlags) {
   if (cliFlags.bypassedPdfBuilderOption) {
     const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
     // Host doesn't know browser path inside of container
-    option.executableBrowserPath = getExecutableBrowserPath(
+    option.executableBrowser = getExecutableBrowserPath(
       option.browserType ?? 'chromium',
     );
     debug('bypassedPdfBuilderOption', option);

@@ -26,12 +26,13 @@ try {
     verbose: options.verbose,
     timeout: options.timeout,
     sandbox: options.sandbox,
-    executableChromium: options.executableChromium,
+    executableBrowser: options.executableBrowser,
     image: options.image,
     http: options.http,
     viewer: options.viewer,
     // browser: options.browser,
     bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
+    executableChromium: options.executableChromium, // TODO: Remove it in the next major version up
   }).catch(gracefulError);
 } catch (err) {
   if (err instanceof Error) {

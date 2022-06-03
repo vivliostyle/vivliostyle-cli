@@ -74,7 +74,7 @@ export async function buildPDF({
   customStyle,
   customUserStyle,
   singleDoc,
-  executableBrowserPath,
+  executableBrowser,
   browserType,
   image,
   sandbox,
@@ -101,21 +101,21 @@ export async function buildPDF({
   });
   debug('viewerFullUrl', viewerFullUrl);
 
-  debug(`Executing browser path: ${executableBrowserPath}`);
-  if (!checkBrowserAvailability(executableBrowserPath)) {
-    if (isPlaywrightExecutable(executableBrowserPath)) {
+  debug(`Executing browser path: ${executableBrowser}`);
+  if (!checkBrowserAvailability(executableBrowser)) {
+    if (isPlaywrightExecutable(executableBrowser)) {
       // The browser isn't downloaded first time starting CLI so try to download it
       await downloadBrowser(browserType);
     } else {
-      // executableBrowserPath seems to be specified explicitly
+      // executableBrowser seems to be specified explicitly
       throw new Error(
-        `Cannot find the browser. Please check the executable browser path: ${executableBrowserPath}`,
+        `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
       );
     }
   }
   const browser = await launchBrowser({
     browserType,
-    executablePath: executableBrowserPath,
+    executablePath: executableBrowser,
     headless: true,
     noSandbox: !sandbox,
     disableWebSecurity: !viewer,

@@ -105,8 +105,8 @@ https://github.com/vibranthq/press-ready`,
       `launch chrome without sandbox. use this option when ECONNREFUSED error occurred.`,
     )
     .option(
-      '--executable-chromium <path>',
-      'specify a path of executable Chrome (or Chromium) you installed',
+      '--executable-browser <path>',
+      'specify a path of executable browser you installed',
     )
     .option('--image <image>', 'specify a docker image to render')
     .option(
@@ -130,6 +130,8 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     .addOption(
       new commander.Option('--bypassed-pdf-builder-option <json>').hideHelp(),
     )
+    // TODO: Remove it in the next major version up
+    .addOption(new commander.Option('--executable-chromium <path>').hideHelp())
     .action((_arg: any, option: BuildCliFlags) => {
       option.targets = inferenceTargetsOption(targets);
     });

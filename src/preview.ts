@@ -63,22 +63,22 @@ export async function preview(cliFlags: PreviewCliFlags) {
     quick: config.quick,
   });
 
-  const { browserType, executableBrowserPath } = config;
-  debug(`Executing browser path: ${executableBrowserPath}`);
-  if (!checkBrowserAvailability(executableBrowserPath)) {
-    if (isPlaywrightExecutable(executableBrowserPath)) {
+  const { browserType, executableBrowser } = config;
+  debug(`Executing browser path: ${executableBrowser}`);
+  if (!checkBrowserAvailability(executableBrowser)) {
+    if (isPlaywrightExecutable(executableBrowser)) {
       // The browser isn't downloaded first time starting CLI so try to download it
       await downloadBrowser(browserType);
     } else {
-      // executableBrowserPath seems to be specified explicitly
+      // executableBrowser seems to be specified explicitly
       throw new Error(
-        `Cannot find the browser. Please check the executable browser path: ${executableBrowserPath}`,
+        `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
       );
     }
   }
   const browser = await launchBrowser({
     browserType,
-    executablePath: executableBrowserPath,
+    executablePath: executableBrowser,
     headless: false,
     noSandbox: !config.sandbox,
     disableWebSecurity: !config.viewer,

@@ -40,6 +40,7 @@ import {
   filterRelevantAjvErrors,
   isUrlString,
   log,
+  logWarn,
   readJSON,
   statFileSync,
   touchTmpFile,
@@ -106,11 +107,12 @@ export interface CliFlags {
   preflight?: 'press-ready' | 'press-ready-local';
   preflightOption?: string[];
   sandbox?: boolean;
-  executableChromium?: string;
+  executableBrowser?: string;
   image?: string;
   http?: boolean;
   viewer?: string;
   browser?: 'chromium' | 'firefox' | 'webkit';
+  /** @deprecated */ executableChromium?: string;
 }
 
 export interface WebPublicationManifestConfig {
@@ -157,7 +159,7 @@ export type MergedConfig = {
   verbose: boolean;
   timeout: number;
   sandbox: boolean;
-  executableBrowserPath: string;
+  executableBrowser: string;
   browserType: BrowserType;
   image: string;
   httpServer: boolean;
@@ -369,6 +371,16 @@ export function collectVivliostyleConfig<T extends CliFlags>(
       }
     } catch (_err) {}
   }
+
+  if (cliFlags.executableChromium) {
+    logWarn(
+      chalk.yellowBright(
+        "'--executable-chromium' option was deprecated and will be removed in a future release. Please replace with '--executable-browser' option.",
+      ),
+    );
+    cliFlags.executableBrowser = cliFlags.executableChromium;
+  }
+
   return {
     cliFlags,
     vivliostyleConfig:
@@ -442,8 +454,8 @@ export async function mergeConfig<T extends CliFlags>(
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
   const browserType = cliFlags.browser ?? config?.browser ?? 'chromium';
-  const executableBrowserPath =
-    cliFlags.executableChromium ?? getExecutableBrowserPath(browserType);
+  const executableBrowser =
+    cliFlags.executableBrowser ?? getExecutableBrowserPath(browserType);
   const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
   const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
@@ -542,7 +554,7 @@ export async function mergeConfig<T extends CliFlags>(
     verbose,
     timeout,
     sandbox,
-    executableBrowserPath,
+    executableBrowser,
     browserType,
     image,
     httpServer,

@@ -27,8 +27,8 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
       `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
     )
     .option(
-      '--executable-chromium <path>',
-      'specify a path of executable Chrome(Chromium) you installed',
+      '--executable-browser <path>',
+      'specify a path of executable browser you installed',
     )
     .option(
       '--http',
@@ -46,6 +46,8 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
         `EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer [chromium]
 Currently, Firefox and Webkit support preview command only!`,
       ).choices(['chromium', 'firefox', 'webkit']),
-    );
+    )
+    // TODO: Remove it in the next major version up
+    .addOption(new commander.Option('--executable-chromium <path>').hideHelp());
   return program;
 }
