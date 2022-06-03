@@ -29,10 +29,21 @@ export async function launchBrowser({
     browserType === 'chromium'
       ? {
           executablePath,
-          headless,
+          chromiumSandbox: !noSandbox,
+          // We don't use Playwright's preset for headless Chrome to set `headless: 'chrome'` option
+          // https://github.com/vivliostyle/vivliostyle-cli/pull/280
+          headless: false,
           args: [
+            // Preset of Playwright: https://github.com/microsoft/playwright/blob/e69c3f12e6f07ee9e737446ba22f20cb669d7211/packages/playwright-core/src/server/chromium/chromium.ts#L287-L294
+            ...(headless
+              ? [
+                  '--headless=chrome', //'--headless',
+                  '--hide-scrollbars',
+                  '--mute-audio',
+                  '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
+                ]
+              : []),
             '--allow-file-access-from-files',
-            noSandbox ? '--no-sandbox' : '',
             disableWebSecurity ? '--disable-web-security' : '',
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
           ],
