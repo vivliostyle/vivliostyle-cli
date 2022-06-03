@@ -21,6 +21,10 @@
       "required": ["path"],
       "additionalProperties": false
     },
+    "browserType": {
+      "type": "string",
+      "enum": ["chromium", "firefox", "webkit"]
+    },
     "contentsEntryObject": {
       "type": "object",
       "properties": {
@@ -267,6 +271,11 @@
           "description": "Specify a URL of displaying viewer instead of vivliostyle-cli's one. It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)",
           "type": "string",
           "minLength": 1
+        },
+        "browser": {
+          "description": "EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer. Currently, Firefox and Webkit support preview command only!",
+          "oneOf": [{ "$ref": "#/definitions/browserType" }],
+          "default": "chromium"
         }
       },
       "required": ["entry"]

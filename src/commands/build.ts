@@ -30,6 +30,7 @@ try {
     image: options.image,
     http: options.http,
     viewer: options.viewer,
+    // browser: options.browser,
     bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
   }).catch(gracefulError);
 } catch (err) {

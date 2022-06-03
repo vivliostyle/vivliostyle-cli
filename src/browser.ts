@@ -1,6 +1,7 @@
 import fs from 'fs';
 import * as playwright from 'playwright-core';
 import { registry } from 'playwright-core/lib/server';
+import type { BrowserType } from './schema/vivliostyleConfig.schema';
 import {
   beforeExitHandlers,
   logInfo,
@@ -9,31 +10,52 @@ import {
   stopLogging,
 } from './util';
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-
-export async function launchBrowser(
-  browserName: BrowserName,
-  options?: playwright.LaunchOptions,
-): Promise<playwright.Browser> {
-  const browser = await playwright[browserName].launch({
-    ...options,
-  });
+export async function launchBrowser({
+  browserType,
+  executablePath,
+  headless,
+  noSandbox,
+  disableWebSecurity,
+  disableDevShmUsage,
+}: {
+  browserType: BrowserType;
+  executablePath: string;
+  headless: boolean;
+  noSandbox?: boolean;
+  disableWebSecurity?: boolean;
+  disableDevShmUsage?: boolean;
+}): Promise<playwright.Browser> {
+  const options =
+    browserType === 'chromium'
+      ? {
+          executablePath,
+          headless,
+          args: [
+            '--allow-file-access-from-files',
+            noSandbox ? '--no-sandbox' : '',
+            disableWebSecurity ? '--disable-web-security' : '',
+            disableDevShmUsage ? '--disable-dev-shm-usage' : '',
+          ],
+        }
+      : // TODO: Investigate appropriate settings on Firefox & Webkit
+        { executablePath, headless };
+  const browser = await playwright[browserType].launch(options);
   beforeExitHandlers.push(() => {
     browser.close();
   });
   return browser;
 }
 
-export function getExecutableBrowserPath(browserName: BrowserName): string {
-  return playwright[browserName].executablePath();
+export function getExecutableBrowserPath(browserType: BrowserType): string {
+  return playwright[browserType].executablePath();
 }
 
-export function getFullBrowserName(browserName: BrowserName): string {
+export function getFullBrowserName(browserType: BrowserType): string {
   return {
     chromium: 'Chromium',
     firefox: 'Firefox',
     webkit: 'Webkit',
-  }[browserName];
+  }[browserType];
 }
 
 export function checkBrowserAvailability(path: string): boolean {
@@ -45,9 +67,9 @@ export function isPlaywrightExecutable(path: string): boolean {
 }
 
 export async function downloadBrowser(
-  browserName: BrowserName,
+  browserType: BrowserType,
 ): Promise<string> {
-  const executable = registry.findExecutable(browserName);
+  const executable = registry.findExecutable(browserType);
   logInfo('Rendering browser is not installed yet. Downloading now...');
   stopLogging();
   await registry.install([executable], false);

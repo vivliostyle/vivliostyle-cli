@@ -27,6 +27,7 @@ import {
 } from './output';
 import { vivliostyleConfigSchema } from './schema/vivliostyle';
 import type {
+  BrowserType,
   EntryObject,
   VivliostyleConfigEntry,
   VivliostyleConfigSchema,
@@ -109,6 +110,7 @@ export interface CliFlags {
   image?: string;
   http?: boolean;
   viewer?: string;
+  browser?: 'chromium' | 'firefox' | 'webkit';
 }
 
 export interface WebPublicationManifestConfig {
@@ -155,7 +157,8 @@ export type MergedConfig = {
   verbose: boolean;
   timeout: number;
   sandbox: boolean;
-  executableChromium: string;
+  executableBrowserPath: string;
+  browserType: BrowserType;
   image: string;
   httpServer: boolean;
   viewer: string | undefined;
@@ -438,8 +441,9 @@ export async function mergeConfig<T extends CliFlags>(
   const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
-  const executableChromium =
-    cliFlags.executableChromium ?? getExecutableBrowserPath('chromium');
+  const browserType = cliFlags.browser ?? config?.browser ?? 'chromium';
+  const executableBrowserPath =
+    cliFlags.executableChromium ?? getExecutableBrowserPath(browserType);
   const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
   const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
@@ -538,7 +542,8 @@ export async function mergeConfig<T extends CliFlags>(
     verbose,
     timeout,
     sandbox,
-    executableChromium,
+    executableBrowserPath,
+    browserType,
     image,
     httpServer,
     viewer,

@@ -24,6 +24,7 @@ try {
     executableChromium: options.executableChromium,
     http: options.http,
     viewer: options.viewer,
+    browser: options.browser,
   }).catch(gracefulError);
 } catch (err) {
   if (err instanceof Error) {

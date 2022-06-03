@@ -74,7 +74,8 @@ export async function buildPDF({
   customStyle,
   customUserStyle,
   singleDoc,
-  executableChromium,
+  executableBrowserPath,
+  browserType,
   image,
   sandbox,
   verbose,
@@ -100,27 +101,27 @@ export async function buildPDF({
   });
   debug('viewerFullUrl', viewerFullUrl);
 
-  debug(`Executing Chromium path: ${executableChromium}`);
-  if (!checkBrowserAvailability(executableChromium)) {
-    if (isPlaywrightExecutable(executableChromium)) {
+  debug(`Executing browser path: ${executableBrowserPath}`);
+  if (!checkBrowserAvailability(executableBrowserPath)) {
+    if (isPlaywrightExecutable(executableBrowserPath)) {
       // The browser isn't downloaded first time starting CLI so try to download it
-      await downloadBrowser('chromium');
+      await downloadBrowser(browserType);
     } else {
-      // executableChromium seems to be specified explicitly
+      // executableBrowserPath seems to be specified explicitly
       throw new Error(
-        `Cannot find the browser. Please check the executable chromium path: ${executableChromium}`,
+        `Cannot find the browser. Please check the executable browser path: ${executableBrowserPath}`,
       );
     }
   }
-  const browser = await launchBrowser('chromium', {
-    args: [
-      '--allow-file-access-from-files',
-      sandbox ? '' : '--no-sandbox',
-      viewer ? '' : '--disable-web-security',
-      isInContainer ? '--disable-dev-shm-usage' : '',
-    ],
+  const browser = await launchBrowser({
+    browserType,
+    executablePath: executableBrowserPath,
+    headless: true,
+    noSandbox: !sandbox,
+    disableWebSecurity: !viewer,
+    disableDevShmUsage: isInContainer,
   });
-  const browserName = getFullBrowserName('chromium');
+  const browserName = getFullBrowserName(browserType);
   const browserVersion = `${browserName}/${await browser.version()}`;
   debug(chalk.green('success'), `browserVersion=${browserVersion}`);
 

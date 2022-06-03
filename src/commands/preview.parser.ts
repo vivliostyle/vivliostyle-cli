@@ -39,6 +39,13 @@ It is useful that requires CORS such as external web fonts.`,
       '--viewer <URL>',
       `specify a URL of displaying viewer instead of vivliostyle-cli's one
 It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)`,
+    )
+    .addOption(
+      new commander.Option(
+        '--browser <browser>',
+        `EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer [chromium]
+Currently, Firefox and Webkit support preview command only!`,
+      ).choices(['chromium', 'firefox', 'webkit']),
     );
   return program;
 }

@@ -3,7 +3,6 @@ import upath from 'upath';
 import {
   checkBrowserAvailability,
   downloadBrowser,
-  getExecutableBrowserPath,
   isPlaywrightExecutable,
   launchBrowser,
 } from './browser';
@@ -64,27 +63,25 @@ export async function preview(cliFlags: PreviewCliFlags) {
     quick: config.quick,
   });
 
-  debug(`Executing Chromium path: ${config.executableChromium}`);
-  const executableChromium =
-    cliFlags.executableChromium ?? getExecutableBrowserPath('chromium');
-  if (!checkBrowserAvailability(executableChromium)) {
-    if (isPlaywrightExecutable(executableChromium)) {
+  const { browserType, executableBrowserPath } = config;
+  debug(`Executing browser path: ${executableBrowserPath}`);
+  if (!checkBrowserAvailability(executableBrowserPath)) {
+    if (isPlaywrightExecutable(executableBrowserPath)) {
       // The browser isn't downloaded first time starting CLI so try to download it
-      await downloadBrowser('chromium');
+      await downloadBrowser(browserType);
     } else {
-      // executableChromium seems to be specified explicitly
+      // executableBrowserPath seems to be specified explicitly
       throw new Error(
-        `Cannot find the browser. Please check the executable chromium path: ${executableChromium}`,
+        `Cannot find the browser. Please check the executable browser path: ${executableBrowserPath}`,
       );
     }
   }
-  const browser = await launchBrowser('chromium', {
+  const browser = await launchBrowser({
+    browserType,
+    executablePath: executableBrowserPath,
     headless: false,
-    args: [
-      '--allow-file-access-from-files',
-      config.sandbox ? '' : '--no-sandbox',
-      config.viewer ? '' : '--disable-web-security',
-    ],
+    noSandbox: !config.sandbox,
+    disableWebSecurity: !config.viewer,
   });
   const page = await browser.newPage();
   await page.goto(viewerFullUrl);
