@@ -83,7 +83,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     noSandbox: !config.sandbox,
     disableWebSecurity: !config.viewer,
   });
-  const page = await browser.newPage();
+  const page = await browser.newPage({ viewport: null });
   await page.goto(viewerFullUrl);
 
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');

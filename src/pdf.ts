@@ -127,7 +127,14 @@ export async function buildPDF({
 
   logUpdate('Building pages');
 
-  const page = await browser.newPage();
+  const page = await browser.newPage({
+    // This viewport size important to detect headless environment in Vivliostyle viewer
+    // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
+    viewport: {
+      width: 800,
+      height: 600,
+    },
+  });
 
   page.on('pageerror', (error) => {
     logError(chalk.red(error.message));
