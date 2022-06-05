@@ -1,0 +1,37 @@
+diff --git a/node_modules/playwright-core/lib/client/page.js b/node_modules/playwright-core/lib/client/page.js
+index 07a6546..e9a7d7f 100644
+--- a/node_modules/playwright-core/lib/client/page.js
++++ b/node_modules/playwright-core/lib/client/page.js
+@@ -810,8 +810,18 @@ class Page extends _channelOwner.ChannelOwner {
+     }
+ 
+     const result = await this._channel.pdf(transportOptions);
++    // The serialzation of TypedArray seems to be wrong
++    // https://github.com/microsoft/playwright/issues/5241
++    const serializeToBuffer = (obj) => {
++      const length = Object.keys(obj).length;
++      const array = new Uint8Array(length);
++      for (let i = 0; i < length; i++) {
++        array[i] = obj[i];
++      }
++      return array.buffer;
++    }
+ 
+-    const buffer = _buffer.Buffer.from(result.pdf, 'base64');
++    const buffer = serializeToBuffer(result.pdf);
+ 
+     if (options.path) {
+       await _fs.default.promises.mkdir(_path.default.dirname(options.path), {
+diff --git a/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js b/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
+index a71fab2..ddede77 100644
+--- a/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
++++ b/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
+@@ -309,7 +309,7 @@ class PageDispatcher extends _dispatcher.Dispatcher {
+     if (!this._page.pdf) throw new Error('PDF generation is only supported for Headless Chromium');
+     const buffer = await this._page.pdf(params);
+     return {
+-      pdf: buffer.toString('base64')
++      pdf: buffer,
+     };
+   }
+ 
