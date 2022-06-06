@@ -1,3 +1,29 @@
+# [5.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.4...v5.0.0) (2022-06-06)
+
+# Experimental support of Firefox & Webkit (preview command only)
+
+You can now use Firebox or Webkit browser to preview Vivliostyle viewer! To use this, please set an argument below
+
+```
+vivliostyle preview --browser firefox
+```
+
+### chore
+
+* Drop Node v12 support ([9407f88](https://github.com/vivliostyle/vivliostyle-cli/commit/9407f88f9c3aee28e3845d1bb9b0ad61efb4a389))
+
+
+### Features
+
+* Experimental support of Firefox & Webkit ([0cedeca](https://github.com/vivliostyle/vivliostyle-cli/commit/0cedeca3ee21019fcef8b95c332d70fd6f0e1dcb))
+* Rename executableChromium option to executableBrowser ([f012071](https://github.com/vivliostyle/vivliostyle-cli/commit/f0120714bac5482d31a8ad5a28ecc9ba1fbf3c36))
+* Switch Puppeteer into Playwright ([95884ea](https://github.com/vivliostyle/vivliostyle-cli/commit/95884ea97691a3db9d59481e6e0a165d1b012348))
+
+
+### BREAKING CHANGES
+
+* Node v14 is now the minimum supported version
+
 ## [4.12.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.3...v4.12.4) (2022-06-01)
 
 ### Bug Fixes
