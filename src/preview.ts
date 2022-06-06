@@ -3,7 +3,7 @@ import upath from 'upath';
 import {
   checkBrowserAvailability,
   downloadBrowser,
-  getExecutableBrowserPath,
+  isPlaywrightExecutable,
   launchBrowser,
 } from './browser';
 import { compile, copyAssets } from './builder';
@@ -63,34 +63,27 @@ export async function preview(cliFlags: PreviewCliFlags) {
     quick: config.quick,
   });
 
-  debug(`Executing Chromium path: ${config.executableChromium}`);
-  const executableChromium =
-    cliFlags.executableChromium ?? getExecutableBrowserPath();
-  if (!checkBrowserAvailability(executableChromium)) {
-    const puppeteerDir = upath.dirname(
-      require.resolve('puppeteer-core/package.json'),
-    );
-    if (!upath.relative(puppeteerDir, executableChromium).startsWith('..')) {
-      // The browser on puppeteer-core isn't downloaded first time starting CLI so try to download it
-      await downloadBrowser();
+  const { browserType, executableBrowser } = config;
+  debug(`Executing browser path: ${executableBrowser}`);
+  if (!checkBrowserAvailability(executableBrowser)) {
+    if (isPlaywrightExecutable(executableBrowser)) {
+      // The browser isn't downloaded first time starting CLI so try to download it
+      await downloadBrowser(browserType);
     } else {
-      // executableChromium seems to be specified explicitly
+      // executableBrowser seems to be specified explicitly
       throw new Error(
-        `Cannot find the browser. Please check the executable chromium path: ${executableChromium}`,
+        `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
       );
     }
   }
   const browser = await launchBrowser({
+    browserType,
+    executablePath: executableBrowser,
     headless: false,
-    executablePath: config.executableChromium,
-    args: [
-      '--allow-file-access-from-files',
-      config.sandbox ? '' : '--no-sandbox',
-      config.viewer ? '' : '--disable-web-security',
-    ],
+    noSandbox: !config.sandbox,
+    disableWebSecurity: !config.viewer,
   });
-  const page = await browser.newPage();
-  await page.setViewport({ width: 0, height: 0 });
+  const page = await browser.newPage({ viewport: null });
   await page.goto(viewerFullUrl);
 
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');

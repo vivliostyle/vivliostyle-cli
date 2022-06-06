@@ -11,6 +11,7 @@ export type VivliostyleConfigSchema =
 export type Entry = string;
 export type EntryObject = ContentsEntryObject | ArticleEntryObject;
 export type Output = string;
+export type BrowserType = 'chromium' | 'firefox' | 'webkit';
 
 export interface VivliostyleConfigEntry {
   /**
@@ -109,6 +110,10 @@ export interface VivliostyleConfigEntry {
    * Specify a URL of displaying viewer instead of vivliostyle-cli's one. It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
    */
   viewer?: string;
+  /**
+   * EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer. Currently, Firefox and Webkit support preview command only!
+   */
+  browser?: BrowserType;
   [k: string]: unknown;
 }
 export interface ArticleEntryObject {

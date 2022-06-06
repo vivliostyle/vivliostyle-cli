@@ -69,6 +69,10 @@ export function logError(...obj: string[]) {
   ora.fail(obj.join(' '));
 }
 
+export function logWarn(...obj: string[]) {
+  ora.warn(obj.join(' '));
+}
+
 export function logInfo(...obj: string[]) {
   ora.info(obj.join(' '));
 }

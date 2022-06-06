@@ -29,11 +29,36 @@ export interface BuildCliFlags extends CliFlags {
   bypassedPdfBuilderOption?: string;
 }
 
+export async function getFullConfig(
+  cliFlags: BuildCliFlags,
+): Promise<MergedConfig[]> {
+  const loadedConf = collectVivliostyleConfig(cliFlags);
+  const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
+  const loadedCliFlags = loadedConf.cliFlags;
+
+  const context = vivliostyleConfig ? path.dirname(vivliostyleConfigPath) : cwd;
+
+  const configEntries: MergedConfig[] = [];
+  for (const entry of vivliostyleConfig ?? [vivliostyleConfig]) {
+    const config = await mergeConfig(loadedCliFlags, entry, context);
+    checkUnsupportedOutputs(config);
+
+    // check output path not to overwrite source files
+    for (const target of config.outputs) {
+      checkOverwriteViolation(config, target.path, target.format);
+    }
+    configEntries.push(config);
+  }
+  return configEntries;
+}
+
 export async function build(cliFlags: BuildCliFlags) {
   if (cliFlags.bypassedPdfBuilderOption) {
     const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
-    // Host doesn't know inside path of chromium path
-    option.executableChromium = getExecutableBrowserPath();
+    // Host doesn't know browser path inside of container
+    option.executableBrowser = getExecutableBrowserPath(
+      option.browserType ?? 'chromium',
+    );
     debug('bypassedPdfBuilderOption', option);
 
     startLogging();
@@ -45,24 +70,7 @@ export async function build(cliFlags: BuildCliFlags) {
 
   const isInContainer = checkContainerEnvironment();
   startLogging('Collecting build config');
-
-  const loadedConf = collectVivliostyleConfig(cliFlags);
-  const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
-  cliFlags = loadedConf.cliFlags;
-
-  const context = vivliostyleConfig ? path.dirname(vivliostyleConfigPath) : cwd;
-
-  const configEntries: MergedConfig[] = [];
-  for (const entry of vivliostyleConfig ?? [vivliostyleConfig]) {
-    const config = await mergeConfig(cliFlags, entry, context);
-    checkUnsupportedOutputs(config);
-
-    // check output path not to overwrite source files
-    for (const target of config.outputs) {
-      checkOverwriteViolation(config, target.path, target.format);
-    }
-    configEntries.push(config);
-  }
+  const configEntries = await getFullConfig(cliFlags);
 
   for (const config of configEntries) {
     // build artifacts

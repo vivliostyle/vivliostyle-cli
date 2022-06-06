@@ -1,86 +1,90 @@
 import fs from 'fs';
-import os from 'os';
-import { performance } from 'perf_hooks';
-import puppeteer, { PuppeteerNode } from 'puppeteer-core';
+import * as playwright from 'playwright-core';
+import { registry } from 'playwright-core/lib/server';
+import type { BrowserType } from './schema/vivliostyleConfig.schema';
 import {
   beforeExitHandlers,
-  checkContainerEnvironment,
-  debug,
   logInfo,
   logSuccess,
-  logUpdate,
   startLogging,
+  stopLogging,
 } from './util';
 
-type PuppeteerLaunchOptions = Parameters<typeof puppeteer.launch>[0];
-type Browser = ReturnType<typeof puppeteer.launch>;
-export async function launchBrowser(options?: PuppeteerLaunchOptions): Browser {
-  // process listener of puppeteer won't handle signal
-  // because it doesn't support subprocess which is spawned by CLI
-  const browser = await puppeteer.launch({
-    handleSIGINT: false,
-    handleSIGTERM: false,
-    handleSIGHUP: false,
-    ...options,
-  });
+export async function launchBrowser({
+  browserType,
+  executablePath,
+  headless,
+  noSandbox,
+  disableWebSecurity,
+  disableDevShmUsage,
+}: {
+  browserType: BrowserType;
+  executablePath: string;
+  headless: boolean;
+  noSandbox?: boolean;
+  disableWebSecurity?: boolean;
+  disableDevShmUsage?: boolean;
+}): Promise<playwright.Browser> {
+  const options =
+    browserType === 'chromium'
+      ? {
+          executablePath,
+          chromiumSandbox: !noSandbox,
+          // We don't use Playwright's preset for headless Chrome to set `headless: 'chrome'` option
+          // https://github.com/vivliostyle/vivliostyle-cli/pull/280
+          headless: false,
+          args: [
+            // Preset of Playwright: https://github.com/microsoft/playwright/blob/e69c3f12e6f07ee9e737446ba22f20cb669d7211/packages/playwright-core/src/server/chromium/chromium.ts#L287-L294
+            ...(headless
+              ? [
+                  '--headless=chrome', //'--headless',
+                  '--hide-scrollbars',
+                  '--mute-audio',
+                  '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
+                ]
+              : []),
+            '--allow-file-access-from-files',
+            disableWebSecurity ? '--disable-web-security' : '',
+            disableDevShmUsage ? '--disable-dev-shm-usage' : '',
+          ],
+        }
+      : // TODO: Investigate appropriate settings on Firefox & Webkit
+        { executablePath, headless };
+  const browser = await playwright[browserType].launch(options);
   beforeExitHandlers.push(() => {
     browser.close();
   });
   return browser;
 }
 
-export function getExecutableBrowserPath(): string {
-  const isInContainer = checkContainerEnvironment();
-  if (isInContainer && os.arch() === 'arm64') {
-    // Use the Debian packages until puppeteer supports
-    // https://github.com/puppeteer/puppeteer/blob/159d2835450697dabea6f9adf6e67d158b5b8ae3/src/node/BrowserFetcher.ts#L298-L303
-    return '/usr/bin/chromium';
-  }
-  return (puppeteer as unknown as PuppeteerNode).executablePath();
+export function getExecutableBrowserPath(browserType: BrowserType): string {
+  return playwright[browserType].executablePath();
+}
+
+export function getFullBrowserName(browserType: BrowserType): string {
+  return {
+    chromium: 'Chromium',
+    firefox: 'Firefox',
+    webkit: 'Webkit',
+  }[browserType];
 }
 
 export function checkBrowserAvailability(path: string): boolean {
   return fs.existsSync(path);
 }
 
-export async function downloadBrowser(): Promise<string> {
-  const browserFetcher = (
-    puppeteer as unknown as PuppeteerNode
-  ).createBrowserFetcher({});
-  const revision = (puppeteer as unknown as PuppeteerNode)._preferredRevision;
-  const revisionInfo = browserFetcher.revisionInfo(revision);
-  debug('trying download browser, revision info', revisionInfo);
+export function isPlaywrightExecutable(path: string): boolean {
+  return registry.executables().some((exe) => exe.executablePath() === path);
+}
 
-  const toMegabytes = (bytes: number) =>
-    `${(bytes / 1024 / 1024).toFixed(1)} Mb`;
-  let time = performance.now();
-  const onProgress = (downloadedBytes: number, totalBytes: number) => {
-    const now = performance.now();
-    if (now - time < 500) {
-      return;
-    }
-    time = now;
-    const progressLen = 16;
-    const completeLen = Math.round(
-      (downloadedBytes / totalBytes) * progressLen,
-    );
-    const progressBar = `[${Array(completeLen + 1).join('=')}${Array(
-      progressLen - completeLen + 1,
-    ).join(' ')}]`;
-    logUpdate(
-      `Downloading Browser: ${progressBar} ${toMegabytes(
-        downloadedBytes,
-      )} / ${toMegabytes(totalBytes)}`,
-    );
-  };
-
-  logInfo(
-    'Rendering browser (Chromium) is not installed yet. Downloading now...',
-  );
-  startLogging('Downloading Browser');
-  await browserFetcher.download(revision, onProgress);
+export async function downloadBrowser(
+  browserType: BrowserType,
+): Promise<string> {
+  const executable = registry.findExecutable(browserType);
+  logInfo('Rendering browser is not installed yet. Downloading now...');
+  stopLogging();
+  await registry.install([executable], false);
   logSuccess(`Successfully downloaded browser`);
   startLogging();
-
-  return revisionInfo.executablePath;
+  return executable.executablePath()!;
 }
