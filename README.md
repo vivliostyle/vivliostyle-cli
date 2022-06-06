@@ -70,36 +70,48 @@ vivliostyle build
 Options:
   -c, --config <config_file>       path to vivliostyle.config.js [vivliostyle.config.js]
   -o, --output <path>              specify output file name or directory [<title>.pdf]
-                                   This option can be specified multiple, then each -o options can be supplied one -f option.
+                                   This option can be specified multiple, then each -o options
+                                   can be supplied one -f option.
                                    ex: -o output1 -f webpub -o output2.pdf -f pdf
   -f, --format <format>            specify output format corresponding output target
-                                   If an extension is specified on -o option, this field will be inferenced automatically.
+                                   If an extension is specified on -o option, this field will be
+                                   inferenced automatically.
   -s, --size <size>                output pdf size [Letter]
-                                   preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+                                   preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
+                                   ledger
                                    custom(comma separated): 182mm,257mm or 8.5in,11in
   --style <stylesheet>             additional stylesheet URL or path
   --user-style <user_stylesheet>   user stylesheet URL or path
   -d, --single-doc                 single HTML document input
-  -p, --press-ready                make generated PDF compatible with press ready PDF/X-1a [false]
+  -p, --press-ready                make generated PDF compatible with press ready PDF/X-1a
+                                   [false]
                                    This option is equivalent with "--preflight press-ready"
   -t, --timeout <seconds>          timeout limit for waiting Vivliostyle process [120]
   -T, --theme <theme>              theme path or package name
   --title <title>                  title
   --author <author>                author
   -l, --language <language>        language
-  --render-mode <mode>             if docker is set, Vivliostyle try to render PDF on Docker container [local] (choices: "local", "docker")
-  --preflight <mode>               apply the process to generate PDF for printing (choices: "press-ready", "press-ready-local")
-  --preflight-option <options...>  options for preflight process (ex: gray-scale, enforce-outline)
-                                   Please refer the document of press-ready for further information.
+  --render-mode <mode>             if docker is set, Vivliostyle try to render PDF on Docker
+                                   container [local] (choices: "local", "docker")
+  --preflight <mode>               apply the process to generate PDF for printing (choices:
+                                   "press-ready", "press-ready-local")
+  --preflight-option <options...>  options for preflight process (ex: gray-scale,
+                                   enforce-outline)
+                                   Please refer the document of press-ready for further
+                                   information.
                                    https://github.com/vibranthq/press-ready
   --verbose                        verbose log output
-  --no-sandbox                     launch chrome without sandbox. use this option when ECONNREFUSED error occurred.
-  --executable-chromium <path>     specify a path of executable Chrome (or Chromium) you installed
+  --no-sandbox                     launch chrome without sandbox. use this option when
+                                   ECONNREFUSED error occurred.
+  --executable-browser <path>      specify a path of executable browser you installed
   --image <image>                  specify a docker image to render
-  --http                           launch an HTTP server hosting contents instead of file protocol
+  --http                           launch an HTTP server hosting contents instead of file
+                                   protocol
                                    It is useful that requires CORS such as external web fonts.
-  --viewer <URL>                   specify a URL of displaying viewer instead of vivliostyle-cli's one
-                                   It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
+  --viewer <URL>                   specify a URL of displaying viewer instead of
+                                   vivliostyle-cli's one
+                                   It is useful that using own viewer that has staging features.
+                                   (ex: https://vivliostyle.vercel.app/)
   -h, --help                       display help for command
 ```
 
@@ -118,7 +130,8 @@ Options:
   -c, --config <config_file>      path to vivliostyle.config.js
   -T, --theme <theme>             theme path or package name
   -s, --size <size>               output pdf size [Letter]
-                                  preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+                                  preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
+                                  ledger
                                   custom(comma separated): 182mm,257mm or 8.5in,11in
   --style <stylesheet>            additional stylesheet URL or path
   --user-style <user_stylesheet>  user stylesheet URL or path
@@ -128,12 +141,20 @@ Options:
   --author <author>               author
   -l, --language <language>       language
   --verbose                       verbose log output
-  --no-sandbox                    launch chrome without sandbox (use this option to avoid ECONNREFUSED error)
-  --executable-chromium <path>    specify a path of executable Chrome(Chromium) you installed
-  --http                          launch an HTTP server hosting contents instead of file protocol
+  --no-sandbox                    launch chrome without sandbox (use this option to avoid
+                                  ECONNREFUSED error)
+  --executable-browser <path>     specify a path of executable browser you installed
+  --http                          launch an HTTP server hosting contents instead of file
+                                  protocol
                                   It is useful that requires CORS such as external web fonts.
-  --viewer <URL>                  specify a URL of displaying viewer instead of vivliostyle-cli's one
-                                  It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
+  --viewer <URL>                  specify a URL of displaying viewer instead of
+                                  vivliostyle-cli's one
+                                  It is useful that using own viewer that has staging features.
+                                  (ex: https://vivliostyle.vercel.app/)
+  --browser <browser>             EXPERIMENTAL SUPPORT: Specify a browser type to launch
+                                  Vivliostyle viewer [chromium]
+                                  Currently, Firefox and Webkit support preview command only!
+                                  (choices: "chromium", "firefox", "webkit")
   -h, --help                      display help for command
 ```
 
