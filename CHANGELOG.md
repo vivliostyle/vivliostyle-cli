@@ -1,3 +1,10 @@
+## [5.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.0.0...v5.0.1) (2022-06-06)
+
+
+### Bug Fixes
+
+* Add patches for published packages ([2e4b363](https://github.com/vivliostyle/vivliostyle-cli/commit/2e4b36308eef62023aea051e6b0ff90920728b11))
+
 # [5.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.4...v5.0.0) (2022-06-06)
 
 # Experimental support of Firefox & Webkit (preview command only)
