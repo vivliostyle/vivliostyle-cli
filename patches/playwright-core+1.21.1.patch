@@ -1,27 +1,42 @@
+diff --git a/node_modules/playwright-core/lib/client/connection.js b/node_modules/playwright-core/lib/client/connection.js
+index 84ecda7..fe9e413 100644
+--- a/node_modules/playwright-core/lib/client/connection.js
++++ b/node_modules/playwright-core/lib/client/connection.js
+@@ -229,7 +229,7 @@ class Connection extends _events.EventEmitter {
+     if (Array.isArray(payload)) return payload.map(p => this._replaceGuidsWithChannels(p));
+     if (payload.guid && this._objects.has(payload.guid)) return this._objects.get(payload.guid)._channel;
+ 
+-    if (typeof payload === 'object') {
++    if (typeof payload === 'object' && !(payload instanceof Buffer)) {
+       const result = {};
+ 
+       for (const key of Object.keys(payload)) result[key] = this._replaceGuidsWithChannels(payload[key]);
 diff --git a/node_modules/playwright-core/lib/client/page.js b/node_modules/playwright-core/lib/client/page.js
-index 07a6546..e9a7d7f 100644
+index 07a6546..bc4c7be 100644
 --- a/node_modules/playwright-core/lib/client/page.js
 +++ b/node_modules/playwright-core/lib/client/page.js
-@@ -810,8 +810,18 @@ class Page extends _channelOwner.ChannelOwner {
-     }
+@@ -811,7 +811,7 @@ class Page extends _channelOwner.ChannelOwner {
  
      const result = await this._channel.pdf(transportOptions);
-+    // The serialzation of TypedArray seems to be wrong
-+    // https://github.com/microsoft/playwright/issues/5241
-+    const serializeToBuffer = (obj) => {
-+      const length = Object.keys(obj).length;
-+      const array = new Uint8Array(length);
-+      for (let i = 0; i < length; i++) {
-+        array[i] = obj[i];
-+      }
-+      return array.buffer;
-+    }
  
 -    const buffer = _buffer.Buffer.from(result.pdf, 'base64');
-+    const buffer = serializeToBuffer(result.pdf);
++    const buffer = result.pdf;
  
      if (options.path) {
        await _fs.default.promises.mkdir(_path.default.dirname(options.path), {
+diff --git a/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js b/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
+index 8ddf347..1378056 100644
+--- a/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
++++ b/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
+@@ -377,7 +377,7 @@ class DispatcherConnection {
+     };
+     if (Array.isArray(payload)) return payload.map(p => this._replaceDispatchersWithGuids(p));
+ 
+-    if (typeof payload === 'object') {
++    if (typeof payload === 'object' && !(payload instanceof Buffer)) {
+       const result = {};
+ 
+       for (const key of Object.keys(payload)) result[key] = this._replaceDispatchersWithGuids(payload[key]);
 diff --git a/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js b/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
 index a71fab2..ddede77 100644
 --- a/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
