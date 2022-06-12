@@ -44,7 +44,7 @@
     "ora": "^5.4.1",
     "patch-package": "^6.4.7",
     "pdf-lib": "^1.16.0",
-    "playwright-core": "1.21.1",
+    "playwright-core": "1.22.2",
     "portfinder": "^1.0.28",
     "postinstall-postinstall": "^2.1.0",
     "press-ready": "^4.0.3",
