@@ -1,9 +1,18 @@
-## [5.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.0.0...v5.0.1) (2022-06-06)
-
+# [5.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.0.1...v5.1.0) (2022-06-12)
 
 ### Bug Fixes
 
-* Add patches for published packages ([2e4b363](https://github.com/vivliostyle/vivliostyle-cli/commit/2e4b36308eef62023aea051e6b0ff90920728b11))
+- Update Vivliostyle.js to 2.15.5: Fix layout problem with Chrome>=102 ([ecfdbb8](https://github.com/vivliostyle/vivliostyle-cli/commit/ecfdbb8a0e1776a1a6eb8b0df2b8ac81cf73d36d))
+
+### Features
+
+- Update Playwright to 1.22.2 (Chromium 102.0.5005.40) ([20f3d6a](https://github.com/vivliostyle/vivliostyle-cli/commit/20f3d6ab4f6b874a34b59aeb0f15878a623f968e))
+
+## [5.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.0.0...v5.0.1) (2022-06-06)
+
+### Bug Fixes
+
+- Add patches for published packages ([2e4b363](https://github.com/vivliostyle/vivliostyle-cli/commit/2e4b36308eef62023aea051e6b0ff90920728b11))
 
 # [5.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.4...v5.0.0) (2022-06-06)
 
@@ -17,19 +26,17 @@ vivliostyle preview --browser firefox
 
 ### chore
 
-* Drop Node v12 support ([9407f88](https://github.com/vivliostyle/vivliostyle-cli/commit/9407f88f9c3aee28e3845d1bb9b0ad61efb4a389))
-
+- Drop Node v12 support ([9407f88](https://github.com/vivliostyle/vivliostyle-cli/commit/9407f88f9c3aee28e3845d1bb9b0ad61efb4a389))
 
 ### Features
 
-* Experimental support of Firefox & Webkit ([0cedeca](https://github.com/vivliostyle/vivliostyle-cli/commit/0cedeca3ee21019fcef8b95c332d70fd6f0e1dcb))
-* Rename executableChromium option to executableBrowser ([f012071](https://github.com/vivliostyle/vivliostyle-cli/commit/f0120714bac5482d31a8ad5a28ecc9ba1fbf3c36))
-* Switch Puppeteer into Playwright ([95884ea](https://github.com/vivliostyle/vivliostyle-cli/commit/95884ea97691a3db9d59481e6e0a165d1b012348))
-
+- Experimental support of Firefox & Webkit ([0cedeca](https://github.com/vivliostyle/vivliostyle-cli/commit/0cedeca3ee21019fcef8b95c332d70fd6f0e1dcb))
+- Rename executableChromium option to executableBrowser ([f012071](https://github.com/vivliostyle/vivliostyle-cli/commit/f0120714bac5482d31a8ad5a28ecc9ba1fbf3c36))
+- Switch Puppeteer into Playwright ([95884ea](https://github.com/vivliostyle/vivliostyle-cli/commit/95884ea97691a3db9d59481e6e0a165d1b012348))
 
 ### BREAKING CHANGES
 
-* Node v14 is now the minimum supported version
+- Node v14 is now the minimum supported version
 
 ## [4.12.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v4.12.3...v4.12.4) (2022-06-01)
 
