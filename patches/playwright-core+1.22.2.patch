@@ -1,5 +1,5 @@
 diff --git a/node_modules/playwright-core/lib/client/connection.js b/node_modules/playwright-core/lib/client/connection.js
-index 84ecda7..fe9e413 100644
+index 84ecda7..d65bddc 100644
 --- a/node_modules/playwright-core/lib/client/connection.js
 +++ b/node_modules/playwright-core/lib/client/connection.js
 @@ -229,7 +229,7 @@ class Connection extends _events.EventEmitter {
@@ -12,10 +12,10 @@ index 84ecda7..fe9e413 100644
  
        for (const key of Object.keys(payload)) result[key] = this._replaceGuidsWithChannels(payload[key]);
 diff --git a/node_modules/playwright-core/lib/client/page.js b/node_modules/playwright-core/lib/client/page.js
-index 07a6546..bc4c7be 100644
+index c0f960b..7c18992 100644
 --- a/node_modules/playwright-core/lib/client/page.js
 +++ b/node_modules/playwright-core/lib/client/page.js
-@@ -811,7 +811,7 @@ class Page extends _channelOwner.ChannelOwner {
+@@ -812,7 +812,7 @@ class Page extends _channelOwner.ChannelOwner {
  
      const result = await this._channel.pdf(transportOptions);
  
@@ -25,7 +25,7 @@ index 07a6546..bc4c7be 100644
      if (options.path) {
        await _fs.default.promises.mkdir(_path.default.dirname(options.path), {
 diff --git a/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js b/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
-index 8ddf347..1378056 100644
+index 8ddf347..d1892f5 100644
 --- a/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
 +++ b/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
 @@ -377,7 +377,7 @@ class DispatcherConnection {
