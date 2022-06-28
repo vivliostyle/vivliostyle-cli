@@ -7,6 +7,28 @@ RUN set -x \
   && apt-get install -y --no-install-recommends \
     # dependencies for press-ready
     ghostscript poppler-utils
+RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections \
+  && apt-get install -y ttf-mscorefonts-installer fonts-ipafont-mincho fonts-ipaexfont \
+  # lower priority for wqy-zenhei over IPA fonts
+  && mv /etc/fonts/conf.d/64-wqy-zenhei.conf /etc/fonts/conf.d/68-wqy-zenhei.conf \
+  && echo '<?xml version="1.0"?>\
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\
+<fontconfig>\
+  <alias><family>Hiragino Mincho ProN</family><prefer><family>IPAexMincho</family></prefer></alias>\
+  <alias><family>Hiragino Mincho Pro</family><prefer><family>IPAexMincho</family></prefer></alias>\
+  <alias><family>YuMincho</family><prefer><family>IPAexMincho</family></prefer></alias>\
+  <alias><family>Yu Mincho</family><prefer><family>IPAexMincho</family></prefer></alias>\
+  <alias><family>MS Mincho</family><prefer><family>IPAMincho</family></prefer></alias>\
+  <alias><family>MS PMincho</family><prefer><family>IPAPMincho</family></prefer></alias>\
+  <alias><family>Hiragino Sans</family><prefer><family>IPAexGothic</family></prefer></alias>\
+  <alias><family>Hiragino Kaku Gothic ProN</family><prefer><family>IPAexGothic</family></prefer></alias>\
+  <alias><family>Hiragino Kaku Gothic Pro</family><prefer><family>IPAexGothic</family></prefer></alias>\
+  <alias><family>YuGothic</family><prefer><family>IPAexGothic</family></prefer></alias>\
+  <alias><family>Yu Gothic</family><prefer><family>IPAexGothic</family></prefer></alias>\
+  <alias><family>Meiryo</family><prefer><family>IPAexGothic</family></prefer></alias>\
+  <alias><family>MS Gothic</family><prefer><family>IPAGothic</family></prefer></alias>\
+  <alias><family>MS PGothic</family><prefer><family>IPAPGothic</family></prefer></alias>\
+</fontconfig>' > /etc/fonts/local.conf
 WORKDIR /opt/vivliostyle-cli
 
 # Build stage
