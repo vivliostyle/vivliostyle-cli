@@ -65,6 +65,8 @@ export async function build(cliFlags: BuildCliFlags) {
     await buildPDF(option);
     // Stop remaining stream output and kill process
     stopLogging();
+
+    teardownServer();
     return;
   }
 
