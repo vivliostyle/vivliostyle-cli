@@ -19,6 +19,34 @@ RUN set -x \
   && mkdir /ms-playwright \
   && npx playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium \
   && chmod -R 777 /ms-playwright \
+  # remove poor quality fonts
+  && apt-get purge -y ttf-unifont fonts-ipafont-gothic fonts-wqy-zenhei \
+  # install Microsoft TrueType core fonts
+  && echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections \
+  && apt-get install -y --no-install-recommends ttf-mscorefonts-installer \
+  # install all Noto fonts
+  && apt-get install -y fonts-noto \
+  # font aliases for Noto CJK fonts
+  && echo '<?xml version="1.0"?>\
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\
+<fontconfig>\
+  <alias><family>Source Han Serif</family><prefer><family>Noto Serif CJK JP</family></prefer></alias>\
+  <alias><family>Hiragino Mincho ProN</family><prefer><family>Noto Serif CJK JP</family></prefer></alias>\
+  <alias><family>Hiragino Mincho Pro</family><prefer><family>Noto Serif CJK JP</family></prefer></alias>\
+  <alias><family>YuMincho</family><prefer><family>Noto Serif CJK JP</family></prefer></alias>\
+  <alias><family>Yu Mincho</family><prefer><family>Noto Serif CJK JP</family></prefer></alias>\
+  <alias><family>MS Mincho</family><prefer><family>Noto Serif CJK JP</family></prefer></alias>\
+  <alias><family>MS PMincho</family><prefer><family>Noto Serif CJK JP</family></prefer></alias>\
+  <alias><family>Source Han Sans</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>Hiragino Sans</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>Hiragino Kaku Gothic ProN</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>Hiragino Kaku Gothic Pro</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>YuGothic</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>Yu Gothic</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>Meiryo</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>MS Gothic</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+  <alias><family>MS PGothic</family><prefer><family>Noto Sans CJK JP</family></prefer></alias>\
+</fontconfig>' > /etc/fonts/local.conf \
   && apt-get install -y --no-install-recommends \
     # dependencies for press-ready
     ghostscript poppler-utils \
