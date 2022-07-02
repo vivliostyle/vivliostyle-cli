@@ -1,8 +1,8 @@
 diff --git a/node_modules/playwright-core/lib/client/connection.js b/node_modules/playwright-core/lib/client/connection.js
-index 84ecda7..d65bddc 100644
+index 33a9e8c..bb6d158 100644
 --- a/node_modules/playwright-core/lib/client/connection.js
 +++ b/node_modules/playwright-core/lib/client/connection.js
-@@ -229,7 +229,7 @@ class Connection extends _events.EventEmitter {
+@@ -235,7 +235,7 @@ class Connection extends _events.EventEmitter {
      if (Array.isArray(payload)) return payload.map(p => this._replaceGuidsWithChannels(p));
      if (payload.guid && this._objects.has(payload.guid)) return this._objects.get(payload.guid)._channel;
  
@@ -12,10 +12,10 @@ index 84ecda7..d65bddc 100644
  
        for (const key of Object.keys(payload)) result[key] = this._replaceGuidsWithChannels(payload[key]);
 diff --git a/node_modules/playwright-core/lib/client/page.js b/node_modules/playwright-core/lib/client/page.js
-index c0f960b..7c18992 100644
+index d4cf947..a100ebb 100644
 --- a/node_modules/playwright-core/lib/client/page.js
 +++ b/node_modules/playwright-core/lib/client/page.js
-@@ -812,7 +812,7 @@ class Page extends _channelOwner.ChannelOwner {
+@@ -826,7 +826,7 @@ class Page extends _channelOwner.ChannelOwner {
  
      const result = await this._channel.pdf(transportOptions);
  
@@ -25,7 +25,7 @@ index c0f960b..7c18992 100644
      if (options.path) {
        await _fs.default.promises.mkdir(_path.default.dirname(options.path), {
 diff --git a/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js b/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
-index 8ddf347..d1892f5 100644
+index 138dcda..ea7bc5c 100644
 --- a/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
 +++ b/node_modules/playwright-core/lib/server/dispatchers/dispatcher.js
 @@ -377,7 +377,7 @@ class DispatcherConnection {
@@ -38,10 +38,10 @@ index 8ddf347..d1892f5 100644
  
        for (const key of Object.keys(payload)) result[key] = this._replaceDispatchersWithGuids(payload[key]);
 diff --git a/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js b/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
-index a71fab2..ddede77 100644
+index 2d2a3af..db8bbbd 100644
 --- a/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
 +++ b/node_modules/playwright-core/lib/server/dispatchers/pageDispatcher.js
-@@ -309,7 +309,7 @@ class PageDispatcher extends _dispatcher.Dispatcher {
+@@ -307,7 +307,7 @@ class PageDispatcher extends _dispatcher.Dispatcher {
      if (!this._page.pdf) throw new Error('PDF generation is only supported for Headless Chromium');
      const buffer = await this._page.pdf(params);
      return {
