@@ -44,6 +44,9 @@ export async function launchBrowser({
                 ]
               : []),
             '--allow-file-access-from-files',
+            // For consistent layout between preview and printing, enable LayoutNGPrinting
+            // https://bugs.chromium.org/p/chromium/issues/detail?id=1121942#c79
+            '--enable-blink-features=LayoutNGPrinting',
             disableWebSecurity ? '--disable-web-security' : '',
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
           ],
