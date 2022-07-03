@@ -256,6 +256,10 @@ export class PostProcess {
   }
 
   async setPageBoxes(pageSizeData: PageSizeData[]) {
+    if (pageSizeData.length + 1 === this.document.getPageCount()) {
+      // fix issue #312: Chromium LayoutNGPrinting adds unnecessary blank page
+      this.document.removePage(pageSizeData.length);
+    }
     if (pageSizeData.length !== this.document.getPageCount()) {
       return;
     }
