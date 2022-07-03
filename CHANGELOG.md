@@ -1,18 +1,22 @@
-# [5.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.1.0...v5.2.0) (2022-07-03)
-
+## [5.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.0...v5.2.1) (2022-07-03)
 
 ### Bug Fixes
 
-* Build not terminated when --render-mode=docker --http ([4d84329](https://github.com/vivliostyle/vivliostyle-cli/commit/4d84329791ebcff4ed16b92510c580a27b08963c)), closes [#298](https://github.com/vivliostyle/vivliostyle-cli/issues/298)
-* Reduce size of Docker image ([0dd443b](https://github.com/vivliostyle/vivliostyle-cli/commit/0dd443bd9495373915d30f13b97556feef892817)), closes [#305](https://github.com/vivliostyle/vivliostyle-cli/issues/305)
-* Update Vivliostyle.js to 2.15.6: fix to use Chromium LayoutNG ([d21b8ef](https://github.com/vivliostyle/vivliostyle-cli/commit/d21b8ef475d546b11b83afcb20b3fa2e4fab85d5))
+- Unnecessary blank page added to the last in output PDF ([fda8991](https://github.com/vivliostyle/vivliostyle-cli/commit/fda89913a879cb337138d19fa15712c82581d594)), closes [#312](https://github.com/vivliostyle/vivliostyle-cli/issues/312)
 
+# [5.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.1.0...v5.2.0) (2022-07-03)
+
+### Bug Fixes
+
+- Build not terminated when --render-mode=docker --http ([4d84329](https://github.com/vivliostyle/vivliostyle-cli/commit/4d84329791ebcff4ed16b92510c580a27b08963c)), closes [#298](https://github.com/vivliostyle/vivliostyle-cli/issues/298)
+- Reduce size of Docker image ([0dd443b](https://github.com/vivliostyle/vivliostyle-cli/commit/0dd443bd9495373915d30f13b97556feef892817)), closes [#305](https://github.com/vivliostyle/vivliostyle-cli/issues/305)
+- Update Vivliostyle.js to 2.15.6: fix to use Chromium LayoutNG ([d21b8ef](https://github.com/vivliostyle/vivliostyle-cli/commit/d21b8ef475d546b11b83afcb20b3fa2e4fab85d5))
 
 ### Features
 
-* Improve font configuration in the docker image ([57e644c](https://github.com/vivliostyle/vivliostyle-cli/commit/57e644c6a06b9be36316322afa6d956f8238c6ec))
-* Set chromium option --enable-blink-features=LayoutNGPrinting ([454b4a6](https://github.com/vivliostyle/vivliostyle-cli/commit/454b4a67234eba27d38592ec940c3cafdef0169f)), closes [1121942#c79](https://github.com/1121942/issues/c79)
-* Update Playwright to 1.23.1 (Chromium 104.0.5112.20) ([c7f0af9](https://github.com/vivliostyle/vivliostyle-cli/commit/c7f0af9d2a0814cdcedc988e307fbe96be21f2a3))
+- Improve font configuration in the docker image ([57e644c](https://github.com/vivliostyle/vivliostyle-cli/commit/57e644c6a06b9be36316322afa6d956f8238c6ec))
+- Set chromium option --enable-blink-features=LayoutNGPrinting ([454b4a6](https://github.com/vivliostyle/vivliostyle-cli/commit/454b4a67234eba27d38592ec940c3cafdef0169f)), closes [1121942#c79](https://github.com/1121942/issues/c79)
+- Update Playwright to 1.23.1 (Chromium 104.0.5112.20) ([c7f0af9](https://github.com/vivliostyle/vivliostyle-cli/commit/c7f0af9d2a0814cdcedc988e307fbe96be21f2a3))
 
 # [5.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.0.1...v5.1.0) (2022-06-12)
 
