@@ -1,0 +1,20 @@
+name: publish-draft
+
+on:
+  - push
+
+jobs:
+  publish-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Output current package version
+        id: package
+        run: |
+          VERSION=$(cat package.json | jq -r '.version')
+          echo "::set-output name=version::$VERSION"
+      - name: Build draft
+        uses: vivliostyle/action@v1
+        with:
+          input: https://vivliostyle.github.io/vivliostyle_doc/samples/niimi-webpub/publication.json
+          cli-version: ${{ steps.package.outputs.version }}
