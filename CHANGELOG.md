@@ -1,3 +1,5 @@
+## [5.2.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.1...v5.2.2) (2022-07-04)
+
 ## [5.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.0...v5.2.1) (2022-07-03)
 
 ### Bug Fixes
