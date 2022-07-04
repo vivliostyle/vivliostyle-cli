@@ -1,3 +1,9 @@
+## [5.2.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.1...v5.2.3) (2022-07-04)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.15.7: Fix float layout on printing ([36c891d](https://github.com/vivliostyle/vivliostyle-cli/commit/36c891d174e1f878864e36595fb9217e8569b9c3))
+
 ## [5.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.0...v5.2.1) (2022-07-03)
 
 ### Bug Fixes
