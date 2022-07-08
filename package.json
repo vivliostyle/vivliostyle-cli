@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@vivliostyle/vfm": "1.2.2",
-    "@vivliostyle/viewer": "2.15.7",
+    "@vivliostyle/viewer": "2.15.8",
     "ajv": "^7.0.4",
     "ajv-formats": "^1.5.1",
     "better-ajv-errors": "^1.2.0",
