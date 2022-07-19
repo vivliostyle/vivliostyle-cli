@@ -1,3 +1,9 @@
+# [5.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.4...v5.3.0) (2022-07-19)
+
+### Features
+
+- Update Vivliostyle.js to 2.16.0: Improve CSS support ([d61e62d](https://github.com/vivliostyle/vivliostyle-cli/commit/d61e62d797b58fc11136f9061f8ff6f0cc43a587))
+
 ## [5.2.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.3...v5.2.4) (2022-07-08)
 
 ### Bug Fixes
