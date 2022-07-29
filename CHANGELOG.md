@@ -1,3 +1,9 @@
+# [5.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.3.0...v5.4.0) (2022-07-29)
+
+### Features
+
+- Update Vivliostyle.js to 2.17.0: Supports CSS Variables ([8533a30](https://github.com/vivliostyle/vivliostyle-cli/commit/8533a30e6c1f78bc5eae70894677af09a7ddd56c))
+
 # [5.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.2.4...v5.3.0) (2022-07-19)
 
 ### Features
