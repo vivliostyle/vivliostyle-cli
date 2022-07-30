@@ -1,3 +1,9 @@
+# [5.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.4.0...v5.5.0) (2022-07-30)
+
+### Features
+
+- Update Playwright to 1.24.2 (Chromium 104.0.5112.48) ([8a2bdec](https://github.com/vivliostyle/vivliostyle-cli/commit/8a2bdec73e039dd052aa0f027b3c556209d84e91)), closes [#299](https://github.com/vivliostyle/vivliostyle-cli/issues/299)
+
 # [5.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.3.0...v5.4.0) (2022-07-29)
 
 ### Features
