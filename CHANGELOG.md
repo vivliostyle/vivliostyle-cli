@@ -1,3 +1,9 @@
+## [5.5.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.5.0...v5.5.1) (2022-08-09)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.17.1: Bug Fixes ([d26c01c](https://github.com/vivliostyle/vivliostyle-cli/commit/d26c01c96300b488d69fba9434d77098780ec97f))
+
 # [5.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.4.0...v5.5.0) (2022-07-30)
 
 ### Features
