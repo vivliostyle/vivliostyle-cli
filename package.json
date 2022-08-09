@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@vivliostyle/vfm": "1.2.2",
-    "@vivliostyle/viewer": "2.17.0",
+    "@vivliostyle/viewer": "2.17.1",
     "ajv": "^7.0.4",
     "ajv-formats": "^1.5.1",
     "better-ajv-errors": "^1.2.0",
