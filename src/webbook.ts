@@ -7,7 +7,7 @@ import type {
   PublicationLinks,
   PublicationManifest,
 } from './schema/publication.schema';
-import { debug } from './util';
+import { debug, pathEquals } from './util';
 
 export async function exportWebPublication({
   exportAliases,
@@ -62,7 +62,7 @@ export async function exportWebPublication({
       if (stderr) {
         throw new Error(stderr);
       }
-      if (path.join(input, entry.source) === manifestPath) {
+      if (pathEquals(path.join(input, entry.source), manifestPath)) {
         actualManifestPath = target;
       }
     }
@@ -75,9 +75,9 @@ export async function exportWebPublication({
     for (const entry of relExportAliases) {
       const rewriteAliasPath = (e: PublicationLinks | string) => {
         if (typeof e === 'string') {
-          return e === entry.source ? entry.source : e;
+          return pathEquals(e, entry.source) ? entry.source : e;
         }
-        if (e.url === entry.source) {
+        if (pathEquals(e.url, entry.source)) {
           e.url = entry.target;
         }
         return e;

@@ -6,7 +6,14 @@ import process from 'process';
 import path from 'upath';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { cliVersion } from './const';
-import { debug, isUrlString, log, startLogging, stopLogging } from './util';
+import {
+  debug,
+  isUrlString,
+  log,
+  pathEquals,
+  startLogging,
+  stopLogging,
+} from './util';
 
 export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
 export const CONTAINER_ROOT_DIR = '/data';
@@ -38,7 +45,7 @@ export function collectVolumeArgs(mountPoints: string[]): string[] {
         return false;
       }
       let parent = p;
-      while (parent !== path.dirname(parent)) {
+      while (!pathEquals(parent, path.dirname(parent))) {
         parent = path.dirname(parent);
         if (array.includes(parent)) {
           // other mount point contains its directory

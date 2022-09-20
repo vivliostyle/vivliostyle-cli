@@ -6,6 +6,7 @@ import {
   beforeExitHandlers,
   logInfo,
   logSuccess,
+  pathEquals,
   startLogging,
   stopLogging,
 } from './util';
@@ -77,7 +78,9 @@ export function checkBrowserAvailability(path: string): boolean {
 }
 
 export function isPlaywrightExecutable(path: string): boolean {
-  return registry.executables().some((exe) => exe.executablePath() === path);
+  return registry
+    .executables()
+    .some((exe) => pathEquals(exe.executablePath() ?? '', path));
 }
 
 export async function downloadBrowser(

@@ -24,6 +24,7 @@ import {
   logInfo,
   logSuccess,
   logUpdate,
+  pathEquals,
   startLogging,
 } from './util';
 
@@ -182,9 +183,11 @@ export async function buildPDF({
       }
       const url = new URL(response.url());
       return url.protocol === 'file:'
-        ? entry.target === url.pathname
-        : path.relative(workspaceDir, entry.target) ===
-            url.pathname.substring(1);
+        ? pathEquals(entry.target, url.pathname)
+        : pathEquals(
+            path.relative(workspaceDir, entry.target),
+            url.pathname.substring(1),
+          );
     });
     if (entry) {
       if (!lastEntry) {
