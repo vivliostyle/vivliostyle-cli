@@ -80,6 +80,11 @@ Options:
                                    preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
                                    ledger
                                    custom(comma separated): 182mm,257mm or 8.5in,11in
+  -m, --crop-marks                 print crop marks
+  --bleed <bleed>                  extent of the bleed area for printing with crop marks [3mm]
+  --crop-offset <offset>           distance between the edge of the trim size and the edge of
+                                   the media size. [auto (13mm + bleed)]
+  --css <CSS>                      custom style CSS code. (ex: ":root {--my-color: lime;}")
   --style <stylesheet>             additional stylesheet URL or path
   --user-style <user_stylesheet>   user stylesheet URL or path
   -d, --single-doc                 single HTML document input
@@ -133,6 +138,11 @@ Options:
                                   preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
                                   ledger
                                   custom(comma separated): 182mm,257mm or 8.5in,11in
+  -m, --crop-marks                print crop marks
+  --bleed <bleed>                 extent of the bleed area for printing with crop marks [3mm]
+  --crop-offset <offset>          distance between the edge of the trim size and the edge of
+                                  the media size. [auto (13mm + bleed)]
+  --css <CSS>                     custom style CSS code. (ex: ":root {--my-color: lime;}")
   --style <stylesheet>            additional stylesheet URL or path
   --user-style <user_stylesheet>  user stylesheet URL or path
   -d, --single-doc                single HTML document input

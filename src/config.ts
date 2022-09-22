@@ -93,6 +93,10 @@ export interface CliFlags {
   targets?: Pick<OutputFormat, 'path' | 'format'>[];
   theme?: string;
   size?: string;
+  cropMarks?: boolean;
+  bleed?: string;
+  cropOffset?: string;
+  css?: string;
   style?: string;
   userStyle?: string;
   singleDoc?: boolean;
@@ -145,6 +149,10 @@ export type MergedConfig = {
     target: string;
   }[];
   size: PageSize | undefined;
+  cropMarks: boolean;
+  bleed: string | undefined;
+  cropOffset: string | undefined;
+  css: string | undefined;
   customStyle: string | undefined;
   customUserStyle: string | undefined;
   singleDoc: boolean;
@@ -426,6 +434,10 @@ export async function mergeConfig<T extends CliFlags>(
   const readingProgression = config?.readingProgression ?? undefined;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
+  const cropMarks = cliFlags.cropMarks ?? false;
+  const bleed = cliFlags.bleed;
+  const cropOffset = cliFlags.cropOffset;
+  const css = cliFlags.css;
   const customStyle =
     cliFlags.style &&
     (isUrlString(cliFlags.style)
@@ -543,6 +555,10 @@ export async function mergeConfig<T extends CliFlags>(
     outputs,
     themeIndexes,
     size,
+    cropMarks,
+    bleed,
+    cropOffset,
+    css,
     customStyle,
     customUserStyle,
     singleDoc,
