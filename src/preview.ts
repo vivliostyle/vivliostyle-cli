@@ -35,6 +35,11 @@ export async function preview(cliFlags: PreviewCliFlags) {
     ? upath.dirname(vivliostyleConfigPath)
     : cwd;
 
+  if (!cliFlags.input && !vivliostyleConfig) {
+    // Empty input, open Viewer start page
+    cliFlags.input = 'data:,';
+  }
+
   let config = await mergeConfig(
     cliFlags,
     // Only show preview of first entry

@@ -107,7 +107,10 @@ export function getViewerFullUrl(
     return url.replace(/&/g, '%26');
   }
 
-  let viewerParams = `src=${escapeParam(sourceUrl.href)}`;
+  let viewerParams =
+    sourceUrl.href === 'data:,'
+      ? '' // open Viewer start page
+      : `src=${escapeParam(sourceUrl.href)}`;
   viewerParams += `&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
   if (style) {
