@@ -42,7 +42,7 @@
     "node-stream-zip": "^1.14.0",
     "ora": "^5.4.1",
     "pdf-lib": "^1.16.0",
-    "playwright-core": "1.24.2",
+    "playwright-core": "1.26.0",
     "portfinder": "^1.0.28",
     "press-ready": "^4.0.3",
     "prettier": "^2.3.2",
