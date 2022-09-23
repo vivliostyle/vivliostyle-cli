@@ -88,7 +88,7 @@ it('converts to valid broker url', async () => {
   };
   maskConfig(validOut2);
   expect(validOut2.url).toBe(
-    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=false&renderAllPages=false&style=data:,#test>p::before{content:\"エスケープ チェック\";display:block}&userStyle=file://path/to/local/style/file/which/might/include/white space/%26/special#?character.css&style=data:,/*<viewer>*/%40page%7Bsize%3A5in%2010in!important%3B%7D/*</viewer>*/',
+    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=false&renderAllPages=false&style=data:,#test>p::before{content:\"エスケープ チェック\";display:block}&userStyle=file://path/to/local/style/file/which/might/include/white space/%26/special#?character.css&style=data:,/*<viewer>*/%40page%7Bsize%3A5in%2010in%3B%7D/*</viewer>*/',
   );
 
   const validOut3 = {
@@ -112,7 +112,7 @@ it('converts to valid broker url', async () => {
   };
   maskConfig(validOut3);
   expect(validOut3.url).toBe(
-    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=true&renderAllPages=true&style=author.css&userStyle=user.css&style=data:,/*<viewer>*/%40page%7Bsize%3Aa5!important%3B%7D/*</viewer>*/%3Aroot%7B--color%3A%23ABC%7D',
+    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=true&renderAllPages=true&style=author.css&userStyle=user.css&style=data:,/*<viewer>*/%40page%7Bsize%3Aa5%3B%7D/*</viewer>*/%3Aroot%7B--color%3A%23ABC%7D',
   );
 
   const validOut4 = {
@@ -135,7 +135,7 @@ it('converts to valid broker url', async () => {
   };
   maskConfig(validOut4);
   expect(validOut4.url).toBe(
-    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=true&renderAllPages=true&style=data:,/*<viewer>*/%40page%7Bmarks%3Acrop%20cross!important%3Bbleed%3A9pt!important%3Bcrop-offset%3A1in!important%3B%7D/*</viewer>*/',
+    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=true&renderAllPages=true&style=data:,/*<viewer>*/%40page%7Bmarks%3Acrop%20cross%3Bbleed%3A9pt%3Bcrop-offset%3A1in%3B%7D/*</viewer>*/',
   );
 });
 

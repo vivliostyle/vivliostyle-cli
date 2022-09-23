@@ -138,16 +138,16 @@ export function getViewerFullUrl(
   if (pageSizeValue || cropMarks || bleed || cropOffset || css) {
     let pageStyle = '@page{';
     if (pageSizeValue) {
-      pageStyle += `size:${pageSizeValue}!important;`;
+      pageStyle += `size:${pageSizeValue};`;
     }
     if (cropMarks) {
-      pageStyle += `marks:crop cross!important;`;
+      pageStyle += `marks:crop cross;`;
     }
     if (bleed || cropMarks) {
-      pageStyle += `bleed:${bleed ?? '3mm'}!important;`;
+      pageStyle += `bleed:${bleed ?? '3mm'};`;
     }
     if (cropOffset) {
-      pageStyle += `crop-offset:${cropOffset}!important;`;
+      pageStyle += `crop-offset:${cropOffset};`;
     }
     pageStyle += '}';
 
