@@ -19,6 +19,10 @@ export interface Server {
 
 export type ViewerUrlOption = {
   size?: PageSize;
+  cropMarks?: boolean;
+  bleed?: string;
+  cropOffset?: string;
+  css?: string;
   style?: string;
   userStyle?: string;
   singleDoc?: boolean;
@@ -97,7 +101,17 @@ export function teardownServer() {
 }
 
 export function getViewerFullUrl(
-  { size, style, userStyle, singleDoc, quick }: ViewerUrlOption,
+  {
+    size,
+    cropMarks,
+    bleed,
+    cropOffset,
+    css,
+    style,
+    userStyle,
+    singleDoc,
+    quick,
+  }: ViewerUrlOption,
   { viewerUrl, sourceUrl }: { viewerUrl: URL; sourceUrl: URL },
 ): string {
   const pageSizeValue =
@@ -121,11 +135,29 @@ export function getViewerFullUrl(
     viewerParams += `&userStyle=${escapeParam(userStyle)}`;
   }
 
-  if (pageSizeValue) {
-    viewerParams +=
-      '&userStyle=data:,/*<viewer>*/' +
-      encodeURIComponent(`@page{size:${pageSizeValue}!important;}`) +
-      '/*</viewer>*/';
+  if (pageSizeValue || cropMarks || bleed || cropOffset || css) {
+    let pageStyle = '@page{';
+    if (pageSizeValue) {
+      pageStyle += `size:${pageSizeValue};`;
+    }
+    if (cropMarks) {
+      pageStyle += `marks:crop cross;`;
+    }
+    if (bleed || cropMarks) {
+      pageStyle += `bleed:${bleed ?? '3mm'};`;
+    }
+    if (cropOffset) {
+      pageStyle += `crop-offset:${cropOffset};`;
+    }
+    pageStyle += '}';
+
+    // The pageStyle settings are put between the `/*<viewer>*/` and `/*</viewer>*/`
+    // in the `&style=data:,…` viewer parameter so that they are reflected in the
+    // Settings menu of the Viewer. Also the custom CSS code is appended after the
+    // `/*</viewer>*/` so that it is shown in the Edit CSS box in the Settings menu.
+    viewerParams += `&style=data:,/*<viewer>*/${encodeURIComponent(
+      pageStyle,
+    )}/*</viewer>*/${encodeURIComponent(css ?? '')}`;
   }
 
   return `${viewerUrl.href}#${viewerParams}`;
