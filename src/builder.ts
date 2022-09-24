@@ -28,6 +28,7 @@ import {
   DetailError,
   filterRelevantAjvErrors,
   log,
+  pathEquals,
   pathStartsWith,
 } from './util';
 
@@ -202,7 +203,7 @@ export async function compile(
       entry.type === 'text/html' ||
       entry.type === 'application/xhtml+xml'
     ) {
-      if (entry.source !== entry.target) {
+      if (!pathEquals(entry.source, entry.target)) {
         const html = processManuscriptHtml(entry.source, {
           style,
           title: entry.title,
@@ -212,7 +213,7 @@ export async function compile(
         fs.writeFileSync(entry.target, html);
       }
     } else {
-      if (entry.source !== entry.target) {
+      if (!pathEquals(entry.source, entry.target)) {
         shelljs.cp(entry.source, entry.target);
       }
     }
@@ -221,7 +222,7 @@ export async function compile(
   // copy theme
   for (const theme of themeIndexes) {
     if (theme.type === 'file') {
-      if (theme.location !== theme.destination) {
+      if (!pathEquals(theme.location, theme.destination)) {
         shelljs.mkdir('-p', path.dirname(theme.destination));
         shelljs.cp(theme.location, theme.destination);
       }
@@ -273,7 +274,7 @@ export async function copyAssets({
   workspaceDir,
   includeAssets,
 }: MergedConfig): Promise<void> {
-  if (entryContextDir === workspaceDir) {
+  if (pathEquals(entryContextDir, workspaceDir)) {
     return;
   }
   const relWorkspaceDir = path.relative(entryContextDir, workspaceDir);

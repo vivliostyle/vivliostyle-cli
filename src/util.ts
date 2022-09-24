@@ -253,10 +253,12 @@ export async function touchTmpFile(path: string): Promise<() => void> {
   return callback;
 }
 
+export function pathEquals(path1: string, path2: string): boolean {
+  return upath.relative(path1, path2) === '';
+}
+
 export function pathStartsWith(path1: string, path2: string): boolean {
-  const path1n = upath.normalize(path1).replace(/\/?$/, '/');
-  const path2n = upath.normalize(path2).replace(/\/?$/, '/');
-  return path1n.startsWith(path2n);
+  return !upath.relative(path2, path1).startsWith('..');
 }
 
 export function isUrlString(str: string): boolean {

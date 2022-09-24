@@ -41,6 +41,7 @@ import {
   isUrlString,
   log,
   logWarn,
+  pathEquals,
   readJSON,
   statFileSync,
   touchTmpFile,
@@ -730,7 +731,10 @@ async function composeProjectConfig<T extends CliFlags>(
     if (!('path' in entry)) {
       const theme =
         parseTheme(entry.theme, context, workspaceDir) ?? themeIndexes[0];
-      if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
+      if (
+        theme &&
+        themeIndexes.every((t) => !pathEquals(t.location, theme.location))
+      ) {
         themeIndexes.push(theme);
       }
       return {
@@ -758,7 +762,10 @@ async function composeProjectConfig<T extends CliFlags>(
       metadata.theme ??
       themeIndexes[0];
 
-    if (theme && themeIndexes.every((t) => t.location !== theme.location)) {
+    if (
+      theme &&
+      themeIndexes.every((t) => !pathEquals(t.location, theme.location))
+    ) {
       themeIndexes.push(theme);
     }
 

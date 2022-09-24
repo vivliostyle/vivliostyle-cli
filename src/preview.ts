@@ -14,6 +14,7 @@ import {
   debug,
   isUrlString,
   logSuccess,
+  pathEquals,
   pathStartsWith,
   startLogging,
   stopLogging,
@@ -140,19 +141,22 @@ export async function preview(cliFlags: PreviewCliFlags) {
           return true;
         }
         if (
-          config.entryContextDir !== config.workspaceDir &&
+          !pathEquals(config.entryContextDir, config.workspaceDir) &&
           pathStartsWith(path, config.workspaceDir)
         ) {
           return true; // ignore saved intermediate files
         }
-        if (config.manifestAutoGenerate && path === config.manifestPath) {
+        if (
+          config.manifestAutoGenerate &&
+          pathEquals(path, config.manifestPath)
+        ) {
           return true; // ignore generated pub-manifest
         }
         if (
           config.entries.length &&
           /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
-          !config.entries.find(
-            (entry) => path === (entry as { source: string }).source,
+          !config.entries.find((entry) =>
+            pathEquals(path, (entry as { source: string }).source),
           )
         ) {
           return true; // ignore md or html files not in entries source
@@ -161,9 +165,9 @@ export async function preview(cliFlags: PreviewCliFlags) {
           config.themeIndexes.find(
             (theme) =>
               (theme.type === 'file' || theme.type === 'package') &&
-              theme.destination !== theme.location &&
+              !pathEquals(theme.destination, theme.location) &&
               (theme.type === 'file'
-                ? path === theme.destination
+                ? pathEquals(path, theme.destination)
                 : pathStartsWith(path, theme.destination)),
           )
         ) {
@@ -176,11 +180,14 @@ export async function preview(cliFlags: PreviewCliFlags) {
     })
     .on('all', (event, path) => {
       if (
-        upath.join(config.entryContextDir, path) === config.input.entry ||
+        pathEquals(
+          upath.join(config.entryContextDir, path),
+          config.input.entry,
+        ) ||
         /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
       ) {
         handleChangeEvent(path);
-      } else if (path === upath.basename(vivliostyleConfigPath)) {
+      } else if (pathEquals(path, upath.basename(vivliostyleConfigPath))) {
         reloadConfig(path);
       }
     });
