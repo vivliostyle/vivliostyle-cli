@@ -1,3 +1,21 @@
+# [5.6.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.5.1...v5.6.0) (2022-09-24)
+
+
+### Bug Fixes
+
+* case-insensitive pathname comparison is necessary for Windows ([972f02a](https://github.com/vivliostyle/vivliostyle-cli/commit/972f02afbac4eb7b33fe1d2081a319519daceed9)), closes [#325](https://github.com/vivliostyle/vivliostyle-cli/issues/325) [#325](https://github.com/vivliostyle/vivliostyle-cli/issues/325)
+* page size with !important in author stylesheets should have higher priority than --size option ([fae01c5](https://github.com/vivliostyle/vivliostyle-cli/commit/fae01c58a62027cfd63a38d97504157da242317f))
+* Update Vivliostyle.js to 2.17.2: Bug Fix ([1c01ee5](https://github.com/vivliostyle/vivliostyle-cli/commit/1c01ee58dd70a369052db4a3658eac4066dc0ec8))
+
+
+### Features
+
+* add custom CSS option (--css) and crop marks options (--crop-marks, --bleed, --crop-offset) ([72c5801](https://github.com/vivliostyle/vivliostyle-cli/commit/72c5801d0e4cac0fe13e30845adc3cdae028dbaf))
+* allow empty input for preview command to open Viewer start page ([9bec5a9](https://github.com/vivliostyle/vivliostyle-cli/commit/9bec5a9f43ed4e5b683f5acb521886d54abd6003))
+* Update Playwright to 1.25.2 (Chromium 105.0.5195.19) ([49beba7](https://github.com/vivliostyle/vivliostyle-cli/commit/49beba790a096ab09080f44da95bd8bcf14ca895))
+* Update Playwright to 1.26.0 (Chromium 106.0.5249.30) ([ea2a077](https://github.com/vivliostyle/vivliostyle-cli/commit/ea2a07713b667b138862ce50291d455e4c099217))
+* Update Vivliostyle.js to 2.18.1: improved viewer settings and bug fixes ([637fd5b](https://github.com/vivliostyle/vivliostyle-cli/commit/637fd5b1551424304124d689bf1f896612c61d86)), closes [#993](https://github.com/vivliostyle/vivliostyle-cli/issues/993) [#991](https://github.com/vivliostyle/vivliostyle-cli/issues/991) [#992](https://github.com/vivliostyle/vivliostyle-cli/issues/992) [#995](https://github.com/vivliostyle/vivliostyle-cli/issues/995) [#978](https://github.com/vivliostyle/vivliostyle-cli/issues/978) [#987](https://github.com/vivliostyle/vivliostyle-cli/issues/987) [#597](https://github.com/vivliostyle/vivliostyle-cli/issues/597) [#976](https://github.com/vivliostyle/vivliostyle-cli/issues/976) [#979](https://github.com/vivliostyle/vivliostyle-cli/issues/979) [#986](https://github.com/vivliostyle/vivliostyle-cli/issues/986) [#985](https://github.com/vivliostyle/vivliostyle-cli/issues/985)
+
 ## [5.5.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.5.0...v5.5.1) (2022-08-09)
 
 ### Bug Fixes
