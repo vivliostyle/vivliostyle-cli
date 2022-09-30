@@ -1,3 +1,9 @@
+## [5.6.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.6.0...v5.6.1) (2022-09-30)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.18.2: Bug fixes on text-spacing and viewer ([9123122](https://github.com/vivliostyle/vivliostyle-cli/commit/91231225866b89d26b0789addd090691ed9bab61))
+
 # [5.6.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.5.1...v5.6.0) (2022-09-24)
 
 ### Bug Fixes

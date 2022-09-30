@@ -1,7 +1,7 @@
 {
   "name": "@vivliostyle/cli",
   "description": "Save the pdf file via headless browser and Vivliostyle.",
-  "version": "5.6.0",
+  "version": "5.6.1",
   "author": "spring_raining <harusamex.com@gmail.com>",
   "scripts": {
     "build": "yarn clean && run-p build:*",
