@@ -1251,10 +1251,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vivliostyle/core@^2.18.3":
-  version "2.18.3"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.18.3.tgz#efae16b5b56667083e326ce26228ca6a73960e25"
-  integrity sha512-es93oToBQZsBVosbQk8RFqARPq1O6fVZs1O6kcQZWK26JjAD8Ko3Kp+nufOb/W3GOtOux4tUHSw2ttGKachKWQ==
+"@vivliostyle/core@^2.18.4":
+  version "2.18.4"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.18.4.tgz#4b5ff3d71c18d18d7ca59c83942991797d09f8b9"
+  integrity sha512-rTJIbfkt3hMFbeXNW2YbXCp16bJCWpYeOE8dtVC/YCIAp/OeWRQ9KzKYGKrFVGklPOzXqMAjTY7UO7fj089P2A==
   dependencies:
     fast-diff "^1.2.0"
 
@@ -1297,12 +1297,12 @@
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
 
-"@vivliostyle/viewer@2.18.3":
-  version "2.18.3"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.18.3.tgz#c4096269d093eda1bbbb14ddf7351ed68797dd19"
-  integrity sha512-KydPugN0VmTOZBrVhEDHLeGQsNNb7nO2wpfL1ETGZHxB1yNbACDJbABDY5PmQNc+awb+o5llZK6Z4DOh7+ggJA==
+"@vivliostyle/viewer@2.18.4":
+  version "2.18.4"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.18.4.tgz#70ac226110e3c4541b9bd572259f070b9d66215c"
+  integrity sha512-Xxl0rFgSZg/ZqVP/pZmBUiM7czraHdpksRJZugT6UPXjh1plUrZTcXSfiy2RQuXGMpbmE7qYR4qONcqDT13mwA==
   dependencies:
-    "@vivliostyle/core" "^2.18.3"
+    "@vivliostyle/core" "^2.18.4"
     font-awesome "^4.7.0"
     knockout "^3.5.0"
 
