@@ -1,3 +1,9 @@
+# [5.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.7.0...v5.8.0) (2022-10-18)
+
+### Features
+
+- Update Vivliostyle.js to 2.19.0: Support :is()/:not()/:where()/:has() pseudo-classes ([8d1299a](https://github.com/vivliostyle/vivliostyle-cli/commit/8d1299a63e30d2876bf6345b9bd043b819bdd8ea))
+
 # [5.7.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.6.2...v5.7.0) (2022-10-12)
 
 ### Bug Fixes
