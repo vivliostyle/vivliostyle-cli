@@ -1,3 +1,9 @@
+## [5.8.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.8.0...v5.8.1) (2022-10-21)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.19.1: Bug Fix ([ba8ebce](https://github.com/vivliostyle/vivliostyle-cli/commit/ba8ebce3d324c330bdcf1c56f083d5bcd6245072))
+
 # [5.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.7.0...v5.8.0) (2022-10-18)
 
 ### Features
