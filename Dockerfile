@@ -59,7 +59,7 @@ WORKDIR /opt/vivliostyle-cli
 # Build stage
 FROM base AS builder
 COPY package.json yarn.lock /opt/vivliostyle-cli/
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --network-timeout 600000
 COPY . /opt/vivliostyle-cli
 RUN yarn build
 
@@ -68,7 +68,7 @@ FROM base AS runtime
 ARG VS_CLI_VERSION
 RUN test $VS_CLI_VERSION
 COPY . /opt/vivliostyle-cli
-RUN yarn install --frozen-lockfile --production \
+RUN yarn install --frozen-lockfile --production --network-timeout 600000 \
   && echo $VS_CLI_VERSION > .vs-cli-version \
   && yarn link \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
