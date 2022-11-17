@@ -1,3 +1,14 @@
+# [5.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.8.1...v5.9.0) (2022-11-17)
+
+### Bug Fixes
+
+- remove no longer necessary chromium option to enable LayoutNGPrinting ([3309491](https://github.com/vivliostyle/vivliostyle-cli/commit/330949122070b2eb5b25b377702d244be2c8e205)), closes [#347](https://github.com/vivliostyle/vivliostyle-cli/issues/347)
+- Update Vivliostyle.js to 2.192.2: Bug Fixes ([6c140cc](https://github.com/vivliostyle/vivliostyle-cli/commit/6c140ccbe9ba74b285c5a195505f4423652351d3))
+
+### Features
+
+- Update Playwright to 1.28.0 (Chromium 108.0.5359.29) ([334d246](https://github.com/vivliostyle/vivliostyle-cli/commit/334d246c3dfe191e1b6f94618f7e5c6dd8729b2c)), closes [#347](https://github.com/vivliostyle/vivliostyle-cli/issues/347)
+
 ## [5.8.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.8.0...v5.8.1) (2022-10-21)
 
 ### Bug Fixes
