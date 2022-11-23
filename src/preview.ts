@@ -19,8 +19,8 @@ import {
   debug,
   isUrlString,
   logSuccess,
+  pathContains,
   pathEquals,
-  pathStartsWith,
   startLogging,
   stopLogging,
 } from './util';
@@ -151,7 +151,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
         }
         if (
           !pathEquals(config.entryContextDir, config.workspaceDir) &&
-          pathStartsWith(path, config.workspaceDir)
+          pathContains(config.workspaceDir, path)
         ) {
           return true; // ignore saved intermediate files
         }
@@ -177,7 +177,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
         //       !pathEquals(theme.destination, theme.location) &&
         //       (theme.type === 'file'
         //         ? pathEquals(path, theme.destination)
-        //         : pathStartsWith(path, theme.destination)),
+        //         : pathContains(theme.destination, path)),
         //   )
         // ) {
         //   return true; // ignore copied theme files

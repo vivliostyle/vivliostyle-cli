@@ -36,10 +36,9 @@ const temporaryMovePackagesDirectrory = async <T = unknown>(
 };
 
 export async function checkThemeInstallationNecessity({
-  workspaceDir,
+  themesDir,
   themeIndexes,
-}: Pick<MergedConfig, 'workspaceDir' | 'themeIndexes'>): Promise<boolean> {
-  const themesDir = path.join(workspaceDir, 'themes');
+}: Pick<MergedConfig, 'themesDir' | 'themeIndexes'>): Promise<boolean> {
   if (!fs.existsSync(themesDir)) {
     return themeIndexes.some((theme) => theme.type === 'package');
   }
@@ -51,22 +50,17 @@ export async function checkThemeInstallationNecessity({
     };
     const arb = new Arborist(commonOpt);
     const tree = await arb.loadActual();
-    const children = Array.from(tree.children.values());
+    const pkgs = Array.from(tree.children.keys());
     return themeIndexes.some(
-      (theme) =>
-        theme.type === 'package' &&
-        (children.length === 0 ||
-          // https://github.com/npm/cli/blob/dc8e6bdd1d9e3416846c4f0624705cb42a7fb067/workspaces/arborist/lib/node.js#L1088
-          !children.every((node) => (node as any).satisfies(theme.name))),
+      (theme) => theme.type === 'package' && !pkgs.includes(theme.name),
     );
   });
 }
 
 export async function installThemeDependencies({
-  workspaceDir,
+  themesDir,
   themeIndexes,
-}: Pick<MergedConfig, 'workspaceDir' | 'themeIndexes'>): Promise<void> {
-  const themesDir = path.join(workspaceDir, 'themes');
+}: Pick<MergedConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
   shelljs.mkdir('-p', themesDir);
 
   await temporaryMovePackagesDirectrory(themesDir, async () => {

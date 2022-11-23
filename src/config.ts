@@ -139,6 +139,7 @@ export type ManifestConfig = XOR<
 export type MergedConfig = {
   entryContextDir: string;
   workspaceDir: string;
+  themesDir: string;
   entries: ParsedEntry[];
   input: InputFormat;
   outputs: OutputFormat[];
@@ -209,46 +210,48 @@ function normalizeEntry(e: string | EntryObject): EntryObject {
 }
 
 // parse theme locator
-export function parseTheme(
-  locator: string | undefined,
-  contextDir: string,
-  workspaceDir: string,
-): ParsedTheme | undefined {
-  if (typeof locator !== 'string' || locator == '') {
-    return undefined;
-  }
-
+export function parseTheme({
+  specifier,
+  entryContextDir,
+  workspaceDir,
+  themesDir,
+}: {
+  specifier: string;
+  entryContextDir: string;
+  workspaceDir: string;
+  themesDir: string;
+}): ParsedTheme {
   // url
-  if (isUrlString(locator)) {
+  if (isUrlString(specifier)) {
     return {
       type: 'uri',
-      name: path.basename(locator),
-      location: locator,
+      name: path.basename(specifier),
+      location: specifier,
     };
   }
 
   // bare .css file
-  const stylePath = path.resolve(contextDir, locator);
+  const stylePath = path.resolve(entryContextDir, specifier);
   if (fs.existsSync(stylePath) && stylePath.endsWith('.css')) {
-    const sourceRelPath = path.relative(contextDir, stylePath);
+    const sourceRelPath = path.relative(entryContextDir, stylePath);
     return {
       type: 'file',
-      name: path.basename(locator),
+      name: path.basename(specifier),
       source: stylePath,
       location: path.resolve(workspaceDir, sourceRelPath),
     };
   }
 
   // node_modules, local pkg
-  const parsed = parsePackageName(locator, contextDir);
+  const parsed = parsePackageName(specifier, entryContextDir);
 
   if (!parsed) {
-    throw new Error(`Invalid package name: ${locator}`);
+    throw new Error(`Invalid package name: ${specifier}`);
   }
   // To security reason, Vivliostyle CLI disallow other than npm registry or local file as download source
   // TODO: Add option that user can allow an unofficial registry explicitly
   if (!parsed.registry && parsed.type !== 'directory') {
-    throw new Error(`This package specifier is not allowed: ${locator}`);
+    throw new Error(`This package specifier is not allowed: ${specifier}`);
   }
   let name = parsed.name;
   if (parsed.type === 'directory' && parsed.fetchSpec) {
@@ -259,13 +262,13 @@ export function parseTheme(
     }
   }
   if (!name) {
-    throw new Error(`Could not determine the package name: ${locator}`);
+    throw new Error(`Could not determine the package name: ${specifier}`);
   }
   return {
     type: 'package',
     name,
-    specifier: locator,
-    location: path.join(workspaceDir, 'themes/packages', name),
+    specifier,
+    location: path.join(themesDir, 'packages', name),
   };
 }
 
@@ -285,18 +288,35 @@ function parsePageSize(size: string): PageSize {
   }
 }
 
-function parseFileMetadata(
-  type: ManuscriptMediaType,
-  sourcePath: string,
-  workspaceDir: string,
-): { title?: string; theme?: ParsedTheme } {
+function parseFileMetadata({
+  type,
+  sourcePath,
+  workspaceDir,
+  themesDir,
+}: {
+  type: ManuscriptMediaType;
+  sourcePath: string;
+  workspaceDir: string;
+  themesDir?: string;
+}): { title?: string; theme?: ParsedTheme } {
   const sourceDir = path.dirname(sourcePath);
   let title: string | undefined;
   let theme: ParsedTheme | undefined;
   if (type === 'text/markdown') {
     const metadata = readMarkdownMetadata(sourcePath);
     title = metadata.title;
-    theme = parseTheme(metadata.vfm?.theme, sourceDir, workspaceDir);
+    if (
+      metadata.vfm?.theme &&
+      typeof metadata.vfm.theme === 'string' &&
+      themesDir
+    ) {
+      theme = parseTheme({
+        specifier: metadata.vfm?.theme,
+        entryContextDir: sourceDir,
+        workspaceDir,
+        themesDir,
+      });
+    }
   } else {
     const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
     title = $('title')?.text() ?? undefined;
@@ -414,6 +434,7 @@ export async function mergeConfig<T extends CliFlags>(
     workspaceDir =
       contextResolve(context, config?.workspaceDir) ?? entryContextDir;
   }
+  const themesDir = path.join(workspaceDir, 'themes');
 
   const includeAssets = config?.includeAssets
     ? Array.isArray(config.includeAssets)
@@ -465,8 +486,20 @@ export async function mergeConfig<T extends CliFlags>(
 
   const themeIndexes: ParsedTheme[] = [];
   const rootTheme = cliFlags.theme
-    ? parseTheme(cliFlags.theme, cwd, workspaceDir)
-    : parseTheme(config?.theme, entryContextDir, workspaceDir);
+    ? parseTheme({
+        specifier: cliFlags.theme,
+        entryContextDir: cwd,
+        workspaceDir,
+        themesDir,
+      })
+    : config?.theme
+    ? parseTheme({
+        specifier: config.theme,
+        entryContextDir,
+        workspaceDir,
+        themesDir,
+      })
+    : undefined;
   if (rootTheme) {
     themeIndexes.push(rootTheme);
   }
@@ -542,6 +575,7 @@ export async function mergeConfig<T extends CliFlags>(
   const commonOpts: CommonOpts = {
     entryContextDir,
     workspaceDir,
+    themesDir,
     includeAssets,
     outputs,
     themeIndexes,
@@ -622,7 +656,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   if (input.format === 'markdown') {
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
-    const metadata = parseFileMetadata(type, sourcePath, workspaceDir);
+    const metadata = parseFileMetadata({ type, sourcePath, workspaceDir });
     const target = path
       .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
       .replace(/\.md$/, '.html');
@@ -697,7 +731,8 @@ async function composeProjectConfig<T extends CliFlags>(
 ): Promise<MergedConfig> {
   debug('entering project config mode');
 
-  const { entryContextDir, workspaceDir, themeIndexes, outputs } = otherConfig;
+  const { entryContextDir, workspaceDir, themesDir, themeIndexes, outputs } =
+    otherConfig;
   const pkgJsonPath = path.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
     ? readJSON(pkgJsonPath)
@@ -719,7 +754,13 @@ async function composeProjectConfig<T extends CliFlags>(
   function parseEntry(entry: EntryObject): ParsedEntry {
     if (!('path' in entry)) {
       const theme =
-        parseTheme(entry.theme, entryContextDir, workspaceDir) ??
+        (entry.theme &&
+          parseTheme({
+            specifier: entry.theme,
+            entryContextDir,
+            workspaceDir,
+            themesDir,
+          })) ??
         themeIndexes[0];
       if (
         theme &&
@@ -744,11 +785,22 @@ async function composeProjectConfig<T extends CliFlags>(
       statFileSync(sourcePath);
     }
     const type = detectManuscriptMediaType(sourcePath);
-    const metadata = parseFileMetadata(type, sourcePath, workspaceDir);
+    const metadata = parseFileMetadata({
+      type,
+      sourcePath,
+      workspaceDir,
+      themesDir,
+    });
 
     const title = entry.title ?? metadata.title ?? projectTitle;
     const theme =
-      parseTheme(entry.theme, entryContextDir, workspaceDir) ??
+      (entry.theme &&
+        parseTheme({
+          specifier: entry.theme,
+          entryContextDir,
+          workspaceDir,
+          themesDir,
+        })) ??
       metadata.theme ??
       themeIndexes[0];
 

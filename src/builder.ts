@@ -32,8 +32,8 @@ import {
   DetailError,
   filterRelevantAjvErrors,
   log,
+  pathContains,
   pathEquals,
-  pathStartsWith,
   startLogging,
   useTmpDirectory,
 } from './util';
@@ -63,32 +63,39 @@ function locateThemePath(theme: ParsedTheme, from: string): string {
 export async function cleanupWorkspace({
   entryContextDir,
   workspaceDir,
+  themesDir,
 }: MergedConfig) {
-  if (pathStartsWith(entryContextDir, workspaceDir)) {
+  if (
+    pathEquals(workspaceDir, entryContextDir) ||
+    pathContains(workspaceDir, entryContextDir)
+  ) {
     return;
   }
   // workspaceDir is placed on different directory; delete everything excepting theme files
   debug('cleanup workspace files', workspaceDir);
   let movedThemePath: string | undefined;
-  if (fs.existsSync(path.join(workspaceDir, 'themes'))) {
+  if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
     [movedThemePath] = await useTmpDirectory();
-    shelljs.mv(path.join(workspaceDir, 'themes'), movedThemePath);
+    shelljs.mv(themesDir, movedThemePath);
   }
   shelljs.rm('-rf', workspaceDir);
   if (movedThemePath) {
     shelljs.mkdir('-p', workspaceDir);
-    shelljs.mv(path.join(movedThemePath, 'themes'), workspaceDir);
+    shelljs.mv(
+      path.join(movedThemePath, path.basename(themesDir)),
+      workspaceDir,
+    );
   }
 }
 
 export async function prepareThemeDirectory({
-  workspaceDir,
+  themesDir,
   themeIndexes,
 }: MergedConfig) {
   // install theme packages
-  if (await checkThemeInstallationNecessity({ workspaceDir, themeIndexes })) {
+  if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
     startLogging('Installing theme files');
-    await installThemeDependencies({ workspaceDir, themeIndexes });
+    await installThemeDependencies({ themesDir, themeIndexes });
   }
 
   // copy theme files
@@ -324,12 +331,12 @@ export function checkOverwriteViolation(
   target: string,
   fileInformation: string,
 ) {
-  if (pathStartsWith(entryContextDir, target)) {
+  if (!pathContains(entryContextDir, target)) {
     throw new Error(
       `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the manuscript file(s). Please specify other paths.`,
     );
   }
-  if (pathStartsWith(workspaceDir, target)) {
+  if (!pathContains(workspaceDir, target)) {
     throw new Error(
       `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the working directory of Vivliostyle. Please specify other paths.`,
     );
