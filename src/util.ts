@@ -37,11 +37,17 @@ exitSignals.forEach((sig) => {
 });
 
 export function startLogging(text?: string) {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
   // If text is not set, erase previous log with space character
   ora.start(text ?? ' ');
 }
 
 export function stopLogging(text?: string, symbol?: string) {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
   if (!text) {
     ora.stop();
     return;
@@ -54,6 +60,9 @@ export function log(...obj: any) {
 }
 
 export function logUpdate(...obj: string[]) {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
   if (ora.isSpinning) {
     ora.text = obj.join(' ');
   } else {
