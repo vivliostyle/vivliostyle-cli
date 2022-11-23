@@ -4,7 +4,6 @@ import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
-import resolvePkg from 'resolve-pkg';
 import path from 'upath';
 import { pathToFileURL } from 'url';
 import { getExecutableBrowserPath } from './browser';
@@ -33,6 +32,7 @@ import type {
   VivliostyleConfigSchema,
 } from './schema/vivliostyleConfig.schema';
 import { PageSize } from './server';
+import { parsePackageName } from './theme';
 import {
   cwd,
   debug,
@@ -58,16 +58,15 @@ export interface UriTheme {
 export interface FileTheme {
   type: 'file';
   name: string;
+  source: string;
   location: string;
-  destination: string;
 }
 
 export interface PackageTheme {
   type: 'package';
   name: string;
+  specifier: string;
   location: string;
-  destination: string;
-  style: string;
 }
 
 export interface ManuscriptEntry {
@@ -228,55 +227,46 @@ export function parseTheme(
     };
   }
 
+  // bare .css file
   const stylePath = path.resolve(contextDir, locator);
+  if (fs.existsSync(stylePath) && stylePath.endsWith('.css')) {
+    const sourceRelPath = path.relative(contextDir, stylePath);
+    return {
+      type: 'file',
+      name: path.basename(locator),
+      source: stylePath,
+      location: path.resolve(workspaceDir, sourceRelPath),
+    };
+  }
 
   // node_modules, local pkg
-  const pkgRootDir = resolvePkg(locator, { cwd: contextDir });
-  if (!pkgRootDir?.endsWith('.css')) {
-    const style = parseStyleLocator(pkgRootDir ?? stylePath, locator);
-    if (style) {
-      return {
-        type: 'package',
-        name: style.name,
-        location: pkgRootDir ?? stylePath,
-        destination: path.join(workspaceDir, 'themes/packages', style.name),
-        style: style.maybeStyle,
-      };
+  const parsed = parsePackageName(locator, contextDir);
+
+  if (!parsed) {
+    throw new Error(`Invalid package name: ${locator}`);
+  }
+  // To security reason, Vivliostyle CLI disallow other than npm registry or local file as download source
+  // TODO: Add option that user can allow an unofficial registry explicitly
+  if (!parsed.registry && parsed.type !== 'directory') {
+    throw new Error(`This package specifier is not allowed: ${locator}`);
+  }
+  let name = parsed.name;
+  if (parsed.type === 'directory' && parsed.fetchSpec) {
+    const pkgJsonPath = path.join(parsed.fetchSpec, 'package.json');
+    if (fs.existsSync(pkgJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+      name = packageJson.name;
     }
   }
-
-  // bare .css file
-  const sourceRelPath = path.relative(contextDir, stylePath);
+  if (!name) {
+    throw new Error(`Could not determine the package name: ${locator}`);
+  }
   return {
-    type: 'file',
-    name: path.basename(locator),
-    location: stylePath,
-    destination: path.resolve(workspaceDir, sourceRelPath),
+    type: 'package',
+    name,
+    specifier: locator,
+    location: path.join(workspaceDir, 'themes/packages', name),
   };
-}
-
-function parseStyleLocator(
-  pkgRootDir: string,
-  locator: string,
-): { name: string; maybeStyle: string } | undefined {
-  const pkgJsonPath = path.join(pkgRootDir, 'package.json');
-  if (!fs.existsSync(pkgJsonPath)) {
-    return undefined;
-  }
-
-  const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-
-  const maybeStyle =
-    packageJson?.vivliostyle?.theme?.style ??
-    packageJson.style ??
-    packageJson.main;
-
-  if (!maybeStyle) {
-    throw new Error(
-      `invalid style file: ${maybeStyle} while parsing ${locator}`,
-    );
-  }
-  return { name: packageJson.name, maybeStyle };
 }
 
 function parsePageSize(size: string): PageSize {
@@ -474,9 +464,9 @@ export async function mergeConfig<T extends CliFlags>(
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
 
   const themeIndexes: ParsedTheme[] = [];
-  const rootTheme =
-    parseTheme(cliFlags.theme, cwd, workspaceDir) ??
-    parseTheme(config?.theme, context, workspaceDir);
+  const rootTheme = cliFlags.theme
+    ? parseTheme(cliFlags.theme, cwd, workspaceDir)
+    : parseTheme(config?.theme, entryContextDir, workspaceDir);
   if (rootTheme) {
     themeIndexes.push(rootTheme);
   }
@@ -584,7 +574,7 @@ export async function mergeConfig<T extends CliFlags>(
   }
   const parsedConfig = cliFlags.input
     ? await composeSingleInputConfig(commonOpts, cliFlags, config)
-    : await composeProjectConfig(commonOpts, cliFlags, config, context);
+    : await composeProjectConfig(commonOpts, cliFlags, config);
   debug('parsedConfig', parsedConfig);
   checkUnusedCliFlags(parsedConfig, cliFlags);
   return parsedConfig;
@@ -704,12 +694,11 @@ async function composeProjectConfig<T extends CliFlags>(
   otherConfig: CommonOpts,
   cliFlags: T,
   config: VivliostyleConfigEntry | undefined,
-  context: string,
 ): Promise<MergedConfig> {
   debug('entering project config mode');
 
   const { entryContextDir, workspaceDir, themeIndexes, outputs } = otherConfig;
-  const pkgJsonPath = path.resolve(context, 'package.json');
+  const pkgJsonPath = path.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
     ? readJSON(pkgJsonPath)
     : undefined;
@@ -730,7 +719,8 @@ async function composeProjectConfig<T extends CliFlags>(
   function parseEntry(entry: EntryObject): ParsedEntry {
     if (!('path' in entry)) {
       const theme =
-        parseTheme(entry.theme, context, workspaceDir) ?? themeIndexes[0];
+        parseTheme(entry.theme, entryContextDir, workspaceDir) ??
+        themeIndexes[0];
       if (
         theme &&
         themeIndexes.every((t) => !pathEquals(t.location, theme.location))
@@ -758,7 +748,7 @@ async function composeProjectConfig<T extends CliFlags>(
 
     const title = entry.title ?? metadata.title ?? projectTitle;
     const theme =
-      parseTheme(entry.theme, context, workspaceDir) ??
+      parseTheme(entry.theme, entryContextDir, workspaceDir) ??
       metadata.theme ??
       themeIndexes[0];
 
