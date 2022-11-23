@@ -2,7 +2,12 @@ import assert from 'assert';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
-import { checkOverwriteViolation, compile, copyAssets } from '../src/builder';
+import {
+  checkOverwriteViolation,
+  compile,
+  copyAssets,
+  prepareThemeDirectory,
+} from '../src/builder';
 import { MergedConfig } from '../src/config';
 import {
   assertArray,
@@ -37,6 +42,7 @@ it('generate workspace directory', async () => {
     checkOverwriteViolation(config, target.path, target.format);
   }
   assertManifestPath(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
   const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-workspace'));
@@ -48,10 +54,10 @@ it('generate workspace directory', async () => {
     'manuscript/soda.html',
     'publication.json',
     'themes',
+    'themes/package-lock.json',
+    'themes/package.json',
     'themes/packages',
     'themes/packages/debug-theme',
-    'themes/packages/debug-theme/package.json',
-    'themes/packages/debug-theme/theme.css',
   ]);
   const manifest = require(resolveFixture(
     'builder/.vs-workspace/publication.json',
@@ -107,6 +113,7 @@ it('generate files with entryContext', async () => {
     checkOverwriteViolation(config, target.path, target.format);
   }
   assertManifestPath(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
   const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-entryContext'));
@@ -173,6 +180,7 @@ it('generate from various manuscript formats', async () => {
     checkOverwriteViolation(config, target.path, target.format);
   }
   assertManifestPath(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
   const fileList = shelljs.ls(
@@ -187,10 +195,10 @@ it('generate from various manuscript formats', async () => {
     'manuscript/soda.html',
     'publication.json',
     'themes',
+    'themes/package-lock.json',
+    'themes/package.json',
     'themes/packages',
     'themes/packages/debug-theme',
-    'themes/packages/debug-theme/package.json',
-    'themes/packages/debug-theme/theme.css',
   ]);
   const manifest = require(resolveFixture(
     'builder/.vs-variousManuscriptFormat/publication.json',
@@ -271,6 +279,7 @@ it('generate with VFM options', async () => {
   ]);
   assertSingleItem(configWithoutOption);
   assertManifestPath(configWithoutOption);
+  await prepareThemeDirectory(configWithoutOption);
   await compile(configWithoutOption);
   const output1 = fs.readFileSync(
     resolveFixture('builder/.vs-workspace/manuscript/soda.html'),
@@ -284,6 +293,7 @@ it('generate with VFM options', async () => {
   ]);
   assertSingleItem(configWithOption);
   assertManifestPath(configWithOption);
+  await prepareThemeDirectory(configWithOption);
   await compile(configWithOption);
   const manifest = require(resolveFixture('builder/.vs-vfm/publication.json'));
   expect(manifest.readingOrder).toEqual([
@@ -333,6 +343,7 @@ it('generate from multiple config entries', async () => {
   expect(config).toHaveLength(2);
 
   assertManifestPath(config[0]);
+  await prepareThemeDirectory(config[0]);
   await compile(config[0]);
   const manifest1 = require(resolveFixture(
     'builder/.vs-multipleEntry/one/publication.json',
@@ -345,6 +356,7 @@ it('generate from multiple config entries', async () => {
   ]);
 
   assertManifestPath(config[1]);
+  await prepareThemeDirectory(config[1]);
   await compile(config[1]);
   const manifest2 = require(resolveFixture(
     'builder/.vs-multipleEntry/two/publication.json',

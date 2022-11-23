@@ -212,12 +212,12 @@ function normalizeEntry(e: string | EntryObject): EntryObject {
 // parse theme locator
 export function parseTheme({
   specifier,
-  entryContextDir,
+  context,
   workspaceDir,
   themesDir,
 }: {
   specifier: string;
-  entryContextDir: string;
+  context: string;
   workspaceDir: string;
   themesDir: string;
 }): ParsedTheme {
@@ -231,9 +231,9 @@ export function parseTheme({
   }
 
   // bare .css file
-  const stylePath = path.resolve(entryContextDir, specifier);
+  const stylePath = path.resolve(context, specifier);
   if (fs.existsSync(stylePath) && stylePath.endsWith('.css')) {
-    const sourceRelPath = path.relative(entryContextDir, stylePath);
+    const sourceRelPath = path.relative(context, stylePath);
     return {
       type: 'file',
       name: path.basename(specifier),
@@ -243,7 +243,7 @@ export function parseTheme({
   }
 
   // node_modules, local pkg
-  const parsed = parsePackageName(specifier, entryContextDir);
+  const parsed = parsePackageName(specifier, context);
 
   if (!parsed) {
     throw new Error(`Invalid package name: ${specifier}`);
@@ -254,11 +254,13 @@ export function parseTheme({
     throw new Error(`This package specifier is not allowed: ${specifier}`);
   }
   let name = parsed.name;
+  let resolvedSpecifier = specifier;
   if (parsed.type === 'directory' && parsed.fetchSpec) {
     const pkgJsonPath = path.join(parsed.fetchSpec, 'package.json');
     if (fs.existsSync(pkgJsonPath)) {
       const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
       name = packageJson.name;
+      resolvedSpecifier = parsed.fetchSpec;
     }
   }
   if (!name) {
@@ -267,7 +269,7 @@ export function parseTheme({
   return {
     type: 'package',
     name,
-    specifier,
+    specifier: resolvedSpecifier,
     location: path.join(themesDir, 'packages', name),
   };
 }
@@ -312,7 +314,7 @@ function parseFileMetadata({
     ) {
       theme = parseTheme({
         specifier: metadata.vfm?.theme,
-        entryContextDir: sourceDir,
+        context: sourceDir,
         workspaceDir,
         themesDir,
       });
@@ -488,14 +490,14 @@ export async function mergeConfig<T extends CliFlags>(
   const rootTheme = cliFlags.theme
     ? parseTheme({
         specifier: cliFlags.theme,
-        entryContextDir: cwd,
+        context: cwd,
         workspaceDir,
         themesDir,
       })
     : config?.theme
     ? parseTheme({
         specifier: config.theme,
-        entryContextDir,
+        context,
         workspaceDir,
         themesDir,
       })
@@ -608,7 +610,7 @@ export async function mergeConfig<T extends CliFlags>(
   }
   const parsedConfig = cliFlags.input
     ? await composeSingleInputConfig(commonOpts, cliFlags, config)
-    : await composeProjectConfig(commonOpts, cliFlags, config);
+    : await composeProjectConfig(commonOpts, cliFlags, config, context);
   debug('parsedConfig', parsedConfig);
   checkUnusedCliFlags(parsedConfig, cliFlags);
   return parsedConfig;
@@ -728,6 +730,7 @@ async function composeProjectConfig<T extends CliFlags>(
   otherConfig: CommonOpts,
   cliFlags: T,
   config: VivliostyleConfigEntry | undefined,
+  context: string,
 ): Promise<MergedConfig> {
   debug('entering project config mode');
 
@@ -757,7 +760,7 @@ async function composeProjectConfig<T extends CliFlags>(
         (entry.theme &&
           parseTheme({
             specifier: entry.theme,
-            entryContextDir,
+            context,
             workspaceDir,
             themesDir,
           })) ??
@@ -797,7 +800,7 @@ async function composeProjectConfig<T extends CliFlags>(
       (entry.theme &&
         parseTheme({
           specifier: entry.theme,
-          entryContextDir,
+          context,
           workspaceDir,
           themesDir,
         })) ??

@@ -503,7 +503,7 @@ Object {
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "name": "debug-theme",
-        "specifier": "../themes/debug-theme",
+        "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "type": "package",
       },
       "title": "Table of Contents",
@@ -514,7 +514,7 @@ Object {
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "name": "debug-theme",
-        "specifier": "../themes/debug-theme",
+        "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "type": "package",
       },
       "title": "title",
@@ -588,7 +588,7 @@ Object {
     Object {
       "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
       "name": "debug-theme",
-      "specifier": "../themes/debug-theme",
+      "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "type": "package",
     },
     Object {
@@ -775,7 +775,7 @@ Object {
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "name": "debug-theme",
-        "specifier": "../themes/debug-theme",
+        "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "type": "package",
       },
       "title": "Table of Contents",
@@ -786,7 +786,7 @@ Object {
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "name": "debug-theme",
-        "specifier": "../themes/debug-theme",
+        "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "type": "package",
       },
       "title": "title",
@@ -860,7 +860,7 @@ Object {
     Object {
       "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
       "name": "debug-theme",
-      "specifier": "../themes/debug-theme",
+      "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "type": "package",
     },
     Object {
@@ -1047,7 +1047,7 @@ Object {
       "theme": Object {
         "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
         "name": "debug-theme",
-        "specifier": "../themes/debug-theme",
+        "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
         "type": "package",
       },
       "title": "Yuno",
@@ -1109,7 +1109,7 @@ Object {
     Object {
       "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
       "name": "debug-theme",
-      "specifier": "../themes/debug-theme",
+      "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
       "type": "package",
     },
   ],
