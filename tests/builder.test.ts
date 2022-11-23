@@ -4,11 +4,13 @@ import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
 import {
   checkOverwriteViolation,
+  cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
 } from '../src/builder';
 import { MergedConfig } from '../src/config';
+import { checkThemeInstallationNecessity } from '../src/theme';
 import {
   assertArray,
   assertSingleItem,
@@ -29,6 +31,8 @@ afterAll(() => {
     resolveFixture('builder/.vs-variousManuscriptFormat'),
     resolveFixture('builder/.vs-vfm'),
     resolveFixture('builder/.vs-multipleEntry'),
+    resolveFixture('builder/.vs-localTheme'),
+    resolveFixture('builder/.vs-remoteTheme'),
   ]);
 });
 
@@ -42,6 +46,7 @@ it('generate workspace directory', async () => {
     checkOverwriteViolation(config, target.path, target.format);
   }
   assertManifestPath(config);
+  await cleanupWorkspace(config);
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
@@ -97,6 +102,8 @@ it('generate workspace directory', async () => {
   ).toBeTruthy();
 
   // try again and check idempotence
+  await cleanupWorkspace(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
   const fileList2 = shelljs.ls('-R', resolveFixture('builder/.vs-workspace'));
@@ -113,6 +120,7 @@ it('generate files with entryContext', async () => {
     checkOverwriteViolation(config, target.path, target.format);
   }
   assertManifestPath(config);
+  await cleanupWorkspace(config);
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
@@ -161,6 +169,8 @@ it('generate files with entryContext', async () => {
   ).toBeTruthy();
 
   // try again and check idempotence
+  await cleanupWorkspace(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
   const fileList2 = shelljs.ls(
@@ -180,6 +190,7 @@ it('generate from various manuscript formats', async () => {
     checkOverwriteViolation(config, target.path, target.format);
   }
   assertManifestPath(config);
+  await cleanupWorkspace(config);
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
@@ -279,6 +290,7 @@ it('generate with VFM options', async () => {
   ]);
   assertSingleItem(configWithoutOption);
   assertManifestPath(configWithoutOption);
+  await cleanupWorkspace(configWithoutOption);
   await prepareThemeDirectory(configWithoutOption);
   await compile(configWithoutOption);
   const output1 = fs.readFileSync(
@@ -293,6 +305,7 @@ it('generate with VFM options', async () => {
   ]);
   assertSingleItem(configWithOption);
   assertManifestPath(configWithOption);
+  await cleanupWorkspace(configWithOption);
   await prepareThemeDirectory(configWithOption);
   await compile(configWithOption);
   const manifest = require(resolveFixture('builder/.vs-vfm/publication.json'));
@@ -343,6 +356,7 @@ it('generate from multiple config entries', async () => {
   expect(config).toHaveLength(2);
 
   assertManifestPath(config[0]);
+  await cleanupWorkspace(config[0]);
   await prepareThemeDirectory(config[0]);
   await compile(config[0]);
   const manifest1 = require(resolveFixture(
@@ -356,6 +370,7 @@ it('generate from multiple config entries', async () => {
   ]);
 
   assertManifestPath(config[1]);
+  await cleanupWorkspace(config[1]);
   await prepareThemeDirectory(config[1]);
   await compile(config[1]);
   const manifest2 = require(resolveFixture(
@@ -406,4 +421,129 @@ it('check overwrite violation', async () => {
       }
     }),
   ).rejects.toThrow();
+});
+
+it('install local themes', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/localTheme.config.js'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await cleanupWorkspace(config);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  await copyAssets(config);
+  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-localTheme'));
+  expect([...fileList]).toEqual([
+    'manuscript',
+    'manuscript/cover.png',
+    'manuscript/soda.html',
+    'manuscript/theme-reference.html',
+    'publication.json',
+    'sample-theme.css',
+    'themes',
+    'themes/package-lock.json',
+    'themes/package.json',
+    'themes/packages',
+    'themes/packages/debug-theme',
+  ]);
+  // checking symlink-referenced directory
+  const themePackageFileList = shelljs.ls(
+    '-R',
+    resolveFixture('builder/.vs-localTheme/themes/packages/debug-theme'),
+  );
+  expect([...themePackageFileList]).toEqual(['package.json', 'theme.css']);
+
+  const doc1 = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-localTheme/manuscript/soda.html'),
+    ),
+  );
+  expect(
+    doc1.window.document.querySelector(
+      'link[rel="stylesheet"][href="../themes/packages/debug-theme/theme.css"]',
+    ),
+  ).toBeTruthy();
+  const doc2 = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-localTheme/manuscript/theme-reference.html'),
+    ),
+  );
+  expect(
+    doc2.window.document.querySelector(
+      'link[rel="stylesheet"][href="../sample-theme.css"]',
+    ),
+  ).toBeTruthy();
+
+  // try again and check idempotence
+  await cleanupWorkspace(config);
+  expect(checkThemeInstallationNecessity(config)).resolves.toBe(false);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  await copyAssets(config);
+  const fileList2 = shelljs.ls('-R', resolveFixture('builder/.vs-localTheme'));
+  expect([...fileList2]).toEqual([...fileList]);
+});
+
+it('install remote themes', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/remoteTheme.config.js'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await cleanupWorkspace(config);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  await copyAssets(config);
+  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-remoteTheme'));
+  expect([...fileList]).toContain(
+    'themes/packages/@vivliostyle/theme-academic/package.json',
+  );
+
+  const doc = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-remoteTheme/manuscript/soda.html'),
+    ),
+  );
+  expect(
+    doc.window.document.querySelector(
+      'link[rel="stylesheet"][href="../themes/packages/@vivliostyle/theme-academic/theme_common.css"]',
+    ),
+  ).toBeTruthy();
+
+  // try again and check idempotence
+  await cleanupWorkspace(config);
+  expect(checkThemeInstallationNecessity(config)).resolves.toBe(false);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  await copyAssets(config);
+  const fileList2 = shelljs.ls('-R', resolveFixture('builder/.vs-remoteTheme'));
+  expect([...fileList2]).toEqual([...fileList]);
+});
+
+it('fail to install if package does not exist', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/nonExistTheme.config.js'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  expect(prepareThemeDirectory(config)).rejects.toThrow(
+    'An error occurred during the installation of the theme',
+  );
+});
+
+it('reject trying import theme that is not vivliostyle theme', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/invalidTheme.config.js'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await prepareThemeDirectory(config);
+  expect(compile(config)).rejects.toThrow(
+    'Could not find a style file for the theme: invalid-theme',
+  );
 });

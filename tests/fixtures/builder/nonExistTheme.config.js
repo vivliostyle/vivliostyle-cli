@@ -1,4 +1,4 @@
 module.exports = {
-  entry: ['input.md'],
+  entry: 'manuscript/soda.md',
   theme: '@vivliostyle/theme-non-exist',
 };
