@@ -170,18 +170,9 @@ export async function preview(cliFlags: PreviewCliFlags) {
         ) {
           return true; // ignore md or html files not in entries source
         }
-        // if (
-        //   config.themeIndexes.find(
-        //     (theme) =>
-        //       (theme.type === 'file' || theme.type === 'package') &&
-        //       !pathEquals(theme.destination, theme.location) &&
-        //       (theme.type === 'file'
-        //         ? pathEquals(path, theme.destination)
-        //         : pathContains(theme.destination, path)),
-        //   )
-        // ) {
-        //   return true; // ignore copied theme files
-        // }
+        if (pathContains(config.themesDir, path)) {
+          return true; // ignore theme packages
+        }
         return false;
       },
       cwd: config.entries.length ? context : config.entryContextDir,
