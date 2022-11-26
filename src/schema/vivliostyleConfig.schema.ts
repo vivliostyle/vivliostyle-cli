@@ -8,6 +8,7 @@
 export type VivliostyleConfigSchema =
   | VivliostyleConfigEntry
   | [VivliostyleConfigEntry, ...VivliostyleConfigEntry[]];
+export type Theme = string;
 export type Entry = string;
 export type EntryObject = ContentsEntryObject | ArticleEntryObject;
 export type Output = string;
@@ -23,9 +24,9 @@ export interface VivliostyleConfigEntry {
    */
   author?: string;
   /**
-   * Theme package path or URL of css file.
+   * Theme package path(s) or URL(s) of css file.
    */
-  theme?: string;
+  theme?: Theme | ThemeObject | (Theme | ThemeObject)[];
   /**
    * Entry file(s) of document.
    */
@@ -116,17 +117,29 @@ export interface VivliostyleConfigEntry {
   browser?: BrowserType;
   [k: string]: unknown;
 }
+export interface ThemeObject {
+  /**
+   * Sepcifier name of importing theme package or a path of CSS file.
+   * - A npm-style package argument is allowed (ex: @vivliostyle/theme-academic@1 ./local-pkg)
+   * - A URL or a local path of CSS is allowed (ex: ./style.css, https://example.com/style.css)
+   */
+  specifier: string;
+  /**
+   * Importing CSS path(s) of the package. Specify this if you want to import other than the default file.
+   */
+  import?: string | string[];
+}
 export interface ArticleEntryObject {
   path: string;
   title?: string;
-  theme?: string;
+  theme?: Theme | ThemeObject | (Theme | ThemeObject)[];
   encodingFormat?: string;
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
   rel: 'contents';
   title?: string;
-  theme?: string;
+  theme?: Theme | ThemeObject | (Theme | ThemeObject)[];
 }
 export interface OutputObject {
   /**

@@ -9,7 +9,21 @@
       "properties": {
         "path": { "type": "string" },
         "title": { "type": "string" },
-        "theme": { "type": "string" },
+        "theme": {
+          "oneOf": [
+            { "$ref": "#/definitions/theme" },
+            { "$ref": "#/definitions/themeObject" },
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/definitions/theme" },
+                  { "$ref": "#/definitions/themeObject" }
+                ]
+              }
+            }
+          ]
+        },
         "encodingFormat": { "type": "string" },
         "rel": {
           "type": ["string", "array"],
@@ -33,7 +47,21 @@
           "const": "contents"
         },
         "title": { "type": "string" },
-        "theme": { "type": "string" }
+        "theme": {
+          "oneOf": [
+            { "$ref": "#/definitions/theme" },
+            { "$ref": "#/definitions/themeObject" },
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/definitions/theme" },
+                  { "$ref": "#/definitions/themeObject" }
+                ]
+              }
+            }
+          ]
+        }
       },
       "required": ["rel"],
       "additionalProperties": false
@@ -78,6 +106,29 @@
       "required": ["path"],
       "additionalProperties": false
     },
+    "theme": {
+      "type": "string",
+      "minLength": 1
+    },
+    "themeObject": {
+      "type": "object",
+      "properties": {
+        "specifier": {
+          "description": "Sepcifier name of importing theme package or a path of CSS file. \n- A npm-style package argument is allowed (ex: @vivliostyle/theme-academic@1 ./local-pkg)\n- A URL or a local path of CSS is allowed (ex: ./style.css, https://example.com/style.css)",
+          "type": "string",
+          "minLength": 1
+        },
+        "import": {
+          "description": "Importing CSS path(s) of the package. Specify this if you want to import other than the default file.",
+          "type": ["string", "array"],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["specifier"],
+      "additionalProperties": false
+    },
     "vfmReplaceRule": {
       "type": "object",
       "properties": {
@@ -107,17 +158,18 @@
           "minLength": 1
         },
         "theme": {
-          "description": "Theme package path or URL of css file.",
-          "anyOf": [
+          "description": "Theme package path(s) or URL(s) of css file.",
+          "oneOf": [
+            { "$ref": "#/definitions/theme" },
+            { "$ref": "#/definitions/themeObject" },
             {
-              "type": "string",
-              "maxLength": 214,
-              "minLength": 1,
-              "pattern": "^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$"
-            },
-            {
-              "type": "string",
-              "pattern": "^.+/[^/]+(.css|\\w)$"
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "$ref": "#/definitions/theme" },
+                  { "$ref": "#/definitions/themeObject" }
+                ]
+              }
             }
           ]
         },
