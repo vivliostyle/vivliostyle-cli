@@ -2,7 +2,13 @@ import chalk from 'chalk';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import { getExecutableBrowserPath } from './browser';
-import { checkOverwriteViolation, compile, copyAssets } from './builder';
+import {
+  checkOverwriteViolation,
+  cleanupWorkspace,
+  compile,
+  copyAssets,
+  prepareThemeDirectory,
+} from './builder';
 import {
   CliFlags,
   collectVivliostyleConfig,
@@ -77,6 +83,8 @@ export async function build(cliFlags: BuildCliFlags) {
   for (const config of configEntries) {
     // build artifacts
     if (config.manifestPath) {
+      await cleanupWorkspace(config);
+      await prepareThemeDirectory(config);
       await compile(config);
       await copyAssets(config);
     }

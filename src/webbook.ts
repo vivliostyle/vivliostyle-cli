@@ -37,7 +37,8 @@ export async function exportWebPublication({
         cwd: input,
         // copy files included on exportAlias in last
         ignore: relExportAliases.map(({ source }) => source),
-        followSymbolicLinks: false,
+        // follow symbolic links to copy local theme packages
+        followSymbolicLinks: true,
         gitignore: true,
       })),
     ];

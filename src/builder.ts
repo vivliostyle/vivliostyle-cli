@@ -24,17 +24,87 @@ import type {
 import { publicationSchema, publicationSchemas } from './schema/pubManifest';
 import type { ArticleEntryObject } from './schema/vivliostyleConfig.schema';
 import {
+  checkThemeInstallationNecessity,
+  installThemeDependencies,
+} from './theme';
+import {
   debug,
   DetailError,
   filterRelevantAjvErrors,
   log,
+  pathContains,
   pathEquals,
-  pathStartsWith,
+  startLogging,
+  useTmpDirectory,
 } from './util';
 
-export function cleanup(location: string) {
-  debug('cleanup file', location);
-  shelljs.rm('-rf', location);
+function locateThemePath(theme: ParsedTheme, from: string): string {
+  if (theme.type === 'uri') {
+    return theme.location;
+  }
+  if (theme.type === 'file') {
+    return path.relative(from, theme.location);
+  }
+  const pkgJsonPath = path.join(theme.location, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+  const maybeStyle =
+    packageJson?.vivliostyle?.theme?.style ??
+    packageJson.style ??
+    packageJson.main;
+  if (!maybeStyle) {
+    throw new DetailError(
+      `Could not find a style file for the theme: ${theme.name}.`,
+      'Please ensure this package satisfies a `vivliostyle.theme.style` propertiy.',
+    );
+  }
+  return path.relative(from, path.join(theme.location, maybeStyle));
+}
+
+export async function cleanupWorkspace({
+  entryContextDir,
+  workspaceDir,
+  themesDir,
+}: MergedConfig) {
+  if (
+    pathEquals(workspaceDir, entryContextDir) ||
+    pathContains(workspaceDir, entryContextDir)
+  ) {
+    return;
+  }
+  // workspaceDir is placed on different directory; delete everything excepting theme files
+  debug('cleanup workspace files', workspaceDir);
+  let movedThemePath: string | undefined;
+  if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
+    [movedThemePath] = await useTmpDirectory();
+    shelljs.mv(themesDir, movedThemePath);
+  }
+  shelljs.rm('-rf', workspaceDir);
+  if (movedThemePath) {
+    shelljs.mkdir('-p', workspaceDir);
+    shelljs.mv(
+      path.join(movedThemePath, path.basename(themesDir)),
+      workspaceDir,
+    );
+  }
+}
+
+export async function prepareThemeDirectory({
+  themesDir,
+  themeIndexes,
+}: MergedConfig) {
+  // install theme packages
+  if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
+    startLogging('Installing theme files');
+    await installThemeDependencies({ themesDir, themeIndexes });
+  }
+
+  // copy theme files
+  for (const theme of themeIndexes) {
+    if (theme.type === 'file' && !pathEquals(theme.source, theme.location)) {
+      shelljs.mkdir('-p', path.dirname(theme.location));
+      shelljs.cp(theme.source, theme.location);
+    }
+  }
 }
 
 // https://www.w3.org/TR/pub-manifest/
@@ -130,44 +200,17 @@ export function generateManifest(
   }
 }
 
-export async function compile(
-  {
-    entryContextDir,
-    workspaceDir,
-    manifestPath,
-    manifestAutoGenerate,
-    themeIndexes,
-    entries,
-    language,
-    readingProgression,
-    cover,
-    vfmOptions,
-    input,
-  }: MergedConfig & WebPublicationManifestConfig,
-  { reload = false }: { reload?: boolean } = {},
-): Promise<void> {
-  debug('entries', entries);
-  debug('themes', themeIndexes);
-
-  if (!reload && !pathStartsWith(entryContextDir, workspaceDir)) {
-    // workspaceDir is placed on different directory
-    cleanup(workspaceDir);
-  }
-
-  const locateThemePath = (
-    from: string,
-    theme?: ParsedTheme,
-  ): string | undefined => {
-    switch (theme?.type) {
-      case 'uri':
-        return theme.location;
-      case 'file':
-        return path.relative(from, theme.destination);
-      case 'package':
-        return path.relative(from, path.join(theme.destination, theme.style));
-    }
-  };
-
+export async function compile({
+  entryContextDir,
+  workspaceDir,
+  manifestPath,
+  manifestAutoGenerate,
+  entries,
+  language,
+  readingProgression,
+  cover,
+  vfmOptions,
+}: MergedConfig & WebPublicationManifestConfig): Promise<void> {
   const generativeContentsEntry = entries.find(
     (e) => !('source' in e) && e.rel === 'contents',
   );
@@ -188,7 +231,8 @@ export async function compile(
     shelljs.mkdir('-p', path.dirname(entry.target));
 
     // calculate style path
-    const style = locateThemePath(path.dirname(entry.target), entry.theme);
+    const style =
+      entry.theme && locateThemePath(entry.theme, path.dirname(entry.target));
     if (entry.type === 'text/markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
@@ -219,22 +263,11 @@ export async function compile(
     }
   }
 
-  // copy theme
-  for (const theme of themeIndexes) {
-    if (theme.type === 'file') {
-      if (!pathEquals(theme.location, theme.destination)) {
-        shelljs.mkdir('-p', path.dirname(theme.destination));
-        shelljs.cp(theme.location, theme.destination);
-      }
-    } else if (theme.type === 'package') {
-      shelljs.mkdir('-p', theme.destination);
-      shelljs.cp('-r', path.join(theme.location, '*'), theme.destination);
-    }
-  }
-
   // generate toc
   if (generativeContentsEntry) {
-    const style = locateThemePath(workspaceDir, generativeContentsEntry.theme);
+    const style =
+      generativeContentsEntry.theme &&
+      locateThemePath(generativeContentsEntry.theme, workspaceDir);
     const tocString = generateTocHtml({
       entries: contentEntries,
       manifestPath,
@@ -298,12 +331,15 @@ export function checkOverwriteViolation(
   target: string,
   fileInformation: string,
 ) {
-  if (pathStartsWith(entryContextDir, target)) {
+  if (
+    pathContains(target, entryContextDir) ||
+    pathEquals(target, entryContextDir)
+  ) {
     throw new Error(
       `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the manuscript file(s). Please specify other paths.`,
     );
   }
-  if (pathStartsWith(workspaceDir, target)) {
+  if (pathContains(target, workspaceDir) || pathEquals(target, workspaceDir)) {
     throw new Error(
       `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the working directory of Vivliostyle. Please specify other paths.`,
     );

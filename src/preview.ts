@@ -6,7 +6,12 @@ import {
   isPlaywrightExecutable,
   launchBrowser,
 } from './browser';
-import { compile, copyAssets } from './builder';
+import {
+  cleanupWorkspace,
+  compile,
+  copyAssets,
+  prepareThemeDirectory,
+} from './builder';
 import { CliFlags, collectVivliostyleConfig, mergeConfig } from './config';
 import { prepareServer } from './server';
 import {
@@ -14,8 +19,8 @@ import {
   debug,
   isUrlString,
   logSuccess,
+  pathContains,
   pathEquals,
-  pathStartsWith,
   startLogging,
   stopLogging,
 } from './util';
@@ -51,6 +56,8 @@ export async function preview(cliFlags: PreviewCliFlags) {
 
   // build artifacts
   if (config.manifestPath) {
+    await cleanupWorkspace(config);
+    await prepareThemeDirectory(config);
     await compile(config);
     await copyAssets(config);
   }
@@ -108,7 +115,8 @@ export async function preview(cliFlags: PreviewCliFlags) {
       config = await mergeConfig(cliFlags, vivliostyleConfig?.[0], context);
       // build artifacts
       if (config.manifestPath) {
-        await compile(config, { reload: true });
+        await prepareThemeDirectory(config);
+        await compile(config);
         await copyAssets(config);
       }
       page.reload();
@@ -122,7 +130,8 @@ export async function preview(cliFlags: PreviewCliFlags) {
       startLogging(`Rebuilding ${path}`);
       // build artifacts
       if (config.manifestPath) {
-        await compile(config, { reload: true });
+        await prepareThemeDirectory(config);
+        await compile(config);
         await copyAssets(config);
       }
       page.reload();
@@ -142,7 +151,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
         }
         if (
           !pathEquals(config.entryContextDir, config.workspaceDir) &&
-          pathStartsWith(path, config.workspaceDir)
+          pathContains(config.workspaceDir, path)
         ) {
           return true; // ignore saved intermediate files
         }
@@ -161,17 +170,8 @@ export async function preview(cliFlags: PreviewCliFlags) {
         ) {
           return true; // ignore md or html files not in entries source
         }
-        if (
-          config.themeIndexes.find(
-            (theme) =>
-              (theme.type === 'file' || theme.type === 'package') &&
-              !pathEquals(theme.destination, theme.location) &&
-              (theme.type === 'file'
-                ? pathEquals(path, theme.destination)
-                : pathStartsWith(path, theme.destination)),
-          )
-        ) {
-          return true; // ignore copied theme files
+        if (pathContains(config.themesDir, path)) {
+          return true; // ignore theme packages
         }
         return false;
       },

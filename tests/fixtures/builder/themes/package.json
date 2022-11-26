@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "invalid-theme": "file:../../themes/invalid-theme"
+  }
+}

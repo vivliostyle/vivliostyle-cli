@@ -5,17 +5,22 @@ import { pathToFileURL } from 'url';
 import { getViewerFullUrl, prepareServer, teardownServer } from '../src/server';
 import { maskConfig } from './commandUtil';
 
-jest.mock('http', () => ({
-  __esModule: true,
-  default: {
-    createServer: jest.fn(() => ({
-      listen: (port: number, host: string, callback: () => void) => {
-        callback();
-      },
-      close: () => {},
-    })),
-  },
-}));
+jest.mock('http', () => {
+  const { Agent } = jest.requireActual('http');
+  return {
+    __esModule: true,
+    default: {
+      createServer: jest.fn(() => ({
+        listen: (port: number, host: string, callback: () => void) => {
+          callback();
+        },
+        close: () => {},
+      })),
+    },
+    // `agentkeepalive` package requires this
+    Agent,
+  };
+});
 const mockedCreateServer = http.createServer as jest.MockedFunction<
   typeof http.createServer
 >;
@@ -88,7 +93,7 @@ it('converts to valid broker url', async () => {
   };
   maskConfig(validOut2);
   expect(validOut2.url).toBe(
-    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=false&renderAllPages=false&style=data:,#test>p::before{content:\"エスケープ チェック\";display:block}&userStyle=file://path/to/local/style/file/which/might/include/white space/%26/special#?character.css&style=data:,/*<viewer>*/%40page%7Bsize%3A5in%2010in%3B%7D/*</viewer>*/',
+    'file://__WORKSPACE__/node_modules/@vivliostyle/viewer/lib/index.html#src=file:///absolute/path/to/something&bookMode=false&renderAllPages=false&style=data:,#test>p::before{content:"エスケープ チェック";display:block}&userStyle=file://path/to/local/style/file/which/might/include/white space/%26/special#?character.css&style=data:,/*<viewer>*/%40page%7Bsize%3A5in%2010in%3B%7D/*</viewer>*/',
   );
 
   const validOut3 = {

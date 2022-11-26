@@ -2,7 +2,7 @@ import assert from 'assert';
 import fs from 'fs';
 import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
-import { compile } from '../src/builder';
+import { compile, prepareThemeDirectory } from '../src/builder';
 import { MergedConfig } from '../src/config';
 import { generateTocHtml } from '../src/html';
 import {
@@ -64,6 +64,7 @@ it('toc: true', async () => {
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.1'));
   expect([...fileList]).toEqual([
@@ -106,6 +107,7 @@ it("toc: 'manuscript/contents.html'", async () => {
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.2'));
   expect([...fileList]).toEqual([
@@ -152,6 +154,7 @@ it('Write ToC by myself', async () => {
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
+  await prepareThemeDirectory(config);
   await compile(config);
   const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.3'));
   expect([...fileList]).toEqual([
@@ -163,10 +166,10 @@ it('Write ToC by myself', async () => {
     'publication.json',
     'sample-theme.css',
     'themes',
+    'themes/package-lock.json',
+    'themes/package.json',
     'themes/packages',
     'themes/packages/debug-theme',
-    'themes/packages/debug-theme/package.json',
-    'themes/packages/debug-theme/theme.css',
   ]);
   const manifest = require(resolveFixture('toc/.vs-valid.3/publication.json'));
   expect(manifest.readingOrder[0]).toEqual({
