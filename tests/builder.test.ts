@@ -33,6 +33,10 @@ afterAll(() => {
     resolveFixture('builder/.vs-multipleEntry'),
     resolveFixture('builder/.vs-localTheme'),
     resolveFixture('builder/.vs-remoteTheme'),
+    resolveFixture('builder/.vs-multipleTheme'),
+    resolveFixture('builder/.vs-nonExistTheme'),
+    resolveFixture('builder/.vs-invalidTheme'),
+    resolveFixture('builder/.vs-nonExistImport'),
   ]);
 });
 
@@ -453,7 +457,11 @@ it('install local themes', async () => {
     '-R',
     resolveFixture('builder/.vs-localTheme/themes/packages/debug-theme'),
   );
-  expect([...themePackageFileList]).toEqual(['package.json', 'theme.css']);
+  expect([...themePackageFileList]).toEqual([
+    'additional-theme.css',
+    'package.json',
+    'theme.css',
+  ]);
 
   const doc1 = new JSDOM(
     fs.readFileSync(
@@ -523,6 +531,44 @@ it('install remote themes', async () => {
   expect([...fileList2]).toEqual([...fileList]);
 });
 
+it('use multiple themes', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/multipleTheme.config.js'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await cleanupWorkspace(config);
+  await prepareThemeDirectory(config);
+  await compile(config);
+
+  const doc1 = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-multipleTheme/manuscript/soda.html'),
+    ),
+  );
+  expect(
+    [...doc1.window.document.querySelectorAll('link[rel="stylesheet"]')].map(
+      (e) => e.getAttribute('href'),
+    ),
+  ).toEqual([
+    '../themes/packages/debug-theme/theme.css',
+    '../themes/packages/debug-theme/additional-theme.css',
+    'sample-theme.css',
+  ]);
+  const doc2 = new JSDOM(
+    fs.readFileSync(resolveFixture('builder/.vs-multipleTheme/index.html')),
+  );
+  expect(
+    [...doc2.window.document.querySelectorAll('link[rel="stylesheet"]')].map(
+      (e) => e.getAttribute('href'),
+    ),
+  ).toEqual([
+    'themes/packages/@vivliostyle/theme-academic/theme_common.css',
+    'manuscript/sample-theme.css',
+  ]);
+});
+
 it('fail to install if package does not exist', async () => {
   const config = await getMergedConfig([
     '-c',
@@ -545,5 +591,18 @@ it('reject trying import theme that is not vivliostyle theme', async () => {
   await prepareThemeDirectory(config);
   expect(compile(config)).rejects.toThrow(
     'Could not find a style file for the theme: invalid-theme',
+  );
+});
+
+it('reject import style file that is not exist', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/nonExistImport.config.js'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await prepareThemeDirectory(config);
+  expect(compile(config)).rejects.toThrow(
+    'Could not find a style path not-exist.css for the theme: debug-theme',
   );
 });
