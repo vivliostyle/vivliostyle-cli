@@ -28,6 +28,7 @@ import { vivliostyleConfigSchema } from './schema/vivliostyle';
 import type {
   BrowserType,
   EntryObject,
+  ThemeObject,
   VivliostyleConfigEntry,
   VivliostyleConfigSchema,
 } from './schema/vivliostyleConfig.schema';
@@ -41,7 +42,6 @@ import {
   isUrlString,
   log,
   logWarn,
-  pathEquals,
   readJSON,
   statFileSync,
   touchTmpFile,
@@ -67,12 +67,13 @@ export interface PackageTheme {
   name: string;
   specifier: string;
   location: string;
+  importPath?: string | string[];
 }
 
 export interface ManuscriptEntry {
   type: ManuscriptMediaType;
   title?: string;
-  theme?: ParsedTheme;
+  themes: ParsedTheme[];
   source: string;
   target: string;
   rel?: string | string[];
@@ -81,7 +82,7 @@ export interface ManuscriptEntry {
 export interface ContentsEntry {
   rel: 'contents';
   title?: string;
-  theme?: ParsedTheme;
+  themes: ParsedTheme[];
   target: string;
 }
 
@@ -143,7 +144,8 @@ export type MergedConfig = {
   entries: ParsedEntry[];
   input: InputFormat;
   outputs: OutputFormat[];
-  themeIndexes: ParsedTheme[];
+  themeIndexes: Set<ParsedTheme>;
+  rootThemes: ParsedTheme[];
   includeAssets: string[];
   exportAliases: {
     source: string;
@@ -211,16 +213,19 @@ function normalizeEntry(e: string | EntryObject): EntryObject {
 
 // parse theme locator
 export function parseTheme({
-  specifier,
+  theme,
   context,
   workspaceDir,
   themesDir,
 }: {
-  specifier: string;
+  theme: string | ThemeObject;
   context: string;
   workspaceDir: string;
   themesDir: string;
 }): ParsedTheme {
+  const { specifier, import: importPath } =
+    typeof theme === 'string' ? { specifier: theme, import: undefined } : theme;
+
   // url
   if (isUrlString(specifier)) {
     return {
@@ -271,6 +276,7 @@ export function parseTheme({
     name,
     specifier: resolvedSpecifier,
     location: path.join(themesDir, 'packages', name),
+    importPath,
   };
 }
 
@@ -300,30 +306,34 @@ function parseFileMetadata({
   sourcePath: string;
   workspaceDir: string;
   themesDir?: string;
-}): { title?: string; theme?: ParsedTheme } {
+}): { title?: string; themes?: ParsedTheme[] } {
   const sourceDir = path.dirname(sourcePath);
   let title: string | undefined;
-  let theme: ParsedTheme | undefined;
+  let themes: ParsedTheme[] | undefined;
   if (type === 'text/markdown') {
     const metadata = readMarkdownMetadata(sourcePath);
     title = metadata.title;
-    if (
-      metadata.vfm?.theme &&
-      typeof metadata.vfm.theme === 'string' &&
-      themesDir
-    ) {
-      theme = parseTheme({
-        specifier: metadata.vfm?.theme,
-        context: sourceDir,
-        workspaceDir,
-        themesDir,
-      });
+    if (metadata.vfm?.theme && themesDir) {
+      themes = [metadata.vfm.theme]
+        .flat()
+        .filter(
+          (entry) =>
+            !!entry && (typeof entry === 'string' || typeof entry === 'object'),
+        )
+        .map((theme) =>
+          parseTheme({
+            theme,
+            context: sourceDir,
+            workspaceDir,
+            themesDir,
+          }),
+        );
     }
   } else {
     const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
     title = $('title')?.text() ?? undefined;
   }
-  return { title, theme };
+  return { title, themes };
 }
 
 export function collectVivliostyleConfig<T extends CliFlags>(
@@ -486,25 +496,26 @@ export async function mergeConfig<T extends CliFlags>(
   const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
 
-  const themeIndexes: ParsedTheme[] = [];
-  const rootTheme = cliFlags.theme
-    ? parseTheme({
-        specifier: cliFlags.theme,
-        context: cwd,
-        workspaceDir,
-        themesDir,
-      })
+  const rootThemes = cliFlags.theme
+    ? [
+        parseTheme({
+          theme: cliFlags.theme,
+          context: cwd,
+          workspaceDir,
+          themesDir,
+        }),
+      ]
     : config?.theme
-    ? parseTheme({
-        specifier: config.theme,
-        context,
-        workspaceDir,
-        themesDir,
-      })
-    : undefined;
-  if (rootTheme) {
-    themeIndexes.push(rootTheme);
-  }
+    ? [config.theme].flat().map((theme) =>
+        parseTheme({
+          theme,
+          context,
+          workspaceDir,
+          themesDir,
+        }),
+      )
+    : [];
+  const themeIndexes = new Set(rootThemes);
 
   const outputs = ((): OutputFormat[] => {
     if (cliFlags.targets?.length) {
@@ -581,6 +592,7 @@ export async function mergeConfig<T extends CliFlags>(
     includeAssets,
     outputs,
     themeIndexes,
+    rootThemes,
     size,
     cropMarks,
     bleed,
@@ -663,12 +675,14 @@ async function composeSingleInputConfig<T extends CliFlags>(
       .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
       .replace(/\.md$/, '.html');
     await touchTmpFile(target);
+    const themes = metadata.themes ?? [...otherConfig.rootThemes];
+    themes.forEach((t) => otherConfig.themeIndexes.add(t));
     entries.push({
       type,
       source: sourcePath,
       target,
       title: metadata.title,
-      theme: metadata.theme ?? otherConfig.themeIndexes[0],
+      themes,
     });
     exportAliases.push({
       source: target,
@@ -734,8 +748,14 @@ async function composeProjectConfig<T extends CliFlags>(
 ): Promise<MergedConfig> {
   debug('entering project config mode');
 
-  const { entryContextDir, workspaceDir, themesDir, themeIndexes, outputs } =
-    otherConfig;
+  const {
+    entryContextDir,
+    workspaceDir,
+    themesDir,
+    themeIndexes,
+    rootThemes,
+    outputs,
+  } = otherConfig;
   const pkgJsonPath = path.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
     ? readJSON(pkgJsonPath)
@@ -756,26 +776,22 @@ async function composeProjectConfig<T extends CliFlags>(
 
   function parseEntry(entry: EntryObject): ParsedEntry {
     if (!('path' in entry)) {
-      const theme =
-        (entry.theme &&
-          parseTheme({
-            specifier: entry.theme,
-            context,
-            workspaceDir,
-            themesDir,
-          })) ??
-        themeIndexes[0];
-      if (
-        theme &&
-        themeIndexes.every((t) => !pathEquals(t.location, theme.location))
-      ) {
-        themeIndexes.push(theme);
-      }
+      const themes = entry.theme
+        ? [entry.theme].flat().map((theme) =>
+            parseTheme({
+              theme,
+              context,
+              workspaceDir,
+              themesDir,
+            }),
+          )
+        : [...rootThemes];
+      themes.forEach((t) => themeIndexes.add(t));
       return {
         rel: 'contents',
         target: autoGeneratedTocPath,
         title: entry.title ?? config?.tocTitle ?? TOC_TITLE,
-        theme,
+        themes,
       } as ContentsEntry;
     }
     const sourcePath = path.resolve(entryContextDir, entry.path); // abs
@@ -796,30 +812,21 @@ async function composeProjectConfig<T extends CliFlags>(
     });
 
     const title = entry.title ?? metadata.title ?? projectTitle;
-    const theme =
-      (entry.theme &&
-        parseTheme({
-          specifier: entry.theme,
-          context,
-          workspaceDir,
-          themesDir,
-        })) ??
-      metadata.theme ??
-      themeIndexes[0];
-
-    if (
-      theme &&
-      themeIndexes.every((t) => !pathEquals(t.location, theme.location))
-    ) {
-      themeIndexes.push(theme);
-    }
+    const themes = entry.theme
+      ? [entry.theme]
+          .flat()
+          .map((theme) =>
+            parseTheme({ theme, context, workspaceDir, themesDir }),
+          )
+      : metadata.themes ?? [...rootThemes];
+    themes.forEach((t) => themeIndexes.add(t));
 
     return {
       type,
       source: sourcePath,
       target: targetPath,
       title,
-      theme,
+      themes,
       ...(entry.rel && { rel: entry.rel }),
     } as ManuscriptEntry;
   }
@@ -855,7 +862,7 @@ async function composeProjectConfig<T extends CliFlags>(
       rel: 'contents',
       target: autoGeneratedTocPath,
       title: config?.tocTitle ?? TOC_TITLE,
-      theme: themeIndexes[0],
+      themes: [...rootThemes],
     });
   }
 

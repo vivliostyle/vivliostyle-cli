@@ -38,26 +38,41 @@ import {
   useTmpDirectory,
 } from './util';
 
-function locateThemePath(theme: ParsedTheme, from: string): string {
+function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   if (theme.type === 'uri') {
     return theme.location;
   }
   if (theme.type === 'file') {
     return path.relative(from, theme.location);
   }
-  const pkgJsonPath = path.join(theme.location, 'package.json');
-  const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-  const maybeStyle =
-    packageJson?.vivliostyle?.theme?.style ??
-    packageJson.style ??
-    packageJson.main;
-  if (!maybeStyle) {
-    throw new DetailError(
-      `Could not find a style file for the theme: ${theme.name}.`,
-      'Please ensure this package satisfies a `vivliostyle.theme.style` propertiy.',
-    );
+  if (theme.importPath) {
+    return [theme.importPath].flat().map((locator) => {
+      const resolvedPath = path.resolve(theme.location, locator);
+      if (
+        !pathContains(theme.location, resolvedPath) ||
+        !fs.existsSync(resolvedPath)
+      ) {
+        throw new Error(
+          `Could not find a style path ${theme.importPath} for the theme: ${theme.name}.`,
+        );
+      }
+      return path.relative(from, resolvedPath);
+    });
+  } else {
+    const pkgJsonPath = path.join(theme.location, 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+    const maybeStyle =
+      packageJson?.vivliostyle?.theme?.style ??
+      packageJson.style ??
+      packageJson.main;
+    if (!maybeStyle) {
+      throw new DetailError(
+        `Could not find a style file for the theme: ${theme.name}.`,
+        'Please ensure this package satisfies a `vivliostyle.theme.style` propertiy.',
+      );
+    }
+    return path.relative(from, path.join(theme.location, maybeStyle));
   }
-  return path.relative(from, path.join(theme.location, maybeStyle));
 }
 
 export async function cleanupWorkspace({
@@ -231,8 +246,9 @@ export async function compile({
     shelljs.mkdir('-p', path.dirname(entry.target));
 
     // calculate style path
-    const style =
-      entry.theme && locateThemePath(entry.theme, path.dirname(entry.target));
+    const style = entry.themes.flatMap((theme) =>
+      locateThemePath(theme, path.dirname(entry.target)),
+    );
     if (entry.type === 'text/markdown') {
       // compile markdown
       const vfile = processMarkdown(entry.source, {
@@ -265,9 +281,9 @@ export async function compile({
 
   // generate toc
   if (generativeContentsEntry) {
-    const style =
-      generativeContentsEntry.theme &&
-      locateThemePath(generativeContentsEntry.theme, workspaceDir);
+    const style = generativeContentsEntry.themes.flatMap((theme) =>
+      locateThemePath(theme, workspaceDir),
+    );
     const tocString = generateTocHtml({
       entries: contentEntries,
       manifestPath,

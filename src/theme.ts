@@ -40,7 +40,7 @@ export async function checkThemeInstallationNecessity({
   themeIndexes,
 }: Pick<MergedConfig, 'themesDir' | 'themeIndexes'>): Promise<boolean> {
   if (!fs.existsSync(themesDir)) {
-    return themeIndexes.some((theme) => theme.type === 'package');
+    return [...themeIndexes].some((theme) => theme.type === 'package');
   }
 
   return await temporaryMovePackagesDirectrory(themesDir, async () => {
@@ -51,7 +51,7 @@ export async function checkThemeInstallationNecessity({
     const arb = new Arborist(commonOpt);
     const tree = await arb.loadActual();
     const pkgs = Array.from(tree.children.keys());
-    return themeIndexes.some(
+    return [...themeIndexes].some(
       (theme) => theme.type === 'package' && !pkgs.includes(theme.name),
     );
   });
@@ -71,9 +71,13 @@ export async function installThemeDependencies({
       };
       const tree = await new Arborist(commonOpt).buildIdealTree();
       const existing = Array.from(tree.children.keys());
-      const add = themeIndexes.flatMap((theme) =>
-        theme.type === 'package' ? [theme.specifier] : [],
-      );
+      const add = [
+        ...new Set(
+          [...themeIndexes].flatMap((theme) =>
+            theme.type === 'package' ? [theme.specifier] : [],
+          ),
+        ),
+      ];
       const rm = existing.filter((v) => !add.includes(v));
 
       // Install dependencies

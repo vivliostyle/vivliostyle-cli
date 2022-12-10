@@ -1,13 +1,15 @@
 module.exports = {
   title: 'title',
   author: 'author',
-  theme: '../themes/debug-theme',
+  theme: ['../themes/debug-theme'],
   entry: [
     'manuscript.md',
     {
       path: 'manuscript.md',
       title: 'title',
-      theme: 'theme.css',
+      theme: {
+        specifier: 'theme.css',
+      },
     },
   ],
   entryContext: '.',
