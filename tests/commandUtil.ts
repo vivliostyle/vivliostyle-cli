@@ -46,7 +46,10 @@ export const maskConfig = (obj: any) => {
     } else if (k === 'image') {
       obj[k] = '__IMAGE__';
     } else if (typeof v === 'string') {
-      obj[k] = v.replace(rootPath, '__WORKSPACE__');
+      const normalized = v.match(/^(https?|file):\/{2}/) ? v : path.toUnix(v);
+      obj[k] = normalized
+        .replace(rootPath, '__WORKSPACE__')
+        .replace(/^(https?|file):\/+/, '$1://');
     }
   });
 };
