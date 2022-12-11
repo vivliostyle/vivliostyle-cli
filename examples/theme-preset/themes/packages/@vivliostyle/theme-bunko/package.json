@@ -1,0 +1,42 @@
+{
+  "name": "@vivliostyle/theme-bunko",
+  "description": "文庫用のテーマ",
+  "version": "0.3.0",
+  "author": "Vivliostyle <mail@vivliostyle.org>",
+  "scripts": {
+    "dev": "vivliostyle-theme-scripts preview theme.css --layout example/bunko.md"
+  },
+  "devDependencies": {
+    "vivliostyle-theme-scripts": "^0.3.1"
+  },
+  "files": [
+    "*.css",
+    "example"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vivliostyle/themes.git",
+    "directory": "packages/@vivliostyle/theme-bunko"
+  },
+  "homepage": "https://github.com/vivliostyle/themes",
+  "keywords": [
+    "vivliostyle",
+    "vivliostyle-theme"
+  ],
+  "license": "CC0-1.0",
+  "vivliostyle": {
+    "theme": {
+      "name": "Bunko",
+      "style": "./theme.css",
+      "category": "novel",
+      "topics": [
+        "小説",
+        "縦書き"
+      ]
+    }
+  },
+  "gitHead": "b6dd255b3e11e11232d92685cad9b810f43198e2"
+}

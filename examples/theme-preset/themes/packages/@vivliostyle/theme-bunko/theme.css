@@ -1,0 +1,105 @@
+@charset "UTF-8";
+
+html {
+  writing-mode: vertical-rl;
+  orphans: 1;
+  widows: 1;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+@page {
+  size: 148mm 210mm;
+  width: 360pt;
+  height: 468pt;
+  margin: auto;
+  font-size: 8.5pt;
+  font-family: '游明朝', 'YuMincho', serif;
+}
+
+@page :left {
+  @top-left {
+    content: counter(page) '　' env(doc-title);
+    margin-left: 7pt;
+    margin-top: 8.5mm;
+    writing-mode: horizontal-tb;
+  }
+}
+
+@page :right {
+  @top-right {
+    content: counter(page);
+    margin-right: 7pt;
+    margin-top: 8.5mm;
+    writing-mode: horizontal-tb;
+  }
+}
+
+html {
+  font-family: '游明朝', 'YuMincho', serif;
+  text-align: justify;
+  line-height: 2rem;
+}
+
+h1 {
+  font-weight: bold;
+  font-size: 1.35rem;
+  break-after: avoid;
+  line-height: 6rem;
+  letter-spacing: 0.125em;
+}
+
+h2 {
+  font-weight: normal;
+  font-size: 1.18rem;
+  text-indent: 3rem;
+  break-after: avoid;
+  line-height: 4rem;
+}
+
+ruby > rt {
+  font-size: 0.5rem;
+}
+
+p {
+  text-indent: 1em;
+}
+
+/* 括弧で始まる段落 */
+p.q {
+  text-indent: 0;
+}
+
+/* 奥付 */
+[role='doc-colophon'] {
+  font-size: 0.824rem;
+  line-height: 1.5rem;
+  margin-block-start: 6rem;
+  break-inside: avoid;
+}
+
+/* 縦中横 */
+.tcy {
+  text-combine-upright: all;
+}
+
+.upright {
+  text-orientation: upright;
+}
+
+/* 圏点（ゴマ） */
+em.sesame_dot {
+  font-style: normal;
+  text-emphasis-style: sesame;
+}
+
+/* 著者 */
+.author {
+  text-align: end;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0.125em;
+}

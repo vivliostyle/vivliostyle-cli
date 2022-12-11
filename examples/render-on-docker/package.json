@@ -1,6 +1,4 @@
 {
-  "name": "theme-preset",
-  "version": "1.0.0",
   "scripts": {
     "build": "vivliostyle build",
     "preview": "vivliostyle preview"
