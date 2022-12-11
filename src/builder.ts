@@ -95,12 +95,13 @@ export async function cleanupWorkspace({
   let movedThemePath: string | undefined;
   if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
     [movedThemePath] = await useTmpDirectory();
-    shelljs.mv(themesDir, movedThemePath);
+    shelljs.cp('-rf', themesDir, movedThemePath);
   }
   shelljs.rm('-rf', workspaceDir);
   if (movedThemePath) {
     shelljs.mkdir('-p', workspaceDir);
-    shelljs.mv(
+    shelljs.cp(
+      '-rf',
       path.join(movedThemePath, path.basename(themesDir)),
       workspaceDir,
     );
