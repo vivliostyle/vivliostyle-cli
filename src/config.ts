@@ -1,39 +1,39 @@
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import AjvModule from 'ajv';
+import AjvFormatsModule from 'ajv-formats';
 import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'upath';
 import { pathToFileURL } from 'url';
-import { getExecutableBrowserPath } from './browser';
-import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const';
-import { CONTAINER_IMAGE } from './container';
-import { openEpubToTmpDirectory } from './epub';
+import { getExecutableBrowserPath } from './browser.js';
+import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const.js';
+import { CONTAINER_IMAGE } from './container.js';
+import { openEpubToTmpDirectory } from './epub.js';
 import {
   detectInputFormat,
   detectManuscriptMediaType,
   InputFormat,
   ManuscriptMediaType,
-} from './input';
-import { readMarkdownMetadata } from './markdown';
+} from './input.js';
+import { readMarkdownMetadata } from './markdown.js';
 import {
   checkOutputFormat,
   checkPreflightMode,
   checkRenderMode,
   detectOutputFormat,
   OutputFormat,
-} from './output';
-import { vivliostyleConfigSchema } from './schema/vivliostyle';
+} from './output.js';
+import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
 import type {
   BrowserType,
   EntryObject,
   ThemeObject,
   VivliostyleConfigEntry,
   VivliostyleConfigSchema,
-} from './schema/vivliostyleConfig.schema';
-import { PageSize } from './server';
-import { parsePackageName } from './theme';
+} from './schema/vivliostyleConfig.schema.js';
+import { PageSize } from './server.js';
+import { parsePackageName } from './theme.js';
 import {
   cwd,
   debug,
@@ -45,7 +45,11 @@ import {
   readJSON,
   statFileSync,
   touchTmpFile,
-} from './util';
+} from './util.js';
+
+// FIXME: https://github.com/ajv-validator/ajv/issues/2047
+const Ajv = AjvModule.default;
+const addFormats = AjvFormatsModule.default;
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -336,33 +340,45 @@ function parseFileMetadata({
   return { title, themes };
 }
 
-export function collectVivliostyleConfig<T extends CliFlags>(
+export async function collectVivliostyleConfig<T extends CliFlags>(
   cliFlags: T,
-): {
-  cliFlags: T;
-  vivliostyleConfig?: VivliostyleConfigEntry[];
-  vivliostyleConfigPath: string;
-} {
-  const load = (configPath: string) => {
-    if (!fs.existsSync(configPath)) {
-      return undefined;
+): Promise<
+  {
+    cliFlags: T;
+  } & (
+    | {
+        vivliostyleConfig: VivliostyleConfigEntry[];
+        vivliostyleConfigPath: string;
+      }
+    | {
+        vivliostyleConfig?: undefined;
+        vivliostyleConfigPath?: undefined;
+      }
+  )
+> {
+  const load = async (configPath: string) => {
+    let config: VivliostyleConfigSchema;
+    let jsonRaw: string | undefined;
+    try {
+      if (path.extname(configPath) === '.json') {
+        jsonRaw = fs.readFileSync(configPath, 'utf8');
+        config = JSON.parse(jsonRaw);
+      } else {
+        config = (await import(configPath)).default;
+      }
+    } catch (error) {
+      const thrownError = error as Error;
+      throw new DetailError(
+        `An error occurred on loading a config file: ${configPath}`,
+        thrownError.stack ?? thrownError.message,
+      );
     }
-    delete require.cache[configPath]; // clear require cache
-    const config = require(configPath) as VivliostyleConfigSchema;
 
     const ajv = new Ajv({ strict: false });
     addFormats(ajv);
     const validate = ajv.compile(vivliostyleConfigSchema);
     const valid = validate(config);
     if (!valid) {
-      let jsonRaw: string | undefined;
-      try {
-        jsonRaw = fs.readFileSync(configPath, 'utf8');
-        // Check JSON validity
-        JSON.parse(jsonRaw);
-      } catch {
-        jsonRaw = undefined;
-      }
       const message = `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`;
       const detailMessage =
         validate.errors &&
@@ -379,27 +395,45 @@ export function collectVivliostyleConfig<T extends CliFlags>(
     return config;
   };
 
-  let vivliostyleConfigPath = cliFlags.configPath
-    ? path.resolve(cwd, cliFlags.configPath)
-    : path.join(cwd, 'vivliostyle.config.js');
-  let vivliostyleConfig = load(vivliostyleConfigPath);
-  if (
-    !vivliostyleConfig &&
+  let configEntry:
+    | {
+        vivliostyleConfig: VivliostyleConfigEntry[];
+        vivliostyleConfigPath: string;
+      }
+    | {
+        vivliostyleConfig?: undefined;
+        vivliostyleConfigPath?: undefined;
+      } = {};
+  let vivliostyleConfigPath: string | undefined;
+  if (cliFlags.configPath) {
+    vivliostyleConfigPath = path.resolve(cwd, cliFlags.configPath);
+  } else {
+    vivliostyleConfigPath = ['.js', '.mjs', '.cjs']
+      .map((ext) => path.join(cwd, `vivliostyle.config${ext}`))
+      .find((p) => fs.existsSync(p));
+  }
+  // let vivliostyleConfig: VivliostyleConfigSchema | undefined;
+  if (vivliostyleConfigPath) {
+    configEntry = {
+      vivliostyleConfigPath,
+      vivliostyleConfig: [await load(vivliostyleConfigPath)].flat(),
+    };
+  } else if (
     cliFlags.input &&
     path.basename(cliFlags.input).startsWith('vivliostyle.config')
   ) {
     // Load an input argument as a Vivliostyle config
     try {
       const inputPath = path.resolve(cwd, cliFlags.input);
-      const inputConfig = load(inputPath);
-      if (inputConfig) {
-        cliFlags = {
-          ...cliFlags,
-          input: undefined,
-        };
-        vivliostyleConfigPath = inputPath;
-        vivliostyleConfig = inputConfig;
-      }
+      const inputConfig = await load(inputPath);
+      cliFlags = {
+        ...cliFlags,
+        input: undefined,
+      };
+      configEntry = {
+        vivliostyleConfigPath: inputPath,
+        vivliostyleConfig: [inputConfig].flat(),
+      };
     } catch (_err) {}
   }
 
@@ -414,13 +448,7 @@ export function collectVivliostyleConfig<T extends CliFlags>(
 
   return {
     cliFlags,
-    vivliostyleConfig:
-      vivliostyleConfig &&
-      // Config file allows both single input and list of inputs
-      (Array.isArray(vivliostyleConfig)
-        ? vivliostyleConfig
-        : [vivliostyleConfig]),
-    vivliostyleConfigPath,
+    ...configEntry,
   };
 }
 

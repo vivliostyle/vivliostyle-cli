@@ -1,9 +1,13 @@
-import commander from 'commander';
-import { BuildCliFlags } from '../build';
-import { validateTimeoutFlag } from '../config';
-import { checkOutputFormat, detectOutputFormat, OutputFormat } from '../output';
+import { Command, Option } from 'commander';
+import { BuildCliFlags } from '../build.js';
+import { validateTimeoutFlag } from '../config.js';
+import {
+  checkOutputFormat,
+  detectOutputFormat,
+  OutputFormat,
+} from '../output.js';
 
-export function setupBuildParserProgram(): commander.Command {
+export function setupBuildParserProgram(): Command {
   // Provide an order-sensitive command parser
   // ex: "-o foo -o bar -f baz"
   //    → [{output: "foo"}, {output:"bar", format: "baz"}]
@@ -36,7 +40,7 @@ export function setupBuildParserProgram(): commander.Command {
     return [...(previous || []), value];
   };
 
-  const program = new commander.Command();
+  const program = new Command();
   program
     .name('vivliostyle build')
     .description('build and create PDF file')
@@ -95,13 +99,13 @@ This option is equivalent with "--preflight press-ready"`,
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
     .addOption(
-      new commander.Option(
+      new Option(
         '--render-mode <mode>',
         'if docker is set, Vivliostyle try to render PDF on Docker container [local]',
       ).choices(['local', 'docker']),
     )
     .addOption(
-      new commander.Option(
+      new Option(
         '--preflight <mode>',
         'apply the process to generate PDF for printing',
       ).choices(['press-ready', 'press-ready-local']),
@@ -140,11 +144,9 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     // Currently, Firefox and Webkit support preview command only!`,
     //       ).choices(['chromium', 'firefox', 'webkit']),
     //     )
-    .addOption(
-      new commander.Option('--bypassed-pdf-builder-option <json>').hideHelp(),
-    )
+    .addOption(new Option('--bypassed-pdf-builder-option <json>').hideHelp())
     // TODO: Remove it in the next major version up
-    .addOption(new commander.Option('--executable-chromium <path>').hideHelp())
+    .addOption(new Option('--executable-chromium <path>').hideHelp())
     .action((_arg: any, option: BuildCliFlags) => {
       option.targets = inferenceTargetsOption(targets);
     });

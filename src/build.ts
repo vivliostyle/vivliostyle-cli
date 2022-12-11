@@ -1,22 +1,22 @@
 import chalk from 'chalk';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { getExecutableBrowserPath } from './browser';
+import { getExecutableBrowserPath } from './browser.js';
 import {
   checkOverwriteViolation,
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from './builder';
+} from './builder.js';
 import {
   CliFlags,
   collectVivliostyleConfig,
   mergeConfig,
   MergedConfig,
-} from './config';
-import { buildPDF, buildPDFWithContainer } from './pdf';
-import { teardownServer } from './server';
+} from './config.js';
+import { buildPDF, buildPDFWithContainer } from './pdf.js';
+import { teardownServer } from './server.js';
 import {
   checkContainerEnvironment,
   cwd,
@@ -24,8 +24,8 @@ import {
   log,
   startLogging,
   stopLogging,
-} from './util';
-import { exportWebPublication } from './webbook';
+} from './util.js';
+import { exportWebPublication } from './webbook.js';
 
 export interface BuildCliFlags extends CliFlags {
   output?: {
@@ -38,7 +38,7 @@ export interface BuildCliFlags extends CliFlags {
 export async function getFullConfig(
   cliFlags: BuildCliFlags,
 ): Promise<MergedConfig[]> {
-  const loadedConf = collectVivliostyleConfig(cliFlags);
+  const loadedConf = await collectVivliostyleConfig(cliFlags);
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
   const loadedCliFlags = loadedConf.cliFlags;
 
@@ -111,11 +111,13 @@ export async function build(cliFlags: BuildCliFlags) {
           });
         }
       } else if (target.format === 'webpub') {
-        if (!config.manifestPath) {
+        const { exportAliases, manifestPath } = config;
+        if (!manifestPath) {
           continue;
         }
         output = await exportWebPublication({
-          ...config,
+          exportAliases,
+          manifestPath,
           input: config.workspaceDir,
           output: target.path,
         });

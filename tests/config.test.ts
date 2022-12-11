@@ -1,11 +1,11 @@
 import shelljs from 'shelljs';
-import path from 'upath';
 import {
   assertArray,
   assertSingleItem,
   getMergedConfig,
   maskConfig,
-} from './commandUtil';
+  resolveFixture,
+} from './commandUtil.js';
 
 const configFiles = [
   'valid.1',
@@ -18,13 +18,13 @@ const configFiles = [
 const configFilePath = configFiles.reduce(
   (p, v) => ({
     ...p,
-    [v]: path.resolve(__dirname, `fixtures/config/vivliostyle.config.${v}.js`),
+    [v]: resolveFixture(`config/vivliostyle.config.${v}.cjs`),
   }),
   {} as { [k in typeof configFiles[number]]: string },
 );
 
 afterAll(() => {
-  shelljs.rm('-f', path.resolve(__dirname, 'fixtures/config/.vs-*'));
+  shelljs.rm('-f', resolveFixture('config/.vs-*'));
 });
 
 it('parse vivliostyle config', async () => {
@@ -104,9 +104,7 @@ it('Loads same config file on each way', async () => {
 });
 
 it('yields a config with single markdown', async () => {
-  const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/config/sample.md'),
-  ]);
+  const config = await getMergedConfig([resolveFixture('config/sample.md')]);
   maskConfig(config);
   assertSingleItem(config);
   expect(config.entries[0].target).toMatch(
@@ -134,16 +132,14 @@ it('yields a config with single markdown', async () => {
 });
 
 it('imports single html file', async () => {
-  const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/config/sample.html'),
-  ]);
+  const config = await getMergedConfig([resolveFixture('config/sample.html')]);
   maskConfig(config);
   expect(config).toMatchSnapshot();
 });
 
 it('yields a config with single input and vivliostyle config', async () => {
   const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/config/sample.md'),
+    resolveFixture('config/sample.md'),
     '-c',
     configFilePath['valid.1'],
   ]);
@@ -163,7 +159,7 @@ it('yields a config with single input and vivliostyle config', async () => {
 
 it('imports a EPUB file', async () => {
   const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/epubs/adaptive.epub'),
+    resolveFixture('epubs/adaptive.epub'),
     '-o',
     'epub.pdf',
   ]);
@@ -176,7 +172,7 @@ it('imports a EPUB file', async () => {
 
 it('imports a EPUB OPF file', async () => {
   const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/epubs/adaptive/OPS/content.opf'),
+    resolveFixture('epubs/adaptive/OPS/content.opf'),
     '-o',
     'epub-opf.pdf',
   ]);
@@ -186,7 +182,7 @@ it('imports a EPUB OPF file', async () => {
 
 it('imports a webbook compliant to W3C Web publication', async () => {
   const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/webbooks/w3c-webpub/publication.json'),
+    resolveFixture('webbooks/w3c-webpub/publication.json'),
     '-o',
     'w3c-webpub',
   ]);
@@ -196,7 +192,7 @@ it('imports a webbook compliant to W3C Web publication', async () => {
 
 it('imports a webbook compliant to Readium Web publication', async () => {
   const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/webbooks/readium-webpub/manifest.jsonld'),
+    resolveFixture('webbooks/readium-webpub/manifest.jsonld'),
     '-o',
     'readium-webpub',
   ]);
@@ -214,7 +210,7 @@ it('imports a https URL', async () => {
 
 it('yields a config from frontmatter', async () => {
   const config = await getMergedConfig([
-    path.resolve(__dirname, 'fixtures/config/frontmatter.md'),
+    resolveFixture('config/frontmatter.md'),
   ]);
   maskConfig(config);
   assertSingleItem(config);

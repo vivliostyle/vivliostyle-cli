@@ -1,10 +1,10 @@
 import Arborist from '@npmcli/arborist';
-import fs from 'fs';
+import fs from 'node:fs';
 import npa from 'npm-package-arg';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { MergedConfig } from './config';
-import { beforeExitHandlers, DetailError } from './util';
+import { MergedConfig } from './config.js';
+import { beforeExitHandlers, DetailError } from './util.js';
 
 // Rename `packages` directory into `node_modules` while Arborist works
 const temporaryMovePackagesDirectrory = async <T = unknown>(

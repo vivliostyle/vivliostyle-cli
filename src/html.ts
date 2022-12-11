@@ -1,10 +1,10 @@
 import cheerio from 'cheerio';
-import fs from 'fs';
+import fs from 'node:fs';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
 import prettier from 'prettier';
 import path from 'upath';
-import { ManuscriptEntry } from './config';
+import { ManuscriptEntry } from './config.js';
 
 export function generateTocHtml({
   entries,

@@ -1,6 +1,6 @@
 import execa from 'execa';
 import fileType from 'file-type';
-import fs from 'fs';
+import fs from 'node:fs';
 import {
   PDFCatalog,
   PDFDict,
@@ -10,11 +10,11 @@ import {
   PDFNumber,
 } from 'pdf-lib';
 import path from 'upath';
+import { rootPath } from './commandUtil.js';
+import packageJSON from '../package.json';
 
-const rootPath = path.resolve(__dirname, '..');
-const packageJSON = require(path.join(rootPath, 'package.json'));
 const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
-const fixtureRoot = path.resolve(__dirname, 'fixtures/wood');
+const fixtureRoot = path.resolve(rootPath, 'tests/fixtures/wood');
 const fixtureFile = path.join(fixtureRoot, 'index.html');
 
 const localTmpDir = path.join(rootPath, 'tmp');
@@ -23,7 +23,7 @@ fs.mkdirSync(localTmpDir, { recursive: true });
 function cleanUp(filePath: string) {
   try {
     fs.unlinkSync(filePath);
-  } catch (err) {
+  } catch (err: any) {
     if (err.code !== 'ENOENT') {
       throw err;
     }
@@ -53,7 +53,7 @@ it.only('generate pdf without errors', async () => {
       fixtureFile,
     ]);
     expect(response.stdout).toContain('has been created');
-  } catch (err) {
+  } catch (err: any) {
     throw err.stderr;
   }
 
@@ -76,7 +76,7 @@ it('generate press-ready pdf without errors', async () => {
       '--press-ready',
       fixtureFile,
     ]);
-  } catch (err) {
+  } catch (err: any) {
     throw err.stderr;
   }
 
@@ -100,7 +100,7 @@ it('generates a PDF with metadata', async () => {
       fixtureFile,
     ]);
     expect(response.stdout).toContain('has been created');
-  } catch (err) {
+  } catch (err: any) {
     throw err.stderr;
   }
 

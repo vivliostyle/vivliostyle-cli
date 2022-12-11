@@ -1,5 +1,5 @@
-import assert from 'assert';
-import fs from 'fs';
+import assert from 'node:assert';
+import fs from 'node:fs';
 import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
 import {
@@ -8,15 +8,15 @@ import {
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from '../src/builder';
-import { MergedConfig } from '../src/config';
-import { checkThemeInstallationNecessity } from '../src/theme';
+} from '../src/builder.js';
+import { MergedConfig } from '../src/config.js';
+import { checkThemeInstallationNecessity } from '../src/theme.js';
 import {
   assertArray,
   assertSingleItem,
   getMergedConfig,
   resolveFixture,
-} from './commandUtil';
+} from './commandUtil.js';
 
 function assertManifestPath(
   config: MergedConfig,
@@ -43,7 +43,7 @@ afterAll(() => {
 it('generate workspace directory', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/workspace.config.js'),
+    resolveFixture('builder/workspace.config.cjs'),
   ]);
   assertSingleItem(config);
   for (const target of config.outputs) {
@@ -68,9 +68,9 @@ it('generate workspace directory', async () => {
     'themes/packages',
     'themes/packages/debug-theme',
   ]);
-  const manifest = require(resolveFixture(
-    'builder/.vs-workspace/publication.json',
-  ));
+  const { default: manifest } = await import(
+    resolveFixture('builder/.vs-workspace/publication.json')
+  );
   expect(manifest.links[0]).toEqual({
     encodingFormat: 'image/png',
     rel: 'cover',
@@ -117,7 +117,7 @@ it('generate workspace directory', async () => {
 it('generate files with entryContext', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/entryContext.config.js'),
+    resolveFixture('builder/entryContext.config.cjs'),
   ]);
   assertSingleItem(config);
   for (const target of config.outputs) {
@@ -137,9 +137,9 @@ it('generate files with entryContext', async () => {
     'soda.html',
     't-o-c.html',
   ]);
-  const manifest = require(resolveFixture(
-    'builder/.vs-entryContext/publication.json',
-  ));
+  const { default: manifest } = await import(
+    resolveFixture('builder/.vs-entryContext/publication.json')
+  );
   expect(manifest.links[0]).toEqual({
     encodingFormat: 'image/png',
     rel: 'cover',
@@ -187,7 +187,7 @@ it('generate files with entryContext', async () => {
 it('generate from various manuscript formats', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/variousManuscriptFormat.config.js'),
+    resolveFixture('builder/variousManuscriptFormat.config.cjs'),
   ]);
   assertSingleItem(config);
   for (const target of config.outputs) {
@@ -215,9 +215,9 @@ it('generate from various manuscript formats', async () => {
     'themes/packages',
     'themes/packages/debug-theme',
   ]);
-  const manifest = require(resolveFixture(
-    'builder/.vs-variousManuscriptFormat/publication.json',
-  ));
+  const { default: manifest } = await import(
+    resolveFixture('builder/.vs-variousManuscriptFormat/publication.json')
+  );
   expect(manifest.readingOrder).toEqual([
     {
       name: 'SODA',
@@ -290,7 +290,7 @@ it('generate from various manuscript formats', async () => {
 it('generate with VFM options', async () => {
   const configWithoutOption = await getMergedConfig([
     '-c',
-    resolveFixture('builder/workspace.config.js'),
+    resolveFixture('builder/workspace.config.cjs'),
   ]);
   assertSingleItem(configWithoutOption);
   assertManifestPath(configWithoutOption);
@@ -305,14 +305,16 @@ it('generate with VFM options', async () => {
 
   const configWithOption = await getMergedConfig([
     '-c',
-    resolveFixture('builder/vfm.config.js'),
+    resolveFixture('builder/vfm.config.cjs'),
   ]);
   assertSingleItem(configWithOption);
   assertManifestPath(configWithOption);
   await cleanupWorkspace(configWithOption);
   await prepareThemeDirectory(configWithOption);
   await compile(configWithOption);
-  const manifest = require(resolveFixture('builder/.vs-vfm/publication.json'));
+  const { default: manifest } = await import(
+    resolveFixture('builder/.vs-vfm/publication.json')
+  );
   expect(manifest.readingOrder).toEqual([
     {
       url: 'index.html',
@@ -354,7 +356,7 @@ it('generate with VFM options', async () => {
 it('generate from multiple config entries', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/multipleEntry.config.js'),
+    resolveFixture('builder/multipleEntry.config.cjs'),
   ]);
   assertArray(config);
   expect(config).toHaveLength(2);
@@ -363,9 +365,9 @@ it('generate from multiple config entries', async () => {
   await cleanupWorkspace(config[0]);
   await prepareThemeDirectory(config[0]);
   await compile(config[0]);
-  const manifest1 = require(resolveFixture(
-    'builder/.vs-multipleEntry/one/publication.json',
-  ));
+  const { default: manifest1 } = await import(
+    resolveFixture('builder/.vs-multipleEntry/one/publication.json')
+  );
   expect(manifest1.readingOrder).toEqual([
     {
       name: 'SODA',
@@ -377,9 +379,9 @@ it('generate from multiple config entries', async () => {
   await cleanupWorkspace(config[1]);
   await prepareThemeDirectory(config[1]);
   await compile(config[1]);
-  const manifest2 = require(resolveFixture(
-    'builder/.vs-multipleEntry/two/publication.json',
-  ));
+  const { default: manifest2 } = await import(
+    resolveFixture('builder/.vs-multipleEntry/two/publication.json')
+  );
   expect(manifest2.readingOrder).toEqual([
     {
       url: 'manuscript/frontmatter.html',
@@ -397,7 +399,7 @@ it('generate from multiple config entries', async () => {
 it('check overwrite violation', async () => {
   const config1 = await getMergedConfig([
     '-c',
-    resolveFixture('builder/overwriteViolation.1.config.js'),
+    resolveFixture('builder/overwriteViolation.1.config.cjs'),
   ]);
   assertSingleItem(config1);
   expect(
@@ -412,7 +414,7 @@ it('check overwrite violation', async () => {
   ).rejects.toThrow();
   const config2 = await getMergedConfig([
     '-c',
-    resolveFixture('builder/overwriteViolation.2.config.js'),
+    resolveFixture('builder/overwriteViolation.2.config.cjs'),
   ]);
   assertSingleItem(config2);
   expect(
@@ -430,7 +432,7 @@ it('check overwrite violation', async () => {
 it('install local themes', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/localTheme.config.js'),
+    resolveFixture('builder/localTheme.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -497,7 +499,7 @@ it('install local themes', async () => {
 it('install remote themes', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/remoteTheme.config.js'),
+    resolveFixture('builder/remoteTheme.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -534,7 +536,7 @@ it('install remote themes', async () => {
 it('use multiple themes', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/multipleTheme.config.js'),
+    resolveFixture('builder/multipleTheme.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -572,7 +574,7 @@ it('use multiple themes', async () => {
 it('fail to install if package does not exist', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/nonExistTheme.config.js'),
+    resolveFixture('builder/nonExistTheme.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -584,7 +586,7 @@ it('fail to install if package does not exist', async () => {
 it('reject trying import theme that is not vivliostyle theme', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/invalidTheme.config.js'),
+    resolveFixture('builder/invalidTheme.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -597,7 +599,7 @@ it('reject trying import theme that is not vivliostyle theme', async () => {
 it('reject import style file that is not exist', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('builder/nonExistImport.config.js'),
+    resolveFixture('builder/nonExistImport.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);

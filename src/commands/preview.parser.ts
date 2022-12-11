@@ -1,7 +1,7 @@
-import commander from 'commander';
+import { Command, Option } from 'commander';
 
-export function setupPreviewParserProgram(): commander.Command {
-  const program = new commander.Command();
+export function setupPreviewParserProgram(): Command {
+  const program = new Command();
   program
     .name('vivliostyle preview')
     .description('launch preview server')
@@ -54,13 +54,13 @@ It is useful that requires CORS such as external web fonts.`,
 It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)`,
     )
     .addOption(
-      new commander.Option(
+      new Option(
         '--browser <browser>',
         `EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer [chromium]
 Currently, Firefox and Webkit support preview command only!`,
       ).choices(['chromium', 'firefox', 'webkit']),
     )
     // TODO: Remove it in the next major version up
-    .addOption(new commander.Option('--executable-chromium <path>').hideHelp());
+    .addOption(new Option('--executable-chromium <path>').hideHelp());
   return program;
 }

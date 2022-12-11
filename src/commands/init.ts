@@ -1,6 +1,6 @@
-import { init } from '../init';
-import { gracefulError } from '../util';
-import { setupInitParserProgram } from './init.parser';
+import { init } from '../init.js';
+import { gracefulError } from '../util.js';
+import { setupInitParserProgram } from './init.parser.js';
 
 try {
   const program = setupInitParserProgram();

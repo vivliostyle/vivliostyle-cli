@@ -1,8 +1,8 @@
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import AjvModule from 'ajv';
+import AjvFormatsModule from 'ajv-formats';
 import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
-import fs from 'fs';
+import fs from 'node:fs';
 import globby from 'globby';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
@@ -13,20 +13,20 @@ import {
   MergedConfig,
   ParsedTheme,
   WebPublicationManifestConfig,
-} from './config';
-import { TOC_TITLE } from './const';
-import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html';
-import { processMarkdown } from './markdown';
+} from './config.js';
+import { TOC_TITLE } from './const.js';
+import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html.js';
+import { processMarkdown } from './markdown.js';
 import type {
   PublicationLinks,
   PublicationManifest,
-} from './schema/publication.schema';
-import { publicationSchema, publicationSchemas } from './schema/pubManifest';
-import type { ArticleEntryObject } from './schema/vivliostyleConfig.schema';
+} from './schema/publication.schema.js';
+import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
+import type { ArticleEntryObject } from './schema/vivliostyleConfig.schema.js';
 import {
   checkThemeInstallationNecessity,
   installThemeDependencies,
-} from './theme';
+} from './theme.js';
 import {
   debug,
   DetailError,
@@ -36,7 +36,11 @@ import {
   pathEquals,
   startLogging,
   useTmpDirectory,
-} from './util';
+} from './util.js';
+
+// FIXME: https://github.com/ajv-validator/ajv/issues/2047
+const Ajv = AjvModule.default;
+const addFormats = AjvFormatsModule.default;
 
 function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   if (theme.type === 'uri') {

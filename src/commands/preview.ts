@@ -1,6 +1,6 @@
-import { preview } from '../preview';
-import { gracefulError } from '../util';
-import { setupPreviewParserProgram } from './preview.parser';
+import { preview } from '../preview.js';
+import { gracefulError } from '../util.js';
+import { setupPreviewParserProgram } from './preview.parser.js';
 
 try {
   const program = setupPreviewParserProgram();

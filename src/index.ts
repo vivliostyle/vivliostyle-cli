@@ -1,5 +1,5 @@
-export { build, BuildCliFlags } from './build';
-export { init, InitCliFlags } from './init';
-export { preview, PreviewCliFlags } from './preview';
-export type { PublicationManifest } from './schema/publication.schema';
-export type { VivliostyleConfigSchema } from './schema/vivliostyleConfig.schema';
+export { build, BuildCliFlags } from './build.js';
+export { init, InitCliFlags } from './init.js';
+export { preview, PreviewCliFlags } from './preview.js';
+export type { PublicationManifest } from './schema/publication.schema.js';
+export type { VivliostyleConfigSchema } from './schema/vivliostyleConfig.schema.js';

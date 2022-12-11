@@ -1,7 +1,7 @@
-import process from 'process';
-import { build } from '../build';
-import { gracefulError } from '../util';
-import { setupBuildParserProgram } from './build.parser';
+import process from 'node:process';
+import { build } from '../build.js';
+import { gracefulError } from '../util.js';
+import { setupBuildParserProgram } from './build.parser.js';
 
 try {
   const program = setupBuildParserProgram();

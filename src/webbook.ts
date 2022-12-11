@@ -1,13 +1,13 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import globby from 'globby';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { MergedConfig } from './config';
+import { MergedConfig } from './config.js';
 import type {
   PublicationLinks,
   PublicationManifest,
-} from './schema/publication.schema';
-import { debug, pathEquals } from './util';
+} from './schema/publication.schema.js';
+import { debug, pathEquals } from './util.js';
 
 export async function exportWebPublication({
   exportAliases,
