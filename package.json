@@ -93,7 +93,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./schemas": "./schemas/I",
+    "./schemas/*": "./schemas/*",
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
   },
