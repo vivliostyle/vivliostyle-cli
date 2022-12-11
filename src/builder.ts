@@ -2,10 +2,10 @@ import AjvModule from 'ajv';
 import AjvFormatsModule from 'ajv-formats';
 import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
-import fs from 'node:fs';
-import globby from 'globby';
+import { globby } from 'globby';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
+import fs from 'node:fs';
 import shelljs from 'shelljs';
 import path from 'upath';
 import {

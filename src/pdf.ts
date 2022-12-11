@@ -1,9 +1,9 @@
 import chalk from 'chalk';
+import { URL } from 'node:url';
 import { Page } from 'playwright-core';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { URL } from 'node:url';
 import {
   checkBrowserAvailability,
   downloadBrowser,

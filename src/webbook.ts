@@ -1,5 +1,5 @@
+import { globby } from 'globby';
 import fs from 'node:fs';
-import globby from 'globby';
 import shelljs from 'shelljs';
 import path from 'upath';
 import { MergedConfig } from './config.js';
@@ -32,16 +32,18 @@ export async function exportWebPublication({
         target: path.relative(input, target),
       }))
       .filter(({ source }) => !source.startsWith('..'));
-    const files = [
-      ...(await globby('**/*', {
-        cwd: input,
+    const files = await globby('**/*', {
+      cwd: input,
+      ignore: [
         // copy files included on exportAlias in last
-        ignore: relExportAliases.map(({ source }) => source),
-        // follow symbolic links to copy local theme packages
-        followSymbolicLinks: true,
-        gitignore: true,
-      })),
-    ];
+        ...relExportAliases.map(({ source }) => source),
+        // including node_modules possibly occurs cyclic reference of symlink
+        'node_modules/',
+      ],
+      // follow symbolic links to copy local theme packages
+      followSymbolicLinks: true,
+      gitignore: true,
+    });
 
     debug('webbook files', files);
     for (const file of files) {
