@@ -2,4 +2,7 @@
 /draft.pdf
 /draft
 /node_modules
-/themes
+/themes/packages/.package-lock.json
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

@@ -1,14 +1,15 @@
-import http from 'http';
+import http from 'node:http';
 import resolvePkg from 'resolve-pkg';
 import handler from 'serve-handler';
 import upath from 'upath';
-import { pathToFileURL, URL } from 'url';
+import { pathToFileURL, URL } from 'node:url';
+import { viewerRoot } from './const.js';
 import {
   beforeExitHandlers,
   debug,
   findAvailablePort,
   isUrlString,
-} from './util';
+} from './util.js';
 
 export type PageSize = { format: string } | { width: string; height: string };
 
@@ -46,9 +47,6 @@ export async function prepareServer(option: ServerOption): Promise<{
     ? new URL(option.viewer)
     : option.httpServer
     ? (async () => {
-        const viewerRoot = resolvePkg('@vivliostyle/viewer', {
-          cwd: __dirname,
-        })!;
         _viewerServer = _viewerServer || (await launchServer(viewerRoot));
 
         const viewerUrl = new URL('http://localhost');
@@ -58,10 +56,7 @@ export async function prepareServer(option: ServerOption): Promise<{
       })()
     : (() => {
         const viewerUrl = new URL('file://');
-        viewerUrl.pathname = upath.join(
-          resolvePkg('@vivliostyle/viewer', { cwd: __dirname })!,
-          'lib/index.html',
-        );
+        viewerUrl.pathname = upath.join(viewerRoot, 'lib/index.html');
         return viewerUrl;
       })());
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import commander from 'commander';
-import { cliVersion, coreVersion } from './const';
+import { Command } from 'commander';
+import { cliVersion, coreVersion } from './const.js';
 
 const version = `cli: ${cliVersion}
 core: ${coreVersion}`;
 
-const program = new commander.Command();
+const program = new Command();
 program
   .name('vivliostyle')
   .version(version, '-v, --version')

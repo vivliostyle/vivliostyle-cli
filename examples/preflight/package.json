@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "vivliostyle build",
+    "preview": "vivliostyle preview"
+  },
+  "dependencies": {
+    "@vivliostyle/cli": "file:../../"
+  }
+}

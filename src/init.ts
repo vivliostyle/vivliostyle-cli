@@ -1,8 +1,8 @@
 import chalk from 'chalk';
-import fs from 'fs';
+import fs from 'node:fs';
 import path from 'upath';
-import { CONTAINER_IMAGE } from './container';
-import { cwd, log } from './util';
+import { CONTAINER_IMAGE } from './container.js';
+import { cwd, log } from './util.js';
 
 export interface InitCliFlags {
   title?: string;

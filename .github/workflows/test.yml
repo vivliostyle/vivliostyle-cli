@@ -5,19 +5,36 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         node: [14, 16, 18]
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install external library
-        run: sudo apt-get update && sudo apt-get install -y ghostscript poppler-utils
+      # - name: Install external library
+      #   run: sudo apt-get update && sudo apt-get install -y ghostscript poppler-utils
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
       - run: yarn install
-      - run: yarn test
+      # FIXME: In Node.js 14, Jest fails to run tests serially due to a V8 bug
+      # We manually separate the test process as a workaround and avoid the dynamic import cache bug
+      # https://github.com/facebook/jest/issues/11438
+      # - run: yarn test
+      - run: yarn build
+      - run: yarn playwright install chromium
+      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/api.test.ts
+      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/builder.test.ts
+      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/cli.test.ts
+      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/config.test.ts
+      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/init.test.ts
+      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/server.test.ts
+      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/toc.test.ts
   build-and-push-image:
     runs-on: ubuntu-latest
     services:

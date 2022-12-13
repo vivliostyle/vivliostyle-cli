@@ -1,9 +1,10 @@
 import execa from 'execa';
-import fs from 'fs';
-import * as path from 'path';
+import fs from 'node:fs';
+import shelljs from 'shelljs';
+import path from 'upath';
+import { rootPath } from './commandUtil.js';
+import packageJSON from '../package.json';
 
-const rootPath = path.resolve(__dirname, '..');
-const packageJSON = require(path.join(rootPath, 'package.json'));
 const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
 
 const localTmpDir = path.join(rootPath, 'tmp');
@@ -12,7 +13,7 @@ fs.mkdirSync(localTmpDir, { recursive: true });
 function cleanUp(filePath: string) {
   try {
     fs.unlinkSync(filePath);
-  } catch (err) {
+  } catch (err: any) {
     if (err.code !== 'ENOENT') {
       throw err;
     }
@@ -74,7 +75,14 @@ it('test the init command with long option', async () => {
     'Successfully created vivliostyle.config.js',
   );
 
-  const config = require(path.join(outputDir, 'vivliostyle.config.js'));
+  // Change file extension and load Common JS
+  shelljs.mv(
+    path.join(outputDir, 'vivliostyle.config.js'),
+    path.join(outputDir, 'vivliostyle.config.cjs'),
+  );
+  const { default: config } = await import(
+    path.join(outputDir, 'vivliostyle.config.cjs')
+  );
   expect(config.title).toBe('Sample Document');
   expect(config.author).toBe('Author Name <author@example.com>');
   expect(config.language).toBe('en');
@@ -108,7 +116,14 @@ it('test the init command with short option', async () => {
     'Successfully created vivliostyle.config.js',
   );
 
-  const config = require(path.join(outputDir, 'vivliostyle.config.js'));
+  // Change file extension and load Common JS
+  shelljs.mv(
+    path.join(outputDir, 'vivliostyle.config.js'),
+    path.join(outputDir, 'vivliostyle.config.cjs'),
+  );
+  const { default: config } = await import(
+    path.join(outputDir, 'vivliostyle.config.cjs')
+  );
   expect(config.title).toBe('Sample Document2');
   expect(config.author).toBe('Author Name2 <author@example.com>');
   expect(config.language).toBe('jp');

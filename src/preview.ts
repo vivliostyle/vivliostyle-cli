@@ -5,15 +5,15 @@ import {
   downloadBrowser,
   isPlaywrightExecutable,
   launchBrowser,
-} from './browser';
+} from './browser.js';
 import {
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from './builder';
-import { CliFlags, collectVivliostyleConfig, mergeConfig } from './config';
-import { prepareServer } from './server';
+} from './builder.js';
+import { CliFlags, collectVivliostyleConfig, mergeConfig } from './config.js';
+import { prepareServer } from './server.js';
 import {
   cwd,
   debug,
@@ -23,7 +23,7 @@ import {
   pathEquals,
   startLogging,
   stopLogging,
-} from './util';
+} from './util.js';
 
 let timer: NodeJS.Timeout;
 
@@ -32,7 +32,7 @@ export interface PreviewCliFlags extends CliFlags {}
 export async function preview(cliFlags: PreviewCliFlags) {
   startLogging('Collecting preview config');
 
-  const loadedConf = collectVivliostyleConfig(cliFlags);
+  const loadedConf = await collectVivliostyleConfig(cliFlags);
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
   cliFlags = loadedConf.cliFlags;
 
@@ -110,7 +110,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     timer = setTimeout(async () => {
       startLogging(`Config file change detected. Reloading ${path}`);
       // reload vivliostyle config
-      const loadedConf = collectVivliostyleConfig(cliFlags);
+      const loadedConf = await collectVivliostyleConfig(cliFlags);
       const { vivliostyleConfig } = loadedConf;
       config = await mergeConfig(cliFlags, vivliostyleConfig?.[0], context);
       // build artifacts
@@ -187,7 +187,10 @@ export async function preview(cliFlags: PreviewCliFlags) {
         /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
       ) {
         handleChangeEvent(path);
-      } else if (pathEquals(path, upath.basename(vivliostyleConfigPath))) {
+      } else if (
+        vivliostyleConfigPath &&
+        pathEquals(path, upath.basename(vivliostyleConfigPath))
+      ) {
         reloadConfig(path);
       }
     });

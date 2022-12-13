@@ -1,10 +1,10 @@
 import fileType from 'file-type';
-import fs from 'fs';
+import fs from 'node:fs';
 import path from 'upath';
-import { build } from '../src';
+import { build } from '../src/index.js';
+import { rootPath } from './commandUtil.js';
 
-const rootPath = path.resolve(__dirname, '..');
-const fixtureRoot = path.resolve(__dirname, 'fixtures/wood');
+const fixtureRoot = path.resolve(rootPath, 'tests/fixtures/wood');
 const fixtureFile = path.join(fixtureRoot, 'index.html');
 
 const localTmpDir = path.join(rootPath, 'tmp');
@@ -13,7 +13,7 @@ fs.mkdirSync(localTmpDir, { recursive: true });
 function cleanUp(filePath: string) {
   try {
     fs.unlinkSync(filePath);
-  } catch (err) {
+  } catch (err: any) {
     if (err.code !== 'ENOENT') {
       throw err;
     }

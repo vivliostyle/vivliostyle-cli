@@ -1,11 +1,14 @@
-import assert from 'assert';
+import assert from 'node:assert';
+import URL from 'node:url';
 import path from 'upath';
-import { setupBuildParserProgram } from '../src/commands/build.parser';
+import { setupBuildParserProgram } from '../src/commands/build.parser.js';
 import {
   collectVivliostyleConfig,
   mergeConfig,
   MergedConfig,
-} from '../src/config';
+} from '../src/config.js';
+
+export const rootPath = path.join(URL.fileURLToPath(import.meta.url), '../..');
 
 export const getMergedConfig = async (
   args: string[],
@@ -17,7 +20,7 @@ export const getMergedConfig = async (
   ]);
   const options = program.opts();
   const { vivliostyleConfig, vivliostyleConfigPath, cliFlags } =
-    collectVivliostyleConfig({
+    await collectVivliostyleConfig({
       ...program.opts(),
       input: program.args?.[0],
       configPath: options.config,
@@ -25,7 +28,7 @@ export const getMergedConfig = async (
     });
   const context = vivliostyleConfig
     ? path.dirname(vivliostyleConfigPath)
-    : __dirname;
+    : path.join(rootPath, 'tests');
   const config = await Promise.all(
     (vivliostyleConfig ?? [vivliostyleConfig]).map((entry) =>
       mergeConfig(cliFlags, entry, context),
@@ -34,7 +37,6 @@ export const getMergedConfig = async (
   return config.length > 1 ? config : config[0];
 };
 
-const rootPath = path.resolve(__dirname, '..');
 export const maskConfig = (obj: any) => {
   Object.entries(obj).forEach(([k, v]) => {
     if (v && typeof v === 'object') {
@@ -44,13 +46,16 @@ export const maskConfig = (obj: any) => {
     } else if (k === 'image') {
       obj[k] = '__IMAGE__';
     } else if (typeof v === 'string') {
-      obj[k] = v.replace(rootPath, '__WORKSPACE__');
+      const normalized = v.match(/^(https?|file):\/{2}/) ? v : path.toUnix(v);
+      obj[k] = normalized
+        .replace(rootPath, '__WORKSPACE__')
+        .replace(/^(https?|file):\/+/, '$1://');
     }
   });
 };
 
 export const resolveFixture = (p: string) =>
-  path.resolve(__dirname, 'fixtures', p);
+  path.resolve(rootPath, 'tests/fixtures', p);
 
 export function assertSingleItem<T = unknown>(
   value: T | T[],

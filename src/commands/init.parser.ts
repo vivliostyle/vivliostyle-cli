@@ -1,7 +1,7 @@
-import commander from 'commander';
+import { Command } from 'commander';
 
-export function setupInitParserProgram(): commander.Command {
-  const program = new commander.Command();
+export function setupInitParserProgram(): Command {
+  const program = new Command();
   program
     .name('vivliostyle init')
     .description('create vivliostyle config file')

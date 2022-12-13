@@ -1,13 +1,13 @@
-import fs from 'fs';
-import globby from 'globby';
+import { globby } from 'globby';
+import fs from 'node:fs';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { MergedConfig } from './config';
+import { MergedConfig } from './config.js';
 import type {
   PublicationLinks,
   PublicationManifest,
-} from './schema/publication.schema';
-import { debug, pathEquals } from './util';
+} from './schema/publication.schema.js';
+import { debug, pathEquals } from './util.js';
 
 export async function exportWebPublication({
   exportAliases,
@@ -32,16 +32,18 @@ export async function exportWebPublication({
         target: path.relative(input, target),
       }))
       .filter(({ source }) => !source.startsWith('..'));
-    const files = [
-      ...(await globby('**/*', {
-        cwd: input,
+    const files = await globby('**/*', {
+      cwd: input,
+      ignore: [
         // copy files included on exportAlias in last
-        ignore: relExportAliases.map(({ source }) => source),
-        // follow symbolic links to copy local theme packages
-        followSymbolicLinks: true,
-        gitignore: true,
-      })),
-    ];
+        ...relExportAliases.map(({ source }) => source),
+        // including node_modules possibly occurs cyclic reference of symlink
+        'node_modules/',
+      ],
+      // follow symbolic links to copy local theme packages
+      followSymbolicLinks: true,
+      gitignore: true,
+    });
 
     debug('webbook files', files);
     for (const file of files) {

@@ -4,7 +4,7 @@ import {
   StringifyMarkdownOptions,
   VFM,
 } from '@vivliostyle/vfm';
-import fs from 'fs';
+import fs from 'node:fs';
 import vfile, { VFile } from 'vfile';
 
 export interface VSFile extends VFile {

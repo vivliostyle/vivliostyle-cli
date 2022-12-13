@@ -1,22 +1,26 @@
 import chalk from 'chalk';
+import { URL } from 'node:url';
 import { Page } from 'playwright-core';
 import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
-import { URL } from 'url';
 import {
   checkBrowserAvailability,
   downloadBrowser,
   getFullBrowserName,
   isPlaywrightExecutable,
   launchBrowser,
-} from './browser';
-import { ManuscriptEntry, MergedConfig } from './config';
-import { collectVolumeArgs, runContainer, toContainerPath } from './container';
-import { Meta, Payload, TOCItem } from './global-viewer';
-import { PdfOutput } from './output';
-import { PageSizeData, PostProcess } from './postprocess';
-import { prepareServer } from './server';
+} from './browser.js';
+import { ManuscriptEntry, MergedConfig } from './config.js';
+import {
+  collectVolumeArgs,
+  runContainer,
+  toContainerPath,
+} from './container.js';
+import { Meta, Payload, TOCItem } from './global-viewer.js';
+import { PdfOutput } from './output.js';
+import { PageSizeData, PostProcess } from './postprocess.js';
+import { prepareServer } from './server.js';
 import {
   checkContainerEnvironment,
   debug,
@@ -26,7 +30,7 @@ import {
   logUpdate,
   pathEquals,
   startLogging,
-} from './util';
+} from './util.js';
 
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;

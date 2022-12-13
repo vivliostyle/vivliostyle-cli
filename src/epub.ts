@@ -1,14 +1,12 @@
 import xmlParser from 'fast-xml-parser';
-import fs from 'fs';
+import fs from 'node:fs';
 import path from 'upath';
-import { inflateZip, useTmpDirectory } from './util';
+import { inflateZip, useTmpDirectory } from './util.js';
 
 const pickFirstOne = <T>(arg: T | T[]): T =>
   Array.isArray(arg) ? arg[0] : arg;
 
-export async function openEpubToTmpDirectory(
-  filePath: string,
-): Promise<{
+export async function openEpubToTmpDirectory(filePath: string): Promise<{
   dest: string;
   epubOpfPath: string;
   deleteEpub: () => void;

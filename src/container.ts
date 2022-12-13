@@ -2,10 +2,10 @@ import chalk from 'chalk';
 import commandExists from 'command-exists';
 import execa from 'execa';
 import isInteractive from 'is-interactive';
-import process from 'process';
+import process from 'node:process';
 import path from 'upath';
-import { fileURLToPath, pathToFileURL } from 'url';
-import { cliVersion } from './const';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { cliVersion } from './const.js';
 import {
   debug,
   isUrlString,
@@ -13,7 +13,7 @@ import {
   pathEquals,
   startLogging,
   stopLogging,
-} from './util';
+} from './util.js';
 
 export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
 export const CONTAINER_ROOT_DIR = '/data';

@@ -1,5 +1,5 @@
-import assert from 'assert';
-import fs from 'fs';
+import assert from 'node:assert';
+import fs from 'node:fs';
 import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
 import { compile, prepareThemeDirectory } from '../src/builder';
@@ -60,7 +60,7 @@ it('generateTocHtml', () => {
 it('toc: true', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('toc/toc.valid.1.config.js'),
+    resolveFixture('toc/toc.valid.1.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -74,7 +74,9 @@ it('toc: true', async () => {
     'index.html',
     'publication.json',
   ]);
-  const manifest = require(resolveFixture('toc/.vs-valid.1/publication.json'));
+  const { default: manifest } = await import(
+    resolveFixture('toc/.vs-valid.1/publication.json')
+  );
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
     name: 'Table of Contents',
@@ -103,7 +105,7 @@ it('toc: true', async () => {
 it("toc: 'manuscript/contents.html'", async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('toc/toc.valid.2.config.js'),
+    resolveFixture('toc/toc.valid.2.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -118,7 +120,9 @@ it("toc: 'manuscript/contents.html'", async () => {
     'manuscript/contents.html',
     'publication.json',
   ]);
-  const manifest = require(resolveFixture('toc/.vs-valid.2/publication.json'));
+  const { default: manifest } = await import(
+    resolveFixture('toc/.vs-valid.2/publication.json')
+  );
   expect(manifest.readingOrder[3]).toEqual({
     rel: 'contents',
     name: 'もくじ',
@@ -150,7 +154,7 @@ it("toc: 'manuscript/contents.html'", async () => {
 it('Write ToC by myself', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('toc/toc.valid.3.config.js'),
+    resolveFixture('toc/toc.valid.3.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);
@@ -171,7 +175,9 @@ it('Write ToC by myself', async () => {
     'themes/packages',
     'themes/packages/debug-theme',
   ]);
-  const manifest = require(resolveFixture('toc/.vs-valid.3/publication.json'));
+  const { default: manifest } = await import(
+    resolveFixture('toc/.vs-valid.3/publication.json')
+  );
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
     name: 'Hand-written ToC',
@@ -194,7 +200,7 @@ it('Write ToC by myself', async () => {
 it('check ToC overwrite violation', async () => {
   const config = await getMergedConfig([
     '-c',
-    resolveFixture('toc/toc.invalid.1.config.js'),
+    resolveFixture('toc/toc.invalid.1.config.cjs'),
   ]);
   assertSingleItem(config);
   assertManifestPath(config);

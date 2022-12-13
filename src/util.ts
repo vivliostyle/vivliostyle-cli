@@ -1,14 +1,14 @@
 import { ErrorObject } from 'ajv';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
-import fs from 'fs';
+import fs from 'node:fs';
 import StreamZip from 'node-stream-zip';
 import oraConstructor from 'ora';
 import portfinder from 'portfinder';
 import shelljs from 'shelljs';
 import tmp from 'tmp';
 import upath from 'upath';
-import util from 'util';
+import util from 'node:util';
 
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());
@@ -128,13 +128,13 @@ export function filterRelevantAjvErrors(
     return singleErrors.filter((error) => {
       if (
         metaErrors.some((metaError) =>
-          error.dataPath.startsWith(metaError.dataPath),
+          error.instancePath.startsWith(metaError.instancePath),
         )
       ) {
         return !singleErrors.some(
           (otherError) =>
-            otherError.dataPath.startsWith(error.dataPath) &&
-            otherError.dataPath.length > error.dataPath.length,
+            otherError.instancePath.startsWith(error.instancePath) &&
+            otherError.instancePath.length > error.instancePath.length,
         );
       } else {
         return true;
@@ -143,7 +143,7 @@ export function filterRelevantAjvErrors(
   }
   function mergeTypeErrorsByPath(typeErrors: ErrorObject[]): ErrorObject[] {
     const typeErrorsByPath = typeErrors.reduce((acc, error) => {
-      const key = error.dataPath;
+      const key = error.instancePath;
       return {
         ...acc,
         [key]: [...(acc[key] ?? []), error],
@@ -184,7 +184,7 @@ export function filterRelevantAjvErrors(
   const nonShadowingTypeErrors = typeErrors.filter(
     (typeError) =>
       !nonTypeErrors.some(
-        (nonTypeError) => nonTypeError.dataPath === typeError.dataPath,
+        (nonTypeError) => nonTypeError.instancePath === typeError.instancePath,
       ),
   );
   const typeErrorsMerged = mergeTypeErrorsByPath(nonShadowingTypeErrors);

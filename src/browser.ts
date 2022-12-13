@@ -1,7 +1,7 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import * as playwright from 'playwright-core';
 import { registry } from 'playwright-core/lib/server';
-import type { BrowserType } from './schema/vivliostyleConfig.schema';
+import type { BrowserType } from './schema/vivliostyleConfig.schema.js';
 import {
   beforeExitHandlers,
   logInfo,
@@ -9,7 +9,7 @@ import {
   pathEquals,
   startLogging,
   stopLogging,
-} from './util';
+} from './util.js';
 
 export async function launchBrowser({
   browserType,
