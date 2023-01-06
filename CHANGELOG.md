@@ -1,22 +1,30 @@
-# [6.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.9.0...v6.0.0) (2022-12-17)
-
+# [6.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.0.0...v6.1.0) (2023-01-06)
 
 ### Bug Fixes
 
-* Prevent recursive reference of same symlink ([751de6a](https://github.com/vivliostyle/vivliostyle-cli/commit/751de6a679c52cd55486510ac3ce904643dece6a))
-
+- stop using Chromium's `--headless=chrome` mode that causes layout problem on HiDPI display ([8c990d0](https://github.com/vivliostyle/vivliostyle-cli/commit/8c990d03f9295cfb308412e3a27f9754764915ce)), closes [#357](https://github.com/vivliostyle/vivliostyle-cli/issues/357)
 
 ### Features
 
-* Allow importing multiple themes and specify custom import path(s) ([65506c8](https://github.com/vivliostyle/vivliostyle-cli/commit/65506c8224d57c1bf912bded824bfe6850b5a347))
-* Renew the theme installation logic ([dab7669](https://github.com/vivliostyle/vivliostyle-cli/commit/dab7669fa0731c3ce3d63bf492bb63c774bfcac8))
-* Support Node.js ESM ([59df357](https://github.com/vivliostyle/vivliostyle-cli/commit/59df357f35d7910787e8f9ec4724cd55b8b97db8))
-* Update Vivliostyle.js to 2.20.0: CSS lh/rlh units and margin-break property support ([b5d8d8f](https://github.com/vivliostyle/vivliostyle-cli/commit/b5d8d8f2b9e59dd877572cdafdaebd1a1941101d))
+- Update Playwright to 1.29.1 (Chromium 109.0.5414.46) ([80461b5](https://github.com/vivliostyle/vivliostyle-cli/commit/80461b5d91aa70f49e6803bc9c13cbbb25a7ccca))
+- Update Vivliostyle.js to 2.21.1: Enable very thin border width; Update CSS text-spacing ([b819768](https://github.com/vivliostyle/vivliostyle-cli/commit/b8197686134fc8bf6e11f95f6b65f936d25edc24))
 
+# [6.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.9.0...v6.0.0) (2022-12-17)
+
+### Bug Fixes
+
+- Prevent recursive reference of same symlink ([751de6a](https://github.com/vivliostyle/vivliostyle-cli/commit/751de6a679c52cd55486510ac3ce904643dece6a))
+
+### Features
+
+- Allow importing multiple themes and specify custom import path(s) ([65506c8](https://github.com/vivliostyle/vivliostyle-cli/commit/65506c8224d57c1bf912bded824bfe6850b5a347))
+- Renew the theme installation logic ([dab7669](https://github.com/vivliostyle/vivliostyle-cli/commit/dab7669fa0731c3ce3d63bf492bb63c774bfcac8))
+- Support Node.js ESM ([59df357](https://github.com/vivliostyle/vivliostyle-cli/commit/59df357f35d7910787e8f9ec4724cd55b8b97db8))
+- Update Vivliostyle.js to 2.20.0: CSS lh/rlh units and margin-break property support ([b5d8d8f](https://github.com/vivliostyle/vivliostyle-cli/commit/b5d8d8f2b9e59dd877572cdafdaebd1a1941101d))
 
 ### BREAKING CHANGES
 
-* vivliostyle-cli now provides codes as ESM
+- vivliostyle-cli now provides codes as ESM
 
 # [5.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v5.8.1...v5.9.0) (2022-11-17)
 
