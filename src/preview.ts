@@ -12,7 +12,12 @@ import {
   copyAssets,
   prepareThemeDirectory,
 } from './builder.js';
-import { CliFlags, collectVivliostyleConfig, mergeConfig } from './config.js';
+import {
+  CliFlags,
+  collectVivliostyleConfig,
+  mergeConfig,
+  ManuscriptEntry,
+} from './config.js';
 import { prepareServer } from './server.js';
 import {
   cwd,
@@ -164,8 +169,10 @@ export async function preview(cliFlags: PreviewCliFlags) {
         if (
           config.entries.length &&
           /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
-          !config.entries.find((entry) =>
-            pathEquals(path, (entry as { source: string }).source ?? ''),
+          !config.entries.some(
+            (entry) =>
+              entry.rel !== 'contents' &&
+              pathEquals(path, (entry as ManuscriptEntry).source),
           )
         ) {
           return true; // ignore md or html files not in entries source
