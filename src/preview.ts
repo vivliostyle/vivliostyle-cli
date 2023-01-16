@@ -165,7 +165,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
           config.entries.length &&
           /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
           !config.entries.find((entry) =>
-            pathEquals(path, (entry as { source: string }).source),
+            pathEquals(path, (entry as { source: string }).source ?? ''),
           )
         ) {
           return true; // ignore md or html files not in entries source
