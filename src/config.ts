@@ -364,7 +364,7 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
         jsonRaw = fs.readFileSync(configPath, 'utf8');
         config = JSON.parse(jsonRaw);
       } else {
-        config = (await import(configPath)).default;
+        config = (await import(pathToFileURL(configPath).href)).default;
       }
     } catch (error) {
       const thrownError = error as Error;
