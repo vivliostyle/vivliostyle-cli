@@ -1,18 +1,20 @@
-
-
-# [6.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.1.0...v6.2.0) (2023-01-25)
-
+## [6.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.0...v6.2.1) (2023-01-26)
 
 ### Bug Fixes
 
-* ERR_UNSUPPORTED_ESM_URL_SCHEME on Windows ([d76692a](https://github.com/vivliostyle/vivliostyle-cli/commit/d76692a20ada631f23da3af23a5a95c88848d430)), closes [#362](https://github.com/vivliostyle/vivliostyle-cli/issues/362)
-* preview crashes when config has `toc: true` ([15dfcc7](https://github.com/vivliostyle/vivliostyle-cli/commit/15dfcc72a572e05c3b1d240390cd39ae8b717e38)), closes [#354](https://github.com/vivliostyle/vivliostyle-cli/issues/354)
+- Update Vivliostyle.js to 2.22.2: Leader layout bug fixes ([26c66d5](https://github.com/vivliostyle/vivliostyle-cli/commit/26c66d58d7319ad44e9cc8a2cb0f876265d6da60))
 
+# [6.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.1.0...v6.2.0) (2023-01-25)
+
+### Bug Fixes
+
+- ERR_UNSUPPORTED_ESM_URL_SCHEME on Windows ([d76692a](https://github.com/vivliostyle/vivliostyle-cli/commit/d76692a20ada631f23da3af23a5a95c88848d430)), closes [#362](https://github.com/vivliostyle/vivliostyle-cli/issues/362)
+- preview crashes when config has `toc: true` ([15dfcc7](https://github.com/vivliostyle/vivliostyle-cli/commit/15dfcc72a572e05c3b1d240390cd39ae8b717e38)), closes [#354](https://github.com/vivliostyle/vivliostyle-cli/issues/354)
 
 ### Features
 
-* Update Playwright to 1.30.0 (Chromium 110.0.5481.38) ([48f7ee2](https://github.com/vivliostyle/vivliostyle-cli/commit/48f7ee26271965351f51c7470b71584d4d284450))
-* Update Vivliostyle.js to 2.22.0: Support CSS leader() function ([8036fa5](https://github.com/vivliostyle/vivliostyle-cli/commit/8036fa5547745b5874ef8b762e0ed93826c96319))
+- Update Playwright to 1.30.0 (Chromium 110.0.5481.38) ([48f7ee2](https://github.com/vivliostyle/vivliostyle-cli/commit/48f7ee26271965351f51c7470b71584d4d284450))
+- Update Vivliostyle.js to 2.22.0: Support CSS leader() function ([8036fa5](https://github.com/vivliostyle/vivliostyle-cli/commit/8036fa5547745b5874ef8b762e0ed93826c96319))
 
 # [6.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.0.0...v6.1.0) (2023-01-06)
 
