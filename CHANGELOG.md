@@ -1,3 +1,9 @@
+## [6.2.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.1...v6.2.2) (2023-01-29)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.22.3: Fix PDF internal link bug ([5fc0e86](https://github.com/vivliostyle/vivliostyle-cli/commit/5fc0e869fa1e68e6d5fe478e1e57e26e7e4c9d99))
+
 ## [6.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.0...v6.2.1) (2023-01-26)
 
 ### Bug Fixes
