@@ -101,7 +101,13 @@ export function parsePackageName(
   cwd: string,
 ): npa.Result | null {
   try {
-    return npa(specifier, cwd);
+    let result = npa(specifier, cwd);
+    // #373: Relative path specifiers may be assumed as shorthand of hosted git
+    // (ex: foo/bar -> github:foo/bar)
+    if (result.type === 'git' && result.saveSpec?.startsWith('github:')) {
+      result = npa(`file:${specifier}`, cwd);
+    }
+    return result;
   } catch (error) {
     return null;
   }

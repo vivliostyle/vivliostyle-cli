@@ -1,5 +1,104 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`allow a loose specifier of a theme direcory: valid.5.config.js 1`] = `
+Object {
+  "bleed": undefined,
+  "browserType": "chromium",
+  "cover": undefined,
+  "cropMarks": false,
+  "cropOffset": undefined,
+  "css": undefined,
+  "customStyle": undefined,
+  "customUserStyle": undefined,
+  "entries": Array [
+    Object {
+      "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+      "target": "__WORKSPACE__/tests/fixtures/config/manuscript.html",
+      "themes": Array [
+        Object {
+          "importPath": undefined,
+          "location": "__WORKSPACE__/tests/fixtures/config/themes/packages/foo",
+          "name": "foo",
+          "specifier": "__WORKSPACE__/tests/fixtures/config/themes/foo",
+          "type": "package",
+        },
+      ],
+      "title": "pkgName",
+      "type": "text/markdown",
+    },
+  ],
+  "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
+  "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
+  "exportAliases": Array [],
+  "httpServer": false,
+  "image": "__IMAGE__",
+  "includeAssets": Array [
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.svg",
+    "**/*.gif",
+    "**/*.webp",
+    "**/*.apng",
+    "**/*.ttf",
+    "**/*.otf",
+    "**/*.woff",
+    "**/*.woff2",
+  ],
+  "input": Object {
+    "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
+    "format": "pub-manifest",
+  },
+  "language": null,
+  "manifestAutoGenerate": Object {
+    "author": "pkgAuthor",
+    "title": "pkgName",
+  },
+  "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "outputs": Array [
+    Object {
+      "format": "pdf",
+      "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
+      "preflight": null,
+      "preflightOption": Array [],
+      "renderMode": "local",
+    },
+  ],
+  "quick": false,
+  "readingProgression": undefined,
+  "rootThemes": Array [
+    Object {
+      "importPath": undefined,
+      "location": "__WORKSPACE__/tests/fixtures/config/themes/packages/foo",
+      "name": "foo",
+      "specifier": "__WORKSPACE__/tests/fixtures/config/themes/foo",
+      "type": "package",
+    },
+  ],
+  "sandbox": true,
+  "singleDoc": false,
+  "size": undefined,
+  "themeIndexes": Set {
+    Object {
+      "importPath": undefined,
+      "location": "__WORKSPACE__/tests/fixtures/config/themes/packages/foo",
+      "name": "foo",
+      "specifier": "__WORKSPACE__/tests/fixtures/config/themes/foo",
+      "type": "package",
+    },
+  },
+  "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
+  "timeout": 120000,
+  "verbose": false,
+  "vfmOptions": Object {
+    "disableFormatHtml": false,
+    "hardLineBreaks": false,
+  },
+  "viewer": undefined,
+  "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
+}
+`;
+
 exports[`imports a EPUB OPF file 1`] = `
 Object {
   "bleed": undefined,
