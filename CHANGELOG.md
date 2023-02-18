@@ -1,3 +1,12 @@
+
+
+## [6.2.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.2...v6.2.3) (2023-02-18)
+
+
+### Bug Fixes
+
+* Allow loose specifiers for local theme directories; fix [#373](https://github.com/vivliostyle/vivliostyle-cli/issues/373) ([832a160](https://github.com/vivliostyle/vivliostyle-cli/commit/832a1606087731608fc92fbc5808e360f587e950))
+
 ## [6.2.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.1...v6.2.2) (2023-01-29)
 
 ### Bug Fixes
