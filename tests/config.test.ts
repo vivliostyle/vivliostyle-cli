@@ -12,6 +12,7 @@ const configFiles = [
   'valid.2',
   'valid.3',
   'valid.4',
+  'valid.5',
   'invalid.1',
   'invalid.2',
 ] as const;
@@ -225,4 +226,10 @@ it('parse array of config', async () => {
   expect(validConfig[0]).toMatchSnapshot('valid.1.config.js');
   expect(validConfig[1]).toMatchSnapshot('valid.2.config.js');
   expect(validConfig[2]).toMatchSnapshot('valid.3.config.js');
+});
+
+it('allow a loose specifier of a theme direcory', async () => {
+  const validConfig = await getMergedConfig(['-c', configFilePath['valid.5']]);
+  maskConfig(validConfig);
+  expect(validConfig).toMatchSnapshot('valid.5.config.js');
 });
