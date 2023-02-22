@@ -1,11 +1,20 @@
-
-
-## [6.2.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.2...v6.2.3) (2023-02-18)
-
+# [6.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.3...v6.3.0) (2023-02-22)
 
 ### Bug Fixes
 
-* Allow loose specifiers for local theme directories; fix [#373](https://github.com/vivliostyle/vivliostyle-cli/issues/373) ([832a160](https://github.com/vivliostyle/vivliostyle-cli/commit/832a1606087731608fc92fbc5808e360f587e950))
+- browser address bar should not be focused when starting preview ([cb48ff7](https://github.com/vivliostyle/vivliostyle-cli/commit/cb48ff7612088aeabd89c01f1f2f6941838a150a))
+- preview minimum font-size problem depending on locale ([d1c779e](https://github.com/vivliostyle/vivliostyle-cli/commit/d1c779e36172f9ce6e6790a534cc6f736723c89a))
+- Update Vivliostyle.js to 2.22.4: Bug Fixes ([9cc01b4](https://github.com/vivliostyle/vivliostyle-cli/commit/9cc01b4f003d4361f31935f65bcf918c34d1796c))
+
+### Features
+
+- Update Playwright to 1.31.0 (Chromium 111.0.5563.19) ([5a6cdcc](https://github.com/vivliostyle/vivliostyle-cli/commit/5a6cdccf0dfdb5accf94059be0ac8534e14b36aa))
+
+## [6.2.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.2...v6.2.3) (2023-02-18)
+
+### Bug Fixes
+
+- Allow loose specifiers for local theme directories; fix [#373](https://github.com/vivliostyle/vivliostyle-cli/issues/373) ([832a160](https://github.com/vivliostyle/vivliostyle-cli/commit/832a1606087731608fc92fbc5808e360f587e950))
 
 ## [6.2.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.1...v6.2.2) (2023-01-29)
 
