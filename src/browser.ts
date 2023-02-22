@@ -36,6 +36,7 @@ export async function launchBrowser({
             '--allow-file-access-from-files',
             disableWebSecurity ? '--disable-web-security' : '',
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
+            '--lang=en',
           ],
         }
       : // TODO: Investigate appropriate settings on Firefox & Webkit
