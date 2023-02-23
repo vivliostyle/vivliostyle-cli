@@ -1,3 +1,9 @@
+## [6.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.3.0...v6.3.1) (2023-02-23)
+
+### Bug Fixes
+
+- Update Playwright to 1.31.1 (Chromium 111.0.5563.19, bugfixed on Windows) ([6cb5c21](https://github.com/vivliostyle/vivliostyle-cli/commit/6cb5c21e624a11300475c5ea1a012ff3ce0f94b4))
+
 # [6.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.2.3...v6.3.0) (2023-02-22)
 
 ### Bug Fixes
