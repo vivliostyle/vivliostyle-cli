@@ -1,3 +1,14 @@
+# [7.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.3.1...v7.0.0) (2023-03-13)
+
+### Features
+
+- Update VFM to 2.1.0 ([f53d141](https://github.com/vivliostyle/vivliostyle-cli/commit/f53d141a06365e6a0d44c6ada74f087035d9a85a))
+- Update Vivliostyle.js to 2.23.0: New syntax of CSS text-spacing properties ([7a4049c](https://github.com/vivliostyle/vivliostyle-cli/commit/7a4049c4fb663e413808347080ecbe33b56446d0))
+
+### BREAKING CHANGES
+
+- VFM v1 → v2
+
 ## [6.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v6.3.0...v6.3.1) (2023-02-23)
 
 ### Bug Fixes
