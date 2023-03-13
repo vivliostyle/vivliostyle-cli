@@ -1450,19 +1450,19 @@
   dependencies:
     fast-diff "^1.2.0"
 
-"@vivliostyle/vfm@1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-1.2.2.tgz#ae8fa4ed44b3bcf2d033e74f2b61d115994645fe"
-  integrity sha512-M8iGJ2wbJfrYUlvciZj1N234qnJIuX6ui7sywZr0RXlh7SbhKvOEQsezLKy00/TT2VSF0R+pVRnxMVBDSy6iag==
+"@vivliostyle/vfm@2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-2.1.0.tgz#8d4e068123cffe1c2081ce3a1389c4fbe003d42d"
+  integrity sha512-qs26plUnRTd/XGQd7iLVkpSIY3pYPxwvYty8QJsSt+i9uS5W+LEY3QSRoWvbJTHco0IS8mmPmmf4XouABSQaQg==
   dependencies:
     debug "^4.3.1"
     doctype "^2.0.4"
-    github-slugger "^1.3.0"
+    github-slugger "^1.4.0"
     hast-util-find-and-replace "^3.2.0"
     hast-util-is-element "^1.1.0"
     hast-util-select "^4.0.2"
     hastscript "^6.0.0"
-    js-yaml "^4.0.0"
+    js-yaml "^4.1.0"
     mdast-util-find-and-replace "^1.1.1"
     mdast-util-to-hast "^10.1.1"
     mdast-util-to-string "^2.0.0"
@@ -3870,7 +3870,7 @@ gitconfiglocal@^1.0.0:
   dependencies:
     ini "^1.3.2"
 
-github-slugger@^1.3.0:
+github-slugger@^1.4.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/github-slugger/-/github-slugger-1.5.0.tgz#17891bbc73232051474d68bd867a34625c955f7d"
   integrity sha512-wIh+gKBI9Nshz2o46B0B3f5k/W+WI9ZAv6y5Dn5WJ5SK1t0TnDimB4WE5rmTD05ZAIn8HALCZVmCsvj0w0v0lw==
@@ -5350,7 +5350,7 @@ js-yaml@^3.13.1:
     argparse "^1.0.7"
     esprima "^4.0.0"
 
-js-yaml@^4.0.0, js-yaml@^4.1.0:
+js-yaml@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.0.tgz#c1fb65f8f5017901cdd2c951864ba18458a10602"
   integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
