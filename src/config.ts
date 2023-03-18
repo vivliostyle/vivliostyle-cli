@@ -286,7 +286,7 @@ export function parseTheme({
 
 function parsePageSize(size: string): PageSize {
   const [width, height, ...others] = `${size}`.split(',');
-  if (others.length) {
+  if (!width || others.length) {
     throw new Error(`Cannot parse size: ${size}`);
   } else if (width && height) {
     return {
@@ -295,7 +295,7 @@ function parsePageSize(size: string): PageSize {
     };
   } else {
     return {
-      format: width ?? 'Letter',
+      format: width,
     };
   }
 }

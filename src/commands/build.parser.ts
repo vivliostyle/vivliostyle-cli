@@ -64,7 +64,7 @@ If an extension is specified on -o option, this field will be inferenced automat
     )
     .option(
       '-s, --size <size>',
-      `output pdf size [Letter]
+      `output pdf size
 preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
 custom(comma separated): 182mm,257mm or 8.5in,11in`,
     )
