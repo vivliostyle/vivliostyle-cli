@@ -76,7 +76,7 @@ Options:
   -f, --format <format>            specify output format corresponding output target
                                    If an extension is specified on -o option, this field will be
                                    inferenced automatically.
-  -s, --size <size>                output pdf size [Letter]
+  -s, --size <size>                output pdf size
                                    preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
                                    ledger
                                    custom(comma separated): 182mm,257mm or 8.5in,11in
@@ -134,7 +134,7 @@ vivliostyle preview
 Options:
   -c, --config <config_file>      path to vivliostyle.config.js
   -T, --theme <theme>             theme path or package name
-  -s, --size <size>               output pdf size [Letter]
+  -s, --size <size>               output pdf size
                                   preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal,
                                   ledger
                                   custom(comma separated): 182mm,257mm or 8.5in,11in
