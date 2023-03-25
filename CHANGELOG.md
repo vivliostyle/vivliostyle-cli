@@ -1,3 +1,9 @@
+## [7.1.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.1.0...v7.1.1) (2023-03-25)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.23.2: Bug Fix (Regression) ([4c258c0](https://github.com/vivliostyle/vivliostyle-cli/commit/4c258c04c939a83ab0d70e46b83936796134bdd4))
+
 # [7.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.0.0...v7.1.0) (2023-03-24)
 
 ### Bug Fixes
