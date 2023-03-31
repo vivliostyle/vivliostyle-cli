@@ -117,6 +117,8 @@ Options:
                                    vivliostyle-cli's one
                                    It is useful that using own viewer that has staging features.
                                    (ex: https://vivliostyle.vercel.app/)
+  --viewer-param <parameters>      specify viewer parameters.
+                                   (ex: "allowScripts=false&pixelRatio=16")
   -h, --help                       display help for command
 ```
 
@@ -161,6 +163,8 @@ Options:
                                   vivliostyle-cli's one
                                   It is useful that using own viewer that has staging features.
                                   (ex: https://vivliostyle.vercel.app/)
+  --viewer-param <parameters>     specify viewer parameters.
+                                  (ex: "allowScripts=false&pixelRatio=16")
   --browser <browser>             EXPERIMENTAL SUPPORT: Specify a browser type to launch
                                   Vivliostyle viewer [chromium]
                                   Currently, Firefox and Webkit support preview command only!

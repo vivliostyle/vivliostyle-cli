@@ -34,6 +34,7 @@ try {
     image: options.image,
     http: options.http,
     viewer: options.viewer,
+    viewerParam: options.viewerParam,
     // browser: options.browser,
     bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
     executableChromium: options.executableChromium, // TODO: Remove it in the next major version up

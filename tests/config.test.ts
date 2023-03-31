@@ -75,6 +75,8 @@ it('override option by CLI command', async () => {
     '--http',
     '--viewer',
     'https://vivliostyle.org/viewer/',
+    '--viewer-param',
+    'allowScripts=false&pixelRatio=16',
   ]);
   maskConfig(config);
   expect(config).toMatchSnapshot('valid.1.config.js');

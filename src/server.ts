@@ -28,6 +28,7 @@ export type ViewerUrlOption = {
   userStyle?: string;
   singleDoc?: boolean;
   quick?: boolean;
+  viewerParam?: string | undefined;
 };
 
 export type ServerOption = ViewerUrlOption & {
@@ -106,6 +107,7 @@ export function getViewerFullUrl(
     userStyle,
     singleDoc,
     quick,
+    viewerParam,
   }: ViewerUrlOption,
   { viewerUrl, sourceUrl }: { viewerUrl: URL; sourceUrl: URL },
 ): string {
@@ -153,6 +155,11 @@ export function getViewerFullUrl(
     viewerParams += `&style=data:,/*<viewer>*/${encodeURIComponent(
       pageStyle,
     )}/*</viewer>*/${encodeURIComponent(css ?? '')}`;
+  }
+
+  if (viewerParam) {
+    // append additional viewer parameters
+    viewerParams += `&${viewerParam}`;
   }
 
   return `${viewerUrl.href}#${viewerParams}`;

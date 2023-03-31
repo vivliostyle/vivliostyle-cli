@@ -95,6 +95,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -158,6 +159,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
 }
 `;
@@ -221,6 +223,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/epubs",
 }
 `;
@@ -283,6 +286,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
   "workspaceDir": "__WORKSPACE__",
 }
@@ -345,6 +349,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
 }
 `;
@@ -406,6 +411,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
 }
 `;
@@ -468,6 +474,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
@@ -600,6 +607,7 @@ Object {
     "hardLineBreaks": true,
   },
   "viewer": "https://vivliostyle.org/viewer/",
+  "viewerParam": "allowScripts=false&pixelRatio=16",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -742,6 +750,7 @@ Object {
     "hardLineBreaks": true,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -817,6 +826,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -892,6 +902,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -1034,6 +1045,7 @@ Object {
     "hardLineBreaks": true,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -1109,6 +1121,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -1184,6 +1197,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;
@@ -1292,6 +1306,7 @@ Object {
     "hardLineBreaks": true,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -1367,6 +1382,7 @@ Object {
     "hardLineBreaks": false,
   },
   "viewer": undefined,
+  "viewerParam": undefined,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;

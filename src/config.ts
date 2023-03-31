@@ -120,6 +120,7 @@ export interface CliFlags {
   image?: string;
   http?: boolean;
   viewer?: string;
+  viewerParam?: string;
   browser?: 'chromium' | 'firefox' | 'webkit';
   /** @deprecated */ executableChromium?: string;
 }
@@ -179,6 +180,7 @@ export type MergedConfig = {
   image: string;
   httpServer: boolean;
   viewer: string | undefined;
+  viewerParam: string | undefined;
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -523,6 +525,7 @@ export async function mergeConfig<T extends CliFlags>(
   const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
   const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
+  const viewerParam = cliFlags.viewerParam ?? config?.viewerParam ?? undefined;
 
   const rootThemes = cliFlags.theme
     ? [
@@ -642,6 +645,7 @@ export async function mergeConfig<T extends CliFlags>(
     image,
     httpServer,
     viewer,
+    viewerParam,
   };
   if (!cliFlags.input && !config) {
     throw new Error(
