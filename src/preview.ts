@@ -106,6 +106,13 @@ export async function preview(cliFlags: PreviewCliFlags) {
     disableWebSecurity: !config.viewer,
   });
   const page = await browser.newPage({ viewport: null });
+
+  // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
+  const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+  await page.addInitScript(
+    `window.localStorage.setItem('i18nextLng', '${locale}');`,
+  );
+
   await page.goto(viewerFullUrl);
 
   // Move focus from the address bar to the page
