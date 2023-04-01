@@ -750,7 +750,7 @@ Object {
     "hardLineBreaks": true,
   },
   "viewer": undefined,
-  "viewerParam": undefined,
+  "viewerParam": "foo=bar",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -1045,7 +1045,7 @@ Object {
     "hardLineBreaks": true,
   },
   "viewer": undefined,
-  "viewerParam": undefined,
+  "viewerParam": "foo=bar",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;
@@ -1306,7 +1306,7 @@ Object {
     "hardLineBreaks": true,
   },
   "viewer": undefined,
-  "viewerParam": undefined,
+  "viewerParam": "foo=bar",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;

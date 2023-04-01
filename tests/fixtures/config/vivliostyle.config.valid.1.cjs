@@ -33,4 +33,5 @@ module.exports = {
   },
   readingProgression: 'rtl',
   browser: 'firefox',
+  viewerParam: 'foo=bar',
 };
