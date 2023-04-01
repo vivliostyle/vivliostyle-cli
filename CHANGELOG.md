@@ -1,3 +1,11 @@
+# [7.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.1.1...v7.2.0) (2023-04-01)
+
+### Features
+
+- set UI language of Vivliostyle Viewer ([73dc48a](https://github.com/vivliostyle/vivliostyle-cli/commit/73dc48a52e915241b2815cd10a2d749edb85fc82))
+- Update Vivliostyle.js to 2.24.0: improved Viewer features ([6094439](https://github.com/vivliostyle/vivliostyle-cli/commit/6094439b7710c53d5b872a5b1f55f7d4a7dc1e82))
+- Viewer parameter setting: `--viewer-param` option (viewerParam property) ([72a749d](https://github.com/vivliostyle/vivliostyle-cli/commit/72a749de29a0bd0fb1ea7a84f00c5b1cc6fa3325)), closes [#169](https://github.com/vivliostyle/vivliostyle-cli/issues/169)
+
 ## [7.1.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.1.0...v7.1.1) (2023-03-25)
 
 ### Bug Fixes
