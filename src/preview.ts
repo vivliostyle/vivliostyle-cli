@@ -74,6 +74,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     workspaceDir: config.workspaceDir,
     httpServer: config.httpServer,
     viewer: config.viewer,
+    viewerParam: config.viewerParam,
     size: config.size,
     cropMarks: config.cropMarks,
     bleed: config.bleed,

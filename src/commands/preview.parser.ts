@@ -53,6 +53,10 @@ It is useful that requires CORS such as external web fonts.`,
       `specify a URL of displaying viewer instead of vivliostyle-cli's one
 It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)`,
     )
+    .option(
+      '--viewer-param <parameters>',
+      `specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")`,
+    )
     .addOption(
       new Option(
         '--browser <browser>',

@@ -112,6 +112,10 @@ export interface VivliostyleConfigEntry {
    */
   viewer?: string;
   /**
+   * specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
+   */
+  viewerParam?: string;
+  /**
    * EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer. Currently, Firefox and Webkit support preview command only!
    */
   browser?: BrowserType;
