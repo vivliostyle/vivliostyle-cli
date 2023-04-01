@@ -1443,10 +1443,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vivliostyle/core@^2.23.2":
-  version "2.23.2"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.23.2.tgz#0e3011e7d6faedf7c5c8d317c2a8904bd289d4df"
-  integrity sha512-ZhuguX48089K33lke3bjKhkJFTJ49UUt8Gap/M9uHL7q8hpsZSZb73ogKElAZFBDs5Nnq8CMYbJYu6idHbepAA==
+"@vivliostyle/core@^2.24.0":
+  version "2.24.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.24.0.tgz#6395cd86f273ae2cbd33452d2a32102da0def780"
+  integrity sha512-lv2iqNUJh7qmKCD8Ni0zknB3Nm7Nv+x5xvWY7LfTdGdRfK9M31AXnRujVsYDWDz6KKExSdtRIeNxLrgFs/FzHg==
   dependencies:
     fast-diff "^1.2.0"
 
@@ -1489,13 +1489,13 @@
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
 
-"@vivliostyle/viewer@2.23.2":
-  version "2.23.2"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.23.2.tgz#a1dea2d86e6c7c251f1e4d70ec63f478f7bb7704"
-  integrity sha512-YpUMMx4S+1Q+YEr19+7k/e/F0f71JcyRPNQyccPDiPUlj/7pM3lpDvzQZoWzfeQG3spTokiRyqxWBHawaujAuQ==
+"@vivliostyle/viewer@2.24.0":
+  version "2.24.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.24.0.tgz#d68cca6e13115f233d9472c29f051353ad1a68b5"
+  integrity sha512-n4iygbqNugmGcZmy7Hl+k0k/2H+pqZa6JOcMKZ6SOn1Rrll6Du3901QzAgWGDd0gIWnmEj5Q5rLBHcsLKV6STw==
   dependencies:
-    "@vivliostyle/core" "^2.23.2"
-    font-awesome "^4.7.0"
+    "@vivliostyle/core" "^2.24.0"
+    i18next-ko "^3.0.1"
     knockout "^3.5.0"
 
 JSONStream@^1.0.4:
@@ -3607,11 +3607,6 @@ find-versions@^4.0.0:
   dependencies:
     semver-regex "^3.1.2"
 
-font-awesome@^4.7.0:
-  version "4.7.0"
-  resolved "https://registry.yarnpkg.com/font-awesome/-/font-awesome-4.7.0.tgz#8fa8cf0411a1a31afd07b06d2902bb9fc815a133"
-  integrity sha1-j6jPBBGhoxr9B7BtKQK7n8gVoTM=
-
 for-each@^0.3.3:
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/for-each/-/for-each-0.3.3.tgz#69b447e88a0a5d32c3e7084f3f1710034b21376e"
@@ -4371,6 +4366,18 @@ husky@^4.3.8:
     please-upgrade-node "^3.2.0"
     slash "^3.0.0"
     which-pm-runs "^1.0.0"
+
+i18next-ko@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/i18next-ko/-/i18next-ko-3.0.1.tgz#b5ee2a4fc6767064e3b27d7b5683a527bf2bbc5d"
+  integrity sha512-Z0HMTiJHU1zP+Lgp8H8iZYmOZHrUVu6LaAWAmm5cMuP4y/VFAghEfs9kDuQ86+S+g45TCKzX76MqyNGemlJuMA==
+  dependencies:
+    i18next "^3.4.3"
+
+i18next@^3.4.3:
+  version "3.5.2"
+  resolved "https://registry.yarnpkg.com/i18next/-/i18next-3.5.2.tgz#930390d5c318ceaa4858b52dd0e40e6b203f9f41"
+  integrity sha512-42eGG1b56O5NR01Gudod1R3LzPugN6tZ3ZmYtAqOJSmx4V3vD07hLtkkFrv/qu1mRecW1woezyXFZBFnNAgRXw==
 
 iconv-lite@0.4.24, iconv-lite@^0.4.24:
   version "0.4.24"
