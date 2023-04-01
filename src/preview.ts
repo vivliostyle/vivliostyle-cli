@@ -114,6 +114,9 @@ export async function preview(cliFlags: PreviewCliFlags) {
     `window.localStorage.setItem('i18nextLng', '${locale}');`,
   );
 
+  // Prevent confirm dialog from being auto-dismissed
+  page.on('dialog', () => {});
+
   await page.goto(viewerFullUrl);
 
   // Move focus from the address bar to the page
