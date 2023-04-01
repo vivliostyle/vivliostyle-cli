@@ -1,3 +1,10 @@
+## [7.2.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.0...v7.2.1) (2023-04-01)
+
+### Bug Fixes
+
+- prevent confirm dialog from being auto-dismissed ([dd61be8](https://github.com/vivliostyle/vivliostyle-cli/commit/dd61be885a95623995cf2b4203ec87b5ea8af4f6))
+- Update Vivliostyle.js to 2.24.1: Bug Fix ([64f722b](https://github.com/vivliostyle/vivliostyle-cli/commit/64f722b9a4d9723a1beae32fe6baa612a2a3e657))
+
 # [7.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.1.1...v7.2.0) (2023-04-01)
 
 ### Features
