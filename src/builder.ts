@@ -2,7 +2,6 @@ import AjvModule from 'ajv';
 import AjvFormatsModule from 'ajv-formats';
 import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
-import { globby } from 'globby';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
@@ -34,6 +33,7 @@ import {
   log,
   pathContains,
   pathEquals,
+  safeGlob,
   startLogging,
   useTmpDirectory,
 } from './util.js';
@@ -332,7 +332,7 @@ export async function copyAssets({
     return;
   }
   const relWorkspaceDir = path.relative(entryContextDir, workspaceDir);
-  const assets = await globby(includeAssets, {
+  const assets = await safeGlob(includeAssets, {
     cwd: entryContextDir,
     ignore: relWorkspaceDir ? [path.join(relWorkspaceDir, '**/*')] : undefined,
     caseSensitiveMatch: false,

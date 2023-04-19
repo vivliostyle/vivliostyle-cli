@@ -1,4 +1,3 @@
-import { globby } from 'globby';
 import fs from 'node:fs';
 import shelljs from 'shelljs';
 import path from 'upath';
@@ -7,7 +6,7 @@ import type {
   PublicationLinks,
   PublicationManifest,
 } from './schema/publication.schema.js';
-import { debug, pathEquals } from './util.js';
+import { debug, pathEquals, safeGlob } from './util.js';
 
 export async function exportWebPublication({
   exportAliases,
@@ -32,13 +31,13 @@ export async function exportWebPublication({
         target: path.relative(input, target),
       }))
       .filter(({ source }) => !source.startsWith('..'));
-    const files = await globby('**/*', {
+    const files = await safeGlob('**/*', {
       cwd: input,
       ignore: [
         // copy files included on exportAlias in last
         ...relExportAliases.map(({ source }) => source),
         // including node_modules possibly occurs cyclic reference of symlink
-        'node_modules/',
+        '**/node_modules',
       ],
       // follow symbolic links to copy local theme packages
       followSymbolicLinks: true,
