@@ -327,6 +327,7 @@ export async function copyAssets({
   entryContextDir,
   workspaceDir,
   includeAssets,
+  outputs,
 }: MergedConfig): Promise<void> {
   if (pathEquals(entryContextDir, workspaceDir)) {
     return;
@@ -334,7 +335,18 @@ export async function copyAssets({
   const relWorkspaceDir = path.relative(entryContextDir, workspaceDir);
   const assets = await safeGlob(includeAssets, {
     cwd: entryContextDir,
-    ignore: relWorkspaceDir ? [path.join(relWorkspaceDir, '**/*')] : undefined,
+    ignore: [
+      // don't copy auto-generated assets
+      ...outputs.flatMap(({ format, path: p }) =>
+        !pathContains(entryContextDir, p)
+          ? []
+          : format === 'webpub'
+          ? path.join(path.relative(entryContextDir, p), '**')
+          : path.relative(entryContextDir, p),
+      ),
+      // don't copy workspace itself
+      ...(relWorkspaceDir ? [path.join(relWorkspaceDir, '**')] : []),
+    ],
     caseSensitiveMatch: false,
     followSymbolicLinks: false,
     gitignore: true,

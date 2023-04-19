@@ -6,21 +6,22 @@ import type {
   PublicationLinks,
   PublicationManifest,
 } from './schema/publication.schema.js';
-import { debug, pathEquals, safeGlob } from './util.js';
+import { debug, pathContains, pathEquals, safeGlob } from './util.js';
 
 export async function exportWebPublication({
   exportAliases,
+  outputs,
   manifestPath,
   input,
-  output,
-}: Pick<MergedConfig, 'exportAliases'> & {
+  outputDir,
+}: Pick<MergedConfig, 'exportAliases' | 'outputs'> & {
   input: string;
-  output: string;
+  outputDir: string;
   manifestPath: string;
 }): Promise<string> {
-  if (fs.existsSync(output)) {
-    debug('going to remove existing webpub', output);
-    shelljs.rm('-rf', output);
+  if (fs.existsSync(outputDir)) {
+    debug('going to remove existing webpub', outputDir);
+    shelljs.rm('-rf', outputDir);
   }
   const silentMode = shelljs.config.silent;
   shelljs.config.silent = true;
@@ -34,6 +35,14 @@ export async function exportWebPublication({
     const files = await safeGlob('**/*', {
       cwd: input,
       ignore: [
+        // don't copy auto-generated assets
+        ...outputs.flatMap(({ format, path: p }) =>
+          !pathContains(input, p)
+            ? []
+            : format === 'webpub'
+            ? path.join(path.relative(input, p), '**')
+            : path.relative(input, p),
+        ),
         // copy files included on exportAlias in last
         ...relExportAliases.map(({ source }) => source),
         // including node_modules possibly occurs cyclic reference of symlink
@@ -46,7 +55,7 @@ export async function exportWebPublication({
 
     debug('webbook files', files);
     for (const file of files) {
-      const target = path.join(output, file);
+      const target = path.join(outputDir, file);
       const stderr =
         shelljs.mkdir('-p', path.dirname(target)).stderr ||
         shelljs.cp('-r', path.join(input, file), target).stderr;
@@ -57,7 +66,7 @@ export async function exportWebPublication({
     debug('webbook files (alias)', relExportAliases);
     let actualManifestPath = manifestPath;
     for (const entry of relExportAliases) {
-      const target = path.join(output, entry.target);
+      const target = path.join(outputDir, entry.target);
       const stderr =
         shelljs.mkdir('-p', path.dirname(target)).stderr ||
         shelljs.cp('-r', path.join(input, entry.source), target).stderr;
@@ -102,10 +111,10 @@ export async function exportWebPublication({
     }
     fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
   } catch (err) {
-    shelljs.rm('-rf', output);
+    shelljs.rm('-rf', outputDir);
     throw err;
   } finally {
     shelljs.config.silent = silentMode;
   }
-  return output;
+  return outputDir;
 }

@@ -111,15 +111,16 @@ export async function build(cliFlags: BuildCliFlags) {
           });
         }
       } else if (target.format === 'webpub') {
-        const { exportAliases, manifestPath } = config;
+        const { exportAliases, outputs, manifestPath } = config;
         if (!manifestPath) {
           continue;
         }
         output = await exportWebPublication({
           exportAliases,
+          outputs,
           manifestPath,
           input: config.workspaceDir,
-          output: target.path,
+          outputDir: target.path,
         });
       }
       if (output) {
