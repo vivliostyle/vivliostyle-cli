@@ -32,7 +32,7 @@ export async function exportWebPublication({
         target: path.relative(input, target),
       }))
       .filter(({ source }) => !source.startsWith('..'));
-    const files = await safeGlob('**/*', {
+    const files = await safeGlob('**', {
       cwd: input,
       ignore: [
         // don't copy auto-generated assets
@@ -50,7 +50,7 @@ export async function exportWebPublication({
       ],
       // follow symbolic links to copy local theme packages
       followSymbolicLinks: true,
-      gitignore: true,
+      gitignore: false,
     });
 
     debug('webbook files', files);
