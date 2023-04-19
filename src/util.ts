@@ -367,7 +367,6 @@ export async function safeGlob(
       })),
     );
     const patterns = files.flatMap((file) => parseIgnoreFile(file, cwd));
-    console.log(patterns);
     const ignores = ((gitIgnore as any)() as Ignore).add(patterns);
     const toRelativePath = (pwttern: string, cwd: string) => {
       cwd = slash(cwd);
