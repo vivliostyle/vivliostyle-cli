@@ -1,14 +1,19 @@
 import { ErrorObject } from 'ajv';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
-import fs from 'node:fs';
+import fastGlob from 'fast-glob';
+import { globby, Options as GlobbyOptions } from 'globby';
+import gitIgnore, { Ignore } from 'ignore';
 import StreamZip from 'node-stream-zip';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import util from 'node:util';
 import oraConstructor from 'ora';
 import portfinder from 'portfinder';
 import shelljs from 'shelljs';
+import slash from 'slash';
 import tmp from 'tmp';
 import upath from 'upath';
-import util from 'node:util';
 
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());
@@ -282,4 +287,111 @@ export function findAvailablePort(): Promise<number> {
 
 export function checkContainerEnvironment(): boolean {
   return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
+}
+
+// Mostly the same as the globby implementation, with some overrides
+// for ignorefile lookups to avoid circular references by symbolic links
+export async function safeGlob(
+  patterns: string | readonly string[],
+  options: GlobbyOptions,
+): Promise<string[]> {
+  type FsAdapter = Required<
+    NonNullable<NonNullable<Parameters<typeof globby>[1]>['fs']>
+  >;
+
+  const symbolicLinkSet = new Set<string>();
+  const customFs = {
+    readdir: function customReaddir(filepath, options, callback) {
+      return fs.readdir(filepath, options, (err, files) => {
+        if (err) {
+          callback(err, files);
+          return;
+        }
+        const filtered = files.filter((dirent) => {
+          if (!dirent.isSymbolicLink()) {
+            return true;
+          }
+          const dirpath = upath.join(filepath, dirent.name);
+          // Omit nested symbolic link from readdir result and avoid cyclic exploring
+          if ([...symbolicLinkSet].some((v) => pathContains(v, dirpath))) {
+            return false;
+          }
+          symbolicLinkSet.add(dirpath);
+          return true;
+        });
+        callback(null, filtered);
+      });
+    } as FsAdapter['readdir'],
+  };
+
+  const parseIgnoreFile = (
+    file: { filePath: string; content: string },
+    cwd: string,
+  ) => {
+    const base = slash(upath.relative(cwd, upath.dirname(file.filePath)));
+    return file.content
+      .split(/\r?\n/)
+      .filter((line) => line && !line.startsWith('#'))
+      .map((pattern) =>
+        pattern.startsWith('!')
+          ? `!${upath.posix.join(base, pattern.slice(1))}`
+          : upath.posix.join(base, pattern),
+      );
+  };
+
+  const getIgnoreFilter = async (): Promise<(pattern: string) => boolean> => {
+    const filePatterns = [
+      ...[options.ignoreFiles ?? []].flat(),
+      options.gitignore ? '**/.gitignore' : [],
+    ].flat();
+    if (filePatterns.length === 0) {
+      return () => true;
+    }
+
+    const cwd =
+      options.cwd instanceof URL
+        ? fileURLToPath(options.cwd)
+        : (options.cwd as string) || process.cwd();
+    const paths = await fastGlob(filePatterns, {
+      cwd,
+      fs: customFs,
+      ignore: ['**/node_modules', '**/flow-typed', '**/coverage', '**/.git'],
+      absolute: true,
+      dot: true,
+    });
+
+    const files = await Promise.all(
+      paths.map(async (filePath) => ({
+        filePath,
+        content: await fs.promises.readFile(filePath, 'utf8'),
+      })),
+    );
+    const patterns = files.flatMap((file) => parseIgnoreFile(file, cwd));
+    const ignores = ((gitIgnore as any)() as Ignore).add(patterns);
+    const toRelativePath = (pwttern: string, cwd: string) => {
+      cwd = slash(cwd);
+      if (upath.isAbsolute(pwttern)) {
+        if (slash(pwttern).startsWith(cwd)) {
+          return upath.relative(cwd, pwttern);
+        }
+        throw new Error(`Path ${pwttern} is not in cwd ${cwd}`);
+      }
+      return pwttern;
+    };
+    return (pattern: string) => {
+      pattern = toRelativePath(pattern, cwd);
+      return !ignores.ignores(slash(pattern));
+    };
+  };
+
+  const [filter, result] = await Promise.all([
+    getIgnoreFilter(),
+    globby(patterns, {
+      ...options,
+      gitignore: false,
+      ignoreFiles: [],
+      fs: customFs,
+    }),
+  ]);
+  return result.filter(filter);
 }
