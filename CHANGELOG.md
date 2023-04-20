@@ -1,13 +1,16 @@
-
-
-## [7.2.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.2...v7.2.3) (2023-04-20)
-
+## [7.2.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.3...v7.2.4) (2023-04-20)
 
 ### Bug Fixes
 
-* Avoid infinite loop during glob files ([d36a021](https://github.com/vivliostyle/vivliostyle-cli/commit/d36a021ad47f858f268970fd06e19cd3370baba2))
-* Copy ignored files into webpub output ([efc30f2](https://github.com/vivliostyle/vivliostyle-cli/commit/efc30f2d5d2e99c16590c63f7f3d004edf555aee))
-* Prevent nested copy occuring with multiple times of build ([cb84f7a](https://github.com/vivliostyle/vivliostyle-cli/commit/cb84f7a571c3ffe03e2b11e0be7797a143952062))
+- Update Vivliostyle.js to 2.24.3: Bug Fixes ([88c1405](https://github.com/vivliostyle/vivliostyle-cli/commit/88c1405be904b2b82833ff1ca3afc2bfd4e0c1e0))
+
+## [7.2.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.2...v7.2.3) (2023-04-20)
+
+### Bug Fixes
+
+- Avoid infinite loop during glob files ([d36a021](https://github.com/vivliostyle/vivliostyle-cli/commit/d36a021ad47f858f268970fd06e19cd3370baba2))
+- Copy ignored files into webpub output ([efc30f2](https://github.com/vivliostyle/vivliostyle-cli/commit/efc30f2d5d2e99c16590c63f7f3d004edf555aee))
+- Prevent nested copy occuring with multiple times of build ([cb84f7a](https://github.com/vivliostyle/vivliostyle-cli/commit/cb84f7a571c3ffe03e2b11e0be7797a143952062))
 
 ## [7.2.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.1...v7.2.2) (2023-04-12)
 
