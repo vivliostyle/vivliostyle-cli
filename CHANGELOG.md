@@ -1,3 +1,12 @@
+
+
+## [7.2.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.4...v7.2.5) (2023-04-29)
+
+
+### Bug Fixes
+
+* Fix dependency issue; fix [#400](https://github.com/vivliostyle/vivliostyle-cli/issues/400) ([b879960](https://github.com/vivliostyle/vivliostyle-cli/commit/b879960c28950924d1ec7478a2954d93fb9003da))
+
 ## [7.2.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.3...v7.2.4) (2023-04-20)
 
 ### Bug Fixes
