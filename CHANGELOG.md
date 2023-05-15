@@ -1,11 +1,15 @@
+# [7.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.5...v7.3.0) (2023-05-15)
 
+### Features
+
+- Update Playwright to 1.33.0 (Chromium 113.0.5672.53) ([101c98e](https://github.com/vivliostyle/vivliostyle-cli/commit/101c98ef12071bac0f93a1e66f5641d20566e694))
+- Update Vivliostyle.js to 2.25.0: Support CSS Running Elements ([ca6ff7e](https://github.com/vivliostyle/vivliostyle-cli/commit/ca6ff7e3879572a3c31fb35f7e2ec775174a7b43))
 
 ## [7.2.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.4...v7.2.5) (2023-04-29)
 
-
 ### Bug Fixes
 
-* Fix dependency issue; fix [#400](https://github.com/vivliostyle/vivliostyle-cli/issues/400) ([b879960](https://github.com/vivliostyle/vivliostyle-cli/commit/b879960c28950924d1ec7478a2954d93fb9003da))
+- Fix dependency issue; fix [#400](https://github.com/vivliostyle/vivliostyle-cli/issues/400) ([b879960](https://github.com/vivliostyle/vivliostyle-cli/commit/b879960c28950924d1ec7478a2954d93fb9003da))
 
 ## [7.2.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.2.3...v7.2.4) (2023-04-20)
 
