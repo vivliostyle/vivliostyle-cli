@@ -22,7 +22,7 @@
   "dependencies": {
     "@npmcli/arborist": "^6.1.3",
     "@vivliostyle/vfm": "2.1.0",
-    "@vivliostyle/viewer": "2.25.0",
+    "@vivliostyle/viewer": "2.25.1",
     "ajv": "^8.11.2",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",
