@@ -27,7 +27,7 @@ jobs:
       # https://github.com/facebook/jest/issues/11438
       # - run: yarn test
       - run: yarn build
-      - run: yarn playwright install chromium
+      - run: yarn playwright-core install chromium
       - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/api.test.ts
       - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/builder.test.ts
       - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/cli.test.ts
