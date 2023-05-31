@@ -14,7 +14,7 @@
     "dev": "run-p dev:*",
     "dev:cli": "tsc -w --preserveWatchOutput",
     "example": "yarn --cwd example build",
-    "pretest": "yarn build && playwright install chromium",
+    "pretest": "yarn build && playwright-core install chromium",
     "release": "release-it",
     "release:pre": "release-it --preRelease --npm.tag=next",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
@@ -46,7 +46,7 @@
     "node-stream-zip": "^1.14.0",
     "ora": "^5.4.1",
     "pdf-lib": "^1.16.0",
-    "playwright-core": "1.33.0",
+    "playwright-core": "1.34.3",
     "portfinder": "^1.0.28",
     "press-ready": "^4.0.3",
     "prettier": "^2.3.2",
