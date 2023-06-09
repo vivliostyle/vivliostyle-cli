@@ -1,9 +1,9 @@
-FROM ubuntu:focal AS base
+FROM ubuntu:jammy AS base
 ARG PLAYWRIGHT_VERSION
 LABEL maintainer "spring_raining <harusamex.com@gmail.com>"
 
 # Playwright's Dockerfile:
-# https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
+# https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.jammy
 # How to reduce size of Docker image for Playwright:
 # https://github.com/microsoft/playwright/issues/10168
 ARG DEBIAN_FRONTEND=noninteractive
