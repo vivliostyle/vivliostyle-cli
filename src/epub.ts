@@ -1,4 +1,4 @@
-import xmlParser from 'fast-xml-parser';
+import { XMLParser } from 'fast-xml-parser';
 import fs from 'node:fs';
 import path from 'upath';
 import { inflateZip, useTmpDirectory } from './util.js';
@@ -15,11 +15,11 @@ export async function openEpubToTmpDirectory(filePath: string): Promise<{
   await inflateZip(filePath, tmpDir);
 
   const containerXmlPath = path.join(tmpDir, 'META-INF/container.xml');
+  const xmlParser = new XMLParser({
+    ignoreAttributes: false,
+  });
   const { container } = xmlParser.parse(
     fs.readFileSync(containerXmlPath, 'utf8'),
-    {
-      ignoreAttributes: false,
-    },
   );
   const rootfile = pickFirstOne(container.rootfiles.rootfile); // Only supports a default rendition
   const epubOpfPath = path.join(tmpDir, rootfile['@_full-path']);
