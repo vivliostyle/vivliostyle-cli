@@ -1,3 +1,19 @@
+
+
+# [8.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.4.0...v8.0.0) (2023-06-12)
+
+
+### Features
+
+* Update Playwright to 1.35.0 (Chromium 115.0.5790.13) ([1610cac](https://github.com/vivliostyle/vivliostyle-cli/commit/1610cac51d74995d5418084994e1ef04744ae8a6))
+* Update Ubuntu version on Docker to jammy (22.04LTS) ([ffbbd99](https://github.com/vivliostyle/vivliostyle-cli/commit/ffbbd99e6a407ce527a21f56bc20384fb768116f)), closes [#410](https://github.com/vivliostyle/vivliostyle-cli/issues/410)
+* Upgrade minimum node version ([6e94857](https://github.com/vivliostyle/vivliostyle-cli/commit/6e9485761300750466eadf7c0a48a709af2a80ce))
+
+
+### BREAKING CHANGES
+
+* Minimum supported version of Node.js becomes v16
+
 # [7.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.3.0...v7.4.0) (2023-05-31)
 
 ### Bug Fixes
