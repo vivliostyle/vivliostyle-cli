@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [14, 16, 18]
+        node: [16, 18, 20]
         os:
           - ubuntu-latest
           - macos-latest
@@ -22,19 +22,8 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: yarn install
-      # FIXME: In Node.js 14, Jest fails to run tests serially due to a V8 bug
-      # We manually separate the test process as a workaround and avoid the dynamic import cache bug
-      # https://github.com/facebook/jest/issues/11438
-      # - run: yarn test
-      - run: yarn build
       - run: yarn playwright-core install chromium
-      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/api.test.ts
-      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/builder.test.ts
-      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/cli.test.ts
-      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/config.test.ts
-      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/init.test.ts
-      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/server.test.ts
-      - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/toc.test.ts
+      - run: yarn test
   build-and-push-image:
     runs-on: ubuntu-latest
     services:

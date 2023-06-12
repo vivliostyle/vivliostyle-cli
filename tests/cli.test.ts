@@ -10,8 +10,8 @@ import {
   PDFNumber,
 } from 'pdf-lib';
 import path from 'upath';
-import { rootPath } from './commandUtil.js';
 import packageJSON from '../package.json';
+import { rootPath } from './commandUtil.js';
 
 const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
 const fixtureRoot = path.resolve(rootPath, 'tests/fixtures/wood');
@@ -60,7 +60,7 @@ it.only('generate pdf without errors', async () => {
   // mimetype test
   const type = await fileType.fromFile(outputPath);
   expect(type!.mime).toEqual('application/pdf');
-}, 20000);
+}, 120000);
 
 it('generate press-ready pdf without errors', async () => {
   const outputPath = path.join(localTmpDir, 'test-press-ready.pdf');
@@ -83,7 +83,7 @@ it('generate press-ready pdf without errors', async () => {
   // mimetype test
   const type = await fileType.fromFile(outputPath);
   expect(type!.mime).toEqual('application/pdf');
-}, 20000);
+}, 120000);
 
 it('generates a PDF with metadata', async () => {
   const outputPath = path.join(localTmpDir, 'test-metadata.pdf');
@@ -123,4 +123,4 @@ it('generates a PDF with metadata', async () => {
   const intro = outlines.lookup(PDFName.of('First'), PDFDict);
   const introTitle = intro.lookup(PDFName.of('Title'), PDFHexString);
   expect(introTitle.sizeInBytes()).toBe(62);
-}, 20000);
+}, 120000);

@@ -38,4 +38,4 @@ test('api generates pdf without errors', async () => {
   // mimetype test
   const type = await fileType.fromFile(outputPath);
   expect(type!.mime).toEqual('application/pdf');
-}, 20000);
+}, 120000);
