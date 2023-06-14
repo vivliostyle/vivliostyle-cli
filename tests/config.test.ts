@@ -149,10 +149,10 @@ it('yields a config with single input and vivliostyle config', async () => {
   maskConfig(config);
   assertSingleItem(config);
   expect(config.entries[0].target).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.sample\.html$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/workspaceDir\/\.vs-.+\.sample\.html$/,
   );
   expect(config.manifestPath).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/\.vs-.+\.publication\.json$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/workspaceDir\/\.vs-.+\.publication\.json$/,
   );
   config.manifestPath = '__SNIP__';
   config.entries[0].target = '__SNIP__';

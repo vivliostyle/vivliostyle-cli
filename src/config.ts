@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'upath';
+import shelljs from 'shelljs';
 import { pathToFileURL } from 'url';
 import { getExecutableBrowserPath } from './browser.js';
 import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const.js';
@@ -465,11 +466,11 @@ export async function mergeConfig<T extends CliFlags>(
   let entryContextDir: string;
   let workspaceDir: string;
 
-  if (cliFlags.input && isUrlString(cliFlags.input)) {
+  if (cliFlags.input && !config && isUrlString(cliFlags.input)) {
     workspaceDir = entryContextDir = cwd;
   } else {
     entryContextDir = path.resolve(
-      cliFlags.input
+      cliFlags.input && !config
         ? path.dirname(path.resolve(context, cliFlags.input))
         : contextResolve(context, config?.entryContext) ?? context,
     );
@@ -681,19 +682,17 @@ async function composeSingleInputConfig<T extends CliFlags>(
   debug('entering single entry config mode');
 
   let sourcePath: string;
-  let workspaceDir: string;
   let input: InputFormat;
+  const workspaceDir = otherConfig.workspaceDir;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
   const tmpPrefix = `.vs-${Date.now()}.`;
 
   if (cliFlags.input && isUrlString(cliFlags.input)) {
     sourcePath = cliFlags.input;
-    workspaceDir = otherConfig.workspaceDir;
     input = { format: 'webbook', entry: sourcePath };
   } else {
     sourcePath = path.resolve(cliFlags.input);
-    workspaceDir = path.dirname(sourcePath);
     input = detectInputFormat(sourcePath);
     // Check file exists
     statFileSync(sourcePath);
@@ -703,8 +702,14 @@ async function composeSingleInputConfig<T extends CliFlags>(
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata({ type, sourcePath, workspaceDir });
+    const relDir = path.relative(
+      otherConfig.entryContextDir,
+      path.dirname(sourcePath),
+    );
+    const targetDir = path.resolve(workspaceDir, relDir);
+    shelljs.mkdir('-p', targetDir);
     const target = path
-      .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+      .resolve(targetDir, `${tmpPrefix}${path.basename(sourcePath)}`)
       .replace(/\.md$/, '.html');
     await touchTmpFile(target);
     const themes = metadata.themes ?? [...otherConfig.rootThemes];
