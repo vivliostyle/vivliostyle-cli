@@ -36,11 +36,13 @@ export async function launchBrowser({
             '--allow-file-access-from-files',
             disableWebSecurity ? '--disable-web-security' : '',
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
+            // set Chromium language to English to avoid locale-dependent issues (e.g. minimum font size)
             '--lang=en',
             ...(!headless && process.platform === 'darwin'
               ? ['-AppleLanguages', '(en)']
               : []),
           ],
+          env: { ...process.env, LANG: 'en.UTF-8' },
         }
       : // TODO: Investigate appropriate settings on Firefox & Webkit
         { executablePath, headless };
