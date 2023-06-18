@@ -37,6 +37,9 @@ export async function launchBrowser({
             disableWebSecurity ? '--disable-web-security' : '',
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
             '--lang=en',
+            ...(!headless && process.platform === 'darwin'
+              ? ['-AppleLanguages', '(en)']
+              : []),
           ],
         }
       : // TODO: Investigate appropriate settings on Firefox & Webkit
