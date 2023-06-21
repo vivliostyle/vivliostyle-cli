@@ -142,21 +142,25 @@ it('imports single html file', async () => {
 
 it('yields a config with single input and vivliostyle config', async () => {
   const config = await getMergedConfig([
-    resolveFixture('config/sample.md'),
+    resolveFixture('config/nestedDir/01.md'),
     '-c',
     configFilePath['valid.1'],
   ]);
   maskConfig(config);
   assertSingleItem(config);
   expect(config.entries[0].target).toMatch(
-    /^__WORKSPACE__\/tests\/fixtures\/config\/workspaceDir\/\.vs-.+\.sample\.html$/,
+    /^__WORKSPACE__\/tests\/fixtures\/config\/workspaceDir\/nestedDir\/\.vs-.+\.01\.html$/,
   );
   expect(config.manifestPath).toMatch(
     /^__WORKSPACE__\/tests\/fixtures\/config\/workspaceDir\/\.vs-.+\.publication\.json$/,
   );
+  config.exportAliases.forEach((alias) => {
+    alias.source = alias.source
+      .replace(config.entries[0].target as string, '__SNIP__')
+      .replace(config.manifestPath as string, '__SNIP__');
+  });
   config.manifestPath = '__SNIP__';
   config.entries[0].target = '__SNIP__';
-  (config.exportAliases as unknown) = '__SNIP__';
   expect(config).toMatchSnapshot();
 });
 

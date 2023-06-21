@@ -1214,7 +1214,7 @@ Object {
   "customUserStyle": undefined,
   "entries": Array [
     Object {
-      "source": "__WORKSPACE__/tests/fixtures/config/sample.md",
+      "source": "__WORKSPACE__/tests/fixtures/config/nestedDir/01.md",
       "target": "__SNIP__",
       "themes": Array [
         Object {
@@ -1231,7 +1231,16 @@ Object {
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
-  "exportAliases": "__SNIP__",
+  "exportAliases": Array [
+    Object {
+      "source": "__SNIP__",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/nestedDir/01.html",
+    },
+    Object {
+      "source": "__SNIP__",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+    },
+  ],
   "httpServer": false,
   "image": "__IMAGE__",
   "includeAssets": Array [
@@ -1248,7 +1257,7 @@ Object {
     "**/*.woff2",
   ],
   "input": Object {
-    "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
+    "entry": "__WORKSPACE__/tests/fixtures/config/nestedDir/01.md",
     "format": "markdown",
   },
   "language": "language",
