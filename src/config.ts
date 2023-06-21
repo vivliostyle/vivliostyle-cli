@@ -465,11 +465,11 @@ export async function mergeConfig<T extends CliFlags>(
   let entryContextDir: string;
   let workspaceDir: string;
 
-  if (cliFlags.input && isUrlString(cliFlags.input)) {
+  if (cliFlags.input && !config && isUrlString(cliFlags.input)) {
     workspaceDir = entryContextDir = cwd;
   } else {
     entryContextDir = path.resolve(
-      cliFlags.input
+      cliFlags.input && !config
         ? path.dirname(path.resolve(context, cliFlags.input))
         : contextResolve(context, config?.entryContext) ?? context,
     );
@@ -681,19 +681,17 @@ async function composeSingleInputConfig<T extends CliFlags>(
   debug('entering single entry config mode');
 
   let sourcePath: string;
-  let workspaceDir: string;
   let input: InputFormat;
+  const workspaceDir = otherConfig.workspaceDir;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
   const tmpPrefix = `.vs-${Date.now()}.`;
 
   if (cliFlags.input && isUrlString(cliFlags.input)) {
     sourcePath = cliFlags.input;
-    workspaceDir = otherConfig.workspaceDir;
     input = { format: 'webbook', entry: sourcePath };
   } else {
     sourcePath = path.resolve(cliFlags.input);
-    workspaceDir = path.dirname(sourcePath);
     input = detectInputFormat(sourcePath);
     // Check file exists
     statFileSync(sourcePath);
@@ -703,8 +701,12 @@ async function composeSingleInputConfig<T extends CliFlags>(
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata({ type, sourcePath, workspaceDir });
+    const relDir = path.relative(
+      otherConfig.entryContextDir,
+      path.dirname(sourcePath),
+    );
     const target = path
-      .resolve(workspaceDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+      .resolve(workspaceDir, relDir, `${tmpPrefix}${path.basename(sourcePath)}`)
       .replace(/\.md$/, '.html');
     await touchTmpFile(target);
     const themes = metadata.themes ?? [...otherConfig.rootThemes];
@@ -719,7 +721,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     exportAliases.push({
       source: target,
       target: path.resolve(
-        workspaceDir,
+        path.dirname(target),
         path.basename(sourcePath).replace(/\.md$/, '.html'),
       ),
     });
