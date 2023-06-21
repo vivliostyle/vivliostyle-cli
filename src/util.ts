@@ -257,6 +257,7 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
 }
 
 export async function touchTmpFile(path: string): Promise<() => void> {
+  shelljs.mkdir('-p', upath.dirname(path));
   shelljs.touch(path);
   debug(`Created the temporary file: ${path}`);
   const callback = () => {

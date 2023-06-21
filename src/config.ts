@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'upath';
-import shelljs from 'shelljs';
 import { pathToFileURL } from 'url';
 import { getExecutableBrowserPath } from './browser.js';
 import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const.js';
@@ -706,10 +705,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
       otherConfig.entryContextDir,
       path.dirname(sourcePath),
     );
-    const targetDir = path.resolve(workspaceDir, relDir);
-    shelljs.mkdir('-p', targetDir);
     const target = path
-      .resolve(targetDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+      .resolve(workspaceDir, relDir, `${tmpPrefix}${path.basename(sourcePath)}`)
       .replace(/\.md$/, '.html');
     await touchTmpFile(target);
     const themes = metadata.themes ?? [...otherConfig.rootThemes];
