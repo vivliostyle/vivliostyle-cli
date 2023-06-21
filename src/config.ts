@@ -721,7 +721,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     exportAliases.push({
       source: target,
       target: path.resolve(
-        workspaceDir,
+        path.dirname(target),
         path.basename(sourcePath).replace(/\.md$/, '.html'),
       ),
     });
