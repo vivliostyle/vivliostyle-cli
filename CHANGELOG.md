@@ -1,18 +1,23 @@
+## [8.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.0.0...v8.0.1) (2023-06-22)
 
+### Bug Fixes
+
+- config.workspaceDir should be honored when cliFlags.input is given ([1c67007](https://github.com/vivliostyle/vivliostyle-cli/commit/1c670071a22f9d24254f916f25df6a06ff322222)), closes [#402](https://github.com/vivliostyle/vivliostyle-cli/issues/402) [#402](https://github.com/vivliostyle/vivliostyle-cli/issues/402)
+- Preserve output directory structure when single imput is set ([b5bc015](https://github.com/vivliostyle/vivliostyle-cli/commit/b5bc015062303cabe325215add0f9ca9044ce4e9))
+- preview minimum font-size problem depending on locale on macOS ([c15e9e0](https://github.com/vivliostyle/vivliostyle-cli/commit/c15e9e0a30d0513ef4c6ec3dfc73400d38eabb27)), closes [#399](https://github.com/vivliostyle/vivliostyle-cli/issues/399)
+- Update Vivliostyle.js to 2.25.2: Bugfix on variable fonts ([f3e81ca](https://github.com/vivliostyle/vivliostyle-cli/commit/f3e81ca92760bed5b1b291b0025e40fba03b2ec7))
 
 # [8.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.4.0...v8.0.0) (2023-06-12)
 
-
 ### Features
 
-* Update Playwright to 1.35.0 (Chromium 115.0.5790.13) ([1610cac](https://github.com/vivliostyle/vivliostyle-cli/commit/1610cac51d74995d5418084994e1ef04744ae8a6))
-* Update Ubuntu version on Docker to jammy (22.04LTS) ([ffbbd99](https://github.com/vivliostyle/vivliostyle-cli/commit/ffbbd99e6a407ce527a21f56bc20384fb768116f)), closes [#410](https://github.com/vivliostyle/vivliostyle-cli/issues/410)
-* Upgrade minimum node version ([6e94857](https://github.com/vivliostyle/vivliostyle-cli/commit/6e9485761300750466eadf7c0a48a709af2a80ce))
-
+- Update Playwright to 1.35.0 (Chromium 115.0.5790.13) ([1610cac](https://github.com/vivliostyle/vivliostyle-cli/commit/1610cac51d74995d5418084994e1ef04744ae8a6))
+- Update Ubuntu version on Docker to jammy (22.04LTS) ([ffbbd99](https://github.com/vivliostyle/vivliostyle-cli/commit/ffbbd99e6a407ce527a21f56bc20384fb768116f)), closes [#410](https://github.com/vivliostyle/vivliostyle-cli/issues/410)
+- Upgrade minimum node version ([6e94857](https://github.com/vivliostyle/vivliostyle-cli/commit/6e9485761300750466eadf7c0a48a709af2a80ce))
 
 ### BREAKING CHANGES
 
-* Minimum supported version of Node.js becomes v16
+- Minimum supported version of Node.js becomes v16
 
 # [7.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v7.3.0...v7.4.0) (2023-05-31)
 
