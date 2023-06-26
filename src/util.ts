@@ -2,6 +2,7 @@ import { ErrorObject } from 'ajv';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fastGlob from 'fast-glob';
+import { XMLParser } from 'fast-xml-parser';
 import { globby, Options as GlobbyOptions } from 'globby';
 import gitIgnore, { Ignore } from 'ignore';
 import StreamZip from 'node-stream-zip';
@@ -395,4 +396,24 @@ export async function safeGlob(
     }),
   ]);
   return result.filter(filter);
+}
+
+export async function openEpubToTmpDirectory(filePath: string): Promise<{
+  dest: string;
+  epubOpfPath: string;
+  deleteEpub: () => void;
+}> {
+  const [tmpDir, deleteEpub] = await useTmpDirectory();
+  await inflateZip(filePath, tmpDir);
+
+  const containerXmlPath = upath.join(tmpDir, 'META-INF/container.xml');
+  const xmlParser = new XMLParser({
+    ignoreAttributes: false,
+  });
+  const { container } = xmlParser.parse(
+    fs.readFileSync(containerXmlPath, 'utf8'),
+  );
+  const rootfile = [container.rootfiles.rootfile].flat()[0]; // Only supports a default rendition
+  const epubOpfPath = upath.join(tmpDir, rootfile['@_full-path']);
+  return { dest: tmpDir, epubOpfPath, deleteEpub };
 }

@@ -9,20 +9,19 @@ import { pathToFileURL } from 'url';
 import { getExecutableBrowserPath } from './browser.js';
 import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const.js';
 import { CONTAINER_IMAGE } from './container.js';
-import { openEpubToTmpDirectory } from './epub.js';
 import {
-  detectInputFormat,
-  detectManuscriptMediaType,
   InputFormat,
   ManuscriptMediaType,
+  detectInputFormat,
+  detectManuscriptMediaType,
 } from './input.js';
 import { readMarkdownMetadata } from './markdown.js';
 import {
+  OutputFormat,
   checkOutputFormat,
   checkPreflightMode,
   checkRenderMode,
   detectOutputFormat,
-  OutputFormat,
 } from './output.js';
 import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
 import type {
@@ -35,13 +34,14 @@ import type {
 import { PageSize } from './server.js';
 import { parsePackageName } from './theme.js';
 import {
+  DetailError,
   cwd,
   debug,
-  DetailError,
   filterRelevantAjvErrors,
   isUrlString,
   log,
   logWarn,
+  openEpubToTmpDirectory,
   readJSON,
   statFileSync,
   touchTmpFile,
