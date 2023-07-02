@@ -7,7 +7,12 @@ import fs from 'fs';
 import path from 'upath';
 import { pathToFileURL } from 'url';
 import { getExecutableBrowserPath } from './browser.js';
-import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const.js';
+import {
+  EPUB_OUTPUT_VERSION,
+  MANIFEST_FILENAME,
+  TOC_FILENAME,
+  TOC_TITLE,
+} from './const.js';
 import { CONTAINER_IMAGE } from './container.js';
 import {
   InputFormat,
@@ -558,6 +563,12 @@ export async function mergeConfig<T extends CliFlags>(
             renderMode,
             preflight,
             preflightOption,
+          };
+        } else if (format === 'epub') {
+          return {
+            path: path.resolve(outputPath),
+            format,
+            version: EPUB_OUTPUT_VERSION,
           };
         } else {
           return {

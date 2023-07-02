@@ -1,7 +1,7 @@
 import cheerio from 'cheerio';
-import fs from 'node:fs';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
+import fs from 'node:fs';
 import prettier from 'prettier';
 import path from 'upath';
 import { ManuscriptEntry } from './config.js';

@@ -8,7 +8,7 @@ import type {
 } from './schema/publication.schema.js';
 import { debug, pathContains, pathEquals, safeGlob } from './util.js';
 
-export async function exportWebPublication({
+export async function copyWebPublicationAssets({
   exportAliases,
   outputs,
   manifestPath,
@@ -18,11 +18,7 @@ export async function exportWebPublication({
   input: string;
   outputDir: string;
   manifestPath: string;
-}): Promise<string> {
-  if (fs.existsSync(outputDir)) {
-    debug('going to remove existing webpub', outputDir);
-    shelljs.rm('-rf', outputDir);
-  }
+}) {
   const silentMode = shelljs.config.silent;
   shelljs.config.silent = true;
   try {
@@ -111,10 +107,25 @@ export async function exportWebPublication({
     }
     fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
   } catch (err) {
-    shelljs.rm('-rf', outputDir);
     throw err;
   } finally {
     shelljs.config.silent = silentMode;
+  }
+}
+
+export async function exportWebPublication(
+  params: Parameters<typeof copyWebPublicationAssets>[0],
+): Promise<string> {
+  const { outputDir } = params;
+  if (fs.existsSync(outputDir)) {
+    debug('going to remove existing webpub', outputDir);
+    shelljs.rm('-rf', outputDir);
+  }
+  try {
+    await copyWebPublicationAssets(params);
+  } catch (err) {
+    shelljs.rm('-rf', outputDir);
+    throw err;
   }
   return outputDir;
 }

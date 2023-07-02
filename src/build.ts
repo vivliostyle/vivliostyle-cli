@@ -11,10 +11,11 @@ import {
 } from './builder.js';
 import {
   CliFlags,
+  MergedConfig,
   collectVivliostyleConfig,
   mergeConfig,
-  MergedConfig,
 } from './config.js';
+import { exportEpub } from './epub-output.js';
 import { buildPDF, buildPDFWithContainer } from './pdf.js';
 import { teardownServer } from './server.js';
 import {
@@ -121,6 +122,19 @@ export async function build(cliFlags: BuildCliFlags) {
           manifestPath,
           input: config.workspaceDir,
           outputDir: target.path,
+        });
+      } else if (target.format === 'epub') {
+        const { exportAliases, outputs, manifestPath } = config;
+        if (!manifestPath) {
+          continue;
+        }
+        await exportEpub({
+          exportAliases,
+          outputs,
+          input: config.workspaceDir,
+          manifestPath,
+          target: target.path,
+          epubVersion: target.version,
         });
       }
       if (output) {
