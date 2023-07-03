@@ -17,12 +17,19 @@ import {
   cliRoot,
 } from './const.js';
 import {
+  PageListResourceTreeRoot,
+  TocResourceTreeItem,
+  TocResourceTreeRoot,
+  parsePageListDocument,
+  parseTocDocument,
+} from './html.js';
+import {
   Contributor,
   PublicationLinks,
   PublicationManifest,
   ResourceCategorization,
 } from './schema/publication.schema.js';
-import { debug, safeGlob } from './util.js';
+import { DetailError, debug, safeGlob } from './util.js';
 import { copyWebPublicationAssets } from './webbook.js';
 
 interface ManifestEntry {
@@ -73,6 +80,7 @@ export async function exportEpub({
   const manifest = JSON.parse(
     fs.readFileSync(path.join(tmpDir, 'EPUB/publication.json'), 'utf8'),
   ) as PublicationManifest;
+  const uid = `urn:uuid:${uuid()}`;
 
   const htmlFiles = await safeGlob(['**/*.html', '**/*.htm'], {
     cwd: path.join(tmpDir, 'EPUB'),
@@ -112,8 +120,9 @@ export async function exportEpub({
 
   for (const target of htmlFiles) {
     debug(`Transpiling HTML to XHTML: ${target}`);
+    let parseResult: Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
     try {
-      await transpileHtmlToXhtml({
+      parseResult = await transpileHtmlToXhtml({
         target,
         htmlFiles,
         contextDir: path.join(tmpDir, 'EPUB'),
@@ -122,7 +131,20 @@ export async function exportEpub({
         pageListResource,
       });
     } catch (error) {
-      throw new Error(`Failed to transpile document to XHTML: ${target}`);
+      const thrownError = error as Error;
+      throw new DetailError(
+        `Failed to transpile document to XHTML: ${target}`,
+        thrownError.stack ?? thrownError.message,
+      );
+    }
+    if (parseResult.tocParseTree) {
+      debug(`Generating toc.ncx`);
+
+      fs.writeFileSync(
+        path.join(tmpDir, 'EPUB/toc.ncx'),
+        buildNcx({ toc: parseResult.tocParseTree, manifest, uid }),
+        'utf8',
+      );
     }
   }
 
@@ -161,10 +183,12 @@ export async function exportEpub({
   );
 
   // EPUB/content.opf
+  debug(`Generating content.opf`);
   fs.writeFileSync(
     path.join(tmpDir, 'EPUB/content.opf'),
     buildEpubPackageDocument({
       epubVersion,
+      uid,
       manifest,
       readingOrder,
       manifestItems,
@@ -191,7 +215,10 @@ async function transpileHtmlToXhtml({
   landmarks: LandmarkEntry[];
   tocResource: PublicationLinks;
   pageListResource?: PublicationLinks;
-}): Promise<string> {
+}): Promise<{
+  tocParseTree?: TocResourceTreeRoot;
+  pageListParseTree?: PageListResourceTreeRoot;
+}> {
   const absPath = path.join(contextDir, target);
   const htmlFileUrls = htmlFiles.map((p) =>
     url.pathToFileURL(path.join(contextDir, p)),
@@ -233,17 +260,19 @@ async function transpileHtmlToXhtml({
     return nav;
   };
 
+  let tocParseTree: TocResourceTreeRoot | undefined;
+  let pageListParseTree: PageListResourceTreeRoot | undefined;
+
   if (target === tocResource.url) {
     if (!document.querySelector('[epub:type="toc"]')) {
-      const tocRoot = document.querySelectorAll('[role="doc-toc"]');
-      if (tocRoot.length !== 1) {
+      const parsed = parseTocDocument(dom);
+      if (!parsed) {
         throw new Error('Navigation document must have one "toc" nav element');
       }
-      tocRoot.forEach((el) => {
-        const nav = replaceWithNavElement(el);
-        nav.setAttribute('id', 'toc');
-        nav.setAttribute('epub:type', 'toc');
-      });
+      tocParseTree = parsed;
+      const nav = replaceWithNavElement(parsed.element);
+      nav.setAttribute('id', 'toc');
+      nav.setAttribute('epub:type', 'toc');
     }
 
     if (
@@ -269,27 +298,34 @@ async function transpileHtmlToXhtml({
   }
 
   if (target === pageListResource?.url) {
-    document.querySelectorAll('[role="doc-pagelist"]').forEach((el) => {
-      const nav = replaceWithNavElement(el);
+    const parsed = parsePageListDocument(dom);
+    if (parsed) {
+      pageListParseTree = parsed;
+      const nav = replaceWithNavElement(parsed.element);
       nav.setAttribute('id', 'page-list');
       nav.setAttribute('epub:type', 'page-list');
-    });
+    }
   }
 
   const xhtml = `${XML_DECLARATION}\n${serializeToXml(document)}`;
   await fs.promises.writeFile(changeExtname(absPath, '.xhtml'), xhtml, 'utf8');
   await fs.promises.unlink(absPath);
-  return changeExtname(absPath, '.xhtml');
+  return {
+    tocParseTree,
+    pageListParseTree,
+  };
 }
 
 function buildEpubPackageDocument({
   epubVersion,
   manifest,
+  uid,
   readingOrder,
   manifestItems,
   landmarks,
 }: Pick<Parameters<typeof exportEpub>[0], 'epubVersion'> & {
   manifest: PublicationManifest;
+  uid: string;
   readingOrder: string[];
   manifestItems: ManifestEntry[];
   landmarks: LandmarkEntry[];
@@ -348,7 +384,7 @@ function buildEpubPackageDocument({
         '_xmlns:dc': 'http://purl.org/dc/elements/1.1/',
         'dc:identifier': {
           _id: bookIdentifier,
-          '#text': `urn:uuid:${uuid()}`,
+          '#text': uid,
         },
         'dc:title': manifest.name,
         'dc:language': formattedLang,
@@ -400,6 +436,10 @@ function buildEpubPackageDocument({
         })),
       },
       spine: {
+        ...(() => {
+          const toc = manifestItems.find(({ href }) => href === 'toc.ncx');
+          return toc ? { _toc: itemIdMap.get(toc.href) } : {};
+        })(),
         itemref: readingOrder.map((href) => ({
           _idref: itemIdMap.get(href),
         })),
@@ -413,6 +453,74 @@ function buildEpubPackageDocument({
           },
           ...landmarks.map(({ type, href }) => ({ _type: type, _href: href })),
         ],
+      },
+    },
+  });
+}
+
+function buildNcx({
+  toc,
+  manifest,
+  uid,
+}: {
+  toc: TocResourceTreeRoot;
+  manifest: PublicationManifest;
+  uid: string;
+}): string {
+  const slugger = new GithubSlugger();
+  slugger.reset();
+  // Dummy incremental to increase sequential counts
+  slugger.slug('navPoint');
+
+  const transformNavItem = (
+    item: TocResourceTreeItem,
+  ): Record<string, unknown> => {
+    return {
+      _id: slugger.slug('navPoint'),
+      navLabel: {
+        text: (item.label.textContent ?? '').trim(),
+      },
+      ...(item.label.tagName === 'A' && item.label.getAttribute('href')
+        ? {
+            content: {
+              _src: item.label.getAttribute('href'),
+            },
+          }
+        : {}),
+      ...(item.children && item.children.length > 0
+        ? {
+            navPoint: item.children.map(transformNavItem),
+          }
+        : {}),
+    };
+  };
+
+  const builder = new XMLBuilder({
+    format: true,
+    ignoreAttributes: false,
+    attributeNamePrefix: '_',
+  });
+  return builder.build({
+    '?xml': {
+      _version: '1.0',
+      _encoding: 'UTF-8',
+    },
+    ncx: {
+      _xmlns: 'http://www.daisy.org/z3986/2005/ncx/',
+      _version: '2005-1',
+      head: {
+        meta: [
+          { _name: 'dtb:uid', _content: uid },
+          { _name: 'dtb:depth', _content: '1' },
+          { _name: 'dtb:totalPageCount', _content: '0' },
+          { _name: 'dtb:maxPageNumber', _content: '0' },
+        ],
+      },
+      docTitle: {
+        text: manifest.name,
+      },
+      navMap: {
+        navPoint: toc.children.map(transformNavItem),
       },
     },
   });
