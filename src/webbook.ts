@@ -5,6 +5,7 @@ import { MergedConfig } from './config.js';
 import type {
   PublicationLinks,
   PublicationManifest,
+  ResourceCategorization,
 } from './schema/publication.schema.js';
 import { debug, pathContains, pathEquals, safeGlob } from './util.js';
 
@@ -28,7 +29,7 @@ export async function copyWebPublicationAssets({
         target: path.relative(input, target),
       }))
       .filter(({ source }) => !source.startsWith('..'));
-    const files = await safeGlob('**', {
+    const allFiles = await safeGlob('**', {
       cwd: input,
       ignore: [
         // don't copy auto-generated assets
@@ -39,37 +40,41 @@ export async function copyWebPublicationAssets({
             ? path.join(path.relative(input, p), '**')
             : path.relative(input, p),
         ),
-        // copy files included on exportAlias in last
-        ...relExportAliases.map(({ source }) => source),
         // including node_modules possibly occurs cyclic reference of symlink
         '**/node_modules',
+        // only include dotfiles starting with `.vs-`
+        '**/.!(vs-*)',
       ],
       // follow symbolic links to copy local theme packages
       followSymbolicLinks: true,
       gitignore: false,
+      dot: true,
     });
 
-    debug('webbook files', files);
-    for (const file of files) {
-      const target = path.join(outputDir, file);
+    debug(
+      'webbook files',
+      allFiles.map((file) => {
+        const alias = relExportAliases.find(({ source }) => source === file);
+        return alias ? `${file} (alias: ${alias.target})` : file;
+      }),
+    );
+    const resources: string[] = [];
+    let actualManifestPath = path.join(
+      outputDir,
+      path.relative(input, manifestPath),
+    );
+    for (const file of allFiles) {
+      const alias = relExportAliases.find(({ source }) => source === file);
+      const relTarget = alias?.target || file;
+      resources.push(relTarget);
+      const target = path.join(outputDir, relTarget);
       const stderr =
         shelljs.mkdir('-p', path.dirname(target)).stderr ||
         shelljs.cp('-r', path.join(input, file), target).stderr;
       if (stderr) {
         throw new Error(stderr);
       }
-    }
-    debug('webbook files (alias)', relExportAliases);
-    let actualManifestPath = manifestPath;
-    for (const entry of relExportAliases) {
-      const target = path.join(outputDir, entry.target);
-      const stderr =
-        shelljs.mkdir('-p', path.dirname(target)).stderr ||
-        shelljs.cp('-r', path.join(input, entry.source), target).stderr;
-      if (stderr) {
-        throw new Error(stderr);
-      }
-      if (pathEquals(path.join(input, entry.source), manifestPath)) {
+      if (alias && pathEquals(path.join(input, alias.source), manifestPath)) {
         actualManifestPath = target;
       }
     }
@@ -105,6 +110,24 @@ export async function copyWebPublicationAssets({
           : rewriteAliasPath(manifest.resources);
       }
     }
+
+    // List copied files to resources field
+    const normalizeToUrl = (val?: ResourceCategorization) =>
+      [val || []].flat().map((e) => (typeof e === 'string' ? e : e.url));
+    const preDefinedResources = [
+      ...normalizeToUrl(manifest.links),
+      ...normalizeToUrl(manifest.readingOrder),
+      ...normalizeToUrl(manifest.resources),
+    ];
+    manifest.resources = [
+      ...[manifest.resources || []].flat(),
+      ...resources.flatMap((file) => {
+        if (preDefinedResources.includes(file)) {
+          return [];
+        }
+        return file;
+      }),
+    ];
     fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
   } catch (err) {
     throw err;

@@ -29,7 +29,7 @@ import {
   PublicationManifest,
   ResourceCategorization,
 } from './schema/publication.schema.js';
-import { DetailError, debug, safeGlob } from './util.js';
+import { DetailError, debug } from './util.js';
 import { copyWebPublicationAssets } from './webbook.js';
 
 interface ManifestEntry {
@@ -82,22 +82,16 @@ export async function exportEpub({
   ) as PublicationManifest;
   const uid = `urn:uuid:${uuid()}`;
 
-  const htmlFiles = await safeGlob(['**/*.html', '**/*.htm'], {
-    cwd: path.join(tmpDir, 'EPUB'),
-    ignore: ['publication.json'],
-    followSymbolicLinks: false,
-    gitignore: false,
-  });
-
   const findPublicationLink = (
     relType: string,
     list?: ResourceCategorization,
+    filter?: (e: PublicationLinks) => boolean,
   ) =>
     [list]
       .flat()
       .find(
         (e): e is PublicationLinks =>
-          typeof e === 'object' && e.rel === relType,
+          typeof e === 'object' && e.rel === relType && (!filter || filter(e)),
       );
   const tocResource =
     findPublicationLink('contents', manifest.readingOrder) ||
@@ -109,14 +103,69 @@ export async function exportEpub({
   const pageListResource =
     findPublicationLink('pagelist', manifest.readingOrder) ||
     findPublicationLink('pagelist', manifest.resources);
-  const coverResource = findPublicationLink('cover', manifest.resources);
+  // NOTE: EPUB allows one cover-image item unlike web publication
+  // vivliostyle-cli takes the first cover resource.
+  const pictureCoverResource = findPublicationLink(
+    'cover',
+    manifest.resources,
+    (e) =>
+      ['image/gif', 'image/jpeg', 'image/png', 'image/svg+xml'].includes(
+        e.encodingFormat || mime(e.url) || '',
+      ),
+  );
+  const htmlCoverResource = findPublicationLink(
+    'cover',
+    manifest.resources,
+    (e) => /\.html?$/.test(e.url),
+  );
+
   const landmarks: { type: string; href: string }[] = [];
-  if (coverResource) {
-    const href = path.extname(coverResource.url).match(/^\.html?$/)
-      ? changeExtname(coverResource.url, '.xhtml')
-      : coverResource.url;
-    landmarks.push({ type: 'cover', href });
+  if (htmlCoverResource) {
+    landmarks.push({
+      type: 'cover',
+      href: changeExtname(htmlCoverResource.url, '.xhtml'),
+    });
   }
+
+  const manifestItem = [
+    ...[manifest.links || []].flat(),
+    ...[manifest.readingOrder || []].flat(),
+    ...[manifest.resources || []].flat(),
+  ].reduce((acc, val) => {
+    const { url, encodingFormat } =
+      typeof val === 'string' ? ({ url: val } as PublicationLinks) : val;
+    // Only accepts path-like url
+    try {
+      new URL(url);
+      return acc;
+    } catch (e) {
+      /* NOOP */
+    }
+    if (!fs.existsSync(path.join(tmpDir, 'EPUB', url))) {
+      return acc;
+    }
+    const mediaType = encodingFormat || mime(url);
+    if (!mediaType) {
+      throw new Error(`Unknown mediaType: ${url}`);
+    }
+    acc[url] = {
+      href: url,
+      mediaType,
+    };
+    if (/\.html?$/.test(url)) {
+      acc[url].href = changeExtname(url, '.xhtml');
+      acc[url].mediaType = 'application/xhtml+xml';
+    }
+    if (url === tocResource.url) {
+      acc[url].properties = 'nav';
+    } else if (url === pictureCoverResource?.url) {
+      acc[url].properties = 'cover-image';
+    }
+    return acc;
+  }, {} as Record<string, ManifestEntry>);
+  const htmlFiles = Object.keys(manifestItem).filter((url) =>
+    /\.html?$/.test(url),
+  );
 
   for (const target of htmlFiles) {
     debug(`Transpiling HTML to XHTML: ${target}`);
@@ -145,34 +194,16 @@ export async function exportEpub({
         buildNcx({ toc: parseResult.tocParseTree, manifest, uid }),
         'utf8',
       );
+      manifestItem['toc.ncx'] = {
+        href: 'toc.ncx',
+        mediaType: 'application/x-dtbncx+xml',
+      };
     }
   }
 
-  // TODO: Use `resources` property of webpub
-  const manifestItems = await safeGlob('**', {
-    cwd: path.join(tmpDir, 'EPUB'),
-    ignore: ['*.opf'],
-    followSymbolicLinks: false,
-    gitignore: false,
-  }).then((files) =>
-    files.map<ManifestEntry>((href) => {
-      const mediaType = mime(href);
-      if (!mediaType) {
-        throw new Error(`Unknown mediaType: ${href}`);
-      }
-      return {
-        href,
-        mediaType,
-        // TODO: Determine `cover-image` item
-        properties:
-          href === changeExtname(tocResource.url, '.xhtml') ? 'nav' : undefined,
-      };
-    }),
-  );
-  const readingOrder = [manifest.readingOrder]
+  const readingOrder = [manifest.readingOrder || []]
     .flat()
-    .filter(Boolean)
-    .map((e) => (typeof e === 'string' ? e : e!.url))
+    .map((e) => (typeof e === 'string' ? e : e.url))
     .map((p) => (htmlFiles.includes(p) ? changeExtname(p, '.xhtml') : p));
 
   // META-INF/container.xml
@@ -191,7 +222,7 @@ export async function exportEpub({
       uid,
       manifest,
       readingOrder,
-      manifestItems,
+      manifestItems: Object.values(manifestItem),
       landmarks,
     }),
     'utf8',
