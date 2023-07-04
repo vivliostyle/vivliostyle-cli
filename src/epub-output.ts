@@ -186,6 +186,22 @@ export async function exportEpub({
         thrownError.stack ?? thrownError.message,
       );
     }
+    const appendProperty = (name: string) => {
+      const obj = manifestItem[target];
+      obj.properties = [obj.properties, name].filter(Boolean).join(' ');
+    };
+    if (parseResult.hasMathmlContent) {
+      appendProperty('mathml');
+    }
+    if (parseResult.hasRemoteResources) {
+      appendProperty('remote-resources');
+    }
+    if (parseResult.hasScriptedContent) {
+      appendProperty('scripted');
+    }
+    if (parseResult.hasSvgContent) {
+      appendProperty('svg');
+    }
     if (parseResult.tocParseTree) {
       debug(`Generating toc.ncx`);
 
@@ -249,6 +265,10 @@ async function transpileHtmlToXhtml({
 }): Promise<{
   tocParseTree?: TocResourceTreeRoot;
   pageListParseTree?: PageListResourceTreeRoot;
+  hasMathmlContent: boolean;
+  hasRemoteResources: boolean;
+  hasScriptedContent: boolean;
+  hasSvgContent: boolean;
 }> {
   const absPath = path.join(contextDir, target);
   const htmlFileUrls = htmlFiles.map((p) =>
@@ -344,6 +364,13 @@ async function transpileHtmlToXhtml({
   return {
     tocParseTree,
     pageListParseTree,
+    // FIXME: Yes, I recognize this implementation is inadequate.
+    hasMathmlContent: !!document.querySelector('math'),
+    hasRemoteResources: !!document.querySelector(
+      '[src^="http://"], [src^="https://"]',
+    ),
+    hasScriptedContent: !!document.querySelector('script, form'),
+    hasSvgContent: !!document.querySelector('svg'),
   };
 }
 
