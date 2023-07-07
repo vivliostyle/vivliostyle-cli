@@ -1,9 +1,11 @@
-import { ErrorObject } from 'ajv';
+import AjvModule, { ErrorObject, Schema } from 'ajv';
+import AjvFormatsModule from 'ajv-formats';
+import betterAjvErrors, { IInputOptions } from 'better-ajv-errors';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fastGlob from 'fast-glob';
 import { XMLParser } from 'fast-xml-parser';
-import { globby, Options as GlobbyOptions } from 'globby';
+import { Options as GlobbyOptions, globby } from 'globby';
 import gitIgnore, { Ignore } from 'ignore';
 import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
@@ -15,6 +17,10 @@ import shelljs from 'shelljs';
 import slash from 'slash';
 import tmp from 'tmp';
 import upath from 'upath';
+import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
+import type { PublicationManifest } from './schema/publication.schema.js';
+import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
+import type { VivliostyleConfigSchema } from './schema/vivliostyleConfig.schema.js';
 
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());
@@ -417,3 +423,40 @@ export async function openEpubToTmpDirectory(filePath: string): Promise<{
   const epubOpfPath = upath.join(tmpDir, rootfile['@_full-path']);
   return { dest: tmpDir, epubOpfPath, deleteEpub };
 }
+
+// FIXME: https://github.com/ajv-validator/ajv/issues/2047
+const Ajv = AjvModule.default;
+const addFormats = AjvFormatsModule.default;
+
+const getValidatorFunction =
+  <T extends Schema>(schema: T, refSchemas?: Schema | Schema[]) =>
+  (obj: unknown, errorFormatOption?: IInputOptions): obj is T => {
+    const ajv = new Ajv({ strict: false });
+    addFormats(ajv);
+    if (refSchemas) {
+      ajv.addSchema(refSchemas);
+    }
+    const validate = ajv.compile(schema);
+    const valid = validate(obj);
+    if (!valid) {
+      const detailMessage =
+        validate.errors &&
+        betterAjvErrors(
+          schema,
+          obj,
+          filterRelevantAjvErrors(validate.errors),
+          errorFormatOption,
+        );
+      throw detailMessage || new Error();
+    }
+    return true;
+  };
+
+export const assertVivliostyleConfigSchema =
+  getValidatorFunction<VivliostyleConfigSchema>(vivliostyleConfigSchema);
+
+export const assertPubManifestSchema =
+  getValidatorFunction<PublicationManifest>(
+    publicationSchema,
+    publicationSchemas,
+  );

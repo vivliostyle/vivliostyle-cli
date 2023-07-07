@@ -1,6 +1,3 @@
-import AjvModule from 'ajv';
-import AjvFormatsModule from 'ajv-formats';
-import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
@@ -19,17 +16,17 @@ import { processMarkdown } from './markdown.js';
 import type {
   PublicationLinks,
   PublicationManifest,
+  URL as PublicationURL,
 } from './schema/publication.schema.js';
-import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
 import type { ArticleEntryObject } from './schema/vivliostyleConfig.schema.js';
 import {
   checkThemeInstallationNecessity,
   installThemeDependencies,
 } from './theme.js';
 import {
-  debug,
   DetailError,
-  filterRelevantAjvErrors,
+  assertPubManifestSchema,
+  debug,
   log,
   pathContains,
   pathEquals,
@@ -37,10 +34,6 @@ import {
   startLogging,
   useTmpDirectory,
 } from './util.js';
-
-// FIXME: https://github.com/ajv-validator/ajv/issues/2047
-const Ajv = AjvModule.default;
-const addFormats = AjvFormatsModule.default;
 
 function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   if (theme.type === 'uri') {
@@ -132,24 +125,30 @@ export function generateManifest(
   outputPath: string,
   entryContextDir: string,
   options: {
-    title?: string;
-    author?: string;
+    title: string;
+    author: string;
     language?: string | null;
     readingProgression?: 'ltr' | 'rtl';
     modified: string;
     entries: ArticleEntryObject[];
     cover?: string;
+    links?: (PublicationURL | PublicationLinks)[];
+    resources?: (PublicationURL | PublicationLinks)[];
   },
-) {
+): PublicationManifest {
   const entries: PublicationLinks[] = options.entries.map((entry) => ({
     url: encodeURI(entry.path),
-    name: entry.title,
+    ...(entry.title && { name: entry.title }),
     ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
     ...(entry.rel && { rel: entry.rel }),
     ...(entry.rel === 'contents' && { type: 'LinkedResource' }),
   }));
-  const links: PublicationLinks[] = [];
-  const resources: PublicationLinks[] = [];
+  const links: (PublicationURL | PublicationLinks)[] = [
+    options.links || [],
+  ].flat();
+  const resources: (PublicationURL | PublicationLinks)[] = [
+    options.resources || [],
+  ].flat();
 
   if (options.cover) {
     const { width, height, type } = imageSize(
@@ -196,35 +195,30 @@ export function generateManifest(
   };
 
   const publicationJson = JSON.stringify(publication, null, 2);
-  fs.writeFileSync(outputPath, publicationJson);
-  const ajv = new Ajv({ strict: false });
-  addFormats(ajv);
-  ajv.addSchema(publicationSchemas);
-  const validate = ajv.compile(publicationSchema);
-  const valid = validate(publication);
-  if (!valid) {
-    const message = `Validation of pubManifest failed. Please check the schema: ${outputPath}`;
-    const detailMessage =
-      validate.errors &&
-      betterAjvErrors(
-        publicationSchemas,
-        publication,
-        filterRelevantAjvErrors(validate.errors),
-        {
-          json: publicationJson,
-        },
-      );
-    throw detailMessage
-      ? new DetailError(message, detailMessage)
-      : new Error(message);
+  try {
+    assertPubManifestSchema(publication, {
+      json: publicationJson,
+    });
+  } catch (error) {
+    const thrownError = error as Error | string;
+    throw new DetailError(
+      `Validation of pubManifest failed. Please check the schema: ${outputPath}`,
+      typeof thrownError === 'string'
+        ? thrownError
+        : thrownError.stack ?? thrownError.message,
+    );
   }
+  fs.writeFileSync(outputPath, publicationJson);
+  return publication;
 }
 
 export async function compile({
   entryContextDir,
   workspaceDir,
   manifestPath,
-  manifestAutoGenerate,
+  needToGenerateManifest,
+  title,
+  author,
   entries,
   language,
   readingProgression,
@@ -293,7 +287,7 @@ export async function compile({
       entries: contentEntries,
       manifestPath,
       distDir: path.dirname(generativeContentsEntry.target),
-      title: manifestAutoGenerate?.title,
+      title,
       tocTitle: generativeContentsEntry.title ?? TOC_TITLE,
       style,
     });
@@ -301,9 +295,10 @@ export async function compile({
   }
 
   // generate manifest
-  if (manifestAutoGenerate) {
+  if (needToGenerateManifest) {
     generateManifest(manifestPath, entryContextDir, {
-      ...manifestAutoGenerate,
+      title,
+      author,
       language,
       readingProgression,
       cover: cover && path.relative(entryContextDir, cover),

@@ -17,6 +17,7 @@ import {
 } from './config.js';
 import { exportEpub } from './epub-output.js';
 import { buildPDF, buildPDFWithContainer } from './pdf.js';
+import type { PublicationManifest } from './schema/publication.schema.js';
 import { teardownServer } from './server.js';
 import {
   checkContainerEnvironment,
@@ -25,8 +26,14 @@ import {
   log,
   startLogging,
   stopLogging,
+  useTmpDirectory,
 } from './util.js';
-import { exportWebPublication } from './webbook.js';
+import {
+  copyWebPublicationAssets,
+  prepareWebPublicationDirectory,
+  retrieveWebbookEntry,
+  supplyWebPublicationManifestForWebbook,
+} from './webbook.js';
 
 export interface BuildCliFlags extends CliFlags {
   output?: {
@@ -93,7 +100,8 @@ export async function build(cliFlags: BuildCliFlags) {
     // generate files
     for (const target of config.outputs) {
       let output: string | null = null;
-      if (target.format === 'pdf') {
+      const { format } = target;
+      if (format === 'pdf') {
         if (!isInContainer && target.renderMode === 'docker') {
           output = await buildPDFWithContainer({
             ...config,
@@ -111,31 +119,50 @@ export async function build(cliFlags: BuildCliFlags) {
             target,
           });
         }
-      } else if (target.format === 'webpub') {
-        const { exportAliases, outputs, manifestPath } = config;
-        if (!manifestPath) {
+      } else if (format === 'webpub' || format === 'epub') {
+        const { manifestPath, webbookEntryPath } = config;
+        let outputDir: string;
+        if (format === 'webpub') {
+          outputDir = target.path;
+          prepareWebPublicationDirectory({ outputDir });
+        } else if (format === 'epub') {
+          [outputDir] = await useTmpDirectory();
+        } else {
           continue;
         }
-        output = await exportWebPublication({
-          exportAliases,
-          outputs,
-          manifestPath,
-          input: config.workspaceDir,
-          outputDir: target.path,
-        });
-      } else if (target.format === 'epub') {
-        const { exportAliases, outputs, manifestPath } = config;
-        if (!manifestPath) {
+
+        let manifest: PublicationManifest;
+        if (manifestPath) {
+          manifest = await copyWebPublicationAssets({
+            ...config,
+            input: config.workspaceDir,
+            outputDir,
+            manifestPath,
+          });
+        } else if (webbookEntryPath) {
+          const ret = await retrieveWebbookEntry({
+            webbookEntryPath,
+            outputDir,
+          });
+          manifest =
+            ret.manifest ||
+            (await supplyWebPublicationManifestForWebbook({
+              ...config,
+              entryHtmlFile: ret.entryHtmlFile,
+            }));
+        } else {
           continue;
         }
-        await exportEpub({
-          exportAliases,
-          outputs,
-          input: config.workspaceDir,
-          manifestPath,
-          target: target.path,
-          epubVersion: target.version,
-        });
+
+        if (format === 'epub') {
+          await exportEpub({
+            webpubDir: outputDir,
+            manifest,
+            target: target.path,
+            epubVersion: target.version,
+          });
+        }
+        output = target.path;
       }
       if (output) {
         const formattedOutput = chalk.bold.green(path.relative(cwd, output));
@@ -153,18 +180,15 @@ export async function build(cliFlags: BuildCliFlags) {
   stopLogging('Built successfully.', '🎉');
 }
 
-function checkUnsupportedOutputs({
-  webbookEntryPath,
-  epubOpfPath,
-  outputs,
-}: MergedConfig) {
-  if (webbookEntryPath && outputs.some((t) => t.format === 'webpub')) {
-    throw new Error(
-      'Exporting webpub format from single HTML input is not supported.',
-    );
-  } else if (epubOpfPath && outputs.some((t) => t.format === 'webpub')) {
+function checkUnsupportedOutputs({ epubOpfPath, outputs }: MergedConfig) {
+  if (epubOpfPath && outputs.some((t) => t.format === 'webpub')) {
     throw new Error(
       'Exporting webpub format from EPUB or OPF file is not supported.',
+    );
+  }
+  if (epubOpfPath && outputs.some((t) => t.format === 'epub')) {
+    throw new Error(
+      'Exporting EPUB format from EPUB or OPF file is not supported.',
     );
   }
 }

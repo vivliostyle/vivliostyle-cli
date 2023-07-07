@@ -1,6 +1,3 @@
-import AjvModule from 'ajv';
-import AjvFormatsModule from 'ajv-formats';
-import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
@@ -28,7 +25,6 @@ import {
   checkRenderMode,
   detectOutputFormat,
 } from './output.js';
-import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
 import type {
   BrowserType,
   EntryObject,
@@ -40,9 +36,9 @@ import { PageSize } from './server.js';
 import { parsePackageName } from './theme.js';
 import {
   DetailError,
+  assertVivliostyleConfigSchema,
   cwd,
   debug,
-  filterRelevantAjvErrors,
   isUrlString,
   log,
   logWarn,
@@ -51,10 +47,6 @@ import {
   statFileSync,
   touchTmpFile,
 } from './util.js';
-
-// FIXME: https://github.com/ajv-validator/ajv/issues/2047
-const Ajv = AjvModule.default;
-const addFormats = AjvFormatsModule.default;
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -132,10 +124,7 @@ export interface CliFlags {
 
 export interface WebPublicationManifestConfig {
   manifestPath: string;
-  manifestAutoGenerate: {
-    title: string;
-    author: string;
-  } | null;
+  needToGenerateManifest?: boolean;
 }
 export interface EpubManifestConfig {
   epubOpfPath: string;
@@ -170,6 +159,8 @@ export type MergedConfig = {
   customUserStyle: string | undefined;
   singleDoc: boolean;
   quick: boolean;
+  title: string;
+  author: string;
   language: string | null;
   readingProgression: 'ltr' | 'rtl' | undefined;
   vfmOptions: {
@@ -381,23 +372,19 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
       );
     }
 
-    const ajv = new Ajv({ strict: false });
-    addFormats(ajv);
-    const validate = ajv.compile(vivliostyleConfigSchema);
-    const valid = validate(config);
-    if (!valid) {
-      const message = `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`;
-      const detailMessage =
-        validate.errors &&
-        betterAjvErrors(
-          vivliostyleConfigSchema,
-          config,
-          filterRelevantAjvErrors(validate.errors),
-          typeof jsonRaw === 'string' ? { json: jsonRaw } : { indent: 2 },
-        );
-      throw detailMessage
-        ? new DetailError(message, detailMessage)
-        : new Error(message);
+    try {
+      assertVivliostyleConfigSchema(
+        config,
+        typeof jsonRaw === 'string' ? { json: jsonRaw } : { indent: 2 },
+      );
+    } catch (error) {
+      const thrownError = error as Error | string;
+      throw new DetailError(
+        `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`,
+        typeof thrownError === 'string'
+          ? thrownError
+          : thrownError.stack ?? thrownError.message,
+      );
     }
     return config;
   };
@@ -677,11 +664,11 @@ type CommonOpts = Omit<
   | 'entries'
   | 'exportAliases'
   | 'manifestPath'
-  | 'manifestAutoGenerate'
+  | 'needToGenerateManifest'
   | 'epubOpfPath'
   | 'webbookEntryPath'
-  | 'projectTitle'
-  | 'projectAuthor'
+  | 'title'
+  | 'author'
 >;
 
 async function composeSingleInputConfig<T extends CliFlags>(
@@ -693,6 +680,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   let sourcePath: string;
   let input: InputFormat;
+  const title = cliFlags.title ?? config?.title;
+  const author = cliFlags.author ?? config?.author;
   const workspaceDir = otherConfig.workspaceDir;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
@@ -738,6 +727,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     });
   }
 
+  let fallbackTitle: string = '';
   const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
     if (input.format === 'markdown') {
       // create temporary manifest file
@@ -750,22 +740,15 @@ async function composeSingleInputConfig<T extends CliFlags>(
         source: manifestPath,
         target: path.resolve(workspaceDir, MANIFEST_FILENAME),
       });
-      return {
-        manifestPath,
-        manifestAutoGenerate: {
-          title:
-            cliFlags.title ??
-            config?.title ??
-            (entries.length === 1 && entries[0].title
-              ? (entries[0].title as string)
-              : path.basename(sourcePath)),
-          author: cliFlags.author ?? config?.author ?? '',
-        },
-      };
+      fallbackTitle =
+        entries.length === 1 && entries[0].title
+          ? (entries[0].title as string)
+          : path.basename(sourcePath);
+      return { manifestPath, needToGenerateManifest: true };
     } else if (input.format === 'html' || input.format === 'webbook') {
       return { webbookEntryPath: input.entry };
     } else if (input.format === 'pub-manifest') {
-      return { manifestPath: input.entry, manifestAutoGenerate: null };
+      return { manifestPath: input.entry };
     } else if (input.format === 'epub-opf') {
       return { epubOpfPath: input.entry };
     } else if (input.format === 'epub') {
@@ -782,6 +765,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
     entries,
     input,
     exportAliases,
+    title: title || fallbackTitle,
+    author: author || '',
   };
 }
 
@@ -920,10 +905,8 @@ async function composeProjectConfig<T extends CliFlags>(
     },
     exportAliases: [],
     manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
-    manifestAutoGenerate: {
-      title: projectTitle || fallbackProjectTitle,
-      author: projectAuthor || '',
-    },
+    title: projectTitle || fallbackProjectTitle,
+    author: projectAuthor || '',
   };
 }
 

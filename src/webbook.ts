@@ -1,13 +1,167 @@
 import fs from 'node:fs';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { MergedConfig } from './config.js';
+import { generateManifest } from './builder.js';
+import { MergedConfig, WebbookEntryConfig } from './config.js';
+import { MANIFEST_FILENAME } from './const.js';
+import {
+  fetchLinkedPublicationManifest,
+  getJsdomFromUrlOrFile,
+} from './html.js';
 import type {
   PublicationLinks,
   PublicationManifest,
   ResourceCategorization,
 } from './schema/publication.schema.js';
-import { debug, pathContains, pathEquals, safeGlob } from './util.js';
+import { debug, logError, pathContains, pathEquals, safeGlob } from './util.js';
+
+export function prepareWebPublicationDirectory({
+  outputDir,
+}: {
+  outputDir: string;
+}) {
+  if (fs.existsSync(outputDir)) {
+    debug('going to remove existing webpub', outputDir);
+    shelljs.rm('-rf', outputDir);
+  }
+  fs.mkdirSync(outputDir, { recursive: true });
+}
+
+export async function retrieveWebbookEntry({
+  webbookEntryPath,
+  outputDir,
+}: WebbookEntryConfig & {
+  outputDir: string;
+}): Promise<{
+  entryHtmlFile: string;
+  manifest: PublicationManifest | null;
+}> {
+  const { dom, resourceLoader, baseUrl } = await getJsdomFromUrlOrFile(
+    webbookEntryPath,
+  );
+  const manifest = await fetchLinkedPublicationManifest({
+    dom,
+    resourceLoader,
+    baseUrl,
+  });
+  const rootUrl = new URL('.', baseUrl).href;
+  const pathContains = (url: string) =>
+    !path.posix.relative(rootUrl, url).startsWith('..');
+  const retriever = new Map(resourceLoader.fetcherMap);
+
+  if (manifest) {
+    [manifest.resources || []].flat().forEach((v) => {
+      const url = typeof v === 'string' ? v : v.url;
+      const fullUrl = new URL(url, baseUrl).href;
+      if (!pathContains(fullUrl) || retriever.has(fullUrl)) {
+        return;
+      }
+      const fetchPromise = resourceLoader.fetch(fullUrl);
+      if (fetchPromise && !retriever.has(fullUrl)) {
+        retriever.set(fullUrl, fetchPromise);
+      }
+    });
+    for (const v of [manifest.readingOrder || []].flat()) {
+      const url = typeof v === 'string' ? v : v.url;
+      if (
+        !/\.html?$/.test(url) &&
+        !(typeof v === 'string' || v.encodingFormat === 'text/html')
+      ) {
+        continue;
+      }
+      const fullUrl = new URL(url, baseUrl).href;
+      if (!pathContains(fullUrl) || fullUrl === baseUrl) {
+        continue;
+      }
+      const { resourceLoader } = await getJsdomFromUrlOrFile(fullUrl);
+      resourceLoader.fetcherMap.forEach(
+        (v, k) => !retriever.has(k) && retriever.set(k, v),
+      );
+    }
+  }
+
+  const resources: string[] = [];
+  await Promise.allSettled(
+    Array.from(retriever.entries()).flatMap(([url, fetchPromise]) => {
+      if (!pathContains(url)) {
+        return [];
+      }
+      return fetchPromise
+        .then(async (buffer) => {
+          let relTarget = path.relative(rootUrl, url);
+          if (!relTarget || !path.extname(relTarget)) {
+            relTarget = path.join(relTarget, 'index.html');
+          }
+          const target = path.join(outputDir, relTarget);
+          resources.push(relTarget);
+          await fs.promises.mkdir(path.dirname(target), { recursive: true });
+          await fs.promises.writeFile(target, buffer);
+        })
+        .catch(() => {
+          logError(`Failed to fetch webbook resources: ${url}`);
+        });
+    }),
+  );
+
+  debug('Saved webbook resources', resources);
+
+  return {
+    entryHtmlFile: path.join(
+      outputDir,
+      new URL(baseUrl).pathname.split('/').at(-1) || 'index.html',
+    ),
+    manifest,
+  };
+}
+
+export async function supplyWebPublicationManifestForWebbook({
+  entryHtmlFile,
+  ...config
+}: Pick<
+  MergedConfig,
+  'language' | 'title' | 'author' | 'readingProgression'
+> & {
+  entryHtmlFile: string;
+}): Promise<PublicationManifest> {
+  debug(`Generating publication manifest from HTML: ${entryHtmlFile}`);
+  const { dom } = await getJsdomFromUrlOrFile(entryHtmlFile);
+  const { document } = dom.window;
+  const language =
+    config.language || document.documentElement.lang || undefined;
+  const title = config.title || document.title || '';
+  const author =
+    config.author ||
+    document.querySelector('meta[name="author"]')?.getAttribute('content') ||
+    '';
+
+  const rootDir = path.dirname(entryHtmlFile);
+  const entry = path.basename(entryHtmlFile);
+  const allFiles = await safeGlob('**', {
+    cwd: rootDir,
+    gitignore: false,
+  });
+
+  const manifest = generateManifest(
+    path.join(rootDir, MANIFEST_FILENAME),
+    rootDir,
+    {
+      title,
+      author,
+      language,
+      readingProgression: config.readingProgression,
+      modified: new Date().toISOString(),
+      entries: [{ path: entry }],
+      resources: allFiles.filter((f) => f !== entry),
+    },
+  );
+  const link = document.createElement('link');
+  link.setAttribute('rel', 'publication');
+  link.setAttribute('type', 'application/ld+json');
+  link.setAttribute('href', MANIFEST_FILENAME);
+  document.head.appendChild(link);
+  await fs.promises.writeFile(entryHtmlFile, dom.serialize(), 'utf8');
+  return manifest;
+}
 
 export async function copyWebPublicationAssets({
   exportAliases,
@@ -19,7 +173,7 @@ export async function copyWebPublicationAssets({
   input: string;
   outputDir: string;
   manifestPath: string;
-}) {
+}): Promise<PublicationManifest> {
   const silentMode = shelljs.config.silent;
   shelljs.config.silent = true;
   try {
@@ -129,26 +283,10 @@ export async function copyWebPublicationAssets({
       }),
     ];
     fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
+    return manifest;
   } catch (err) {
     throw err;
   } finally {
     shelljs.config.silent = silentMode;
   }
-}
-
-export async function exportWebPublication(
-  params: Parameters<typeof copyWebPublicationAssets>[0],
-): Promise<string> {
-  const { outputDir } = params;
-  if (fs.existsSync(outputDir)) {
-    debug('going to remove existing webpub', outputDir);
-    shelljs.rm('-rf', outputDir);
-  }
-  try {
-    await copyWebPublicationAssets(params);
-  } catch (err) {
-    shelljs.rm('-rf', outputDir);
-    throw err;
-  }
-  return outputDir;
 }

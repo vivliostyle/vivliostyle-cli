@@ -1,15 +1,14 @@
 import archiver from 'archiver';
 import { XMLBuilder } from 'fast-xml-parser';
 import GithubSlugger from 'github-slugger';
-import { JSDOM } from 'jsdom';
 import languageTags from 'language-tags';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import url from 'node:url';
+import shelljs from 'shelljs';
 import path from 'upath';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
-import { MergedConfig } from './config.js';
 import {
   EPUB_CONTAINER_XML,
   EPUB_NS,
@@ -20,6 +19,7 @@ import {
   PageListResourceTreeRoot,
   TocResourceTreeItem,
   TocResourceTreeRoot,
+  getJsdomFromUrlOrFile,
   parsePageListDocument,
   parseTocDocument,
 } from './html.js';
@@ -30,7 +30,6 @@ import {
   ResourceCategorization,
 } from './schema/publication.schema.js';
 import { DetailError, debug } from './util.js';
-import { copyWebPublicationAssets } from './webbook.js';
 
 interface ManifestEntry {
   href: string;
@@ -49,15 +48,13 @@ const changeExtname = (filepath: string, newExt: string) => {
 };
 
 export async function exportEpub({
-  exportAliases,
-  outputs,
-  input,
-  manifestPath,
+  webpubDir,
+  manifest,
   target,
   epubVersion,
-}: Pick<MergedConfig, 'exportAliases' | 'outputs'> & {
-  input: string;
-  manifestPath: string;
+}: {
+  webpubDir: string;
+  manifest: PublicationManifest;
   target: string;
   epubVersion: '3.0';
 }) {
@@ -65,21 +62,9 @@ export async function exportEpub({
 
   // const [tmpDir, clearTmpDir] = await useTmpDirectory();
   const tmpDir = path.join(cliRoot, 'tmp');
-  fs.mkdirSync(tmpDir, { recursive: true });
-  const clearTmpDir = () => {};
   fs.mkdirSync(path.join(tmpDir, 'META-INF'), { recursive: true });
-  fs.mkdirSync(path.join(tmpDir, 'EPUB'), { recursive: true });
+  shelljs.cp('-rf', webpubDir, path.join(tmpDir, 'EPUB'));
 
-  await copyWebPublicationAssets({
-    exportAliases,
-    outputs,
-    input,
-    outputDir: path.join(tmpDir, 'EPUB'),
-    manifestPath,
-  });
-  const manifest = JSON.parse(
-    fs.readFileSync(path.join(tmpDir, 'EPUB/publication.json'), 'utf8'),
-  ) as PublicationManifest;
   const uid = `urn:uuid:${uuid()}`;
 
   const findPublicationLink = (
@@ -245,7 +230,6 @@ export async function exportEpub({
   );
 
   await compressEpub({ target, sourceDir: tmpDir });
-  clearTmpDir();
 }
 
 async function transpileHtmlToXhtml({
@@ -274,11 +258,9 @@ async function transpileHtmlToXhtml({
   const htmlFileUrls = htmlFiles.map((p) =>
     url.pathToFileURL(path.join(contextDir, p)),
   );
-  const html = await fs.promises.readFile(absPath, 'utf8');
-  const dom = new JSDOM(html);
+  const { dom } = await getJsdomFromUrlOrFile(absPath);
   const { document } = dom.window;
-  const htmlElement = document.body.parentElement!;
-  htmlElement.setAttribute('xmlns:epub', EPUB_NS);
+  document.documentElement.setAttribute('xmlns:epub', EPUB_NS);
 
   document.querySelectorAll('a[href]').forEach((el) => {
     const href = el.getAttribute('href')!;

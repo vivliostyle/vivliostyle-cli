@@ -177,7 +177,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
           return true; // ignore saved intermediate files
         }
         if (
-          config.manifestAutoGenerate &&
+          config.needToGenerateManifest &&
           pathEquals(path, config.manifestPath)
         ) {
           return true; // ignore generated pub-manifest

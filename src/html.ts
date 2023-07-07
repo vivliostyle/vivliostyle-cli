@@ -1,11 +1,94 @@
 import cheerio from 'cheerio';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
-import { JSDOM } from 'jsdom';
+import jsdom, { ResourceLoader as BaseResourceLoader, JSDOM } from 'jsdom';
 import fs from 'node:fs';
+import url from 'node:url';
 import prettier from 'prettier';
 import path from 'upath';
 import { ManuscriptEntry } from './config.js';
+import type { PublicationManifest } from './schema/publication.schema.js';
+import {
+  DetailError,
+  assertPubManifestSchema,
+  debug,
+  log,
+  logWarn,
+} from './util.js';
+
+const virtualConsole = new jsdom.VirtualConsole();
+virtualConsole.on('error', (message) => {
+  debug('[JSDOM Console] error:', message);
+});
+virtualConsole.on('warn', (message) => {
+  debug('[JSDOM Console] warn:', message);
+});
+virtualConsole.on('log', (message) => {
+  debug('[JSDOM Console] log:', message);
+});
+virtualConsole.on('info', (message) => {
+  debug('[JSDOM Console] info:', message);
+});
+virtualConsole.on('dir', (message) => {
+  debug('[JSDOM Console] dir:', message);
+});
+virtualConsole.on('jsdomError', (error) => {
+  // Most of CSS using Paged media will be failed to run CSS parser of JSDOM.
+  // We just ignore it because we don't use CSS parse results.
+  // https://github.com/jsdom/jsdom/blob/a39e0ec4ce9a8806692d986a7ed0cd565ec7498a/lib/jsdom/living/helpers/stylesheets.js#L33-L44
+  // see also: https://github.com/jsdom/jsdom/issues/2005
+  if (error.message === 'Could not parse CSS stylesheet') {
+    return;
+  }
+  throw new DetailError(
+    'Error occurred when loading HTML',
+    error.stack ?? error.message,
+  );
+});
+
+class ResourceLoader extends BaseResourceLoader {
+  fetcherMap = new Map<string, Promise<Buffer>>();
+
+  fetch(url: string, options?: jsdom.FetchOptions) {
+    debug(`[JSDOM] Fetching resource: ${url}`);
+    const fetcher = super.fetch(url, options);
+    if (fetcher) {
+      this.fetcherMap.set(url, fetcher);
+    }
+    return fetcher;
+  }
+}
+
+export async function getJsdomFromUrlOrFile(src: string): Promise<{
+  dom: JSDOM;
+  resourceLoader: ResourceLoader;
+  baseUrl: string;
+}> {
+  const resourceLoader = new ResourceLoader();
+  let baseUrl = src;
+  let dom: JSDOM;
+  if (/^https?:\/\//.test(src)) {
+    const url = new URL(src);
+    // Ensures trailing slash or explicit HTML extensions
+    if (!url.pathname.endsWith('/') && !/\.html?$/.test(url.pathname)) {
+      url.pathname = `${url.pathname}/`;
+    }
+    baseUrl = url.href;
+    dom = await JSDOM.fromURL(src, {
+      virtualConsole,
+      resources: resourceLoader,
+    });
+  } else {
+    baseUrl = /^file:\/\//.test(src) ? src : url.pathToFileURL(src).href;
+    const file = await resourceLoader._readFile(url.fileURLToPath(baseUrl));
+    resourceLoader.fetcherMap.set(baseUrl, Promise.resolve(file));
+    dom = await JSDOM.fromFile(url.fileURLToPath(baseUrl), {
+      virtualConsole,
+      resources: resourceLoader,
+    });
+  }
+  return { dom, resourceLoader, baseUrl };
+}
 
 export function generateTocHtml({
   entries,
@@ -107,6 +190,78 @@ export function isTocHtml(filepath: string): boolean {
   } catch (err) {
     // seems not to be a html file
     return false;
+  }
+}
+
+export async function fetchLinkedPublicationManifest({
+  dom,
+  resourceLoader,
+  baseUrl,
+}: {
+  dom: JSDOM;
+  resourceLoader: ResourceLoader;
+  baseUrl: string;
+}): Promise<PublicationManifest | null> {
+  const { document } = dom.window;
+
+  const linkEl = document.querySelector('link[href][rel="publication"]');
+  if (!linkEl) {
+    return null;
+  }
+  const href = linkEl.getAttribute('href')!.trim();
+  let manifest: PublicationManifest;
+  if (href.startsWith('#')) {
+    const scriptEl = document.getElementById(href.slice(1));
+    if (scriptEl?.getAttribute('type') !== 'application/ld+json') {
+      return null;
+    }
+    debug(`Found embedded publication manifest: ${href}`);
+    let manifest: PublicationManifest;
+    try {
+      manifest = JSON.parse(scriptEl.innerHTML);
+    } catch (error) {
+      const thrownError = error as Error;
+      throw new DetailError(
+        'Failed to parse manifest data',
+        typeof thrownError.stack ?? thrownError.message,
+      );
+    }
+    try {
+      assertPubManifestSchema(manifest, { indent: 2 });
+    } catch (error) {
+      logWarn(
+        'Publication manifest validation failed. Processing continues, but some problems may occur.',
+      );
+      log(error);
+    }
+    return manifest;
+  } else {
+    debug(`Found linked publication manifest: ${href}`);
+    const url = new URL(href, baseUrl);
+    const buffer = await resourceLoader.fetch(url.href);
+    if (!buffer) {
+      throw new Error(`Failed to fetch manifest JSON file: ${url.href}`);
+    }
+    let manifestJson: string;
+    try {
+      manifestJson = buffer.toString();
+      manifest = JSON.parse(manifestJson);
+    } catch (error) {
+      const thrownError = error as Error;
+      throw new DetailError(
+        'Failed to parse manifest data',
+        typeof thrownError.stack ?? thrownError.message,
+      );
+    }
+    try {
+      assertPubManifestSchema(manifest, { json: manifestJson });
+    } catch (error) {
+      logWarn(
+        'Publication manifest validation failed. Processing continues, but some problems may occur.',
+      );
+      log(error);
+    }
+    return manifest;
   }
 }
 
