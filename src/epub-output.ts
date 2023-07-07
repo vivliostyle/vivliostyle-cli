@@ -49,11 +49,13 @@ const changeExtname = (filepath: string, newExt: string) => {
 
 export async function exportEpub({
   webpubDir,
+  entryHtmlFile,
   manifest,
   target,
   epubVersion,
 }: {
   webpubDir: string;
+  entryHtmlFile?: string;
   manifest: PublicationManifest;
   target: string;
   epubVersion: '3.0';
@@ -62,10 +64,14 @@ export async function exportEpub({
 
   // const [tmpDir, clearTmpDir] = await useTmpDirectory();
   const tmpDir = path.join(cliRoot, 'tmp');
+  shelljs.rm('-rf', tmpDir);
   fs.mkdirSync(path.join(tmpDir, 'META-INF'), { recursive: true });
   shelljs.cp('-rf', webpubDir, path.join(tmpDir, 'EPUB'));
 
   const uid = `urn:uuid:${uuid()}`;
+  const entryHtmlRelPath =
+    entryHtmlFile &&
+    path.relative(webpubDir, path.resolve(webpubDir, entryHtmlFile));
 
   const findPublicationLink = (
     relType: string,
@@ -81,10 +87,6 @@ export async function exportEpub({
   const tocResource =
     findPublicationLink('contents', manifest.readingOrder) ||
     findPublicationLink('contents', manifest.resources);
-  if (!tocResource) {
-    // TODO: Generate ToC
-    throw new Error();
-  }
   const pageListResource =
     findPublicationLink('pagelist', manifest.readingOrder) ||
     findPublicationLink('pagelist', manifest.resources);
@@ -141,13 +143,26 @@ export async function exportEpub({
       acc[url].href = changeExtname(url, '.xhtml');
       acc[url].mediaType = 'application/xhtml+xml';
     }
-    if (url === tocResource.url) {
+    if (url === (tocResource?.url || entryHtmlRelPath)) {
       acc[url].properties = 'nav';
     } else if (url === pictureCoverResource?.url) {
       acc[url].properties = 'cover-image';
     }
     return acc;
   }, {} as Record<string, ManifestEntry>);
+  if (
+    entryHtmlRelPath &&
+    Object.values(manifestItem).every(
+      ({ properties }) => !properties?.split(' ').includes('nav'),
+    )
+  ) {
+    manifestItem[entryHtmlRelPath] = {
+      href: changeExtname(entryHtmlRelPath, '.xhtml'),
+      mediaType: 'application/xhtml+xml',
+      properties: 'nav',
+    };
+  }
+
   const htmlFiles = Object.keys(manifestItem).filter((url) =>
     /\.html?$/.test(url),
   );
@@ -161,8 +176,8 @@ export async function exportEpub({
         htmlFiles,
         contextDir: path.join(tmpDir, 'EPUB'),
         landmarks,
-        tocResource,
-        pageListResource,
+        isTocHtml: target === (tocResource?.url || entryHtmlRelPath),
+        isPagelistHtml: target === (pageListResource?.url || entryHtmlRelPath),
       });
     } catch (error) {
       const thrownError = error as Error;
@@ -202,8 +217,9 @@ export async function exportEpub({
     }
   }
 
-  const readingOrder = [manifest.readingOrder || []]
+  const readingOrder = [manifest.readingOrder || entryHtmlRelPath]
     .flat()
+    .filter((v): v is string | PublicationLinks => Boolean(v))
     .map((e) => (typeof e === 'string' ? e : e.url))
     .map((p) => (htmlFiles.includes(p) ? changeExtname(p, '.xhtml') : p));
 
@@ -237,15 +253,15 @@ async function transpileHtmlToXhtml({
   htmlFiles,
   contextDir,
   landmarks,
-  tocResource,
-  pageListResource,
+  isTocHtml,
+  isPagelistHtml,
 }: {
   target: string;
   htmlFiles: string[];
   contextDir: string;
   landmarks: LandmarkEntry[];
-  tocResource: PublicationLinks;
-  pageListResource?: PublicationLinks;
+  isTocHtml: boolean;
+  isPagelistHtml: boolean;
 }): Promise<{
   tocParseTree?: TocResourceTreeRoot;
   pageListParseTree?: PageListResourceTreeRoot;
@@ -296,16 +312,36 @@ async function transpileHtmlToXhtml({
   let tocParseTree: TocResourceTreeRoot | undefined;
   let pageListParseTree: PageListResourceTreeRoot | undefined;
 
-  if (target === tocResource.url) {
+  if (isTocHtml) {
     if (!document.querySelector('[epub:type="toc"]')) {
       const parsed = parseTocDocument(dom);
-      if (!parsed) {
-        throw new Error('Navigation document must have one "toc" nav element');
+      if (parsed) {
+        tocParseTree = parsed;
+        const nav = replaceWithNavElement(parsed.element);
+        nav.setAttribute('id', 'toc');
+        nav.setAttribute('epub:type', 'toc');
+      } else {
+        // Insert single document toc
+        const nav = document.createElement('nav');
+        nav.setAttribute('id', 'toc');
+        nav.setAttribute('role', 'doc-toc');
+        nav.setAttribute('epub:type', 'toc');
+        nav.setAttribute('hidden', '');
+        nav.innerHTML = '<ol><li></li></ol>';
+        const span = document.createElement('span');
+        span.textContent = document.title;
+        nav.querySelector('li')!.appendChild(span);
+        document.body.appendChild(nav);
+        tocParseTree = {
+          element: nav,
+          children: [
+            {
+              element: nav.querySelector('li')!,
+              label: span,
+            },
+          ],
+        };
       }
-      tocParseTree = parsed;
-      const nav = replaceWithNavElement(parsed.element);
-      nav.setAttribute('id', 'toc');
-      nav.setAttribute('epub:type', 'toc');
     }
 
     if (
@@ -330,7 +366,7 @@ async function transpileHtmlToXhtml({
     }
   }
 
-  if (target === pageListResource?.url) {
+  if (isPagelistHtml) {
     const parsed = parsePageListDocument(dom);
     if (parsed) {
       pageListParseTree = parsed;
@@ -486,11 +522,14 @@ function buildEpubPackageDocument({
       },
       guide: {
         reference: [
-          {
-            _type: 'toc',
-            _href: manifestItems.find(({ properties }) => properties === 'nav')!
-              .href,
-          },
+          ...[
+            (() => {
+              const tocItem = manifestItems.find(({ properties }) =>
+                properties?.split(' ').includes('nav'),
+              );
+              return tocItem ? { _type: 'toc', _href: tocItem.href } : [];
+            })(),
+          ].flat(),
           ...landmarks.map(({ type, href }) => ({ _type: type, _href: href })),
         ],
       },

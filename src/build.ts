@@ -131,6 +131,7 @@ export async function build(cliFlags: BuildCliFlags) {
           continue;
         }
 
+        let entryHtmlFile: string | undefined;
         let manifest: PublicationManifest;
         if (manifestPath) {
           manifest = await copyWebPublicationAssets({
@@ -139,11 +140,21 @@ export async function build(cliFlags: BuildCliFlags) {
             outputDir,
             manifestPath,
           });
+          if (config.input.format === 'markdown') {
+            const entry = [manifest.readingOrder].flat()[0];
+            if (entry) {
+              entryHtmlFile = path.join(
+                outputDir,
+                typeof entry === 'string' ? entry : entry.url,
+              );
+            }
+          }
         } else if (webbookEntryPath) {
           const ret = await retrieveWebbookEntry({
             webbookEntryPath,
             outputDir,
           });
+          entryHtmlFile = ret.entryHtmlFile;
           manifest =
             ret.manifest ||
             (await supplyWebPublicationManifestForWebbook({
@@ -157,6 +168,7 @@ export async function build(cliFlags: BuildCliFlags) {
         if (format === 'epub') {
           await exportEpub({
             webpubDir: outputDir,
+            entryHtmlFile,
             manifest,
             target: target.path,
             epubVersion: target.version,
