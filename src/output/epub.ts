@@ -50,6 +50,23 @@ const changeExtname = (filepath: string, newExt: string) => {
   return `${filepath.slice(0, -ext.length)}${newExt}`;
 };
 
+const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
+  const absBasePath = path.join('/', baseUrl);
+  const absRootPath = path.join('/', rootUrl);
+  const hrefUrl = new URL(target, url.pathToFileURL(absBasePath));
+  if (hrefUrl.protocol !== 'file:') {
+    return target;
+  }
+  if (/\.html?$/.test(hrefUrl.pathname)) {
+    hrefUrl.pathname = changeExtname(hrefUrl.pathname, '.xhtml');
+  }
+  const pathname = path.posix.relative(
+    url.pathToFileURL(path.dirname(absRootPath)).pathname,
+    hrefUrl.pathname,
+  );
+  return `${pathname}${hrefUrl.search}${hrefUrl.hash}`;
+};
+
 const normalizeLocalizableString = (
   value: LocalizableStringOrObject | undefined,
   availableLanguages: string[],
@@ -206,7 +223,6 @@ export async function exportEpub({
     try {
       parseResult = await transpileHtmlToXhtml({
         target,
-        htmlFiles,
         contextDir: path.join(tmpDir, 'EPUB'),
         landmarks,
         isTocHtml,
@@ -261,6 +277,7 @@ export async function exportEpub({
         toc: tocParseTree,
         docTitle,
         uid,
+        tocHtml,
       }),
       'utf8',
     );
@@ -311,14 +328,12 @@ export async function exportEpub({
 
 async function transpileHtmlToXhtml({
   target,
-  htmlFiles,
   contextDir,
   landmarks,
   isTocHtml,
   isPagelistHtml,
 }: {
   target: string;
-  htmlFiles: string[];
   contextDir: string;
   landmarks: LandmarkEntry[];
   isTocHtml: boolean;
@@ -333,30 +348,15 @@ async function transpileHtmlToXhtml({
   hasSvgContent: boolean;
 }> {
   const absPath = path.join(contextDir, target);
-  const htmlFileUrls = htmlFiles.map((p) =>
-    url.pathToFileURL(path.join(contextDir, p)),
-  );
   const { dom } = await getJsdomFromUrlOrFile(absPath);
   const { document } = dom.window;
+  // `xmlns` will be supplied in later serialization process
+  document.documentElement.removeAttribute('xmlns');
   document.documentElement.setAttribute('xmlns:epub', EPUB_NS);
 
   document.querySelectorAll('a[href]').forEach((el) => {
     const href = el.getAttribute('href')!;
-    const hrefUrl = new URL(href, url.pathToFileURL(absPath));
-    if (
-      htmlFileUrls.some(
-        (url) =>
-          url.pathname === hrefUrl.pathname ||
-          changeExtname(url.pathname, '') === hrefUrl.pathname,
-      )
-    ) {
-      hrefUrl.pathname = changeExtname(hrefUrl.pathname, '.xhtml');
-    }
-    const pathname = path.posix.relative(
-      url.pathToFileURL(path.dirname(absPath)).pathname,
-      hrefUrl.pathname,
-    );
-    el.setAttribute('href', `${pathname}${hrefUrl.search}${hrefUrl.hash}`);
+    el.setAttribute('href', getRelativeHref(href, target, target));
   });
 
   const replaceWithNavElement = (el: Element) => {
@@ -392,7 +392,7 @@ async function transpileHtmlToXhtml({
         nav.innerHTML = '<ol><li></li></ol>';
         const a = document.createElement('a');
         a.textContent = document.title;
-        a.href = changeExtname(target, '.xhtml');
+        a.href = changeExtname(path.basename(target), '.xhtml');
         nav.querySelector('li')!.appendChild(a);
         document.body.appendChild(nav);
         tocParseTree = {
@@ -607,10 +607,12 @@ function buildNcx({
   toc,
   docTitle,
   uid,
+  tocHtml,
 }: {
   toc: TocResourceTreeRoot;
   docTitle: string;
   uid: string;
+  tocHtml: string;
 }): string {
   const slugger = new GithubSlugger();
   slugger.reset();
@@ -628,7 +630,11 @@ function buildNcx({
       ...(item.label.tagName === 'A' && item.label.getAttribute('href')
         ? {
             content: {
-              _src: item.label.getAttribute('href'),
+              _src: getRelativeHref(
+                item.label.getAttribute('href')!,
+                tocHtml,
+                'toc.ncx',
+              ),
             },
           }
         : {}),

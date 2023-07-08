@@ -160,6 +160,7 @@ export async function build(cliFlags: BuildCliFlags) {
             (await supplyWebPublicationManifestForWebbook({
               ...config,
               entryHtmlFile: ret.entryHtmlFile,
+              outputDir,
             }));
         } else {
           continue;

@@ -1463,6 +1463,11 @@
   resolved "https://registry.yarnpkg.com/@types/w3c-xmlserializer/-/w3c-xmlserializer-2.0.2.tgz#79ab833574bdfac3d03eadb4179508ae89d6bf89"
   integrity sha512-lSw+ZP+r+SQLuQpY1BIAyYUIOd5YBOVg5VY8psTCcHOoDBxVbUPSZZOkGQfssrrWeTJs0tKi5cWhYCKj8gmM5w==
 
+"@types/whatwg-mimetype@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@types/whatwg-mimetype/-/whatwg-mimetype-3.0.0.tgz#4ff45f787a085e7d22b7e01f3724f28a97d84c67"
+  integrity sha512-xHFOhd41VpUR6Y0k8ZinlyFv5cyhC/r2zghJgWWN8oNxqNo45Nf0qCBInJsFeifLeoHcIF4voEfap4A2GYHWkw==
+
 "@types/yargs-parser@*":
   version "15.0.0"
   resolved "https://registry.yarnpkg.com/@types/yargs-parser/-/yargs-parser-15.0.0.tgz#cb3f9f741869e20cce330ffbeb9271590483882d"

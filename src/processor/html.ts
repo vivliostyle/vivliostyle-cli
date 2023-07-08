@@ -47,7 +47,7 @@ virtualConsole.on('jsdomError', (error) => {
 });
 
 export class ResourceLoader extends BaseResourceLoader {
-  fetcherMap = new Map<string, Promise<Buffer>>();
+  fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();
 
   fetch(url: string, options?: jsdom.FetchOptions) {
     debug(`[JSDOM] Fetching resource: ${url}`);
@@ -82,8 +82,8 @@ export async function getJsdomFromUrlOrFile(
   } else {
     baseUrl = /^file:\/\//.test(src) ? src : url.pathToFileURL(src).href;
     if (resourceLoader) {
-      const file = await resourceLoader._readFile(url.fileURLToPath(baseUrl));
-      resourceLoader.fetcherMap.set(baseUrl, Promise.resolve(file));
+      const file = resourceLoader._readFile(url.fileURLToPath(baseUrl));
+      resourceLoader.fetcherMap.set(baseUrl, file);
     }
     dom = await JSDOM.fromFile(url.fileURLToPath(baseUrl), {
       virtualConsole,
