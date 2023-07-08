@@ -2,6 +2,7 @@
 
 exports[`allow a loose specifier of a theme direcory: valid.5.config.js 1`] = `
 Object {
+  "author": "pkgAuthor",
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -49,11 +50,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
     "format": "pub-manifest",
   },
-  "language": null,
-  "manifestAutoGenerate": Object {
-    "author": "pkgAuthor",
-    "title": "pkgName",
-  },
+  "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -89,6 +86,7 @@ Object {
   },
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
+  "title": "pkgName",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -102,6 +100,7 @@ Object {
 
 exports[`imports a EPUB OPF file 1`] = `
 Object {
+  "author": undefined,
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -134,7 +133,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
     "format": "epub-opf",
   },
-  "language": null,
+  "language": undefined,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -153,6 +152,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/themes",
   "timeout": 120000,
+  "title": undefined,
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -166,6 +166,7 @@ Object {
 
 exports[`imports a EPUB file 1`] = `
 Object {
+  "author": undefined,
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -198,7 +199,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive.epub",
     "format": "epub",
   },
-  "language": null,
+  "language": undefined,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -217,6 +218,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/epubs/themes",
   "timeout": 120000,
+  "title": undefined,
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -230,6 +232,7 @@ Object {
 
 exports[`imports a https URL 1`] = `
 Object {
+  "author": undefined,
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -261,7 +264,7 @@ Object {
     "entry": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
     "format": "webbook",
   },
-  "language": null,
+  "language": undefined,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -280,6 +283,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/themes",
   "timeout": 120000,
+  "title": undefined,
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -294,6 +298,7 @@ Object {
 
 exports[`imports a webbook compliant to Readium Web publication 1`] = `
 Object {
+  "author": undefined,
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -325,8 +330,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
     "format": "pub-manifest",
   },
-  "language": null,
-  "manifestAutoGenerate": null,
+  "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
   "outputs": Array [
     Object {
@@ -343,6 +347,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/themes",
   "timeout": 120000,
+  "title": undefined,
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -356,6 +361,7 @@ Object {
 
 exports[`imports a webbook compliant to W3C Web publication 1`] = `
 Object {
+  "author": undefined,
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -387,8 +393,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
     "format": "pub-manifest",
   },
-  "language": null,
-  "manifestAutoGenerate": null,
+  "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
   "outputs": Array [
     Object {
@@ -405,6 +410,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/themes",
   "timeout": 120000,
+  "title": undefined,
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -418,6 +424,7 @@ Object {
 
 exports[`imports single html file 1`] = `
 Object {
+  "author": undefined,
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -449,7 +456,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/sample.html",
     "format": "webbook",
   },
-  "language": null,
+  "language": undefined,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -468,6 +475,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
+  "title": undefined,
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -482,6 +490,7 @@ Object {
 
 exports[`override option by CLI command: valid.1.config.js 1`] = `
 Object {
+  "author": "myAuthor",
   "bleed": undefined,
   "browserType": "firefox",
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -554,10 +563,6 @@ Object {
     "format": "pub-manifest",
   },
   "language": "myLanguage",
-  "manifestAutoGenerate": Object {
-    "author": "myAuthor",
-    "title": "myTitle",
-  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "outputs": Array [
     Object {
@@ -601,6 +606,7 @@ Object {
   },
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 42000,
+  "title": "myTitle",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
@@ -614,6 +620,7 @@ Object {
 
 exports[`parse array of config: valid.1.config.js 1`] = `
 Object {
+  "author": "author",
   "bleed": undefined,
   "browserType": "firefox",
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -690,10 +697,6 @@ Object {
     "format": "pub-manifest",
   },
   "language": "language",
-  "manifestAutoGenerate": Object {
-    "author": "author",
-    "title": "title",
-  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "outputs": Array [
     Object {
@@ -744,6 +747,7 @@ Object {
   },
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 1,
+  "title": "title",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
@@ -757,6 +761,7 @@ Object {
 
 exports[`parse array of config: valid.2.config.js 1`] = `
 Object {
+  "author": "pkgAuthor",
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -796,11 +801,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
     "format": "pub-manifest",
   },
-  "language": null,
-  "manifestAutoGenerate": Object {
-    "author": "pkgAuthor",
-    "title": "pkgName",
-  },
+  "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -820,6 +821,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
+  "title": "pkgName",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -833,6 +835,7 @@ Object {
 
 exports[`parse array of config: valid.3.config.js 1`] = `
 Object {
+  "author": "pkgAuthor",
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -872,11 +875,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
     "format": "pub-manifest",
   },
-  "language": null,
-  "manifestAutoGenerate": Object {
-    "author": "pkgAuthor",
-    "title": "example",
-  },
+  "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -896,6 +895,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
+  "title": "example",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -909,6 +909,7 @@ Object {
 
 exports[`parse vivliostyle config: valid.1.config.js 1`] = `
 Object {
+  "author": "author",
   "bleed": undefined,
   "browserType": "firefox",
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -985,10 +986,6 @@ Object {
     "format": "pub-manifest",
   },
   "language": "language",
-  "manifestAutoGenerate": Object {
-    "author": "author",
-    "title": "title",
-  },
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "outputs": Array [
     Object {
@@ -1039,6 +1036,7 @@ Object {
   },
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 1,
+  "title": "title",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
@@ -1052,6 +1050,7 @@ Object {
 
 exports[`parse vivliostyle config: valid.2.config.js 1`] = `
 Object {
+  "author": "pkgAuthor",
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -1091,11 +1090,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
     "format": "pub-manifest",
   },
-  "language": null,
-  "manifestAutoGenerate": Object {
-    "author": "pkgAuthor",
-    "title": "pkgName",
-  },
+  "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -1115,6 +1110,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
+  "title": "pkgName",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -1128,6 +1124,7 @@ Object {
 
 exports[`parse vivliostyle config: valid.3.config.js 1`] = `
 Object {
+  "author": "pkgAuthor",
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -1167,11 +1164,7 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
     "format": "pub-manifest",
   },
-  "language": null,
-  "manifestAutoGenerate": Object {
-    "author": "pkgAuthor",
-    "title": "example",
-  },
+  "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "outputs": Array [
     Object {
@@ -1191,6 +1184,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
+  "title": "example",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
@@ -1204,6 +1198,7 @@ Object {
 
 exports[`yields a config with single input and vivliostyle config 1`] = `
 Object {
+  "author": "author",
   "bleed": undefined,
   "browserType": "firefox",
   "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -1261,11 +1256,8 @@ Object {
     "format": "markdown",
   },
   "language": "language",
-  "manifestAutoGenerate": Object {
-    "author": "author",
-    "title": "title",
-  },
   "manifestPath": "__SNIP__",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -1309,6 +1301,7 @@ Object {
   },
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 1,
+  "title": "title",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
@@ -1322,6 +1315,7 @@ Object {
 
 exports[`yields a config with single markdown 1`] = `
 Object {
+  "author": undefined,
   "bleed": undefined,
   "browserType": "chromium",
   "cover": undefined,
@@ -1361,12 +1355,9 @@ Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",
     "format": "markdown",
   },
-  "language": null,
-  "manifestAutoGenerate": Object {
-    "author": "",
-    "title": "Yuno",
-  },
+  "language": undefined,
   "manifestPath": "__SNIP__",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -1385,6 +1376,7 @@ Object {
   "themeIndexes": Set {},
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
+  "title": "Yuno",
   "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
