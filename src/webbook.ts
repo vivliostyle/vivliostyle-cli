@@ -14,7 +14,14 @@ import type {
   PublicationManifest,
   ResourceCategorization,
 } from './schema/publication.schema.js';
-import { debug, logError, pathContains, pathEquals, safeGlob } from './util.js';
+import {
+  debug,
+  logError,
+  logUpdate,
+  pathContains,
+  pathEquals,
+  safeGlob,
+} from './util.js';
 
 export function prepareWebPublicationDirectory({
   outputDir,
@@ -37,6 +44,9 @@ export async function retrieveWebbookEntry({
   entryHtmlFile: string;
   manifest: PublicationManifest | null;
 }> {
+  if (/^https?:\/\//.test(webbookEntryPath)) {
+    logUpdate('Fetching remote contents');
+  }
   const resourceLoader = new ResourceLoader();
   const { dom, baseUrl } = await getJsdomFromUrlOrFile(
     webbookEntryPath,

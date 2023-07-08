@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import cheerio from 'cheerio';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
@@ -12,7 +13,6 @@ import {
   DetailError,
   assertPubManifestSchema,
   debug,
-  log,
   logWarn,
 } from './util.js';
 
@@ -213,13 +213,13 @@ export async function fetchLinkedPublicationManifest({
   }
   const href = linkEl.getAttribute('href')!.trim();
   let manifest: PublicationManifest;
+  let manifestJson: string;
   if (href.startsWith('#')) {
     const scriptEl = document.getElementById(href.slice(1));
     if (scriptEl?.getAttribute('type') !== 'application/ld+json') {
       return null;
     }
     debug(`Found embedded publication manifest: ${href}`);
-    let manifest: PublicationManifest;
     try {
       manifest = JSON.parse(scriptEl.innerHTML);
     } catch (error) {
@@ -229,15 +229,7 @@ export async function fetchLinkedPublicationManifest({
         typeof thrownError.stack ?? thrownError.message,
       );
     }
-    try {
-      assertPubManifestSchema(manifest, { indent: 2 });
-    } catch (error) {
-      logWarn(
-        'Publication manifest validation failed. Processing continues, but some problems may occur.',
-      );
-      log(error);
-    }
-    return manifest;
+    manifestJson = JSON.stringify(manifest, null, 2);
   } else {
     debug(`Found linked publication manifest: ${href}`);
     const url = new URL(href, baseUrl);
@@ -245,9 +237,8 @@ export async function fetchLinkedPublicationManifest({
     if (!buffer) {
       throw new Error(`Failed to fetch manifest JSON file: ${url.href}`);
     }
-    let manifestJson: string;
+    manifestJson = buffer.toString();
     try {
-      manifestJson = buffer.toString();
       manifest = JSON.parse(manifestJson);
     } catch (error) {
       const thrownError = error as Error;
@@ -256,16 +247,18 @@ export async function fetchLinkedPublicationManifest({
         typeof thrownError.stack ?? thrownError.message,
       );
     }
-    try {
-      assertPubManifestSchema(manifest, { json: manifestJson });
-    } catch (error) {
-      logWarn(
-        'Publication manifest validation failed. Processing continues, but some problems may occur.',
-      );
-      log(error);
-    }
-    return manifest;
   }
+
+  try {
+    assertPubManifestSchema(manifest, { json: manifestJson });
+  } catch (error) {
+    logWarn(
+      `${chalk.yellowBright(
+        'Publication manifest validation failed. Processing continues, but some problems may occur.',
+      )}\n${error}`,
+    );
+  }
+  return manifest;
 }
 
 export type TocResourceTreeItem = {

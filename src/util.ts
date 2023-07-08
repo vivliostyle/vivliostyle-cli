@@ -83,19 +83,35 @@ export function logUpdate(...obj: string[]) {
 }
 
 export function logSuccess(...obj: string[]) {
+  const { isSpinning, text } = ora;
   ora.succeed(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export function logError(...obj: string[]) {
+  const { isSpinning, text } = ora;
   ora.fail(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export function logWarn(...obj: string[]) {
+  const { isSpinning, text } = ora;
   ora.warn(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export function logInfo(...obj: string[]) {
+  const { isSpinning, text } = ora;
   ora.info(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export class DetailError extends Error {
