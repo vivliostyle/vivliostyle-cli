@@ -1255,11 +1255,6 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.7.tgz#98a993516c859eb0d5c4c8f098317a9ea68db9ad"
   integrity sha512-cxWFQVseBm6O9Gbw1IWb8r6OS4OhSt3hPZLkFApLjM8TEXROBuQGLAH2i2gZpcXdLBIrpXuTDhH7Vbm1iXmNGA==
 
-"@types/language-tags@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@types/language-tags/-/language-tags-1.0.1.tgz#58e04ca5a27031b8cb7c0c91eec653f245b6bde9"
-  integrity sha512-rTtRNIewaBrkMUfsCe7ES3xsTRQcEVgic2yoDY9hM3D/nwmABcG2du4l4+dTbWvfO8pUYwL4/2TbWFJa/AGc2g==
-
 "@types/lodash@^4.14.168":
   version "4.14.168"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.168.tgz#fe24632e79b7ade3f132891afff86caa5e5ce008"
@@ -1924,6 +1919,11 @@ bcp-47-match@^1.0.0:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/bcp-47-match/-/bcp-47-match-1.0.3.tgz#cb8d03071389a10aff2062b862d6575ffd7cd7ef"
   integrity sha512-LggQ4YTdjWQSKELZF5JwchnBa1u0pIQSZf5lSdOHEdbVP55h0qICA/FUp3+W99q0xqxYa1ZQizTUH87gecII5w==
+
+bcp-47-match@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/bcp-47-match/-/bcp-47-match-2.0.3.tgz#603226f6e5d3914a581408be33b28a53144b09d0"
+  integrity sha512-JtTezzbAibu8G0R9op9zb3vcWZd9JF6M0xOYGPn0fNCd7wOpRB1mU2mH9T8gaBGbAAyIIVgB2G7xG0GP98zMAQ==
 
 before-after-hook@^2.2.0:
   version "2.2.3"
@@ -5557,18 +5557,6 @@ knockout@^3.5.0:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/knockout/-/knockout-3.5.1.tgz#62c81e81843bea2008fd23c575edd9ca978e75cf"
   integrity sha512-wRJ9I4az0QcsH7A4v4l0enUpkS++MBx0BnL/68KaLzJg7x1qmbjSlwEoCNol7KTYZ+pmtI7Eh2J0Nu6/2Z5J/Q==
-
-language-subtag-registry@^0.3.20:
-  version "0.3.22"
-  resolved "https://registry.yarnpkg.com/language-subtag-registry/-/language-subtag-registry-0.3.22.tgz#2e1500861b2e457eba7e7ae86877cbd08fa1fd1d"
-  integrity sha512-tN0MCzyWnoz/4nHS6uxdlFWoUZT7ABptwKPQ52Ea7URk6vll88bWBVhodtnlfEuCcKWNGoc+uGbw1cwa9IKh/w==
-
-language-tags@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/language-tags/-/language-tags-1.0.8.tgz#042b4bdb0d4e771a9f8cc2fdc9bb26a52a367312"
-  integrity sha512-aWAZwgPLS8hJ20lNPm9HNVs4inexz6S2sQa3wx/+ycuutMNE5/IfYxiWYBbi+9UWCQVaXYCOPUl6gFrPR7+jGg==
-  dependencies:
-    language-subtag-registry "^0.3.20"
 
 latest-version@^7.0.0:
   version "7.0.0"

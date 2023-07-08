@@ -108,6 +108,10 @@ export async function retrieveWebbookEntry({
   );
 
   debug('Saved webbook resources', resources);
+  debug(
+    'Publication manifest from webbook',
+    manifest && JSON.stringify(manifest),
+  );
 
   return {
     entryHtmlFile: path.join(
@@ -164,6 +168,8 @@ export async function supplyWebPublicationManifestForWebbook({
   link.setAttribute('href', MANIFEST_FILENAME);
   document.head.appendChild(link);
   await fs.promises.writeFile(entryHtmlFile, dom.serialize(), 'utf8');
+
+  debug('Generated publication manifest from HTML', JSON.stringify(manifest));
   return manifest;
 }
 

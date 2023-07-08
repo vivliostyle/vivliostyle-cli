@@ -1,7 +1,8 @@
 import archiver from 'archiver';
+import { lookup as lookupLanguage } from 'bcp-47-match';
 import { XMLBuilder } from 'fast-xml-parser';
 import GithubSlugger from 'github-slugger';
-import languageTags from 'language-tags';
+import type { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import url from 'node:url';
@@ -25,6 +26,8 @@ import {
 } from './html.js';
 import {
   Contributor,
+  LocalizableStringObject,
+  LocalizableStringOrObject,
   PublicationLinks,
   PublicationManifest,
   ResourceCategorization,
@@ -45,6 +48,31 @@ interface LandmarkEntry {
 const changeExtname = (filepath: string, newExt: string) => {
   let ext = path.extname(filepath);
   return `${filepath.slice(0, -ext.length)}${newExt}`;
+};
+
+const normalizeLocalizableString = (
+  value: LocalizableStringOrObject | undefined,
+  availableLanguages: string[],
+): string | undefined => {
+  if (!value) {
+    return;
+  }
+  const values = [value]
+    .flat()
+    .map((value) => (typeof value === 'string' ? { value } : value));
+  const localizedValues = values.filter(
+    (v): v is LocalizableStringObject & { language: string } => !!v.language,
+  );
+  const preferredLang = lookupLanguage(
+    localizedValues.map((v) => v.language),
+    availableLanguages,
+  );
+  if (preferredLang) {
+    return localizedValues[
+      localizedValues.findIndex((v) => v.language === preferredLang)
+    ].value;
+  }
+  return values.find((v) => !v.language)?.value;
 };
 
 export async function exportEpub({
@@ -166,9 +194,14 @@ export async function exportEpub({
   const htmlFiles = Object.keys(manifestItem).filter((url) =>
     /\.html?$/.test(url),
   );
+  const tocHtml = htmlFiles.find(
+    (f) => f === (tocResource?.url || entryHtmlRelPath),
+  );
+  if (!tocHtml) {
+    throw new Error('EPUB must have one ToC document or entry HTML');
+  }
 
-  for (const target of htmlFiles) {
-    debug(`Transpiling HTML to XHTML: ${target}`);
+  const processHtml = async (target: string, isTocHtml: boolean) => {
     let parseResult: Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
     try {
       parseResult = await transpileHtmlToXhtml({
@@ -176,7 +209,7 @@ export async function exportEpub({
         htmlFiles,
         contextDir: path.join(tmpDir, 'EPUB'),
         landmarks,
-        isTocHtml: target === (tocResource?.url || entryHtmlRelPath),
+        isTocHtml,
         isPagelistHtml: target === (pageListResource?.url || entryHtmlRelPath),
       });
     } catch (error) {
@@ -202,19 +235,44 @@ export async function exportEpub({
     if (parseResult.hasSvgContent) {
       appendProperty('svg');
     }
-    if (parseResult.tocParseTree) {
-      debug(`Generating toc.ncx`);
+    return parseResult;
+  };
 
-      fs.writeFileSync(
-        path.join(tmpDir, 'EPUB/toc.ncx'),
-        buildNcx({ toc: parseResult.tocParseTree, manifest, uid }),
-        'utf8',
-      );
-      manifestItem['toc.ncx'] = {
-        href: 'toc.ncx',
-        mediaType: 'application/x-dtbncx+xml',
-      };
-    }
+  debug(`Transpiling ToC HTML to XHTML: ${tocHtml}`);
+  const { dom, tocParseTree } = await processHtml(tocHtml, true);
+  const { document: entryDocument } = dom.window;
+  const docLanguages = [manifest.inLanguage]
+    .flat()
+    .filter((v): v is string => Boolean(v));
+  if (docLanguages.length === 0) {
+    docLanguages.push(entryDocument.documentElement.lang || 'en');
+  }
+  const docTitle =
+    normalizeLocalizableString(manifest.name, docLanguages) ||
+    entryDocument.title;
+  if (!docTitle) {
+    throw new Error('EPUB must have a title of one or more characters');
+  }
+  if (tocParseTree) {
+    debug(`Generating toc.ncx`);
+    fs.writeFileSync(
+      path.join(tmpDir, 'EPUB/toc.ncx'),
+      buildNcx({
+        toc: tocParseTree,
+        docTitle,
+        uid,
+      }),
+      'utf8',
+    );
+    manifestItem['toc.ncx'] = {
+      href: 'toc.ncx',
+      mediaType: 'application/x-dtbncx+xml',
+    };
+  }
+
+  for (const target of htmlFiles.filter((f) => f !== tocHtml)) {
+    debug(`Transpiling HTML to XHTML: ${target}`);
+    await processHtml(target, false);
   }
 
   const readingOrder = [manifest.readingOrder || entryHtmlRelPath]
@@ -237,6 +295,9 @@ export async function exportEpub({
     buildEpubPackageDocument({
       epubVersion,
       uid,
+      docTitle,
+      docLanguages,
+      tocXhtml: manifestItem[tocHtml].href,
       manifest,
       readingOrder,
       manifestItems: Object.values(manifestItem),
@@ -263,6 +324,7 @@ async function transpileHtmlToXhtml({
   isTocHtml: boolean;
   isPagelistHtml: boolean;
 }): Promise<{
+  dom: JSDOM;
   tocParseTree?: TocResourceTreeRoot;
   pageListParseTree?: PageListResourceTreeRoot;
   hasMathmlContent: boolean;
@@ -380,6 +442,7 @@ async function transpileHtmlToXhtml({
   await fs.promises.writeFile(changeExtname(absPath, '.xhtml'), xhtml, 'utf8');
   await fs.promises.unlink(absPath);
   return {
+    dom,
     tocParseTree,
     pageListParseTree,
     // FIXME: Yes, I recognize this implementation is inadequate.
@@ -396,12 +459,18 @@ function buildEpubPackageDocument({
   epubVersion,
   manifest,
   uid,
+  docTitle,
+  docLanguages,
+  tocXhtml,
   readingOrder,
   manifestItems,
   landmarks,
 }: Pick<Parameters<typeof exportEpub>[0], 'epubVersion'> & {
   manifest: PublicationManifest;
   uid: string;
+  docTitle: string;
+  docLanguages: string[];
+  tocXhtml: string;
   readingOrder: string[];
   manifestItems: ManifestEntry[];
   landmarks: LandmarkEntry[];
@@ -410,12 +479,6 @@ function buildEpubPackageDocument({
   slugger.reset();
 
   const bookIdentifier = slugger.slug('bookid');
-  const formattedLang = languageTags(
-    [manifest.inLanguage ?? 'en'].flat()[0],
-  ).format();
-  if (!languageTags(formattedLang).valid()) {
-    throw languageTags(formattedLang).errors()[0];
-  }
   const normalizeDate = (value: string | number | undefined) =>
     value && `${new Date(value).toISOString().split('.')[0]}Z`;
 
@@ -431,7 +494,10 @@ function buildEpubPackageDocument({
       contributor
         ? [contributor].flat().map((entry, index) => ({
             _id: slugger.slug(`${type}-${index + 1}`),
-            '#text': typeof entry === 'string' ? entry : entry.name,
+            '#text':
+              typeof entry === 'string'
+                ? entry
+                : normalizeLocalizableString(entry.name, docLanguages),
           }))
         : [],
     );
@@ -455,15 +521,15 @@ function buildEpubPackageDocument({
       _xmlns: 'http://www.idpf.org/2007/opf',
       _version: epubVersion,
       '_unique-identifier': bookIdentifier,
-      '_xml:lang': formattedLang,
+      '_xml:lang': docLanguages[0],
       metadata: {
         '_xmlns:dc': 'http://purl.org/dc/elements/1.1/',
         'dc:identifier': {
           _id: bookIdentifier,
           '#text': uid,
         },
-        'dc:title': manifest.name,
-        'dc:language': formattedLang,
+        'dc:title': docTitle,
+        'dc:language': docLanguages,
         'dc:creator': transformContributor({
           // TODO: Define proper order
           author: manifest.author,
@@ -516,20 +582,19 @@ function buildEpubPackageDocument({
           const toc = manifestItems.find(({ href }) => href === 'toc.ncx');
           return toc ? { _toc: itemIdMap.get(toc.href) } : {};
         })(),
+        ...(manifest.readingProgression
+          ? { '_page-progression-direction': manifest.readingProgression }
+          : {}),
         itemref: readingOrder.map((href) => ({
           _idref: itemIdMap.get(href),
         })),
       },
       guide: {
         reference: [
-          ...[
-            (() => {
-              const tocItem = manifestItems.find(({ properties }) =>
-                properties?.split(' ').includes('nav'),
-              );
-              return tocItem ? { _type: 'toc', _href: tocItem.href } : [];
-            })(),
-          ].flat(),
+          {
+            _type: 'toc',
+            _href: manifestItems.find((v) => v.href === tocXhtml)!.href,
+          },
           ...landmarks.map(({ type, href }) => ({ _type: type, _href: href })),
         ],
       },
@@ -539,11 +604,11 @@ function buildEpubPackageDocument({
 
 function buildNcx({
   toc,
-  manifest,
+  docTitle,
   uid,
 }: {
   toc: TocResourceTreeRoot;
-  manifest: PublicationManifest;
+  docTitle: string;
   uid: string;
 }): string {
   const slugger = new GithubSlugger();
@@ -596,7 +661,7 @@ function buildNcx({
         ],
       },
       docTitle: {
-        text: manifest.name,
+        text: docTitle,
       },
       navMap: {
         navPoint: toc.children.map(transformNavItem),
