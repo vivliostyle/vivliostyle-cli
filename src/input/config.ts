@@ -909,6 +909,7 @@ async function composeProjectConfig<T extends CliFlags>(
     manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
     title: projectTitle || fallbackProjectTitle,
     author: projectAuthor,
+    needToGenerateManifest: true,
   };
 }
 

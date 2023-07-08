@@ -52,6 +52,7 @@ Object {
   },
   "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -564,6 +565,7 @@ Object {
   },
   "language": "myLanguage",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -698,6 +700,7 @@ Object {
   },
   "language": "language",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -803,6 +806,7 @@ Object {
   },
   "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -877,6 +881,7 @@ Object {
   },
   "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -987,6 +992,7 @@ Object {
   },
   "language": "language",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -1092,6 +1098,7 @@ Object {
   },
   "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -1166,6 +1173,7 @@ Object {
   },
   "language": undefined,
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
+  "needToGenerateManifest": true,
   "outputs": Array [
     Object {
       "format": "pdf",
