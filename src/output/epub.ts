@@ -390,16 +390,17 @@ async function transpileHtmlToXhtml({
         nav.setAttribute('epub:type', 'toc');
         nav.setAttribute('hidden', '');
         nav.innerHTML = '<ol><li></li></ol>';
-        const span = document.createElement('span');
-        span.textContent = document.title;
-        nav.querySelector('li')!.appendChild(span);
+        const a = document.createElement('a');
+        a.textContent = document.title;
+        a.href = changeExtname(target, '.xhtml');
+        nav.querySelector('li')!.appendChild(a);
         document.body.appendChild(nav);
         tocParseTree = {
           element: nav,
           children: [
             {
               element: nav.querySelector('li')!,
-              label: span,
+              label: a,
             },
           ],
         };
