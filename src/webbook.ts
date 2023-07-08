@@ -5,6 +5,7 @@ import { generateManifest } from './builder.js';
 import { MergedConfig, WebbookEntryConfig } from './config.js';
 import { MANIFEST_FILENAME } from './const.js';
 import {
+  ResourceLoader,
   fetchLinkedPublicationManifest,
   getJsdomFromUrlOrFile,
 } from './html.js';
@@ -36,8 +37,10 @@ export async function retrieveWebbookEntry({
   entryHtmlFile: string;
   manifest: PublicationManifest | null;
 }> {
-  const { dom, resourceLoader, baseUrl } = await getJsdomFromUrlOrFile(
+  const resourceLoader = new ResourceLoader();
+  const { dom, baseUrl } = await getJsdomFromUrlOrFile(
     webbookEntryPath,
+    resourceLoader,
   );
   const manifest = await fetchLinkedPublicationManifest({
     dom,
@@ -73,8 +76,9 @@ export async function retrieveWebbookEntry({
       if (!pathContains(fullUrl) || fullUrl === baseUrl) {
         continue;
       }
-      const { resourceLoader } = await getJsdomFromUrlOrFile(fullUrl);
-      resourceLoader.fetcherMap.forEach(
+      const subpathResourceLoader = new ResourceLoader();
+      await getJsdomFromUrlOrFile(fullUrl, subpathResourceLoader);
+      subpathResourceLoader.fetcherMap.forEach(
         (v, k) => !retriever.has(k) && retriever.set(k, v),
       );
     }

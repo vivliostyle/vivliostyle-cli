@@ -46,7 +46,7 @@ virtualConsole.on('jsdomError', (error) => {
   );
 });
 
-class ResourceLoader extends BaseResourceLoader {
+export class ResourceLoader extends BaseResourceLoader {
   fetcherMap = new Map<string, Promise<Buffer>>();
 
   fetch(url: string, options?: jsdom.FetchOptions) {
@@ -59,12 +59,13 @@ class ResourceLoader extends BaseResourceLoader {
   }
 }
 
-export async function getJsdomFromUrlOrFile(src: string): Promise<{
+export async function getJsdomFromUrlOrFile(
+  src: string,
+  resourceLoader?: ResourceLoader,
+): Promise<{
   dom: JSDOM;
-  resourceLoader: ResourceLoader;
   baseUrl: string;
 }> {
-  const resourceLoader = new ResourceLoader();
   let baseUrl = src;
   let dom: JSDOM;
   if (/^https?:\/\//.test(src)) {
@@ -80,14 +81,16 @@ export async function getJsdomFromUrlOrFile(src: string): Promise<{
     });
   } else {
     baseUrl = /^file:\/\//.test(src) ? src : url.pathToFileURL(src).href;
-    const file = await resourceLoader._readFile(url.fileURLToPath(baseUrl));
-    resourceLoader.fetcherMap.set(baseUrl, Promise.resolve(file));
+    if (resourceLoader) {
+      const file = await resourceLoader._readFile(url.fileURLToPath(baseUrl));
+      resourceLoader.fetcherMap.set(baseUrl, Promise.resolve(file));
+    }
     dom = await JSDOM.fromFile(url.fileURLToPath(baseUrl), {
       virtualConsole,
       resources: resourceLoader,
     });
   }
-  return { dom, resourceLoader, baseUrl };
+  return { dom, baseUrl };
 }
 
 export function generateTocHtml({
