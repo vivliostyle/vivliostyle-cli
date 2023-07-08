@@ -3,37 +3,37 @@ import cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'upath';
 import { pathToFileURL } from 'url';
-import { getExecutableBrowserPath } from './browser.js';
+import { getExecutableBrowserPath } from '../browser.js';
 import {
   EPUB_OUTPUT_VERSION,
   MANIFEST_FILENAME,
   TOC_FILENAME,
   TOC_TITLE,
-} from './const.js';
-import { CONTAINER_IMAGE } from './container.js';
+} from '../const.js';
+import { CONTAINER_IMAGE } from '../container.js';
 import {
   InputFormat,
   ManuscriptMediaType,
   detectInputFormat,
   detectManuscriptMediaType,
-} from './input.js';
-import { readMarkdownMetadata } from './markdown.js';
+} from '../input/input-types.js';
 import {
   OutputFormat,
   checkOutputFormat,
   checkPreflightMode,
   checkRenderMode,
   detectOutputFormat,
-} from './output.js';
+} from '../output/output-types.js';
+import { readMarkdownMetadata } from '../processor/markdown.js';
+import { parsePackageName } from '../processor/theme.js';
 import type {
   BrowserType,
   EntryObject,
   ThemeObject,
   VivliostyleConfigEntry,
   VivliostyleConfigSchema,
-} from './schema/vivliostyleConfig.schema.js';
-import { PageSize } from './server.js';
-import { parsePackageName } from './theme.js';
+} from '../schema/vivliostyleConfig.schema.js';
+import { PageSize } from '../server.js';
 import {
   DetailError,
   assertVivliostyleConfigSchema,
@@ -46,7 +46,7 @@ import {
   readJSON,
   statFileSync,
   touchTmpFile,
-} from './util.js';
+} from '../util.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 

@@ -1,10 +1,10 @@
+import { JSDOM } from 'jsdom';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
-import { compile, prepareThemeDirectory } from '../src/builder';
-import { MergedConfig } from '../src/config';
-import { generateTocHtml } from '../src/html';
+import { MergedConfig } from '../src/input/config.js';
+import { compile, prepareThemeDirectory } from '../src/processor/compile.js';
+import { generateTocHtml } from '../src/processor/html.js';
 import {
   assertSingleItem,
   getMergedConfig,

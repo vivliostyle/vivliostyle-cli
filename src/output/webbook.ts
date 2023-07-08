@@ -1,19 +1,19 @@
 import fs from 'node:fs';
 import shelljs from 'shelljs';
 import path from 'upath';
-import { generateManifest } from './builder.js';
-import { MergedConfig, WebbookEntryConfig } from './config.js';
-import { MANIFEST_FILENAME } from './const.js';
+import { MANIFEST_FILENAME } from '../const.js';
+import { MergedConfig, WebbookEntryConfig } from '../input/config.js';
+import { generateManifest } from '../processor/compile.js';
 import {
   ResourceLoader,
   fetchLinkedPublicationManifest,
   getJsdomFromUrlOrFile,
-} from './html.js';
+} from '../processor/html.js';
 import type {
   PublicationLinks,
   PublicationManifest,
   ResourceCategorization,
-} from './schema/publication.schema.js';
+} from '../schema/publication.schema.js';
 import {
   debug,
   logError,
@@ -21,7 +21,7 @@ import {
   pathContains,
   pathEquals,
   safeGlob,
-} from './util.js';
+} from '../util.js';
 
 export function prepareWebPublicationDirectory({
   outputDir,

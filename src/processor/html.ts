@@ -7,14 +7,14 @@ import fs from 'node:fs';
 import url from 'node:url';
 import prettier from 'prettier';
 import path from 'upath';
-import { ManuscriptEntry } from './config.js';
-import type { PublicationManifest } from './schema/publication.schema.js';
+import { ManuscriptEntry } from '../input/config.js';
+import type { PublicationManifest } from '../schema/publication.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,
   debug,
   logWarn,
-} from './util.js';
+} from '../util.js';
 
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.on('error', (message) => {

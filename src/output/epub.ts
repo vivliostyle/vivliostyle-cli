@@ -15,7 +15,7 @@ import {
   EPUB_NS,
   XML_DECLARATION,
   cliRoot,
-} from './const.js';
+} from '../const.js';
 import {
   PageListResourceTreeRoot,
   TocResourceTreeItem,
@@ -23,7 +23,7 @@ import {
   getJsdomFromUrlOrFile,
   parsePageListDocument,
   parseTocDocument,
-} from './html.js';
+} from '../processor/html.js';
 import {
   Contributor,
   LocalizableStringObject,
@@ -31,8 +31,8 @@ import {
   PublicationLinks,
   PublicationManifest,
   ResourceCategorization,
-} from './schema/publication.schema.js';
-import { DetailError, debug } from './util.js';
+} from '../schema/publication.schema.js';
+import { DetailError, debug } from '../util.js';
 
 interface ManifestEntry {
   href: string;

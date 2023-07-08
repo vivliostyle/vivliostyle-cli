@@ -1,16 +1,16 @@
+import { JSDOM } from 'jsdom';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { JSDOM } from 'jsdom';
 import shelljs from 'shelljs';
+import { MergedConfig } from '../src/input/config.js';
 import {
   checkOverwriteViolation,
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from '../src/builder.js';
-import { MergedConfig } from '../src/config.js';
-import { checkThemeInstallationNecessity } from '../src/theme.js';
+} from '../src/processor/compile.js';
+import { checkThemeInstallationNecessity } from '../src/processor/theme.js';
 import {
   assertArray,
   assertSingleItem,

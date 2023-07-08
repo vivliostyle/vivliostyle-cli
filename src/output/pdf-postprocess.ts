@@ -13,20 +13,20 @@ import {
 import * as pressReadyModule from 'press-ready';
 import path from 'upath';
 import { v1 as uuid } from 'uuid';
-import { MergedConfig } from './config.js';
-import { coreVersion } from './const.js';
+import { coreVersion } from '../const.js';
 import {
   collectVolumeArgs,
   runContainer,
   toContainerPath,
-} from './container.js';
-import type { Meta, TOCItem } from './global-viewer.js';
-import { PdfOutput } from './output.js';
+} from '../container.js';
+import type { Meta, TOCItem } from '../global-viewer.js';
+import { MergedConfig } from '../input/config.js';
 import {
   checkContainerEnvironment,
   startLogging,
   stopLogging,
-} from './util.js';
+} from '../util.js';
+import type { PdfOutput } from './output-types.js';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
   Pick<MergedConfig, 'image'>;

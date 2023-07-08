@@ -3,20 +3,26 @@ import terminalLink from 'terminal-link';
 import path from 'upath';
 import { getExecutableBrowserPath } from './browser.js';
 import {
+  CliFlags,
+  MergedConfig,
+  collectVivliostyleConfig,
+  mergeConfig,
+} from './input/config.js';
+import { exportEpub } from './output/epub.js';
+import { buildPDF, buildPDFWithContainer } from './output/pdf.js';
+import {
+  copyWebPublicationAssets,
+  prepareWebPublicationDirectory,
+  retrieveWebbookEntry,
+  supplyWebPublicationManifestForWebbook,
+} from './output/webbook.js';
+import {
   checkOverwriteViolation,
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from './builder.js';
-import {
-  CliFlags,
-  MergedConfig,
-  collectVivliostyleConfig,
-  mergeConfig,
-} from './config.js';
-import { exportEpub } from './epub-output.js';
-import { buildPDF, buildPDFWithContainer } from './pdf.js';
+} from './processor/compile.js';
 import type { PublicationManifest } from './schema/publication.schema.js';
 import { teardownServer } from './server.js';
 import {
@@ -28,12 +34,6 @@ import {
   stopLogging,
   useTmpDirectory,
 } from './util.js';
-import {
-  copyWebPublicationAssets,
-  prepareWebPublicationDirectory,
-  retrieveWebbookEntry,
-  supplyWebPublicationManifestForWebbook,
-} from './webbook.js';
 
 export interface BuildCliFlags extends CliFlags {
   output?: {

@@ -4,25 +4,19 @@ import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import shelljs from 'shelljs';
 import path from 'upath';
+import { TOC_TITLE } from '../const.js';
 import {
   ManuscriptEntry,
   MergedConfig,
   ParsedTheme,
   WebPublicationManifestConfig,
-} from './config.js';
-import { TOC_TITLE } from './const.js';
-import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html.js';
-import { processMarkdown } from './markdown.js';
+} from '../input/config.js';
 import type {
   PublicationLinks,
   PublicationManifest,
   URL as PublicationURL,
-} from './schema/publication.schema.js';
-import type { ArticleEntryObject } from './schema/vivliostyleConfig.schema.js';
-import {
-  checkThemeInstallationNecessity,
-  installThemeDependencies,
-} from './theme.js';
+} from '../schema/publication.schema.js';
+import type { ArticleEntryObject } from '../schema/vivliostyleConfig.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,
@@ -33,7 +27,13 @@ import {
   safeGlob,
   startLogging,
   useTmpDirectory,
-} from './util.js';
+} from '../util.js';
+import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html.js';
+import { processMarkdown } from './markdown.js';
+import {
+  checkThemeInstallationNecessity,
+  installThemeDependencies,
+} from './theme.js';
 
 function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   if (theme.type === 'uri') {

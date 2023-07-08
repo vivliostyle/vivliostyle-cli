@@ -1,11 +1,11 @@
 import { Command, Option } from 'commander';
 import { BuildCliFlags } from '../build.js';
-import { validateTimeoutFlag } from '../config.js';
+import { validateTimeoutFlag } from '../input/config.js';
 import {
   OutputFormat,
   checkOutputFormat,
   detectOutputFormat,
-} from '../output.js';
+} from '../output/output-types.js';
 
 export function setupBuildParserProgram(): Command {
   // Provide an order-sensitive command parser

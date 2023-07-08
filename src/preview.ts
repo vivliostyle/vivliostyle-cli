@@ -7,17 +7,17 @@ import {
   launchBrowser,
 } from './browser.js';
 import {
+  CliFlags,
+  ManuscriptEntry,
+  collectVivliostyleConfig,
+  mergeConfig,
+} from './input/config.js';
+import {
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from './builder.js';
-import {
-  CliFlags,
-  collectVivliostyleConfig,
-  mergeConfig,
-  ManuscriptEntry,
-} from './config.js';
+} from './processor/compile.js';
 import { prepareServer } from './server.js';
 import {
   cwd,

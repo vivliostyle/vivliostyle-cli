@@ -1,4 +1,4 @@
-import { safeGlob } from '../src/util';
+import { safeGlob } from '../src/util.js';
 import { resolveFixture } from './commandUtil.js';
 
 it('safeGlob follows symbolic link: ../..', async () => {

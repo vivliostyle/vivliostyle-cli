@@ -10,17 +10,15 @@ import {
   getFullBrowserName,
   isPlaywrightExecutable,
   launchBrowser,
-} from './browser.js';
-import { ManuscriptEntry, MergedConfig } from './config.js';
+} from '../browser.js';
 import {
   collectVolumeArgs,
   runContainer,
   toContainerPath,
-} from './container.js';
-import { Meta, Payload, TOCItem } from './global-viewer.js';
-import { PdfOutput } from './output.js';
-import { PageSizeData, PostProcess } from './postprocess.js';
-import { prepareServer } from './server.js';
+} from '../container.js';
+import { Meta, Payload, TOCItem } from '../global-viewer.js';
+import { ManuscriptEntry, MergedConfig } from '../input/config.js';
+import { prepareServer } from '../server.js';
 import {
   checkContainerEnvironment,
   debug,
@@ -30,7 +28,9 @@ import {
   logUpdate,
   pathEquals,
   startLogging,
-} from './util.js';
+} from '../util.js';
+import type { PdfOutput } from './output-types.js';
+import { PageSizeData, PostProcess } from './pdf-postprocess.js';
 
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;

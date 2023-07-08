@@ -1,8 +1,7 @@
 import http from 'node:http';
-import resolvePkg from 'resolve-pkg';
+import { pathToFileURL, URL } from 'node:url';
 import handler from 'serve-handler';
 import upath from 'upath';
-import { pathToFileURL, URL } from 'node:url';
 import { viewerRoot } from './const.js';
 import {
   beforeExitHandlers,

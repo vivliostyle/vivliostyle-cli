@@ -1,6 +1,6 @@
-import path from 'upath';
 import { pathToFileURL } from 'node:url';
-import { getViewerFullUrl } from '../src/server';
+import path from 'upath';
+import { getViewerFullUrl } from '../src/server.js';
 import { maskConfig, rootPath } from './commandUtil.js';
 
 // Giving up run tests using ESM mocks due to lack of Jest’s support

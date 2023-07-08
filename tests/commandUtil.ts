@@ -6,7 +6,7 @@ import {
   collectVivliostyleConfig,
   mergeConfig,
   MergedConfig,
-} from '../src/config.js';
+} from '../src/input/config.js';
 
 export const rootPath = path.join(URL.fileURLToPath(import.meta.url), '../..');
 
