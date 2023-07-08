@@ -125,9 +125,9 @@ export function generateManifest(
   outputPath: string,
   entryContextDir: string,
   options: {
-    title: string;
-    author: string;
-    language?: string | null;
+    title?: string;
+    author?: string;
+    language?: string;
     readingProgression?: 'ltr' | 'rtl';
     modified: string;
     entries: ArticleEntryObject[];
@@ -182,13 +182,13 @@ export function generateManifest(
     '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],
     type: 'Book',
     conformsTo: 'https://github.com/vivliostyle/vivliostyle-cli',
-    author: options.author,
+    ...(options.title && { name: options.title }),
+    ...(options.author && { author: options.author }),
     ...(options.language && { inLanguage: options.language }),
     ...(options.readingProgression && {
       readingProgression: options.readingProgression,
     }),
     dateModified: options.modified,
-    name: options.title,
     readingOrder: entries,
     resources,
     links,

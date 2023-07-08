@@ -160,9 +160,9 @@ export type MergedConfig = {
   customUserStyle: string | undefined;
   singleDoc: boolean;
   quick: boolean;
-  title: string;
-  author: string;
-  language: string | null;
+  title: string | undefined;
+  author: string | undefined;
+  language: string | undefined;
   readingProgression: 'ltr' | 'rtl' | undefined;
   vfmOptions: {
     hardLineBreaks: boolean;
@@ -477,7 +477,7 @@ export async function mergeConfig<T extends CliFlags>(
       : [config.includeAssets]
     : DEFAULT_ASSETS;
 
-  const language = cliFlags.language ?? config?.language ?? null;
+  const language = cliFlags.language ?? config?.language ?? undefined;
   const readingProgression =
     cliFlags.readingProgression ?? config?.readingProgression ?? undefined;
   const sizeFlag = cliFlags.size ?? config?.size;
@@ -729,7 +729,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     });
   }
 
-  let fallbackTitle: string = '';
+  let fallbackTitle: string | undefined;
   const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
     if (input.format === 'markdown') {
       // create temporary manifest file
@@ -768,7 +768,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     input,
     exportAliases,
     title: title || fallbackTitle,
-    author: author || '',
+    author: author,
   };
 }
 
@@ -874,7 +874,7 @@ async function composeProjectConfig<T extends CliFlags>(
     );
   }
 
-  let fallbackProjectTitle: string = '';
+  let fallbackProjectTitle: string | undefined;
   if (!projectTitle) {
     if (entries.length === 1 && entries[0].title) {
       fallbackProjectTitle = entries[0].title;
@@ -908,7 +908,7 @@ async function composeProjectConfig<T extends CliFlags>(
     exportAliases: [],
     manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
     title: projectTitle || fallbackProjectTitle,
-    author: projectAuthor || '',
+    author: projectAuthor,
   };
 }
 
