@@ -34,6 +34,12 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
+    .addOption(
+      new Option(
+        '--reading-progression <direction>',
+        'Direction of reading progression',
+      ).choices(['ltr', 'rtl']),
+    )
     .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',

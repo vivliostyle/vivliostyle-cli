@@ -22,6 +22,7 @@ try {
     title: options.title,
     author: options.author,
     language: options.language,
+    readingProgression: options.readingProgression,
     verbose: options.verbose,
     timeout: options.timeout,
     sandbox: options.sandbox,

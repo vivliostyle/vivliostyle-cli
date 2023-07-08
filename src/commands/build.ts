@@ -24,6 +24,7 @@ try {
     author: options.author,
     language: options.language,
     pressReady: options.pressReady,
+    readingProgression: options.readingProgression,
     renderMode: options.renderMode || 'local',
     preflight: options.preflight,
     preflightOption: options.preflightOption,

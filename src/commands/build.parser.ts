@@ -2,9 +2,9 @@ import { Command, Option } from 'commander';
 import { BuildCliFlags } from '../build.js';
 import { validateTimeoutFlag } from '../config.js';
 import {
+  OutputFormat,
   checkOutputFormat,
   detectOutputFormat,
-  OutputFormat,
 } from '../output.js';
 
 export function setupBuildParserProgram(): Command {
@@ -98,6 +98,12 @@ This option is equivalent with "--preflight press-ready"`,
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
+    .addOption(
+      new Option(
+        '--reading-progression <direction>',
+        'Direction of reading progression',
+      ).choices(['ltr', 'rtl']),
+    )
     .addOption(
       new Option(
         '--render-mode <mode>',

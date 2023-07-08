@@ -119,6 +119,7 @@ export interface CliFlags {
   viewer?: string;
   viewerParam?: string;
   browser?: 'chromium' | 'firefox' | 'webkit';
+  readingProgression?: 'ltr' | 'rtl';
   /** @deprecated */ executableChromium?: string;
 }
 
@@ -477,7 +478,8 @@ export async function mergeConfig<T extends CliFlags>(
     : DEFAULT_ASSETS;
 
   const language = cliFlags.language ?? config?.language ?? null;
-  const readingProgression = config?.readingProgression ?? undefined;
+  const readingProgression =
+    cliFlags.readingProgression ?? config?.readingProgression ?? undefined;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const cropMarks = cliFlags.cropMarks ?? false;
