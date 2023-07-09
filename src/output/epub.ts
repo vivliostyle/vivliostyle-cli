@@ -1,5 +1,6 @@
 import archiver from 'archiver';
 import { lookup as lookupLanguage } from 'bcp-47-match';
+import chalk from 'chalk';
 import { XMLBuilder } from 'fast-xml-parser';
 import GithubSlugger from 'github-slugger';
 import type { JSDOM } from 'jsdom';
@@ -32,7 +33,7 @@ import {
   PublicationManifest,
   ResourceCategorization,
 } from '../schema/publication.schema.js';
-import { DetailError, debug } from '../util.js';
+import { DetailError, debug, logWarn } from '../util.js';
 
 interface ManifestEntry {
   href: string;
@@ -90,6 +91,14 @@ const normalizeLocalizableString = (
     ].value;
   }
   return values.find((v) => !v.language)?.value;
+};
+
+const appendManifestProperty = (entry: ManifestEntry, newProperty: string) => {
+  entry.properties = entry.properties
+    ? Array.from(new Set([...entry.properties.split(' '), newProperty])).join(
+        ' ',
+      )
+    : newProperty;
 };
 
 export async function exportEpub({
@@ -176,10 +185,7 @@ export async function exportEpub({
     if (!fs.existsSync(path.join(tmpDir, 'EPUB', url))) {
       return acc;
     }
-    const mediaType = encodingFormat || mime(url);
-    if (!mediaType) {
-      throw new Error(`Unknown mediaType: ${url}`);
-    }
+    const mediaType = encodingFormat || mime(url) || 'text/plain';
     acc[url] = {
       href: url,
       mediaType,
@@ -188,35 +194,30 @@ export async function exportEpub({
       acc[url].href = changeExtname(url, '.xhtml');
       acc[url].mediaType = 'application/xhtml+xml';
     }
-    if (url === (tocResource?.url || entryHtmlRelPath)) {
-      acc[url].properties = 'nav';
-    } else if (url === pictureCoverResource?.url) {
+    if (url === pictureCoverResource?.url) {
       acc[url].properties = 'cover-image';
     }
     return acc;
   }, {} as Record<string, ManifestEntry>);
-  if (
-    entryHtmlRelPath &&
-    Object.values(manifestItem).every(
-      ({ properties }) => !properties?.split(' ').includes('nav'),
-    )
-  ) {
-    manifestItem[entryHtmlRelPath] = {
-      href: changeExtname(entryHtmlRelPath, '.xhtml'),
-      mediaType: 'application/xhtml+xml',
-      properties: 'nav',
-    };
-  }
 
   const htmlFiles = Object.keys(manifestItem).filter((url) =>
     /\.html?$/.test(url),
   );
-  const tocHtml = htmlFiles.find(
+  let tocHtml = htmlFiles.find(
     (f) => f === (tocResource?.url || entryHtmlRelPath),
   );
+  const readingOrder = [manifest.readingOrder || entryHtmlRelPath]
+    .flat()
+    .flatMap((v) => (v ? (typeof v === 'string' ? { url: v } : v) : []));
   if (!tocHtml) {
-    throw new Error('EPUB must have one ToC document or entry HTML');
+    logWarn(
+      chalk.yellowBright(
+        'No table of contents document was found. for EPUB output, we recommend to enable `toc` option in your Vivliostyle config file to generate a table of contents document.',
+      ),
+    );
+    tocHtml = readingOrder[0].url;
   }
+  appendManifestProperty(manifestItem[tocHtml], 'nav');
 
   const processHtml = async (target: string, isTocHtml: boolean) => {
     let parseResult: Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
@@ -235,28 +236,24 @@ export async function exportEpub({
         thrownError.stack ?? thrownError.message,
       );
     }
-    const appendProperty = (name: string) => {
-      const obj = manifestItem[target];
-      obj.properties = [obj.properties, name].filter(Boolean).join(' ');
-    };
     if (parseResult.hasMathmlContent) {
-      appendProperty('mathml');
+      appendManifestProperty(manifestItem[target], 'mathml');
     }
     if (parseResult.hasRemoteResources) {
-      appendProperty('remote-resources');
+      appendManifestProperty(manifestItem[target], 'remote-resources');
     }
     if (parseResult.hasScriptedContent) {
-      appendProperty('scripted');
+      appendManifestProperty(manifestItem[target], 'scripted');
     }
     if (parseResult.hasSvgContent) {
-      appendProperty('svg');
+      appendManifestProperty(manifestItem[target], 'svg');
     }
     return parseResult;
   };
 
   debug(`Transpiling ToC HTML to XHTML: ${tocHtml}`);
-  const { dom, tocParseTree } = await processHtml(tocHtml, true);
-  const { document: entryDocument } = dom.window;
+  const tocProcessResult = await processHtml(tocHtml, true);
+  const { document: entryDocument } = tocProcessResult.dom.window;
   const docLanguages = [manifest.inLanguage]
     .flat()
     .filter((v): v is string => Boolean(v));
@@ -269,34 +266,38 @@ export async function exportEpub({
   if (!docTitle) {
     throw new Error('EPUB must have a title of one or more characters');
   }
-  if (tocParseTree) {
-    debug(`Generating toc.ncx`);
-    fs.writeFileSync(
-      path.join(tmpDir, 'EPUB/toc.ncx'),
-      buildNcx({
-        toc: tocParseTree,
-        docTitle,
-        uid,
-        tocHtml,
-      }),
-      'utf8',
-    );
-    manifestItem['toc.ncx'] = {
-      href: 'toc.ncx',
-      mediaType: 'application/x-dtbncx+xml',
-    };
-  }
 
   for (const target of htmlFiles.filter((f) => f !== tocHtml)) {
     debug(`Transpiling HTML to XHTML: ${target}`);
     await processHtml(target, false);
   }
 
-  const readingOrder = [manifest.readingOrder || entryHtmlRelPath]
-    .flat()
-    .filter((v): v is string | PublicationLinks => Boolean(v))
-    .map((e) => (typeof e === 'string' ? e : e.url))
-    .map((p) => (htmlFiles.includes(p) ? changeExtname(p, '.xhtml') : p));
+  let { tocParseTree } = tocProcessResult;
+  if (!tocParseTree) {
+    tocParseTree = await supplyTocNavElement({
+      tocHtml,
+      tocDom: tocProcessResult.dom,
+      contextDir: path.join(tmpDir, 'EPUB'),
+      readingOrder,
+      docLanguages,
+    });
+  }
+
+  // EPUB/toc.ncx
+  fs.writeFileSync(
+    path.join(tmpDir, 'EPUB/toc.ncx'),
+    buildNcx({
+      toc: tocParseTree,
+      docTitle,
+      uid,
+      tocHtml,
+    }),
+    'utf8',
+  );
+  manifestItem['toc.ncx'] = {
+    href: 'toc.ncx',
+    mediaType: 'application/x-dtbncx+xml',
+  };
 
   // META-INF/container.xml
   fs.writeFileSync(
@@ -382,28 +383,6 @@ async function transpileHtmlToXhtml({
         const nav = replaceWithNavElement(parsed.element);
         nav.setAttribute('id', 'toc');
         nav.setAttribute('epub:type', 'toc');
-      } else {
-        // Insert single document toc
-        const nav = document.createElement('nav');
-        nav.setAttribute('id', 'toc');
-        nav.setAttribute('role', 'doc-toc');
-        nav.setAttribute('epub:type', 'toc');
-        nav.setAttribute('hidden', '');
-        nav.innerHTML = '<ol><li></li></ol>';
-        const a = document.createElement('a');
-        a.textContent = document.title;
-        a.href = changeExtname(path.basename(target), '.xhtml');
-        nav.querySelector('li')!.appendChild(a);
-        document.body.appendChild(nav);
-        tocParseTree = {
-          element: nav,
-          children: [
-            {
-              element: nav.querySelector('li')!,
-              label: a,
-            },
-          ],
-        };
       }
     }
 
@@ -456,6 +435,60 @@ async function transpileHtmlToXhtml({
   };
 }
 
+export async function supplyTocNavElement({
+  tocHtml,
+  tocDom,
+  contextDir,
+  readingOrder,
+  docLanguages,
+}: {
+  tocHtml: string;
+  tocDom: JSDOM;
+  contextDir: string;
+  readingOrder: PublicationLinks[];
+  docLanguages: string[];
+}): Promise<TocResourceTreeRoot> {
+  debug(`Generating toc nav element: ${tocHtml}`);
+  const absPath = path.join(contextDir, tocHtml);
+  const { document } = tocDom.window;
+
+  const nav = document.createElement('nav');
+  nav.setAttribute('id', 'toc');
+  nav.setAttribute('role', 'doc-toc');
+  nav.setAttribute('epub:type', 'toc');
+  nav.setAttribute('hidden', '');
+  const ol = document.createElement('ol');
+  const tocParseTree: TocResourceTreeRoot = {
+    element: nav,
+    children: [],
+  };
+
+  for (const content of readingOrder) {
+    let name = normalizeLocalizableString(content.name, docLanguages);
+    if (!name) {
+      const { dom } = await getJsdomFromUrlOrFile(
+        path.join(contextDir, changeExtname(content.url, '.xhtml')),
+      );
+      name = dom.window.document.title;
+    }
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.textContent = name;
+    a.href = getRelativeHref(content.url, '', tocHtml);
+    li.appendChild(a);
+    ol.appendChild(li);
+    tocParseTree.children.push({ element: li, label: a });
+  }
+
+  nav.appendChild(ol);
+  document.body.appendChild(nav);
+  const xhtml = `${XML_DECLARATION}\n${serializeToXml(document)}`;
+  await fs.promises.writeFile(changeExtname(absPath, '.xhtml'), xhtml, 'utf8');
+
+  debug('Generated toc nav element', nav.outerHTML);
+  return tocParseTree;
+}
+
 function buildEpubPackageDocument({
   epubVersion,
   manifest,
@@ -472,7 +505,7 @@ function buildEpubPackageDocument({
   docTitle: string;
   docLanguages: string[];
   tocXhtml: string;
-  readingOrder: string[];
+  readingOrder: PublicationLinks[];
   manifestItems: ManifestEntry[];
   landmarks: LandmarkEntry[];
 }): string {
@@ -586,8 +619,8 @@ function buildEpubPackageDocument({
         ...(manifest.readingProgression
           ? { '_page-progression-direction': manifest.readingProgression }
           : {}),
-        itemref: readingOrder.map((href) => ({
-          _idref: itemIdMap.get(href),
+        itemref: readingOrder.map(({ url }) => ({
+          _idref: itemIdMap.get(changeExtname(url, '.xhtml')),
         })),
       },
       guide: {
@@ -633,7 +666,7 @@ function buildNcx({
               _src: getRelativeHref(
                 item.label.getAttribute('href')!,
                 tocHtml,
-                'toc.ncx',
+                '',
               ),
             },
           }
