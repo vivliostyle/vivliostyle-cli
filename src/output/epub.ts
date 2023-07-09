@@ -11,12 +11,7 @@ import shelljs from 'shelljs';
 import path from 'upath';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
-import {
-  EPUB_CONTAINER_XML,
-  EPUB_NS,
-  XML_DECLARATION,
-  cliRoot,
-} from '../const.js';
+import { EPUB_CONTAINER_XML, EPUB_NS, XML_DECLARATION } from '../const.js';
 import {
   PageListResourceTreeRoot,
   TocResourceTreeItem,
@@ -25,7 +20,7 @@ import {
   parsePageListDocument,
   parseTocDocument,
 } from '../processor/html.js';
-import {
+import type {
   Contributor,
   LocalizableStringObject,
   LocalizableStringOrObject,
@@ -33,7 +28,7 @@ import {
   PublicationManifest,
   ResourceCategorization,
 } from '../schema/publication.schema.js';
-import { DetailError, debug, logWarn } from '../util.js';
+import { DetailError, debug, logWarn, useTmpDirectory } from '../util.js';
 
 interface ManifestEntry {
   href: string;
@@ -116,9 +111,7 @@ export async function exportEpub({
 }) {
   debug('Export EPUB');
 
-  // const [tmpDir, clearTmpDir] = await useTmpDirectory();
-  const tmpDir = path.join(cliRoot, 'tmp');
-  shelljs.rm('-rf', tmpDir);
+  const [tmpDir] = await useTmpDirectory();
   fs.mkdirSync(path.join(tmpDir, 'META-INF'), { recursive: true });
   shelljs.cp('-rf', webpubDir, path.join(tmpDir, 'EPUB'));
 
