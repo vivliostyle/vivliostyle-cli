@@ -7,7 +7,6 @@ import type { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import url from 'node:url';
-import path from 'upath';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
 import { EPUB_CONTAINER_XML, EPUB_NS, XML_DECLARATION } from '../const.js';
@@ -27,7 +26,7 @@ import type {
   PublicationManifest,
   ResourceCategorization,
 } from '../schema/publication.schema.js';
-import { DetailError, copy, debug, logWarn, useTmpDirectory } from '../util.js';
+import { DetailError, copy, debug, logWarn, upath, useTmpDirectory } from '../util.js';
 
 interface ManifestEntry {
   href: string;
@@ -41,13 +40,13 @@ interface LandmarkEntry {
 }
 
 const changeExtname = (filepath: string, newExt: string) => {
-  let ext = path.extname(filepath);
+  let ext = upath.extname(filepath);
   return `${filepath.slice(0, -ext.length)}${newExt}`;
 };
 
 const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
-  const absBasePath = path.join('/', baseUrl);
-  const absRootPath = path.join('/', rootUrl);
+  const absBasePath = upath.join('/', baseUrl);
+  const absRootPath = upath.join('/', rootUrl);
   const hrefUrl = new URL(target, url.pathToFileURL(absBasePath));
   if (hrefUrl.protocol !== 'file:') {
     return target;
@@ -55,8 +54,8 @@ const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
   if (/\.html?$/.test(hrefUrl.pathname)) {
     hrefUrl.pathname = changeExtname(hrefUrl.pathname, '.xhtml');
   }
-  const pathname = path.posix.relative(
-    url.pathToFileURL(path.dirname(absRootPath)).pathname,
+  const pathname = upath.posix.relative(
+    url.pathToFileURL(upath.dirname(absRootPath)).pathname,
     hrefUrl.pathname,
   );
   return `${pathname}${hrefUrl.search}${hrefUrl.hash}`;
@@ -111,13 +110,13 @@ export async function exportEpub({
   debug('Export EPUB');
 
   const [tmpDir] = await useTmpDirectory();
-  fs.mkdirSync(path.join(tmpDir, 'META-INF'), { recursive: true });
-  await copy(webpubDir, path.join(tmpDir, 'EPUB'));
+  fs.mkdirSync(upath.join(tmpDir, 'META-INF'), { recursive: true });
+  await copy(webpubDir, upath.join(tmpDir, 'EPUB'));
 
   const uid = `urn:uuid:${uuid()}`;
   const entryHtmlRelPath =
     entryHtmlFile &&
-    path.relative(webpubDir, path.resolve(webpubDir, entryHtmlFile));
+    upath.relative(webpubDir, upath.resolve(webpubDir, entryHtmlFile));
 
   const findPublicationLink = (
     relType: string,
@@ -174,7 +173,7 @@ export async function exportEpub({
     } catch (e) {
       /* NOOP */
     }
-    if (!fs.existsSync(path.join(tmpDir, 'EPUB', url))) {
+    if (!fs.existsSync(upath.join(tmpDir, 'EPUB', url))) {
       return acc;
     }
     const mediaType = encodingFormat || mime(url) || 'text/plain';
@@ -216,7 +215,7 @@ export async function exportEpub({
     try {
       parseResult = await transpileHtmlToXhtml({
         target,
-        contextDir: path.join(tmpDir, 'EPUB'),
+        contextDir: upath.join(tmpDir, 'EPUB'),
         landmarks,
         isTocHtml,
         isPagelistHtml: target === (pageListResource?.url || entryHtmlRelPath),
@@ -269,7 +268,7 @@ export async function exportEpub({
     tocParseTree = await supplyTocNavElement({
       tocHtml,
       tocDom: tocProcessResult.dom,
-      contextDir: path.join(tmpDir, 'EPUB'),
+      contextDir: upath.join(tmpDir, 'EPUB'),
       readingOrder,
       docLanguages,
     });
@@ -277,7 +276,7 @@ export async function exportEpub({
 
   // EPUB/toc.ncx
   fs.writeFileSync(
-    path.join(tmpDir, 'EPUB/toc.ncx'),
+    upath.join(tmpDir, 'EPUB/toc.ncx'),
     buildNcx({
       toc: tocParseTree,
       docTitle,
@@ -293,7 +292,7 @@ export async function exportEpub({
 
   // META-INF/container.xml
   fs.writeFileSync(
-    path.join(tmpDir, 'META-INF/container.xml'),
+    upath.join(tmpDir, 'META-INF/container.xml'),
     EPUB_CONTAINER_XML,
     'utf8',
   );
@@ -301,7 +300,7 @@ export async function exportEpub({
   // EPUB/content.opf
   debug(`Generating content.opf`);
   fs.writeFileSync(
-    path.join(tmpDir, 'EPUB/content.opf'),
+    upath.join(tmpDir, 'EPUB/content.opf'),
     buildEpubPackageDocument({
       epubVersion,
       uid,
@@ -340,7 +339,7 @@ async function transpileHtmlToXhtml({
   hasScriptedContent: boolean;
   hasSvgContent: boolean;
 }> {
-  const absPath = path.join(contextDir, target);
+  const absPath = upath.join(contextDir, target);
   const { dom } = await getJsdomFromUrlOrFile(absPath);
   const { document } = dom.window;
   // `xmlns` will be supplied in later serialization process
@@ -441,7 +440,7 @@ export async function supplyTocNavElement({
   docLanguages: string[];
 }): Promise<TocResourceTreeRoot> {
   debug(`Generating toc nav element: ${tocHtml}`);
-  const absPath = path.join(contextDir, tocHtml);
+  const absPath = upath.join(contextDir, tocHtml);
   const { document } = tocDom.window;
 
   const nav = document.createElement('nav');
@@ -459,7 +458,7 @@ export async function supplyTocNavElement({
     let name = normalizeLocalizableString(content.name, docLanguages);
     if (!name) {
       const { dom } = await getJsdomFromUrlOrFile(
-        path.join(contextDir, changeExtname(content.url, '.xhtml')),
+        upath.join(contextDir, changeExtname(content.url, '.xhtml')),
       );
       name = dom.window.document.title;
     }
@@ -721,8 +720,8 @@ async function compressEpub({
     archive.pipe(output);
 
     archive.append('application/epub+zip', { name: 'mimetype' });
-    archive.directory(path.join(sourceDir, 'META-INF'), 'META-INF');
-    archive.directory(path.join(sourceDir, 'EPUB'), 'EPUB');
+    archive.directory(upath.join(sourceDir, 'META-INF'), 'META-INF');
+    archive.directory(upath.join(sourceDir, 'EPUB'), 'EPUB');
     archive.finalize();
   });
 }

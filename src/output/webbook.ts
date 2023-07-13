@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import path from 'upath';
 import MIMEType from 'whatwg-mimetype';
 import { MANIFEST_FILENAME } from '../const.js';
 import { MergedConfig, WebbookEntryConfig } from '../input/config.js';
@@ -23,6 +22,7 @@ import {
   pathEquals,
   remove,
   safeGlob,
+  upath,
 } from '../util.js';
 
 export async function prepareWebPublicationDirectory({
@@ -63,7 +63,7 @@ export async function retrieveWebbookEntry({
     ? new URL('/', baseUrl).href
     : new URL('.', baseUrl).href;
   const pathContains = (url: string) =>
-    !path.posix.relative(rootUrl, url).startsWith('..');
+    !upath.relative(rootUrl, url).startsWith('..');
   const retriever = new Map(resourceLoader.fetcherMap);
 
   if (manifest) {
@@ -101,9 +101,9 @@ export async function retrieveWebbookEntry({
   const normalizeToLocalPath = (urlString: string, mimeType?: string) => {
     const url = new URL(urlString);
     url.hash = '';
-    let relTarget = path.posix.relative(rootUrl, url.href);
-    if (!relTarget || (mimeType === 'text/html' && !path.extname(relTarget))) {
-      relTarget = path.join(relTarget, 'index.html');
+    let relTarget = upath.relative(rootUrl, url.href);
+    if (!relTarget || (mimeType === 'text/html' && !upath.extname(relTarget))) {
+      relTarget = upath.join(relTarget, 'index.html');
     }
     return relTarget;
   };
@@ -125,9 +125,9 @@ export async function retrieveWebbookEntry({
             /* NOOP */
           }
           const relTarget = normalizeToLocalPath(url, encodingFormat);
-          const target = path.join(outputDir, relTarget);
+          const target = upath.join(outputDir, relTarget);
           fetchedResources.push({ url: relTarget, encodingFormat });
-          await fs.promises.mkdir(path.dirname(target), { recursive: true });
+          await fs.promises.mkdir(upath.dirname(target), { recursive: true });
           await fs.promises.writeFile(target, buffer);
         })
         .catch(() => {
@@ -159,7 +159,7 @@ export async function retrieveWebbookEntry({
   );
 
   return {
-    entryHtmlFile: path.join(
+    entryHtmlFile: upath.join(
       outputDir,
       normalizeToLocalPath(baseUrl, 'text/html'),
     ),
@@ -189,14 +189,14 @@ export async function supplyWebPublicationManifestForWebbook({
     document.querySelector('meta[name="author"]')?.getAttribute('content') ||
     '';
 
-  const entry = path.relative(outputDir, entryHtmlFile);
+  const entry = upath.relative(outputDir, entryHtmlFile);
   const allFiles = await safeGlob('**', {
     cwd: outputDir,
     gitignore: false,
   });
 
   const manifest = generateManifest(
-    path.join(outputDir, MANIFEST_FILENAME),
+    upath.join(outputDir, MANIFEST_FILENAME),
     outputDir,
     {
       title,
@@ -235,8 +235,8 @@ export async function copyWebPublicationAssets({
 }): Promise<PublicationManifest> {
   const relExportAliases = exportAliases
     .map(({ source, target }) => ({
-      source: path.relative(input, source),
-      target: path.relative(input, target),
+      source: upath.relative(input, source),
+      target: upath.relative(input, target),
     }))
     .filter(({ source }) => !source.startsWith('..'));
   const allFiles = await safeGlob('**', {
@@ -247,8 +247,8 @@ export async function copyWebPublicationAssets({
         !pathContains(input, p)
           ? []
           : format === 'webpub'
-          ? path.join(path.relative(input, p), '**')
-          : path.relative(input, p),
+          ? upath.join(upath.relative(input, p), '**')
+          : upath.relative(input, p),
       ),
       // including node_modules possibly occurs cyclic reference of symlink
       '**/node_modules',
@@ -269,18 +269,18 @@ export async function copyWebPublicationAssets({
     }),
   );
   const resources: string[] = [];
-  let actualManifestPath = path.join(
+  let actualManifestPath = upath.join(
     outputDir,
-    path.relative(input, manifestPath),
+    upath.relative(input, manifestPath),
   );
   for (const file of allFiles) {
     const alias = relExportAliases.find(({ source }) => source === file);
     const relTarget = alias?.target || file;
     resources.push(relTarget);
-    const target = path.join(outputDir, relTarget);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    await copy(path.join(input, file), target);
-    if (alias && pathEquals(path.join(input, alias.source), manifestPath)) {
+    const target = upath.join(outputDir, relTarget);
+    fs.mkdirSync(upath.dirname(target), { recursive: true });
+    await copy(upath.join(input, file), target);
+    if (alias && pathEquals(upath.join(input, alias.source), manifestPath)) {
       actualManifestPath = target;
     }
   }

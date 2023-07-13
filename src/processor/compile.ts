@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
-import path from 'upath';
 import { TOC_TITLE } from '../const.js';
 import {
   ManuscriptEntry,
@@ -27,6 +26,7 @@ import {
   remove,
   safeGlob,
   startLogging,
+  upath,
   useTmpDirectory,
 } from '../util.js';
 import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html.js';
@@ -41,11 +41,11 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
     return theme.location;
   }
   if (theme.type === 'file') {
-    return path.relative(from, theme.location);
+    return upath.relative(from, theme.location);
   }
   if (theme.importPath) {
     return [theme.importPath].flat().map((locator) => {
-      const resolvedPath = path.resolve(theme.location, locator);
+      const resolvedPath = upath.resolve(theme.location, locator);
       if (
         !pathContains(theme.location, resolvedPath) ||
         !fs.existsSync(resolvedPath)
@@ -54,10 +54,10 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
           `Could not find a style path ${theme.importPath} for the theme: ${theme.name}.`,
         );
       }
-      return path.relative(from, resolvedPath);
+      return upath.relative(from, resolvedPath);
     });
   } else {
-    const pkgJsonPath = path.join(theme.location, 'package.json');
+    const pkgJsonPath = upath.join(theme.location, 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
     const maybeStyle =
       packageJson?.vivliostyle?.theme?.style ??
@@ -69,7 +69,7 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
         'Please ensure this package satisfies a `vivliostyle.theme.style` propertiy.',
       );
     }
-    return path.relative(from, path.join(theme.location, maybeStyle));
+    return upath.relative(from, upath.join(theme.location, maybeStyle));
   }
 }
 
@@ -93,7 +93,7 @@ export async function cleanupWorkspace({
   }
   await remove(workspaceDir);
   if (movedThemePath) {
-    fs.mkdirSync(path.dirname(themesDir), { recursive: true });
+    fs.mkdirSync(upath.dirname(themesDir), { recursive: true });
     await copy(movedThemePath, themesDir);
   }
 }
@@ -111,7 +111,7 @@ export async function prepareThemeDirectory({
   // copy theme files
   for (const theme of themeIndexes) {
     if (theme.type === 'file' && !pathEquals(theme.source, theme.location)) {
-      fs.mkdirSync(path.dirname(theme.location), { recursive: true });
+      fs.mkdirSync(upath.dirname(theme.location), { recursive: true });
       await copy(theme.source, theme.location);
     }
   }
@@ -149,7 +149,7 @@ export function generateManifest(
 
   if (options.cover) {
     const { width, height, type } = imageSize(
-      path.resolve(entryContextDir, options.cover),
+      upath.resolve(entryContextDir, options.cover),
     );
     let mimeType: string | false = false;
     if (type) {
@@ -239,11 +239,11 @@ export async function compile({
     (e): e is ManuscriptEntry => 'source' in e,
   );
   for (const entry of contentEntries) {
-    fs.mkdirSync(path.dirname(entry.target), { recursive: true });
+    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
 
     // calculate style path
     const style = entry.themes.flatMap((theme) =>
-      locateThemePath(theme, path.dirname(entry.target)),
+      locateThemePath(theme, upath.dirname(entry.target)),
     );
     if (entry.type === 'text/markdown') {
       // compile markdown
@@ -283,7 +283,7 @@ export async function compile({
     const tocString = generateTocHtml({
       entries: contentEntries,
       manifestPath,
-      distDir: path.dirname(generativeContentsEntry.target),
+      distDir: upath.dirname(generativeContentsEntry.target),
       title,
       tocTitle: generativeContentsEntry.title ?? TOC_TITLE,
       style,
@@ -298,10 +298,10 @@ export async function compile({
       author,
       language,
       readingProgression,
-      cover: cover && path.relative(entryContextDir, cover),
+      cover: cover && upath.relative(entryContextDir, cover),
       entries: entries.map((entry) => ({
         title: entry.title,
-        path: path.relative(workspaceDir, entry.target),
+        path: upath.relative(workspaceDir, entry.target),
         encodingFormat:
           !('type' in entry) ||
           entry.type === 'text/markdown' ||
@@ -324,7 +324,7 @@ export async function copyAssets({
   if (pathEquals(entryContextDir, workspaceDir)) {
     return;
   }
-  const relWorkspaceDir = path.relative(entryContextDir, workspaceDir);
+  const relWorkspaceDir = upath.relative(entryContextDir, workspaceDir);
   const assets = await safeGlob(includeAssets, {
     cwd: entryContextDir,
     ignore: [
@@ -333,11 +333,11 @@ export async function copyAssets({
         !pathContains(entryContextDir, p)
           ? []
           : format === 'webpub'
-          ? path.join(path.relative(entryContextDir, p), '**')
-          : path.relative(entryContextDir, p),
+          ? upath.join(upath.relative(entryContextDir, p), '**')
+          : upath.relative(entryContextDir, p),
       ),
       // don't copy workspace itself
-      ...(relWorkspaceDir ? [path.join(relWorkspaceDir, '**')] : []),
+      ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
     ],
     caseSensitiveMatch: false,
     followSymbolicLinks: false,
@@ -345,9 +345,9 @@ export async function copyAssets({
   });
   debug('assets', assets);
   for (const asset of assets) {
-    const target = path.join(workspaceDir, asset);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    await copy(path.resolve(entryContextDir, asset), target);
+    const target = upath.join(workspaceDir, asset);
+    fs.mkdirSync(upath.dirname(target), { recursive: true });
+    await copy(upath.resolve(entryContextDir, asset), target);
   }
 }
 

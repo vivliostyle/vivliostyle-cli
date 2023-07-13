@@ -6,7 +6,6 @@ import jsdom, { ResourceLoader as BaseResourceLoader, JSDOM } from 'jsdom';
 import fs from 'node:fs';
 import url from 'node:url';
 import prettier from 'prettier';
-import path from 'upath';
 import { ManuscriptEntry } from '../input/config.js';
 import type { PublicationManifest } from '../schema/publication.schema.js';
 import {
@@ -14,6 +13,7 @@ import {
   assertPubManifestSchema,
   debug,
   logWarn,
+  upath,
 } from '../util.js';
 
 const virtualConsole = new jsdom.VirtualConsole();
@@ -113,8 +113,8 @@ export function generateTocHtml({
       'li',
       h(
         'a',
-        { href: encodeURI(path.relative(distDir, entry.target)) },
-        entry.title || path.basename(entry.target, '.html'),
+        { href: encodeURI(upath.relative(distDir, entry.target)) },
+        entry.title || upath.basename(entry.target, '.html'),
       ),
     ),
   );
@@ -125,7 +125,7 @@ export function generateTocHtml({
       ...[
         h('title', title ?? ''),
         h('link', {
-          href: encodeURI(path.relative(distDir, manifestPath)),
+          href: encodeURI(upath.relative(distDir, manifestPath)),
           rel: 'publication',
           type: 'application/ld+json',
         }),

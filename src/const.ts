@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import resolvePkg from 'resolve-pkg';
-import path from 'upath';
+import { upath } from '../vendors/index.js';
 
 export const MANIFEST_FILENAME = 'publication.json';
 export const TOC_FILENAME = 'index.html';
@@ -18,13 +18,13 @@ export const EPUB_CONTAINER_XML = `${XML_DECLARATION}
   </rootfiles>
 </container>`;
 
-export const cliRoot = path.join(fileURLToPath(import.meta.url), '../..');
+export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
 export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {
     return '0.0.1';
   }
   const pkg = JSON.parse(
-    fs.readFileSync(path.join(cliRoot, 'package.json'), 'utf8'),
+    fs.readFileSync(upath.join(cliRoot, 'package.json'), 'utf8'),
   );
   return pkg.version;
 })();
@@ -35,7 +35,7 @@ export const coreVersion = (() => {
     return '0.0.1';
   }
   const pkg = JSON.parse(
-    fs.readFileSync(path.join(viewerRoot, 'package.json'), 'utf8'),
+    fs.readFileSync(upath.join(viewerRoot, 'package.json'), 'utf8'),
   );
   return pkg.version;
 })();

@@ -1,8 +1,7 @@
 import chalk from 'chalk';
 import fs from 'node:fs';
-import path from 'upath';
 import { CONTAINER_IMAGE } from './container.js';
-import { cwd, log } from './util.js';
+import { cwd, log, upath } from './util.js';
 
 export interface InitCliFlags {
   title?: string;
@@ -13,7 +12,7 @@ export interface InitCliFlags {
 }
 
 export async function init(cliFlags: InitCliFlags) {
-  const vivliostyleConfigPath = path.join(cwd, 'vivliostyle.config.js');
+  const vivliostyleConfigPath = upath.join(cwd, 'vivliostyle.config.js');
 
   if (fs.existsSync(vivliostyleConfigPath)) {
     return log(

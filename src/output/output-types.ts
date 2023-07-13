@@ -1,4 +1,4 @@
-import path from 'upath';
+import { upath } from '../util.js';
 
 interface OutputFormatTrait<T extends string = string> {
   format: T;
@@ -37,7 +37,7 @@ export const checkPreflightMode = (v: unknown): v is PdfOutput['preflight'] => {
 };
 
 export function detectOutputFormat(outputPath: string): OutputFormat['format'] {
-  const lowerCasedExt = path.extname(outputPath);
+  const lowerCasedExt = upath.extname(outputPath);
   if (lowerCasedExt === '.pdf') {
     return 'pdf';
   } else if (lowerCasedExt === '.epub') {

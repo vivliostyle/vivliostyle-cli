@@ -1,16 +1,16 @@
 import execa from 'execa';
 import fileType from 'file-type';
 import fs from 'node:fs';
-import path from 'upath';
 import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
+import { upath } from '../src/util.js';
 import { rootPath } from './commandUtil.js';
 
-const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
-const fixtureRoot = path.resolve(rootPath, 'tests/fixtures/wood');
-const fixtureFile = path.join(fixtureRoot, 'index.html');
+const cliPath = upath.join(rootPath, packageJSON.bin.vivliostyle);
+const fixtureRoot = upath.resolve(rootPath, 'tests/fixtures/wood');
+const fixtureFile = upath.join(fixtureRoot, 'index.html');
 
-const localTmpDir = path.join(rootPath, 'tmp');
+const localTmpDir = upath.join(rootPath, 'tmp');
 fs.mkdirSync(localTmpDir, { recursive: true });
 
 function cleanUp(filePath: string) {
@@ -33,7 +33,7 @@ it('show version', async () => {
 });
 
 it('generate pdf without errors', async () => {
-  const outputPath = path.join(localTmpDir, 'test.pdf');
+  const outputPath = upath.join(localTmpDir, 'test.pdf');
   cleanUp(outputPath);
 
   try {

@@ -14,7 +14,6 @@ import util from 'node:util';
 import oraConstructor from 'ora';
 import portfinder from 'portfinder';
 import slash from 'slash';
-import upath from 'upath';
 import {
   copy,
   copySync,
@@ -23,13 +22,14 @@ import {
   remove,
   removeSync,
   tmp,
+  upath,
 } from '../vendors/index.js';
 import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
 import type { PublicationManifest } from './schema/publication.schema.js';
 import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
 import type { VivliostyleConfigSchema } from './schema/vivliostyleConfig.schema.js';
 
-export { copy, copySync, move, moveSync, remove, removeSync, tmp };
+export { copy, copySync, move, moveSync, remove, removeSync, tmp, upath };
 
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());

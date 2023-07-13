@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
-import path from 'upath';
 import { pathToFileURL } from 'url';
 import { getExecutableBrowserPath } from '../browser.js';
 import {
@@ -46,6 +45,7 @@ import {
   readJSON,
   statFileSync,
   touchTmpFile,
+  upath,
 } from '../util.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
@@ -204,7 +204,7 @@ export function contextResolve(
   context: string,
   loc: string | undefined,
 ): string | undefined {
-  return loc && path.resolve(context, loc);
+  return loc && upath.resolve(context, loc);
 }
 
 function normalizeEntry(e: string | EntryObject): EntryObject {
@@ -233,20 +233,20 @@ export function parseTheme({
   if (isUrlString(specifier)) {
     return {
       type: 'uri',
-      name: path.basename(specifier),
+      name: upath.basename(specifier),
       location: specifier,
     };
   }
 
   // bare .css file
-  const stylePath = path.resolve(context, specifier);
+  const stylePath = upath.resolve(context, specifier);
   if (fs.existsSync(stylePath) && stylePath.endsWith('.css')) {
-    const sourceRelPath = path.relative(context, stylePath);
+    const sourceRelPath = upath.relative(context, stylePath);
     return {
       type: 'file',
-      name: path.basename(specifier),
+      name: upath.basename(specifier),
       source: stylePath,
-      location: path.resolve(workspaceDir, sourceRelPath),
+      location: upath.resolve(workspaceDir, sourceRelPath),
     };
   }
 
@@ -264,7 +264,7 @@ export function parseTheme({
   let name = parsed.name;
   let resolvedSpecifier = specifier;
   if (parsed.type === 'directory' && parsed.fetchSpec) {
-    const pkgJsonPath = path.join(parsed.fetchSpec, 'package.json');
+    const pkgJsonPath = upath.join(parsed.fetchSpec, 'package.json');
     if (fs.existsSync(pkgJsonPath)) {
       const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
       name = packageJson.name;
@@ -278,7 +278,7 @@ export function parseTheme({
     type: 'package',
     name,
     specifier: resolvedSpecifier,
-    location: path.join(themesDir, 'packages', name),
+    location: upath.join(themesDir, 'packages', name),
     importPath,
   };
 }
@@ -310,7 +310,7 @@ function parseFileMetadata({
   workspaceDir: string;
   themesDir?: string;
 }): { title?: string; themes?: ParsedTheme[] } {
-  const sourceDir = path.dirname(sourcePath);
+  const sourceDir = upath.dirname(sourcePath);
   let title: string | undefined;
   let themes: ParsedTheme[] | undefined;
   if (type === 'text/markdown') {
@@ -359,7 +359,7 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     let config: VivliostyleConfigSchema;
     let jsonRaw: string | undefined;
     try {
-      if (path.extname(configPath) === '.json') {
+      if (upath.extname(configPath) === '.json') {
         jsonRaw = fs.readFileSync(configPath, 'utf8');
         config = JSON.parse(jsonRaw);
       } else {
@@ -401,10 +401,10 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
       } = {};
   let vivliostyleConfigPath: string | undefined;
   if (cliFlags.configPath) {
-    vivliostyleConfigPath = path.resolve(cwd, cliFlags.configPath);
+    vivliostyleConfigPath = upath.resolve(cwd, cliFlags.configPath);
   } else {
     vivliostyleConfigPath = ['.js', '.mjs', '.cjs']
-      .map((ext) => path.join(cwd, `vivliostyle.config${ext}`))
+      .map((ext) => upath.join(cwd, `vivliostyle.config${ext}`))
       .find((p) => fs.existsSync(p));
   }
   // let vivliostyleConfig: VivliostyleConfigSchema | undefined;
@@ -415,11 +415,11 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     };
   } else if (
     cliFlags.input &&
-    path.basename(cliFlags.input).startsWith('vivliostyle.config')
+    upath.basename(cliFlags.input).startsWith('vivliostyle.config')
   ) {
     // Load an input argument as a Vivliostyle config
     try {
-      const inputPath = path.resolve(cwd, cliFlags.input);
+      const inputPath = upath.resolve(cwd, cliFlags.input);
       const inputConfig = await load(inputPath);
       cliFlags = {
         ...cliFlags,
@@ -461,15 +461,15 @@ export async function mergeConfig<T extends CliFlags>(
   if (cliFlags.input && !config && isUrlString(cliFlags.input)) {
     workspaceDir = entryContextDir = cwd;
   } else {
-    entryContextDir = path.resolve(
+    entryContextDir = upath.resolve(
       cliFlags.input && !config
-        ? path.dirname(path.resolve(context, cliFlags.input))
+        ? upath.dirname(upath.resolve(context, cliFlags.input))
         : contextResolve(context, config?.entryContext) ?? context,
     );
     workspaceDir =
       contextResolve(context, config?.workspaceDir) ?? entryContextDir;
   }
-  const themesDir = path.join(workspaceDir, 'themes');
+  const themesDir = upath.join(workspaceDir, 'themes');
 
   const includeAssets = config?.includeAssets
     ? Array.isArray(config.includeAssets)
@@ -547,7 +547,7 @@ export async function mergeConfig<T extends CliFlags>(
       return cliFlags.targets.map(({ path: outputPath, format }) => {
         if (format === 'pdf') {
           return {
-            path: path.resolve(outputPath),
+            path: upath.resolve(outputPath),
             format,
             renderMode,
             preflight,
@@ -555,13 +555,13 @@ export async function mergeConfig<T extends CliFlags>(
           };
         } else if (format === 'epub') {
           return {
-            path: path.resolve(outputPath),
+            path: upath.resolve(outputPath),
             format,
             version: EPUB_OUTPUT_VERSION,
           };
         } else {
           return {
-            path: path.resolve(outputPath),
+            path: upath.resolve(outputPath),
             format,
           };
         }
@@ -573,7 +573,7 @@ export async function mergeConfig<T extends CliFlags>(
       ).map((target) => {
         const targetObj =
           typeof target === 'string' ? { path: target } : target;
-        const outputPath = path.resolve(context, targetObj.path);
+        const outputPath = upath.resolve(context, targetObj.path);
         const format = targetObj.format ?? detectOutputFormat(outputPath);
         if (!checkOutputFormat(format)) {
           throw new Error(`Unknown format: ${format}`);
@@ -607,7 +607,7 @@ export async function mergeConfig<T extends CliFlags>(
     const filename = config?.title ? `${config.title}.pdf` : 'output.pdf';
     return [
       {
-        path: path.resolve(context, filename),
+        path: upath.resolve(context, filename),
         format: 'pdf',
         renderMode,
         preflight,
@@ -693,7 +693,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     sourcePath = cliFlags.input;
     input = { format: 'webbook', entry: sourcePath };
   } else {
-    sourcePath = path.resolve(cliFlags.input);
+    sourcePath = upath.resolve(cliFlags.input);
     input = detectInputFormat(sourcePath);
     // Check file exists
     statFileSync(sourcePath);
@@ -703,12 +703,16 @@ async function composeSingleInputConfig<T extends CliFlags>(
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata({ type, sourcePath, workspaceDir });
-    const relDir = path.relative(
+    const relDir = upath.relative(
       otherConfig.entryContextDir,
-      path.dirname(sourcePath),
+      upath.dirname(sourcePath),
     );
-    const target = path
-      .resolve(workspaceDir, relDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+    const target = upath
+      .resolve(
+        workspaceDir,
+        relDir,
+        `${tmpPrefix}${upath.basename(sourcePath)}`,
+      )
       .replace(/\.md$/, '.html');
     await touchTmpFile(target);
     const themes = metadata.themes ?? [...otherConfig.rootThemes];
@@ -722,9 +726,9 @@ async function composeSingleInputConfig<T extends CliFlags>(
     });
     exportAliases.push({
       source: target,
-      target: path.resolve(
-        path.dirname(target),
-        path.basename(sourcePath).replace(/\.md$/, '.html'),
+      target: upath.resolve(
+        upath.dirname(target),
+        upath.basename(sourcePath).replace(/\.md$/, '.html'),
       ),
     });
   }
@@ -733,19 +737,19 @@ async function composeSingleInputConfig<T extends CliFlags>(
   const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
     if (input.format === 'markdown') {
       // create temporary manifest file
-      const manifestPath = path.resolve(
+      const manifestPath = upath.resolve(
         workspaceDir,
         `${tmpPrefix}${MANIFEST_FILENAME}`,
       );
       await touchTmpFile(manifestPath);
       exportAliases.push({
         source: manifestPath,
-        target: path.resolve(workspaceDir, MANIFEST_FILENAME),
+        target: upath.resolve(workspaceDir, MANIFEST_FILENAME),
       });
       fallbackTitle =
         entries.length === 1 && entries[0].title
           ? (entries[0].title as string)
-          : path.basename(sourcePath);
+          : upath.basename(sourcePath);
       return { manifestPath, needToGenerateManifest: true };
     } else if (input.format === 'html' || input.format === 'webbook') {
       return { webbookEntryPath: input.entry };
@@ -788,7 +792,7 @@ async function composeProjectConfig<T extends CliFlags>(
     rootThemes,
     outputs,
   } = otherConfig;
-  const pkgJsonPath = path.resolve(entryContextDir, 'package.json');
+  const pkgJsonPath = upath.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
     ? readJSON(pkgJsonPath)
     : undefined;
@@ -796,7 +800,7 @@ async function composeProjectConfig<T extends CliFlags>(
     debug('located package.json path', pkgJsonPath);
   }
 
-  const autoGeneratedTocPath = path.resolve(
+  const autoGeneratedTocPath = upath.resolve(
     workspaceDir,
     typeof config?.toc === 'string' ? config.toc : TOC_FILENAME,
   );
@@ -826,9 +830,9 @@ async function composeProjectConfig<T extends CliFlags>(
         themes,
       } as ContentsEntry;
     }
-    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
-    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
-    const targetPath = path
+    const sourcePath = upath.resolve(entryContextDir, entry.path); // abs
+    const contextEntryPath = upath.relative(entryContextDir, sourcePath); // rel
+    const targetPath = upath
       .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
     if (!isUrlString(sourcePath)) {
@@ -879,7 +883,7 @@ async function composeProjectConfig<T extends CliFlags>(
     if (entries.length === 1 && entries[0].title) {
       fallbackProjectTitle = entries[0].title;
     } else {
-      fallbackProjectTitle = path.basename(outputs[0].path);
+      fallbackProjectTitle = upath.basename(outputs[0].path);
       log(
         `\n${chalk.yellow(
           'Could not find any appropriate publication title. We set ',
@@ -903,10 +907,10 @@ async function composeProjectConfig<T extends CliFlags>(
     entries,
     input: {
       format: 'pub-manifest',
-      entry: path.join(workspaceDir, MANIFEST_FILENAME),
+      entry: upath.join(workspaceDir, MANIFEST_FILENAME),
     },
     exportAliases: [],
-    manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
+    manifestPath: upath.join(workspaceDir, MANIFEST_FILENAME),
     title: projectTitle || fallbackProjectTitle,
     author: projectAuthor,
     needToGenerateManifest: true,

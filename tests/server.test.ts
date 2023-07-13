@@ -1,13 +1,13 @@
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import portfinder from 'portfinder';
-import path from 'upath';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import {
   getViewerFullUrl,
   prepareServer,
   teardownServer,
 } from '../src/server.js';
+import { upath } from '../src/util.js';
 import { maskConfig, rootPath } from './commandUtil.js';
 
 vi.mock('http', async () => {
@@ -52,7 +52,7 @@ it('converts to valid broker url', async () => {
       {},
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),
@@ -84,7 +84,7 @@ it('converts to valid broker url', async () => {
       },
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),
@@ -109,7 +109,7 @@ it('converts to valid broker url', async () => {
       },
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),
@@ -133,7 +133,7 @@ it('converts to valid broker url', async () => {
       },
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),

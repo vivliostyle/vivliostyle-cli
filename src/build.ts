@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 import terminalLink from 'terminal-link';
-import path from 'upath';
 import { getExecutableBrowserPath } from './browser.js';
 import {
   CliFlags,
@@ -32,6 +31,7 @@ import {
   log,
   startLogging,
   stopLogging,
+  upath,
   useTmpDirectory,
 } from './util.js';
 
@@ -50,7 +50,9 @@ export async function getFullConfig(
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
   const loadedCliFlags = loadedConf.cliFlags;
 
-  const context = vivliostyleConfig ? path.dirname(vivliostyleConfigPath) : cwd;
+  const context = vivliostyleConfig
+    ? upath.dirname(vivliostyleConfigPath)
+    : cwd;
 
   const configEntries: MergedConfig[] = [];
   for (const entry of vivliostyleConfig ?? [vivliostyleConfig]) {
@@ -143,7 +145,7 @@ export async function build(cliFlags: BuildCliFlags) {
           if (config.input.format === 'markdown') {
             const entry = [manifest.readingOrder].flat()[0];
             if (entry) {
-              entryHtmlFile = path.join(
+              entryHtmlFile = upath.join(
                 outputDir,
                 typeof entry === 'string' ? entry : entry.url,
               );
@@ -178,7 +180,7 @@ export async function build(cliFlags: BuildCliFlags) {
         output = target.path;
       }
       if (output) {
-        const formattedOutput = chalk.bold.green(path.relative(cwd, output));
+        const formattedOutput = chalk.bold.green(upath.relative(cwd, output));
         log(
           `\n${terminalLink(formattedOutput, 'file://' + output, {
             fallback: () => formattedOutput,

@@ -1,14 +1,14 @@
 import assert from 'node:assert';
 import URL from 'node:url';
-import path from 'upath';
 import { setupBuildParserProgram } from '../src/commands/build.parser.js';
 import {
   collectVivliostyleConfig,
   mergeConfig,
   MergedConfig,
 } from '../src/input/config.js';
+import { upath } from '../src/util.js';
 
-export const rootPath = path.join(URL.fileURLToPath(import.meta.url), '../..');
+export const rootPath = upath.join(URL.fileURLToPath(import.meta.url), '../..');
 
 export const getMergedConfig = async (
   args: string[],
@@ -27,8 +27,8 @@ export const getMergedConfig = async (
       targets: options.targets,
     });
   const context = vivliostyleConfig
-    ? path.dirname(vivliostyleConfigPath)
-    : path.join(rootPath, 'tests');
+    ? upath.dirname(vivliostyleConfigPath)
+    : upath.join(rootPath, 'tests');
   const config = await Promise.all(
     (vivliostyleConfig ?? [vivliostyleConfig]).map((entry) =>
       mergeConfig(cliFlags, entry, context),
@@ -46,7 +46,7 @@ export const maskConfig = (obj: any) => {
     } else if (k === 'image') {
       obj[k] = '__IMAGE__';
     } else if (typeof v === 'string') {
-      const normalized = v.match(/^(https?|file):\/{2}/) ? v : path.toUnix(v);
+      const normalized = v.match(/^(https?|file):\/{2}/) ? v : upath.toUnix(v);
       obj[k] = normalized
         .replace(rootPath, '__WORKSPACE__')
         .replace(/^(https?|file):\/+/, '$1://');
@@ -55,7 +55,7 @@ export const maskConfig = (obj: any) => {
 };
 
 export const resolveFixture = (p: string) =>
-  path.resolve(rootPath, 'tests/fixtures', p);
+  upath.resolve(rootPath, 'tests/fixtures', p);
 
 export function assertSingleItem<T = unknown>(
   value: T | T[],

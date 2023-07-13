@@ -3,7 +3,6 @@ import commandExists from 'command-exists';
 import execa from 'execa';
 import isInteractive from 'is-interactive';
 import process from 'node:process';
-import path from 'upath';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { cliVersion } from './const.js';
 import {
@@ -13,6 +12,7 @@ import {
   pathEquals,
   startLogging,
   stopLogging,
+  upath,
 } from './util.js';
 
 export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
@@ -22,18 +22,18 @@ export function toContainerPath(urlOrAbsPath: string): string {
   if (isUrlString(urlOrAbsPath)) {
     if (urlOrAbsPath.toLowerCase().startsWith('file')) {
       return pathToFileURL(
-        path.posix.join(
+        upath.posix.join(
           CONTAINER_ROOT_DIR,
-          path.toUnix(fileURLToPath(urlOrAbsPath)).replace(/^\w:/, ''),
+          upath.toUnix(fileURLToPath(urlOrAbsPath)).replace(/^\w:/, ''),
         ),
       ).href;
     } else {
       return urlOrAbsPath;
     }
   }
-  return path.posix.join(
+  return upath.posix.join(
     CONTAINER_ROOT_DIR,
-    path.toUnix(urlOrAbsPath).replace(/^\w:/, ''),
+    upath.toUnix(urlOrAbsPath).replace(/^\w:/, ''),
   );
 }
 
@@ -45,8 +45,8 @@ export function collectVolumeArgs(mountPoints: string[]): string[] {
         return false;
       }
       let parent = p;
-      while (!pathEquals(parent, path.dirname(parent))) {
-        parent = path.dirname(parent);
+      while (!pathEquals(parent, upath.dirname(parent))) {
+        parent = upath.dirname(parent);
         if (array.includes(parent)) {
           // other mount point contains its directory
           return false;

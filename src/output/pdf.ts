@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import { URL } from 'node:url';
 import { Page } from 'playwright-core';
 import terminalLink from 'terminal-link';
-import path from 'upath';
 import {
   checkBrowserAvailability,
   downloadBrowser,
@@ -28,6 +27,7 @@ import {
   logUpdate,
   pathEquals,
   startLogging,
+  upath,
 } from '../util.js';
 import type { PdfOutput } from './output-types.js';
 import { PageSizeData, PostProcess } from './pdf-postprocess.js';
@@ -59,7 +59,7 @@ export async function buildPDFWithContainer(
     image: option.image,
     userVolumeArgs: collectVolumeArgs([
       option.workspaceDir,
-      path.dirname(option.target.path),
+      upath.dirname(option.target.path),
     ]),
     commandArgs: [
       'build',
@@ -183,7 +183,7 @@ export async function buildPDF({
 
   function stringifyEntry(entry: ManuscriptEntry) {
     const formattedSourcePath = chalk.bold.cyan(
-      path.relative(entryContextDir, entry.source),
+      upath.relative(entryContextDir, entry.source),
     );
     return `${terminalLink(formattedSourcePath, 'file://' + entry.source, {
       fallback: () => formattedSourcePath,
@@ -199,7 +199,7 @@ export async function buildPDF({
       return url.protocol === 'file:'
         ? pathEquals(entry.target, url.pathname)
         : pathEquals(
-            path.relative(workspaceDir, entry.target),
+            upath.relative(workspaceDir, entry.target),
             url.pathname.substring(1),
           );
     });
@@ -294,7 +294,7 @@ export async function buildPDF({
   await browser.close();
 
   logUpdate('Processing PDF');
-  fs.mkdirSync(path.dirname(target.path), { recursive: true });
+  fs.mkdirSync(upath.dirname(target.path), { recursive: true });
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata, {

@@ -1,13 +1,13 @@
 import http from 'node:http';
 import { pathToFileURL, URL } from 'node:url';
 import handler from 'serve-handler';
-import upath from 'upath';
 import { viewerRoot } from './const.js';
 import {
   beforeExitHandlers,
   debug,
   findAvailablePort,
   isUrlString,
+  upath,
 } from './util.js';
 
 export type PageSize = { format: string } | { width: string; height: string };

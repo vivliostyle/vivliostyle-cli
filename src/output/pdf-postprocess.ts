@@ -11,7 +11,6 @@ import {
   ReadingDirection,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
-import path from 'upath';
 import { v1 as uuid } from 'uuid';
 import { coreVersion } from '../const.js';
 import {
@@ -25,6 +24,7 @@ import {
   checkContainerEnvironment,
   startLogging,
   stopLogging,
+  upath,
 } from '../util.js';
 import type { PdfOutput } from './output-types.js';
 
@@ -76,8 +76,8 @@ export async function pressReadyWithContainer({
     image,
     entrypoint: 'press-ready',
     userVolumeArgs: collectVolumeArgs([
-      path.dirname(input),
-      path.dirname(output),
+      upath.dirname(input),
+      upath.dirname(output),
     ]),
     commandArgs: [
       'build',
@@ -106,7 +106,7 @@ export class PostProcess {
   ) {
     const isInContainer = checkContainerEnvironment();
     const input = preflight
-      ? path.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
+      ? upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
       : output;
 
     const pdf = await this.document.save();

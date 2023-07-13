@@ -1,5 +1,5 @@
 import { lookup as mime } from 'mime-types';
-import path from 'upath';
+import { upath } from '../util.js';
 
 interface InputFormatTrait<T extends string = string> {
   format: T;
@@ -44,7 +44,7 @@ export type InputFormat =
   | EpubOpfInput;
 
 export function detectInputFormat(entry: string): InputFormat {
-  const lowerCasedExt = path.extname(entry).toLowerCase();
+  const lowerCasedExt = upath.extname(entry).toLowerCase();
   if (lowerCasedExt === '.md' || lowerCasedExt === '.markdown') {
     return { format: 'markdown', entry };
   } else if (lowerCasedExt === '.json' || lowerCasedExt === '.jsonld') {
