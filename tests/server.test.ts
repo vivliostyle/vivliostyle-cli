@@ -196,15 +196,18 @@ it('starts up a source server with custom viewer', async () => {
 });
 
 it('starts up with no http server', async () => {
+  const input = '/absolute/path/to/manifest/file.json';
   const validOut1 = await prepareServer({
-    input: '/absolute/path/to/manifest/file.json',
+    input,
     workspaceDir: '/absolute/path',
     httpServer: false,
     viewer: 'file:///something/viewer',
   });
   maskConfig(validOut1);
   expect(validOut1.viewerFullUrl).toBe(
-    'file://something/viewer#src=file:///absolute/path/to/manifest/file.json&bookMode=true&renderAllPages=true',
+    `file://something/viewer#src=${pathToFileURL(
+      input,
+    )}&bookMode=true&renderAllPages=true`,
   );
   expect(mockedCreateServer.mock.calls.length).toBe(0);
   expect(mockedGetPortPromise.mock.calls.length).toBe(0);
