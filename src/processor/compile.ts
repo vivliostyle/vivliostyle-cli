@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
-import path from 'node:path';
+import path from 'upath';
 import { TOC_TITLE } from '../const.js';
 import {
   ManuscriptEntry,
