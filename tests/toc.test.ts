@@ -1,10 +1,12 @@
+import { globby } from 'globby';
 import { JSDOM } from 'jsdom';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import shelljs from 'shelljs';
+import { afterAll, expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import { compile, prepareThemeDirectory } from '../src/processor/compile.js';
 import { generateTocHtml } from '../src/processor/html.js';
+import { removeSync } from '../src/util.js';
 import {
   assertSingleItem,
   getMergedConfig,
@@ -18,11 +20,11 @@ function assertManifestPath(
 }
 
 afterAll(() => {
-  shelljs.rm('-rf', [
+  [
     resolveFixture('toc/.vs-valid.1'),
     resolveFixture('toc/.vs-valid.2'),
     resolveFixture('toc/.vs-valid.3'),
-  ]);
+  ].forEach((f) => removeSync(f));
 });
 
 it('generateTocHtml', () => {
@@ -66,14 +68,12 @@ it('toc: true', async () => {
   assertManifestPath(config);
   await prepareThemeDirectory(config);
   await compile(config);
-  const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.1'));
-  expect([...fileList]).toEqual([
-    'a.html',
-    'b.html',
-    'c.html',
-    'index.html',
-    'publication.json',
-  ]);
+  const fileList = await globby('**', {
+    cwd: resolveFixture('toc/.vs-valid.1'),
+  });
+  expect(new Set(fileList)).toEqual(
+    new Set(['a.html', 'b.html', 'c.html', 'index.html', 'publication.json']),
+  );
   const { default: manifest } = await import(
     resolveFixture('toc/.vs-valid.1/publication.json')
   );
@@ -111,15 +111,18 @@ it("toc: 'manuscript/contents.html'", async () => {
   assertManifestPath(config);
   await prepareThemeDirectory(config);
   await compile(config);
-  const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.2'));
-  expect([...fileList]).toEqual([
-    'manuscript',
-    'manuscript/a.html',
-    'manuscript/b.html',
-    'manuscript/c.html',
-    'manuscript/contents.html',
-    'publication.json',
-  ]);
+  const fileList = await globby('**', {
+    cwd: resolveFixture('toc/.vs-valid.2'),
+  });
+  expect(new Set(fileList)).toMatchObject(
+    new Set([
+      'manuscript/a.html',
+      'manuscript/b.html',
+      'manuscript/c.html',
+      'manuscript/contents.html',
+      'publication.json',
+    ]),
+  );
   const { default: manifest } = await import(
     resolveFixture('toc/.vs-valid.2/publication.json')
   );
@@ -160,21 +163,24 @@ it('Write ToC by myself', async () => {
   assertManifestPath(config);
   await prepareThemeDirectory(config);
   await compile(config);
-  const fileList = shelljs.ls('-R', resolveFixture('toc/.vs-valid.3'));
-  expect([...fileList]).toEqual([
-    'manuscript',
-    'manuscript/a.html',
-    'manuscript/b.html',
-    'manuscript/c.html',
-    'manuscript/ToC.html',
-    'publication.json',
-    'sample-theme.css',
-    'themes',
-    'themes/package-lock.json',
-    'themes/package.json',
-    'themes/packages',
-    'themes/packages/debug-theme',
-  ]);
+  const fileList = await globby('**', {
+    cwd: resolveFixture('toc/.vs-valid.3'),
+  });
+  expect(new Set(fileList)).toMatchObject(
+    new Set([
+      'manuscript/a.html',
+      'manuscript/b.html',
+      'manuscript/c.html',
+      'manuscript/ToC.html',
+      'publication.json',
+      'sample-theme.css',
+      'themes/package-lock.json',
+      'themes/package.json',
+      'themes/packages/debug-theme/additional-theme.css',
+      'themes/packages/debug-theme/package.json',
+      'themes/packages/debug-theme/theme.css',
+    ]),
+  );
   const { default: manifest } = await import(
     resolveFixture('toc/.vs-valid.3/publication.json')
   );

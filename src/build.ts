@@ -124,7 +124,7 @@ export async function build(cliFlags: BuildCliFlags) {
         let outputDir: string;
         if (format === 'webpub') {
           outputDir = target.path;
-          prepareWebPublicationDirectory({ outputDir });
+          await prepareWebPublicationDirectory({ outputDir });
         } else if (format === 'epub') {
           [outputDir] = await useTmpDirectory();
         } else {

@@ -1,3 +1,4 @@
+import { expect, it } from 'vitest';
 import { safeGlob } from '../src/util.js';
 import { resolveFixture } from './commandUtil.js';
 

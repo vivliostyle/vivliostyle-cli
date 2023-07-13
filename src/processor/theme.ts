@@ -1,10 +1,9 @@
 import Arborist from '@npmcli/arborist';
 import fs from 'node:fs';
 import npa from 'npm-package-arg';
-import shelljs from 'shelljs';
 import path from 'upath';
 import type { MergedConfig } from '../input/config.js';
-import { beforeExitHandlers, DetailError } from '../util.js';
+import { beforeExitHandlers, DetailError, moveSync } from '../util.js';
 
 // Rename `packages` directory into `node_modules` while Arborist works
 const temporaryMovePackagesDirectrory = async <T = unknown>(
@@ -13,19 +12,19 @@ const temporaryMovePackagesDirectrory = async <T = unknown>(
 ) => {
   const exitHandler = () => {
     if (fs.existsSync(path.join(themesDir, 'node_modules'))) {
-      shelljs.mv(
-        '-f',
+      moveSync(
         path.join(themesDir, 'node_modules'),
         path.join(themesDir, 'packages'),
+        { overwrite: true },
       );
     }
   };
   beforeExitHandlers.push(exitHandler);
   if (fs.existsSync(path.join(themesDir, 'packages'))) {
-    shelljs.mv(
-      '-f',
+    moveSync(
       path.join(themesDir, 'packages'),
       path.join(themesDir, 'node_modules'),
+      { overwrite: true },
     );
   }
   try {
@@ -61,7 +60,7 @@ export async function installThemeDependencies({
   themesDir,
   themeIndexes,
 }: Pick<MergedConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
-  shelljs.mkdir('-p', themesDir);
+  fs.mkdirSync(themesDir, { recursive: true });
 
   await temporaryMovePackagesDirectrory(themesDir, async () => {
     try {

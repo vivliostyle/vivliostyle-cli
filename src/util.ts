@@ -13,14 +13,23 @@ import { fileURLToPath } from 'node:url';
 import util from 'node:util';
 import oraConstructor from 'ora';
 import portfinder from 'portfinder';
-import shelljs from 'shelljs';
 import slash from 'slash';
-import tmp from 'tmp';
 import upath from 'upath';
+import {
+  copy,
+  copySync,
+  move,
+  moveSync,
+  remove,
+  removeSync,
+  tmp,
+} from '../vendors/index.js';
 import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
 import type { PublicationManifest } from './schema/publication.schema.js';
 import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
 import type { VivliostyleConfigSchema } from './schema/vivliostyleConfig.schema.js';
+
+export { copy, copySync, move, moveSync, remove, removeSync, tmp };
 
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());
@@ -270,7 +279,7 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
       const callback = () => {
         // clear function doesn't work well?
         // clear();
-        shelljs.rm('-rf', path);
+        removeSync(path);
         debug(`Removed the temporary directory: ${path}`);
       };
       beforeExitHandlers.push(callback);
@@ -280,11 +289,12 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
 }
 
 export async function touchTmpFile(path: string): Promise<() => void> {
-  shelljs.mkdir('-p', upath.dirname(path));
-  shelljs.touch(path);
+  fs.mkdirSync(upath.dirname(path), { recursive: true });
+  // Create file if not exist
+  fs.closeSync(fs.openSync(path, 'a'));
   debug(`Created the temporary file: ${path}`);
   const callback = () => {
-    shelljs.rm('-f', path);
+    removeSync(path);
     debug(`Removed the temporary file: ${path}`);
   };
   beforeExitHandlers.push(callback);

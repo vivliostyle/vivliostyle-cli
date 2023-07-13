@@ -1,7 +1,7 @@
 import chalk from 'chalk';
+import fs from 'node:fs';
 import { URL } from 'node:url';
 import { Page } from 'playwright-core';
-import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
 import path from 'upath';
 import {
@@ -294,7 +294,7 @@ export async function buildPDF({
   await browser.close();
 
   logUpdate('Processing PDF');
-  shelljs.mkdir('-p', path.dirname(target.path));
+  fs.mkdirSync(path.dirname(target.path), { recursive: true });
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata, {

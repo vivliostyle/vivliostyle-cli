@@ -2,8 +2,7 @@ import chalk from 'chalk';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
-import shelljs from 'shelljs';
-import path from 'upath';
+import path from 'node:path';
 import { TOC_TITLE } from '../const.js';
 import {
   ManuscriptEntry,
@@ -20,10 +19,12 @@ import type { ArticleEntryObject } from '../schema/vivliostyleConfig.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,
+  copy,
   debug,
   log,
   pathContains,
   pathEquals,
+  remove,
   safeGlob,
   startLogging,
   useTmpDirectory,
@@ -88,16 +89,12 @@ export async function cleanupWorkspace({
   let movedThemePath: string | undefined;
   if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
     [movedThemePath] = await useTmpDirectory();
-    shelljs.cp('-rf', themesDir, movedThemePath);
+    await copy(themesDir, movedThemePath);
   }
-  shelljs.rm('-rf', workspaceDir);
+  await remove(workspaceDir);
   if (movedThemePath) {
-    shelljs.mkdir('-p', workspaceDir);
-    shelljs.cp(
-      '-rf',
-      path.join(movedThemePath, path.basename(themesDir)),
-      workspaceDir,
-    );
+    fs.mkdirSync(path.dirname(themesDir), { recursive: true });
+    await copy(movedThemePath, themesDir);
   }
 }
 
@@ -114,8 +111,8 @@ export async function prepareThemeDirectory({
   // copy theme files
   for (const theme of themeIndexes) {
     if (theme.type === 'file' && !pathEquals(theme.source, theme.location)) {
-      shelljs.mkdir('-p', path.dirname(theme.location));
-      shelljs.cp(theme.source, theme.location);
+      fs.mkdirSync(path.dirname(theme.location), { recursive: true });
+      await copy(theme.source, theme.location);
     }
   }
 }
@@ -242,7 +239,7 @@ export async function compile({
     (e): e is ManuscriptEntry => 'source' in e,
   );
   for (const entry of contentEntries) {
-    shelljs.mkdir('-p', path.dirname(entry.target));
+    fs.mkdirSync(path.dirname(entry.target), { recursive: true });
 
     // calculate style path
     const style = entry.themes.flatMap((theme) =>
@@ -273,7 +270,7 @@ export async function compile({
       }
     } else {
       if (!pathEquals(entry.source, entry.target)) {
-        shelljs.cp(entry.source, entry.target);
+        await copy(entry.source, entry.target);
       }
     }
   }
@@ -349,8 +346,8 @@ export async function copyAssets({
   debug('assets', assets);
   for (const asset of assets) {
     const target = path.join(workspaceDir, asset);
-    shelljs.mkdir('-p', path.dirname(target));
-    shelljs.cp(path.resolve(entryContextDir, asset), target);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    await copy(path.resolve(entryContextDir, asset), target);
   }
 }
 

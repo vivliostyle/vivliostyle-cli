@@ -23,6 +23,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: yarn install
       - run: yarn playwright-core install chromium
+      - run: yarn build
       - run: yarn test
   build-and-push-image:
     runs-on: ubuntu-latest

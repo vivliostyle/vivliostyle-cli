@@ -1,4 +1,4 @@
-const baseConfig = require('./workspace.config');
+const baseConfig = require('./workspace.config.cjs');
 
 module.exports = [
   {

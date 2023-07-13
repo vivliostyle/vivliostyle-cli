@@ -1,6 +1,7 @@
 import fileType from 'file-type';
 import fs from 'node:fs';
 import path from 'upath';
+import { expect, test } from 'vitest';
 import { build } from '../src/index.js';
 import { rootPath } from './commandUtil.js';
 

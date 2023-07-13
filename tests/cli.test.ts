@@ -10,6 +10,7 @@ import {
   PDFNumber,
 } from 'pdf-lib';
 import path from 'upath';
+import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
 import { rootPath } from './commandUtil.js';
 

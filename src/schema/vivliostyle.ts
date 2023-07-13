@@ -1,13 +1,8 @@
-import fs from 'node:fs';
-import path from 'upath';
-import { cliRoot } from '../const.js';
+import { createRequire } from 'node:module';
 
 // TODO: Change to static import after JSON module becomes stable
-const importJSON = (p: string) =>
-  JSON.parse(fs.readFileSync(path.join(cliRoot, p), 'utf8'));
+const require = createRequire(import.meta.url);
 
-const vivliostyleConfigSchema = importJSON(
-  'schemas/vivliostyle/vivliostyleConfig.schema.json',
-);
+const vivliostyleConfigSchema = require('../../schemas/vivliostyle/vivliostyleConfig.schema.json');
 
 export { vivliostyleConfigSchema };

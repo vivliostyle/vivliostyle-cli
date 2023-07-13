@@ -1,9 +1,10 @@
 import execa from 'execa';
 import fs from 'node:fs';
-import shelljs from 'shelljs';
 import path from 'upath';
-import { rootPath } from './commandUtil.js';
+import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
+import { moveSync } from '../src/util.js';
+import { rootPath } from './commandUtil.js';
 
 const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
 
@@ -76,9 +77,10 @@ it('test the init command with long option', async () => {
   );
 
   // Change file extension and load Common JS
-  shelljs.mv(
+  moveSync(
     path.join(outputDir, 'vivliostyle.config.js'),
     path.join(outputDir, 'vivliostyle.config.cjs'),
+    { overwrite: true },
   );
   const { default: config } = await import(
     path.join(outputDir, 'vivliostyle.config.cjs')
@@ -117,9 +119,10 @@ it('test the init command with short option', async () => {
   );
 
   // Change file extension and load Common JS
-  shelljs.mv(
+  moveSync(
     path.join(outputDir, 'vivliostyle.config.js'),
     path.join(outputDir, 'vivliostyle.config.cjs'),
+    { overwrite: true },
   );
   const { default: config } = await import(
     path.join(outputDir, 'vivliostyle.config.cjs')

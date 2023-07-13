@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`allow a loose specifier of a theme direcory: valid.5.config.js 1`] = `
+exports[`allow a loose specifier of a theme direcory > valid.5.config.js 1`] = `
 Object {
   "author": "pkgAuthor",
   "bleed": undefined,
@@ -489,7 +489,7 @@ Object {
 }
 `;
 
-exports[`override option by CLI command: valid.1.config.js 1`] = `
+exports[`override option by CLI command > valid.1.config.js 1`] = `
 Object {
   "author": "myAuthor",
   "bleed": undefined,
@@ -620,7 +620,7 @@ Object {
 }
 `;
 
-exports[`parse array of config: valid.1.config.js 1`] = `
+exports[`parse array of config > valid.1.config.js 1`] = `
 Object {
   "author": "author",
   "bleed": undefined,
@@ -762,7 +762,7 @@ Object {
 }
 `;
 
-exports[`parse array of config: valid.2.config.js 1`] = `
+exports[`parse array of config > valid.2.config.js 1`] = `
 Object {
   "author": "pkgAuthor",
   "bleed": undefined,
@@ -837,7 +837,7 @@ Object {
 }
 `;
 
-exports[`parse array of config: valid.3.config.js 1`] = `
+exports[`parse array of config > valid.3.config.js 1`] = `
 Object {
   "author": "pkgAuthor",
   "bleed": undefined,
@@ -912,7 +912,7 @@ Object {
 }
 `;
 
-exports[`parse vivliostyle config: valid.1.config.js 1`] = `
+exports[`parse vivliostyle config > valid.1.config.js 1`] = `
 Object {
   "author": "author",
   "bleed": undefined,
@@ -1054,7 +1054,7 @@ Object {
 }
 `;
 
-exports[`parse vivliostyle config: valid.2.config.js 1`] = `
+exports[`parse vivliostyle config > valid.2.config.js 1`] = `
 Object {
   "author": "pkgAuthor",
   "bleed": undefined,
@@ -1129,7 +1129,7 @@ Object {
 }
 `;
 
-exports[`parse vivliostyle config: valid.3.config.js 1`] = `
+exports[`parse vivliostyle config > valid.3.config.js 1`] = `
 Object {
   "author": "pkgAuthor",
   "bleed": undefined,

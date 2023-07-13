@@ -7,7 +7,6 @@ import type { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import url from 'node:url';
-import shelljs from 'shelljs';
 import path from 'upath';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
@@ -28,7 +27,7 @@ import type {
   PublicationManifest,
   ResourceCategorization,
 } from '../schema/publication.schema.js';
-import { DetailError, debug, logWarn, useTmpDirectory } from '../util.js';
+import { DetailError, copy, debug, logWarn, useTmpDirectory } from '../util.js';
 
 interface ManifestEntry {
   href: string;
@@ -113,7 +112,7 @@ export async function exportEpub({
 
   const [tmpDir] = await useTmpDirectory();
   fs.mkdirSync(path.join(tmpDir, 'META-INF'), { recursive: true });
-  shelljs.cp('-rf', webpubDir, path.join(tmpDir, 'EPUB'));
+  await copy(webpubDir, path.join(tmpDir, 'EPUB'));
 
   const uid = `urn:uuid:${uuid()}`;
   const entryHtmlRelPath =

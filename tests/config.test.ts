@@ -1,4 +1,5 @@
-import shelljs from 'shelljs';
+import { afterAll, expect, it } from 'vitest';
+import { removeSync } from '../src/util.js';
 import {
   assertArray,
   assertSingleItem,
@@ -25,7 +26,7 @@ const configFilePath = configFiles.reduce(
 );
 
 afterAll(() => {
-  shelljs.rm('-f', resolveFixture('config/.vs-*'));
+  removeSync(resolveFixture('config/.vs-*'));
 });
 
 it('parse vivliostyle config', async () => {
@@ -225,6 +226,7 @@ it('yields a config from frontmatter', async () => {
 });
 
 it('parse array of config', async () => {
+  console.log(configFilePath['valid.4']);
   const validConfig = await getMergedConfig(['-c', configFilePath['valid.4']]);
   maskConfig(validConfig);
   assertArray(validConfig);
