@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import fs from 'node:fs';
 import { CONTAINER_IMAGE } from './container.js';
-import { cwd, log, upath } from './util.js';
+import { cwd, log, setLogLevel, upath } from './util.js';
 
 export interface InitCliFlags {
   title?: string;
@@ -9,9 +9,12 @@ export interface InitCliFlags {
   language?: string;
   theme?: string;
   size?: string;
+  logLevel?: 'silent' | 'info' | 'debug';
 }
 
 export async function init(cliFlags: InitCliFlags) {
+  setLogLevel(cliFlags.logLevel);
+
   const vivliostyleConfigPath = upath.join(cwd, 'vivliostyle.config.js');
 
   if (fs.existsSync(vivliostyleConfigPath)) {

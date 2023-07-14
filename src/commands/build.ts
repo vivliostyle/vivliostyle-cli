@@ -37,6 +37,7 @@ try {
     viewer: options.viewer,
     viewerParam: options.viewerParam,
     // browser: options.browser,
+    logLevel: options.logLevel,
     bypassedPdfBuilderOption: options.bypassedPdfBuilderOption,
     executableChromium: options.executableChromium, // TODO: Remove it in the next major version up
   }).catch(gracefulError);

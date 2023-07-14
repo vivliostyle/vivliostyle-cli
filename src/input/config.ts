@@ -120,6 +120,7 @@ export interface CliFlags {
   viewerParam?: string;
   browser?: 'chromium' | 'firefox' | 'webkit';
   readingProgression?: 'ltr' | 'rtl';
+  logLevel?: 'silent' | 'info' | 'debug';
   /** @deprecated */ executableChromium?: string;
 }
 

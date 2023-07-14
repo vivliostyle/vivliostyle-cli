@@ -12,6 +12,7 @@ try {
     language: options.language,
     size: options.size,
     theme: options.theme,
+    logLevel: options.logLevel,
   }).catch(gracefulError);
 } catch (err) {
   if (err instanceof Error) {

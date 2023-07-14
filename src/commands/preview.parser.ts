@@ -70,6 +70,14 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
 Currently, Firefox and Webkit support preview command only!`,
       ).choices(['chromium', 'firefox', 'webkit']),
     )
+    .addOption(
+      new Option(
+        '--log-level <level>',
+        'specify a log level of console outputs',
+      )
+        .choices(['silent', 'info', 'debug'])
+        .default('info'),
+    )
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp());
   return program;

@@ -29,6 +29,7 @@ import {
   cwd,
   debug,
   log,
+  setLogLevel,
   startLogging,
   stopLogging,
   upath,
@@ -65,6 +66,8 @@ export async function getFullConfig(
 }
 
 export async function build(cliFlags: BuildCliFlags) {
+  setLogLevel(cliFlags.logLevel);
+
   if (cliFlags.bypassedPdfBuilderOption) {
     const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
     // Host doesn't know browser path inside of container

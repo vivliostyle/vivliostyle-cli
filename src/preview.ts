@@ -25,6 +25,7 @@ import {
   logSuccess,
   pathContains,
   pathEquals,
+  setLogLevel,
   startLogging,
   stopLogging,
   upath,
@@ -35,6 +36,8 @@ let timer: NodeJS.Timeout;
 export interface PreviewCliFlags extends CliFlags {}
 
 export async function preview(cliFlags: PreviewCliFlags) {
+  setLogLevel(cliFlags.logLevel);
+
   startLogging('Collecting preview config');
 
   const loadedConf = await collectVivliostyleConfig(cliFlags);

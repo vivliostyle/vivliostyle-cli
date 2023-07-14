@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 
 export function setupInitParserProgram(): Command {
   const program = new Command();
@@ -9,6 +9,14 @@ export function setupInitParserProgram(): Command {
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
     .option('-s, --size  <size>', 'paper size')
-    .option('-T, --theme <theme>', 'theme');
+    .option('-T, --theme <theme>', 'theme')
+    .addOption(
+      new Option(
+        '--log-level <level>',
+        'specify a log level of console outputs',
+      )
+        .choices(['silent', 'info', 'debug'])
+        .default('info'),
+    );
   return program;
 }

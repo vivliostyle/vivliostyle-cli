@@ -57,8 +57,24 @@ exitSignals.forEach((sig) => {
   });
 });
 
+/**
+ * 0: silent
+ * 1: info
+ * 2: debug
+ */
+let logLevel: 0 | 1 | 2 = 0;
+export function setLogLevel(level?: 'silent' | 'info' | 'debug') {
+  if (!level) {
+    return;
+  }
+  logLevel = { silent: 0 as const, info: 1 as const, debug: 2 as const }[level];
+  if (logLevel >= 2) {
+    debugConstructor.enable('vs-cli');
+  }
+}
+
 export function startLogging(text?: string) {
-  if (process.env.NODE_ENV === 'test') {
+  if (logLevel < 1) {
     return;
   }
   // If text is not set, erase previous log with space character
@@ -66,7 +82,7 @@ export function startLogging(text?: string) {
 }
 
 export function stopLogging(text?: string, symbol?: string) {
-  if (process.env.NODE_ENV === 'test') {
+  if (logLevel < 1) {
     return;
   }
   if (!text) {
@@ -77,11 +93,14 @@ export function stopLogging(text?: string, symbol?: string) {
 }
 
 export function log(...obj: any) {
+  if (logLevel < 1) {
+    return;
+  }
   console.log(...obj);
 }
 
 export function logUpdate(...obj: string[]) {
-  if (process.env.NODE_ENV === 'test') {
+  if (logLevel < 1) {
     return;
   }
   if (ora.isSpinning) {
@@ -92,6 +111,9 @@ export function logUpdate(...obj: string[]) {
 }
 
 export function logSuccess(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
   const { isSpinning, text } = ora;
   ora.succeed(obj.join(' '));
   if (isSpinning) {
@@ -100,6 +122,9 @@ export function logSuccess(...obj: string[]) {
 }
 
 export function logError(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
   const { isSpinning, text } = ora;
   ora.fail(obj.join(' '));
   if (isSpinning) {
@@ -108,6 +133,9 @@ export function logError(...obj: string[]) {
 }
 
 export function logWarn(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
   const { isSpinning, text } = ora;
   ora.warn(obj.join(' '));
   if (isSpinning) {
@@ -116,6 +144,9 @@ export function logWarn(...obj: string[]) {
 }
 
 export function logInfo(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
   const { isSpinning, text } = ora;
   ora.info(obj.join(' '));
   if (isSpinning) {
