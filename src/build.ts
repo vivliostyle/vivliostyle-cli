@@ -36,10 +36,6 @@ import {
 } from './util.js';
 
 export interface BuildCliFlags extends CliFlags {
-  output?: {
-    output?: string;
-    format?: string;
-  }[];
   bypassedPdfBuilderOption?: string;
 }
 
