@@ -170,8 +170,8 @@ Object {
     },
   ],
   "resources": Array [
-    "publication.json",
     "foo.md",
+    "publication.json",
   ],
   "type": "Book",
 }
@@ -242,10 +242,10 @@ Object {
   ],
   "readingProgression": "rtl",
   "resources": Array [
-    "publication.json",
-    "vivliostyle.config.json",
     "doc/one.md",
     "doc/two.md",
+    "publication.json",
+    "vivliostyle.config.json",
   ],
   "type": "Book",
 }

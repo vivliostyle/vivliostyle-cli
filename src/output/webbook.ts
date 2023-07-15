@@ -25,6 +25,17 @@ import {
   upath,
 } from '../util.js';
 
+function sortManifestResources(manifest: PublicationManifest) {
+  if (!Array.isArray(manifest.resources)) {
+    return;
+  }
+  manifest.resources = [...manifest.resources].sort((a, b) =>
+    (typeof a === 'string' ? a : a.url) > (typeof b === 'string' ? b : b.url)
+      ? 1
+      : -1,
+  );
+}
+
 export async function prepareWebPublicationDirectory({
   outputDir,
 }: {
@@ -151,6 +162,7 @@ export async function retrieveWebbookEntry({
         ({ url }) => !referencedContents.includes(url),
       ),
     ];
+    sortManifestResources(manifest);
   }
 
   debug(
@@ -212,6 +224,7 @@ export async function supplyWebPublicationManifestForWebbook({
       resources: allFiles.filter((f) => f !== entry),
     },
   );
+  sortManifestResources(manifest);
   const link = document.createElement('link');
   link.setAttribute('rel', 'publication');
   link.setAttribute('type', 'application/ld+json');
@@ -344,6 +357,7 @@ export async function copyWebPublicationAssets({
       return file;
     }),
   ];
+  sortManifestResources(manifest);
   fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
   return manifest;
 }
