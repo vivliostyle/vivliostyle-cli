@@ -4,6 +4,7 @@ import tmp from 'tmp';
 import { afterEach, expect, it, vi } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
 import { PublicationManifest } from '../src/schema/publication.schema.js';
+import { toTree } from './commandUtil.js';
 
 vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
 
@@ -106,7 +107,7 @@ it('generate EPUB from single HTML with pub manifest', async () => {
     epubVersion: '3.0',
   });
 
-  expect(vol.toTree()).toMatchSnapshot('tree');
+  expect(toTree(vol)).toMatchSnapshot('tree');
   const file = vol.toJSON();
   expect(file['/tmp/1/META-INF/container.xml']).toMatchSnapshot(
     'container.xml',
@@ -172,7 +173,7 @@ it('generate EPUB from series of HTML files', async () => {
     epubVersion: '3.0',
   });
 
-  expect(vol.toTree()).toMatchSnapshot('tree');
+  expect(toTree(vol)).toMatchSnapshot('tree');
   const file = vol.toJSON();
   expect(
     file['/tmp/1/EPUB/content.opf']

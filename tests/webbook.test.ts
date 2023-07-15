@@ -3,6 +3,7 @@ import { format } from 'prettier';
 import { afterEach, expect, it, vi } from 'vitest';
 import { build } from '../src/index.js';
 import { VivliostyleConfigSchema } from '../src/schema/vivliostyleConfig.schema.js';
+import { toTree } from './commandUtil.js';
 
 vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
 
@@ -25,7 +26,7 @@ it('generate webpub from single markdown file', async () => {
     targets: [{ path: '/work/output', format: 'webpub' }],
   });
 
-  expect(vol.toTree()).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   delete manifest.dateModified;
@@ -49,7 +50,7 @@ it('generate webpub from vivliostyle.config.js', async () => {
     configPath: '/work/input/vivliostyle.config.json',
   });
 
-  expect(vol.toTree()).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   delete manifest.dateModified;
@@ -86,7 +87,7 @@ it('generate webpub from a plain HTML', async () => {
     targets: [{ path: '/work/output', format: 'webpub' }],
   });
 
-  expect(vol.toTree()).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   delete manifest.dateModified;
@@ -138,7 +139,7 @@ it('generate webpub from a single-document publication', async () => {
     targets: [{ path: '/work/output', format: 'webpub' }],
   });
 
-  expect(vol.toTree()).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const entry = file['/work/output/webbook.html'];
   expect(format(entry as string, { parser: 'html' })).toMatchSnapshot();
@@ -162,8 +163,7 @@ it('generate webpub from a remote HTML document', async () => {
     input: 'https://example.com/work/input',
     targets: [{ path: '/work/output', format: 'webpub' }],
   });
-
-  expect(vol.toTree()).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   delete manifest.dateModified;
