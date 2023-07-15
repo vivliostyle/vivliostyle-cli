@@ -1,14 +1,27 @@
+/// <reference path="../types/jsdom.d.ts" />
+import {
+  AbortablePromise,
+  BaseOptions,
+  ConstructorOptions,
+  FetchOptions,
+  FileOptions,
+  SupportedContentTypes,
+} from 'jsdom';
+import { fs as memfs } from 'memfs';
+import { lookup as mime } from 'mime-types';
 import assert from 'node:assert';
-import URL from 'node:url';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { vi } from 'vitest';
 import { setupBuildParserProgram } from '../src/commands/build.parser.js';
 import {
+  MergedConfig,
   collectVivliostyleConfig,
   mergeConfig,
-  MergedConfig,
 } from '../src/input/config.js';
 import { upath } from '../src/util.js';
 
-export const rootPath = upath.join(URL.fileURLToPath(import.meta.url), '../..');
+export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
 
 export const getMergedConfig = async (
   args: string[],
@@ -65,4 +78,98 @@ export function assertSingleItem<T = unknown>(
 
 export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
   return assert(Array.isArray(value));
+}
+
+export async function getMockedJSDOM(): Promise<typeof import('jsdom')> {
+  const jsdom = await vi.importActual<typeof import('jsdom')>('jsdom');
+  const { JSDOM: JSDOMBase, ResourceLoader: ResourceLoaderBase } = jsdom;
+
+  // https://github.com/jsdom/jsdom/blob/a39e0ec4ce9a8806692d986a7ed0cd565ec7498a/lib/api.js#L183
+  function normalizeFromFileOptions(
+    filename: string,
+    options: FileOptions,
+  ): ConstructorOptions {
+    const normalized = { ...options } as ConstructorOptions;
+    if (normalized.contentType === undefined) {
+      const extname = path.extname(filename);
+      if (extname === '.xhtml' || extname === '.xht' || extname === '.xml') {
+        normalized.contentType = 'application/xhtml+xml';
+      }
+    }
+    if (normalized.url === undefined) {
+      normalized.url = pathToFileURL(filename) as any;
+    }
+    return normalized;
+  }
+
+  function mapToLocalPath(urlString: string): string {
+    const url = new URL(urlString);
+    let pathname = url.pathname;
+    if (!path.extname(pathname)) {
+      pathname = path.posix.join(pathname, 'index.html');
+    }
+    return pathname;
+  }
+
+  class JSDOM extends JSDOMBase {
+    static async fromURL(url: string, options: BaseOptions = {}) {
+      const resourceLoader =
+        options.resources instanceof ResourceLoader
+          ? options.resources
+          : new ResourceLoader();
+      const fetcher = resourceLoader.fetch(url) as AbortablePromise<Buffer>;
+      const buffer = await fetcher;
+      if (!buffer) {
+        throw new Error();
+      }
+      return new JSDOMBase(buffer, {
+        ...options,
+        url,
+        contentType: fetcher?.response?.headers[
+          'content-type'
+        ] as SupportedContentTypes,
+      });
+    }
+
+    static async fromFile(url: string, options: FileOptions = {}) {
+      const buffer = await memfs.promises.readFile(url);
+      return new JSDOMBase(buffer, normalizeFromFileOptions(url, options));
+    }
+  }
+
+  class ResourceLoader extends ResourceLoaderBase {
+    _readFile(filePath) {
+      return memfs.promises.readFile(filePath) as AbortablePromise<Buffer>;
+    }
+    fetch(urlString: string, options: FetchOptions = {}) {
+      if (/^https?:/.test(urlString)) {
+        const url = new URL(urlString);
+        const fetcher = this._readFile(
+          mapToLocalPath(urlString),
+        ) as AbortablePromise<Buffer>;
+        fetcher.response = {
+          headers: {
+            'content-type': mime(url.pathname) || 'text/html',
+          },
+        } as any;
+        return fetcher;
+      }
+      return super.fetch(urlString, options);
+    }
+  }
+  return { ...jsdom, JSDOM, ResourceLoader };
+}
+
+export function getMockedTmp() {
+  const mod = {
+    __callCount: 0,
+    dir: (_, cb) => {
+      const target = `/tmp/${++mod.__callCount}`;
+      memfs.mkdirSync(target, { recursive: true });
+      cb(null, target);
+    },
+  };
+  return { default: mod } as unknown as typeof import('tmp') & {
+    __callCount: number;
+  };
 }

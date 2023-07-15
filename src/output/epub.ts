@@ -26,7 +26,14 @@ import type {
   PublicationManifest,
   ResourceCategorization,
 } from '../schema/publication.schema.js';
-import { DetailError, copy, debug, logWarn, upath, useTmpDirectory } from '../util.js';
+import {
+  DetailError,
+  copy,
+  debug,
+  logWarn,
+  upath,
+  useTmpDirectory,
+} from '../util.js';
 
 interface ManifestEntry {
   href: string;
@@ -37,7 +44,12 @@ interface ManifestEntry {
 interface LandmarkEntry {
   type: string;
   href: string;
+  text: string;
 }
+
+const TOC_ID = 'toc';
+const LANDMARKS_ID = 'landmarks';
+const PAGELIST_ID = 'page-list';
 
 const changeExtname = (filepath: string, newExt: string) => {
   let ext = upath.extname(filepath);
@@ -151,14 +163,6 @@ export async function exportEpub({
     (e) => /\.html?$/.test(e.url),
   );
 
-  const landmarks: { type: string; href: string }[] = [];
-  if (htmlCoverResource) {
-    landmarks.push({
-      type: 'cover',
-      href: changeExtname(htmlCoverResource.url, '.xhtml'),
-    });
-  }
-
   const manifestItem = [
     ...[manifest.links || []].flat(),
     ...[manifest.readingOrder || []].flat(),
@@ -208,7 +212,28 @@ export async function exportEpub({
     );
     tocHtml = readingOrder[0].url;
   }
+  if (!(tocHtml in manifestItem)) {
+    manifestItem[tocHtml] = {
+      href: changeExtname(tocHtml, '.xhtml'),
+      mediaType: 'application/xhtml+xml',
+    };
+  }
   appendManifestProperty(manifestItem[tocHtml], 'nav');
+
+  const landmarks: LandmarkEntry[] = [
+    {
+      type: 'toc',
+      href: `${manifestItem[tocHtml].href}#${TOC_ID}`,
+      text: 'Table of Contents',
+    },
+  ];
+  if (htmlCoverResource) {
+    landmarks.push({
+      type: 'cover',
+      href: changeExtname(htmlCoverResource.url, '.xhtml'),
+      text: 'Cover Page',
+    });
+  }
 
   const processHtml = async (target: string, isTocHtml: boolean) => {
     let parseResult: Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
@@ -306,7 +331,6 @@ export async function exportEpub({
       uid,
       docTitle,
       docLanguages,
-      tocXhtml: manifestItem[tocHtml].href,
       manifest,
       readingOrder,
       manifestItems: Object.values(manifestItem),
@@ -372,7 +396,7 @@ async function transpileHtmlToXhtml({
       if (parsed) {
         tocParseTree = parsed;
         const nav = replaceWithNavElement(parsed.element);
-        nav.setAttribute('id', 'toc');
+        nav.setAttribute('id', TOC_ID);
         nav.setAttribute('epub:type', 'toc');
       }
     }
@@ -383,14 +407,15 @@ async function transpileHtmlToXhtml({
     ) {
       const nav = document.createElement('nav');
       nav.setAttribute('epub:type', 'landmarks');
-      nav.setAttribute('id', 'landmarks');
+      nav.setAttribute('id', LANDMARKS_ID);
       nav.setAttribute('hidden', '');
       const ol = document.createElement('ol');
-      for (const { type, href } of landmarks) {
+      for (const { type, href, text } of landmarks) {
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.setAttribute('epub:type', type);
-        a.setAttribute('href', href);
+        a.setAttribute('href', getRelativeHref(href, '', target));
+        a.text = text;
         li.appendChild(a);
         ol.appendChild(li);
       }
@@ -404,7 +429,7 @@ async function transpileHtmlToXhtml({
     if (parsed) {
       pageListParseTree = parsed;
       const nav = replaceWithNavElement(parsed.element);
-      nav.setAttribute('id', 'page-list');
+      nav.setAttribute('id', PAGELIST_ID);
       nav.setAttribute('epub:type', 'page-list');
     }
   }
@@ -444,7 +469,7 @@ export async function supplyTocNavElement({
   const { document } = tocDom.window;
 
   const nav = document.createElement('nav');
-  nav.setAttribute('id', 'toc');
+  nav.setAttribute('id', TOC_ID);
   nav.setAttribute('role', 'doc-toc');
   nav.setAttribute('epub:type', 'toc');
   nav.setAttribute('hidden', '');
@@ -486,7 +511,6 @@ function buildEpubPackageDocument({
   uid,
   docTitle,
   docLanguages,
-  tocXhtml,
   readingOrder,
   manifestItems,
   landmarks,
@@ -495,7 +519,6 @@ function buildEpubPackageDocument({
   uid: string;
   docTitle: string;
   docLanguages: string[];
-  tocXhtml: string;
   readingOrder: PublicationLinks[];
   manifestItems: ManifestEntry[];
   landmarks: LandmarkEntry[];
@@ -615,13 +638,11 @@ function buildEpubPackageDocument({
         })),
       },
       guide: {
-        reference: [
-          {
-            _type: 'toc',
-            _href: manifestItems.find((v) => v.href === tocXhtml)!.href,
-          },
-          ...landmarks.map(({ type, href }) => ({ _type: type, _href: href })),
-        ],
+        reference: landmarks.map(({ type, href, text }) => ({
+          _type: type,
+          _href: href,
+          _title: text,
+        })),
       },
     },
   });

@@ -1,0 +1,287 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generate EPUB from series of HTML files > content.opf 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<package xmlns=\\"http://www.idpf.org/2007/opf\\" version=\\"3.0\\" unique-identifier=\\"bookid\\" xml:lang=\\"en\\">
+  <metadata xmlns:dc=\\"http://purl.org/dc/elements/1.1/\\">
+    
+    <dc:title>My book</dc:title>
+    <dc:language>en</dc:language>
+    
+  </metadata>
+  <manifest>
+    <item id=\\"srcindexxhtml\\" href=\\"src/index.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav\\"></item>
+    <item id=\\"srcaindexxhtml\\" href=\\"src/a/index.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
+    <item id=\\"srcbcdxhtml\\" href=\\"src/b/c/d.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
+    <item id=\\"tocncx\\" href=\\"toc.ncx\\" media-type=\\"application/x-dtbncx+xml\\"></item>
+  </manifest>
+  <spine toc=\\"tocncx\\">
+    <itemref idref=\\"srcindexxhtml\\"></itemref>
+    <itemref idref=\\"srcaindexxhtml\\"></itemref>
+    <itemref idref=\\"srcbcdxhtml\\"></itemref>
+  </spine>
+  <guide>
+    <reference type=\\"toc\\" href=\\"src/index.xhtml#toc\\" title=\\"Table of Contents\\"></reference>
+  </guide>
+</package>
+"
+`;
+
+exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<html
+  xmlns=\\"http://www.w3.org/1999/xhtml\\"
+  lang=\\"en\\"
+  xmlns:epub=\\"http://www.idpf.org/2007/ops\\"
+>
+  <head>
+    <title>My book</title>
+  </head>
+  <body>
+    <a href=\\"index.xhtml#foo\\">1</a>
+    <a href=\\"a\\">2</a>
+    <a href=\\"b/c/d\\">3</a>
+
+    <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
+      <ol>
+        <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
+      </ol>
+    </nav>
+    <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\" hidden=\\"\\">
+      <ol>
+        <li><a href=\\"index.xhtml\\">My book</a></li>
+        <li><a href=\\"a/index.xhtml\\">yuno</a></li>
+        <li><a href=\\"b/c/d.xhtml\\">yunocchi</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>
+"
+`;
+
+exports[`generate EPUB from series of HTML files > toc.ncx 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<ncx xmlns=\\"http://www.daisy.org/z3986/2005/ncx/\\" version=\\"2005-1\\">
+  <head>
+    
+    <meta name=\\"dtb:depth\\" content=\\"1\\"></meta>
+    <meta name=\\"dtb:totalPageCount\\" content=\\"0\\"></meta>
+    <meta name=\\"dtb:maxPageNumber\\" content=\\"0\\"></meta>
+  </head>
+  <docTitle>
+    <text>My book</text>
+  </docTitle>
+  <navMap>
+    <navPoint id=\\"navpoint-1\\">
+      <navLabel>
+        <text>My book</text>
+      </navLabel>
+      <content src=\\"src/index.xhtml\\"></content>
+    </navPoint>
+    <navPoint id=\\"navpoint-2\\">
+      <navLabel>
+        <text>yuno</text>
+      </navLabel>
+      <content src=\\"src/a/index.xhtml\\"></content>
+    </navPoint>
+    <navPoint id=\\"navpoint-3\\">
+      <navLabel>
+        <text>yunocchi</text>
+      </navLabel>
+      <content src=\\"src/b/c/d.xhtml\\"></content>
+    </navPoint>
+  </navMap>
+</ncx>
+"
+`;
+
+exports[`generate EPUB from series of HTML files > tree 1`] = `
+"/
+├─ tmp/
+│  └─ 1/
+│     ├─ EPUB/
+│     │  ├─ content.opf
+│     │  ├─ src/
+│     │  │  ├─ a/
+│     │  │  │  └─ index.xhtml
+│     │  │  ├─ b/
+│     │  │  │  └─ c/
+│     │  │  │     └─ d.xhtml
+│     │  │  └─ index.xhtml
+│     │  └─ toc.ncx
+│     └─ META-INF/
+│        └─ container.xml
+└─ work/
+   ├─ input/
+   │  └─ src/
+   │     ├─ a/
+   │     │  └─ index.html
+   │     ├─ b/
+   │     │  └─ c/
+   │     │     └─ d.html
+   │     └─ index.html
+   └─ output.epub"
+`;
+
+exports[`generate EPUB from single HTML with pub manifest > container.xml 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<container version=\\"1.0\\" xmlns=\\"urn:oasis:names:tc:opendocument:xmlns:container\\">
+  <rootfiles>
+    <rootfile full-path=\\"EPUB/content.opf\\" media-type=\\"application/oebps-package+xml\\" />
+  </rootfiles>
+</container>"
+`;
+
+exports[`generate EPUB from single HTML with pub manifest > content.opf 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<package xmlns=\\"http://www.idpf.org/2007/opf\\" version=\\"3.0\\" unique-identifier=\\"bookid\\" xml:lang=\\"ja-JP\\">
+  <metadata xmlns:dc=\\"http://purl.org/dc/elements/1.1/\\">
+    
+    <dc:title>Document</dc:title>
+    <dc:language>ja-JP</dc:language>
+    <dc:creator id=\\"author-1\\">宮沢賢治</dc:creator>
+    <dc:creator id=\\"creator-1\\">foo</dc:creator>
+    <dc:creator id=\\"creator-2\\">bar</dc:creator>
+    <dc:creator id=\\"editor-1\\">baz</dc:creator>
+    <dc:creator id=\\"artist-1\\">a</dc:creator>
+    <dc:creator id=\\"illustrator-1\\">i</dc:creator>
+    <dc:creator id=\\"colorist-1\\">x</dc:creator>
+    <dc:creator id=\\"penciler-1\\">q</dc:creator>
+    <dc:creator id=\\"inker-1\\">c</dc:creator>
+    <dc:creator id=\\"letterer-1\\">b</dc:creator>
+    <dc:creator id=\\"translator-1\\">l</dc:creator>
+    <dc:creator id=\\"readby-1\\">o</dc:creator>
+    <dc:publisher id=\\"publisher-1\\">Publisher</dc:publisher>
+    <dc:contributor id=\\"contributor-1\\">Contributor</dc:contributor>
+    <dc:rights>© 2023 Acme Corporation</dc:rights>
+    <dc:subject>Subject</dc:subject>
+    
+  </metadata>
+  <manifest>
+    <item id=\\"coverpng\\" href=\\"cover.png\\" media-type=\\"image/png\\" properties=\\"cover-image\\"></item>
+    <item id=\\"indexxhtml\\" href=\\"index.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav mathml remote-resources scripted svg\\"></item>
+    <item id=\\"tocncx\\" href=\\"toc.ncx\\" media-type=\\"application/x-dtbncx+xml\\"></item>
+  </manifest>
+  <spine toc=\\"tocncx\\" page-progression-direction=\\"rtl\\">
+    <itemref idref=\\"indexxhtml\\"></itemref>
+  </spine>
+  <guide>
+    <reference type=\\"toc\\" href=\\"index.xhtml#toc\\" title=\\"Table of Contents\\"></reference>
+  </guide>
+</package>
+"
+`;
+
+exports[`generate EPUB from single HTML with pub manifest > index.xhtml 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<html
+  xmlns=\\"http://www.w3.org/1999/xhtml\\"
+  lang=\\"ja-JP\\"
+  xmlns:epub=\\"http://www.idpf.org/2007/ops\\"
+>
+  <head>
+    <title>Document</title>
+    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"assets/style.css\\" />
+    <link
+      rel=\\"publication\\"
+      type=\\"application/ld+json\\"
+      href=\\"publication.json\\"
+    />
+  </head>
+  <body>
+    <nav role=\\"doc-toc\\" id=\\"toc\\" epub:type=\\"toc\\">
+      <h1>Table of Contents</h1>
+      <ol>
+        <li><a href=\\"index.xhtml#intro\\">Intro</a></li>
+        <li>
+          <a href=\\"index.xhtml#main\\">Main</a>
+          <ol>
+            <li><a href=\\"index.xhtml#main-1\\">Main 1</a></li>
+            <li><a href=\\"index.xhtml#main-2\\">Main 2</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+    <nav role=\\"doc-pagelist\\" id=\\"page-list\\" epub:type=\\"page-list\\">
+      <ol>
+        <li><a href=\\"index.xhtml#intro\\">Intro</a></li>
+        <li><a href=\\"index.xhtml#main\\">Main</a></li>
+        <li><a href=\\"index.xhtml#main-1\\">Main 1</a></li>
+        <li><a href=\\"index.xhtml#main-2\\">Main 2</a></li>
+      </ol>
+    </nav>
+    <math xmlns=\\"http://www.w3.org/1998/Math/MathML\\" />
+    <svg xmlns=\\"http://www.w3.org/2000/svg\\" />
+    <script src=\\"https://example.com/remote-script.js\\"></script>
+
+    <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
+      <ol>
+        <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>
+"
+`;
+
+exports[`generate EPUB from single HTML with pub manifest > toc.ncx 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<ncx xmlns=\\"http://www.daisy.org/z3986/2005/ncx/\\" version=\\"2005-1\\">
+  <head>
+    
+    <meta name=\\"dtb:depth\\" content=\\"1\\"></meta>
+    <meta name=\\"dtb:totalPageCount\\" content=\\"0\\"></meta>
+    <meta name=\\"dtb:maxPageNumber\\" content=\\"0\\"></meta>
+  </head>
+  <docTitle>
+    <text>Document</text>
+  </docTitle>
+  <navMap>
+    <navPoint id=\\"navpoint-1\\">
+      <navLabel>
+        <text>Intro</text>
+      </navLabel>
+      <content src=\\"index.xhtml#intro\\"></content>
+    </navPoint>
+    <navPoint id=\\"navpoint-2\\">
+      <navLabel>
+        <text>Main</text>
+      </navLabel>
+      <content src=\\"index.xhtml#main\\"></content>
+      <navPoint id=\\"navpoint-3\\">
+        <navLabel>
+          <text>Main 1</text>
+        </navLabel>
+        <content src=\\"index.xhtml#main-1\\"></content>
+      </navPoint>
+      <navPoint id=\\"navpoint-4\\">
+        <navLabel>
+          <text>Main 2</text>
+        </navLabel>
+        <content src=\\"index.xhtml#main-2\\"></content>
+      </navPoint>
+    </navPoint>
+  </navMap>
+</ncx>
+"
+`;
+
+exports[`generate EPUB from single HTML with pub manifest > tree 1`] = `
+"/
+├─ tmp/
+│  └─ 1/
+│     ├─ EPUB/
+│     │  ├─ content.opf
+│     │  ├─ cover.png
+│     │  ├─ index.xhtml
+│     │  ├─ publication.json
+│     │  └─ toc.ncx
+│     └─ META-INF/
+│        └─ container.xml
+└─ work/
+   ├─ input/
+   │  ├─ cover.png
+   │  ├─ index.html
+   │  └─ publication.json
+   └─ output.epub"
+`;
