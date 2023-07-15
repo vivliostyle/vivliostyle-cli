@@ -40,7 +40,6 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
         'Direction of reading progression',
       ).choices(['ltr', 'rtl']),
     )
-    .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',
       `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
@@ -75,10 +74,11 @@ Currently, Firefox and Webkit support preview command only!`,
         '--log-level <level>',
         'specify a log level of console outputs',
       )
-        .choices(['silent', 'info', 'debug'])
+        .choices(['silent', 'info', 'verbose', 'debug'])
         .default('info'),
     )
     // TODO: Remove it in the next major version up
-    .addOption(new Option('--executable-chromium <path>').hideHelp());
+    .addOption(new Option('--executable-chromium <path>').hideHelp())
+    .addOption(new Option('--verbose').hideHelp());
   return program;
 }

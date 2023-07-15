@@ -87,13 +87,13 @@ export async function buildPDF({
   browserType,
   image,
   sandbox,
-  verbose,
   timeout,
   entryContextDir,
   entries,
   httpServer,
   viewer,
   viewerParam,
+  logLevel,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
@@ -169,7 +169,7 @@ export async function buildPDF({
         }
         break;
     }
-    if (!verbose) {
+    if (logLevel === 'silent' || logLevel === 'info') {
       return;
     }
     if (msg.type() === 'error') {

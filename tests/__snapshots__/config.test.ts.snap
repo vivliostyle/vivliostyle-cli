@@ -51,6 +51,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -88,7 +89,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
   "title": "pkgName",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -135,6 +135,7 @@ Object {
     "format": "epub-opf",
   },
   "language": undefined,
+  "logLevel": "info",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -154,7 +155,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/themes",
   "timeout": 120000,
   "title": undefined,
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -201,6 +201,7 @@ Object {
     "format": "epub",
   },
   "language": undefined,
+  "logLevel": "info",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -220,7 +221,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/epubs/themes",
   "timeout": 120000,
   "title": undefined,
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -266,6 +266,7 @@ Object {
     "format": "webbook",
   },
   "language": undefined,
+  "logLevel": "info",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -285,7 +286,6 @@ Object {
   "themesDir": "__WORKSPACE__/themes",
   "timeout": 120000,
   "title": undefined,
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -332,6 +332,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
   "outputs": Array [
     Object {
@@ -349,7 +350,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/themes",
   "timeout": 120000,
   "title": undefined,
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -395,6 +395,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
   "outputs": Array [
     Object {
@@ -412,7 +413,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/themes",
   "timeout": 120000,
   "title": undefined,
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -458,6 +458,7 @@ Object {
     "format": "webbook",
   },
   "language": undefined,
+  "logLevel": "info",
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -477,7 +478,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
   "title": undefined,
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -564,6 +564,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": "myLanguage",
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -609,7 +610,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 42000,
   "title": "myTitle",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
     "hardLineBreaks": true,
@@ -699,6 +699,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": "language",
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -751,7 +752,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 1,
   "title": "title",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
     "hardLineBreaks": true,
@@ -805,6 +805,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -826,7 +827,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
   "title": "pkgName",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -880,6 +880,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -901,7 +902,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
   "title": "example",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -991,6 +991,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": "language",
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -1043,7 +1044,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 1,
   "title": "title",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
     "hardLineBreaks": true,
@@ -1097,6 +1097,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -1118,7 +1119,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
   "title": "pkgName",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -1172,6 +1172,7 @@ Object {
     "format": "pub-manifest",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__WORKSPACE__/tests/fixtures/config/publication.json",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -1193,7 +1194,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
   "title": "example",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,
@@ -1264,6 +1264,7 @@ Object {
     "format": "markdown",
   },
   "language": "language",
+  "logLevel": "info",
   "manifestPath": "__SNIP__",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -1310,7 +1311,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes",
   "timeout": 1,
   "title": "title",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": true,
     "hardLineBreaks": true,
@@ -1364,6 +1364,7 @@ Object {
     "format": "markdown",
   },
   "language": undefined,
+  "logLevel": "info",
   "manifestPath": "__SNIP__",
   "needToGenerateManifest": true,
   "outputs": Array [
@@ -1385,7 +1386,6 @@ Object {
   "themesDir": "__WORKSPACE__/tests/fixtures/config/themes",
   "timeout": 120000,
   "title": "Yuno",
-  "verbose": false,
   "vfmOptions": Object {
     "disableFormatHtml": false,
     "hardLineBreaks": false,

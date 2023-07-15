@@ -15,7 +15,7 @@ export function setupInitParserProgram(): Command {
         '--log-level <level>',
         'specify a log level of console outputs',
       )
-        .choices(['silent', 'info', 'debug'])
+        .choices(['silent', 'info', 'verbose', 'debug'])
         .default('info'),
     );
   return program;

@@ -64,15 +64,21 @@ exitSignals.forEach((sig) => {
 /**
  * 0: silent
  * 1: info
- * 2: debug
+ * 2: verbose
+ * 3: debug
  */
-let logLevel: 0 | 1 | 2 = 0;
-export function setLogLevel(level?: 'silent' | 'info' | 'debug') {
+let logLevel: 0 | 1 | 2 | 3 = 0;
+export function setLogLevel(level?: 'silent' | 'info' | 'verbose' | 'debug') {
   if (!level) {
     return;
   }
-  logLevel = { silent: 0 as const, info: 1 as const, debug: 2 as const }[level];
-  if (logLevel >= 2) {
+  logLevel = {
+    silent: 0 as const,
+    info: 1 as const,
+    verbose: 2 as const,
+    debug: 3 as const,
+  }[level];
+  if (logLevel >= 3) {
     debugConstructor.enable('vs-cli');
   }
 }

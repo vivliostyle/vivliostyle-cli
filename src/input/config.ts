@@ -107,7 +107,7 @@ export interface CliFlags {
   title?: string;
   author?: string;
   language?: string;
-  verbose?: boolean;
+  /** @deprecated */ verbose?: boolean;
   timeout?: number;
   renderMode?: 'local' | 'docker';
   preflight?: 'press-ready' | 'press-ready-local';
@@ -120,7 +120,7 @@ export interface CliFlags {
   viewerParam?: string;
   browser?: 'chromium' | 'firefox' | 'webkit';
   readingProgression?: 'ltr' | 'rtl';
-  logLevel?: 'silent' | 'info' | 'debug';
+  logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
   /** @deprecated */ executableChromium?: string;
 }
 
@@ -170,7 +170,6 @@ export type MergedConfig = {
     disableFormatHtml: boolean;
   };
   cover: string | undefined;
-  verbose: boolean;
   timeout: number;
   sandbox: boolean;
   executableBrowser: string;
@@ -179,6 +178,7 @@ export type MergedConfig = {
   httpServer: boolean;
   viewer: string | undefined;
   viewerParam: string | undefined;
+  logLevel: 'silent' | 'info' | 'verbose' | 'debug';
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -442,6 +442,14 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     cliFlags.executableBrowser = cliFlags.executableChromium;
   }
 
+  if (cliFlags.verbose) {
+    logWarn(
+      chalk.yellowBright(
+        "'--verbose' option was deprecated and will be removed in a future release. Please replace with '--log-level verbose' option.",
+      ),
+    );
+  }
+
   return {
     cliFlags,
     ...configEntry,
@@ -511,7 +519,6 @@ export async function mergeConfig<T extends CliFlags>(
     disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
   };
 
-  const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
   const browserType = cliFlags.browser ?? config?.browser ?? 'chromium';
@@ -521,6 +528,10 @@ export async function mergeConfig<T extends CliFlags>(
   const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
   const viewerParam = cliFlags.viewerParam ?? config?.viewerParam ?? undefined;
+  const logLevel =
+    cliFlags.logLevel ??
+    ((cliFlags.verbose && 'verbose') || undefined) ??
+    'silent';
 
   const rootThemes = cliFlags.theme
     ? [
@@ -638,7 +649,6 @@ export async function mergeConfig<T extends CliFlags>(
     readingProgression,
     vfmOptions,
     cover,
-    verbose,
     timeout,
     sandbox,
     executableBrowser,
@@ -647,6 +657,7 @@ export async function mergeConfig<T extends CliFlags>(
     httpServer,
     viewer,
     viewerParam,
+    logLevel,
   };
   if (!cliFlags.input && !config) {
     throw new Error(

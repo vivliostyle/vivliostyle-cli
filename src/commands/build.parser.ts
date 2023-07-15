@@ -122,7 +122,6 @@ This option is equivalent with "--preflight press-ready"`,
 Please refer the document of press-ready for further information.
 https://github.com/vibranthq/press-ready`,
     )
-    .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',
       `launch chrome without sandbox. use this option when ECONNREFUSED error occurred.`,
@@ -159,12 +158,13 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
         '--log-level <level>',
         'specify a log level of console outputs',
       )
-        .choices(['silent', 'info', 'debug'])
+        .choices(['silent', 'info', 'verbose', 'debug'])
         .default('info'),
     )
     .addOption(new Option('--bypassed-pdf-builder-option <json>').hideHelp())
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
+    .addOption(new Option('--verbose').hideHelp())
     .action((_arg: any, option: BuildCliFlags) => {
       option.targets = inferenceTargetsOption(targets);
     });

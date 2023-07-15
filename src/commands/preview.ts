@@ -23,7 +23,7 @@ try {
     author: options.author,
     language: options.language,
     readingProgression: options.readingProgression,
-    verbose: options.verbose,
+    verbose: options.verbose, // TODO: Remove it in the next major version up
     timeout: options.timeout,
     sandbox: options.sandbox,
     executableBrowser: options.executableBrowser,

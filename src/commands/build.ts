@@ -28,7 +28,7 @@ try {
     renderMode: options.renderMode || 'local',
     preflight: options.preflight,
     preflightOption: options.preflightOption,
-    verbose: options.verbose,
+    verbose: options.verbose, // TODO: Remove it in the next major version up
     timeout: options.timeout,
     sandbox: options.sandbox,
     executableBrowser: options.executableBrowser,
