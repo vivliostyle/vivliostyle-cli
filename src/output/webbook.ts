@@ -113,26 +113,30 @@ export async function retrieveWebbookEntry({
       if (!pathContains(url)) {
         return [];
       }
-      return fetcher
-        .then(async (buffer) => {
-          let encodingFormat: string | undefined;
-          try {
-            const contentType = fetcher.response?.headers['content-type'];
-            if (contentType) {
-              encodingFormat = new MIMEType(contentType).essence;
+      return (
+        fetcher
+          .then(async (buffer) => {
+            let encodingFormat: string | undefined;
+            try {
+              const contentType = fetcher.response?.headers['content-type'];
+              if (contentType) {
+                encodingFormat = new MIMEType(contentType).essence;
+              }
+              /* c8 ignore next 3 */
+            } catch (e) {
+              /* NOOP */
             }
-          } catch (e) {
-            /* NOOP */
-          }
-          const relTarget = normalizeToLocalPath(url, encodingFormat);
-          const target = upath.join(outputDir, relTarget);
-          fetchedResources.push({ url: relTarget, encodingFormat });
-          await fs.promises.mkdir(upath.dirname(target), { recursive: true });
-          await fs.promises.writeFile(target, buffer);
-        })
-        .catch(() => {
-          logError(`Failed to fetch webbook resources: ${url}`);
-        });
+            const relTarget = normalizeToLocalPath(url, encodingFormat);
+            const target = upath.join(outputDir, relTarget);
+            fetchedResources.push({ url: relTarget, encodingFormat });
+            await fs.promises.mkdir(upath.dirname(target), { recursive: true });
+            await fs.promises.writeFile(target, buffer);
+          })
+          /* c8 ignore next 3 */
+          .catch(() => {
+            logError(`Failed to fetch webbook resources: ${url}`);
+          })
+      );
     }),
   );
 
@@ -211,7 +215,13 @@ export async function supplyWebPublicationManifestForWebbook({
   const link = document.createElement('link');
   link.setAttribute('rel', 'publication');
   link.setAttribute('type', 'application/ld+json');
-  link.setAttribute('href', MANIFEST_FILENAME);
+  link.setAttribute(
+    'href',
+    upath.relative(
+      upath.dirname(entryHtmlFile),
+      upath.join(outputDir, MANIFEST_FILENAME),
+    ),
+  );
   document.head.appendChild(link);
   await fs.promises.writeFile(entryHtmlFile, dom.serialize(), 'utf8');
 

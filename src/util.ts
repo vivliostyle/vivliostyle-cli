@@ -43,16 +43,20 @@ const ora = oraConstructor({
 });
 
 export let beforeExitHandlers: (() => void)[] = [];
+export function runExitHandlers() {
+  while (beforeExitHandlers.length) {
+    try {
+      beforeExitHandlers.shift()?.();
+    } catch (e) {
+      // NOOP
+    }
+  }
+}
+
 const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
 exitSignals.forEach((sig) => {
   process.on(sig, (code: number) => {
-    while (beforeExitHandlers.length) {
-      try {
-        beforeExitHandlers.shift()?.();
-      } catch (e) {
-        // NOOP
-      }
-    }
+    runExitHandlers();
     process.exit(code);
   });
 });

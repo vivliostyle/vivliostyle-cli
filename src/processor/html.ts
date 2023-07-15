@@ -17,6 +17,7 @@ import {
 } from '../util.js';
 
 const virtualConsole = new jsdom.VirtualConsole();
+/* c8 ignore start */
 virtualConsole.on('error', (message) => {
   debug('[JSDOM Console] error:', message);
 });
@@ -45,6 +46,7 @@ virtualConsole.on('jsdomError', (error) => {
     error.stack ?? error.message,
   );
 });
+/* c8 ignore end */
 
 export class ResourceLoader extends BaseResourceLoader {
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();

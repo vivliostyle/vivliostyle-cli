@@ -29,6 +29,7 @@ import {
   cwd,
   debug,
   log,
+  runExitHandlers,
   setLogLevel,
   startLogging,
   stopLogging,
@@ -191,6 +192,7 @@ export async function build(cliFlags: BuildCliFlags) {
     teardownServer();
   }
 
+  runExitHandlers();
   stopLogging('Built successfully.', '🎉');
 }
 

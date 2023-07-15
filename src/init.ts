@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import fs from 'node:fs';
 import { CONTAINER_IMAGE } from './container.js';
-import { cwd, log, setLogLevel, upath } from './util.js';
+import { cwd, log, runExitHandlers, setLogLevel, upath } from './util.js';
 
 export interface InitCliFlags {
   title?: string;
@@ -74,5 +74,7 @@ module.exports = vivliostyleConfig;
 `;
 
   fs.writeFileSync(vivliostyleConfigPath, vivliostyleConfig);
+
+  runExitHandlers();
   log(`Successfully created ${chalk.cyan('vivliostyle.config.js')}`);
 }

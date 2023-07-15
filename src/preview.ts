@@ -127,6 +127,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
   // Focus to the URL input box if available
   await page.locator('#vivliostyle-input-url').focus();
 
+  // note: runExitHandlers() is not necessary here
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
 
   function reloadConfig(path: string) {
