@@ -83,6 +83,7 @@ export async function getJsdomFromUrlOrFile(
     dom = await JSDOM.fromFile(fileURLToPath(url), {
       virtualConsole,
       resources: resourceLoader,
+      contentType: 'text/html; charset=UTF-8',
     });
   } else {
     throw new Error(`Unsupported protocol: ${url.protocol}`);
@@ -120,6 +121,7 @@ export function generateTocHtml({
     h(
       'head',
       ...[
+        h('meta', { charset: 'utf-8' }),
         h('title', title ?? ''),
         h('link', {
           href: encodeURI(upath.relative(distDir, manifestPath)),
