@@ -248,10 +248,11 @@ export async function supplyWebPublicationManifestForWebbook({
 export async function copyWebPublicationAssets({
   exportAliases,
   outputs,
+  includeAssets,
   manifestPath,
   input,
   outputDir,
-}: Pick<MergedConfig, 'exportAliases' | 'outputs'> & {
+}: Pick<MergedConfig, 'exportAliases' | 'outputs' | 'includeAssets'> & {
   input: string;
   outputDir: string;
   manifestPath: string;
@@ -262,34 +263,45 @@ export async function copyWebPublicationAssets({
       target: upath.relative(input, target),
     }))
     .filter(({ source }) => !source.startsWith('..'));
-  const allFiles = await safeGlob('**', {
-    cwd: input,
-    ignore: [
-      // don't copy auto-generated assets
-      ...outputs.flatMap(({ format, path: p }) =>
-        !pathContains(input, p)
-          ? []
-          : format === 'webpub'
-          ? upath.join(upath.relative(input, p), '**')
-          : upath.relative(input, p),
-      ),
-      // including node_modules possibly occurs cyclic reference of symlink
-      '**/node_modules',
-      // only include dotfiles starting with `.vs-`
-      '**/.!(vs-*)',
+  const allFiles = await safeGlob(
+    [
+      upath.relative(input, manifestPath),
+      '**/*.{html,html,css}',
+      ...includeAssets,
     ],
-    // follow symbolic links to copy local theme packages
-    followSymbolicLinks: true,
-    gitignore: false,
-    dot: true,
-  });
+    {
+      cwd: input,
+      ignore: [
+        // don't copy auto-generated assets
+        ...outputs.flatMap(({ format, path: p }) =>
+          !pathContains(input, p)
+            ? []
+            : format === 'webpub'
+            ? upath.join(upath.relative(input, p), '**')
+            : upath.relative(input, p),
+        ),
+        // including node_modules possibly occurs cyclic reference of symlink
+        '**/node_modules',
+        // only include dotfiles starting with `.vs-`
+        '**/.!(vs-*)/**',
+      ],
+      // follow symbolic links to copy local theme packages
+      followSymbolicLinks: true,
+      gitignore: false,
+      dot: true,
+    },
+  );
 
   debug(
     'webbook files',
-    allFiles.map((file) => {
-      const alias = relExportAliases.find(({ source }) => source === file);
-      return alias ? `${file} (alias: ${alias.target})` : file;
-    }),
+    JSON.stringify(
+      allFiles.map((file) => {
+        const alias = relExportAliases.find(({ source }) => source === file);
+        return alias ? `${file} (alias: ${alias.target})` : file;
+      }),
+      null,
+      2,
+    ),
   );
   const resources: string[] = [];
   let actualManifestPath = upath.join(
