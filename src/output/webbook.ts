@@ -140,8 +140,9 @@ export async function retrieveWebbookEntry({
             await fs.promises.mkdir(upath.dirname(target), { recursive: true });
             await fs.promises.writeFile(target, buffer);
           })
-          /* c8 ignore next 3 */
-          .catch(() => {
+          /* c8 ignore next 4 */
+          .catch((error) => {
+            debug(error);
             logError(`Failed to fetch webbook resources: ${url}`);
           })
       );

@@ -30,7 +30,7 @@
     "archiver": "^5.3.1",
     "bcp-47-match": "^2.0.3",
     "better-ajv-errors": "^1.2.0",
-    "canvas": "^2.11.2",
+    "canvas": "npm:@napi-rs/canvas@0.1.41",
     "chalk": "^4.1.2",
     "cheerio": "^1.0.0-rc.10",
     "chokidar": "^3.5.2",
