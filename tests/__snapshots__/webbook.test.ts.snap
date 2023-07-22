@@ -93,7 +93,7 @@ exports[`generate webpub from a remote HTML document 3`] = `
 "<html lang=\\"en\\">
   <head>
     <title>Document</title>
-    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"assets/style.css\\" />
+    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"../assets/style.css\\" />
     <link
       rel=\\"publication\\"
       type=\\"application/ld+json\\"
@@ -150,7 +150,6 @@ exports[`generate webpub from single markdown file 1`] = `
    │  └─ foo.md
    └─ output/
       ├─ foo.html
-      ├─ foo.md
       └─ publication.json"
 `;
 
@@ -170,7 +169,6 @@ Object {
     },
   ],
   "resources": Array [
-    "foo.md",
     "publication.json",
   ],
   "type": "Book",
@@ -190,23 +188,17 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
    │  ├─ output/
    │  │  ├─ doc/
    │  │  │  ├─ one.html
-   │  │  │  ├─ one.md
-   │  │  │  ├─ two.html
-   │  │  │  └─ two.md
+   │  │  │  └─ two.html
    │  │  ├─ index.html
-   │  │  ├─ publication.json
-   │  │  └─ vivliostyle.config.json
+   │  │  └─ publication.json
    │  ├─ publication.json
    │  └─ vivliostyle.config.json
    └─ output/
       ├─ doc/
       │  ├─ one.html
-      │  ├─ one.md
-      │  ├─ two.html
-      │  └─ two.md
+      │  └─ two.html
       ├─ index.html
-      ├─ publication.json
-      └─ vivliostyle.config.json"
+      └─ publication.json"
 `;
 
 exports[`generate webpub from vivliostyle.config.js 2`] = `
@@ -242,10 +234,7 @@ Object {
   ],
   "readingProgression": "rtl",
   "resources": Array [
-    "doc/one.md",
-    "doc/two.md",
     "publication.json",
-    "vivliostyle.config.json",
   ],
   "type": "Book",
 }

@@ -72,7 +72,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
 
   const { viewerFullUrl } = await prepareServer({
     input: (config.manifestPath ??
-      config.webbookEntryPath ??
+      config.webbookEntryUrl ??
       config.epubOpfPath) as string,
     workspaceDir: config.workspaceDir,
     httpServer: config.httpServer,

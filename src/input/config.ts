@@ -132,7 +132,7 @@ export interface EpubManifestConfig {
   epubOpfPath: string;
 }
 export interface WebbookEntryConfig {
-  webbookEntryPath: string;
+  webbookEntryUrl: string;
 }
 export type ManifestConfig = XOR<
   [WebPublicationManifestConfig, WebbookEntryConfig, EpubManifestConfig]
@@ -680,7 +680,7 @@ type CommonOpts = Omit<
   | 'manifestPath'
   | 'needToGenerateManifest'
   | 'epubOpfPath'
-  | 'webbookEntryPath'
+  | 'webbookEntryUrl'
   | 'title'
   | 'author'
 >;
@@ -764,7 +764,20 @@ async function composeSingleInputConfig<T extends CliFlags>(
           : upath.basename(sourcePath);
       return { manifestPath, needToGenerateManifest: true };
     } else if (input.format === 'html' || input.format === 'webbook') {
-      return { webbookEntryPath: input.entry };
+      const url = isUrlString(input.entry)
+        ? new URL(input.entry)
+        : pathToFileURL(input.entry);
+      // Ensures trailing slash or explicit HTML extensions
+      if (
+        (url.protocol === 'http:' || url.protocol === 'https:') &&
+        !url.pathname.endsWith('/') &&
+        !/\.html?$/.test(url.pathname)
+      ) {
+        url.pathname = `${url.pathname}/`;
+      }
+      return {
+        webbookEntryUrl: url.href,
+      };
     } else if (input.format === 'pub-manifest') {
       return { manifestPath: input.entry };
     } else if (input.format === 'epub-opf') {

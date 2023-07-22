@@ -151,7 +151,7 @@ it('generate webpub from a remote HTML document', async () => {
       <html lang="en">
       <head>
         <title>Document</title>
-        <link rel="stylesheet" type="text/css" href="assets/style.css">
+        <link rel="stylesheet" type="text/css" href="../assets/style.css">
       </head>
       <body>
       </body>

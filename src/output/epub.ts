@@ -6,7 +6,7 @@ import GithubSlugger from 'github-slugger';
 import type { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
-import url from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
 import { EPUB_CONTAINER_XML, EPUB_NS, XML_DECLARATION } from '../const.js';
@@ -31,6 +31,7 @@ import {
   copy,
   debug,
   logWarn,
+  remove,
   upath,
   useTmpDirectory,
 } from '../util.js';
@@ -59,7 +60,7 @@ const changeExtname = (filepath: string, newExt: string) => {
 const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
   const absBasePath = upath.join('/', baseUrl);
   const absRootPath = upath.join('/', rootUrl);
-  const hrefUrl = new URL(target, url.pathToFileURL(absBasePath));
+  const hrefUrl = new URL(target, pathToFileURL(absBasePath));
   if (hrefUrl.protocol !== 'file:') {
     return target;
   }
@@ -67,7 +68,7 @@ const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
     hrefUrl.pathname = changeExtname(hrefUrl.pathname, '.xhtml');
   }
   const pathname = upath.posix.relative(
-    url.pathToFileURL(upath.dirname(absRootPath)).pathname,
+    pathToFileURL(upath.dirname(absRootPath)).pathname,
     hrefUrl.pathname,
   );
   return `${pathname}${hrefUrl.search}${hrefUrl.hash}`;
@@ -109,17 +110,25 @@ const appendManifestProperty = (entry: ManifestEntry, newProperty: string) => {
 export async function exportEpub({
   webpubDir,
   entryHtmlFile,
+  entryContextUrl,
   manifest,
   target,
   epubVersion,
 }: {
   webpubDir: string;
   entryHtmlFile?: string;
+  entryContextUrl?: string;
   manifest: PublicationManifest;
   target: string;
   epubVersion: '3.0';
 }) {
-  debug('Export EPUB');
+  debug('Export EPUB', {
+    webpubDir,
+    entryContextUrl,
+    entryHtmlFile,
+    target,
+    epubVersion,
+  });
 
   const [tmpDir] = await useTmpDirectory();
   fs.mkdirSync(upath.join(tmpDir, 'META-INF'), { recursive: true });
@@ -241,6 +250,8 @@ export async function exportEpub({
       parseResult = await transpileHtmlToXhtml({
         target,
         contextDir: upath.join(tmpDir, 'EPUB'),
+        entryContextUrl:
+          entryContextUrl || pathToFileURL(upath.join(webpubDir, '/')).href,
         landmarks,
         isTocHtml,
         isPagelistHtml: target === (pageListResource?.url || entryHtmlRelPath),
@@ -288,7 +299,7 @@ export async function exportEpub({
     await processHtml(target, false);
   }
 
-  let { tocParseTree } = tocProcessResult;
+  let { tocParseTree, linkedPubManifest } = tocProcessResult;
   if (!tocParseTree) {
     tocParseTree = await supplyTocNavElement({
       tocHtml,
@@ -297,6 +308,10 @@ export async function exportEpub({
       readingOrder,
       docLanguages,
     });
+  }
+  if (linkedPubManifest) {
+    await remove(upath.join(tmpDir, 'EPUB', linkedPubManifest));
+    delete manifestItem[linkedPubManifest];
   }
 
   // EPUB/toc.ncx
@@ -345,12 +360,14 @@ export async function exportEpub({
 async function transpileHtmlToXhtml({
   target,
   contextDir,
+  entryContextUrl,
   landmarks,
   isTocHtml,
   isPagelistHtml,
 }: {
   target: string;
   contextDir: string;
+  entryContextUrl: string;
   landmarks: LandmarkEntry[];
   isTocHtml: boolean;
   isPagelistHtml: boolean;
@@ -358,6 +375,7 @@ async function transpileHtmlToXhtml({
   dom: JSDOM;
   tocParseTree?: TocResourceTreeRoot;
   pageListParseTree?: PageListResourceTreeRoot;
+  linkedPubManifest?: string;
   hasMathmlContent: boolean;
   hasRemoteResources: boolean;
   hasScriptedContent: boolean;
@@ -389,6 +407,7 @@ async function transpileHtmlToXhtml({
 
   let tocParseTree: TocResourceTreeRoot | undefined;
   let pageListParseTree: PageListResourceTreeRoot | undefined;
+  let linkedPubManifest: string | undefined;
 
   if (isTocHtml) {
     if (!document.querySelector('[epub:type="toc"]')) {
@@ -422,6 +441,34 @@ async function transpileHtmlToXhtml({
       nav.appendChild(ol);
       document.body.appendChild(nav);
     }
+
+    // Remove a publication manifest linked to ToC html.
+    // When converting to EPUB, HTML files are converted to XHTML files
+    // and no longer conform to Web publication, so we need to
+    // explicitly remove the publication manifest.
+    const publicationLinkEl = document.querySelector(
+      'link[href][rel="publication"]',
+    );
+    if (publicationLinkEl) {
+      const href = publicationLinkEl.getAttribute('href')!.trim();
+      if (href.startsWith('#')) {
+        const scriptEl = document.getElementById(href.slice(1));
+        if (scriptEl?.getAttribute('type') === 'application/ld+json') {
+          scriptEl.parentNode?.removeChild(scriptEl);
+        }
+      } else {
+        const entryUrl = entryContextUrl;
+        const publicationUrl = new URL(href, new URL(target, entryUrl)).href;
+        const rootUrl = /^https?:/i.test(entryUrl)
+          ? new URL('/', entryUrl).href
+          : new URL('.', entryUrl).href;
+        const relPublicationPath = upath.relative(rootUrl, publicationUrl);
+        if (!relPublicationPath.startsWith('..')) {
+          linkedPubManifest = relPublicationPath;
+        }
+      }
+      publicationLinkEl.parentNode?.removeChild(publicationLinkEl);
+    }
   }
 
   if (isPagelistHtml) {
@@ -441,6 +488,7 @@ async function transpileHtmlToXhtml({
     dom,
     tocParseTree,
     pageListParseTree,
+    linkedPubManifest,
     // FIXME: Yes, I recognize this implementation is inadequate.
     hasMathmlContent: !!document.querySelector('math'),
     hasRemoteResources: !!document.querySelector(
@@ -451,7 +499,7 @@ async function transpileHtmlToXhtml({
   };
 }
 
-export async function supplyTocNavElement({
+async function supplyTocNavElement({
   tocHtml,
   tocDom,
   contextDir,

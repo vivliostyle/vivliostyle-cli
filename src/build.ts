@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
 import { getExecutableBrowserPath } from './browser.js';
 import {
@@ -108,7 +109,7 @@ export async function build(cliFlags: BuildCliFlags) {
           output = await buildPDFWithContainer({
             ...config,
             input: (config.manifestPath ??
-              config.webbookEntryPath ??
+              config.webbookEntryUrl ??
               config.epubOpfPath) as string,
             target,
           });
@@ -116,13 +117,13 @@ export async function build(cliFlags: BuildCliFlags) {
           output = await buildPDF({
             ...config,
             input: (config.manifestPath ??
-              config.webbookEntryPath ??
+              config.webbookEntryUrl ??
               config.epubOpfPath) as string,
             target,
           });
         }
       } else if (format === 'webpub' || format === 'epub') {
-        const { manifestPath, webbookEntryPath } = config;
+        const { manifestPath, webbookEntryUrl } = config;
         let outputDir: string;
         if (format === 'webpub') {
           outputDir = target.path;
@@ -133,9 +134,11 @@ export async function build(cliFlags: BuildCliFlags) {
           continue;
         }
 
+        let entryContextUrl: string;
         let entryHtmlFile: string | undefined;
         let manifest: PublicationManifest;
         if (manifestPath) {
+          entryContextUrl = pathToFileURL(manifestPath).href;
           manifest = await copyWebPublicationAssets({
             ...config,
             input: config.workspaceDir,
@@ -151,11 +154,12 @@ export async function build(cliFlags: BuildCliFlags) {
               );
             }
           }
-        } else if (webbookEntryPath) {
+        } else if (webbookEntryUrl) {
           const ret = await retrieveWebbookEntry({
-            webbookEntryPath,
+            webbookEntryUrl,
             outputDir,
           });
+          entryContextUrl = webbookEntryUrl;
           entryHtmlFile = ret.entryHtmlFile;
           manifest =
             ret.manifest ||
@@ -172,6 +176,7 @@ export async function build(cliFlags: BuildCliFlags) {
           await exportEpub({
             webpubDir: outputDir,
             entryHtmlFile,
+            entryContextUrl,
             manifest,
             target: target.path,
             epubVersion: target.version,

@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { pathToFileURL, URL } from 'node:url';
+import { fileURLToPath, pathToFileURL, URL } from 'node:url';
 import handler from 'serve-handler';
 import { viewerRoot } from './const.js';
 import {
@@ -60,21 +60,29 @@ export async function prepareServer(option: ServerOption): Promise<{
         return viewerUrl;
       })());
 
-  const sourceUrl = await (isUrlString(option.input)
+  const inputUrl = isUrlString(option.input)
     ? new URL(option.input)
-    : option.httpServer ||
-      // Use http server because http viewer cannot access to file protocol
-      (option.viewer && /^https?:/i.test(option.viewer))
-    ? (async () => {
-        _sourceServer =
-          _sourceServer || (await launchServer(option.workspaceDir));
+    : pathToFileURL(option.input);
+  const sourceUrl = await (async () => {
+    if (
+      inputUrl.protocol === 'file:' &&
+      (option.httpServer ||
+        // Use http server because http viewer cannot access to file protocol
+        (option.viewer && /^https?:/i.test(option.viewer)))
+    ) {
+      _sourceServer =
+        _sourceServer || (await launchServer(option.workspaceDir));
 
-        const sourceUrl = new URL('http://localhost');
-        sourceUrl.port = `${_sourceServer.port}`;
-        sourceUrl.pathname = upath.relative(option.workspaceDir, option.input);
-        return sourceUrl;
-      })()
-    : pathToFileURL(option.input));
+      const sourceUrl = new URL('http://localhost');
+      sourceUrl.port = `${_sourceServer.port}`;
+      sourceUrl.pathname = upath.relative(
+        option.workspaceDir,
+        fileURLToPath(inputUrl),
+      );
+      return sourceUrl;
+    }
+    return inputUrl;
+  })();
 
   return {
     viewerFullUrl: getViewerFullUrl(option, {

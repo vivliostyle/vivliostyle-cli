@@ -292,7 +292,7 @@ Object {
   },
   "viewer": undefined,
   "viewerParam": undefined,
-  "webbookEntryPath": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
+  "webbookEntryUrl": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
   "workspaceDir": "__WORKSPACE__",
 }
 `;
@@ -484,7 +484,7 @@ Object {
   },
   "viewer": undefined,
   "viewerParam": undefined,
-  "webbookEntryPath": "__WORKSPACE__/tests/fixtures/config/sample.html",
+  "webbookEntryUrl": "file://__WORKSPACE__/tests/fixtures/config/sample.html",
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config",
 }
 `;

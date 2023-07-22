@@ -49,7 +49,7 @@ export async function prepareWebPublicationDirectory({
 }
 
 export async function retrieveWebbookEntry({
-  webbookEntryPath,
+  webbookEntryUrl,
   outputDir,
 }: WebbookEntryConfig & {
   outputDir: string;
@@ -57,22 +57,19 @@ export async function retrieveWebbookEntry({
   entryHtmlFile: string;
   manifest: PublicationManifest | null;
 }> {
-  if (/^https?:\/\//.test(webbookEntryPath)) {
+  if (/^https?:/i.test(webbookEntryUrl)) {
     logUpdate('Fetching remote contents');
   }
   const resourceLoader = new ResourceLoader();
-  const { dom, baseUrl } = await getJsdomFromUrlOrFile(
-    webbookEntryPath,
-    resourceLoader,
-  );
+  const { dom } = await getJsdomFromUrlOrFile(webbookEntryUrl, resourceLoader);
   const manifest = await fetchLinkedPublicationManifest({
     dom,
     resourceLoader,
-    baseUrl,
+    baseUrl: webbookEntryUrl,
   });
-  const rootUrl = /^https?:\/\//.test(baseUrl)
-    ? new URL('/', baseUrl).href
-    : new URL('.', baseUrl).href;
+  const rootUrl = /^https?:/i.test(webbookEntryUrl)
+    ? new URL('/', webbookEntryUrl).href
+    : new URL('.', webbookEntryUrl).href;
   const pathContains = (url: string) =>
     !upath.relative(rootUrl, url).startsWith('..');
   const retriever = new Map(resourceLoader.fetcherMap);
@@ -80,7 +77,7 @@ export async function retrieveWebbookEntry({
   if (manifest) {
     [manifest.resources || []].flat().forEach((v) => {
       const url = typeof v === 'string' ? v : v.url;
-      const fullUrl = new URL(url, baseUrl).href;
+      const fullUrl = new URL(url, webbookEntryUrl).href;
       if (!pathContains(fullUrl) || retriever.has(fullUrl)) {
         return;
       }
@@ -97,8 +94,8 @@ export async function retrieveWebbookEntry({
       ) {
         continue;
       }
-      const fullUrl = new URL(url, baseUrl).href;
-      if (!pathContains(fullUrl) || fullUrl === baseUrl) {
+      const fullUrl = new URL(url, webbookEntryUrl).href;
+      if (!pathContains(fullUrl) || fullUrl === webbookEntryUrl) {
         continue;
       }
       const subpathResourceLoader = new ResourceLoader();
@@ -177,7 +174,7 @@ export async function retrieveWebbookEntry({
   return {
     entryHtmlFile: upath.join(
       outputDir,
-      normalizeToLocalPath(baseUrl, 'text/html'),
+      normalizeToLocalPath(webbookEntryUrl, 'text/html'),
     ),
     manifest,
   };
@@ -265,7 +262,7 @@ export async function copyWebPublicationAssets({
     .filter(({ source }) => !source.startsWith('..'));
   const allFiles = await safeGlob(
     [
-      upath.relative(input, manifestPath),
+      `**/${upath.relative(input, manifestPath)}`,
       '**/*.{html,html,css}',
       ...includeAssets,
     ],

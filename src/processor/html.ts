@@ -4,7 +4,7 @@ import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
 import jsdom, { ResourceLoader as BaseResourceLoader, JSDOM } from 'jsdom';
 import fs from 'node:fs';
-import url from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
 import { ManuscriptEntry } from '../input/config.js';
 import type { PublicationManifest } from '../schema/publication.schema.js';
@@ -12,6 +12,7 @@ import {
   DetailError,
   assertPubManifestSchema,
   debug,
+  isUrlString,
   logWarn,
   upath,
 } from '../util.js';
@@ -66,33 +67,27 @@ export async function getJsdomFromUrlOrFile(
   resourceLoader?: ResourceLoader,
 ): Promise<{
   dom: JSDOM;
-  baseUrl: string;
 }> {
-  let baseUrl = src;
+  const url = isUrlString(src) ? new URL(src) : pathToFileURL(src);
   let dom: JSDOM;
-  if (/^https?:\/\//.test(src)) {
-    const url = new URL(src);
-    // Ensures trailing slash or explicit HTML extensions
-    if (!url.pathname.endsWith('/') && !/\.html?$/.test(url.pathname)) {
-      url.pathname = `${url.pathname}/`;
-    }
-    baseUrl = url.href;
+  if (url.protocol === 'http:' || url.protocol === 'https:') {
     dom = await JSDOM.fromURL(src, {
       virtualConsole,
       resources: resourceLoader,
     });
-  } else {
-    baseUrl = /^file:\/\//.test(src) ? src : url.pathToFileURL(src).href;
+  } else if (url.protocol === 'file:') {
     if (resourceLoader) {
-      const file = resourceLoader._readFile(url.fileURLToPath(baseUrl));
-      resourceLoader.fetcherMap.set(baseUrl, file);
+      const file = resourceLoader._readFile(fileURLToPath(url));
+      resourceLoader.fetcherMap.set(url.href, file);
     }
-    dom = await JSDOM.fromFile(url.fileURLToPath(baseUrl), {
+    dom = await JSDOM.fromFile(fileURLToPath(url), {
       virtualConsole,
       resources: resourceLoader,
     });
+  } else {
+    throw new Error(`Unsupported protocol: ${url.protocol}`);
   }
-  return { dom, baseUrl };
+  return { dom };
 }
 
 export function generateTocHtml({

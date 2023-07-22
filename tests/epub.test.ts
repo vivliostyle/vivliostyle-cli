@@ -102,6 +102,7 @@ it('generate EPUB from single HTML with pub manifest', async () => {
   await exportEpub({
     webpubDir: '/work/input',
     entryHtmlFile: 'index.html',
+    entryContextUrl: 'file://work/input/publication.json',
     manifest,
     target: '/work/output.epub',
     epubVersion: '3.0',
