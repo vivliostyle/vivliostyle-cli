@@ -305,6 +305,21 @@
   resolved "https://registry.yarnpkg.com/@napi-rs/canvas-win32-x64-msvc/-/canvas-win32-x64-msvc-0.1.41.tgz#41652565110359d300a7bd4ce86861efb25e10ec"
   integrity sha512-e2L/VLJR/glc0vUACVBSL+VpbrfIRRuJU183t5jrOnaLFvVZHH/0iCF9ph9CUN/kKSg2cU84oGrnfJIsuPglSQ==
 
+"@napi-rs/canvas@0.1.41":
+  version "0.1.41"
+  resolved "https://registry.yarnpkg.com/@napi-rs/canvas/-/canvas-0.1.41.tgz#babd041abc1c243ee90c7f36cc5b649d116b21b0"
+  integrity sha512-JjdMfKyXox09KgC3fNB4+x0M/rwufIWrfcBDU0BuF6jKVhlSSSNy7D2WEX4zs5NgWHeiArHCXLtJ0dW6KyK7GQ==
+  optionalDependencies:
+    "@napi-rs/canvas-android-arm64" "0.1.41"
+    "@napi-rs/canvas-darwin-arm64" "0.1.41"
+    "@napi-rs/canvas-darwin-x64" "0.1.41"
+    "@napi-rs/canvas-linux-arm-gnueabihf" "0.1.41"
+    "@napi-rs/canvas-linux-arm64-gnu" "0.1.41"
+    "@napi-rs/canvas-linux-arm64-musl" "0.1.41"
+    "@napi-rs/canvas-linux-x64-gnu" "0.1.41"
+    "@napi-rs/canvas-linux-x64-musl" "0.1.41"
+    "@napi-rs/canvas-win32-x64-msvc" "0.1.41"
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -1706,21 +1721,6 @@ camelcase@^7.0.0:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-7.0.1.tgz#f02e50af9fd7782bc8b88a3558c32fd3a388f048"
   integrity sha512-xlx1yCK2Oc1APsPXDL2LdlNP6+uu8OCDdhOBSVT279M/S+y75O30C2VuD8T2ogdePBBl7PfPF4504tnLgX3zfw==
-
-"canvas@npm:@napi-rs/canvas@0.1.41":
-  version "0.1.41"
-  resolved "https://registry.yarnpkg.com/@napi-rs/canvas/-/canvas-0.1.41.tgz#babd041abc1c243ee90c7f36cc5b649d116b21b0"
-  integrity sha512-JjdMfKyXox09KgC3fNB4+x0M/rwufIWrfcBDU0BuF6jKVhlSSSNy7D2WEX4zs5NgWHeiArHCXLtJ0dW6KyK7GQ==
-  optionalDependencies:
-    "@napi-rs/canvas-android-arm64" "0.1.41"
-    "@napi-rs/canvas-darwin-arm64" "0.1.41"
-    "@napi-rs/canvas-darwin-x64" "0.1.41"
-    "@napi-rs/canvas-linux-arm-gnueabihf" "0.1.41"
-    "@napi-rs/canvas-linux-arm64-gnu" "0.1.41"
-    "@napi-rs/canvas-linux-arm64-musl" "0.1.41"
-    "@napi-rs/canvas-linux-x64-gnu" "0.1.41"
-    "@napi-rs/canvas-linux-x64-musl" "0.1.41"
-    "@napi-rs/canvas-win32-x64-msvc" "0.1.41"
 
 ccount@^1.0.0:
   version "1.1.0"
