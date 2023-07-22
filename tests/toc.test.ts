@@ -38,6 +38,7 @@ it('generateTocHtml', () => {
   expect(toc).toBe(
     `<html>
   <head>
+    <meta charset="utf-8" />
     <title>Book title</title>
     <link
       href="publication.json"

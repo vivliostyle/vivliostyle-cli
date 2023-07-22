@@ -243,6 +243,7 @@ Object {
 exports[`generate webpub from vivliostyle.config.js 3`] = `
 "<html>
   <head>
+    <meta charset=\\"utf-8\\" />
     <title>output</title>
     <link
       href=\\"publication.json\\"
