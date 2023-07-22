@@ -1,5 +1,5 @@
+import { JSDOM } from '@vivliostyle/jsdom';
 import { globby } from 'globby';
-import { JSDOM } from 'jsdom';
 import assert from 'node:assert';
 import fs from 'node:fs';
 import { afterAll, expect, it } from 'vitest';

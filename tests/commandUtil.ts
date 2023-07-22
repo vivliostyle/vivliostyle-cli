@@ -6,7 +6,7 @@ import {
   FetchOptions,
   FileOptions,
   SupportedContentTypes,
-} from 'jsdom';
+} from '@vivliostyle/jsdom';
 import { printTree } from 'json-joy/es6/util/print/printTree';
 import { fs as memfs } from 'memfs';
 import { Volume } from 'memfs/lib/volume.js';
@@ -82,8 +82,12 @@ export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
   return assert(Array.isArray(value));
 }
 
-export async function getMockedJSDOM(): Promise<typeof import('jsdom')> {
-  const jsdom = await vi.importActual<typeof import('jsdom')>('jsdom');
+export async function getMockedJSDOM(): Promise<
+  typeof import('@vivliostyle/jsdom')
+> {
+  const jsdom = await vi.importActual<typeof import('@vivliostyle/jsdom')>(
+    '@vivliostyle/jsdom',
+  );
   const { JSDOM: JSDOMBase, ResourceLoader: ResourceLoaderBase } = jsdom;
 
   // https://github.com/jsdom/jsdom/blob/a39e0ec4ce9a8806692d986a7ed0cd565ec7498a/lib/api.js#L183

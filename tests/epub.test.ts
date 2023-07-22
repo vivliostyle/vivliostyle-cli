@@ -8,7 +8,7 @@ import { toTree } from './commandUtil.js';
 
 vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
 
-vi.mock('jsdom', () =>
+vi.mock('@vivliostyle/jsdom', () =>
   import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
 );
 

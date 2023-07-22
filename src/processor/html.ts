@@ -1,8 +1,11 @@
+import jsdom, {
+  ResourceLoader as BaseResourceLoader,
+  JSDOM,
+} from '@vivliostyle/jsdom';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import toHTML from 'hast-util-to-html';
 import h from 'hastscript';
-import jsdom, { ResourceLoader as BaseResourceLoader, JSDOM } from 'jsdom';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';

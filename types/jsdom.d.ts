@@ -1,4 +1,6 @@
-declare module 'jsdom' {
+declare module '@vivliostyle/jsdom' {
+  export * from 'jsdom';
+
   export interface AbortablePromise<T> extends Promise<T> {
     abort(): void;
     response?: import('http').IncomingMessage;

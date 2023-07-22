@@ -11,7 +11,7 @@ vi.mock('image-size', () => ({
   imageSize: () => ({ width: 100, height: 100, type: 'png' }),
 }));
 
-vi.mock('jsdom', () =>
+vi.mock('@vivliostyle/jsdom', () =>
   import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
 );
 

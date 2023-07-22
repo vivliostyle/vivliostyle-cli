@@ -1,9 +1,9 @@
+import type { JSDOM } from '@vivliostyle/jsdom';
 import archiver from 'archiver';
 import { lookup as lookupLanguage } from 'bcp-47-match';
 import chalk from 'chalk';
 import { XMLBuilder } from 'fast-xml-parser';
 import GithubSlugger from 'github-slugger';
-import type { JSDOM } from 'jsdom';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
