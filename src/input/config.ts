@@ -668,7 +668,6 @@ export async function mergeConfig<T extends CliFlags>(
     ? await composeSingleInputConfig(commonOpts, cliFlags, config)
     : await composeProjectConfig(commonOpts, cliFlags, config, context);
   debug('parsedConfig', parsedConfig);
-  checkUnusedCliFlags(parsedConfig, cliFlags);
   return parsedConfig;
 }
 
@@ -940,35 +939,4 @@ async function composeProjectConfig<T extends CliFlags>(
     author: projectAuthor,
     needToGenerateManifest: true,
   };
-}
-
-export function checkUnusedCliFlags<T extends CliFlags>(
-  config: MergedConfig,
-  cliFlags: T,
-) {
-  const unusedFlags: string[] = [];
-  if (!config.manifestPath) {
-    if (cliFlags.theme) {
-      unusedFlags.push('--theme');
-    }
-    if (cliFlags.title) {
-      unusedFlags.push('--title');
-    }
-    if (cliFlags.author) {
-      unusedFlags.push('--author');
-    }
-    if (cliFlags.language) {
-      unusedFlags.push('--language');
-    }
-  }
-  if (unusedFlags.length) {
-    log('\n');
-    unusedFlags.forEach((flag) => {
-      log(
-        `${chalk.bold.yellow(flag)}${chalk.bold.yellow(
-          ` flag seems to be set but the current export setting doesn't support this. This option will be ignored.`,
-        )}`,
-      );
-    });
-  }
 }
