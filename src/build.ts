@@ -1,37 +1,44 @@
 import chalk from 'chalk';
+import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
-import path from 'upath';
 import { getExecutableBrowserPath } from './browser.js';
+import {
+  CliFlags,
+  MergedConfig,
+  collectVivliostyleConfig,
+  mergeConfig,
+} from './input/config.js';
+import { exportEpub } from './output/epub.js';
+import { buildPDF, buildPDFWithContainer } from './output/pdf.js';
+import {
+  copyWebPublicationAssets,
+  prepareWebPublicationDirectory,
+  retrieveWebbookEntry,
+  supplyWebPublicationManifestForWebbook,
+} from './output/webbook.js';
 import {
   checkOverwriteViolation,
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from './builder.js';
-import {
-  CliFlags,
-  collectVivliostyleConfig,
-  mergeConfig,
-  MergedConfig,
-} from './config.js';
-import { buildPDF, buildPDFWithContainer } from './pdf.js';
+} from './processor/compile.js';
+import type { PublicationManifest } from './schema/publication.schema.js';
 import { teardownServer } from './server.js';
 import {
   checkContainerEnvironment,
   cwd,
   debug,
   log,
+  runExitHandlers,
+  setLogLevel,
   startLogging,
   stopLogging,
+  upath,
+  useTmpDirectory,
 } from './util.js';
-import { exportWebPublication } from './webbook.js';
 
 export interface BuildCliFlags extends CliFlags {
-  output?: {
-    output?: string;
-    format?: string;
-  }[];
   bypassedPdfBuilderOption?: string;
 }
 
@@ -42,7 +49,9 @@ export async function getFullConfig(
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
   const loadedCliFlags = loadedConf.cliFlags;
 
-  const context = vivliostyleConfig ? path.dirname(vivliostyleConfigPath) : cwd;
+  const context = vivliostyleConfig
+    ? upath.dirname(vivliostyleConfigPath)
+    : cwd;
 
   const configEntries: MergedConfig[] = [];
   for (const entry of vivliostyleConfig ?? [vivliostyleConfig]) {
@@ -59,6 +68,8 @@ export async function getFullConfig(
 }
 
 export async function build(cliFlags: BuildCliFlags) {
+  setLogLevel(cliFlags.logLevel);
+
   if (cliFlags.bypassedPdfBuilderOption) {
     const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
     // Host doesn't know browser path inside of container
@@ -92,12 +103,13 @@ export async function build(cliFlags: BuildCliFlags) {
     // generate files
     for (const target of config.outputs) {
       let output: string | null = null;
-      if (target.format === 'pdf') {
+      const { format } = target;
+      if (format === 'pdf') {
         if (!isInContainer && target.renderMode === 'docker') {
           output = await buildPDFWithContainer({
             ...config,
             input: (config.manifestPath ??
-              config.webbookEntryPath ??
+              config.webbookEntryUrl ??
               config.epubOpfPath) as string,
             target,
           });
@@ -105,26 +117,75 @@ export async function build(cliFlags: BuildCliFlags) {
           output = await buildPDF({
             ...config,
             input: (config.manifestPath ??
-              config.webbookEntryPath ??
+              config.webbookEntryUrl ??
               config.epubOpfPath) as string,
             target,
           });
         }
-      } else if (target.format === 'webpub') {
-        const { exportAliases, outputs, manifestPath } = config;
-        if (!manifestPath) {
+      } else if (format === 'webpub' || format === 'epub') {
+        const { manifestPath, webbookEntryUrl } = config;
+        let outputDir: string;
+        if (format === 'webpub') {
+          outputDir = target.path;
+          await prepareWebPublicationDirectory({ outputDir });
+        } else if (format === 'epub') {
+          [outputDir] = await useTmpDirectory();
+        } else {
           continue;
         }
-        output = await exportWebPublication({
-          exportAliases,
-          outputs,
-          manifestPath,
-          input: config.workspaceDir,
-          outputDir: target.path,
-        });
+
+        let entryContextUrl: string;
+        let entryHtmlFile: string | undefined;
+        let manifest: PublicationManifest;
+        if (manifestPath) {
+          entryContextUrl = pathToFileURL(manifestPath).href;
+          manifest = await copyWebPublicationAssets({
+            ...config,
+            input: config.workspaceDir,
+            outputDir,
+            manifestPath,
+          });
+          if (config.input.format === 'markdown') {
+            const entry = [manifest.readingOrder].flat()[0];
+            if (entry) {
+              entryHtmlFile = upath.join(
+                outputDir,
+                typeof entry === 'string' ? entry : entry.url,
+              );
+            }
+          }
+        } else if (webbookEntryUrl) {
+          const ret = await retrieveWebbookEntry({
+            webbookEntryUrl,
+            outputDir,
+          });
+          entryContextUrl = webbookEntryUrl;
+          entryHtmlFile = ret.entryHtmlFile;
+          manifest =
+            ret.manifest ||
+            (await supplyWebPublicationManifestForWebbook({
+              ...config,
+              entryHtmlFile: ret.entryHtmlFile,
+              outputDir,
+            }));
+        } else {
+          continue;
+        }
+
+        if (format === 'epub') {
+          await exportEpub({
+            webpubDir: outputDir,
+            entryHtmlFile,
+            entryContextUrl,
+            manifest,
+            target: target.path,
+            epubVersion: target.version,
+          });
+        }
+        output = target.path;
       }
       if (output) {
-        const formattedOutput = chalk.bold.green(path.relative(cwd, output));
+        const formattedOutput = chalk.bold.green(upath.relative(cwd, output));
         log(
           `\n${terminalLink(formattedOutput, 'file://' + output, {
             fallback: () => formattedOutput,
@@ -136,21 +197,19 @@ export async function build(cliFlags: BuildCliFlags) {
     teardownServer();
   }
 
+  runExitHandlers();
   stopLogging('Built successfully.', '🎉');
 }
 
-function checkUnsupportedOutputs({
-  webbookEntryPath,
-  epubOpfPath,
-  outputs,
-}: MergedConfig) {
-  if (webbookEntryPath && outputs.some((t) => t.format === 'webpub')) {
-    throw new Error(
-      'Exporting webpub format from single HTML input is not supported.',
-    );
-  } else if (epubOpfPath && outputs.some((t) => t.format === 'webpub')) {
+function checkUnsupportedOutputs({ epubOpfPath, outputs }: MergedConfig) {
+  if (epubOpfPath && outputs.some((t) => t.format === 'webpub')) {
     throw new Error(
       'Exporting webpub format from EPUB or OPF file is not supported.',
+    );
+  }
+  if (epubOpfPath && outputs.some((t) => t.format === 'epub')) {
+    throw new Error(
+      'Exporting EPUB format from EPUB or OPF file is not supported.',
     );
   }
 }

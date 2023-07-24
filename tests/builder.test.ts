@@ -1,16 +1,18 @@
+import { JSDOM } from '@vivliostyle/jsdom';
+import { globby } from 'globby';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { JSDOM } from 'jsdom';
-import shelljs from 'shelljs';
+import { afterAll, expect, it } from 'vitest';
+import { MergedConfig } from '../src/input/config.js';
 import {
   checkOverwriteViolation,
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from '../src/builder.js';
-import { MergedConfig } from '../src/config.js';
-import { checkThemeInstallationNecessity } from '../src/theme.js';
+} from '../src/processor/compile.js';
+import { checkThemeInstallationNecessity } from '../src/processor/theme.js';
+import { removeSync } from '../src/util.js';
 import {
   assertArray,
   assertSingleItem,
@@ -25,7 +27,7 @@ function assertManifestPath(
 }
 
 afterAll(() => {
-  shelljs.rm('-rf', [
+  [
     resolveFixture('builder/.vs-workspace'),
     resolveFixture('builder/.vs-entryContext'),
     resolveFixture('builder/.vs-variousManuscriptFormat'),
@@ -37,7 +39,7 @@ afterAll(() => {
     resolveFixture('builder/.vs-nonExistTheme'),
     resolveFixture('builder/.vs-invalidTheme'),
     resolveFixture('builder/.vs-nonExistImport'),
-  ]);
+  ].map((f) => removeSync(f));
 });
 
 it('generate workspace directory', async () => {
@@ -54,20 +56,23 @@ it('generate workspace directory', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-workspace'));
-  expect([...fileList]).toEqual([
-    'index.html',
-    'manuscript',
-    'manuscript/cover.png',
-    'manuscript/sample-theme.css',
-    'manuscript/soda.html',
-    'publication.json',
-    'themes',
-    'themes/package-lock.json',
-    'themes/package.json',
-    'themes/packages',
-    'themes/packages/debug-theme',
-  ]);
+  const fileList = await globby('**', {
+    cwd: resolveFixture('builder/.vs-workspace'),
+  });
+  expect(new Set(fileList)).toEqual(
+    new Set([
+      'index.html',
+      'manuscript/cover.png',
+      'manuscript/sample-theme.css',
+      'manuscript/soda.html',
+      'publication.json',
+      'themes/package-lock.json',
+      'themes/package.json',
+      'themes/packages/debug-theme/additional-theme.css',
+      'themes/packages/debug-theme/package.json',
+      'themes/packages/debug-theme/theme.css',
+    ]),
+  );
   const { default: manifest } = await import(
     resolveFixture('builder/.vs-workspace/publication.json')
   );
@@ -110,8 +115,10 @@ it('generate workspace directory', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = shelljs.ls('-R', resolveFixture('builder/.vs-workspace'));
-  expect([...fileList2]).toEqual([...fileList]);
+  const fileList2 = await globby('**', {
+    cwd: resolveFixture('builder/.vs-workspace'),
+  });
+  expect(new Set(fileList2)).toEqual(new Set(fileList));
 });
 
 it('generate files with entryContext', async () => {
@@ -128,15 +135,18 @@ it('generate files with entryContext', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-entryContext'));
-  expect([...fileList]).toEqual([
-    'cover.png',
-    'manuscript',
-    'manuscript/sample-theme.css',
-    'publication.json',
-    'soda.html',
-    't-o-c.html',
-  ]);
+  const fileList = await globby('**', {
+    cwd: resolveFixture('builder/.vs-entryContext'),
+  });
+  expect(new Set(fileList)).toEqual(
+    new Set([
+      'cover.png',
+      'manuscript/sample-theme.css',
+      'publication.json',
+      'soda.html',
+      't-o-c.html',
+    ]),
+  );
   const { default: manifest } = await import(
     resolveFixture('builder/.vs-entryContext/publication.json')
   );
@@ -177,11 +187,10 @@ it('generate files with entryContext', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = shelljs.ls(
-    '-R',
-    resolveFixture('builder/.vs-entryContext'),
-  );
-  expect([...fileList2]).toEqual([...fileList]);
+  const fileList2 = await globby('**', {
+    cwd: resolveFixture('builder/.vs-entryContext'),
+  });
+  expect(new Set(fileList2)).toEqual(new Set(fileList));
 });
 
 it('generate from various manuscript formats', async () => {
@@ -198,23 +207,23 @@ it('generate from various manuscript formats', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = shelljs.ls(
-    '-R',
-    resolveFixture('builder/.vs-variousManuscriptFormat'),
+  const fileList = await globby('**', {
+    cwd: resolveFixture('builder/.vs-variousManuscriptFormat'),
+  });
+  expect(new Set(fileList)).toEqual(
+    new Set([
+      'manuscript/cover.png',
+      'manuscript/sample-html.html',
+      'manuscript/sample-xhtml.xhtml',
+      'manuscript/soda.html',
+      'publication.json',
+      'themes/package-lock.json',
+      'themes/package.json',
+      'themes/packages/debug-theme/additional-theme.css',
+      'themes/packages/debug-theme/package.json',
+      'themes/packages/debug-theme/theme.css',
+    ]),
   );
-  expect([...fileList]).toEqual([
-    'manuscript',
-    'manuscript/cover.png',
-    'manuscript/sample-html.html',
-    'manuscript/sample-xhtml.xhtml',
-    'manuscript/soda.html',
-    'publication.json',
-    'themes',
-    'themes/package-lock.json',
-    'themes/package.json',
-    'themes/packages',
-    'themes/packages/debug-theme',
-  ]);
   const { default: manifest } = await import(
     resolveFixture('builder/.vs-variousManuscriptFormat/publication.json')
   );
@@ -440,30 +449,30 @@ it('install local themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-localTheme'));
-  expect([...fileList]).toEqual([
-    'manuscript',
-    'manuscript/cover.png',
-    'manuscript/soda.html',
-    'manuscript/theme-reference.html',
-    'publication.json',
-    'sample-theme.css',
-    'themes',
-    'themes/package-lock.json',
-    'themes/package.json',
-    'themes/packages',
-    'themes/packages/debug-theme',
-  ]);
-  // checking symlink-referenced directory
-  const themePackageFileList = shelljs.ls(
-    '-R',
-    resolveFixture('builder/.vs-localTheme/themes/packages/debug-theme'),
+  const fileList = await globby('**', {
+    cwd: resolveFixture('builder/.vs-localTheme'),
+  });
+  expect(new Set(fileList)).toEqual(
+    new Set([
+      'manuscript/cover.png',
+      'manuscript/soda.html',
+      'manuscript/theme-reference.html',
+      'publication.json',
+      'sample-theme.css',
+      'themes/package-lock.json',
+      'themes/package.json',
+      'themes/packages/debug-theme/additional-theme.css',
+      'themes/packages/debug-theme/package.json',
+      'themes/packages/debug-theme/theme.css',
+    ]),
   );
-  expect([...themePackageFileList]).toEqual([
-    'additional-theme.css',
-    'package.json',
-    'theme.css',
-  ]);
+  // checking symlink-referenced directory
+  const themePackageFileList = await globby('**', {
+    cwd: resolveFixture('builder/.vs-localTheme/themes/packages/debug-theme'),
+  });
+  expect(new Set(themePackageFileList)).toEqual(
+    new Set(['additional-theme.css', 'package.json', 'theme.css']),
+  );
 
   const doc1 = new JSDOM(
     fs.readFileSync(
@@ -492,8 +501,10 @@ it('install local themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = shelljs.ls('-R', resolveFixture('builder/.vs-localTheme'));
-  expect([...fileList2]).toEqual([...fileList]);
+  const fileList2 = await globby('**', {
+    cwd: resolveFixture('builder/.vs-localTheme'),
+  });
+  expect(new Set(fileList2)).toEqual(new Set(fileList));
 });
 
 it('install remote themes', async () => {
@@ -507,8 +518,10 @@ it('install remote themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = shelljs.ls('-R', resolveFixture('builder/.vs-remoteTheme'));
-  expect([...fileList]).toContain(
+  const fileList = await globby('**', {
+    cwd: resolveFixture('builder/.vs-remoteTheme'),
+  });
+  expect(fileList).toContain(
     'themes/packages/@vivliostyle/theme-academic/package.json',
   );
 
@@ -529,9 +542,11 @@ it('install remote themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = shelljs.ls('-R', resolveFixture('builder/.vs-remoteTheme'));
-  expect([...fileList2]).toEqual([...fileList]);
-});
+  const fileList2 = await globby('**', {
+    cwd: resolveFixture('builder/.vs-remoteTheme'),
+  });
+  expect(new Set(fileList2)).toEqual(new Set(fileList));
+}, 300000);
 
 it('use multiple themes', async () => {
   const config = await getMergedConfig([

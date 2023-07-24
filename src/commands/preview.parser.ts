@@ -34,7 +34,12 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
     .option('-l, --language <language>', 'language')
-    .option('--verbose', 'verbose log output')
+    .addOption(
+      new Option(
+        '--reading-progression <direction>',
+        'Direction of reading progression',
+      ).choices(['ltr', 'rtl']),
+    )
     .option(
       '--no-sandbox',
       `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
@@ -64,7 +69,16 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
 Currently, Firefox and Webkit support preview command only!`,
       ).choices(['chromium', 'firefox', 'webkit']),
     )
+    .addOption(
+      new Option(
+        '--log-level <level>',
+        'specify a log level of console outputs',
+      )
+        .choices(['silent', 'info', 'verbose', 'debug'])
+        .default('info'),
+    )
     // TODO: Remove it in the next major version up
-    .addOption(new Option('--executable-chromium <path>').hideHelp());
+    .addOption(new Option('--executable-chromium <path>').hideHelp())
+    .addOption(new Option('--verbose').hideHelp());
   return program;
 }

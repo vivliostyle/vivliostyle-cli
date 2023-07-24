@@ -1,0 +1,266 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generate webpub from a plain HTML 1`] = `
+"/
+└─ work/
+   ├─ input/
+   │  ├─ style.css
+   │  └─ webbook.html
+   └─ output/
+      ├─ publication.json
+      ├─ style.css
+      └─ webbook.html"
+`;
+
+exports[`generate webpub from a plain HTML 2`] = `
+Object {
+  "@context": Array [
+    "https://schema.org",
+    "https://www.w3.org/ns/pub-context",
+  ],
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "inLanguage": "ja",
+  "links": Array [],
+  "name": "Doc title",
+  "readingOrder": Array [
+    Object {
+      "url": "webbook.html",
+    },
+  ],
+  "resources": Array [
+    "style.css",
+  ],
+  "type": "Book",
+}
+`;
+
+exports[`generate webpub from a plain HTML 3`] = `
+"<!DOCTYPE html>
+<html lang=\\"ja\\">
+  <head>
+    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style.css\\" />
+    <title>Doc title</title>
+    <link
+      rel=\\"publication\\"
+      type=\\"application/ld+json\\"
+      href=\\"publication.json\\"
+    />
+  </head>
+  <body></body>
+</html>
+"
+`;
+
+exports[`generate webpub from a remote HTML document 1`] = `
+"/
+└─ work/
+   ├─ assets/
+   │  └─ style.css
+   ├─ input/
+   │  └─ index.html
+   └─ output/
+      ├─ publication.json
+      └─ work/
+         ├─ assets/
+         │  └─ style.css
+         └─ input/
+            └─ index.html"
+`;
+
+exports[`generate webpub from a remote HTML document 2`] = `
+Object {
+  "@context": Array [
+    "https://schema.org",
+    "https://www.w3.org/ns/pub-context",
+  ],
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "inLanguage": "en",
+  "links": Array [],
+  "name": "Document",
+  "readingOrder": Array [
+    Object {
+      "url": "work/input/index.html",
+    },
+  ],
+  "resources": Array [
+    "work/assets/style.css",
+  ],
+  "type": "Book",
+}
+`;
+
+exports[`generate webpub from a remote HTML document 3`] = `
+"<html lang=\\"en\\">
+  <head>
+    <title>Document</title>
+    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"../assets/style.css\\" />
+    <link
+      rel=\\"publication\\"
+      type=\\"application/ld+json\\"
+      href=\\"../../publication.json\\"
+    />
+  </head>
+  <body></body>
+</html>
+"
+`;
+
+exports[`generate webpub from a single-document publication 1`] = `
+"/
+└─ work/
+   ├─ input/
+   │  ├─ assets/
+   │  │  ├─ figure.svg
+   │  │  └─ subdir.css
+   │  ├─ subdir/
+   │  │  └─ index.html
+   │  └─ webbook.html
+   └─ output/
+      ├─ assets/
+      │  ├─ figure.svg
+      │  └─ subdir.css
+      ├─ subdir/
+      │  └─ index.html
+      └─ webbook.html"
+`;
+
+exports[`generate webpub from a single-document publication 2`] = `
+"<html lang=\\"en\\">
+  <head>
+    <title>Document with toc</title>
+    <link rel=\\"publication\\" href=\\"#wp_manifest\\" />
+    <script type=\\"application/ld+json\\" id=\\"wp_manifest\\">
+      {
+        \\"@context\\": [\\"https://schema.org\\", \\"https://www.w3.org/ns/wp-context\\"],
+        \\"conformsTo\\": \\"yuno\\",
+        \\"resources\\": [\\"assets/figure.svg\\"],
+        \\"readingOrder\\": [\\"#foo\\", \\"../bar.html\\", \\"subdir/index.html\\"]
+      }
+    </script>
+  </head>
+  <body></body>
+</html>
+"
+`;
+
+exports[`generate webpub from single markdown file 1`] = `
+"/
+└─ work/
+   ├─ input/
+   │  └─ foo.md
+   └─ output/
+      ├─ foo.html
+      └─ publication.json"
+`;
+
+exports[`generate webpub from single markdown file 2`] = `
+Object {
+  "@context": Array [
+    "https://schema.org",
+    "https://www.w3.org/ns/pub-context",
+  ],
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "links": Array [],
+  "name": "Hi",
+  "readingOrder": Array [
+    Object {
+      "name": "Hi",
+      "url": "foo.html",
+    },
+  ],
+  "resources": Array [
+    "publication.json",
+  ],
+  "type": "Book",
+}
+`;
+
+exports[`generate webpub from vivliostyle.config.js 1`] = `
+"/
+└─ work/
+   ├─ input/
+   │  ├─ doc/
+   │  │  ├─ one.html
+   │  │  ├─ one.md
+   │  │  ├─ two.html
+   │  │  └─ two.md
+   │  ├─ index.html
+   │  ├─ output/
+   │  │  ├─ doc/
+   │  │  │  ├─ one.html
+   │  │  │  └─ two.html
+   │  │  ├─ index.html
+   │  │  └─ publication.json
+   │  ├─ publication.json
+   │  └─ vivliostyle.config.json
+   └─ output/
+      ├─ doc/
+      │  ├─ one.html
+      │  └─ two.html
+      ├─ index.html
+      └─ publication.json"
+`;
+
+exports[`generate webpub from vivliostyle.config.js 2`] = `
+Object {
+  "@context": Array [
+    "https://schema.org",
+    "https://www.w3.org/ns/pub-context",
+  ],
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "links": Array [
+    Object {
+      "encodingFormat": "image/png",
+      "height": 100,
+      "rel": "cover",
+      "url": "cover.png",
+      "width": 100,
+    },
+  ],
+  "name": "output",
+  "readingOrder": Array [
+    Object {
+      "name": "Table of Contents",
+      "rel": "contents",
+      "type": "LinkedResource",
+      "url": "index.html",
+    },
+    Object {
+      "url": "doc/one.html",
+    },
+    Object {
+      "url": "doc/two.html",
+    },
+  ],
+  "readingProgression": "rtl",
+  "resources": Array [
+    "publication.json",
+  ],
+  "type": "Book",
+}
+`;
+
+exports[`generate webpub from vivliostyle.config.js 3`] = `
+"<html>
+  <head>
+    <meta charset=\\"utf-8\\" />
+    <title>output</title>
+    <link
+      href=\\"publication.json\\"
+      rel=\\"publication\\"
+      type=\\"application/ld+json\\"
+    />
+  </head>
+  <body>
+    <h1>output</h1>
+    <nav id=\\"toc\\" role=\\"doc-toc\\">
+      <h2>Table of Contents</h2>
+      <ol>
+        <li><a href=\\"doc/one.html\\">one</a></li>
+        <li><a href=\\"doc/two.html\\">two</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>
+"
+`;

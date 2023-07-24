@@ -1,18 +1,20 @@
-import path from 'upath';
+import http from 'node:http';
 import { pathToFileURL } from 'node:url';
-import { getViewerFullUrl } from '../src/server';
+import portfinder from 'portfinder';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import {
+  getViewerFullUrl,
+  prepareServer,
+  teardownServer,
+} from '../src/server.js';
+import { upath } from '../src/util.js';
 import { maskConfig, rootPath } from './commandUtil.js';
 
-// Giving up run tests using ESM mocks due to lack of Jest’s support
-// I'd really like to switch to Vitest..
-// https://jestjs.io/ja/docs/ecmascript-modules#module-mocking-in-esm
-/*
-jest.mock('http', () => {
-  const { Agent } = jest.requireActual('http') as typeof http;
+vi.mock('http', async () => {
+  const { Agent } = await vi.importActual<typeof import('http')>('http');
   return {
-    __esModule: true,
     default: {
-      createServer: jest.fn(() => ({
+      createServer: vi.fn(() => ({
         listen: (port: number, host: string, callback: () => void) => {
           callback();
         },
@@ -23,21 +25,16 @@ jest.mock('http', () => {
     Agent,
   };
 });
-const mockedCreateServer = http.createServer as jest.MockedFunction<
-  typeof http.createServer
->;
+const mockedCreateServer = vi.mocked(http).createServer;
 
-jest.mock('portfinder', () => ({
-  __esModule: true,
+vi.mock('portfinder', () => ({
   default: {
-    getPortPromise: jest.fn(async () => {
+    getPortPromise: vi.fn(async () => {
       return 33333;
     }),
   },
 }));
-const mockedGetPortPromise = portfinder.getPortPromise as jest.MockedFunction<
-  typeof portfinder.getPortPromise
->;
+const mockedGetPortPromise = vi.mocked(portfinder).getPortPromise;
 
 beforeEach(() => {
   mockedCreateServer.mockClear();
@@ -47,7 +44,6 @@ beforeEach(() => {
 afterEach(() => {
   teardownServer();
 });
-*/
 
 it('converts to valid broker url', async () => {
   const sourceUrl1 = pathToFileURL('/absolute/path/to/manifest/file.json');
@@ -56,7 +52,7 @@ it('converts to valid broker url', async () => {
       {},
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),
@@ -88,7 +84,7 @@ it('converts to valid broker url', async () => {
       },
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),
@@ -113,7 +109,7 @@ it('converts to valid broker url', async () => {
       },
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),
@@ -137,7 +133,7 @@ it('converts to valid broker url', async () => {
       },
       {
         viewerUrl: pathToFileURL(
-          path.resolve(
+          upath.resolve(
             rootPath,
             'node_modules/@vivliostyle/viewer/lib/index.html',
           ),
@@ -152,7 +148,6 @@ it('converts to valid broker url', async () => {
   );
 });
 
-/*
 it('starts up broker and source servers', async () => {
   const validOut1 = await prepareServer({
     input: '/absolute/path/to/manifest/file.json',
@@ -164,6 +159,7 @@ it('starts up broker and source servers', async () => {
   expect(validOut1.viewerFullUrl).toBe(
     'http://localhost:33333/lib/index.html#src=http://localhost:33333/to/manifest/file.json&bookMode=true&renderAllPages=true',
   );
+  vi.mocked(http).createServer.mock.calls;
   expect(mockedCreateServer.mock.calls.length).toBe(2);
   expect(mockedGetPortPromise.mock.calls.length).toBe(2);
 });
@@ -200,17 +196,19 @@ it('starts up a source server with custom viewer', async () => {
 });
 
 it('starts up with no http server', async () => {
+  const input = '/absolute/path/to/manifest/file.json';
   const validOut1 = await prepareServer({
-    input: '/absolute/path/to/manifest/file.json',
+    input,
     workspaceDir: '/absolute/path',
     httpServer: false,
     viewer: 'file:///something/viewer',
   });
   maskConfig(validOut1);
   expect(validOut1.viewerFullUrl).toBe(
-    'file:///something/viewer#src=file:///absolute/path/to/manifest/file.json&bookMode=true&renderAllPages=true',
+    `file://something/viewer#src=${pathToFileURL(
+      input,
+    )}&bookMode=true&renderAllPages=true`,
   );
   expect(mockedCreateServer.mock.calls.length).toBe(0);
   expect(mockedGetPortPromise.mock.calls.length).toBe(0);
 });
-*/

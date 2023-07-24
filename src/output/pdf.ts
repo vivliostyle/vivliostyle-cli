@@ -1,26 +1,23 @@
 import chalk from 'chalk';
+import fs from 'node:fs';
 import { URL } from 'node:url';
 import { Page } from 'playwright-core';
-import shelljs from 'shelljs';
 import terminalLink from 'terminal-link';
-import path from 'upath';
 import {
   checkBrowserAvailability,
   downloadBrowser,
   getFullBrowserName,
   isPlaywrightExecutable,
   launchBrowser,
-} from './browser.js';
-import { ManuscriptEntry, MergedConfig } from './config.js';
+} from '../browser.js';
 import {
   collectVolumeArgs,
   runContainer,
   toContainerPath,
-} from './container.js';
-import { Meta, Payload, TOCItem } from './global-viewer.js';
-import { PdfOutput } from './output.js';
-import { PageSizeData, PostProcess } from './postprocess.js';
-import { prepareServer } from './server.js';
+} from '../container.js';
+import { Meta, Payload, TOCItem } from '../global-viewer.js';
+import { ManuscriptEntry, MergedConfig } from '../input/config.js';
+import { prepareServer } from '../server.js';
 import {
   checkContainerEnvironment,
   debug,
@@ -30,7 +27,10 @@ import {
   logUpdate,
   pathEquals,
   startLogging,
-} from './util.js';
+  upath,
+} from '../util.js';
+import type { PdfOutput } from './output-types.js';
+import { PageSizeData, PostProcess } from './pdf-postprocess.js';
 
 export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
   input: string;
@@ -59,7 +59,7 @@ export async function buildPDFWithContainer(
     image: option.image,
     userVolumeArgs: collectVolumeArgs([
       option.workspaceDir,
-      path.dirname(option.target.path),
+      upath.dirname(option.target.path),
     ]),
     commandArgs: [
       'build',
@@ -87,13 +87,13 @@ export async function buildPDF({
   browserType,
   image,
   sandbox,
-  verbose,
   timeout,
   entryContextDir,
   entries,
   httpServer,
   viewer,
   viewerParam,
+  logLevel,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
@@ -169,7 +169,7 @@ export async function buildPDF({
         }
         break;
     }
-    if (!verbose) {
+    if (logLevel === 'silent' || logLevel === 'info') {
       return;
     }
     if (msg.type() === 'error') {
@@ -183,7 +183,7 @@ export async function buildPDF({
 
   function stringifyEntry(entry: ManuscriptEntry) {
     const formattedSourcePath = chalk.bold.cyan(
-      path.relative(entryContextDir, entry.source),
+      upath.relative(entryContextDir, entry.source),
     );
     return `${terminalLink(formattedSourcePath, 'file://' + entry.source, {
       fallback: () => formattedSourcePath,
@@ -199,7 +199,7 @@ export async function buildPDF({
       return url.protocol === 'file:'
         ? pathEquals(entry.target, url.pathname)
         : pathEquals(
-            path.relative(workspaceDir, entry.target),
+            upath.relative(workspaceDir, entry.target),
             url.pathname.substring(1),
           );
     });
@@ -294,7 +294,7 @@ export async function buildPDF({
   await browser.close();
 
   logUpdate('Processing PDF');
-  shelljs.mkdir('-p', path.dirname(target.path));
+  fs.mkdirSync(upath.dirname(target.path), { recursive: true });
 
   const post = await PostProcess.load(pdf);
   await post.metadata(metadata, {

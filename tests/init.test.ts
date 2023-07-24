@@ -1,13 +1,13 @@
 import execa from 'execa';
 import fs from 'node:fs';
-import shelljs from 'shelljs';
-import path from 'upath';
-import { rootPath } from './commandUtil.js';
+import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
+import { moveSync, upath } from '../src/util.js';
+import { rootPath } from './commandUtil.js';
 
-const cliPath = path.join(rootPath, packageJSON.bin.vivliostyle);
+const cliPath = upath.join(rootPath, packageJSON.bin.vivliostyle);
 
-const localTmpDir = path.join(rootPath, 'tmp');
+const localTmpDir = upath.join(rootPath, 'tmp');
 fs.mkdirSync(localTmpDir, { recursive: true });
 
 function cleanUp(filePath: string) {
@@ -37,7 +37,7 @@ function unChalk(str: string) {
 }
 
 it('test the init command', async () => {
-  cleanUp(path.join(localTmpDir, 'vivliostyle.config.js'));
+  cleanUp(upath.join(localTmpDir, 'vivliostyle.config.js'));
   const response = await vivliostyleCLI(['init', localTmpDir], localTmpDir);
   expect(unChalk(response.stdout)).toBe(
     'Successfully created vivliostyle.config.js',
@@ -50,11 +50,11 @@ it('test the init command', async () => {
 });
 
 it('test the init command with long option', async () => {
-  const outputDir = path.join(localTmpDir, 'long');
+  const outputDir = upath.join(localTmpDir, 'long');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir);
   }
-  cleanUp(path.join(outputDir, 'vivliostyle.config.js'));
+  cleanUp(upath.join(outputDir, 'vivliostyle.config.js'));
   const response = await vivliostyleCLI(
     [
       'init',
@@ -76,12 +76,13 @@ it('test the init command with long option', async () => {
   );
 
   // Change file extension and load Common JS
-  shelljs.mv(
-    path.join(outputDir, 'vivliostyle.config.js'),
-    path.join(outputDir, 'vivliostyle.config.cjs'),
+  moveSync(
+    upath.join(outputDir, 'vivliostyle.config.js'),
+    upath.join(outputDir, 'vivliostyle.config.cjs'),
+    { overwrite: true },
   );
   const { default: config } = await import(
-    path.join(outputDir, 'vivliostyle.config.cjs')
+    upath.join(outputDir, 'vivliostyle.config.cjs')
   );
   expect(config.title).toBe('Sample Document');
   expect(config.author).toBe('Author Name <author@example.com>');
@@ -91,11 +92,11 @@ it('test the init command with long option', async () => {
 });
 
 it('test the init command with short option', async () => {
-  const outputDir = path.join(localTmpDir, 'short');
+  const outputDir = upath.join(localTmpDir, 'short');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir);
   }
-  cleanUp(path.join(outputDir, 'vivliostyle.config.js'));
+  cleanUp(upath.join(outputDir, 'vivliostyle.config.js'));
   const response = await vivliostyleCLI(
     [
       'init',
@@ -117,12 +118,13 @@ it('test the init command with short option', async () => {
   );
 
   // Change file extension and load Common JS
-  shelljs.mv(
-    path.join(outputDir, 'vivliostyle.config.js'),
-    path.join(outputDir, 'vivliostyle.config.cjs'),
+  moveSync(
+    upath.join(outputDir, 'vivliostyle.config.js'),
+    upath.join(outputDir, 'vivliostyle.config.cjs'),
+    { overwrite: true },
   );
   const { default: config } = await import(
-    path.join(outputDir, 'vivliostyle.config.cjs')
+    upath.join(outputDir, 'vivliostyle.config.cjs')
   );
   expect(config.title).toBe('Sample Document2');
   expect(config.author).toBe('Author Name2 <author@example.com>');

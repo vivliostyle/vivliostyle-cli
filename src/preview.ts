@@ -1,5 +1,4 @@
 import chokidar from 'chokidar';
-import upath from 'upath';
 import {
   checkBrowserAvailability,
   downloadBrowser,
@@ -7,17 +6,17 @@ import {
   launchBrowser,
 } from './browser.js';
 import {
+  CliFlags,
+  ManuscriptEntry,
+  collectVivliostyleConfig,
+  mergeConfig,
+} from './input/config.js';
+import {
   cleanupWorkspace,
   compile,
   copyAssets,
   prepareThemeDirectory,
-} from './builder.js';
-import {
-  CliFlags,
-  collectVivliostyleConfig,
-  mergeConfig,
-  ManuscriptEntry,
-} from './config.js';
+} from './processor/compile.js';
 import { prepareServer } from './server.js';
 import {
   cwd,
@@ -26,8 +25,10 @@ import {
   logSuccess,
   pathContains,
   pathEquals,
+  setLogLevel,
   startLogging,
   stopLogging,
+  upath,
 } from './util.js';
 
 let timer: NodeJS.Timeout;
@@ -35,6 +36,8 @@ let timer: NodeJS.Timeout;
 export interface PreviewCliFlags extends CliFlags {}
 
 export async function preview(cliFlags: PreviewCliFlags) {
+  setLogLevel(cliFlags.logLevel);
+
   startLogging('Collecting preview config');
 
   const loadedConf = await collectVivliostyleConfig(cliFlags);
@@ -69,7 +72,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
 
   const { viewerFullUrl } = await prepareServer({
     input: (config.manifestPath ??
-      config.webbookEntryPath ??
+      config.webbookEntryUrl ??
       config.epubOpfPath) as string,
     workspaceDir: config.workspaceDir,
     httpServer: config.httpServer,
@@ -124,6 +127,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
   // Focus to the URL input box if available
   await page.locator('#vivliostyle-input-url').focus();
 
+  // note: runExitHandlers() is not necessary here
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
 
   function reloadConfig(path: string) {
@@ -177,7 +181,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
           return true; // ignore saved intermediate files
         }
         if (
-          config.manifestAutoGenerate &&
+          config.needToGenerateManifest &&
           pathEquals(path, config.manifestPath)
         ) {
           return true; // ignore generated pub-manifest

@@ -1,55 +1,52 @@
-import AjvModule from 'ajv';
-import AjvFormatsModule from 'ajv-formats';
-import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
-import path from 'upath';
 import { pathToFileURL } from 'url';
-import { getExecutableBrowserPath } from './browser.js';
-import { MANIFEST_FILENAME, TOC_FILENAME, TOC_TITLE } from './const.js';
-import { CONTAINER_IMAGE } from './container.js';
-import { openEpubToTmpDirectory } from './epub.js';
+import { getExecutableBrowserPath } from '../browser.js';
 import {
-  detectInputFormat,
-  detectManuscriptMediaType,
+  EPUB_OUTPUT_VERSION,
+  MANIFEST_FILENAME,
+  TOC_FILENAME,
+  TOC_TITLE,
+} from '../const.js';
+import { CONTAINER_IMAGE } from '../container.js';
+import {
   InputFormat,
   ManuscriptMediaType,
-} from './input.js';
-import { readMarkdownMetadata } from './markdown.js';
+  detectInputFormat,
+  detectManuscriptMediaType,
+} from '../input/input-types.js';
 import {
+  OutputFormat,
   checkOutputFormat,
   checkPreflightMode,
   checkRenderMode,
   detectOutputFormat,
-  OutputFormat,
-} from './output.js';
-import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
+} from '../output/output-types.js';
+import { readMarkdownMetadata } from '../processor/markdown.js';
+import { parsePackageName } from '../processor/theme.js';
 import type {
   BrowserType,
   EntryObject,
   ThemeObject,
   VivliostyleConfigEntry,
   VivliostyleConfigSchema,
-} from './schema/vivliostyleConfig.schema.js';
-import { PageSize } from './server.js';
-import { parsePackageName } from './theme.js';
+} from '../schema/vivliostyleConfig.schema.js';
+import { PageSize } from '../server.js';
 import {
+  DetailError,
+  assertVivliostyleConfigSchema,
   cwd,
   debug,
-  DetailError,
-  filterRelevantAjvErrors,
   isUrlString,
   log,
   logWarn,
+  openEpubToTmpDirectory,
   readJSON,
   statFileSync,
   touchTmpFile,
-} from './util.js';
-
-// FIXME: https://github.com/ajv-validator/ajv/issues/2047
-const Ajv = AjvModule.default;
-const addFormats = AjvFormatsModule.default;
+  upath,
+} from '../util.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -110,7 +107,7 @@ export interface CliFlags {
   title?: string;
   author?: string;
   language?: string;
-  verbose?: boolean;
+  /** @deprecated */ verbose?: boolean;
   timeout?: number;
   renderMode?: 'local' | 'docker';
   preflight?: 'press-ready' | 'press-ready-local';
@@ -122,21 +119,20 @@ export interface CliFlags {
   viewer?: string;
   viewerParam?: string;
   browser?: 'chromium' | 'firefox' | 'webkit';
+  readingProgression?: 'ltr' | 'rtl';
+  logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
   /** @deprecated */ executableChromium?: string;
 }
 
 export interface WebPublicationManifestConfig {
   manifestPath: string;
-  manifestAutoGenerate: {
-    title: string;
-    author: string;
-  } | null;
+  needToGenerateManifest?: boolean;
 }
 export interface EpubManifestConfig {
   epubOpfPath: string;
 }
 export interface WebbookEntryConfig {
-  webbookEntryPath: string;
+  webbookEntryUrl: string;
 }
 export type ManifestConfig = XOR<
   [WebPublicationManifestConfig, WebbookEntryConfig, EpubManifestConfig]
@@ -165,14 +161,15 @@ export type MergedConfig = {
   customUserStyle: string | undefined;
   singleDoc: boolean;
   quick: boolean;
-  language: string | null;
+  title: string | undefined;
+  author: string | undefined;
+  language: string | undefined;
   readingProgression: 'ltr' | 'rtl' | undefined;
   vfmOptions: {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
   };
   cover: string | undefined;
-  verbose: boolean;
   timeout: number;
   sandbox: boolean;
   executableBrowser: string;
@@ -181,6 +178,7 @@ export type MergedConfig = {
   httpServer: boolean;
   viewer: string | undefined;
   viewerParam: string | undefined;
+  logLevel: 'silent' | 'info' | 'verbose' | 'debug';
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -207,7 +205,7 @@ export function contextResolve(
   context: string,
   loc: string | undefined,
 ): string | undefined {
-  return loc && path.resolve(context, loc);
+  return loc && upath.resolve(context, loc);
 }
 
 function normalizeEntry(e: string | EntryObject): EntryObject {
@@ -236,20 +234,20 @@ export function parseTheme({
   if (isUrlString(specifier)) {
     return {
       type: 'uri',
-      name: path.basename(specifier),
+      name: upath.basename(specifier),
       location: specifier,
     };
   }
 
   // bare .css file
-  const stylePath = path.resolve(context, specifier);
+  const stylePath = upath.resolve(context, specifier);
   if (fs.existsSync(stylePath) && stylePath.endsWith('.css')) {
-    const sourceRelPath = path.relative(context, stylePath);
+    const sourceRelPath = upath.relative(context, stylePath);
     return {
       type: 'file',
-      name: path.basename(specifier),
+      name: upath.basename(specifier),
       source: stylePath,
-      location: path.resolve(workspaceDir, sourceRelPath),
+      location: upath.resolve(workspaceDir, sourceRelPath),
     };
   }
 
@@ -267,7 +265,7 @@ export function parseTheme({
   let name = parsed.name;
   let resolvedSpecifier = specifier;
   if (parsed.type === 'directory' && parsed.fetchSpec) {
-    const pkgJsonPath = path.join(parsed.fetchSpec, 'package.json');
+    const pkgJsonPath = upath.join(parsed.fetchSpec, 'package.json');
     if (fs.existsSync(pkgJsonPath)) {
       const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
       name = packageJson.name;
@@ -281,7 +279,7 @@ export function parseTheme({
     type: 'package',
     name,
     specifier: resolvedSpecifier,
-    location: path.join(themesDir, 'packages', name),
+    location: upath.join(themesDir, 'packages', name),
     importPath,
   };
 }
@@ -313,7 +311,7 @@ function parseFileMetadata({
   workspaceDir: string;
   themesDir?: string;
 }): { title?: string; themes?: ParsedTheme[] } {
-  const sourceDir = path.dirname(sourcePath);
+  const sourceDir = upath.dirname(sourcePath);
   let title: string | undefined;
   let themes: ParsedTheme[] | undefined;
   if (type === 'text/markdown') {
@@ -362,7 +360,7 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     let config: VivliostyleConfigSchema;
     let jsonRaw: string | undefined;
     try {
-      if (path.extname(configPath) === '.json') {
+      if (upath.extname(configPath) === '.json') {
         jsonRaw = fs.readFileSync(configPath, 'utf8');
         config = JSON.parse(jsonRaw);
       } else {
@@ -376,23 +374,19 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
       );
     }
 
-    const ajv = new Ajv({ strict: false });
-    addFormats(ajv);
-    const validate = ajv.compile(vivliostyleConfigSchema);
-    const valid = validate(config);
-    if (!valid) {
-      const message = `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`;
-      const detailMessage =
-        validate.errors &&
-        betterAjvErrors(
-          vivliostyleConfigSchema,
-          config,
-          filterRelevantAjvErrors(validate.errors),
-          typeof jsonRaw === 'string' ? { json: jsonRaw } : { indent: 2 },
-        );
-      throw detailMessage
-        ? new DetailError(message, detailMessage)
-        : new Error(message);
+    try {
+      assertVivliostyleConfigSchema(
+        config,
+        typeof jsonRaw === 'string' ? { json: jsonRaw } : { indent: 2 },
+      );
+    } catch (error) {
+      const thrownError = error as Error | string;
+      throw new DetailError(
+        `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`,
+        typeof thrownError === 'string'
+          ? thrownError
+          : thrownError.stack ?? thrownError.message,
+      );
     }
     return config;
   };
@@ -408,10 +402,10 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
       } = {};
   let vivliostyleConfigPath: string | undefined;
   if (cliFlags.configPath) {
-    vivliostyleConfigPath = path.resolve(cwd, cliFlags.configPath);
+    vivliostyleConfigPath = upath.resolve(cwd, cliFlags.configPath);
   } else {
     vivliostyleConfigPath = ['.js', '.mjs', '.cjs']
-      .map((ext) => path.join(cwd, `vivliostyle.config${ext}`))
+      .map((ext) => upath.join(cwd, `vivliostyle.config${ext}`))
       .find((p) => fs.existsSync(p));
   }
   // let vivliostyleConfig: VivliostyleConfigSchema | undefined;
@@ -422,11 +416,11 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     };
   } else if (
     cliFlags.input &&
-    path.basename(cliFlags.input).startsWith('vivliostyle.config')
+    upath.basename(cliFlags.input).startsWith('vivliostyle.config')
   ) {
     // Load an input argument as a Vivliostyle config
     try {
-      const inputPath = path.resolve(cwd, cliFlags.input);
+      const inputPath = upath.resolve(cwd, cliFlags.input);
       const inputConfig = await load(inputPath);
       cliFlags = {
         ...cliFlags,
@@ -446,6 +440,14 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
       ),
     );
     cliFlags.executableBrowser = cliFlags.executableChromium;
+  }
+
+  if (cliFlags.verbose) {
+    logWarn(
+      chalk.yellowBright(
+        "'--verbose' option was deprecated and will be removed in a future release. Please replace with '--log-level verbose' option.",
+      ),
+    );
   }
 
   return {
@@ -468,15 +470,15 @@ export async function mergeConfig<T extends CliFlags>(
   if (cliFlags.input && !config && isUrlString(cliFlags.input)) {
     workspaceDir = entryContextDir = cwd;
   } else {
-    entryContextDir = path.resolve(
+    entryContextDir = upath.resolve(
       cliFlags.input && !config
-        ? path.dirname(path.resolve(context, cliFlags.input))
+        ? upath.dirname(upath.resolve(context, cliFlags.input))
         : contextResolve(context, config?.entryContext) ?? context,
     );
     workspaceDir =
       contextResolve(context, config?.workspaceDir) ?? entryContextDir;
   }
-  const themesDir = path.join(workspaceDir, 'themes');
+  const themesDir = upath.join(workspaceDir, 'themes');
 
   const includeAssets = config?.includeAssets
     ? Array.isArray(config.includeAssets)
@@ -484,8 +486,9 @@ export async function mergeConfig<T extends CliFlags>(
       : [config.includeAssets]
     : DEFAULT_ASSETS;
 
-  const language = cliFlags.language ?? config?.language ?? null;
-  const readingProgression = config?.readingProgression ?? undefined;
+  const language = cliFlags.language ?? config?.language ?? undefined;
+  const readingProgression =
+    cliFlags.readingProgression ?? config?.readingProgression ?? undefined;
   const sizeFlag = cliFlags.size ?? config?.size;
   const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
   const cropMarks = cliFlags.cropMarks ?? false;
@@ -516,7 +519,6 @@ export async function mergeConfig<T extends CliFlags>(
     disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
   };
 
-  const verbose = cliFlags.verbose ?? false;
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? true;
   const browserType = cliFlags.browser ?? config?.browser ?? 'chromium';
@@ -526,6 +528,10 @@ export async function mergeConfig<T extends CliFlags>(
   const httpServer = cliFlags.http ?? config?.http ?? false;
   const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
   const viewerParam = cliFlags.viewerParam ?? config?.viewerParam ?? undefined;
+  const logLevel =
+    cliFlags.logLevel ??
+    ((cliFlags.verbose && 'verbose') || undefined) ??
+    'silent';
 
   const rootThemes = cliFlags.theme
     ? [
@@ -553,15 +559,21 @@ export async function mergeConfig<T extends CliFlags>(
       return cliFlags.targets.map(({ path: outputPath, format }) => {
         if (format === 'pdf') {
           return {
-            path: path.resolve(outputPath),
+            path: upath.resolve(outputPath),
             format,
             renderMode,
             preflight,
             preflightOption,
           };
+        } else if (format === 'epub') {
+          return {
+            path: upath.resolve(outputPath),
+            format,
+            version: EPUB_OUTPUT_VERSION,
+          };
         } else {
           return {
-            path: path.resolve(outputPath),
+            path: upath.resolve(outputPath),
             format,
           };
         }
@@ -573,7 +585,7 @@ export async function mergeConfig<T extends CliFlags>(
       ).map((target) => {
         const targetObj =
           typeof target === 'string' ? { path: target } : target;
-        const outputPath = path.resolve(context, targetObj.path);
+        const outputPath = upath.resolve(context, targetObj.path);
         const format = targetObj.format ?? detectOutputFormat(outputPath);
         if (!checkOutputFormat(format)) {
           throw new Error(`Unknown format: ${format}`);
@@ -607,7 +619,7 @@ export async function mergeConfig<T extends CliFlags>(
     const filename = config?.title ? `${config.title}.pdf` : 'output.pdf';
     return [
       {
-        path: path.resolve(context, filename),
+        path: upath.resolve(context, filename),
         format: 'pdf',
         renderMode,
         preflight,
@@ -637,7 +649,6 @@ export async function mergeConfig<T extends CliFlags>(
     readingProgression,
     vfmOptions,
     cover,
-    verbose,
     timeout,
     sandbox,
     executableBrowser,
@@ -646,6 +657,7 @@ export async function mergeConfig<T extends CliFlags>(
     httpServer,
     viewer,
     viewerParam,
+    logLevel,
   };
   if (!cliFlags.input && !config) {
     throw new Error(
@@ -656,7 +668,6 @@ export async function mergeConfig<T extends CliFlags>(
     ? await composeSingleInputConfig(commonOpts, cliFlags, config)
     : await composeProjectConfig(commonOpts, cliFlags, config, context);
   debug('parsedConfig', parsedConfig);
-  checkUnusedCliFlags(parsedConfig, cliFlags);
   return parsedConfig;
 }
 
@@ -666,11 +677,11 @@ type CommonOpts = Omit<
   | 'entries'
   | 'exportAliases'
   | 'manifestPath'
-  | 'manifestAutoGenerate'
+  | 'needToGenerateManifest'
   | 'epubOpfPath'
-  | 'webbookEntryPath'
-  | 'projectTitle'
-  | 'projectAuthor'
+  | 'webbookEntryUrl'
+  | 'title'
+  | 'author'
 >;
 
 async function composeSingleInputConfig<T extends CliFlags>(
@@ -682,6 +693,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   let sourcePath: string;
   let input: InputFormat;
+  const title = cliFlags.title ?? config?.title;
+  const author = cliFlags.author ?? config?.author;
   const workspaceDir = otherConfig.workspaceDir;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
@@ -691,7 +704,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
     sourcePath = cliFlags.input;
     input = { format: 'webbook', entry: sourcePath };
   } else {
-    sourcePath = path.resolve(cliFlags.input);
+    sourcePath = upath.resolve(cliFlags.input);
     input = detectInputFormat(sourcePath);
     // Check file exists
     statFileSync(sourcePath);
@@ -701,12 +714,16 @@ async function composeSingleInputConfig<T extends CliFlags>(
     // Single input file; create temporary file
     const type = detectManuscriptMediaType(sourcePath);
     const metadata = parseFileMetadata({ type, sourcePath, workspaceDir });
-    const relDir = path.relative(
+    const relDir = upath.relative(
       otherConfig.entryContextDir,
-      path.dirname(sourcePath),
+      upath.dirname(sourcePath),
     );
-    const target = path
-      .resolve(workspaceDir, relDir, `${tmpPrefix}${path.basename(sourcePath)}`)
+    const target = upath
+      .resolve(
+        workspaceDir,
+        relDir,
+        `${tmpPrefix}${upath.basename(sourcePath)}`,
+      )
       .replace(/\.md$/, '.html');
     await touchTmpFile(target);
     const themes = metadata.themes ?? [...otherConfig.rootThemes];
@@ -720,41 +737,48 @@ async function composeSingleInputConfig<T extends CliFlags>(
     });
     exportAliases.push({
       source: target,
-      target: path.resolve(
-        path.dirname(target),
-        path.basename(sourcePath).replace(/\.md$/, '.html'),
+      target: upath.resolve(
+        upath.dirname(target),
+        upath.basename(sourcePath).replace(/\.md$/, '.html'),
       ),
     });
   }
 
+  let fallbackTitle: string | undefined;
   const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
     if (input.format === 'markdown') {
       // create temporary manifest file
-      const manifestPath = path.resolve(
+      const manifestPath = upath.resolve(
         workspaceDir,
         `${tmpPrefix}${MANIFEST_FILENAME}`,
       );
       await touchTmpFile(manifestPath);
       exportAliases.push({
         source: manifestPath,
-        target: path.resolve(workspaceDir, MANIFEST_FILENAME),
+        target: upath.resolve(workspaceDir, MANIFEST_FILENAME),
       });
-      return {
-        manifestPath,
-        manifestAutoGenerate: {
-          title:
-            cliFlags.title ??
-            config?.title ??
-            (entries.length === 1 && entries[0].title
-              ? (entries[0].title as string)
-              : path.basename(sourcePath)),
-          author: cliFlags.author ?? config?.author ?? '',
-        },
-      };
+      fallbackTitle =
+        entries.length === 1 && entries[0].title
+          ? (entries[0].title as string)
+          : upath.basename(sourcePath);
+      return { manifestPath, needToGenerateManifest: true };
     } else if (input.format === 'html' || input.format === 'webbook') {
-      return { webbookEntryPath: input.entry };
+      const url = isUrlString(input.entry)
+        ? new URL(input.entry)
+        : pathToFileURL(input.entry);
+      // Ensures trailing slash or explicit HTML extensions
+      if (
+        (url.protocol === 'http:' || url.protocol === 'https:') &&
+        !url.pathname.endsWith('/') &&
+        !/\.html?$/.test(url.pathname)
+      ) {
+        url.pathname = `${url.pathname}/`;
+      }
+      return {
+        webbookEntryUrl: url.href,
+      };
     } else if (input.format === 'pub-manifest') {
-      return { manifestPath: input.entry, manifestAutoGenerate: null };
+      return { manifestPath: input.entry };
     } else if (input.format === 'epub-opf') {
       return { epubOpfPath: input.entry };
     } else if (input.format === 'epub') {
@@ -771,6 +795,8 @@ async function composeSingleInputConfig<T extends CliFlags>(
     entries,
     input,
     exportAliases,
+    title: title || fallbackTitle,
+    author: author,
   };
 }
 
@@ -790,7 +816,7 @@ async function composeProjectConfig<T extends CliFlags>(
     rootThemes,
     outputs,
   } = otherConfig;
-  const pkgJsonPath = path.resolve(entryContextDir, 'package.json');
+  const pkgJsonPath = upath.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
     ? readJSON(pkgJsonPath)
     : undefined;
@@ -798,7 +824,7 @@ async function composeProjectConfig<T extends CliFlags>(
     debug('located package.json path', pkgJsonPath);
   }
 
-  const autoGeneratedTocPath = path.resolve(
+  const autoGeneratedTocPath = upath.resolve(
     workspaceDir,
     typeof config?.toc === 'string' ? config.toc : TOC_FILENAME,
   );
@@ -828,9 +854,9 @@ async function composeProjectConfig<T extends CliFlags>(
         themes,
       } as ContentsEntry;
     }
-    const sourcePath = path.resolve(entryContextDir, entry.path); // abs
-    const contextEntryPath = path.relative(entryContextDir, sourcePath); // rel
-    const targetPath = path
+    const sourcePath = upath.resolve(entryContextDir, entry.path); // abs
+    const contextEntryPath = upath.relative(entryContextDir, sourcePath); // rel
+    const targetPath = upath
       .resolve(workspaceDir, contextEntryPath)
       .replace(/\.md$/, '.html');
     if (!isUrlString(sourcePath)) {
@@ -876,12 +902,12 @@ async function composeProjectConfig<T extends CliFlags>(
     );
   }
 
-  let fallbackProjectTitle: string = '';
+  let fallbackProjectTitle: string | undefined;
   if (!projectTitle) {
     if (entries.length === 1 && entries[0].title) {
       fallbackProjectTitle = entries[0].title;
     } else {
-      fallbackProjectTitle = path.basename(outputs[0].path);
+      fallbackProjectTitle = upath.basename(outputs[0].path);
       log(
         `\n${chalk.yellow(
           'Could not find any appropriate publication title. We set ',
@@ -905,44 +931,12 @@ async function composeProjectConfig<T extends CliFlags>(
     entries,
     input: {
       format: 'pub-manifest',
-      entry: path.join(workspaceDir, MANIFEST_FILENAME),
+      entry: upath.join(workspaceDir, MANIFEST_FILENAME),
     },
     exportAliases: [],
-    manifestPath: path.join(workspaceDir, MANIFEST_FILENAME),
-    manifestAutoGenerate: {
-      title: projectTitle || fallbackProjectTitle,
-      author: projectAuthor || '',
-    },
+    manifestPath: upath.join(workspaceDir, MANIFEST_FILENAME),
+    title: projectTitle || fallbackProjectTitle,
+    author: projectAuthor,
+    needToGenerateManifest: true,
   };
-}
-
-export function checkUnusedCliFlags<T extends CliFlags>(
-  config: MergedConfig,
-  cliFlags: T,
-) {
-  const unusedFlags: string[] = [];
-  if (!config.manifestPath) {
-    if (cliFlags.theme) {
-      unusedFlags.push('--theme');
-    }
-    if (cliFlags.title) {
-      unusedFlags.push('--title');
-    }
-    if (cliFlags.author) {
-      unusedFlags.push('--author');
-    }
-    if (cliFlags.language) {
-      unusedFlags.push('--language');
-    }
-  }
-  if (unusedFlags.length) {
-    log('\n');
-    unusedFlags.forEach((flag) => {
-      log(
-        `${chalk.bold.yellow(flag)}${chalk.bold.yellow(
-          ` flag seems to be set but the current export setting doesn't support this. This option will be ignored.`,
-        )}`,
-      );
-    });
-  }
 }

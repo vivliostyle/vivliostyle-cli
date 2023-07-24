@@ -1,57 +1,51 @@
-import AjvModule from 'ajv';
-import AjvFormatsModule from 'ajv-formats';
-import betterAjvErrors from 'better-ajv-errors';
 import chalk from 'chalk';
 import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
-import shelljs from 'shelljs';
-import path from 'upath';
+import { TOC_TITLE } from '../const.js';
 import {
   ManuscriptEntry,
   MergedConfig,
   ParsedTheme,
   WebPublicationManifestConfig,
-} from './config.js';
-import { TOC_TITLE } from './const.js';
-import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html.js';
-import { processMarkdown } from './markdown.js';
+} from '../input/config.js';
 import type {
   PublicationLinks,
   PublicationManifest,
-} from './schema/publication.schema.js';
-import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
-import type { ArticleEntryObject } from './schema/vivliostyleConfig.schema.js';
+  URL as PublicationURL,
+} from '../schema/publication.schema.js';
+import type { ArticleEntryObject } from '../schema/vivliostyleConfig.schema.js';
+import {
+  DetailError,
+  assertPubManifestSchema,
+  copy,
+  debug,
+  log,
+  pathContains,
+  pathEquals,
+  remove,
+  safeGlob,
+  startLogging,
+  upath,
+  useTmpDirectory,
+} from '../util.js';
+import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html.js';
+import { processMarkdown } from './markdown.js';
 import {
   checkThemeInstallationNecessity,
   installThemeDependencies,
 } from './theme.js';
-import {
-  debug,
-  DetailError,
-  filterRelevantAjvErrors,
-  log,
-  pathContains,
-  pathEquals,
-  safeGlob,
-  startLogging,
-  useTmpDirectory,
-} from './util.js';
-
-// FIXME: https://github.com/ajv-validator/ajv/issues/2047
-const Ajv = AjvModule.default;
-const addFormats = AjvFormatsModule.default;
 
 function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   if (theme.type === 'uri') {
     return theme.location;
   }
   if (theme.type === 'file') {
-    return path.relative(from, theme.location);
+    return upath.relative(from, theme.location);
   }
   if (theme.importPath) {
     return [theme.importPath].flat().map((locator) => {
-      const resolvedPath = path.resolve(theme.location, locator);
+      const resolvedPath = upath.resolve(theme.location, locator);
       if (
         !pathContains(theme.location, resolvedPath) ||
         !fs.existsSync(resolvedPath)
@@ -60,10 +54,10 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
           `Could not find a style path ${theme.importPath} for the theme: ${theme.name}.`,
         );
       }
-      return path.relative(from, resolvedPath);
+      return upath.relative(from, resolvedPath);
     });
   } else {
-    const pkgJsonPath = path.join(theme.location, 'package.json');
+    const pkgJsonPath = upath.join(theme.location, 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
     const maybeStyle =
       packageJson?.vivliostyle?.theme?.style ??
@@ -75,7 +69,7 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
         'Please ensure this package satisfies a `vivliostyle.theme.style` propertiy.',
       );
     }
-    return path.relative(from, path.join(theme.location, maybeStyle));
+    return upath.relative(from, upath.join(theme.location, maybeStyle));
   }
 }
 
@@ -95,16 +89,12 @@ export async function cleanupWorkspace({
   let movedThemePath: string | undefined;
   if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
     [movedThemePath] = await useTmpDirectory();
-    shelljs.cp('-rf', themesDir, movedThemePath);
+    await copy(themesDir, movedThemePath);
   }
-  shelljs.rm('-rf', workspaceDir);
+  await remove(workspaceDir);
   if (movedThemePath) {
-    shelljs.mkdir('-p', workspaceDir);
-    shelljs.cp(
-      '-rf',
-      path.join(movedThemePath, path.basename(themesDir)),
-      workspaceDir,
-    );
+    fs.mkdirSync(upath.dirname(themesDir), { recursive: true });
+    await copy(movedThemePath, themesDir);
   }
 }
 
@@ -121,8 +111,8 @@ export async function prepareThemeDirectory({
   // copy theme files
   for (const theme of themeIndexes) {
     if (theme.type === 'file' && !pathEquals(theme.source, theme.location)) {
-      shelljs.mkdir('-p', path.dirname(theme.location));
-      shelljs.cp(theme.source, theme.location);
+      fs.mkdirSync(upath.dirname(theme.location), { recursive: true });
+      await copy(theme.source, theme.location);
     }
   }
 }
@@ -134,26 +124,32 @@ export function generateManifest(
   options: {
     title?: string;
     author?: string;
-    language?: string | null;
+    language?: string;
     readingProgression?: 'ltr' | 'rtl';
     modified: string;
     entries: ArticleEntryObject[];
     cover?: string;
+    links?: (PublicationURL | PublicationLinks)[];
+    resources?: (PublicationURL | PublicationLinks)[];
   },
-) {
+): PublicationManifest {
   const entries: PublicationLinks[] = options.entries.map((entry) => ({
     url: encodeURI(entry.path),
-    name: entry.title,
+    ...(entry.title && { name: entry.title }),
     ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
     ...(entry.rel && { rel: entry.rel }),
     ...(entry.rel === 'contents' && { type: 'LinkedResource' }),
   }));
-  const links: PublicationLinks[] = [];
-  const resources: PublicationLinks[] = [];
+  const links: (PublicationURL | PublicationLinks)[] = [
+    options.links || [],
+  ].flat();
+  const resources: (PublicationURL | PublicationLinks)[] = [
+    options.resources || [],
+  ].flat();
 
   if (options.cover) {
     const { width, height, type } = imageSize(
-      path.resolve(entryContextDir, options.cover),
+      upath.resolve(entryContextDir, options.cover),
     );
     let mimeType: string | false = false;
     if (type) {
@@ -183,48 +179,43 @@ export function generateManifest(
     '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],
     type: 'Book',
     conformsTo: 'https://github.com/vivliostyle/vivliostyle-cli',
-    author: options.author,
+    ...(options.title && { name: options.title }),
+    ...(options.author && { author: options.author }),
     ...(options.language && { inLanguage: options.language }),
     ...(options.readingProgression && {
       readingProgression: options.readingProgression,
     }),
     dateModified: options.modified,
-    name: options.title,
     readingOrder: entries,
     resources,
     links,
   };
 
   const publicationJson = JSON.stringify(publication, null, 2);
-  fs.writeFileSync(outputPath, publicationJson);
-  const ajv = new Ajv({ strict: false });
-  addFormats(ajv);
-  ajv.addSchema(publicationSchemas);
-  const validate = ajv.compile(publicationSchema);
-  const valid = validate(publication);
-  if (!valid) {
-    const message = `Validation of pubManifest failed. Please check the schema: ${outputPath}`;
-    const detailMessage =
-      validate.errors &&
-      betterAjvErrors(
-        publicationSchemas,
-        publication,
-        filterRelevantAjvErrors(validate.errors),
-        {
-          json: publicationJson,
-        },
-      );
-    throw detailMessage
-      ? new DetailError(message, detailMessage)
-      : new Error(message);
+  try {
+    assertPubManifestSchema(publication, {
+      json: publicationJson,
+    });
+  } catch (error) {
+    const thrownError = error as Error | string;
+    throw new DetailError(
+      `Validation of pubManifest failed. Please check the schema: ${outputPath}`,
+      typeof thrownError === 'string'
+        ? thrownError
+        : thrownError.stack ?? thrownError.message,
+    );
   }
+  fs.writeFileSync(outputPath, publicationJson);
+  return publication;
 }
 
 export async function compile({
   entryContextDir,
   workspaceDir,
   manifestPath,
-  manifestAutoGenerate,
+  needToGenerateManifest,
+  title,
+  author,
   entries,
   language,
   readingProgression,
@@ -248,11 +239,11 @@ export async function compile({
     (e): e is ManuscriptEntry => 'source' in e,
   );
   for (const entry of contentEntries) {
-    shelljs.mkdir('-p', path.dirname(entry.target));
+    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
 
     // calculate style path
     const style = entry.themes.flatMap((theme) =>
-      locateThemePath(theme, path.dirname(entry.target)),
+      locateThemePath(theme, upath.dirname(entry.target)),
     );
     if (entry.type === 'text/markdown') {
       // compile markdown
@@ -279,7 +270,7 @@ export async function compile({
       }
     } else {
       if (!pathEquals(entry.source, entry.target)) {
-        shelljs.cp(entry.source, entry.target);
+        await copy(entry.source, entry.target);
       }
     }
   }
@@ -292,8 +283,8 @@ export async function compile({
     const tocString = generateTocHtml({
       entries: contentEntries,
       manifestPath,
-      distDir: path.dirname(generativeContentsEntry.target),
-      title: manifestAutoGenerate?.title,
+      distDir: upath.dirname(generativeContentsEntry.target),
+      title,
       tocTitle: generativeContentsEntry.title ?? TOC_TITLE,
       style,
     });
@@ -301,15 +292,16 @@ export async function compile({
   }
 
   // generate manifest
-  if (manifestAutoGenerate) {
+  if (needToGenerateManifest) {
     generateManifest(manifestPath, entryContextDir, {
-      ...manifestAutoGenerate,
+      title,
+      author,
       language,
       readingProgression,
-      cover: cover && path.relative(entryContextDir, cover),
+      cover: cover && upath.relative(entryContextDir, cover),
       entries: entries.map((entry) => ({
         title: entry.title,
-        path: path.relative(workspaceDir, entry.target),
+        path: upath.relative(workspaceDir, entry.target),
         encodingFormat:
           !('type' in entry) ||
           entry.type === 'text/markdown' ||
@@ -332,7 +324,7 @@ export async function copyAssets({
   if (pathEquals(entryContextDir, workspaceDir)) {
     return;
   }
-  const relWorkspaceDir = path.relative(entryContextDir, workspaceDir);
+  const relWorkspaceDir = upath.relative(entryContextDir, workspaceDir);
   const assets = await safeGlob(includeAssets, {
     cwd: entryContextDir,
     ignore: [
@@ -341,11 +333,11 @@ export async function copyAssets({
         !pathContains(entryContextDir, p)
           ? []
           : format === 'webpub'
-          ? path.join(path.relative(entryContextDir, p), '**')
-          : path.relative(entryContextDir, p),
+          ? upath.join(upath.relative(entryContextDir, p), '**')
+          : upath.relative(entryContextDir, p),
       ),
       // don't copy workspace itself
-      ...(relWorkspaceDir ? [path.join(relWorkspaceDir, '**')] : []),
+      ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
     ],
     caseSensitiveMatch: false,
     followSymbolicLinks: false,
@@ -353,9 +345,9 @@ export async function copyAssets({
   });
   debug('assets', assets);
   for (const asset of assets) {
-    const target = path.join(workspaceDir, asset);
-    shelljs.mkdir('-p', path.dirname(target));
-    shelljs.cp(path.resolve(entryContextDir, asset), target);
+    const target = upath.join(workspaceDir, asset);
+    fs.mkdirSync(upath.dirname(target), { recursive: true });
+    await copy(upath.resolve(entryContextDir, asset), target);
   }
 }
 

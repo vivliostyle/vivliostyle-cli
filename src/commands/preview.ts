@@ -22,7 +22,8 @@ try {
     title: options.title,
     author: options.author,
     language: options.language,
-    verbose: options.verbose,
+    readingProgression: options.readingProgression,
+    verbose: options.verbose, // TODO: Remove it in the next major version up
     timeout: options.timeout,
     sandbox: options.sandbox,
     executableBrowser: options.executableBrowser,
@@ -30,6 +31,7 @@ try {
     viewer: options.viewer,
     viewerParam: options.viewerParam,
     browser: options.browser,
+    logLevel: options.logLevel,
     executableChromium: options.executableChromium, // TODO: Remove it in the next major version up
   }).catch(gracefulError);
 } catch (err) {

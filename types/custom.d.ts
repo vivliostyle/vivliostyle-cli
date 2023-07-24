@@ -7,3 +7,7 @@ declare type XOR<T extends any[], U extends any[] = []> = T extends []
   ? never
   : (T[0] & Without<Union<[...U, ...Tail<T>]>>) | XOR<Tail<T>, [T[0], ...U]>;
 declare type Resolved<T> = T extends Promise<infer U> ? U : never;
+
+interface ImportMeta {
+  env?: Record<string, unknown>;
+}

@@ -11,22 +11,22 @@ import {
   ReadingDirection,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
-import path from 'upath';
 import { v1 as uuid } from 'uuid';
-import { MergedConfig } from './config.js';
-import { coreVersion } from './const.js';
+import { coreVersion } from '../const.js';
 import {
   collectVolumeArgs,
   runContainer,
   toContainerPath,
-} from './container.js';
-import type { Meta, TOCItem } from './global-viewer.js';
-import { PdfOutput } from './output.js';
+} from '../container.js';
+import type { Meta, TOCItem } from '../global-viewer.js';
+import { MergedConfig } from '../input/config.js';
 import {
   checkContainerEnvironment,
   startLogging,
   stopLogging,
-} from './util.js';
+  upath,
+} from '../util.js';
+import type { PdfOutput } from './output-types.js';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
   Pick<MergedConfig, 'image'>;
@@ -76,8 +76,8 @@ export async function pressReadyWithContainer({
     image,
     entrypoint: 'press-ready',
     userVolumeArgs: collectVolumeArgs([
-      path.dirname(input),
-      path.dirname(output),
+      upath.dirname(input),
+      upath.dirname(output),
     ]),
     commandArgs: [
       'build',
@@ -106,7 +106,7 @@ export class PostProcess {
   ) {
     const isInContainer = checkContainerEnvironment();
     const input = preflight
-      ? path.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
+      ? upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
       : output;
 
     const pdf = await this.document.save();

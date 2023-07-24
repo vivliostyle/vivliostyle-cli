@@ -1,13 +1,14 @@
 import fileType from 'file-type';
 import fs from 'node:fs';
-import path from 'upath';
+import { expect, test } from 'vitest';
 import { build } from '../src/index.js';
+import { upath } from '../src/util.js';
 import { rootPath } from './commandUtil.js';
 
-const fixtureRoot = path.resolve(rootPath, 'tests/fixtures/wood');
-const fixtureFile = path.join(fixtureRoot, 'index.html');
+const fixtureRoot = upath.resolve(rootPath, 'tests/fixtures/wood');
+const fixtureFile = upath.join(fixtureRoot, 'index.html');
 
-const localTmpDir = path.join(rootPath, 'tmp');
+const localTmpDir = upath.join(rootPath, 'tmp');
 fs.mkdirSync(localTmpDir, { recursive: true });
 
 function cleanUp(filePath: string) {
@@ -21,7 +22,7 @@ function cleanUp(filePath: string) {
 }
 
 test('api generates pdf without errors', async () => {
-  const outputPath = path.join(localTmpDir, 'test-api.pdf');
+  const outputPath = upath.join(localTmpDir, 'test-api.pdf');
   cleanUp(outputPath);
 
   await build({

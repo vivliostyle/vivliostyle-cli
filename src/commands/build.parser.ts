@@ -1,11 +1,11 @@
 import { Command, Option } from 'commander';
 import { BuildCliFlags } from '../build.js';
-import { validateTimeoutFlag } from '../config.js';
+import { validateTimeoutFlag } from '../input/config.js';
 import {
+  OutputFormat,
   checkOutputFormat,
   detectOutputFormat,
-  OutputFormat,
-} from '../output.js';
+} from '../output/output-types.js';
 
 export function setupBuildParserProgram(): Command {
   // Provide an order-sensitive command parser
@@ -100,6 +100,12 @@ This option is equivalent with "--preflight press-ready"`,
     .option('-l, --language <language>', 'language')
     .addOption(
       new Option(
+        '--reading-progression <direction>',
+        'Direction of reading progression',
+      ).choices(['ltr', 'rtl']),
+    )
+    .addOption(
+      new Option(
         '--render-mode <mode>',
         'if docker is set, Vivliostyle try to render PDF on Docker container [local]',
       ).choices(['local', 'docker']),
@@ -116,7 +122,6 @@ This option is equivalent with "--preflight press-ready"`,
 Please refer the document of press-ready for further information.
 https://github.com/vibranthq/press-ready`,
     )
-    .option('--verbose', 'verbose log output')
     .option(
       '--no-sandbox',
       `launch chrome without sandbox. use this option when ECONNREFUSED error occurred.`,
@@ -148,9 +153,18 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     // Currently, Firefox and Webkit support preview command only!`,
     //       ).choices(['chromium', 'firefox', 'webkit']),
     //     )
+    .addOption(
+      new Option(
+        '--log-level <level>',
+        'specify a log level of console outputs',
+      )
+        .choices(['silent', 'info', 'verbose', 'debug'])
+        .default('info'),
+    )
     .addOption(new Option('--bypassed-pdf-builder-option <json>').hideHelp())
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
+    .addOption(new Option('--verbose').hideHelp())
     .action((_arg: any, option: BuildCliFlags) => {
       option.targets = inferenceTargetsOption(targets);
     });

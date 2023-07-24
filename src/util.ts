@@ -1,8 +1,11 @@
-import { ErrorObject } from 'ajv';
+import AjvModule, { ErrorObject, Schema } from 'ajv';
+import AjvFormatsModule from 'ajv-formats';
+import betterAjvErrors, { IInputOptions } from 'better-ajv-errors';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fastGlob from 'fast-glob';
-import { globby, Options as GlobbyOptions } from 'globby';
+import { XMLParser } from 'fast-xml-parser';
+import { Options as GlobbyOptions, globby } from 'globby';
 import gitIgnore, { Ignore } from 'ignore';
 import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
@@ -10,10 +13,23 @@ import { fileURLToPath } from 'node:url';
 import util from 'node:util';
 import oraConstructor from 'ora';
 import portfinder from 'portfinder';
-import shelljs from 'shelljs';
 import slash from 'slash';
 import tmp from 'tmp';
-import upath from 'upath';
+import {
+  copy,
+  copySync,
+  move,
+  moveSync,
+  remove,
+  removeSync,
+  upath,
+} from '../vendors/index.js';
+import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
+import type { PublicationManifest } from './schema/publication.schema.js';
+import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
+import type { VivliostyleConfigSchema } from './schema/vivliostyleConfig.schema.js';
+
+export { copy, copySync, move, moveSync, remove, removeSync, upath };
 
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());
@@ -27,22 +43,48 @@ const ora = oraConstructor({
 });
 
 export let beforeExitHandlers: (() => void)[] = [];
+export function runExitHandlers() {
+  while (beforeExitHandlers.length) {
+    try {
+      beforeExitHandlers.shift()?.();
+    } catch (e) {
+      // NOOP
+    }
+  }
+}
+
 const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
 exitSignals.forEach((sig) => {
   process.on(sig, (code: number) => {
-    while (beforeExitHandlers.length) {
-      try {
-        beforeExitHandlers.shift()?.();
-      } catch (e) {
-        // NOOP
-      }
-    }
+    runExitHandlers();
     process.exit(code);
   });
 });
 
+/**
+ * 0: silent
+ * 1: info
+ * 2: verbose
+ * 3: debug
+ */
+let logLevel: 0 | 1 | 2 | 3 = 0;
+export function setLogLevel(level?: 'silent' | 'info' | 'verbose' | 'debug') {
+  if (!level) {
+    return;
+  }
+  logLevel = {
+    silent: 0 as const,
+    info: 1 as const,
+    verbose: 2 as const,
+    debug: 3 as const,
+  }[level];
+  if (logLevel >= 3) {
+    debugConstructor.enable('vs-cli');
+  }
+}
+
 export function startLogging(text?: string) {
-  if (process.env.NODE_ENV === 'test') {
+  if (logLevel < 1) {
     return;
   }
   // If text is not set, erase previous log with space character
@@ -50,7 +92,7 @@ export function startLogging(text?: string) {
 }
 
 export function stopLogging(text?: string, symbol?: string) {
-  if (process.env.NODE_ENV === 'test') {
+  if (logLevel < 1) {
     return;
   }
   if (!text) {
@@ -61,11 +103,14 @@ export function stopLogging(text?: string, symbol?: string) {
 }
 
 export function log(...obj: any) {
+  if (logLevel < 1) {
+    return;
+  }
   console.log(...obj);
 }
 
 export function logUpdate(...obj: string[]) {
-  if (process.env.NODE_ENV === 'test') {
+  if (logLevel < 1) {
     return;
   }
   if (ora.isSpinning) {
@@ -76,19 +121,47 @@ export function logUpdate(...obj: string[]) {
 }
 
 export function logSuccess(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
+  const { isSpinning, text } = ora;
   ora.succeed(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export function logError(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
+  const { isSpinning, text } = ora;
   ora.fail(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export function logWarn(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
+  const { isSpinning, text } = ora;
   ora.warn(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export function logInfo(...obj: string[]) {
+  if (logLevel < 1) {
+    return;
+  }
+  const { isSpinning, text } = ora;
   ora.info(obj.join(' '));
+  if (isSpinning) {
+    startLogging(text);
+  }
 }
 
 export class DetailError extends Error {
@@ -247,7 +320,7 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
       const callback = () => {
         // clear function doesn't work well?
         // clear();
-        shelljs.rm('-rf', path);
+        removeSync(path);
         debug(`Removed the temporary directory: ${path}`);
       };
       beforeExitHandlers.push(callback);
@@ -257,11 +330,12 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
 }
 
 export async function touchTmpFile(path: string): Promise<() => void> {
-  shelljs.mkdir('-p', upath.dirname(path));
-  shelljs.touch(path);
+  fs.mkdirSync(upath.dirname(path), { recursive: true });
+  // Create file if not exist
+  fs.closeSync(fs.openSync(path, 'a'));
   debug(`Created the temporary file: ${path}`);
   const callback = () => {
-    shelljs.rm('-f', path);
+    removeSync(path);
     debug(`Removed the temporary file: ${path}`);
   };
   beforeExitHandlers.push(callback);
@@ -396,3 +470,60 @@ export async function safeGlob(
   ]);
   return result.filter(filter);
 }
+
+export async function openEpubToTmpDirectory(filePath: string): Promise<{
+  dest: string;
+  epubOpfPath: string;
+  deleteEpub: () => void;
+}> {
+  const [tmpDir, deleteEpub] = await useTmpDirectory();
+  await inflateZip(filePath, tmpDir);
+
+  const containerXmlPath = upath.join(tmpDir, 'META-INF/container.xml');
+  const xmlParser = new XMLParser({
+    ignoreAttributes: false,
+  });
+  const { container } = xmlParser.parse(
+    fs.readFileSync(containerXmlPath, 'utf8'),
+  );
+  const rootfile = [container.rootfiles.rootfile].flat()[0]; // Only supports a default rendition
+  const epubOpfPath = upath.join(tmpDir, rootfile['@_full-path']);
+  return { dest: tmpDir, epubOpfPath, deleteEpub };
+}
+
+// FIXME: https://github.com/ajv-validator/ajv/issues/2047
+const Ajv = AjvModule.default;
+const addFormats = AjvFormatsModule.default;
+
+const getValidatorFunction =
+  <T extends Schema>(schema: T, refSchemas?: Schema | Schema[]) =>
+  (obj: unknown, errorFormatOption?: IInputOptions): obj is T => {
+    const ajv = new Ajv({ strict: false });
+    addFormats(ajv);
+    if (refSchemas) {
+      ajv.addSchema(refSchemas);
+    }
+    const validate = ajv.compile(schema);
+    const valid = validate(obj);
+    if (!valid) {
+      const detailMessage =
+        validate.errors &&
+        betterAjvErrors(
+          schema,
+          obj,
+          filterRelevantAjvErrors(validate.errors),
+          errorFormatOption,
+        );
+      throw detailMessage || new Error();
+    }
+    return true;
+  };
+
+export const assertVivliostyleConfigSchema =
+  getValidatorFunction<VivliostyleConfigSchema>(vivliostyleConfigSchema);
+
+export const assertPubManifestSchema =
+  getValidatorFunction<PublicationManifest>(
+    publicationSchema,
+    publicationSchemas,
+  );

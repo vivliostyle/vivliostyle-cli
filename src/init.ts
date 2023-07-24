@@ -1,8 +1,7 @@
 import chalk from 'chalk';
 import fs from 'node:fs';
-import path from 'upath';
 import { CONTAINER_IMAGE } from './container.js';
-import { cwd, log } from './util.js';
+import { cwd, log, runExitHandlers, setLogLevel, upath } from './util.js';
 
 export interface InitCliFlags {
   title?: string;
@@ -10,10 +9,13 @@ export interface InitCliFlags {
   language?: string;
   theme?: string;
   size?: string;
+  logLevel?: 'silent' | 'info' | 'debug';
 }
 
 export async function init(cliFlags: InitCliFlags) {
-  const vivliostyleConfigPath = path.join(cwd, 'vivliostyle.config.js');
+  setLogLevel(cliFlags.logLevel);
+
+  const vivliostyleConfigPath = upath.join(cwd, 'vivliostyle.config.js');
 
   if (fs.existsSync(vivliostyleConfigPath)) {
     return log(
@@ -72,5 +74,7 @@ module.exports = vivliostyleConfig;
 `;
 
   fs.writeFileSync(vivliostyleConfigPath, vivliostyleConfig);
+
+  runExitHandlers();
   log(`Successfully created ${chalk.cyan('vivliostyle.config.js')}`);
 }
