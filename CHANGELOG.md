@@ -1,3 +1,24 @@
+
+
+# [8.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.0.1...v8.1.0) (2023-07-25)
+
+
+### Bug Fixes
+
+* Migrate Jest to Vitest ([e20d817](https://github.com/vivliostyle/vivliostyle-cli/commit/e20d817f6513c6b1805909da783574a76f57f1d7))
+* Remove obsoleted cli flags checker ([30ed466](https://github.com/vivliostyle/vivliostyle-cli/commit/30ed466a094cfb929406a3dc858b16a5281b968c))
+* Set resources property for web publication manifest ([3d6fa6a](https://github.com/vivliostyle/vivliostyle-cli/commit/3d6fa6a2e1dbf09ae8da9f66d8830836f0553f51))
+* Update Vivliostyle.js to 2.25.3: Bug Fixes ([e283af3](https://github.com/vivliostyle/vivliostyle-cli/commit/e283af38179990572da15b8b294261feb3938beb))
+
+
+### Features
+
+* Add --reading-progression CLI option ([8c4353c](https://github.com/vivliostyle/vivliostyle-cli/commit/8c4353c357cd26960709fad286f144b42f57b788))
+* Add a log level option for CLI and JavaScript API ([f3b9b6a](https://github.com/vivliostyle/vivliostyle-cli/commit/f3b9b6ae288b428f54b93ffdc3677dbe07a140e5))
+* Add EPUB for output option ([19b1dab](https://github.com/vivliostyle/vivliostyle-cli/commit/19b1dab11128881893d3388dc57455137a74fb18))
+* Make --verbose option deprecated ([dab272d](https://github.com/vivliostyle/vivliostyle-cli/commit/dab272df1ec1c2a4d385eeb97c36d6b3e30f6065))
+* Support single HTML → webpub convertion ([8b2a87c](https://github.com/vivliostyle/vivliostyle-cli/commit/8b2a87c2b332fbac69a873cb214aec6c8b2e8077))
+
 ## [8.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.0.0...v8.0.1) (2023-06-22)
 
 ### Bug Fixes
