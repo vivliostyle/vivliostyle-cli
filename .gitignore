@@ -1,4 +1,5 @@
 /dist
+/vendors/index.js
 /tmp
 *.pdf
 .vscode
