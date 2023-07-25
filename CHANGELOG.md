@@ -1,5 +1,12 @@
 
 
+## [8.1.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.1.0...v8.1.1) (2023-07-25)
+
+
+### Bug Fixes
+
+* Fix broken release of v8.1.0 ([063a695](https://github.com/vivliostyle/vivliostyle-cli/commit/063a695e376d26cbe07904f2d8b86722d667ba0e)), closes [#429](https://github.com/vivliostyle/vivliostyle-cli/issues/429)
+
 # [8.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.0.1...v8.1.0) (2023-07-25)
 
 
