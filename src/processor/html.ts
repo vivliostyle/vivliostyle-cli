@@ -94,6 +94,15 @@ export async function getJsdomFromUrlOrFile(
   return { dom };
 }
 
+const getTocHtmlStyle = ({
+  bodyBreakBefore,
+}: {
+  bodyBreakBefore: 'page' | 'recto' | 'verso';
+}) => /* css */ `
+body {
+  break-before: ${bodyBreakBefore};
+}
+`;
 export function generateTocHtml({
   entries,
   manifestPath,
@@ -126,6 +135,7 @@ export function generateTocHtml({
       ...[
         h('meta', { charset: 'utf-8' }),
         h('title', title ?? ''),
+        h('style', getTocHtmlStyle({ bodyBreakBefore: 'page' })),
         h('link', {
           href: encodeURI(upath.relative(distDir, manifestPath)),
           rel: 'publication',
@@ -141,6 +151,53 @@ export function generateTocHtml({
     ),
   );
   return prettier.format(toHTML(toc), { parser: 'html' });
+}
+
+const getCoverHtmlStyle = () => /* css */ `
+body {
+  margin: 0;
+}
+[role="doc-cover"] {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+}
+@page {
+  margin: 0;
+}
+`;
+export function generateCoverHtml({
+  imageSrc,
+  imageAlt,
+  title,
+  style,
+}: {
+  imageSrc: string;
+  imageAlt: string;
+  title?: string;
+  style?: string[];
+}): string {
+  const cover = h(
+    'html',
+    h(
+      'head',
+      ...[
+        h('meta', { charset: 'utf-8' }),
+        h('title', title ?? ''),
+        h('style', getCoverHtmlStyle()),
+        ...(style || []).map((s) => h('link', { href: s, rel: 'stylesheet' })),
+      ].filter((n) => !!n),
+    ),
+    h(
+      'body',
+      h(
+        'section',
+        { role: 'region', ariaLabel: 'Cover' },
+        h('img', { src: imageSrc, alt: imageAlt, role: 'doc-cover' }),
+      ),
+    ),
+  );
+  return prettier.format(toHTML(cover), { parser: 'html' });
 }
 
 export function processManuscriptHtml(
@@ -192,6 +249,16 @@ export function isTocHtml(filepath: string): boolean {
     return (
       $('[role="doc-toc"], [role="directory"], nav, .toc, #toc').length > 0
     );
+  } catch (err) {
+    // seems not to be a html file
+    return false;
+  }
+}
+
+export function isCovertHtml(filepath: string): boolean {
+  try {
+    const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'));
+    return $('[role="doc-cover"]').length > 0;
   } catch (err) {
     // seems not to be a html file
     return false;

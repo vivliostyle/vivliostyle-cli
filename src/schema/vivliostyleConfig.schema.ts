@@ -10,7 +10,11 @@ export type VivliostyleConfigSchema =
   | [VivliostyleConfigEntry, ...VivliostyleConfigEntry[]];
 export type Theme = string;
 export type Entry = string;
-export type EntryObject = ContentsEntryObject | ArticleEntryObject;
+export type ThemeSpecifier = Theme | ThemeObject | (Theme | ThemeObject)[];
+export type EntryObject =
+  | ContentsEntryObject
+  | ArticleEntryObject
+  | CoverEntryObject;
 export type Output = string;
 export type BrowserType = 'chromium' | 'firefox' | 'webkit';
 
@@ -57,6 +61,15 @@ export interface VivliostyleConfigEntry {
   toc?: boolean | string;
   tocTitle?: string;
   cover?: string;
+  coverHtml?:
+    | string
+    | {
+        path?: string;
+        title?: string;
+        imageSrc?: string;
+        imageAlt?: string;
+        [k: string]: unknown;
+      };
   /**
    * Timeout limit for waiting Vivliostyle process [120000]
    */
@@ -136,14 +149,19 @@ export interface ThemeObject {
 export interface ArticleEntryObject {
   path: string;
   title?: string;
-  theme?: Theme | ThemeObject | (Theme | ThemeObject)[];
+  theme?: ThemeSpecifier;
   encodingFormat?: string;
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
   rel: 'contents';
   title?: string;
-  theme?: Theme | ThemeObject | (Theme | ThemeObject)[];
+  theme?: ThemeSpecifier;
+}
+export interface CoverEntryObject {
+  rel: 'cover';
+  title?: string;
+  theme?: ThemeSpecifier;
 }
 export interface OutputObject {
   /**

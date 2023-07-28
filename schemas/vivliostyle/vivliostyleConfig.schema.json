@@ -9,21 +9,7 @@
       "properties": {
         "path": { "type": "string" },
         "title": { "type": "string" },
-        "theme": {
-          "oneOf": [
-            { "$ref": "#/definitions/theme" },
-            { "$ref": "#/definitions/themeObject" },
-            {
-              "type": "array",
-              "items": {
-                "oneOf": [
-                  { "$ref": "#/definitions/theme" },
-                  { "$ref": "#/definitions/themeObject" }
-                ]
-              }
-            }
-          ]
-        },
+        "theme": { "$ref": "#/definitions/themeSpecifier" },
         "encodingFormat": { "type": "string" },
         "rel": {
           "type": ["string", "array"],
@@ -47,21 +33,20 @@
           "const": "contents"
         },
         "title": { "type": "string" },
-        "theme": {
-          "oneOf": [
-            { "$ref": "#/definitions/theme" },
-            { "$ref": "#/definitions/themeObject" },
-            {
-              "type": "array",
-              "items": {
-                "oneOf": [
-                  { "$ref": "#/definitions/theme" },
-                  { "$ref": "#/definitions/themeObject" }
-                ]
-              }
-            }
-          ]
-        }
+        "theme": { "$ref": "#/definitions/themeSpecifier" }
+      },
+      "required": ["rel"],
+      "additionalProperties": false
+    },
+    "coverEntryObject": {
+      "type": "object",
+      "properties": {
+        "rel": {
+          "type": "string",
+          "const": "cover"
+        },
+        "title": { "type": "string" },
+        "theme": { "$ref": "#/definitions/themeSpecifier" }
       },
       "required": ["rel"],
       "additionalProperties": false
@@ -69,7 +54,8 @@
     "entryObject": {
       "oneOf": [
         { "$ref": "#/definitions/contentsEntryObject" },
-        { "$ref": "#/definitions/articleEntryObject" }
+        { "$ref": "#/definitions/articleEntryObject" },
+        { "$ref": "#/definitions/coverEntryObject" }
       ]
     },
     "output": {
@@ -129,6 +115,21 @@
       "required": ["specifier"],
       "additionalProperties": false
     },
+    "themeSpecifier": {
+      "oneOf": [
+        { "$ref": "#/definitions/theme" },
+        { "$ref": "#/definitions/themeObject" },
+        {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/theme" },
+              { "$ref": "#/definitions/themeObject" }
+            ]
+          }
+        }
+      ]
+    },
     "vfmReplaceRule": {
       "type": "object",
       "properties": {
@@ -158,20 +159,8 @@
           "minLength": 1
         },
         "theme": {
-          "description": "Theme package path(s) or URL(s) of css file.",
-          "oneOf": [
-            { "$ref": "#/definitions/theme" },
-            { "$ref": "#/definitions/themeObject" },
-            {
-              "type": "array",
-              "items": {
-                "oneOf": [
-                  { "$ref": "#/definitions/theme" },
-                  { "$ref": "#/definitions/themeObject" }
-                ]
-              }
-            }
-          ]
+          "$ref": "#/definitions/themeSpecifier",
+          "description": "Theme package path(s) or URL(s) of css file."
         },
         "entry": {
           "description": "Entry file(s) of document.",
@@ -261,6 +250,32 @@
           "type": "string",
           "minLength": 1
         },
+        "coverHtml": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "imageSrc": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "imageAlt": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
         "timeout": {
           "description": "Timeout limit for waiting Vivliostyle process [120000]",
           "type": "number",
@@ -321,6 +336,11 @@
         },
         "viewer": {
           "description": "Specify a URL of displaying viewer instead of vivliostyle-cli's one. It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)",
+          "type": "string",
+          "minLength": 1
+        },
+        "viewerParam": {
+          "description": "specify viewer parameters. (ex: \"allowScripts=false&pixelRatio=16\")",
           "type": "string",
           "minLength": 1
         },

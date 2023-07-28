@@ -7,10 +7,6 @@ import { toTree } from './commandUtil.js';
 
 vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
 
-vi.mock('image-size', () => ({
-  imageSize: () => ({ width: 100, height: 100, type: 'png' }),
-}));
-
 vi.mock('@vivliostyle/jsdom', () =>
   import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
 );
@@ -45,6 +41,7 @@ it('generate webpub from vivliostyle.config.js', async () => {
     '/work/input/vivliostyle.config.json': JSON.stringify(config),
     '/work/input/doc/one.md': 'yuno',
     '/work/input/doc/two.md': 'yunocchi',
+    '/work/input/cover.png': '',
   });
   await build({
     configPath: '/work/input/vivliostyle.config.json',

@@ -6,6 +6,8 @@ import { upath } from '../vendors/index.js';
 export const MANIFEST_FILENAME = 'publication.json';
 export const TOC_FILENAME = 'index.html';
 export const TOC_TITLE = 'Table of Contents';
+export const COVER_HTML_FILENAME = 'cover.html';
+export const COVER_HTML_IMAGE_ALT = 'Cover image';
 
 export const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>';
 export const EPUB_OUTPUT_VERSION = '3.0';
