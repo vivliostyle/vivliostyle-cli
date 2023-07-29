@@ -45,14 +45,17 @@
           "type": "string",
           "const": "cover"
         },
+        "path": { "type": "string" },
         "title": { "type": "string" },
-        "theme": { "$ref": "#/definitions/themeSpecifier" }
+        "theme": { "$ref": "#/definitions/themeSpecifier" },
+        "imageSrc": { "type": "string" },
+        "imageAlt": { "type": "string" }
       },
       "required": ["rel"],
       "additionalProperties": false
     },
     "entryObject": {
-      "oneOf": [
+      "anyOf": [
         { "$ref": "#/definitions/contentsEntryObject" },
         { "$ref": "#/definitions/articleEntryObject" },
         { "$ref": "#/definitions/coverEntryObject" }
@@ -247,32 +250,24 @@
           "minLength": 1
         },
         "cover": {
-          "type": "string",
-          "minLength": 1
-        },
-        "coverHtml": {
           "oneOf": [
-            { "type": "string" },
+            {
+              "type": "string",
+              "minLength": 1
+            },
             {
               "type": "object",
               "properties": {
-                "path": {
+                "src": {
                   "type": "string",
                   "minLength": 1
                 },
-                "title": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "imageSrc": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "imageAlt": {
+                "htmlPath": {
                   "type": "string",
                   "minLength": 1
                 }
-              }
+              },
+              "required": ["src"]
             }
           ]
         },

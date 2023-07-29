@@ -234,21 +234,19 @@ export async function compile({
     );
   }
 
-  const generativeCoverPageEntry = entries.find(
-    (e) => !('source' in e) && e.rel === 'cover',
-  ) as CoverEntry | undefined;
-  if (
-    generativeCoverPageEntry &&
-    fs.existsSync(generativeCoverPageEntry.target) &&
-    !isCovertHtml(generativeCoverPageEntry.target)
-  ) {
-    throw new Error(
-      `${generativeCoverPageEntry.target} is set as a destination to create a cover page HTML file, but there is already a document other than the cover page file in this location.`,
-    );
-  }
+  const generativeCoverPageEntries = entries.filter(
+    (e): e is CoverEntry => !('source' in e) && e.rel === 'cover',
+  );
+  generativeCoverPageEntries.forEach(({ target }) => {
+    if (fs.existsSync(target) && !isCovertHtml(target)) {
+      throw new Error(
+        `${target} is set as a destination to create a cover page HTML file, but there is already a document other than the cover page file in this location.`,
+      );
+    }
+  });
 
   const contentEntries = entries.filter(
-    (e): e is ManuscriptEntry => 'source' in e,
+    (e): e is ManuscriptEntry => e.rel !== 'contents' && e.rel !== 'cover',
   );
   for (const entry of contentEntries) {
     fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
@@ -291,7 +289,7 @@ export async function compile({
   if (generativeContentsEntry) {
     const entry = generativeContentsEntry;
     const style = entry.themes.flatMap((theme) =>
-      locateThemePath(theme, workspaceDir),
+      locateThemePath(theme, upath.dirname(entry.target)),
     );
     const tocString = generateTocHtml({
       entries: contentEntries,
@@ -306,14 +304,17 @@ export async function compile({
   }
 
   // generate cover
-  if (generativeCoverPageEntry) {
-    const entry = generativeCoverPageEntry;
+  for (const entry of generativeCoverPageEntries) {
     const style = entry.themes.flatMap((theme) =>
-      locateThemePath(theme, workspaceDir),
+      locateThemePath(theme, upath.dirname(entry.target)),
     );
     const coverHtml = generateCoverHtml({
       imageSrc: upath.relative(
-        upath.dirname(entry.target),
+        upath.join(
+          entryContextDir,
+          upath.relative(workspaceDir, entry.target),
+          '..',
+        ),
         entry.coverImageSrc,
       ),
       imageAlt: entry.coverImageAlt,
@@ -331,7 +332,7 @@ export async function compile({
       author,
       language,
       readingProgression,
-      cover: cover && upath.relative(entryContextDir, cover),
+      cover: cover && upath.relative(entryContextDir, cover.src),
       entries: entries.map((entry) => ({
         title: entry.title,
         path: upath.relative(workspaceDir, entry.target),

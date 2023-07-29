@@ -60,14 +60,11 @@ export interface VivliostyleConfigEntry {
   readingProgression?: 'ltr' | 'rtl';
   toc?: boolean | string;
   tocTitle?: string;
-  cover?: string;
-  coverHtml?:
+  cover?:
     | string
     | {
-        path?: string;
-        title?: string;
-        imageSrc?: string;
-        imageAlt?: string;
+        src: string;
+        htmlPath?: string;
         [k: string]: unknown;
       };
   /**
@@ -160,8 +157,11 @@ export interface ContentsEntryObject {
 }
 export interface CoverEntryObject {
   rel: 'cover';
+  path?: string;
   title?: string;
   theme?: ThemeSpecifier;
+  imageSrc?: string;
+  imageAlt?: string;
 }
 export interface OutputObject {
   /**
