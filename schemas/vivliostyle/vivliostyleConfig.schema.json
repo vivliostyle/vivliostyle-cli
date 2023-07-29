@@ -33,7 +33,15 @@
           "const": "contents"
         },
         "title": { "type": "string" },
-        "theme": { "$ref": "#/definitions/themeSpecifier" }
+        "theme": { "$ref": "#/definitions/themeSpecifier" },
+        "pageBreakBefore": {
+          "type": "string",
+          "enum": ["left", "right", "recto", "verso"]
+        },
+        "pageCounterReset": {
+          "type": "integer",
+          "minimum": 1
+        }
       },
       "required": ["rel"],
       "additionalProperties": false
@@ -49,7 +57,11 @@
         "title": { "type": "string" },
         "theme": { "$ref": "#/definitions/themeSpecifier" },
         "imageSrc": { "type": "string" },
-        "imageAlt": { "type": "string" }
+        "imageAlt": { "type": "string" },
+        "pageBreakBefore": {
+          "type": "string",
+          "enum": ["left", "right", "recto", "verso"]
+        }
       },
       "required": ["rel"],
       "additionalProperties": false
@@ -57,8 +69,8 @@
     "entryObject": {
       "anyOf": [
         { "$ref": "#/definitions/contentsEntryObject" },
-        { "$ref": "#/definitions/articleEntryObject" },
-        { "$ref": "#/definitions/coverEntryObject" }
+        { "$ref": "#/definitions/coverEntryObject" },
+        { "$ref": "#/definitions/articleEntryObject" }
       ]
     },
     "output": {

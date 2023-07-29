@@ -95,12 +95,25 @@ export async function getJsdomFromUrlOrFile(
 }
 
 const getTocHtmlStyle = ({
-  bodyBreakBefore,
+  pageBreakBefore,
+  pageCounterReset,
 }: {
-  bodyBreakBefore: 'page' | 'recto' | 'verso';
+  pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
+  pageCounterReset?: number;
 }) => /* css */ `
-body {
-  break-before: ${bodyBreakBefore};
+${
+  pageBreakBefore
+    ? `:root {
+  break-before: ${pageBreakBefore};
+}`
+    : ''
+}
+${
+  typeof pageCounterReset === 'number'
+    ? `@page :nth(1) {
+  counter-reset: page ${Math.floor(pageCounterReset - 1)};
+}`
+    : ''
 }
 `;
 export function generateTocHtml({
@@ -109,14 +122,16 @@ export function generateTocHtml({
   distDir,
   title,
   tocTitle,
-  style,
+  stylesheets = [],
+  styleOptions = {},
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   manifestPath: string;
   distDir: string;
   title?: string;
   tocTitle: string;
-  style?: string[];
+  stylesheets?: string[];
+  styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
 }): string {
   const items = entries.map((entry) =>
     h(
@@ -135,13 +150,13 @@ export function generateTocHtml({
       ...[
         h('meta', { charset: 'utf-8' }),
         h('title', title ?? ''),
-        h('style', getTocHtmlStyle({ bodyBreakBefore: 'page' })),
+        h('style', getTocHtmlStyle(styleOptions)),
         h('link', {
           href: encodeURI(upath.relative(distDir, manifestPath)),
           rel: 'publication',
           type: 'application/ld+json',
         }),
-        ...(style || []).map((s) => h('link', { href: s, rel: 'stylesheet' })),
+        ...stylesheets.map((s) => h('link', { href: s, rel: 'stylesheet' })),
       ].filter((n) => !!n),
     ),
     h(
@@ -153,7 +168,15 @@ export function generateTocHtml({
   return prettier.format(toHTML(toc), { parser: 'html' });
 }
 
-const getCoverHtmlStyle = () => /* css */ `
+const getCoverHtmlStyle = ({
+  pageBreakBefore,
+}: {
+  pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
+}) => /* css */ `
+:root {
+  --page-mbox-visibility: hidden;
+  ${pageBreakBefore ? `break-before: ${pageBreakBefore};` : ''}
+}
 body {
   margin: 0;
 }
@@ -164,18 +187,68 @@ body {
 }
 @page {
   margin: 0;
+  @top-left-corner {
+    visibility: var(--page-mbox-visibility);
+  }
+  @top-left {
+    visibility: var(--page-mbox-visibility);
+  }
+  @top-center {
+    visibility: var(--page-mbox-visibility);
+  }
+  @top-right {
+    visibility: var(--page-mbox-visibility);
+  }
+  @top-right-corner {
+    visibility: var(--page-mbox-visibility);
+  }
+  @left-top {
+    visibility: var(--page-mbox-visibility);
+  }
+  @left-middle {
+    visibility: var(--page-mbox-visibility);
+  }
+  @left-bottom {
+    visibility: var(--page-mbox-visibility);
+  }
+  @right-top {
+    visibility: var(--page-mbox-visibility);
+  }
+  @right-middle {
+    visibility: var(--page-mbox-visibility);
+  }
+  @right-bottom {
+    visibility: var(--page-mbox-visibility);
+  }
+  @bottom-left-corner {
+    visibility: var(--page-mbox-visibility);
+  }
+  @bottom-left {
+    visibility: var(--page-mbox-visibility);
+  }
+  @bottom-center {
+    visibility: var(--page-mbox-visibility);
+  }
+  @bottom-right {
+    visibility: var(--page-mbox-visibility);
+  }
+  @bottom-right-corner {
+    visibility: var(--page-mbox-visibility);
+  }
 }
 `;
 export function generateCoverHtml({
   imageSrc,
   imageAlt,
   title,
-  style,
+  stylesheets = [],
+  styleOptions = {},
 }: {
   imageSrc: string;
   imageAlt: string;
   title?: string;
-  style?: string[];
+  stylesheets?: string[];
+  styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
 }): string {
   const cover = h(
     'html',
@@ -184,8 +257,8 @@ export function generateCoverHtml({
       ...[
         h('meta', { charset: 'utf-8' }),
         h('title', title ?? ''),
-        h('style', getCoverHtmlStyle()),
-        ...(style || []).map((s) => h('link', { href: s, rel: 'stylesheet' })),
+        h('style', getCoverHtmlStyle(styleOptions)),
+        ...stylesheets.map((s) => h('link', { href: s, rel: 'stylesheet' })),
       ].filter((n) => !!n),
     ),
     h(

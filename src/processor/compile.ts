@@ -3,6 +3,7 @@ import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { TOC_TITLE } from '../const.js';
 import {
+  ContentsEntry,
   CoverEntry,
   ManuscriptEntry,
   MergedConfig,
@@ -222,7 +223,7 @@ export async function compile({
   vfmOptions,
 }: MergedConfig & WebPublicationManifestConfig): Promise<void> {
   const generativeContentsEntry = entries.find(
-    (e) => !('source' in e) && e.rel === 'contents',
+    (e): e is ContentsEntry => !('source' in e) && e.rel === 'contents',
   );
   if (
     generativeContentsEntry &&
@@ -288,7 +289,7 @@ export async function compile({
   // generate toc
   if (generativeContentsEntry) {
     const entry = generativeContentsEntry;
-    const style = entry.themes.flatMap((theme) =>
+    const stylesheets = entry.themes.flatMap((theme) =>
       locateThemePath(theme, upath.dirname(entry.target)),
     );
     const tocString = generateTocHtml({
@@ -297,7 +298,8 @@ export async function compile({
       distDir: upath.dirname(entry.target),
       title,
       tocTitle: entry.title ?? TOC_TITLE,
-      style,
+      stylesheets,
+      styleOptions: entry,
     });
     fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
     fs.writeFileSync(entry.target, tocString);
@@ -305,7 +307,7 @@ export async function compile({
 
   // generate cover
   for (const entry of generativeCoverPageEntries) {
-    const style = entry.themes.flatMap((theme) =>
+    const stylesheets = entry.themes.flatMap((theme) =>
       locateThemePath(theme, upath.dirname(entry.target)),
     );
     const coverHtml = generateCoverHtml({
@@ -319,7 +321,8 @@ export async function compile({
       ),
       imageAlt: entry.coverImageAlt,
       title: entry.title,
-      style,
+      stylesheets,
+      styleOptions: entry,
     });
     fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
     fs.writeFileSync(entry.target, coverHtml, 'utf8');

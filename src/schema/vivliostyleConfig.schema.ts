@@ -13,8 +13,8 @@ export type Entry = string;
 export type ThemeSpecifier = Theme | ThemeObject | (Theme | ThemeObject)[];
 export type EntryObject =
   | ContentsEntryObject
-  | ArticleEntryObject
-  | CoverEntryObject;
+  | CoverEntryObject
+  | ArticleEntryObject;
 export type Output = string;
 export type BrowserType = 'chromium' | 'firefox' | 'webkit';
 
@@ -154,6 +154,8 @@ export interface ContentsEntryObject {
   rel: 'contents';
   title?: string;
   theme?: ThemeSpecifier;
+  pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
+  pageCounterReset?: number;
 }
 export interface CoverEntryObject {
   rel: 'cover';
@@ -162,6 +164,7 @@ export interface CoverEntryObject {
   theme?: ThemeSpecifier;
   imageSrc?: string;
   imageAlt?: string;
+  pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
 }
 export interface OutputObject {
   /**
