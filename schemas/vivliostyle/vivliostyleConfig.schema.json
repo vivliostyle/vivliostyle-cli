@@ -274,6 +274,10 @@
                   "type": "string",
                   "minLength": 1
                 },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
                 "htmlPath": {
                   "type": "string",
                   "minLength": 1

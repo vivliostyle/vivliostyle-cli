@@ -51,6 +51,13 @@ interface LandmarkEntry {
 const TOC_ID = 'toc';
 const LANDMARKS_ID = 'landmarks';
 const PAGELIST_ID = 'page-list';
+const COVER_IMAGE_MIMETYPES = [
+  'image/gif',
+  'image/jpeg',
+  'image/png',
+  'image/svg+xml',
+  'image/webp',
+];
 
 const changeExtname = (filepath: string, newExt: string) => {
   let ext = upath.extname(filepath);
@@ -150,25 +157,28 @@ export async function exportEpub({
         (e): e is PublicationLinks =>
           typeof e === 'object' && e.rel === relType && (!filter || filter(e)),
       );
-  const tocResource =
-    findPublicationLink('contents', manifest.readingOrder) ||
-    findPublicationLink('contents', manifest.resources);
-  const pageListResource =
-    findPublicationLink('pagelist', manifest.readingOrder) ||
-    findPublicationLink('pagelist', manifest.resources);
+  const tocResource = findPublicationLink('contents', [
+    ...[manifest.readingOrder || []].flat(),
+    ...[manifest.resources || []].flat(),
+  ]);
+  const pageListResource = findPublicationLink('pagelist', [
+    ...[manifest.readingOrder || []].flat(),
+    ...[manifest.resources || []].flat(),
+  ]);
   // NOTE: EPUB allows one cover-image item unlike web publication
   // vivliostyle-cli takes the first cover resource.
   const pictureCoverResource = findPublicationLink(
     'cover',
     manifest.resources,
     (e) =>
-      ['image/gif', 'image/jpeg', 'image/png', 'image/svg+xml'].includes(
-        e.encodingFormat || mime(e.url) || '',
-      ),
+      COVER_IMAGE_MIMETYPES.includes(e.encodingFormat || mime(e.url) || ''),
   );
   const htmlCoverResource = findPublicationLink(
     'cover',
-    manifest.resources,
+    [
+      ...[manifest.readingOrder || []].flat(),
+      ...[manifest.resources || []].flat(),
+    ],
     (e) => /\.html?$/.test(e.url),
   );
 
@@ -681,8 +691,10 @@ function buildEpubPackageDocument({
         ...(manifest.readingProgression
           ? { '_page-progression-direction': manifest.readingProgression }
           : {}),
-        itemref: readingOrder.map(({ url }) => ({
+        itemref: readingOrder.map(({ url, rel }, index) => ({
           _idref: itemIdMap.get(changeExtname(url, '.xhtml')),
+          // Regard the first cover entry as a hidden page
+          ...(index === 0 && rel === 'cover' ? { _linear: 'no' } : {}),
         })),
       },
       guide: {

@@ -64,6 +64,7 @@ export interface VivliostyleConfigEntry {
     | string
     | {
         src: string;
+        name?: string;
         htmlPath?: string;
         [k: string]: unknown;
       };

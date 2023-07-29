@@ -188,6 +188,7 @@ export type MergedConfig = {
   cover:
     | {
         src: string;
+        name: string;
         htmlPath: string;
       }
     | undefined;
@@ -648,20 +649,21 @@ export async function mergeConfig<T extends CliFlags>(
     ];
   })();
 
-  const cover: MergedConfig['cover'] = config?.cover
-    ? typeof config.cover === 'string'
-      ? {
-          src: upath.resolve(entryContextDir, config.cover),
-          htmlPath: upath.resolve(workspaceDir, COVER_HTML_FILENAME),
-        }
-      : {
-          src: upath.resolve(entryContextDir, config.cover.src),
-          htmlPath: upath.resolve(
-            workspaceDir,
-            config.cover.htmlPath || COVER_HTML_FILENAME,
-          ),
-        }
-    : undefined;
+  const cover = ((): MergedConfig['cover'] => {
+    if (!config?.cover) {
+      return undefined;
+    }
+    const obj =
+      typeof config.cover === 'string' ? { src: config.cover } : config.cover;
+    return {
+      src: upath.resolve(entryContextDir, obj.src),
+      name: obj.name || COVER_HTML_IMAGE_ALT,
+      htmlPath: upath.resolve(
+        workspaceDir,
+        obj.htmlPath || COVER_HTML_FILENAME,
+      ),
+    };
+  })();
 
   const commonOpts: CommonOpts = {
     entryContextDir,
@@ -934,7 +936,7 @@ async function composeProjectConfig<T extends CliFlags>(
         title: entry.title ?? projectTitle,
         themes,
         coverImageSrc,
-        coverImageAlt: entry.imageAlt || COVER_HTML_IMAGE_ALT,
+        coverImageAlt: entry.imageAlt || cover?.name || COVER_HTML_IMAGE_ALT,
         pageBreakBefore: entry.pageBreakBefore,
       };
       return parsedEntry;
@@ -1018,7 +1020,7 @@ async function composeProjectConfig<T extends CliFlags>(
       title: projectTitle,
       themes: [...rootThemes],
       coverImageSrc: ensureCoverImage(cover.src)!,
-      coverImageAlt: COVER_HTML_IMAGE_ALT,
+      coverImageAlt: cover.name,
     });
   }
 

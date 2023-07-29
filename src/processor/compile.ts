@@ -135,7 +135,10 @@ export function generateManifest(
     readingProgression?: 'ltr' | 'rtl';
     modified: string;
     entries: ArticleEntryObject[];
-    cover?: string;
+    cover?: {
+      url: string;
+      name: string;
+    };
     links?: (PublicationURL | PublicationLinks)[];
     resources?: (PublicationURL | PublicationLinks)[];
   },
@@ -157,11 +160,12 @@ export function generateManifest(
   ].flat();
 
   if (options.cover) {
-    const mimeType = mime(options.cover);
+    const mimeType = mime(options.cover.url);
     if (mimeType) {
-      links.push({
+      resources.push({
         rel: 'cover',
-        url: encodeURI(options.cover),
+        url: encodeURI(options.cover.url),
+        name: options.cover.name,
         encodingFormat: mimeType,
       });
     } else {
@@ -335,7 +339,10 @@ export async function compile({
       author,
       language,
       readingProgression,
-      cover: cover && upath.relative(entryContextDir, cover.src),
+      cover: cover && {
+        url: upath.relative(entryContextDir, cover.src),
+        name: cover.name,
+      },
       entries: entries.map((entry) => ({
         title: entry.title,
         path: upath.relative(workspaceDir, entry.target),
