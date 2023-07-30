@@ -125,6 +125,7 @@ export function generateTocHtml({
   entries,
   manifestPath,
   distDir,
+  language,
   title,
   tocTitle,
   stylesheets = [],
@@ -133,6 +134,7 @@ export function generateTocHtml({
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   manifestPath: string;
   distDir: string;
+  language?: string;
   title?: string;
   tocTitle: string;
   stylesheets?: string[];
@@ -150,6 +152,7 @@ export function generateTocHtml({
   );
   const toc = h(
     'html',
+    { lang: language },
     h(
       'head',
       ...[
@@ -248,18 +251,21 @@ body {
 export function generateCoverHtml({
   imageSrc,
   imageAlt,
+  language,
   title,
   stylesheets = [],
   styleOptions = {},
 }: {
   imageSrc: string;
   imageAlt: string;
+  language?: string;
   title?: string;
   stylesheets?: string[];
   styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
 }): string {
   const cover = h(
     'html',
+    { lang: language },
     h(
       'head',
       ...[

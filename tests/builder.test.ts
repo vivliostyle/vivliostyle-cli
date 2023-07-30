@@ -101,6 +101,7 @@ it('generate workspace directory', async () => {
   const tocHtml = new JSDOM(
     fs.readFileSync(resolveFixture('builder/.vs-workspace/index.html')),
   );
+  expect(tocHtml.window.document.documentElement.lang).toBe('ja');
   expect(
     tocHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
@@ -122,6 +123,7 @@ it('generate workspace directory', async () => {
     fs.readFileSync(resolveFixture('builder/.vs-workspace/cover.html')),
     { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
   );
+  expect(coverHtml.window.document.documentElement.lang).toBe('ja');
   expect(
     coverHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
