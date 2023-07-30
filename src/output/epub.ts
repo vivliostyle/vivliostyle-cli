@@ -668,12 +668,22 @@ function buildEpubPackageDocument({
         'dc:subject': transformToGenericTextNode(
           manifest['dc:subject'] || manifest.subject,
         ),
-        meta: transformToGenericTextNode(
-          normalizeDate(manifest.dateModified || Date.now()),
-          {
-            _property: 'dcterms:modified',
-          },
-        ),
+        meta: [
+          ...transformToGenericTextNode(
+            normalizeDate(manifest.dateModified || Date.now()),
+            {
+              _property: 'dcterms:modified',
+            },
+          ),
+          ...(() => {
+            const coverImage = manifestItems.find(
+              (it) => it.properties === 'cover-image',
+            );
+            return coverImage
+              ? [{ _name: 'cover', _content: itemIdMap.get(coverImage.href) }]
+              : [];
+          })(),
+        ],
       },
       manifest: {
         item: manifestItems.map(({ href, mediaType, properties }) => ({
