@@ -35,10 +35,12 @@
         "title": { "type": "string" },
         "theme": { "$ref": "#/definitions/themeSpecifier" },
         "pageBreakBefore": {
+          "description": "Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.",
           "type": "string",
           "enum": ["left", "right", "recto", "verso"]
         },
         "pageCounterReset": {
+          "description": "Reset the starting page number of this document by the specified integer. It is useful when you want to control page numbers when including a cover page.",
           "type": "integer",
           "minimum": 1
         }
@@ -59,6 +61,7 @@
         "imageSrc": { "type": "string" },
         "imageAlt": { "type": "string" },
         "pageBreakBefore": {
+          "description": "Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.",
           "type": "string",
           "enum": ["left", "right", "recto", "verso"]
         }
@@ -249,6 +252,7 @@
           "default": "ltr"
         },
         "toc": {
+          "description": "Specify whether to generate a table of contents (ToC) document. If a string is set, the ToC document will be saved at that location. (default: index.html)",
           "oneOf": [
             { "type": "boolean" },
             {
@@ -258,10 +262,12 @@
           ]
         },
         "tocTitle": {
+          "description": "Specify the title of the generated ToC document.",
           "type": "string",
           "minLength": 1
         },
         "cover": {
+          "description": "Options about cover images and cover page documents",
           "oneOf": [
             {
               "type": "string",
@@ -271,14 +277,17 @@
               "type": "object",
               "properties": {
                 "src": {
+                  "description": "Specify the cover image to be used for the cover page.",
                   "type": "string",
                   "minLength": 1
                 },
                 "name": {
+                  "description": "Specify alternative text for the cover image.",
                   "type": "string",
                   "minLength": 1
                 },
                 "htmlPath": {
+                  "description": "Specify the location where the generated cover document will be saved. (default: cover.html)",
                   "type": "string",
                   "minLength": 1
                 }

@@ -58,13 +58,31 @@ export interface VivliostyleConfigEntry {
    */
   language?: string;
   readingProgression?: 'ltr' | 'rtl';
+  /**
+   * Specify whether to generate a table of contents (ToC) document. If a string is set, the ToC document will be saved at that location. (default: index.html)
+   */
   toc?: boolean | string;
+  /**
+   * Specify the title of the generated ToC document.
+   */
   tocTitle?: string;
+  /**
+   * Options about cover images and cover page documents
+   */
   cover?:
     | string
     | {
+        /**
+         * Specify the cover image to be used for the cover page.
+         */
         src: string;
+        /**
+         * Specify alternative text for the cover image.
+         */
         name?: string;
+        /**
+         * Specify the location where the generated cover document will be saved. (default: cover.html)
+         */
         htmlPath?: string;
         [k: string]: unknown;
       };
@@ -155,7 +173,13 @@ export interface ContentsEntryObject {
   rel: 'contents';
   title?: string;
   theme?: ThemeSpecifier;
+  /**
+   * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+   */
   pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
+  /**
+   * Reset the starting page number of this document by the specified integer. It is useful when you want to control page numbers when including a cover page.
+   */
   pageCounterReset?: number;
 }
 export interface CoverEntryObject {
@@ -165,6 +189,9 @@ export interface CoverEntryObject {
   theme?: ThemeSpecifier;
   imageSrc?: string;
   imageAlt?: string;
+  /**
+   * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+   */
   pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
 }
 export interface OutputObject {
