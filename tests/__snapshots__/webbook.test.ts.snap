@@ -179,6 +179,8 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
 "/
 └─ work/
    ├─ input/
+   │  ├─ cover.html
+   │  ├─ cover.png
    │  ├─ doc/
    │  │  ├─ one.html
    │  │  ├─ one.md
@@ -186,6 +188,8 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
    │  │  └─ two.md
    │  ├─ index.html
    │  ├─ output/
+   │  │  ├─ cover.html
+   │  │  ├─ cover.png
    │  │  ├─ doc/
    │  │  │  ├─ one.html
    │  │  │  └─ two.html
@@ -194,6 +198,8 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
    │  ├─ publication.json
    │  └─ vivliostyle.config.json
    └─ output/
+      ├─ cover.html
+      ├─ cover.png
       ├─ doc/
       │  ├─ one.html
       │  └─ two.html
@@ -208,17 +214,14 @@ Object {
     "https://www.w3.org/ns/pub-context",
   ],
   "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
-  "links": Array [
-    Object {
-      "encodingFormat": "image/png",
-      "height": 100,
-      "rel": "cover",
-      "url": "cover.png",
-      "width": 100,
-    },
-  ],
+  "links": Array [],
   "name": "output",
   "readingOrder": Array [
+    Object {
+      "rel": "cover",
+      "type": "LinkedResource",
+      "url": "cover.html",
+    },
     Object {
       "name": "Table of Contents",
       "rel": "contents",
@@ -234,6 +237,12 @@ Object {
   ],
   "readingProgression": "rtl",
   "resources": Array [
+    Object {
+      "encodingFormat": "image/png",
+      "name": "Cover image",
+      "rel": "cover",
+      "url": "cover.png",
+    },
     "publication.json",
   ],
   "type": "Book",

@@ -1,0 +1,80 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generate files with multiple cover pages 1`] = `
+"
+      :root {
+        break-before: recto;
+      }
+      @page :nth(1) {
+        counter-reset: page 0;
+      }
+    "
+`;
+
+exports[`generate files with multiple cover pages 2`] = `
+"
+      :root {
+        --page-mbox-visibility: hidden;
+        break-before: left;
+      }
+      body {
+        margin: 0;
+      }
+      [role=\\"doc-cover\\"] {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+      }
+      @page {
+        margin: 0;
+        @top-left-corner {
+          visibility: var(--page-mbox-visibility);
+        }
+        @top-left {
+          visibility: var(--page-mbox-visibility);
+        }
+        @top-center {
+          visibility: var(--page-mbox-visibility);
+        }
+        @top-right {
+          visibility: var(--page-mbox-visibility);
+        }
+        @top-right-corner {
+          visibility: var(--page-mbox-visibility);
+        }
+        @left-top {
+          visibility: var(--page-mbox-visibility);
+        }
+        @left-middle {
+          visibility: var(--page-mbox-visibility);
+        }
+        @left-bottom {
+          visibility: var(--page-mbox-visibility);
+        }
+        @right-top {
+          visibility: var(--page-mbox-visibility);
+        }
+        @right-middle {
+          visibility: var(--page-mbox-visibility);
+        }
+        @right-bottom {
+          visibility: var(--page-mbox-visibility);
+        }
+        @bottom-left-corner {
+          visibility: var(--page-mbox-visibility);
+        }
+        @bottom-left {
+          visibility: var(--page-mbox-visibility);
+        }
+        @bottom-center {
+          visibility: var(--page-mbox-visibility);
+        }
+        @bottom-right {
+          visibility: var(--page-mbox-visibility);
+        }
+        @bottom-right-corner {
+          visibility: var(--page-mbox-visibility);
+        }
+      }
+    "
+`;

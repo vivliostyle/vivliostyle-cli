@@ -156,6 +156,7 @@ exports[`generate EPUB from single HTML with pub manifest > content.opf 1`] = `
     <dc:rights>© 2023 Acme Corporation</dc:rights>
     <dc:subject>Subject</dc:subject>
     
+    <meta name=\\"cover\\" content=\\"coverpng\\"></meta>
   </metadata>
   <manifest>
     <item id=\\"coverpng\\" href=\\"cover.png\\" media-type=\\"image/png\\" properties=\\"cover-image\\"></item>

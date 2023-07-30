@@ -494,13 +494,31 @@ Object {
   "author": "myAuthor",
   "bleed": undefined,
   "browserType": "firefox",
-  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "cover": Object {
+    "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
+    "name": "Cover image alt",
+    "src": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  },
   "cropMarks": false,
   "cropOffset": undefined,
   "css": undefined,
   "customStyle": "https://vivlostyle.org",
   "customUserStyle": "file://__WORKSPACE__/user/style/dummy.css",
   "entries": Array [
+    Object {
+      "coverImageAlt": "Cover image alt",
+      "coverImageSrc": "__WORKSPACE__/tests/fixtures/config/cover.png",
+      "rel": "cover",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
+      "themes": Array [
+        Object {
+          "location": "https://myTheme.example.com",
+          "name": "myTheme.example.com",
+          "type": "uri",
+        },
+      ],
+      "title": "myTitle",
+    },
     Object {
       "rel": "contents",
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
@@ -625,13 +643,33 @@ Object {
   "author": "author",
   "bleed": undefined,
   "browserType": "firefox",
-  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "cover": Object {
+    "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
+    "name": "Cover image alt",
+    "src": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  },
   "cropMarks": false,
   "cropOffset": undefined,
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
   "entries": Array [
+    Object {
+      "coverImageAlt": "Cover image alt",
+      "coverImageSrc": "__WORKSPACE__/tests/fixtures/config/cover.png",
+      "rel": "cover",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
+      "themes": Array [
+        Object {
+          "importPath": undefined,
+          "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+          "name": "debug-theme",
+          "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+          "type": "package",
+        },
+      ],
+      "title": "title",
+    },
     Object {
       "rel": "contents",
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
@@ -917,13 +955,33 @@ Object {
   "author": "author",
   "bleed": undefined,
   "browserType": "firefox",
-  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "cover": Object {
+    "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
+    "name": "Cover image alt",
+    "src": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  },
   "cropMarks": false,
   "cropOffset": undefined,
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
   "entries": Array [
+    Object {
+      "coverImageAlt": "Cover image alt",
+      "coverImageSrc": "__WORKSPACE__/tests/fixtures/config/cover.png",
+      "rel": "cover",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
+      "themes": Array [
+        Object {
+          "importPath": undefined,
+          "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
+          "name": "debug-theme",
+          "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
+          "type": "package",
+        },
+      ],
+      "title": "title",
+    },
     Object {
       "rel": "contents",
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
@@ -1209,7 +1267,11 @@ Object {
   "author": "author",
   "bleed": undefined,
   "browserType": "firefox",
-  "cover": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  "cover": Object {
+    "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
+    "name": "Cover image alt",
+    "src": "__WORKSPACE__/tests/fixtures/config/cover.png",
+  },
   "cropMarks": false,
   "cropOffset": undefined,
   "css": undefined,

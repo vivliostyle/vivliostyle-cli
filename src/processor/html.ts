@@ -100,7 +100,11 @@ const getTocHtmlStyle = ({
 }: {
   pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
   pageCounterReset?: number;
-}) => /* css */ `
+}) => {
+  if (!pageBreakBefore && typeof pageCounterReset !== 'number') {
+    return null;
+  }
+  return /* css */ `
 ${
   pageBreakBefore
     ? `:root {
@@ -116,6 +120,7 @@ ${
     : ''
 }
 `;
+};
 export function generateTocHtml({
   entries,
   manifestPath,
@@ -150,7 +155,10 @@ export function generateTocHtml({
       ...[
         h('meta', { charset: 'utf-8' }),
         h('title', title ?? ''),
-        h('style', getTocHtmlStyle(styleOptions)),
+        ...(() => {
+          const style = getTocHtmlStyle(styleOptions);
+          return style ? [h('style', getTocHtmlStyle(styleOptions))] : [];
+        })(),
         h('link', {
           href: encodeURI(upath.relative(distDir, manifestPath)),
           rel: 'publication',

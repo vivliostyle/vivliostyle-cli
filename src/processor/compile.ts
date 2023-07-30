@@ -251,7 +251,7 @@ export async function compile({
   });
 
   const contentEntries = entries.filter(
-    (e): e is ManuscriptEntry => e.rel !== 'contents' && e.rel !== 'cover',
+    (e): e is ManuscriptEntry => 'source' in e,
   );
   for (const entry of contentEntries) {
     fs.mkdirSync(upath.dirname(entry.target), { recursive: true });

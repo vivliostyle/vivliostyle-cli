@@ -13,4 +13,5 @@ module.exports = {
     hardLineBreaks: true,
     disableFormatHtml: true,
   },
+  cover: undefined,
 };
