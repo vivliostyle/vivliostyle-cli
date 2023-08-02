@@ -28,18 +28,18 @@ function assertManifestPath(
 
 afterAll(() => {
   [
-    resolveFixture('builder/.vs-workspace'),
-    resolveFixture('builder/.vs-entryContext'),
-    resolveFixture('builder/.vs-variousManuscriptFormat'),
-    resolveFixture('builder/.vs-vfm'),
-    resolveFixture('builder/.vs-multipleEntry'),
-    resolveFixture('builder/.vs-multipleCoverPages'),
-    resolveFixture('builder/.vs-localTheme'),
-    resolveFixture('builder/.vs-remoteTheme'),
-    resolveFixture('builder/.vs-multipleTheme'),
-    resolveFixture('builder/.vs-nonExistTheme'),
-    resolveFixture('builder/.vs-invalidTheme'),
-    resolveFixture('builder/.vs-nonExistImport'),
+    // resolveFixture('builder/.vs-workspace'),
+    // resolveFixture('builder/.vs-entryContext'),
+    // resolveFixture('builder/.vs-variousManuscriptFormat'),
+    // resolveFixture('builder/.vs-vfm'),
+    // resolveFixture('builder/.vs-multipleEntry'),
+    // resolveFixture('builder/.vs-multipleCoverPages'),
+    // resolveFixture('builder/.vs-localTheme'),
+    // resolveFixture('builder/.vs-remoteTheme'),
+    // resolveFixture('builder/.vs-multipleTheme'),
+    // resolveFixture('builder/.vs-nonExistTheme'),
+    // resolveFixture('builder/.vs-invalidTheme'),
+    // resolveFixture('builder/.vs-nonExistImport'),
   ].map((f) => removeSync(f));
 });
 
@@ -128,7 +128,7 @@ it('generate workspace directory', async () => {
     coverHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
     ),
-  ).toBeTruthy();
+  ).not.toBeTruthy();
   expect(
     coverHtml.window.document.querySelector(
       '[aria-label="Cover"] > img[src="manuscript/cover.png"][alt="Cover image"][role="doc-cover"]',
@@ -499,11 +499,6 @@ it('generate files with multiple cover pages', async () => {
   );
   expect(
     coverHtml.window.document.querySelector(
-      'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
-    ),
-  ).toBeTruthy();
-  expect(
-    coverHtml.window.document.querySelector(
       'img[src="manuscript/cover.png"][alt="Cover image"][role="doc-cover"]',
     ),
   ).toBeTruthy();
@@ -517,6 +512,11 @@ it('generate files with multiple cover pages', async () => {
   expect(
     anotherCoverHtml.window.document.querySelector('style')?.innerHTML,
   ).toMatchSnapshot();
+  expect(
+    coverHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
+    ),
+  ).not.toBeTruthy();
   expect(
     anotherCoverHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="manuscript/sample-theme.css"]',

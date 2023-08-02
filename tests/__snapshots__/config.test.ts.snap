@@ -510,13 +510,7 @@ Object {
       "coverImageSrc": "__WORKSPACE__/tests/fixtures/config/cover.png",
       "rel": "cover",
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
-      "themes": Array [
-        Object {
-          "location": "https://myTheme.example.com",
-          "name": "myTheme.example.com",
-          "type": "uri",
-        },
-      ],
+      "themes": Array [],
       "title": "myTitle",
     },
     Object {
@@ -659,15 +653,7 @@ Object {
       "coverImageSrc": "__WORKSPACE__/tests/fixtures/config/cover.png",
       "rel": "cover",
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
-      "themes": Array [
-        Object {
-          "importPath": undefined,
-          "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
-          "name": "debug-theme",
-          "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
-          "type": "package",
-        },
-      ],
+      "themes": Array [],
       "title": "title",
     },
     Object {
@@ -971,15 +957,7 @@ Object {
       "coverImageSrc": "__WORKSPACE__/tests/fixtures/config/cover.png",
       "rel": "cover",
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
-      "themes": Array [
-        Object {
-          "importPath": undefined,
-          "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/themes/packages/debug-theme",
-          "name": "debug-theme",
-          "specifier": "__WORKSPACE__/tests/fixtures/themes/debug-theme",
-          "type": "package",
-        },
-      ],
+      "themes": Array [],
       "title": "title",
     },
     Object {

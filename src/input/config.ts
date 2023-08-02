@@ -919,7 +919,7 @@ async function composeProjectConfig<T extends CliFlags>(
               themesDir,
             }),
           )
-        : [...rootThemes];
+        : []; // Don't inherit rootThemes for cover documents
       themes.forEach((t) => themeIndexes.add(t));
       const coverImageSrc = ensureCoverImage(entry.imageSrc || cover?.src);
       if (!coverImageSrc) {
@@ -1018,7 +1018,7 @@ async function composeProjectConfig<T extends CliFlags>(
       rel: 'cover',
       target: cover.htmlPath,
       title: projectTitle,
-      themes: [...rootThemes],
+      themes: [], // Don't inherit rootThemes for cover documents
       coverImageSrc: ensureCoverImage(cover.src)!,
       coverImageAlt: cover.name,
     });
