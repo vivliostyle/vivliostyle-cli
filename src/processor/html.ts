@@ -192,6 +192,7 @@ body {
   margin: 0;
 }
 [role="doc-cover"] {
+  display: block;
   width: 100vw;
   height: 100vh;
   object-fit: cover;

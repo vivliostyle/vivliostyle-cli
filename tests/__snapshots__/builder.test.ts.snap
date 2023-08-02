@@ -21,6 +21,7 @@ exports[`generate files with multiple cover pages 2`] = `
         margin: 0;
       }
       [role=\\"doc-cover\\"] {
+        display: block;
         width: 100vw;
         height: 100vh;
         object-fit: cover;
