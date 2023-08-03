@@ -184,9 +184,12 @@ const getCoverHtmlStyle = ({
 }: {
   pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
 }) => /* css */ `
-:root {
-  --page-mbox-visibility: hidden;
-  ${pageBreakBefore ? `break-before: ${pageBreakBefore};` : ''}
+${
+  pageBreakBefore
+    ? `:root {
+  break-before: ${pageBreakBefore};
+}`
+    : ''
 }
 body {
   margin: 0;
@@ -195,58 +198,10 @@ body {
   display: block;
   width: 100vw;
   height: 100vh;
-  object-fit: cover;
+  object-fit: contain;
 }
 @page {
   margin: 0;
-  @top-left-corner {
-    visibility: var(--page-mbox-visibility);
-  }
-  @top-left {
-    visibility: var(--page-mbox-visibility);
-  }
-  @top-center {
-    visibility: var(--page-mbox-visibility);
-  }
-  @top-right {
-    visibility: var(--page-mbox-visibility);
-  }
-  @top-right-corner {
-    visibility: var(--page-mbox-visibility);
-  }
-  @left-top {
-    visibility: var(--page-mbox-visibility);
-  }
-  @left-middle {
-    visibility: var(--page-mbox-visibility);
-  }
-  @left-bottom {
-    visibility: var(--page-mbox-visibility);
-  }
-  @right-top {
-    visibility: var(--page-mbox-visibility);
-  }
-  @right-middle {
-    visibility: var(--page-mbox-visibility);
-  }
-  @right-bottom {
-    visibility: var(--page-mbox-visibility);
-  }
-  @bottom-left-corner {
-    visibility: var(--page-mbox-visibility);
-  }
-  @bottom-left {
-    visibility: var(--page-mbox-visibility);
-  }
-  @bottom-center {
-    visibility: var(--page-mbox-visibility);
-  }
-  @bottom-right {
-    visibility: var(--page-mbox-visibility);
-  }
-  @bottom-right-corner {
-    visibility: var(--page-mbox-visibility);
-  }
 }
 `;
 export function generateCoverHtml({
