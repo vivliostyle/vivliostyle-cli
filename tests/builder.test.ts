@@ -715,7 +715,7 @@ it('install remote themes', async () => {
     cwd: resolveFixture('builder/.vs-remoteTheme'),
   });
   expect(new Set(fileList2)).toEqual(new Set(fileList));
-}, 300000);
+}, 300000); // Longer timeout to ensure installing remote themes
 
 it('use multiple themes', async () => {
   const config = await getMergedConfig([
@@ -753,7 +753,7 @@ it('use multiple themes', async () => {
     'themes/packages/@vivliostyle/theme-academic/theme_common.css',
     'manuscript/sample-theme.css',
   ]);
-});
+}, 300000); // Longer timeout to ensure installing remote themes
 
 it('fail to install if package does not exist', async () => {
   const config = await getMergedConfig([
