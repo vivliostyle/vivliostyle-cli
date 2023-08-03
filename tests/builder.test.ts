@@ -28,18 +28,19 @@ function assertManifestPath(
 
 afterAll(() => {
   [
-    // resolveFixture('builder/.vs-workspace'),
-    // resolveFixture('builder/.vs-entryContext'),
-    // resolveFixture('builder/.vs-variousManuscriptFormat'),
-    // resolveFixture('builder/.vs-vfm'),
-    // resolveFixture('builder/.vs-multipleEntry'),
-    // resolveFixture('builder/.vs-multipleCoverPages'),
-    // resolveFixture('builder/.vs-localTheme'),
-    // resolveFixture('builder/.vs-remoteTheme'),
-    // resolveFixture('builder/.vs-multipleTheme'),
-    // resolveFixture('builder/.vs-nonExistTheme'),
-    // resolveFixture('builder/.vs-invalidTheme'),
-    // resolveFixture('builder/.vs-nonExistImport'),
+    resolveFixture('builder/.vs-workspace'),
+    resolveFixture('builder/.vs-entryContext'),
+    resolveFixture('builder/.vs-variousManuscriptFormat'),
+    resolveFixture('builder/.vs-vfm'),
+    resolveFixture('builder/.vs-multipleEntry'),
+    resolveFixture('builder/.vs-multipleCoverPages'),
+    resolveFixture('builder/.vs-hiddenCoverPage'),
+    resolveFixture('builder/.vs-localTheme'),
+    resolveFixture('builder/.vs-remoteTheme'),
+    resolveFixture('builder/.vs-multipleTheme'),
+    resolveFixture('builder/.vs-nonExistTheme'),
+    resolveFixture('builder/.vs-invalidTheme'),
+    resolveFixture('builder/.vs-nonExistImport'),
   ].map((f) => removeSync(f));
 });
 
@@ -527,6 +528,49 @@ it('generate files with multiple cover pages', async () => {
       'img[src="manuscript/cover2.png"][alt="yuno"][role="doc-cover"]',
     ),
   ).toBeTruthy();
+});
+
+it('generate files with hidden cover pages', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/hiddenCoverPage.config.cjs'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await cleanupWorkspace(config);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  const { default: manifest } = await import(
+    resolveFixture('builder/.vs-hiddenCoverPage/publication.json')
+  );
+  expect(manifest.readingOrder).toEqual([
+    {
+      url: 'index.html',
+      name: 'Table of Contents',
+      rel: 'contents',
+      type: 'LinkedResource',
+    },
+    {
+      url: 'manuscript/soda.html',
+      name: 'SODA',
+    },
+  ]);
+  expect(manifest.resources).toEqual(
+    expect.arrayContaining([
+      {
+        type: 'LinkedResource',
+        url: 'cover.html',
+        encodingFormat: 'text/html',
+        rel: 'cover',
+      },
+      {
+        encodingFormat: 'image/png',
+        rel: 'cover',
+        url: 'manuscript/cover.png',
+        name: 'Cover image',
+      },
+    ]),
+  );
 });
 
 it('check overwrite violation', async () => {

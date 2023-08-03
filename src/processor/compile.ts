@@ -336,6 +336,33 @@ export async function compile({
 
   // generate manifest
   if (needToGenerateManifest) {
+    const manifestEntries: ArticleEntryObject[] = entries.map((entry) => ({
+      title: entry.title,
+      path: upath.relative(workspaceDir, entry.target),
+      encodingFormat:
+        !('type' in entry) ||
+        entry.type === 'text/markdown' ||
+        entry.type === 'text/html'
+          ? undefined
+          : entry.type,
+      rel: entry.rel,
+    }));
+    const resources: (PublicationURL | PublicationLinks)[] = [];
+
+    if (
+      cover?.hideCoverPage &&
+      entries[0].rel === 'cover' &&
+      cover.htmlPath === entries[0].target
+    ) {
+      const coverEntry = manifestEntries.shift()!;
+      resources.push({
+        type: 'LinkedResource',
+        url: coverEntry.path,
+        encodingFormat: 'text/html',
+        rel: 'cover',
+      });
+    }
+
     generateManifest(manifestPath, entryContextDir, {
       title,
       author,
@@ -345,17 +372,8 @@ export async function compile({
         url: upath.relative(entryContextDir, cover.src),
         name: cover.name,
       },
-      entries: entries.map((entry) => ({
-        title: entry.title,
-        path: upath.relative(workspaceDir, entry.target),
-        encodingFormat:
-          !('type' in entry) ||
-          entry.type === 'text/markdown' ||
-          entry.type === 'text/html'
-            ? undefined
-            : entry.type,
-        rel: entry.rel,
-      })),
+      entries: manifestEntries,
+      resources,
       modified: new Date().toISOString(),
     });
   }

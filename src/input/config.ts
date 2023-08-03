@@ -189,7 +189,8 @@ export type MergedConfig = {
     | {
         src: string;
         name: string;
-        htmlPath: string;
+        htmlPath: string | undefined;
+        hideCoverPage: boolean;
       }
     | undefined;
   timeout: number;
@@ -655,13 +656,16 @@ export async function mergeConfig<T extends CliFlags>(
     }
     const obj =
       typeof config.cover === 'string' ? { src: config.cover } : config.cover;
+    if (!('htmlPath' in obj)) {
+      obj.htmlPath = COVER_HTML_FILENAME;
+    }
     return {
       src: upath.resolve(entryContextDir, obj.src),
       name: obj.name || COVER_HTML_IMAGE_ALT,
-      htmlPath: upath.resolve(
-        workspaceDir,
-        obj.htmlPath || COVER_HTML_FILENAME,
-      ),
+      htmlPath:
+        (obj.htmlPath && upath.resolve(workspaceDir, obj.htmlPath)) ||
+        undefined,
+      hideCoverPage: !!obj.hideCoverPage,
     };
   })();
 
@@ -1013,7 +1017,7 @@ async function composeProjectConfig<T extends CliFlags>(
       themes: [...rootThemes],
     });
   }
-  if (cover && !entries.find(({ rel }) => rel === 'cover')) {
+  if (cover?.htmlPath && !entries.find(({ rel }) => rel === 'cover')) {
     entries.unshift({
       rel: 'cover',
       target: cover.htmlPath,

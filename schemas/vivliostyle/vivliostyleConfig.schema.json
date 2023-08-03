@@ -287,9 +287,18 @@
                   "minLength": 1
                 },
                 "htmlPath": {
-                  "description": "Specify the location where the generated cover document will be saved. (default: cover.html)",
-                  "type": "string",
-                  "minLength": 1
+                  "description": "Specify the location where the generated cover document will be saved. (default: cover.html) If falsy value is set, the cover document won't be generated.",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    { "type": "boolean" }
+                  ]
+                },
+                "hideCoverPage": {
+                  "description": "If true, the cover page will not appear in the output document.",
+                  "type": "boolean"
                 }
               },
               "required": ["src"]

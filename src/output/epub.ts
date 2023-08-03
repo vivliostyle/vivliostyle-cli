@@ -703,8 +703,6 @@ function buildEpubPackageDocument({
           : {}),
         itemref: readingOrder.map(({ url, rel }, index) => ({
           _idref: itemIdMap.get(changeExtname(url, '.xhtml')),
-          // Regard the first cover entry as a hidden page
-          ...(index === 0 && rel === 'cover' ? { _linear: 'no' } : {}),
         })),
       },
       guide: {
