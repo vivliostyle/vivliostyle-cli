@@ -192,3 +192,55 @@ it('generate EPUB from series of HTML files', async () => {
     'src/index.xhtml',
   );
 });
+
+it('generate EPUB with a hidden cover document', async () => {
+  const manifest: PublicationManifest = {
+    '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],
+    conformsTo: 'yuno',
+    readingOrder: ['src/index.html', 'src/a.html'],
+    resources: [
+      {
+        rel: 'cover',
+        type: 'LinkedResource',
+        url: 'cover.html',
+        encodingFormat: 'text/html',
+      },
+      {
+        rel: 'cover',
+        url: 'cover.png',
+        encodingFormat: 'image/png',
+      },
+    ],
+  };
+  vol.fromJSON({
+    '/work/input/src/index.html': /* html */ `
+      <html lang="en">
+      <head>
+        <title>yuno</title>
+      </head>
+      <body>
+        <nav role="doc-toc">
+          <ol><li><a href="a.html">A</a></li></ol>
+        </nav>
+      </body>
+      </html>
+    `,
+    '/work/input/src/a.html': /* html */ `<html lang="en"><head><title></title></head><body></body></html>`,
+    '/work/input/cover.html': /* html */ `<html lang="en"><head><title></title></head><body></body></html>`,
+    '/work/input/cover.png': '',
+  });
+  await exportEpub({
+    webpubDir: '/work/input',
+    manifest,
+    target: '/work/output.epub',
+    epubVersion: '3.0',
+  });
+
+  expect(toTree(vol)).toMatchSnapshot('tree');
+  const file = vol.toJSON();
+  expect(
+    file['/tmp/1/EPUB/content.opf']
+      ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
+      .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
+  ).toMatchSnapshot('content.opf');
+});

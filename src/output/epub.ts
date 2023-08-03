@@ -48,6 +48,11 @@ interface LandmarkEntry {
   text: string;
 }
 
+interface SpineEntry {
+  href: string;
+  linear?: 'no';
+}
+
 const TOC_ID = 'toc';
 const LANDMARKS_ID = 'landmarks';
 const PAGELIST_ID = 'page-list';
@@ -231,6 +236,9 @@ export async function exportEpub({
     );
     tocHtml = readingOrder[0].url;
   }
+  const spineItems = readingOrder.map<SpineEntry>(({ url }) => ({
+    href: changeExtname(url, '.xhtml'),
+  }));
   if (!(tocHtml in manifestItem)) {
     manifestItem[tocHtml] = {
       href: changeExtname(tocHtml, '.xhtml'),
@@ -247,11 +255,19 @@ export async function exportEpub({
     },
   ];
   if (htmlCoverResource) {
+    const coverHref = changeExtname(htmlCoverResource.url, '.xhtml');
     landmarks.push({
       type: 'cover',
-      href: changeExtname(htmlCoverResource.url, '.xhtml'),
+      href: coverHref,
       text: 'Cover Page',
     });
+    if (spineItems.every(({ href }) => href !== coverHref)) {
+      spineItems.unshift({
+        href: coverHref,
+        // Set a cover entry as a hidden page
+        linear: 'no',
+      });
+    }
   }
 
   const processHtml = async (target: string, isTocHtml: boolean) => {
@@ -357,7 +373,7 @@ export async function exportEpub({
       docTitle,
       docLanguages,
       manifest,
-      readingOrder,
+      spineItems,
       manifestItems: Object.values(manifestItem),
       landmarks,
     }),
@@ -569,7 +585,7 @@ function buildEpubPackageDocument({
   uid,
   docTitle,
   docLanguages,
-  readingOrder,
+  spineItems,
   manifestItems,
   landmarks,
 }: Pick<Parameters<typeof exportEpub>[0], 'epubVersion'> & {
@@ -577,7 +593,7 @@ function buildEpubPackageDocument({
   uid: string;
   docTitle: string;
   docLanguages: string[];
-  readingOrder: PublicationLinks[];
+  spineItems: SpineEntry[];
   manifestItems: ManifestEntry[];
   landmarks: LandmarkEntry[];
 }): string {
@@ -701,9 +717,12 @@ function buildEpubPackageDocument({
         ...(manifest.readingProgression
           ? { '_page-progression-direction': manifest.readingProgression }
           : {}),
-        itemref: readingOrder.map(({ url, rel }, index) => ({
-          _idref: itemIdMap.get(changeExtname(url, '.xhtml')),
-        })),
+        itemref: [
+          ...spineItems.map(({ href, linear }) => ({
+            _idref: itemIdMap.get(href),
+            ...(linear ? { _linear: linear } : {}),
+          })),
+        ],
       },
       guide: {
         reference: landmarks.map(({ type, href, text }) => ({

@@ -280,3 +280,57 @@ exports[`generate EPUB from single HTML with pub manifest > tree 1`] = `
    │  └─ publication.json
    └─ output.epub"
 `;
+
+exports[`generate EPUB with a hidden cover document > content.opf 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<package xmlns=\\"http://www.idpf.org/2007/opf\\" version=\\"3.0\\" unique-identifier=\\"bookid\\" xml:lang=\\"en\\">
+  <metadata xmlns:dc=\\"http://purl.org/dc/elements/1.1/\\">
+    
+    <dc:title>yuno</dc:title>
+    <dc:language>en</dc:language>
+    
+    <meta name=\\"cover\\" content=\\"coverpng\\"></meta>
+  </metadata>
+  <manifest>
+    <item id=\\"srcindexxhtml\\" href=\\"src/index.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav\\"></item>
+    <item id=\\"srcaxhtml\\" href=\\"src/a.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
+    <item id=\\"coverxhtml\\" href=\\"cover.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
+    <item id=\\"coverpng\\" href=\\"cover.png\\" media-type=\\"image/png\\" properties=\\"cover-image\\"></item>
+    <item id=\\"tocncx\\" href=\\"toc.ncx\\" media-type=\\"application/x-dtbncx+xml\\"></item>
+  </manifest>
+  <spine toc=\\"tocncx\\">
+    <itemref idref=\\"coverxhtml\\" linear=\\"no\\"></itemref>
+    <itemref idref=\\"srcindexxhtml\\"></itemref>
+    <itemref idref=\\"srcaxhtml\\"></itemref>
+  </spine>
+  <guide>
+    <reference type=\\"toc\\" href=\\"src/index.xhtml#toc\\" title=\\"Table of Contents\\"></reference>
+    <reference type=\\"cover\\" href=\\"cover.xhtml\\" title=\\"Cover Page\\"></reference>
+  </guide>
+</package>
+"
+`;
+
+exports[`generate EPUB with a hidden cover document > tree 1`] = `
+"/
+├─ tmp/
+│  └─ 1/
+│     ├─ EPUB/
+│     │  ├─ content.opf
+│     │  ├─ cover.png
+│     │  ├─ cover.xhtml
+│     │  ├─ src/
+│     │  │  ├─ a.xhtml
+│     │  │  └─ index.xhtml
+│     │  └─ toc.ncx
+│     └─ META-INF/
+│        └─ container.xml
+└─ work/
+   ├─ input/
+   │  ├─ cover.html
+   │  ├─ cover.png
+   │  └─ src/
+   │     ├─ a.html
+   │     └─ index.html
+   └─ output.epub"
+`;
