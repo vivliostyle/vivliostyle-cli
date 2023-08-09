@@ -50,7 +50,6 @@ interface LandmarkEntry {
 
 interface SpineEntry {
   href: string;
-  linear?: 'no';
 }
 
 const TOC_ID = 'toc';
@@ -255,19 +254,11 @@ export async function exportEpub({
     },
   ];
   if (htmlCoverResource) {
-    const coverHref = changeExtname(htmlCoverResource.url, '.xhtml');
     landmarks.push({
       type: 'cover',
-      href: coverHref,
+      href: changeExtname(htmlCoverResource.url, '.xhtml'),
       text: 'Cover Page',
     });
-    if (spineItems.every(({ href }) => href !== coverHref)) {
-      spineItems.unshift({
-        href: coverHref,
-        // Set a cover entry as a hidden page
-        linear: 'no',
-      });
-    }
   }
 
   const processHtml = async (target: string, isTocHtml: boolean) => {
@@ -718,9 +709,8 @@ function buildEpubPackageDocument({
           ? { '_page-progression-direction': manifest.readingProgression }
           : {}),
         itemref: [
-          ...spineItems.map(({ href, linear }) => ({
+          ...spineItems.map(({ href }) => ({
             _idref: itemIdMap.get(href),
-            ...(linear ? { _linear: linear } : {}),
           })),
         ],
       },

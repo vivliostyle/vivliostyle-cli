@@ -295,10 +295,6 @@
                     },
                     { "type": "boolean" }
                   ]
-                },
-                "hideCoverPage": {
-                  "description": "If true, the cover page will not appear in the output document.",
-                  "type": "boolean"
                 }
               },
               "required": ["src"]

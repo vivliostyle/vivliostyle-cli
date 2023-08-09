@@ -347,22 +347,6 @@ export async function compile({
           : entry.type,
       rel: entry.rel,
     }));
-    const resources: (PublicationURL | PublicationLinks)[] = [];
-
-    if (
-      cover?.hideCoverPage &&
-      entries[0].rel === 'cover' &&
-      cover.htmlPath === entries[0].target
-    ) {
-      const coverEntry = manifestEntries.shift()!;
-      resources.push({
-        type: 'LinkedResource',
-        url: coverEntry.path,
-        encodingFormat: 'text/html',
-        rel: 'cover',
-      });
-    }
-
     generateManifest(manifestPath, entryContextDir, {
       title,
       author,
@@ -373,7 +357,6 @@ export async function compile({
         name: cover.name,
       },
       entries: manifestEntries,
-      resources,
       modified: new Date().toISOString(),
     });
   }

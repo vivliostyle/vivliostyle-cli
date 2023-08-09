@@ -190,7 +190,6 @@ export type MergedConfig = {
         src: string;
         name: string;
         htmlPath: string | undefined;
-        hideCoverPage: boolean;
       }
     | undefined;
   timeout: number;
@@ -665,7 +664,6 @@ export async function mergeConfig<T extends CliFlags>(
       htmlPath:
         (obj.htmlPath && upath.resolve(workspaceDir, obj.htmlPath)) ||
         undefined,
-      hideCoverPage: !!obj.hideCoverPage,
     };
   })();
 

@@ -84,10 +84,6 @@ export interface VivliostyleConfigEntry {
          * Specify the location where the generated cover document will be saved. (default: cover.html) If falsy value is set, the cover document won't be generated.
          */
         htmlPath?: string | boolean;
-        /**
-         * If true, the cover page will not appear in the output document.
-         */
-        hideCoverPage?: boolean;
         [k: string]: unknown;
       };
   /**

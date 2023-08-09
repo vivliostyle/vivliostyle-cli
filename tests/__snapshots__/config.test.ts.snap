@@ -495,7 +495,6 @@ Object {
   "bleed": undefined,
   "browserType": "firefox",
   "cover": Object {
-    "hideCoverPage": true,
     "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
     "name": "Cover image alt",
     "src": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -639,7 +638,6 @@ Object {
   "bleed": undefined,
   "browserType": "firefox",
   "cover": Object {
-    "hideCoverPage": true,
     "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
     "name": "Cover image alt",
     "src": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -944,7 +942,6 @@ Object {
   "bleed": undefined,
   "browserType": "firefox",
   "cover": Object {
-    "hideCoverPage": true,
     "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
     "name": "Cover image alt",
     "src": "__WORKSPACE__/tests/fixtures/config/cover.png",
@@ -1249,7 +1246,6 @@ Object {
   "bleed": undefined,
   "browserType": "firefox",
   "cover": Object {
-    "hideCoverPage": true,
     "htmlPath": "__WORKSPACE__/tests/fixtures/config/workspaceDir/mycover.html",
     "name": "Cover image alt",
     "src": "__WORKSPACE__/tests/fixtures/config/cover.png",

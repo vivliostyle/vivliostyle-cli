@@ -28,7 +28,6 @@ module.exports = {
     src: './cover.png',
     name: 'Cover image alt',
     htmlPath: './mycover.html',
-    hideCoverPage: true,
   },
   timeout: 1,
   workspaceDir: 'workspaceDir',
