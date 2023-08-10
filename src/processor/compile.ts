@@ -1,9 +1,10 @@
 import chalk from 'chalk';
-import { imageSize } from 'image-size';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { TOC_TITLE } from '../const.js';
 import {
+  ContentsEntry,
+  CoverEntry,
   ManuscriptEntry,
   MergedConfig,
   ParsedTheme,
@@ -29,7 +30,13 @@ import {
   upath,
   useTmpDirectory,
 } from '../util.js';
-import { generateTocHtml, isTocHtml, processManuscriptHtml } from './html.js';
+import {
+  generateCoverHtml,
+  generateTocHtml,
+  isCovertHtml,
+  isTocHtml,
+  processManuscriptHtml,
+} from './html.js';
 import { processMarkdown } from './markdown.js';
 import {
   checkThemeInstallationNecessity,
@@ -128,7 +135,10 @@ export function generateManifest(
     readingProgression?: 'ltr' | 'rtl';
     modified: string;
     entries: ArticleEntryObject[];
-    cover?: string;
+    cover?: {
+      url: string;
+      name: string;
+    };
     links?: (PublicationURL | PublicationLinks)[];
     resources?: (PublicationURL | PublicationLinks)[];
   },
@@ -138,7 +148,9 @@ export function generateManifest(
     ...(entry.title && { name: entry.title }),
     ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
     ...(entry.rel && { rel: entry.rel }),
-    ...(entry.rel === 'contents' && { type: 'LinkedResource' }),
+    ...((entry.rel === 'contents' || entry.rel === 'cover') && {
+      type: 'LinkedResource',
+    }),
   }));
   const links: (PublicationURL | PublicationLinks)[] = [
     options.links || [],
@@ -148,23 +160,15 @@ export function generateManifest(
   ].flat();
 
   if (options.cover) {
-    const { width, height, type } = imageSize(
-      upath.resolve(entryContextDir, options.cover),
-    );
-    let mimeType: string | false = false;
-    if (type) {
-      mimeType = mime(type);
-      if (mimeType) {
-        links.push({
-          rel: 'cover',
-          url: encodeURI(options.cover),
-          encodingFormat: mimeType,
-          width,
-          height,
-        });
-      }
-    }
-    if (!type || !mimeType) {
+    const mimeType = mime(options.cover.url);
+    if (mimeType) {
+      resources.push({
+        rel: 'cover',
+        url: encodeURI(options.cover.url),
+        name: options.cover.name,
+        encodingFormat: mimeType,
+      });
+    } else {
       log(
         `\n${chalk.yellow('Cover image ')}${chalk.bold.yellow(
           `"${options.cover}"`,
@@ -223,7 +227,7 @@ export async function compile({
   vfmOptions,
 }: MergedConfig & WebPublicationManifestConfig): Promise<void> {
   const generativeContentsEntry = entries.find(
-    (e) => !('source' in e) && e.rel === 'contents',
+    (e): e is ContentsEntry => !('source' in e) && e.rel === 'contents',
   );
   if (
     generativeContentsEntry &&
@@ -234,6 +238,17 @@ export async function compile({
       `${generativeContentsEntry.target} is set as a destination to create a ToC HTML file, but there is already a document other than the ToC file in this location. Please move this file, or set a 'toc' option in vivliostyle.config.js to specify another destination for the ToC file.`,
     );
   }
+
+  const generativeCoverPageEntries = entries.filter(
+    (e): e is CoverEntry => !('source' in e) && e.rel === 'cover',
+  );
+  generativeCoverPageEntries.forEach(({ target }) => {
+    if (fs.existsSync(target) && !isCovertHtml(target)) {
+      throw new Error(
+        `${target} is set as a destination to create a cover page HTML file, but there is already a document other than the cover page file in this location.`,
+      );
+    }
+  });
 
   const contentEntries = entries.filter(
     (e): e is ManuscriptEntry => 'source' in e,
@@ -277,39 +292,71 @@ export async function compile({
 
   // generate toc
   if (generativeContentsEntry) {
-    const style = generativeContentsEntry.themes.flatMap((theme) =>
-      locateThemePath(theme, workspaceDir),
+    const entry = generativeContentsEntry;
+    const stylesheets = entry.themes.flatMap((theme) =>
+      locateThemePath(theme, upath.dirname(entry.target)),
     );
     const tocString = generateTocHtml({
       entries: contentEntries,
       manifestPath,
-      distDir: upath.dirname(generativeContentsEntry.target),
+      distDir: upath.dirname(entry.target),
+      language,
       title,
-      tocTitle: generativeContentsEntry.title ?? TOC_TITLE,
-      style,
+      tocTitle: entry.title ?? TOC_TITLE,
+      stylesheets,
+      styleOptions: entry,
     });
-    fs.writeFileSync(generativeContentsEntry.target, tocString);
+    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
+    fs.writeFileSync(entry.target, tocString);
+  }
+
+  // generate cover
+  for (const entry of generativeCoverPageEntries) {
+    const stylesheets = entry.themes.flatMap((theme) =>
+      locateThemePath(theme, upath.dirname(entry.target)),
+    );
+    const coverHtml = generateCoverHtml({
+      imageSrc: upath.relative(
+        upath.join(
+          entryContextDir,
+          upath.relative(workspaceDir, entry.target),
+          '..',
+        ),
+        entry.coverImageSrc,
+      ),
+      imageAlt: entry.coverImageAlt,
+      language,
+      title: entry.title,
+      stylesheets,
+      styleOptions: entry,
+    });
+    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
+    fs.writeFileSync(entry.target, coverHtml, 'utf8');
   }
 
   // generate manifest
   if (needToGenerateManifest) {
+    const manifestEntries: ArticleEntryObject[] = entries.map((entry) => ({
+      title: entry.title,
+      path: upath.relative(workspaceDir, entry.target),
+      encodingFormat:
+        !('type' in entry) ||
+        entry.type === 'text/markdown' ||
+        entry.type === 'text/html'
+          ? undefined
+          : entry.type,
+      rel: entry.rel,
+    }));
     generateManifest(manifestPath, entryContextDir, {
       title,
       author,
       language,
       readingProgression,
-      cover: cover && upath.relative(entryContextDir, cover),
-      entries: entries.map((entry) => ({
-        title: entry.title,
-        path: upath.relative(workspaceDir, entry.target),
-        encodingFormat:
-          !('type' in entry) ||
-          entry.type === 'text/markdown' ||
-          entry.type === 'text/html'
-            ? undefined
-            : entry.type,
-        rel: entry.rel,
-      })),
+      cover: cover && {
+        url: upath.relative(entryContextDir, cover.src),
+        name: cover.name,
+      },
+      entries: manifestEntries,
       modified: new Date().toISOString(),
     });
   }

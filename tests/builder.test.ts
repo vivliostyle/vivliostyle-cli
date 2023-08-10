@@ -1,4 +1,4 @@
-import { JSDOM } from '@vivliostyle/jsdom';
+import jsdom, { JSDOM } from '@vivliostyle/jsdom';
 import { globby } from 'globby';
 import assert from 'node:assert';
 import fs from 'node:fs';
@@ -33,6 +33,7 @@ afterAll(() => {
     resolveFixture('builder/.vs-variousManuscriptFormat'),
     resolveFixture('builder/.vs-vfm'),
     resolveFixture('builder/.vs-multipleEntry'),
+    resolveFixture('builder/.vs-multipleCoverPages'),
     resolveFixture('builder/.vs-localTheme'),
     resolveFixture('builder/.vs-remoteTheme'),
     resolveFixture('builder/.vs-multipleTheme'),
@@ -62,7 +63,9 @@ it('generate workspace directory', async () => {
   expect(new Set(fileList)).toEqual(
     new Set([
       'index.html',
+      'cover.html',
       'manuscript/cover.png',
+      'manuscript/cover2.png',
       'manuscript/sample-theme.css',
       'manuscript/soda.html',
       'publication.json',
@@ -76,14 +79,19 @@ it('generate workspace directory', async () => {
   const { default: manifest } = await import(
     resolveFixture('builder/.vs-workspace/publication.json')
   );
-  expect(manifest.links[0]).toEqual({
+  expect(manifest.resources[0]).toEqual({
     encodingFormat: 'image/png',
     rel: 'cover',
     url: 'manuscript/cover.png',
-    width: 512,
-    height: 512,
+    name: 'Cover image',
   });
   expect(manifest.readingOrder[0]).toEqual({
+    rel: 'cover',
+    name: 'title',
+    type: 'LinkedResource',
+    url: 'cover.html',
+  });
+  expect(manifest.readingOrder[1]).toEqual({
     rel: 'contents',
     name: 'Table of Contents',
     type: 'LinkedResource',
@@ -93,6 +101,7 @@ it('generate workspace directory', async () => {
   const tocHtml = new JSDOM(
     fs.readFileSync(resolveFixture('builder/.vs-workspace/index.html')),
   );
+  expect(tocHtml.window.document.documentElement.lang).toBe('ja');
   expect(
     tocHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
@@ -107,6 +116,22 @@ it('generate workspace directory', async () => {
   expect(
     manuscriptHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="sample-theme.css"]',
+    ),
+  ).toBeTruthy();
+
+  const coverHtml = new JSDOM(
+    fs.readFileSync(resolveFixture('builder/.vs-workspace/cover.html')),
+    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+  );
+  expect(coverHtml.window.document.documentElement.lang).toBe('ja');
+  expect(
+    coverHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
+    ),
+  ).not.toBeTruthy();
+  expect(
+    coverHtml.window.document.querySelector(
+      '[aria-label="Cover"] > img[src="manuscript/cover.png"][alt="Cover image"][role="doc-cover"]',
     ),
   ).toBeTruthy();
 
@@ -141,6 +166,8 @@ it('generate files with entryContext', async () => {
   expect(new Set(fileList)).toEqual(
     new Set([
       'cover.png',
+      'cover2.png',
+      'covercover.html',
       'manuscript/sample-theme.css',
       'publication.json',
       'soda.html',
@@ -150,14 +177,19 @@ it('generate files with entryContext', async () => {
   const { default: manifest } = await import(
     resolveFixture('builder/.vs-entryContext/publication.json')
   );
-  expect(manifest.links[0]).toEqual({
+  expect(manifest.resources[0]).toEqual({
     encodingFormat: 'image/png',
     rel: 'cover',
     url: 'cover.png',
-    width: 512,
-    height: 512,
+    name: 'Cover image',
   });
   expect(manifest.readingOrder[0]).toEqual({
+    rel: 'cover',
+    name: 'title',
+    type: 'LinkedResource',
+    url: 'covercover.html',
+  });
+  expect(manifest.readingOrder[1]).toEqual({
     rel: 'contents',
     name: 'Table of Contents',
     type: 'LinkedResource',
@@ -213,6 +245,7 @@ it('generate from various manuscript formats', async () => {
   expect(new Set(fileList)).toEqual(
     new Set([
       'manuscript/cover.png',
+      'manuscript/cover2.png',
       'manuscript/sample-html.html',
       'manuscript/sample-xhtml.xhtml',
       'manuscript/soda.html',
@@ -405,6 +438,97 @@ it('generate from multiple config entries', async () => {
   ]);
 });
 
+it('generate files with multiple cover pages', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('builder/multipleCoverPages.config.cjs'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await cleanupWorkspace(config);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  const { default: manifest } = await import(
+    resolveFixture('builder/.vs-multipleCoverPages/publication.json')
+  );
+  expect(manifest.readingOrder).toEqual([
+    {
+      url: 'cover.html',
+      name: 'title',
+      rel: 'cover',
+      type: 'LinkedResource',
+    },
+    {
+      url: 'index.html',
+      name: 'Table of Contents',
+      rel: 'contents',
+      type: 'LinkedResource',
+    },
+    {
+      url: 'manuscript/soda.html',
+      name: 'SODA',
+    },
+    {
+      url: 'another-cover.html',
+      name: 'title',
+      rel: 'cover',
+      type: 'LinkedResource',
+    },
+  ]);
+
+  const tocHtml = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-multipleCoverPages/index.html'),
+    ),
+    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+  );
+  expect(
+    tocHtml.window.document.querySelector('style')?.innerHTML,
+  ).toMatchSnapshot();
+  expect(
+    tocHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="manuscript/sample-theme.css"]',
+    ),
+  ).toBeTruthy();
+
+  const coverHtml = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-multipleCoverPages/cover.html'),
+    ),
+    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+  );
+  expect(
+    coverHtml.window.document.querySelector(
+      'img[src="manuscript/cover.png"][alt="Cover image"][role="doc-cover"]',
+    ),
+  ).toBeTruthy();
+
+  const anotherCoverHtml = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('builder/.vs-multipleCoverPages/another-cover.html'),
+    ),
+    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+  );
+  expect(
+    anotherCoverHtml.window.document.querySelector('style')?.innerHTML,
+  ).toMatchSnapshot();
+  expect(
+    coverHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',
+    ),
+  ).not.toBeTruthy();
+  expect(
+    anotherCoverHtml.window.document.querySelector(
+      'link[rel="stylesheet"][href="manuscript/sample-theme.css"]',
+    ),
+  ).toBeTruthy();
+  expect(
+    anotherCoverHtml.window.document.querySelector(
+      'img[src="manuscript/cover2.png"][alt="yuno"][role="doc-cover"]',
+    ),
+  ).toBeTruthy();
+});
+
 it('check overwrite violation', async () => {
   const config1 = await getMergedConfig([
     '-c',
@@ -455,6 +579,7 @@ it('install local themes', async () => {
   expect(new Set(fileList)).toEqual(
     new Set([
       'manuscript/cover.png',
+      'manuscript/cover2.png',
       'manuscript/soda.html',
       'manuscript/theme-reference.html',
       'publication.json',
@@ -546,7 +671,7 @@ it('install remote themes', async () => {
     cwd: resolveFixture('builder/.vs-remoteTheme'),
   });
   expect(new Set(fileList2)).toEqual(new Set(fileList));
-}, 300000);
+}, 300000); // Longer timeout to ensure installing remote themes
 
 it('use multiple themes', async () => {
   const config = await getMergedConfig([
@@ -584,7 +709,7 @@ it('use multiple themes', async () => {
     'themes/packages/@vivliostyle/theme-academic/theme_common.css',
     'manuscript/sample-theme.css',
   ]);
-});
+}, 300000); // Longer timeout to ensure installing remote themes
 
 it('fail to install if package does not exist', async () => {
   const config = await getMergedConfig([

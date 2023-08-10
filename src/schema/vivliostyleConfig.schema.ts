@@ -10,7 +10,11 @@ export type VivliostyleConfigSchema =
   | [VivliostyleConfigEntry, ...VivliostyleConfigEntry[]];
 export type Theme = string;
 export type Entry = string;
-export type EntryObject = ContentsEntryObject | ArticleEntryObject;
+export type ThemeSpecifier = Theme | ThemeObject | (Theme | ThemeObject)[];
+export type EntryObject =
+  | ContentsEntryObject
+  | CoverEntryObject
+  | ArticleEntryObject;
 export type Output = string;
 export type BrowserType = 'chromium' | 'firefox' | 'webkit';
 
@@ -54,9 +58,34 @@ export interface VivliostyleConfigEntry {
    */
   language?: string;
   readingProgression?: 'ltr' | 'rtl';
+  /**
+   * Specify whether to generate a table of contents (ToC) document. If a string is set, the ToC document will be saved at that location. (default: index.html)
+   */
   toc?: boolean | string;
+  /**
+   * Specify the title of the generated ToC document.
+   */
   tocTitle?: string;
-  cover?: string;
+  /**
+   * Options about cover images and cover page documents
+   */
+  cover?:
+    | string
+    | {
+        /**
+         * Specify the cover image to be used for the cover page.
+         */
+        src: string;
+        /**
+         * Specify alternative text for the cover image.
+         */
+        name?: string;
+        /**
+         * Specify the location where the generated cover document will be saved. (default: cover.html) If falsy value is set, the cover document won't be generated.
+         */
+        htmlPath?: string | boolean;
+        [k: string]: unknown;
+      };
   /**
    * Timeout limit for waiting Vivliostyle process [120000]
    */
@@ -136,14 +165,34 @@ export interface ThemeObject {
 export interface ArticleEntryObject {
   path: string;
   title?: string;
-  theme?: Theme | ThemeObject | (Theme | ThemeObject)[];
+  theme?: ThemeSpecifier;
   encodingFormat?: string;
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
   rel: 'contents';
   title?: string;
-  theme?: Theme | ThemeObject | (Theme | ThemeObject)[];
+  theme?: ThemeSpecifier;
+  /**
+   * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+   */
+  pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
+  /**
+   * Reset the starting page number of this document by the specified integer. It is useful when you want to control page numbers when including a cover page.
+   */
+  pageCounterReset?: number;
+}
+export interface CoverEntryObject {
+  rel: 'cover';
+  path?: string;
+  title?: string;
+  theme?: ThemeSpecifier;
+  imageSrc?: string;
+  imageAlt?: string;
+  /**
+   * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+   */
+  pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
 }
 export interface OutputObject {
   /**

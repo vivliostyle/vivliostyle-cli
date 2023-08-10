@@ -48,9 +48,20 @@ interface LandmarkEntry {
   text: string;
 }
 
+interface SpineEntry {
+  href: string;
+}
+
 const TOC_ID = 'toc';
 const LANDMARKS_ID = 'landmarks';
 const PAGELIST_ID = 'page-list';
+const COVER_IMAGE_MIMETYPES = [
+  'image/gif',
+  'image/jpeg',
+  'image/png',
+  'image/svg+xml',
+  'image/webp',
+];
 
 const changeExtname = (filepath: string, newExt: string) => {
   let ext = upath.extname(filepath);
@@ -150,25 +161,28 @@ export async function exportEpub({
         (e): e is PublicationLinks =>
           typeof e === 'object' && e.rel === relType && (!filter || filter(e)),
       );
-  const tocResource =
-    findPublicationLink('contents', manifest.readingOrder) ||
-    findPublicationLink('contents', manifest.resources);
-  const pageListResource =
-    findPublicationLink('pagelist', manifest.readingOrder) ||
-    findPublicationLink('pagelist', manifest.resources);
+  const tocResource = findPublicationLink('contents', [
+    ...[manifest.readingOrder || []].flat(),
+    ...[manifest.resources || []].flat(),
+  ]);
+  const pageListResource = findPublicationLink('pagelist', [
+    ...[manifest.readingOrder || []].flat(),
+    ...[manifest.resources || []].flat(),
+  ]);
   // NOTE: EPUB allows one cover-image item unlike web publication
   // vivliostyle-cli takes the first cover resource.
   const pictureCoverResource = findPublicationLink(
     'cover',
     manifest.resources,
     (e) =>
-      ['image/gif', 'image/jpeg', 'image/png', 'image/svg+xml'].includes(
-        e.encodingFormat || mime(e.url) || '',
-      ),
+      COVER_IMAGE_MIMETYPES.includes(e.encodingFormat || mime(e.url) || ''),
   );
   const htmlCoverResource = findPublicationLink(
     'cover',
-    manifest.resources,
+    [
+      ...[manifest.readingOrder || []].flat(),
+      ...[manifest.resources || []].flat(),
+    ],
     (e) => /\.html?$/.test(e.url),
   );
 
@@ -221,6 +235,9 @@ export async function exportEpub({
     );
     tocHtml = readingOrder[0].url;
   }
+  const spineItems = readingOrder.map<SpineEntry>(({ url }) => ({
+    href: changeExtname(url, '.xhtml'),
+  }));
   if (!(tocHtml in manifestItem)) {
     manifestItem[tocHtml] = {
       href: changeExtname(tocHtml, '.xhtml'),
@@ -347,7 +364,7 @@ export async function exportEpub({
       docTitle,
       docLanguages,
       manifest,
-      readingOrder,
+      spineItems,
       manifestItems: Object.values(manifestItem),
       landmarks,
     }),
@@ -559,7 +576,7 @@ function buildEpubPackageDocument({
   uid,
   docTitle,
   docLanguages,
-  readingOrder,
+  spineItems,
   manifestItems,
   landmarks,
 }: Pick<Parameters<typeof exportEpub>[0], 'epubVersion'> & {
@@ -567,7 +584,7 @@ function buildEpubPackageDocument({
   uid: string;
   docTitle: string;
   docLanguages: string[];
-  readingOrder: PublicationLinks[];
+  spineItems: SpineEntry[];
   manifestItems: ManifestEntry[];
   landmarks: LandmarkEntry[];
 }): string {
@@ -658,12 +675,22 @@ function buildEpubPackageDocument({
         'dc:subject': transformToGenericTextNode(
           manifest['dc:subject'] || manifest.subject,
         ),
-        meta: transformToGenericTextNode(
-          normalizeDate(manifest.dateModified || Date.now()),
-          {
-            _property: 'dcterms:modified',
-          },
-        ),
+        meta: [
+          ...transformToGenericTextNode(
+            normalizeDate(manifest.dateModified || Date.now()),
+            {
+              _property: 'dcterms:modified',
+            },
+          ),
+          ...(() => {
+            const coverImage = manifestItems.find(
+              (it) => it.properties === 'cover-image',
+            );
+            return coverImage
+              ? [{ _name: 'cover', _content: itemIdMap.get(coverImage.href) }]
+              : [];
+          })(),
+        ],
       },
       manifest: {
         item: manifestItems.map(({ href, mediaType, properties }) => ({
@@ -681,9 +708,11 @@ function buildEpubPackageDocument({
         ...(manifest.readingProgression
           ? { '_page-progression-direction': manifest.readingProgression }
           : {}),
-        itemref: readingOrder.map(({ url }) => ({
-          _idref: itemIdMap.get(changeExtname(url, '.xhtml')),
-        })),
+        itemref: [
+          ...spineItems.map(({ href }) => ({
+            _idref: itemIdMap.get(href),
+          })),
+        ],
       },
       guide: {
         reference: landmarks.map(({ type, href, text }) => ({

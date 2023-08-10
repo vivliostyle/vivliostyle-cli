@@ -24,7 +24,11 @@ module.exports = {
   pressReady: true,
   language: 'language',
   toc: './toc.html',
-  cover: './cover.png',
+  cover: {
+    src: './cover.png',
+    name: 'Cover image alt',
+    htmlPath: './mycover.html',
+  },
   timeout: 1,
   workspaceDir: 'workspaceDir',
   vfm: {

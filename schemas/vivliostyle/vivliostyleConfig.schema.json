@@ -9,21 +9,7 @@
       "properties": {
         "path": { "type": "string" },
         "title": { "type": "string" },
-        "theme": {
-          "oneOf": [
-            { "$ref": "#/definitions/theme" },
-            { "$ref": "#/definitions/themeObject" },
-            {
-              "type": "array",
-              "items": {
-                "oneOf": [
-                  { "$ref": "#/definitions/theme" },
-                  { "$ref": "#/definitions/themeObject" }
-                ]
-              }
-            }
-          ]
-        },
+        "theme": { "$ref": "#/definitions/themeSpecifier" },
         "encodingFormat": { "type": "string" },
         "rel": {
           "type": ["string", "array"],
@@ -47,28 +33,46 @@
           "const": "contents"
         },
         "title": { "type": "string" },
-        "theme": {
-          "oneOf": [
-            { "$ref": "#/definitions/theme" },
-            { "$ref": "#/definitions/themeObject" },
-            {
-              "type": "array",
-              "items": {
-                "oneOf": [
-                  { "$ref": "#/definitions/theme" },
-                  { "$ref": "#/definitions/themeObject" }
-                ]
-              }
-            }
-          ]
+        "theme": { "$ref": "#/definitions/themeSpecifier" },
+        "pageBreakBefore": {
+          "description": "Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.",
+          "type": "string",
+          "enum": ["left", "right", "recto", "verso"]
+        },
+        "pageCounterReset": {
+          "description": "Reset the starting page number of this document by the specified integer. It is useful when you want to control page numbers when including a cover page.",
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": ["rel"],
+      "additionalProperties": false
+    },
+    "coverEntryObject": {
+      "type": "object",
+      "properties": {
+        "rel": {
+          "type": "string",
+          "const": "cover"
+        },
+        "path": { "type": "string" },
+        "title": { "type": "string" },
+        "theme": { "$ref": "#/definitions/themeSpecifier" },
+        "imageSrc": { "type": "string" },
+        "imageAlt": { "type": "string" },
+        "pageBreakBefore": {
+          "description": "Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.",
+          "type": "string",
+          "enum": ["left", "right", "recto", "verso"]
         }
       },
       "required": ["rel"],
       "additionalProperties": false
     },
     "entryObject": {
-      "oneOf": [
+      "anyOf": [
         { "$ref": "#/definitions/contentsEntryObject" },
+        { "$ref": "#/definitions/coverEntryObject" },
         { "$ref": "#/definitions/articleEntryObject" }
       ]
     },
@@ -129,6 +133,21 @@
       "required": ["specifier"],
       "additionalProperties": false
     },
+    "themeSpecifier": {
+      "oneOf": [
+        { "$ref": "#/definitions/theme" },
+        { "$ref": "#/definitions/themeObject" },
+        {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/theme" },
+              { "$ref": "#/definitions/themeObject" }
+            ]
+          }
+        }
+      ]
+    },
     "vfmReplaceRule": {
       "type": "object",
       "properties": {
@@ -158,20 +177,8 @@
           "minLength": 1
         },
         "theme": {
-          "description": "Theme package path(s) or URL(s) of css file.",
-          "oneOf": [
-            { "$ref": "#/definitions/theme" },
-            { "$ref": "#/definitions/themeObject" },
-            {
-              "type": "array",
-              "items": {
-                "oneOf": [
-                  { "$ref": "#/definitions/theme" },
-                  { "$ref": "#/definitions/themeObject" }
-                ]
-              }
-            }
-          ]
+          "$ref": "#/definitions/themeSpecifier",
+          "description": "Theme package path(s) or URL(s) of css file."
         },
         "entry": {
           "description": "Entry file(s) of document.",
@@ -245,6 +252,7 @@
           "default": "ltr"
         },
         "toc": {
+          "description": "Specify whether to generate a table of contents (ToC) document. If a string is set, the ToC document will be saved at that location. (default: index.html)",
           "oneOf": [
             { "type": "boolean" },
             {
@@ -254,12 +262,44 @@
           ]
         },
         "tocTitle": {
+          "description": "Specify the title of the generated ToC document.",
           "type": "string",
           "minLength": 1
         },
         "cover": {
-          "type": "string",
-          "minLength": 1
+          "description": "Options about cover images and cover page documents",
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "object",
+              "properties": {
+                "src": {
+                  "description": "Specify the cover image to be used for the cover page.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "description": "Specify alternative text for the cover image.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "htmlPath": {
+                  "description": "Specify the location where the generated cover document will be saved. (default: cover.html) If falsy value is set, the cover document won't be generated.",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    { "type": "boolean" }
+                  ]
+                }
+              },
+              "required": ["src"]
+            }
+          ]
         },
         "timeout": {
           "description": "Timeout limit for waiting Vivliostyle process [120000]",
@@ -321,6 +361,11 @@
         },
         "viewer": {
           "description": "Specify a URL of displaying viewer instead of vivliostyle-cli's one. It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)",
+          "type": "string",
+          "minLength": 1
+        },
+        "viewerParam": {
+          "description": "specify viewer parameters. (ex: \"allowScripts=false&pixelRatio=16\")",
           "type": "string",
           "minLength": 1
         },

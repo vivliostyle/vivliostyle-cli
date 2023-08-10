@@ -277,12 +277,17 @@ export function readJSON(path: string) {
   }
 }
 
-export function statFileSync(filePath: string) {
+export function statFileSync(
+  filePath: string,
+  {
+    errorMessage = 'Specified input does not exist',
+  }: { errorMessage?: string } = {},
+) {
   try {
     return fs.statSync(filePath);
   } catch (err) {
     if ((err as any).code === 'ENOENT') {
-      throw new Error(`Specified input doesn't exists: ${filePath}`);
+      throw new Error(`${errorMessage}: ${filePath}`);
     }
     throw err;
   }

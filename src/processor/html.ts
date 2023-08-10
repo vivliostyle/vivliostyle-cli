@@ -94,20 +94,51 @@ export async function getJsdomFromUrlOrFile(
   return { dom };
 }
 
+const getTocHtmlStyle = ({
+  pageBreakBefore,
+  pageCounterReset,
+}: {
+  pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
+  pageCounterReset?: number;
+}) => {
+  if (!pageBreakBefore && typeof pageCounterReset !== 'number') {
+    return null;
+  }
+  return /* css */ `
+${
+  pageBreakBefore
+    ? `:root {
+  break-before: ${pageBreakBefore};
+}`
+    : ''
+}
+${
+  typeof pageCounterReset === 'number'
+    ? `@page :nth(1) {
+  counter-reset: page ${Math.floor(pageCounterReset - 1)};
+}`
+    : ''
+}
+`;
+};
 export function generateTocHtml({
   entries,
   manifestPath,
   distDir,
+  language,
   title,
   tocTitle,
-  style,
+  stylesheets = [],
+  styleOptions = {},
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   manifestPath: string;
   distDir: string;
+  language?: string;
   title?: string;
   tocTitle: string;
-  style?: string[];
+  stylesheets?: string[];
+  styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
 }): string {
   const items = entries.map((entry) =>
     h(
@@ -121,17 +152,22 @@ export function generateTocHtml({
   );
   const toc = h(
     'html',
+    { lang: language },
     h(
       'head',
       ...[
         h('meta', { charset: 'utf-8' }),
         h('title', title ?? ''),
+        ...(() => {
+          const style = getTocHtmlStyle(styleOptions);
+          return style ? [h('style', getTocHtmlStyle(styleOptions))] : [];
+        })(),
         h('link', {
           href: encodeURI(upath.relative(distDir, manifestPath)),
           rel: 'publication',
           type: 'application/ld+json',
         }),
-        ...(style || []).map((s) => h('link', { href: s, rel: 'stylesheet' })),
+        ...stylesheets.map((s) => h('link', { href: s, rel: 'stylesheet' })),
       ].filter((n) => !!n),
     ),
     h(
@@ -141,6 +177,70 @@ export function generateTocHtml({
     ),
   );
   return prettier.format(toHTML(toc), { parser: 'html' });
+}
+
+const getCoverHtmlStyle = ({
+  pageBreakBefore,
+}: {
+  pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
+}) => /* css */ `
+${
+  pageBreakBefore
+    ? `:root {
+  break-before: ${pageBreakBefore};
+}`
+    : ''
+}
+body {
+  margin: 0;
+}
+[role="doc-cover"] {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+}
+@page {
+  margin: 0;
+}
+`;
+export function generateCoverHtml({
+  imageSrc,
+  imageAlt,
+  language,
+  title,
+  stylesheets = [],
+  styleOptions = {},
+}: {
+  imageSrc: string;
+  imageAlt: string;
+  language?: string;
+  title?: string;
+  stylesheets?: string[];
+  styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
+}): string {
+  const cover = h(
+    'html',
+    { lang: language },
+    h(
+      'head',
+      ...[
+        h('meta', { charset: 'utf-8' }),
+        h('title', title ?? ''),
+        h('style', getCoverHtmlStyle(styleOptions)),
+        ...stylesheets.map((s) => h('link', { href: s, rel: 'stylesheet' })),
+      ].filter((n) => !!n),
+    ),
+    h(
+      'body',
+      h(
+        'section',
+        { role: 'region', ariaLabel: 'Cover' },
+        h('img', { src: imageSrc, alt: imageAlt, role: 'doc-cover' }),
+      ),
+    ),
+  );
+  return prettier.format(toHTML(cover), { parser: 'html' });
 }
 
 export function processManuscriptHtml(
@@ -192,6 +292,16 @@ export function isTocHtml(filepath: string): boolean {
     return (
       $('[role="doc-toc"], [role="directory"], nav, .toc, #toc').length > 0
     );
+  } catch (err) {
+    // seems not to be a html file
+    return false;
+  }
+}
+
+export function isCovertHtml(filepath: string): boolean {
+  try {
+    const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'));
+    return $('[role="doc-cover"]').length > 0;
   } catch (err) {
     // seems not to be a html file
     return false;

@@ -7,5 +7,8 @@ module.exports = {
   output: ['output1.pdf'],
   workspaceDir: '.vs-entryContext',
   toc: 't-o-c.html',
-  cover: 'cover.png',
+  cover: {
+    src: 'cover.png',
+    htmlPath: 'covercover.html',
+  },
 };

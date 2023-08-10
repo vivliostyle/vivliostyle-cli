@@ -1,6 +1,7 @@
 module.exports = {
   title: 'title',
   author: 'author',
+  language: 'ja',
   entry: [
     {
       path: 'manuscript/soda.md',
