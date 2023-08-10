@@ -1,3 +1,20 @@
+
+
+# [8.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.1.2...v8.2.0) (2023-08-10)
+
+
+### Bug Fixes
+
+* Set lang attributes for generated toc documents ([4c71411](https://github.com/vivliostyle/vivliostyle-cli/commit/4c714116644a9511a398689183327785337fcc9e)), closes [#170](https://github.com/vivliostyle/vivliostyle-cli/issues/170)
+* Update Vivliostyle.js to 2.25.5: Bug Fixes ([20449f3](https://github.com/vivliostyle/vivliostyle-cli/commit/20449f389b06a3ca96dc0a7b66ffb2c8565f92c7))
+
+
+### Features
+
+* Add a feature generating cover HTMLs ([6ff97b5](https://github.com/vivliostyle/vivliostyle-cli/commit/6ff97b5e7e090e61646d14239720340b2d82b123))
+* Add pageBreakBefore and pageCounterReset options ([f3d0fbb](https://github.com/vivliostyle/vivliostyle-cli/commit/f3d0fbb2492f8800b04d61013bcd8ca39c98635e))
+* Support multiple cover pages ([9f761f5](https://github.com/vivliostyle/vivliostyle-cli/commit/9f761f5ec4075622eb4f61e74f4127b2738a9d36))
+
 ## [8.1.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.1.1...v8.1.2) (2023-07-28)
 
 ### Bug Fixes
