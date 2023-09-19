@@ -25,6 +25,7 @@ import {
   logSuccess,
   pathContains,
   pathEquals,
+  runExitHandlers,
   setLogLevel,
   startLogging,
   stopLogging,
@@ -111,6 +112,16 @@ export async function preview(cliFlags: PreviewCliFlags) {
   });
   const page = await browser.newPage({ viewport: null });
 
+  let watcher: chokidar.FSWatcher | null = null;
+
+  // Terminate preview when the previewing page is closed
+  page.on('close', () => {
+    if (watcher) {
+      watcher.close();
+    }
+    runExitHandlers();
+  });
+
   // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
   const locale = Intl.DateTimeFormat().resolvedOptions().locale;
   await page.addInitScript(
@@ -168,7 +179,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     return;
   }
 
-  chokidar
+  watcher = chokidar
     .watch('**', {
       ignored: (path: string) => {
         if (/^node_modules$|^\.git/.test(upath.basename(path))) {
