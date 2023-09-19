@@ -657,7 +657,7 @@ it('install remote themes', async () => {
   );
   expect(
     doc.window.document.querySelector(
-      'link[rel="stylesheet"][href="../themes/packages/@vivliostyle/theme-academic/theme_common.css"]',
+      'link[rel="stylesheet"][href="../themes/packages/@vivliostyle/theme-academic/theme.css"]',
     ),
   ).toBeTruthy();
 
@@ -706,7 +706,7 @@ it('use multiple themes', async () => {
       (e) => e.getAttribute('href'),
     ),
   ).toEqual([
-    'themes/packages/@vivliostyle/theme-academic/theme_common.css',
+    'themes/packages/@vivliostyle/theme-academic/theme.css',
     'manuscript/sample-theme.css',
   ]);
 }, 300000); // Longer timeout to ensure installing remote themes
