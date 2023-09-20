@@ -83,15 +83,38 @@ export function setLogLevel(level?: 'silent' | 'info' | 'verbose' | 'debug') {
   }
 }
 
-export function startLogging(text?: string) {
+/**
+ * @returns A function that stops logging
+ */
+export function startLogging(text?: string): typeof stopLogging {
   if (logLevel < 1) {
-    return;
+    return () => {};
   }
   // If text is not set, erase previous log with space character
   ora.start(text ?? ' ');
+  return stopLogging;
 }
 
-export function stopLogging(text?: string, symbol?: string) {
+/**
+ * @returns A function that starts logging again
+ */
+export function suspendLogging(
+  text?: string,
+  symbol?: string,
+): (text?: string) => void {
+  if (logLevel < 1) {
+    return () => {};
+  }
+  const { isSpinning, text: previousLoggingText } = ora;
+  stopLogging(text, symbol);
+  return (text) => {
+    isSpinning ? startLogging(text || previousLoggingText) : ora.info(text);
+  };
+}
+
+// NOTE: This function is intended to be used in conjunction with startLogging function,
+// so it is not intentionally exported.
+function stopLogging(text?: string, symbol?: string) {
   if (logLevel < 1) {
     return;
   }

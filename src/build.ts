@@ -33,7 +33,6 @@ import {
   runExitHandlers,
   setLogLevel,
   startLogging,
-  stopLogging,
   upath,
   useTmpDirectory,
 } from './util.js';
@@ -78,7 +77,7 @@ export async function build(cliFlags: BuildCliFlags) {
     );
     debug('bypassedPdfBuilderOption', option);
 
-    startLogging();
+    const stopLogging = startLogging();
     await buildPDF(option);
     // Stop remaining stream output and kill process
     stopLogging();
@@ -88,7 +87,7 @@ export async function build(cliFlags: BuildCliFlags) {
   }
 
   const isInContainer = checkContainerEnvironment();
-  startLogging('Collecting build config');
+  const stopLogging = startLogging('Collecting build config');
   const configEntries = await getFullConfig(cliFlags);
 
   for (const config of configEntries) {
