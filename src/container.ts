@@ -10,8 +10,7 @@ import {
   isUrlString,
   log,
   pathEquals,
-  startLogging,
-  stopLogging,
+  suspendLogging,
   upath,
 } from './util.js';
 
@@ -74,7 +73,7 @@ export async function runContainer({
     );
   }
 
-  stopLogging('Launching docker container', '📦');
+  const restartLogging = suspendLogging('Launching docker container', '📦');
   const args = [
     'run',
     ...(isInteractive() ? ['-it'] : []),
@@ -95,7 +94,7 @@ export async function runContainer({
     proc.stdout?.pipe(process.stdout);
     proc.stderr?.pipe(process.stderr);
     const ret = await proc;
-    startLogging();
+    restartLogging();
     return ret;
   } catch (error) {
     log(

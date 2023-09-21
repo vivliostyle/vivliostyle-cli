@@ -7,8 +7,7 @@ import {
   logInfo,
   logSuccess,
   pathEquals,
-  startLogging,
-  stopLogging,
+  suspendLogging,
 } from './util.js';
 
 export async function launchBrowser({
@@ -80,9 +79,9 @@ export async function downloadBrowser(
 ): Promise<string> {
   const executable = registry.findExecutable(browserType);
   logInfo('Rendering browser is not installed yet. Downloading now...');
-  stopLogging();
+  const restartLogging = suspendLogging();
   await registry.install([executable], false);
   logSuccess(`Successfully downloaded browser`);
-  startLogging();
+  restartLogging();
   return executable.executablePath()!;
 }

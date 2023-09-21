@@ -20,12 +20,7 @@ import {
 } from '../container.js';
 import type { Meta, TOCItem } from '../global-viewer.js';
 import { MergedConfig } from '../input/config.js';
-import {
-  checkContainerEnvironment,
-  startLogging,
-  stopLogging,
-  upath,
-} from '../util.js';
+import { checkContainerEnvironment, suspendLogging, upath } from '../util.js';
 import type { PdfOutput } from './output-types.js';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
@@ -116,7 +111,7 @@ export class PostProcess {
       preflight === 'press-ready-local' ||
       (preflight === 'press-ready' && isInContainer)
     ) {
-      stopLogging('Running press-ready', '🚀');
+      const restartLogging = suspendLogging('Running press-ready', '🚀');
       await pressReadyModule.build({
         ...preflightOption.reduce((acc, opt) => {
           const optName = decamelize(opt, { separator: '-' });
@@ -133,16 +128,16 @@ export class PostProcess {
         input,
         output,
       });
-      startLogging();
+      restartLogging();
     } else if (preflight === 'press-ready') {
-      stopLogging('Running press-ready', '🚀');
+      const restartLogging = suspendLogging('Running press-ready', '🚀');
       await pressReadyWithContainer({
         input,
         output,
         preflightOption,
         image,
       });
-      startLogging();
+      restartLogging();
     }
   }
 

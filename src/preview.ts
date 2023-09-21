@@ -23,12 +23,12 @@ import {
   debug,
   isUrlString,
   logSuccess,
+  logUpdate,
   pathContains,
   pathEquals,
   runExitHandlers,
   setLogLevel,
   startLogging,
-  stopLogging,
   upath,
 } from './util.js';
 
@@ -39,7 +39,7 @@ export interface PreviewCliFlags extends CliFlags {}
 export async function preview(cliFlags: PreviewCliFlags) {
   setLogLevel(cliFlags.logLevel);
 
-  startLogging('Collecting preview config');
+  const stopLogging = startLogging('Collecting preview config');
 
   const loadedConf = await collectVivliostyleConfig(cliFlags);
   const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
@@ -61,7 +61,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     context,
   );
 
-  startLogging('Preparing preview');
+  logUpdate('Preparing preview');
 
   // build artifacts
   if (config.manifestPath) {
@@ -144,7 +144,9 @@ export async function preview(cliFlags: PreviewCliFlags) {
   function reloadConfig(path: string) {
     clearTimeout(timer);
     timer = setTimeout(async () => {
-      startLogging(`Config file change detected. Reloading ${path}`);
+      const stopLogging = startLogging(
+        `Config file change detected. Reloading ${path}`,
+      );
       // reload vivliostyle config
       const loadedConf = await collectVivliostyleConfig(cliFlags);
       const { vivliostyleConfig } = loadedConf;
@@ -157,13 +159,14 @@ export async function preview(cliFlags: PreviewCliFlags) {
       }
       page.reload();
       logSuccess(`Reloaded ${path}`);
+      stopLogging();
     }, 2000);
   }
 
   function handleChangeEvent(path: string) {
     clearTimeout(timer);
     timer = setTimeout(async () => {
-      startLogging(`Rebuilding ${path}`);
+      const stopLogging = startLogging(`Rebuilding ${path}`);
       // build artifacts
       if (config.manifestPath) {
         await prepareThemeDirectory(config);
@@ -172,6 +175,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
       }
       page.reload();
       logSuccess(`Built ${path}`);
+      stopLogging();
     }, 2000);
   }
 
