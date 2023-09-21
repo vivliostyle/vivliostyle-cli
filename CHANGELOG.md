@@ -1,5 +1,18 @@
 
 
+# [8.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.2.0...v8.3.0) (2023-09-21)
+
+
+### Bug Fixes
+
+* Fix logging message when the file is updated during preview ([bb5a44e](https://github.com/vivliostyle/vivliostyle-cli/commit/bb5a44e255aa789d599a647b8d7d61ec47859734))
+
+
+### Features
+
+* Preview should be terminated when the previewing page is closed ([89f8bb4](https://github.com/vivliostyle/vivliostyle-cli/commit/89f8bb4c506b516da4aa0a96b1a70c25f27b4958))
+* Update Playwright to 1.38.0 (Chromium 117.0.5938.62) ([cf1b671](https://github.com/vivliostyle/vivliostyle-cli/commit/cf1b671b8efbf42c7be181647bfac744cb5f3214))
+
 # [8.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.1.2...v8.2.0) (2023-08-10)
 
 
