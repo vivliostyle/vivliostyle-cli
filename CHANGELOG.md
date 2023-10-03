@@ -1,32 +1,32 @@
+## [8.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.3.0...v8.3.1) (2023-10-03)
 
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.25.6: Viewer UI Bug Fixes ([5cbb756](https://github.com/vivliostyle/vivliostyle-cli/commit/5cbb756e4e6443ae77db4e88c561dd7dc9d10965))
 
 # [8.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.2.0...v8.3.0) (2023-09-21)
 
-
 ### Bug Fixes
 
-* Fix logging message when the file is updated during preview ([bb5a44e](https://github.com/vivliostyle/vivliostyle-cli/commit/bb5a44e255aa789d599a647b8d7d61ec47859734))
-
+- Fix logging message when the file is updated during preview ([bb5a44e](https://github.com/vivliostyle/vivliostyle-cli/commit/bb5a44e255aa789d599a647b8d7d61ec47859734))
 
 ### Features
 
-* Preview should be terminated when the previewing page is closed ([89f8bb4](https://github.com/vivliostyle/vivliostyle-cli/commit/89f8bb4c506b516da4aa0a96b1a70c25f27b4958))
-* Update Playwright to 1.38.0 (Chromium 117.0.5938.62) ([cf1b671](https://github.com/vivliostyle/vivliostyle-cli/commit/cf1b671b8efbf42c7be181647bfac744cb5f3214))
+- Preview should be terminated when the previewing page is closed ([89f8bb4](https://github.com/vivliostyle/vivliostyle-cli/commit/89f8bb4c506b516da4aa0a96b1a70c25f27b4958))
+- Update Playwright to 1.38.0 (Chromium 117.0.5938.62) ([cf1b671](https://github.com/vivliostyle/vivliostyle-cli/commit/cf1b671b8efbf42c7be181647bfac744cb5f3214))
 
 # [8.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.1.2...v8.2.0) (2023-08-10)
 
-
 ### Bug Fixes
 
-* Set lang attributes for generated toc documents ([4c71411](https://github.com/vivliostyle/vivliostyle-cli/commit/4c714116644a9511a398689183327785337fcc9e)), closes [#170](https://github.com/vivliostyle/vivliostyle-cli/issues/170)
-* Update Vivliostyle.js to 2.25.5: Bug Fixes ([20449f3](https://github.com/vivliostyle/vivliostyle-cli/commit/20449f389b06a3ca96dc0a7b66ffb2c8565f92c7))
-
+- Set lang attributes for generated toc documents ([4c71411](https://github.com/vivliostyle/vivliostyle-cli/commit/4c714116644a9511a398689183327785337fcc9e)), closes [#170](https://github.com/vivliostyle/vivliostyle-cli/issues/170)
+- Update Vivliostyle.js to 2.25.5: Bug Fixes ([20449f3](https://github.com/vivliostyle/vivliostyle-cli/commit/20449f389b06a3ca96dc0a7b66ffb2c8565f92c7))
 
 ### Features
 
-* Add a feature generating cover HTMLs ([6ff97b5](https://github.com/vivliostyle/vivliostyle-cli/commit/6ff97b5e7e090e61646d14239720340b2d82b123))
-* Add pageBreakBefore and pageCounterReset options ([f3d0fbb](https://github.com/vivliostyle/vivliostyle-cli/commit/f3d0fbb2492f8800b04d61013bcd8ca39c98635e))
-* Support multiple cover pages ([9f761f5](https://github.com/vivliostyle/vivliostyle-cli/commit/9f761f5ec4075622eb4f61e74f4127b2738a9d36))
+- Add a feature generating cover HTMLs ([6ff97b5](https://github.com/vivliostyle/vivliostyle-cli/commit/6ff97b5e7e090e61646d14239720340b2d82b123))
+- Add pageBreakBefore and pageCounterReset options ([f3d0fbb](https://github.com/vivliostyle/vivliostyle-cli/commit/f3d0fbb2492f8800b04d61013bcd8ca39c98635e))
+- Support multiple cover pages ([9f761f5](https://github.com/vivliostyle/vivliostyle-cli/commit/9f761f5ec4075622eb4f61e74f4127b2738a9d36))
 
 ## [8.1.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.1.1...v8.1.2) (2023-07-28)
 
