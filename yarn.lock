@@ -1119,10 +1119,10 @@
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
 
-"@vivliostyle/viewer@2.25.5":
-  version "2.25.5"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.25.5.tgz#35ac697fb089365d2a55ac15df4503f7499c5b2b"
-  integrity sha512-X3ttIVSwsClFctLuO807TXIzslu5dvrclOypmcbimT5cdXpZzaHn2ZalGTrSXj6o3oW2UN8+fwmO6Ck9/Wvj3w==
+"@vivliostyle/viewer@2.25.6":
+  version "2.25.6"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.25.6.tgz#1e494256b70f72cb05a66dcd72b6d42b08a74085"
+  integrity sha512-wpzE4/iDmeVaYymXC4illLstCI9GPMkvq7dNRA4CYpPxoHKN7BWzSdI2jrPu7r1LzarTcS0Mz0HEfngS3RSw3w==
   dependencies:
     "@vivliostyle/core" "^2.25.5"
     i18next-ko "^3.0.1"
