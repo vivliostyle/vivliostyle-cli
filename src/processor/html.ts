@@ -167,7 +167,9 @@ export function generateTocHtml({
           rel: 'publication',
           type: 'application/ld+json',
         }),
-        ...stylesheets.map((s) => h('link', { href: s, rel: 'stylesheet' })),
+        ...stylesheets.map((s) =>
+          h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
+        ),
       ].filter((n) => !!n),
     ),
     h(
@@ -228,7 +230,9 @@ export function generateCoverHtml({
         h('meta', { charset: 'utf-8' }),
         h('title', title ?? ''),
         h('style', getCoverHtmlStyle(styleOptions)),
-        ...stylesheets.map((s) => h('link', { href: s, rel: 'stylesheet' })),
+        ...stylesheets.map((s) =>
+          h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
+        ),
       ].filter((n) => !!n),
     ),
     h(
@@ -267,7 +271,7 @@ export function processManuscriptHtml(
     $('title').text(title);
   }
   for (const s of style ?? []) {
-    $('head').append(`<link rel="stylesheet" />`);
+    $('head').append(`<link rel="stylesheet" type="text/css" />`);
     $('head > *:last-child').attr('href', s);
   }
   if (language) {
