@@ -122,9 +122,9 @@ This option is equivalent with "--preflight press-ready"`,
 Please refer the document of press-ready for further information.
 https://github.com/vibranthq/press-ready`,
     )
-    .option(
-      '--no-sandbox',
-      `launch chrome without sandbox. use this option when ECONNREFUSED error occurred.`,
+    .addOption(new Option('--sandbox', `launch chrome with sandbox`).hideHelp())
+    .addOption(
+      new Option('--no-sandbox', `launch chrome without sandbox`).hideHelp(),
     )
     .option(
       '--executable-browser <path>',

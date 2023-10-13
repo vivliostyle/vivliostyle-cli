@@ -541,7 +541,7 @@ export async function mergeConfig<T extends CliFlags>(
   };
 
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
-  const sandbox = cliFlags.sandbox ?? true;
+  const sandbox = cliFlags.sandbox ?? false;
   const browserType = cliFlags.browser ?? config?.browser ?? 'chromium';
   const executableBrowser =
     cliFlags.executableBrowser ?? getExecutableBrowserPath(browserType);
