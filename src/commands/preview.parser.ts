@@ -40,9 +40,9 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
         'Direction of reading progression',
       ).choices(['ltr', 'rtl']),
     )
-    .option(
-      '--no-sandbox',
-      `launch chrome without sandbox (use this option to avoid ECONNREFUSED error)`,
+    .addOption(new Option('--sandbox', `launch chrome with sandbox`).hideHelp())
+    .addOption(
+      new Option('--no-sandbox', `launch chrome without sandbox`).hideHelp(),
     )
     .option(
       '--executable-browser <path>',

@@ -106,8 +106,6 @@ Options:
                                      Please refer the document of press-ready for further
                                      information.
                                      https://github.com/vibranthq/press-ready
-  --no-sandbox                       launch chrome without sandbox. use this option when
-                                     ECONNREFUSED error occurred.
   --executable-browser <path>        specify a path of executable browser you installed
   --image <image>                    specify a docker image to render
   --http                             launch an HTTP server hosting contents instead of file protocol
@@ -154,8 +152,6 @@ Options:
   --author <author>                  author
   -l, --language <language>          language
   --reading-progression <direction>  Direction of reading progression (choices: "ltr", "rtl")
-  --no-sandbox                       launch chrome without sandbox (use this option to avoid
-                                     ECONNREFUSED error)
   --executable-browser <path>        specify a path of executable browser you installed
   --http                             launch an HTTP server hosting contents instead of file protocol
                                      It is useful that requires CORS such as external web fonts.
