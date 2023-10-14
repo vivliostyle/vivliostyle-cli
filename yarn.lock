@@ -1080,10 +1080,10 @@
     ws "^8.13.0"
     xml-name-validator "^4.0.0"
 
-"@vivliostyle/vfm@2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-2.1.0.tgz#8d4e068123cffe1c2081ce3a1389c4fbe003d42d"
-  integrity sha512-qs26plUnRTd/XGQd7iLVkpSIY3pYPxwvYty8QJsSt+i9uS5W+LEY3QSRoWvbJTHco0IS8mmPmmf4XouABSQaQg==
+"@vivliostyle/vfm@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-2.2.0.tgz#f62929bf92b5a3630ba8a26bb607f31d24aeb7e2"
+  integrity sha512-YlkfwmVpo0azJDkLKizCoK0UVGrjRM1UybPMeQnj/3qJYvWezMDNPzBDgOe0W94SCBux8ufO6KuGYyHvm/Z3wg==
   dependencies:
     debug "^4.3.1"
     doctype "^2.0.4"
@@ -6025,10 +6025,10 @@ pkg-types@^1.0.3:
     mlly "^1.2.0"
     pathe "^1.1.0"
 
-playwright-core@1.38.0:
-  version "1.38.0"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.38.0.tgz#cb8e135da1c0b1918b070642372040ed9aa7009a"
-  integrity sha512-f8z1y8J9zvmHoEhKgspmCvOExF2XdcxMW8jNRuX4vkQFrzV4MlZ55iwb5QeyiFQgOFCUolXiRHgpjSEnqvO48g==
+playwright-core@1.39.0:
+  version "1.39.0"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.39.0.tgz#efeaea754af4fb170d11845b8da30b2323287c63"
+  integrity sha512-+k4pdZgs1qiM+OUkSjx96YiKsXsmb59evFoqv8SKO067qBA+Z2s/dCzJij/ZhdQcs2zlTAgRKfeiiLm8PQ2qvw==
 
 please-upgrade-node@^3.2.0:
   version "3.2.0"
