@@ -472,6 +472,14 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     );
   }
 
+  if (cliFlags.sandbox === false) {
+    logWarn(
+      chalk.yellowBright(
+        "'--no-sandbox' option was deprecated and will be removed in a future release. It is no longer necessary because the sandbox is disabled by default.",
+      ),
+    );
+  }
+
   return {
     cliFlags,
     ...configEntry,
