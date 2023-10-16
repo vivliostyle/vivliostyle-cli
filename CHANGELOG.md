@@ -1,3 +1,11 @@
+# [8.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.3.1...v8.4.0) (2023-10-16)
+
+### Features
+
+- disable chromium sandbox by default ([bb82165](https://github.com/vivliostyle/vivliostyle-cli/commit/bb82165545ee5d5ba35a0ef3631950502d2b2ec4)), closes [#446](https://github.com/vivliostyle/vivliostyle-cli/issues/446)
+- Update Playwright to 1.39.0 (Chromium 119.0.6045.9) ([fa1d764](https://github.com/vivliostyle/vivliostyle-cli/commit/fa1d764bf48f75201bb4f078562703e1ebbb6405))
+- Update VFM to 2.2.0: New features to control sectionization ([da0ec85](https://github.com/vivliostyle/vivliostyle-cli/commit/da0ec856f321a62ebc52d4ca9b2e517214cf640b))
+
 ## [8.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.3.0...v8.3.1) (2023-10-03)
 
 ### Bug Fixes
