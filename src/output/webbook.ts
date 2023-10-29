@@ -278,8 +278,6 @@ export async function copyWebPublicationAssets({
             ? upath.join(upath.relative(input, p), '**')
             : upath.relative(input, p),
         ),
-        // including node_modules possibly occurs cyclic reference of symlink
-        '**/node_modules',
         // only include dotfiles starting with `.vs-`
         '**/.!(vs-*)/**',
       ],
