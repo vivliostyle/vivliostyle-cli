@@ -264,7 +264,7 @@ export async function copyWebPublicationAssets({
   const allFiles = await safeGlob(
     [
       `**/${upath.relative(input, manifestPath)}`,
-      '**/*.{html,html,css}',
+      '**/*.{html,htm,css}',
       ...includeAssets,
     ],
     {
