@@ -163,7 +163,11 @@ export type MergedConfig = {
   outputs: OutputFormat[];
   themeIndexes: Set<ParsedTheme>;
   rootThemes: ParsedTheme[];
-  includeAssets: string[];
+  copyAsset: {
+    includes: string[];
+    excludes: string[];
+    fileExtensions: string[];
+  };
   exportAliases: {
     source: string;
     target: string;
@@ -205,18 +209,17 @@ export type MergedConfig = {
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
 
-const DEFAULT_ASSETS = [
-  '**/*.png',
-  '**/*.jpg',
-  '**/*.jpeg',
-  '**/*.svg',
-  '**/*.gif',
-  '**/*.webp',
-  '**/*.apng',
-  '**/*.ttf',
-  '**/*.otf',
-  '**/*.woff',
-  '**/*.woff2',
+const DEFAULT_ASSET_EXTENSIONS = [
+  'png',
+  'jpg',
+  'jpeg',
+  'svg',
+  'webp',
+  'apng',
+  'ttf',
+  'otf',
+  'woff',
+  'woff2',
 ];
 
 export function validateTimeoutFlag(val: string) {
@@ -480,6 +483,15 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     );
   }
 
+  const configEntries = (configEntry.vivliostyleConfig ?? []).flat();
+  if (configEntries.some((config) => config.includeAssets)) {
+    logWarn(
+      chalk.yellowBright(
+        "'includeAssets' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'copyAsset.includes' property instead.",
+      ),
+    );
+  }
+
   return {
     cliFlags,
     ...configEntry,
@@ -509,12 +521,6 @@ export async function mergeConfig<T extends CliFlags>(
       contextResolve(context, config?.workspaceDir) ?? entryContextDir;
   }
   const themesDir = upath.join(workspaceDir, 'themes');
-
-  const includeAssets = config?.includeAssets
-    ? Array.isArray(config.includeAssets)
-      ? config.includeAssets
-      : [config.includeAssets]
-    : DEFAULT_ASSETS;
 
   const language = cliFlags.language ?? config?.language ?? undefined;
   const readingProgression =
@@ -675,11 +681,52 @@ export async function mergeConfig<T extends CliFlags>(
     };
   })();
 
+  const copyAsset = (() => {
+    const {
+      includes: _includes,
+      excludes = [],
+      includeFileExtensions = [],
+      excludeFileExtensions = [],
+    } = config?.copyAsset || {};
+    const includes = _includes || [config?.includeAssets ?? []].flat();
+    const notAllowedPatternRe = /(^\s*[/\\]|^(.*[/\\])?\s*\.\.\s*([/\\].*)?$)/g;
+    // See the special characters of glob pattern
+    // https://github.com/mrmlnc/fast-glob
+    const notAllowedExtensionRe = /([\\/*?@+!|(){}[\]]|\.\.|^\s*\.)/g;
+    Object.entries({ includes, excludes }).forEach(([propName, patterns]) => {
+      patterns.forEach((pattern) => {
+        if (notAllowedPatternRe.test(pattern)) {
+          throw new Error(
+            `Invalid pattern was found in copyAsset.${propName} option: ${pattern}`,
+          );
+        }
+      });
+    });
+    Object.entries({ includeFileExtensions, excludeFileExtensions }).forEach(
+      ([propName, patterns]) => {
+        patterns.forEach((pattern) => {
+          if (notAllowedExtensionRe.test(pattern)) {
+            throw new Error(
+              `Invalid pattern was found in copyAsset.${propName} option: ${pattern}`,
+            );
+          }
+        });
+      },
+    );
+    return {
+      includes,
+      excludes,
+      fileExtensions: [
+        ...new Set([...DEFAULT_ASSET_EXTENSIONS, ...includeFileExtensions]),
+      ].filter((ext) => !excludeFileExtensions.includes(ext)),
+    };
+  })();
+
   const commonOpts: CommonOpts = {
     entryContextDir,
     workspaceDir,
     themesDir,
-    includeAssets,
+    copyAsset,
     outputs,
     themeIndexes,
     rootThemes,

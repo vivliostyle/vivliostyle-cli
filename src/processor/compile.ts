@@ -362,17 +362,50 @@ export async function compile({
   }
 }
 
+export async function globAssetFiles({
+  copyAsset: { fileExtensions, includes, excludes },
+  cwd,
+  ignore = [],
+}: Pick<MergedConfig, 'copyAsset'> & {
+  cwd: string;
+  ignore?: string[];
+}): Promise<Set<string>> {
+  const assets = new Set([
+    // Step 1: Glob files with an extension in `fileExtension`
+    // Ignore files in node_modules directory and files matched `excludes`
+    ...(await safeGlob(
+      fileExtensions.map((ext) => `**/*.${ext}`),
+      {
+        cwd,
+        ignore: [...ignore, ...excludes, '**/node_modules'],
+        followSymbolicLinks: true,
+        gitignore: false,
+      },
+    )),
+    // Step 2: Glob files matched with `includes`
+    // Ignore only files matched `excludes`
+    ...(await safeGlob(includes, {
+      cwd,
+      ignore: [...ignore, ...excludes],
+      followSymbolicLinks: true,
+      gitignore: false,
+    })),
+  ]);
+  return assets;
+}
+
 export async function copyAssets({
   entryContextDir,
   workspaceDir,
-  includeAssets,
+  copyAsset,
   outputs,
 }: MergedConfig): Promise<void> {
   if (pathEquals(entryContextDir, workspaceDir)) {
     return;
   }
   const relWorkspaceDir = upath.relative(entryContextDir, workspaceDir);
-  const assets = await safeGlob(includeAssets, {
+  const assets = await globAssetFiles({
+    copyAsset,
     cwd: entryContextDir,
     ignore: [
       // don't copy auto-generated assets
@@ -386,8 +419,6 @@ export async function copyAssets({
       // don't copy workspace itself
       ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
     ],
-    followSymbolicLinks: true,
-    gitignore: false,
   });
   debug('assets', assets);
   for (const asset of assets) {

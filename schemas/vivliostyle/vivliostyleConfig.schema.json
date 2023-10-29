@@ -224,6 +224,8 @@
           "minLength": 1
         },
         "includeAssets": {
+          "deprecated": true,
+          "description": "@deprecated Use 'copyAsset.includes' instead",
           "oneOf": [
             {
               "type": "array",
@@ -231,6 +233,44 @@
             },
             { "$ref": "#/definitions/entry" }
           ]
+        },
+        "copyAsset": {
+          "description": "Options about asset files to be copied when exporting output.",
+          "type": "object",
+          "properties": {
+            "includes": {
+              "description": "Specify directories and files you want to include as asset files. This option supports wildcard characters to make glob patterns.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "excludes": {
+              "description": "Specify directories and files you want to exclude from the asset file. This option supports wildcard characters to make glob patterns.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "includeFileExtensions": {
+              "description": "Specify extensions of the file you want to include as an asset file. (default: [png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2])",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "excludeFileExtensions": {
+              "description": "Specify extensions of the file you want to exclude as an asset file. ",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
         },
         "size": {
           "description": "Output pdf size [Letter]. preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger. custom(comma separated): 182mm,257mm or 8.5in,11in.",
