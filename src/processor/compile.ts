@@ -386,9 +386,8 @@ export async function copyAssets({
       // don't copy workspace itself
       ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
     ],
-    caseSensitiveMatch: false,
-    followSymbolicLinks: false,
-    gitignore: true,
+    followSymbolicLinks: true,
+    gitignore: false,
   });
   debug('assets', assets);
   for (const asset of assets) {
