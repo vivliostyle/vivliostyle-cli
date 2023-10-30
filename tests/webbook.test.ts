@@ -168,3 +168,37 @@ it('generate webpub from a remote HTML document', async () => {
   const entry = file['/work/output/work/input/index.html'];
   expect(format(entry as string, { parser: 'html' })).toMatchSnapshot();
 });
+
+it('generate webpub with complex copyAsset settings', async () => {
+  const config: VivliostyleConfigSchema = {
+    copyAsset: {
+      includes: [
+        // The following line should also work, but under the mock environment of memfs, fast-glob does not work without '/**'.
+        // 'node_modules/pkgB',
+        'node_modules/pkgB/**',
+      ],
+      excludes: ['cover.png'],
+      includeFileExtensions: ['jxl'],
+      excludeFileExtensions: ['svg'],
+    },
+    entry: ['doc.md'],
+    output: ['/work/output'],
+    workspaceDir: '.vs',
+  };
+  vol.fromJSON({
+    '/work/input/vivliostyle.config.json': JSON.stringify(config),
+    '/work/input/package.json': '',
+    '/work/input/doc.md': 'yuno',
+    '/work/input/cover.png': '',
+    '/work/input/assetA.jxl': '',
+    '/work/input/assetB.svg': '',
+    '/work/input/node_modules/pkgA/img.png': '',
+    '/work/input/node_modules/pkgB/a.html': '',
+    '/work/input/node_modules/pkgB/bar/b.html': '',
+  });
+  await build({
+    configPath: '/work/input/vivliostyle.config.json',
+  });
+
+  expect(toTree(vol)).toMatchSnapshot();
+});

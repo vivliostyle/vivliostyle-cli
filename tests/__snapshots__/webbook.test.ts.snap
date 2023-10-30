@@ -273,3 +273,40 @@ exports[`generate webpub from vivliostyle.config.js 3`] = `
 </html>
 "
 `;
+
+exports[`generate webpub with complex copyAsset settings 1`] = `
+"/
+└─ work/
+   ├─ input/
+   │  ├─ .vs/
+   │  │  ├─ assetA.jxl
+   │  │  ├─ doc.html
+   │  │  ├─ node_modules/
+   │  │  │  └─ pkgB/
+   │  │  │     ├─ a.html
+   │  │  │     └─ bar/
+   │  │  │        └─ b.html
+   │  │  └─ publication.json
+   │  ├─ assetA.jxl
+   │  ├─ assetB.svg
+   │  ├─ cover.png
+   │  ├─ doc.md
+   │  ├─ node_modules/
+   │  │  ├─ pkgA/
+   │  │  │  └─ img.png
+   │  │  └─ pkgB/
+   │  │     ├─ a.html
+   │  │     └─ bar/
+   │  │        └─ b.html
+   │  ├─ package.json
+   │  └─ vivliostyle.config.json
+   └─ output/
+      ├─ assetA.jxl
+      ├─ doc.html
+      ├─ node_modules/
+      │  └─ pkgB/
+      │     ├─ a.html
+      │     └─ bar/
+      │        └─ b.html
+      └─ publication.json"
+`;
