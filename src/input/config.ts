@@ -214,6 +214,7 @@ const DEFAULT_ASSET_EXTENSIONS = [
   'jpg',
   'jpeg',
   'svg',
+  'gif',
   'webp',
   'apng',
   'ttf',
