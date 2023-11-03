@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import MIMEType from 'whatwg-mimetype';
 import { MANIFEST_FILENAME } from '../const.js';
 import { MergedConfig, WebbookEntryConfig } from '../input/config.js';
-import { generateManifest } from '../processor/compile.js';
+import { generateManifest, globAssetFiles } from '../processor/compile.js';
 import {
   ResourceLoader,
   fetchLinkedPublicationManifest,
@@ -246,11 +246,11 @@ export async function supplyWebPublicationManifestForWebbook({
 export async function copyWebPublicationAssets({
   exportAliases,
   outputs,
-  includeAssets,
+  copyAsset,
   manifestPath,
   input,
   outputDir,
-}: Pick<MergedConfig, 'exportAliases' | 'outputs' | 'includeAssets'> & {
+}: Pick<MergedConfig, 'exportAliases' | 'outputs' | 'copyAsset'> & {
   input: string;
   outputDir: string;
   manifestPath: string;
@@ -261,39 +261,46 @@ export async function copyWebPublicationAssets({
       target: upath.relative(input, target),
     }))
     .filter(({ source }) => !source.startsWith('..'));
-  const allFiles = await safeGlob(
-    [
-      `**/${upath.relative(input, manifestPath)}`,
-      '**/*.{html,html,css}',
-      ...includeAssets,
-    ],
-    {
+  const ignore = [
+    // don't copy auto-generated assets
+    ...outputs.flatMap(({ format, path: p }) =>
+      !pathContains(input, p)
+        ? []
+        : format === 'webpub'
+        ? upath.join(upath.relative(input, p), '**')
+        : upath.relative(input, p),
+    ),
+  ];
+  const allFiles = new Set([
+    ...(await globAssetFiles({
+      copyAsset,
       cwd: input,
-      ignore: [
-        // don't copy auto-generated assets
-        ...outputs.flatMap(({ format, path: p }) =>
-          !pathContains(input, p)
-            ? []
-            : format === 'webpub'
-            ? upath.join(upath.relative(input, p), '**')
-            : upath.relative(input, p),
-        ),
-        // including node_modules possibly occurs cyclic reference of symlink
-        '**/node_modules',
-        // only include dotfiles starting with `.vs-`
-        '**/.!(vs-*)/**',
+      ignore,
+    })),
+    ...(await safeGlob(
+      [
+        `**/${upath.relative(input, manifestPath)}`,
+        '**/*.{html,htm,xhtml,xht,css}',
       ],
-      // follow symbolic links to copy local theme packages
-      followSymbolicLinks: true,
-      gitignore: false,
-      dot: true,
-    },
-  );
+      {
+        cwd: input,
+        ignore: [
+          ...ignore,
+          // only include dotfiles starting with `.vs-`
+          '**/.!(vs-*)/**',
+        ],
+        // follow symbolic links to copy local theme packages
+        followSymbolicLinks: true,
+        gitignore: false,
+        dot: true,
+      },
+    )),
+  ]);
 
   debug(
     'webbook files',
     JSON.stringify(
-      allFiles.map((file) => {
+      [...allFiles].map((file) => {
         const alias = relExportAliases.find(({ source }) => source === file);
         return alias ? `${file} (alias: ${alias.target})` : file;
       }),

@@ -38,4 +38,10 @@ module.exports = {
   readingProgression: 'rtl',
   browser: 'firefox',
   viewerParam: 'foo=bar',
+  copyAsset: {
+    includes: ['xx/yy', '**/zz'],
+    excludes: ['*a*'],
+    includeFileExtensions: ['zip'],
+    excludeFileExtensions: ['png', 'jpg'],
+  },
 };

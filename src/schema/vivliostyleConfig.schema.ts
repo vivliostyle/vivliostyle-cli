@@ -44,7 +44,32 @@ export interface VivliostyleConfigEntry {
    */
   output?: (Output | OutputObject)[] | Output | OutputObject;
   workspaceDir?: string;
+  /**
+   * @deprecated Use `copyAsset.includes` instead
+   */
   includeAssets?: Entry[] | Entry;
+  /**
+   * Options about asset files to be copied when exporting output.
+   */
+  copyAsset?: {
+    /**
+     * Specify directories and files you want to include as asset files. This option supports wildcard characters to make glob patterns.
+     */
+    includes?: string[];
+    /**
+     * Specify directories and files you want to exclude from the asset file. This option supports wildcard characters to make glob patterns.
+     */
+    excludes?: string[];
+    /**
+     * Specify extensions of the file you want to include as an asset file. (default: [png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2])
+     */
+    includeFileExtensions?: string[];
+    /**
+     * Specify extensions of the file you want to exclude as an asset file.
+     */
+    excludeFileExtensions?: string[];
+    [k: string]: unknown;
+  };
   /**
    * Output pdf size [Letter]. preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger. custom(comma separated): 182mm,257mm or 8.5in,11in.
    */
