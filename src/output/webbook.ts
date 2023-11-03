@@ -278,7 +278,10 @@ export async function copyWebPublicationAssets({
       ignore,
     })),
     ...(await safeGlob(
-      [`**/${upath.relative(input, manifestPath)}`, '**/*.{html,htm,css}'],
+      [
+        `**/${upath.relative(input, manifestPath)}`,
+        '**/*.{html,htm,xhtml,xht,css}',
+      ],
       {
         cwd: input,
         ignore: [
