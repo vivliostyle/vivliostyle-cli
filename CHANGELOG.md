@@ -1,20 +1,23 @@
-
-
-# [8.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.4.1...v8.5.0) (2023-11-03)
-
+## [8.5.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.5.0...v8.5.1) (2023-11-06)
 
 ### Bug Fixes
 
-* Allow copying assets which is included in gitignore or in symlinks ([f5fd963](https://github.com/vivliostyle/vivliostyle-cli/commit/f5fd963a7b088577f3eb45002777394604841345))
-* Allow xhtml/xht files to be used as input of Webbook/EPUB ([9a0590a](https://github.com/vivliostyle/vivliostyle-cli/commit/9a0590ae5b6d70a0bc646f5f3e2f34654248c942))
-* Copy .htm files for webbook ([7127c42](https://github.com/vivliostyle/vivliostyle-cli/commit/7127c42a2a16e5c5c88a18ee5967e398c6b628aa))
-* Include node_module files for copy targets of webpub ([1a24f89](https://github.com/vivliostyle/vivliostyle-cli/commit/1a24f89672acd3f696309518cfe82ca0582b9ea1))
+- Update VFM to 2.2.1: Bug Fix ([06fbfa9](https://github.com/vivliostyle/vivliostyle-cli/commit/06fbfa958466fd408392e190b786713aefbf95b4))
+- Update Vivliostyle.js to 2.25.8: Bug Fix ([7d56caa](https://github.com/vivliostyle/vivliostyle-cli/commit/7d56caa85af81ead4ee44a3755256dbeb71bc4ee))
 
+# [8.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.4.1...v8.5.0) (2023-11-03)
+
+### Bug Fixes
+
+- Allow copying assets which is included in gitignore or in symlinks ([f5fd963](https://github.com/vivliostyle/vivliostyle-cli/commit/f5fd963a7b088577f3eb45002777394604841345))
+- Allow xhtml/xht files to be used as input of Webbook/EPUB ([9a0590a](https://github.com/vivliostyle/vivliostyle-cli/commit/9a0590ae5b6d70a0bc646f5f3e2f34654248c942))
+- Copy .htm files for webbook ([7127c42](https://github.com/vivliostyle/vivliostyle-cli/commit/7127c42a2a16e5c5c88a18ee5967e398c6b628aa))
+- Include node_module files for copy targets of webpub ([1a24f89](https://github.com/vivliostyle/vivliostyle-cli/commit/1a24f89672acd3f696309518cfe82ca0582b9ea1))
 
 ### Features
 
-* Add the copyAsset option to allow for more fine-tuning of the asset copying process ([62b41f3](https://github.com/vivliostyle/vivliostyle-cli/commit/62b41f3f90d7ffb6a62f0a748b05450cbb856526))
-  * The `includeAssets` option is now deprecated.
+- Add the copyAsset option to allow for more fine-tuning of the asset copying process ([62b41f3](https://github.com/vivliostyle/vivliostyle-cli/commit/62b41f3f90d7ffb6a62f0a748b05450cbb856526))
+  - The `includeAssets` option is now deprecated.
 
 ## [8.4.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.4.0...v8.4.1) (2023-10-24)
 
