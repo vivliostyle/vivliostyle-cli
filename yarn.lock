@@ -1080,10 +1080,10 @@
     ws "^8.13.0"
     xml-name-validator "^4.0.0"
 
-"@vivliostyle/vfm@2.2.0":
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-2.2.0.tgz#f62929bf92b5a3630ba8a26bb607f31d24aeb7e2"
-  integrity sha512-YlkfwmVpo0azJDkLKizCoK0UVGrjRM1UybPMeQnj/3qJYvWezMDNPzBDgOe0W94SCBux8ufO6KuGYyHvm/Z3wg==
+"@vivliostyle/vfm@2.2.1":
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/vfm/-/vfm-2.2.1.tgz#85b7f60081c197e8d4af508325948546ef0b352a"
+  integrity sha512-gxPISVo2kDDxGALKYY7uz7cDnp8RaaY+VSbWz443V7X77ofyfcyRbUM13tEPrje8TEIpuP6pYZ9HU+FVTcrQLw==
   dependencies:
     debug "^4.3.1"
     doctype "^2.0.4"
