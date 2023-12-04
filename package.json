@@ -26,7 +26,7 @@
     "@npmcli/arborist": "^6.1.3",
     "@vivliostyle/jsdom": "22.1.0-vivliostyle-cli.1",
     "@vivliostyle/vfm": "2.2.1",
-    "@vivliostyle/viewer": "2.25.8",
+    "@vivliostyle/viewer": "2.25.9",
     "ajv": "^8.11.2",
     "ajv-formats": "^2.1.1",
     "archiver": "^5.3.1",
