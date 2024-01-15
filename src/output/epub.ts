@@ -806,12 +806,16 @@ async function compressEpub({
   target: string;
   sourceDir: string;
 }): Promise<void> {
+  debug(`Compressing EPUB: ${target}`);
   const output = fs.createWriteStream(target);
   const archive = archiver('zip', {
-    store: true,
+    zlib: { level: 9 }, // Compression level
   });
   return new Promise((resolve, reject) => {
-    output.on('close', resolve);
+    output.on('close', () => {
+      debug(`Compressed EPUB: ${target}`);
+      resolve();
+    });
     output.on('error', reject);
     archive.on('warning', reject);
     archive.on('error', reject);
