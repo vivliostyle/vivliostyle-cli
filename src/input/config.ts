@@ -618,7 +618,7 @@ export async function mergeConfig<T extends CliFlags>(
     if (config?.output) {
       return (
         Array.isArray(config.output) ? config.output : [config.output]
-      ).map((target) => {
+      ).map((target): OutputFormat => {
         const targetObj =
           typeof target === 'string' ? { path: target } : target;
         const outputPath = upath.resolve(context, targetObj.path);
@@ -646,8 +646,15 @@ export async function mergeConfig<T extends CliFlags>(
             preflight: outputPreflight,
             preflightOption: targetObj.preflightOption ?? preflightOption,
           };
+        } else if (format === 'epub') {
+          return {
+            ...targetObj,
+            path: outputPath,
+            format,
+            version: EPUB_OUTPUT_VERSION,
+          };
         } else {
-          return { ...targetObj, path: outputPath, format } as OutputFormat;
+          return { ...targetObj, path: outputPath, format };
         }
       });
     }
