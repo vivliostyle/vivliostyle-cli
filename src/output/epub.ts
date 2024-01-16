@@ -821,7 +821,12 @@ async function compressEpub({
     archive.on('error', reject);
     archive.pipe(output);
 
-    archive.append('application/epub+zip', { name: 'mimetype' });
+    archive.append('application/epub+zip', {
+      name: 'mimetype',
+      // mimetype should not be compressed
+      // https://www.w3.org/TR/epub-33/#sec-zip-container-mime
+      store: true,
+    });
     archive.directory(upath.join(sourceDir, 'META-INF'), 'META-INF');
     archive.directory(upath.join(sourceDir, 'EPUB'), 'EPUB');
     archive.finalize();
