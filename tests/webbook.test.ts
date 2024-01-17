@@ -11,6 +11,12 @@ vi.mock('@vivliostyle/jsdom', () =>
   import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
 );
 
+vi.mock('../src/processor/theme.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/processor/theme.js')>()),
+  checkThemeInstallationNecessity: () => Promise.resolve(false),
+  installThemeDependencies: () => Promise.resolve(),
+}));
+
 afterEach(() => vol.reset());
 
 it('generate webpub from single markdown file', async () => {
@@ -195,6 +201,33 @@ it('generate webpub with complex copyAsset settings', async () => {
     '/work/input/node_modules/pkgA/img.png': '',
     '/work/input/node_modules/pkgB/a.html': '',
     '/work/input/node_modules/pkgB/bar/b.html': '',
+  });
+  await build({
+    configPath: '/work/input/vivliostyle.config.json',
+  });
+
+  expect(toTree(vol)).toMatchSnapshot();
+});
+
+it('copy webpub assets properly', async () => {
+  const config: VivliostyleConfigSchema = {
+    entry: ['doc.md'],
+    output: ['/work/input/output1', '/work/input/output2'],
+    theme: ['themeA', '@org/themeB'],
+  };
+  vol.fromJSON({
+    '/work/input/vivliostyle.config.json': JSON.stringify(config),
+    '/work/input/package.json': '',
+    '/work/input/doc.md': 'yuno',
+    '/work/input/node_modules/pkgA/a.html': '',
+    '/work/input/node_modules/pkgA/a.css': '',
+    '/work/input/themes/packages/themeA/package.json': '{"main": "theme.css"}',
+    '/work/input/themes/packages/themeA/theme.css': '',
+    '/work/input/themes/packages/themeA/example/a.css': '',
+    '/work/input/themes/packages/@org/themeB/package.json':
+      '{"main": "theme.css"}',
+    '/work/input/themes/packages/@org/themeB/theme.css': '',
+    '/work/input/themes/packages/@org/themeB/example/a.css': '',
   });
   await build({
     configPath: '/work/input/vivliostyle.config.json',

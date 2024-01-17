@@ -1,5 +1,53 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`copy webpub assets properly 1`] = `
+"/
+└─ work/
+   └─ input/
+      ├─ doc.html
+      ├─ doc.md
+      ├─ node_modules/
+      │  └─ pkgA/
+      │     ├─ a.css
+      │     └─ a.html
+      ├─ output1/
+      │  ├─ doc.html
+      │  ├─ publication.json
+      │  └─ themes/
+      │     └─ packages/
+      │        ├─ @org/
+      │        │  └─ themeB/
+      │        │     └─ theme.css
+      │        └─ themeA/
+      │           └─ theme.css
+      ├─ output2/
+      │  ├─ doc.html
+      │  ├─ publication.json
+      │  └─ themes/
+      │     └─ packages/
+      │        ├─ @org/
+      │        │  └─ themeB/
+      │        │     └─ theme.css
+      │        └─ themeA/
+      │           └─ theme.css
+      ├─ package.json
+      ├─ publication.json
+      ├─ themes/
+      │  └─ packages/
+      │     ├─ @org/
+      │     │  └─ themeB/
+      │     │     ├─ example/
+      │     │     │  └─ a.css
+      │     │     ├─ package.json
+      │     │     └─ theme.css
+      │     └─ themeA/
+      │        ├─ example/
+      │        │  └─ a.css
+      │        ├─ package.json
+      │        └─ theme.css
+      └─ vivliostyle.config.json"
+`;
+
 exports[`generate webpub from a plain HTML 1`] = `
 "/
 └─ work/
