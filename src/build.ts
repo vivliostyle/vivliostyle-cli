@@ -7,14 +7,8 @@ import {
   collectVivliostyleConfig,
   mergeConfig,
 } from './input/config.js';
-import { exportEpub } from './output/epub.js';
 import { buildPDF, buildPDFWithContainer } from './output/pdf.js';
-import {
-  copyWebPublicationAssets,
-  prepareWebPublicationDirectory,
-  retrieveWebbookEntry,
-  supplyWebPublicationManifestForWebbook,
-} from './output/webbook.js';
+import { buildWebPublication } from './output/webbook.js';
 import {
   checkOverwriteViolation,
   cleanupWorkspace,
@@ -22,7 +16,6 @@ import {
   copyAssets,
   prepareThemeDirectory,
 } from './processor/compile.js';
-import type { PublicationManifest } from './schema/publication.schema.js';
 import { teardownServer } from './server.js';
 import {
   checkContainerEnvironment,
@@ -33,7 +26,6 @@ import {
   setLogLevel,
   startLogging,
   upath,
-  useTmpDirectory,
 } from './util.js';
 
 export interface BuildCliFlags extends CliFlags {
@@ -121,67 +113,10 @@ export async function build(cliFlags: BuildCliFlags) {
           });
         }
       } else if (format === 'webpub' || format === 'epub') {
-        const { webbookEntryUrl } = config;
-        let outputDir: string;
-        if (format === 'webpub') {
-          outputDir = target.path;
-          await prepareWebPublicationDirectory({ outputDir });
-        } else if (format === 'epub') {
-          [outputDir] = await useTmpDirectory();
-        } else {
-          continue;
-        }
-
-        let entryHtmlFile: string | undefined;
-        let manifest: PublicationManifest;
-        let actualManifestPath: string | undefined;
-        if (config.manifestPath) {
-          const ret = await copyWebPublicationAssets({
-            ...config,
-            input: config.workspaceDir,
-            outputDir,
-          });
-          manifest = ret.manifest;
-          actualManifestPath = ret.actualManifestPath;
-          if (config.input.format === 'markdown') {
-            const entry = [manifest.readingOrder].flat()[0];
-            if (entry) {
-              entryHtmlFile = upath.join(
-                outputDir,
-                typeof entry === 'string' ? entry : entry.url,
-              );
-            }
-          }
-        } else if (webbookEntryUrl) {
-          const ret = await retrieveWebbookEntry({
-            webbookEntryUrl,
-            outputDir,
-          });
-          entryHtmlFile = ret.entryHtmlFile;
-          manifest =
-            ret.manifest ||
-            (await supplyWebPublicationManifestForWebbook({
-              ...config,
-              entryHtmlFile: ret.entryHtmlFile,
-              outputDir,
-            }));
-        } else {
-          continue;
-        }
-
-        if (format === 'epub') {
-          await exportEpub({
-            webpubDir: outputDir,
-            entryHtmlFile,
-            manifest,
-            relManifestPath:
-              actualManifestPath &&
-              upath.relative(outputDir, actualManifestPath),
-            target: target.path,
-            epubVersion: target.version,
-          });
-        }
-        output = target.path;
+        output = await buildWebPublication({
+          ...config,
+          target,
+        });
       }
       if (output) {
         const formattedOutput = chalk.bold.green(upath.relative(cwd, output));

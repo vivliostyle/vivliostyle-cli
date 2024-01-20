@@ -27,7 +27,10 @@ import {
   remove,
   safeGlob,
   upath,
+  useTmpDirectory,
 } from '../util.js';
+import { exportEpub } from './epub.js';
+import { EpubOutput, WebPublicationOutput } from './output-types.js';
 
 function sortManifestResources(manifest: PublicationManifest) {
   if (!Array.isArray(manifest.resources)) {
@@ -383,4 +386,72 @@ export async function copyWebPublicationAssets({
   sortManifestResources(manifest);
   fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
   return { manifest, actualManifestPath };
+}
+
+export type BuildWebPublicationOptions = Omit<MergedConfig, 'target'> & {
+  target: WebPublicationOutput | EpubOutput;
+};
+
+export async function buildWebPublication({
+  target,
+  ...config
+}: BuildWebPublicationOptions): Promise<string> {
+  let outputDir: string;
+  if (target.format === 'webpub') {
+    outputDir = target.path;
+    await prepareWebPublicationDirectory({ outputDir });
+  } else {
+    [outputDir] = await useTmpDirectory();
+  }
+
+  let entryHtmlFile: string | undefined;
+  let manifest: PublicationManifest;
+  let actualManifestPath: string | undefined;
+  if (config.manifestPath) {
+    const ret = await copyWebPublicationAssets({
+      ...config,
+      input: config.workspaceDir,
+      outputDir,
+      manifestPath: config.manifestPath,
+    });
+    manifest = ret.manifest;
+    actualManifestPath = ret.actualManifestPath;
+    if (config.input.format === 'markdown') {
+      const entry = [manifest.readingOrder].flat()[0];
+      if (entry) {
+        entryHtmlFile = upath.join(
+          outputDir,
+          typeof entry === 'string' ? entry : entry.url,
+        );
+      }
+    }
+  } else if (config.webbookEntryUrl) {
+    const ret = await retrieveWebbookEntry({
+      webbookEntryUrl: config.webbookEntryUrl,
+      outputDir,
+    });
+    entryHtmlFile = ret.entryHtmlFile;
+    manifest =
+      ret.manifest ||
+      (await supplyWebPublicationManifestForWebbook({
+        ...config,
+        entryHtmlFile: ret.entryHtmlFile,
+        outputDir,
+      }));
+  } else {
+    throw new Error('No entry specified');
+  }
+
+  if (target.format === 'epub') {
+    await exportEpub({
+      webpubDir: outputDir,
+      entryHtmlFile,
+      manifest,
+      relManifestPath:
+        actualManifestPath && upath.relative(outputDir, actualManifestPath),
+      target: target.path,
+      epubVersion: target.version,
+    });
+  }
+  return target.path;
 }
