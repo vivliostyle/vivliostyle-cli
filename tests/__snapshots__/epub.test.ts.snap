@@ -281,3 +281,52 @@ exports[`generate EPUB from single HTML with pub manifest > tree 1`] = `
    │  └─ publication.json
    └─ output.epub"
 `;
+
+exports[`generate EPUB from single Markdown input > tree 1`] = `
+"/
+├─ tmp/
+│  ├─ 1/
+│  │  ├─ index.html
+│  │  └─ publication.json
+│  └─ 2/
+│     ├─ EPUB/
+│     │  ├─ content.opf
+│     │  ├─ index.xhtml
+│     │  └─ toc.ncx
+│     └─ META-INF/
+│        └─ container.xml
+└─ work/
+   ├─ input/
+   │  ├─ .vs-0.index.html
+   │  ├─ .vs-0.publication.json
+   │  └─ index.md
+   └─ output.epub"
+`;
+
+exports[`generate EPUB from vivliostyle.config.js > tree 1`] = `
+"/
+├─ tmp/
+│  ├─ 1/
+│  │  ├─ index.html
+│  │  ├─ manuscript.html
+│  │  ├─ my-theme.css
+│  │  └─ publication.json
+│  └─ 2/
+│     ├─ EPUB/
+│     │  ├─ content.opf
+│     │  ├─ index.xhtml
+│     │  ├─ manuscript.xhtml
+│     │  ├─ my-theme.css
+│     │  └─ toc.ncx
+│     └─ META-INF/
+│        └─ container.xml
+└─ work/
+   └─ input/
+      ├─ index.html
+      ├─ manuscript.html
+      ├─ manuscript.md
+      ├─ my-theme.css
+      ├─ output.epub
+      ├─ publication.json
+      └─ vivliostyle.config.json"
+`;

@@ -1,10 +1,18 @@
+import AdmZip from 'adm-zip';
 import { fs as memfs, vol } from 'memfs';
 import { format } from 'prettier';
 import tmp from 'tmp';
 import { afterEach, expect, it, vi } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
+import { buildWebPublication } from '../src/output/webbook.js';
+import {
+  compile,
+  copyAssets,
+  prepareThemeDirectory,
+} from '../src/processor/compile.js';
 import { PublicationManifest } from '../src/schema/publication.schema.js';
-import { toTree } from './commandUtil.js';
+import { upath } from '../vendors/index.js';
+import { getMergedConfig, toTree } from './commandUtil.js';
 
 vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
 
@@ -24,10 +32,41 @@ vi.mock('tmp', () => {
   return { default: mod };
 });
 
+vi.mock('archiver', async () => {
+  const { default: archiver } = await vi.importActual<{
+    default: typeof import('archiver');
+  }>('archiver');
+  return {
+    default: (...args: Parameters<typeof archiver>) => {
+      const archive = archiver(...args);
+      archive.directory = (dirpath, destpath) => {
+        for (const p in vol.toJSON(dirpath, undefined, true)) {
+          archive.append(vol.readFileSync(upath.join(dirpath, p)), {
+            name: upath.join(destpath, p),
+          });
+        }
+        return archive;
+      };
+      return archive;
+    },
+  };
+});
+
 afterEach(() => {
   vol.reset();
   (tmp as any).__count = 0;
 });
+
+function checkValidEpubZip(epub: Buffer) {
+  // Check epub file contains uncompressed mimetype file
+  expect(epub.readUInt32BE(0)).toBe(0x504b0304);
+  expect(epub.readUInt16LE(8)).toBe(0);
+  expect(epub.slice(30, 38).toString()).toBe('mimetype');
+  expect(epub.slice(38, 58).toString()).toBe('application/epub+zip');
+  // Check the remaining files are compressed
+  expect(epub.readUInt32BE(58)).toBe(0x504b0304);
+  expect(epub.readUInt16LE(66)).not.toBe(0);
+}
 
 it('generate EPUB from single HTML with pub manifest', async () => {
   const manifest: PublicationManifest = {
@@ -193,4 +232,75 @@ it('generate EPUB from series of HTML files', async () => {
   expect(format(first as string, { parser: 'html' })).toMatchSnapshot(
     'src/index.xhtml',
   );
+});
+
+it('generate EPUB from single Markdown input', async () => {
+  vol.fromJSON({
+    '/work/input/index.md': '# Hello',
+  });
+  const config = await getMergedConfig([
+    '/work/input/index.md',
+    '--output',
+    '/work/output.epub',
+  ]);
+  await compile(config);
+  await copyAssets(config);
+  await buildWebPublication({
+    ...config,
+    target: config.outputs[0],
+  });
+
+  expect(toTree(vol).replace(/\.vs-[^.]+/g, '.vs-0')).toMatchSnapshot('tree');
+
+  const epub = vol.readFileSync('/work/output.epub') as Buffer;
+  checkValidEpubZip(epub);
+  const zipFiles = new AdmZip(epub).getEntries();
+  expect(
+    zipFiles.reduce((acc, z) => {
+      acc[z.entryName] = z.getData().toString();
+      return acc;
+    }, {}),
+  ).toEqual({
+    mimetype: 'application/epub+zip',
+    ...vol.toJSON('/tmp/2', undefined, true),
+  });
+});
+
+it('generate EPUB from vivliostyle.config.js', async () => {
+  vol.fromJSON({
+    '/work/input/vivliostyle.config.json': JSON.stringify({
+      entry: 'manuscript.md',
+      output: './output.epub',
+      theme: './my-theme.css',
+      toc: true,
+    }),
+    '/work/input/manuscript.md': '# Hello',
+    '/work/input/my-theme.css': '/* theme CSS */',
+  });
+  const config = await getMergedConfig([
+    '-c',
+    '/work/input/vivliostyle.config.json',
+  ]);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  await copyAssets(config);
+  await buildWebPublication({
+    ...config,
+    target: config.outputs[0],
+  });
+
+  expect(toTree(vol)).toMatchSnapshot('tree');
+
+  const epub = vol.readFileSync('/work/input/output.epub') as Buffer;
+  checkValidEpubZip(epub);
+  const zipFiles = new AdmZip(epub).getEntries();
+  expect(
+    zipFiles.reduce((acc, z) => {
+      acc[z.entryName] = z.getData().toString();
+      return acc;
+    }, {}),
+  ).toEqual({
+    mimetype: 'application/epub+zip',
+    ...vol.toJSON('/tmp/2', undefined, true),
+  });
 });

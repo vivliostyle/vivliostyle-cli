@@ -69,6 +69,7 @@
   "devDependencies": {
     "@hyrious/esbuild-plugin-commonjs": "^0.2.2",
     "@release-it/conventional-changelog": "^5.1.1",
+    "@types/adm-zip": "^0.5.5",
     "@types/archiver": "^5.3.2",
     "@types/command-exists": "1.2.0",
     "@types/debug": "^4.1.7",
@@ -85,6 +86,7 @@
     "@types/w3c-xmlserializer": "^2.0.2",
     "@types/whatwg-mimetype": "^3.0.0",
     "@vitest/coverage-v8": "^0.33.0",
+    "adm-zip": "^0.5.10",
     "esbuild": "^0.18.11",
     "file-type": "^16.5.3",
     "fs-extra": "^11.1.1",
