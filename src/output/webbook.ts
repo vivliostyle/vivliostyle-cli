@@ -262,7 +262,7 @@ export async function copyWebPublicationAssets({
   input: string;
   outputDir: string;
   manifestPath: string;
-}): Promise<PublicationManifest> {
+}): Promise<{ manifest: PublicationManifest; actualManifestPath: string }> {
   const relExportAliases = exportAliases
     .map(({ source, target }) => ({
       source: upath.relative(input, source),
@@ -382,5 +382,5 @@ export async function copyWebPublicationAssets({
   ];
   sortManifestResources(manifest);
   fs.writeFileSync(actualManifestPath, JSON.stringify(manifest, null, 2));
-  return manifest;
+  return { manifest, actualManifestPath };
 }

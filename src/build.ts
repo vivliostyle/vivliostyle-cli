@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
 import { getExecutableBrowserPath } from './browser.js';
 import {
@@ -122,7 +121,7 @@ export async function build(cliFlags: BuildCliFlags) {
           });
         }
       } else if (format === 'webpub' || format === 'epub') {
-        const { manifestPath, webbookEntryUrl } = config;
+        const { webbookEntryUrl } = config;
         let outputDir: string;
         if (format === 'webpub') {
           outputDir = target.path;
@@ -133,17 +132,17 @@ export async function build(cliFlags: BuildCliFlags) {
           continue;
         }
 
-        let entryContextUrl: string;
         let entryHtmlFile: string | undefined;
         let manifest: PublicationManifest;
-        if (manifestPath) {
-          entryContextUrl = pathToFileURL(manifestPath).href;
-          manifest = await copyWebPublicationAssets({
+        let actualManifestPath: string | undefined;
+        if (config.manifestPath) {
+          const ret = await copyWebPublicationAssets({
             ...config,
             input: config.workspaceDir,
             outputDir,
-            manifestPath,
           });
+          manifest = ret.manifest;
+          actualManifestPath = ret.actualManifestPath;
           if (config.input.format === 'markdown') {
             const entry = [manifest.readingOrder].flat()[0];
             if (entry) {
@@ -158,7 +157,6 @@ export async function build(cliFlags: BuildCliFlags) {
             webbookEntryUrl,
             outputDir,
           });
-          entryContextUrl = webbookEntryUrl;
           entryHtmlFile = ret.entryHtmlFile;
           manifest =
             ret.manifest ||
@@ -175,8 +173,10 @@ export async function build(cliFlags: BuildCliFlags) {
           await exportEpub({
             webpubDir: outputDir,
             entryHtmlFile,
-            entryContextUrl,
             manifest,
+            relManifestPath:
+              actualManifestPath &&
+              upath.relative(outputDir, actualManifestPath),
             target: target.path,
             epubVersion: target.version,
           });

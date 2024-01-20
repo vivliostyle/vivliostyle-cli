@@ -121,22 +121,22 @@ const appendManifestProperty = (entry: ManifestEntry, newProperty: string) => {
 export async function exportEpub({
   webpubDir,
   entryHtmlFile,
-  entryContextUrl,
   manifest,
+  relManifestPath,
   target,
   epubVersion,
 }: {
   webpubDir: string;
   entryHtmlFile?: string;
-  entryContextUrl?: string;
   manifest: PublicationManifest;
+  relManifestPath?: string;
   target: string;
   epubVersion: '3.0';
 }) {
   debug('Export EPUB', {
     webpubDir,
-    entryContextUrl,
     entryHtmlFile,
+    relManifestPath,
     target,
     epubVersion,
   });
@@ -221,9 +221,7 @@ export async function exportEpub({
   const htmlFiles = Object.keys(manifestItem).filter((url) =>
     /\.html?$/.test(url),
   );
-  let tocHtml = htmlFiles.find(
-    (f) => f === (tocResource?.url || entryHtmlRelPath),
-  );
+  let tocHtml = htmlFiles.find((f) => f === tocResource?.url);
   const readingOrder = [manifest.readingOrder || entryHtmlRelPath]
     .flat()
     .flatMap((v) => (v ? (typeof v === 'string' ? { url: v } : v) : []));
@@ -233,7 +231,8 @@ export async function exportEpub({
         'No table of contents document was found. for EPUB output, we recommend to enable `toc` option in your Vivliostyle config file to generate a table of contents document.',
       ),
     );
-    tocHtml = readingOrder[0].url;
+    tocHtml =
+      htmlFiles.find((f) => f === entryHtmlRelPath) || readingOrder[0].url;
   }
   const spineItems = readingOrder.map<SpineEntry>(({ url }) => ({
     href: changeExtname(url, '.xhtml'),
@@ -267,8 +266,6 @@ export async function exportEpub({
       parseResult = await transpileHtmlToXhtml({
         target,
         contextDir: upath.join(tmpDir, 'EPUB'),
-        entryContextUrl:
-          entryContextUrl || pathToFileURL(upath.join(webpubDir, '/')).href,
         landmarks,
         isTocHtml,
         isPagelistHtml: target === (pageListResource?.url || entryHtmlRelPath),
@@ -316,7 +313,7 @@ export async function exportEpub({
     await processHtml(target, false);
   }
 
-  let { tocParseTree, linkedPubManifest } = tocProcessResult;
+  let { tocParseTree } = tocProcessResult;
   if (!tocParseTree) {
     tocParseTree = await supplyTocNavElement({
       tocHtml,
@@ -326,9 +323,9 @@ export async function exportEpub({
       docLanguages,
     });
   }
-  if (linkedPubManifest) {
-    await remove(upath.join(tmpDir, 'EPUB', linkedPubManifest));
-    delete manifestItem[linkedPubManifest];
+  if (relManifestPath) {
+    await remove(upath.join(tmpDir, 'EPUB', relManifestPath));
+    delete manifestItem[relManifestPath];
   }
 
   // EPUB/toc.ncx
@@ -377,14 +374,12 @@ export async function exportEpub({
 async function transpileHtmlToXhtml({
   target,
   contextDir,
-  entryContextUrl,
   landmarks,
   isTocHtml,
   isPagelistHtml,
 }: {
   target: string;
   contextDir: string;
-  entryContextUrl: string;
   landmarks: LandmarkEntry[];
   isTocHtml: boolean;
   isPagelistHtml: boolean;
@@ -392,7 +387,6 @@ async function transpileHtmlToXhtml({
   dom: JSDOM;
   tocParseTree?: TocResourceTreeRoot;
   pageListParseTree?: PageListResourceTreeRoot;
-  linkedPubManifest?: string;
   hasMathmlContent: boolean;
   hasRemoteResources: boolean;
   hasScriptedContent: boolean;
@@ -424,7 +418,6 @@ async function transpileHtmlToXhtml({
 
   let tocParseTree: TocResourceTreeRoot | undefined;
   let pageListParseTree: PageListResourceTreeRoot | undefined;
-  let linkedPubManifest: string | undefined;
 
   if (isTocHtml) {
     if (!document.querySelector('[epub:type="toc"]')) {
@@ -473,16 +466,6 @@ async function transpileHtmlToXhtml({
         if (scriptEl?.getAttribute('type') === 'application/ld+json') {
           scriptEl.parentNode?.removeChild(scriptEl);
         }
-      } else {
-        const entryUrl = entryContextUrl;
-        const publicationUrl = new URL(href, new URL(target, entryUrl)).href;
-        const rootUrl = /^https?:/i.test(entryUrl)
-          ? new URL('/', entryUrl).href
-          : new URL('.', entryUrl).href;
-        const relPublicationPath = upath.relative(rootUrl, publicationUrl);
-        if (!relPublicationPath.startsWith('..')) {
-          linkedPubManifest = relPublicationPath;
-        }
       }
       publicationLinkEl.parentNode?.removeChild(publicationLinkEl);
     }
@@ -505,7 +488,6 @@ async function transpileHtmlToXhtml({
     dom,
     tocParseTree,
     pageListParseTree,
-    linkedPubManifest,
     // FIXME: Yes, I recognize this implementation is inadequate.
     hasMathmlContent: !!document.querySelector('math'),
     hasRemoteResources: !!document.querySelector(

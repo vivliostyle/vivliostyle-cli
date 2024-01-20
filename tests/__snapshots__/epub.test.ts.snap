@@ -113,6 +113,7 @@ exports[`generate EPUB from series of HTML files > tree 1`] = `
 │        └─ container.xml
 └─ work/
    ├─ input/
+   │  ├─ publication.json
    │  └─ src/
    │     ├─ a/
    │     │  └─ index.html

@@ -102,8 +102,8 @@ it('generate EPUB from single HTML with pub manifest', async () => {
   await exportEpub({
     webpubDir: '/work/input',
     entryHtmlFile: 'index.html',
-    entryContextUrl: 'file://work/input/publication.json',
     manifest,
+    relManifestPath: 'publication.json',
     target: '/work/output.epub',
     epubVersion: '3.0',
   });
@@ -137,6 +137,7 @@ it('generate EPUB from series of HTML files', async () => {
     readingOrder: ['src/index.html', 'src/a/index.html', 'src/b/c/d.html'],
   };
   vol.fromJSON({
+    '/work/input/publication.json': JSON.stringify(manifest),
     '/work/input/src/index.html': /* html */ `
       <html lang="en">
       <head>
@@ -170,6 +171,7 @@ it('generate EPUB from series of HTML files', async () => {
   await exportEpub({
     webpubDir: '/work/input',
     manifest,
+    relManifestPath: 'publication.json',
     target: '/work/output.epub',
     epubVersion: '3.0',
   });
