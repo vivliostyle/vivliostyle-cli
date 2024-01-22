@@ -1,3 +1,17 @@
+# [8.7.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.6.0...v8.7.0) (2024-01-22)
+
+### Bug Fixes
+
+- Delete publication.json when given a single input file ([90ecbbb](https://github.com/vivliostyle/vivliostyle-cli/commit/90ecbbb967e8b8bf1267100995852c89bd147282))
+- Improve file selector not to include unnecessary files into Webpub/EPUB ([a1921e2](https://github.com/vivliostyle/vivliostyle-cli/commit/a1921e23f5a8b65541f9dfd4ddb6fed4744691cf)), closes [#461](https://github.com/vivliostyle/vivliostyle-cli/issues/461)
+- Set version attribute when building EPUB using config ([3721113](https://github.com/vivliostyle/vivliostyle-cli/commit/3721113623e8cbe9cf41479ae0c1ceec6739c047)), closes [#460](https://github.com/vivliostyle/vivliostyle-cli/issues/460)
+
+### Features
+
+- Enable EPUB compression ([5f5e61d](https://github.com/vivliostyle/vivliostyle-cli/commit/5f5e61d3cea4749d69464265677fbdbb24e7c3ef)), closes [#462](https://github.com/vivliostyle/vivliostyle-cli/issues/462)
+- Update Playwright to 1.41.1 (Chromium 121.0.6167.57) ([45e6364](https://github.com/vivliostyle/vivliostyle-cli/commit/45e6364c14aefb348924e9ecc59bce7afe396d06))
+- Update Vivliostyle.js to 2.26.0: Update CSS text-spacing support ([26d12f8](https://github.com/vivliostyle/vivliostyle-cli/commit/26d12f8e0ad32036693850766a363ec9bd4a8a8e))
+
 # [8.6.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.5.1...v8.6.0) (2023-12-04)
 
 ### Bug Fixes
