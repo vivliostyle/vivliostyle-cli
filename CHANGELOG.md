@@ -1,3 +1,9 @@
+# [8.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.7.0...v8.8.0) (2024-02-09)
+
+### Features
+
+- Update Vivliostyle.js to 2.27.0: Default stylesheet update and bug fixes ([53146e4](https://github.com/vivliostyle/vivliostyle-cli/commit/53146e4970ca244eb9c45944e39dd7ff6ae62f79))
+
 # [8.7.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.6.0...v8.7.0) (2024-01-22)
 
 ### Bug Fixes
