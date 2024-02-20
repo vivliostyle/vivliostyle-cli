@@ -314,7 +314,7 @@ export async function exportEpub({
   }
 
   let { tocParseTree } = tocProcessResult;
-  if (!tocParseTree) {
+  if (!tocParseTree && !tocProcessResult.hasEpubNavDocument) {
     tocParseTree = await supplyTocNavElement({
       tocHtml,
       tocDom: tocProcessResult.dom,
@@ -329,20 +329,23 @@ export async function exportEpub({
   }
 
   // EPUB/toc.ncx
-  fs.writeFileSync(
-    upath.join(tmpDir, 'EPUB/toc.ncx'),
-    buildNcx({
-      toc: tocParseTree,
-      docTitle,
-      uid,
-      tocHtml,
-    }),
-    'utf8',
-  );
-  manifestItem['toc.ncx'] = {
-    href: 'toc.ncx',
-    mediaType: 'application/x-dtbncx+xml',
-  };
+  // note: NCX is not required for EPUB 3.0
+  if (tocParseTree) {
+    fs.writeFileSync(
+      upath.join(tmpDir, 'EPUB/toc.ncx'),
+      buildNcx({
+        toc: tocParseTree,
+        docTitle,
+        uid,
+        tocHtml,
+      }),
+      'utf8',
+    );
+    manifestItem['toc.ncx'] = {
+      href: 'toc.ncx',
+      mediaType: 'application/x-dtbncx+xml',
+    };
+  }
 
   // META-INF/container.xml
   fs.writeFileSync(
@@ -391,6 +394,7 @@ async function transpileHtmlToXhtml({
   hasRemoteResources: boolean;
   hasScriptedContent: boolean;
   hasSvgContent: boolean;
+  hasEpubNavDocument: boolean;
 }> {
   const absPath = upath.join(contextDir, target);
   const { dom } = await getJsdomFromUrlOrFile(absPath);
@@ -419,8 +423,9 @@ async function transpileHtmlToXhtml({
   let tocParseTree: TocResourceTreeRoot | undefined;
   let pageListParseTree: PageListResourceTreeRoot | undefined;
 
+  const hasEpubNavDocument = !!document.querySelector('nav[epub:type]');
   if (isTocHtml) {
-    if (!document.querySelector('[epub:type="toc"]')) {
+    if (!hasEpubNavDocument) {
       const parsed = parseTocDocument(dom);
       if (parsed) {
         tocParseTree = parsed;
@@ -428,28 +433,25 @@ async function transpileHtmlToXhtml({
         nav.setAttribute('id', TOC_ID);
         nav.setAttribute('epub:type', 'toc');
       }
-    }
 
-    if (
-      landmarks.length > 0 &&
-      !document.querySelector('[epub:type="landmarks"]')
-    ) {
-      const nav = document.createElement('nav');
-      nav.setAttribute('epub:type', 'landmarks');
-      nav.setAttribute('id', LANDMARKS_ID);
-      nav.setAttribute('hidden', '');
-      const ol = document.createElement('ol');
-      for (const { type, href, text } of landmarks) {
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.setAttribute('epub:type', type);
-        a.setAttribute('href', getRelativeHref(href, '', target));
-        a.text = text;
-        li.appendChild(a);
-        ol.appendChild(li);
+      if (landmarks.length > 0) {
+        const nav = document.createElement('nav');
+        nav.setAttribute('epub:type', 'landmarks');
+        nav.setAttribute('id', LANDMARKS_ID);
+        nav.setAttribute('hidden', '');
+        const ol = document.createElement('ol');
+        for (const { type, href, text } of landmarks) {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.setAttribute('epub:type', type);
+          a.setAttribute('href', getRelativeHref(href, '', target));
+          a.text = text;
+          li.appendChild(a);
+          ol.appendChild(li);
+        }
+        nav.appendChild(ol);
+        document.body.appendChild(nav);
       }
-      nav.appendChild(ol);
-      document.body.appendChild(nav);
     }
 
     // Remove a publication manifest linked to ToC html.
@@ -495,6 +497,7 @@ async function transpileHtmlToXhtml({
     ),
     hasScriptedContent: !!document.querySelector('script, form'),
     hasSvgContent: !!document.querySelector('svg'),
+    hasEpubNavDocument,
   };
 }
 
