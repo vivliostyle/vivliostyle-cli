@@ -42,16 +42,16 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
     <a href=\\"a\\">2</a>
     <a href=\\"b/c/d\\">3</a>
 
-    <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
-      <ol>
-        <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
-      </ol>
-    </nav>
     <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\" hidden=\\"\\">
       <ol>
         <li><a href=\\"index.xhtml\\">My book</a></li>
         <li><a href=\\"a/index.xhtml\\">yuno</a></li>
         <li><a href=\\"b/c/d.xhtml\\">yunocchi</a></li>
+      </ol>
+    </nav>
+    <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
+      <ol>
+        <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
       </ol>
     </nav>
   </body>

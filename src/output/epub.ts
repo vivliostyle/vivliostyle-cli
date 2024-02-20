@@ -260,15 +260,14 @@ export async function exportEpub({
     });
   }
 
-  const processHtml = async (target: string, isTocHtml: boolean) => {
-    let parseResult: Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
+  const contextDir = upath.join(tmpDir, 'EPUB');
+  type XhtmlEntry = Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
+  const processHtml = async (target: string) => {
+    let parseResult: XhtmlEntry;
     try {
       parseResult = await transpileHtmlToXhtml({
         target,
-        contextDir: upath.join(tmpDir, 'EPUB'),
-        landmarks,
-        isTocHtml,
-        isPagelistHtml: target === (pageListResource?.url || entryHtmlRelPath),
+        contextDir,
       });
     } catch (error) {
       const thrownError = error as Error;
@@ -292,9 +291,16 @@ export async function exportEpub({
     return parseResult;
   };
 
+  const processResult: Record<string, XhtmlEntry> = {};
   debug(`Transpiling ToC HTML to XHTML: ${tocHtml}`);
-  const tocProcessResult = await processHtml(tocHtml, true);
-  const { document: entryDocument } = tocProcessResult.dom.window;
+  processResult[tocHtml] = await processHtml(tocHtml);
+  for (const target of htmlFiles.filter((f) => f !== tocHtml)) {
+    debug(`Transpiling HTML to XHTML: ${target}`);
+    processResult[target] = await processHtml(target);
+  }
+
+  // Process ToC document
+  const { document: entryDocument } = processResult[tocHtml].dom.window;
   const docLanguages = [manifest.inLanguage]
     .flat()
     .filter((v): v is string => Boolean(v));
@@ -307,22 +313,25 @@ export async function exportEpub({
   if (!docTitle) {
     throw new Error('EPUB must have a title of one or more characters');
   }
+  const { tocResourceTree } = await processTocDocument({
+    dom: processResult[tocHtml].dom,
+    target: tocHtml,
+    contextDir,
+    readingOrder,
+    docLanguages,
+    landmarks,
+  });
 
-  for (const target of htmlFiles.filter((f) => f !== tocHtml)) {
-    debug(`Transpiling HTML to XHTML: ${target}`);
-    await processHtml(target, false);
-  }
-
-  let { tocParseTree } = tocProcessResult;
-  if (!tocParseTree && !tocProcessResult.hasEpubNavDocument) {
-    tocParseTree = await supplyTocNavElement({
-      tocHtml,
-      tocDom: tocProcessResult.dom,
-      contextDir: upath.join(tmpDir, 'EPUB'),
-      readingOrder,
-      docLanguages,
+  // Process PageList document
+  const pageListHtml = pageListResource?.url || entryHtmlRelPath;
+  if (pageListHtml && pageListHtml in processResult) {
+    await processPagelistDocument({
+      dom: processResult[pageListHtml].dom,
+      target: pageListHtml,
+      contextDir,
     });
   }
+
   if (relManifestPath) {
     await remove(upath.join(tmpDir, 'EPUB', relManifestPath));
     delete manifestItem[relManifestPath];
@@ -330,11 +339,11 @@ export async function exportEpub({
 
   // EPUB/toc.ncx
   // note: NCX is not required for EPUB 3.0
-  if (tocParseTree) {
+  if (tocResourceTree) {
     fs.writeFileSync(
       upath.join(tmpDir, 'EPUB/toc.ncx'),
       buildNcx({
-        toc: tocParseTree,
+        toc: tocResourceTree,
         docTitle,
         uid,
         tocHtml,
@@ -374,27 +383,23 @@ export async function exportEpub({
   await compressEpub({ target, sourceDir: tmpDir });
 }
 
+async function writeAsXhtml(dom: JSDOM, absPath: string) {
+  const xhtml = `${XML_DECLARATION}\n${serializeToXml(dom.window.document)}`;
+  await fs.promises.writeFile(changeExtname(absPath, '.xhtml'), xhtml, 'utf8');
+}
+
 async function transpileHtmlToXhtml({
   target,
   contextDir,
-  landmarks,
-  isTocHtml,
-  isPagelistHtml,
 }: {
   target: string;
   contextDir: string;
-  landmarks: LandmarkEntry[];
-  isTocHtml: boolean;
-  isPagelistHtml: boolean;
 }): Promise<{
   dom: JSDOM;
-  tocParseTree?: TocResourceTreeRoot;
-  pageListParseTree?: PageListResourceTreeRoot;
   hasMathmlContent: boolean;
   hasRemoteResources: boolean;
   hasScriptedContent: boolean;
   hasSvgContent: boolean;
-  hasEpubNavDocument: boolean;
 }> {
   const absPath = upath.join(contextDir, target);
   const { dom } = await getJsdomFromUrlOrFile(absPath);
@@ -408,88 +413,10 @@ async function transpileHtmlToXhtml({
     el.setAttribute('href', getRelativeHref(href, target, target));
   });
 
-  const replaceWithNavElement = (el: Element) => {
-    const nav = document.createElement('nav');
-    while (el.firstChild) {
-      nav.appendChild(el.firstChild);
-    }
-    for (let i = 0; i < el.attributes.length; i++) {
-      nav.attributes.setNamedItem(el.attributes[i].cloneNode() as Attr);
-    }
-    el.parentNode?.replaceChild(nav, el);
-    return nav;
-  };
-
-  let tocParseTree: TocResourceTreeRoot | undefined;
-  let pageListParseTree: PageListResourceTreeRoot | undefined;
-
-  const hasEpubNavDocument = !!document.querySelector('nav[epub:type]');
-  if (isTocHtml) {
-    if (!hasEpubNavDocument) {
-      const parsed = parseTocDocument(dom);
-      if (parsed) {
-        tocParseTree = parsed;
-        const nav = replaceWithNavElement(parsed.element);
-        nav.setAttribute('id', TOC_ID);
-        nav.setAttribute('epub:type', 'toc');
-      }
-
-      if (landmarks.length > 0) {
-        const nav = document.createElement('nav');
-        nav.setAttribute('epub:type', 'landmarks');
-        nav.setAttribute('id', LANDMARKS_ID);
-        nav.setAttribute('hidden', '');
-        const ol = document.createElement('ol');
-        for (const { type, href, text } of landmarks) {
-          const li = document.createElement('li');
-          const a = document.createElement('a');
-          a.setAttribute('epub:type', type);
-          a.setAttribute('href', getRelativeHref(href, '', target));
-          a.text = text;
-          li.appendChild(a);
-          ol.appendChild(li);
-        }
-        nav.appendChild(ol);
-        document.body.appendChild(nav);
-      }
-    }
-
-    // Remove a publication manifest linked to ToC html.
-    // When converting to EPUB, HTML files are converted to XHTML files
-    // and no longer conform to Web publication, so we need to
-    // explicitly remove the publication manifest.
-    const publicationLinkEl = document.querySelector(
-      'link[href][rel="publication"]',
-    );
-    if (publicationLinkEl) {
-      const href = publicationLinkEl.getAttribute('href')!.trim();
-      if (href.startsWith('#')) {
-        const scriptEl = document.getElementById(href.slice(1));
-        if (scriptEl?.getAttribute('type') === 'application/ld+json') {
-          scriptEl.parentNode?.removeChild(scriptEl);
-        }
-      }
-      publicationLinkEl.parentNode?.removeChild(publicationLinkEl);
-    }
-  }
-
-  if (isPagelistHtml) {
-    const parsed = parsePageListDocument(dom);
-    if (parsed) {
-      pageListParseTree = parsed;
-      const nav = replaceWithNavElement(parsed.element);
-      nav.setAttribute('id', PAGELIST_ID);
-      nav.setAttribute('epub:type', 'page-list');
-    }
-  }
-
-  const xhtml = `${XML_DECLARATION}\n${serializeToXml(document)}`;
-  await fs.promises.writeFile(changeExtname(absPath, '.xhtml'), xhtml, 'utf8');
+  await writeAsXhtml(dom, absPath);
   await fs.promises.unlink(absPath);
   return {
     dom,
-    tocParseTree,
-    pageListParseTree,
     // FIXME: Yes, I recognize this implementation is inadequate.
     hasMathmlContent: !!document.querySelector('math'),
     hasRemoteResources: !!document.querySelector(
@@ -497,62 +424,143 @@ async function transpileHtmlToXhtml({
     ),
     hasScriptedContent: !!document.querySelector('script, form'),
     hasSvgContent: !!document.querySelector('svg'),
-    hasEpubNavDocument,
   };
 }
 
-async function supplyTocNavElement({
-  tocHtml,
-  tocDom,
+function replaceWithNavElement(dom: JSDOM, el: Element) {
+  const nav = dom.window.document.createElement('nav');
+  while (el.firstChild) {
+    nav.appendChild(el.firstChild);
+  }
+  for (let i = 0; i < el.attributes.length; i++) {
+    nav.attributes.setNamedItem(el.attributes[i].cloneNode() as Attr);
+  }
+  el.parentNode?.replaceChild(nav, el);
+  return nav;
+}
+
+async function processTocDocument({
+  dom,
+  target,
   contextDir,
   readingOrder,
   docLanguages,
+  landmarks,
 }: {
-  tocHtml: string;
-  tocDom: JSDOM;
+  dom: JSDOM;
+  target: string;
   contextDir: string;
   readingOrder: PublicationLinks[];
   docLanguages: string[];
-}): Promise<TocResourceTreeRoot> {
-  debug(`Generating toc nav element: ${tocHtml}`);
-  const absPath = upath.join(contextDir, tocHtml);
-  const { document } = tocDom.window;
+  landmarks: LandmarkEntry[];
+}): Promise<{ tocResourceTree: TocResourceTreeRoot | null }> {
+  const { document } = dom.window;
 
-  const nav = document.createElement('nav');
-  nav.setAttribute('id', TOC_ID);
-  nav.setAttribute('role', 'doc-toc');
-  nav.setAttribute('epub:type', 'toc');
-  nav.setAttribute('hidden', '');
-  const ol = document.createElement('ol');
-  const tocParseTree: TocResourceTreeRoot = {
-    element: nav,
-    children: [],
-  };
+  let tocResourceTree: TocResourceTreeRoot | null = null;
+  if (!document.querySelector('nav[epub:type]')) {
+    tocResourceTree = parseTocDocument(dom);
+    if (tocResourceTree) {
+      const nav = replaceWithNavElement(dom, tocResourceTree.element);
+      nav.setAttribute('id', TOC_ID);
+      nav.setAttribute('epub:type', 'toc');
+    } else {
+      debug(`Generating toc nav element: ${target}`);
 
-  for (const content of readingOrder) {
-    let name = normalizeLocalizableString(content.name, docLanguages);
-    if (!name) {
-      const { dom } = await getJsdomFromUrlOrFile(
-        upath.join(contextDir, changeExtname(content.url, '.xhtml')),
-      );
-      name = dom.window.document.title;
+      const nav = document.createElement('nav');
+      nav.setAttribute('id', TOC_ID);
+      nav.setAttribute('role', 'doc-toc');
+      nav.setAttribute('epub:type', 'toc');
+      nav.setAttribute('hidden', '');
+      const ol = document.createElement('ol');
+      tocResourceTree = {
+        element: nav,
+        children: [],
+      };
+
+      for (const content of readingOrder) {
+        let name = normalizeLocalizableString(content.name, docLanguages);
+        if (!name) {
+          const { dom } = await getJsdomFromUrlOrFile(
+            upath.join(contextDir, changeExtname(content.url, '.xhtml')),
+          );
+          name = dom.window.document.title;
+        }
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.textContent = name;
+        a.href = getRelativeHref(content.url, '', target);
+        li.appendChild(a);
+        ol.appendChild(li);
+        tocResourceTree.children.push({ element: li, label: a });
+      }
+
+      nav.appendChild(ol);
+      document.body.appendChild(nav);
+      debug('Generated toc nav element', nav.outerHTML);
     }
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.textContent = name;
-    a.href = getRelativeHref(content.url, '', tocHtml);
-    li.appendChild(a);
-    ol.appendChild(li);
-    tocParseTree.children.push({ element: li, label: a });
+
+    if (landmarks.length > 0) {
+      const nav = document.createElement('nav');
+      nav.setAttribute('epub:type', 'landmarks');
+      nav.setAttribute('id', LANDMARKS_ID);
+      nav.setAttribute('hidden', '');
+      const ol = document.createElement('ol');
+      for (const { type, href, text } of landmarks) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.setAttribute('epub:type', type);
+        a.setAttribute('href', getRelativeHref(href, '', target));
+        a.text = text;
+        li.appendChild(a);
+        ol.appendChild(li);
+      }
+      nav.appendChild(ol);
+      document.body.appendChild(nav);
+    }
   }
 
-  nav.appendChild(ol);
-  document.body.appendChild(nav);
-  const xhtml = `${XML_DECLARATION}\n${serializeToXml(document)}`;
-  await fs.promises.writeFile(changeExtname(absPath, '.xhtml'), xhtml, 'utf8');
+  // Remove a publication manifest linked to ToC html.
+  // When converting to EPUB, HTML files are converted to XHTML files
+  // and no longer conform to Web publication, so we need to
+  // explicitly remove the publication manifest.
+  const publicationLinkEl = document.querySelector(
+    'link[href][rel="publication"]',
+  );
+  if (publicationLinkEl) {
+    const href = publicationLinkEl.getAttribute('href')!.trim();
+    if (href.startsWith('#')) {
+      const scriptEl = document.getElementById(href.slice(1));
+      if (scriptEl?.getAttribute('type') === 'application/ld+json') {
+        scriptEl.parentNode?.removeChild(scriptEl);
+      }
+    }
+    publicationLinkEl.parentNode?.removeChild(publicationLinkEl);
+  }
 
-  debug('Generated toc nav element', nav.outerHTML);
-  return tocParseTree;
+  const absPath = upath.join(contextDir, target);
+  await writeAsXhtml(dom, absPath);
+  return { tocResourceTree };
+}
+
+async function processPagelistDocument({
+  dom,
+  target,
+  contextDir,
+}: {
+  dom: JSDOM;
+  target: string;
+  contextDir: string;
+}): Promise<{ pageListResourceTree: PageListResourceTreeRoot | null }> {
+  const pageListResourceTree = parsePageListDocument(dom);
+  if (pageListResourceTree) {
+    const nav = replaceWithNavElement(dom, pageListResourceTree.element);
+    nav.setAttribute('id', PAGELIST_ID);
+    nav.setAttribute('epub:type', 'page-list');
+  }
+
+  const absPath = upath.join(contextDir, target);
+  await writeAsXhtml(dom, absPath);
+  return { pageListResourceTree };
 }
 
 function buildEpubPackageDocument({
