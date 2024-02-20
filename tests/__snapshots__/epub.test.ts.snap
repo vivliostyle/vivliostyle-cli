@@ -43,6 +43,7 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
     <a href=\\"b/c/d\\">3</a>
 
     <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\" hidden=\\"\\">
+      <h2>Table of Contents</h2>
       <ol>
         <li><a href=\\"index.xhtml\\">My book</a></li>
         <li><a href=\\"a/index.xhtml\\">yuno</a></li>
@@ -50,6 +51,7 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
       </ol>
     </nav>
     <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
+      <h2>Landmarks</h2>
       <ol>
         <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
       </ol>
@@ -212,6 +214,7 @@ exports[`generate EPUB from single HTML with pub manifest > index.xhtml 1`] = `
     <script src=\\"https://example.com/remote-script.js\\"></script>
 
     <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
+      <h2>Landmarks</h2>
       <ol>
         <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
       </ol>

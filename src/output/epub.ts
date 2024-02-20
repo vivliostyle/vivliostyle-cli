@@ -9,7 +9,15 @@ import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
-import { EPUB_CONTAINER_XML, EPUB_NS, XML_DECLARATION } from '../const.js';
+import {
+  EPUB_CONTAINER_XML,
+  EPUB_LANDMARKS_COVER_ENTRY,
+  EPUB_LANDMARKS_TITLE,
+  EPUB_LANDMARKS_TOC_ENTRY,
+  EPUB_NS,
+  TOC_TITLE,
+  XML_DECLARATION,
+} from '../const.js';
 import {
   PageListResourceTreeRoot,
   TocResourceTreeItem,
@@ -249,14 +257,14 @@ export async function exportEpub({
     {
       type: 'toc',
       href: `${manifestItem[tocHtml].href}#${TOC_ID}`,
-      text: 'Table of Contents',
+      text: EPUB_LANDMARKS_TOC_ENTRY,
     },
   ];
   if (htmlCoverResource) {
     landmarks.push({
       type: 'cover',
       href: changeExtname(htmlCoverResource.url, '.xhtml'),
-      text: 'Cover Page',
+      text: EPUB_LANDMARKS_COVER_ENTRY,
     });
   }
 
@@ -471,6 +479,9 @@ async function processTocDocument({
       nav.setAttribute('role', 'doc-toc');
       nav.setAttribute('epub:type', 'toc');
       nav.setAttribute('hidden', '');
+      const h2 = document.createElement('h2');
+      h2.textContent = TOC_TITLE;
+      nav.appendChild(h2);
       const ol = document.createElement('ol');
       tocResourceTree = {
         element: nav,
@@ -500,10 +511,14 @@ async function processTocDocument({
     }
 
     if (landmarks.length > 0) {
+      debug(`Generating landmark nav element: ${target}`);
       const nav = document.createElement('nav');
       nav.setAttribute('epub:type', 'landmarks');
       nav.setAttribute('id', LANDMARKS_ID);
       nav.setAttribute('hidden', '');
+      const h2 = document.createElement('h2');
+      h2.textContent = EPUB_LANDMARKS_TITLE;
+      nav.appendChild(h2);
       const ol = document.createElement('ol');
       for (const { type, href, text } of landmarks) {
         const li = document.createElement('li');
@@ -516,6 +531,7 @@ async function processTocDocument({
       }
       nav.appendChild(ol);
       document.body.appendChild(nav);
+      debug('Generated landmark nav element', nav.outerHTML);
     }
   }
 

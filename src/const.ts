@@ -19,6 +19,9 @@ export const EPUB_CONTAINER_XML = `${XML_DECLARATION}
     <rootfile full-path="EPUB/content.opf" media-type="application/oebps-package+xml" />
   </rootfiles>
 </container>`;
+export const EPUB_LANDMARKS_TITLE = 'Landmarks';
+export const EPUB_LANDMARKS_TOC_ENTRY = TOC_TITLE;
+export const EPUB_LANDMARKS_COVER_ENTRY = 'Cover Page';
 
 export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
 export const cliVersion = (() => {
