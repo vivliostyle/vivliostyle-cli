@@ -304,3 +304,35 @@ it('generate EPUB from vivliostyle.config.js', async () => {
     ...vol.toJSON('/tmp/2', undefined, true),
   });
 });
+
+it('Do not insert nav element to HTML that have nav[epub:type]', async () => {
+  vol.fromJSON({
+    '/work/input/index.html': /* html */ `
+      <html lang="en">
+      <head>
+        <title>Document</title>
+      </head>
+      <body>
+        <nav epub:type="lot"></nav>
+      </body>
+      </html>
+    `,
+  });
+  const config = await getMergedConfig([
+    '/work/input/index.html',
+    '--output',
+    '/work/output.epub',
+  ]);
+  await compile(config);
+  await copyAssets(config);
+  await buildWebPublication({
+    ...config,
+    target: config.outputs[0],
+  });
+
+  const file = vol.toJSON();
+  const xhtml = file['/tmp/2/EPUB/index.xhtml'];
+  expect(xhtml).toMatch(/epub:type="lot"/);
+  expect(xhtml).not.toMatch(/epub:type="toc"/);
+  expect(xhtml).not.toMatch(/epub:type="landmarks"/);
+});
