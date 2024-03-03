@@ -1051,10 +1051,10 @@
     loupe "^2.3.6"
     pretty-format "^29.5.0"
 
-"@vivliostyle/core@^2.27.0":
-  version "2.27.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.27.0.tgz#36f80e55e51d5f4f7d6259cd97991188689f0b91"
-  integrity sha512-QiA/FPnRK5MdSq+RT98Se10CSnoQozyEFWa5al2RyB1BAqbfEc1qvygFD420EVE4XGbO5TAhUGIgqSc2mSrH9g==
+"@vivliostyle/core@^2.28.0":
+  version "2.28.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.28.0.tgz#5c584185bf21be0afc44395dda123e32b03a8193"
+  integrity sha512-z8MKeef2Ond0Tl1QGQGEvkSPrs+eVuDFMeaEg46niBWpY+8RkwHosBjJ42C96CQa12FwnQcpQhaIvOwc76i0dA==
   dependencies:
     fast-diff "^1.2.0"
 
@@ -1126,12 +1126,12 @@
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
 
-"@vivliostyle/viewer@2.27.0":
-  version "2.27.0"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.27.0.tgz#3bb8a14cb828c9c85783078973b72e1d3064013f"
-  integrity sha512-XreTMthS6KMLphgac6Fv4OTncd2fNqs50kCfEYtiTPKBBTJrLA1VsqwVCPbsPJJNxB7NhtWTTpFwaFp99519dg==
+"@vivliostyle/viewer@2.28.0":
+  version "2.28.0"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.28.0.tgz#98f8ef0703bfdadde6c0786748828790ef740afd"
+  integrity sha512-09zXdkRBPJPJpSARHoncZA3Q/1Tcp5XdxjqS4fQXMT+S1otjbumkB25GUmwNUoZMFa6YFYuMUZadIWeT/Etf/g==
   dependencies:
-    "@vivliostyle/core" "^2.27.0"
+    "@vivliostyle/core" "^2.28.0"
     i18next-ko "^3.0.1"
     knockout "^3.5.0"
 
