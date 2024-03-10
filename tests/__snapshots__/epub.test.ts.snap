@@ -13,9 +13,8 @@ exports[`generate EPUB from series of HTML files > content.opf 1`] = `
     <item id=\\"srcindexxhtml\\" href=\\"src/index.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav\\"></item>
     <item id=\\"srcaindexxhtml\\" href=\\"src/a/index.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
     <item id=\\"srcbcdxhtml\\" href=\\"src/b/c/d.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
-    <item id=\\"tocncx\\" href=\\"toc.ncx\\" media-type=\\"application/x-dtbncx+xml\\"></item>
   </manifest>
-  <spine toc=\\"tocncx\\">
+  <spine>
     <itemref idref=\\"srcindexxhtml\\"></itemref>
     <itemref idref=\\"srcaindexxhtml\\"></itemref>
     <itemref idref=\\"srcbcdxhtml\\"></itemref>
@@ -61,56 +60,19 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
 "
 `;
 
-exports[`generate EPUB from series of HTML files > toc.ncx 1`] = `
-"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
-<ncx xmlns=\\"http://www.daisy.org/z3986/2005/ncx/\\" version=\\"2005-1\\">
-  <head>
-    
-    <meta name=\\"dtb:depth\\" content=\\"1\\"></meta>
-    <meta name=\\"dtb:totalPageCount\\" content=\\"0\\"></meta>
-    <meta name=\\"dtb:maxPageNumber\\" content=\\"0\\"></meta>
-  </head>
-  <docTitle>
-    <text>My book</text>
-  </docTitle>
-  <navMap>
-    <navPoint id=\\"navpoint-1\\">
-      <navLabel>
-        <text>My book</text>
-      </navLabel>
-      <content src=\\"src/index.xhtml\\"></content>
-    </navPoint>
-    <navPoint id=\\"navpoint-2\\">
-      <navLabel>
-        <text>yuno</text>
-      </navLabel>
-      <content src=\\"src/a/index.xhtml\\"></content>
-    </navPoint>
-    <navPoint id=\\"navpoint-3\\">
-      <navLabel>
-        <text>yunocchi</text>
-      </navLabel>
-      <content src=\\"src/b/c/d.xhtml\\"></content>
-    </navPoint>
-  </navMap>
-</ncx>
-"
-`;
-
 exports[`generate EPUB from series of HTML files > tree 1`] = `
 "/
 ├─ tmp/
 │  └─ 1/
 │     ├─ EPUB/
 │     │  ├─ content.opf
-│     │  ├─ src/
-│     │  │  ├─ a/
-│     │  │  │  └─ index.xhtml
-│     │  │  ├─ b/
-│     │  │  │  └─ c/
-│     │  │  │     └─ d.xhtml
-│     │  │  └─ index.xhtml
-│     │  └─ toc.ncx
+│     │  └─ src/
+│     │     ├─ a/
+│     │     │  └─ index.xhtml
+│     │     ├─ b/
+│     │     │  └─ c/
+│     │     │     └─ d.xhtml
+│     │     └─ index.xhtml
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
@@ -164,9 +126,8 @@ exports[`generate EPUB from single HTML with pub manifest > content.opf 1`] = `
   <manifest>
     <item id=\\"coverpng\\" href=\\"cover.png\\" media-type=\\"image/png\\" properties=\\"cover-image\\"></item>
     <item id=\\"indexxhtml\\" href=\\"index.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav mathml remote-resources scripted svg\\"></item>
-    <item id=\\"tocncx\\" href=\\"toc.ncx\\" media-type=\\"application/x-dtbncx+xml\\"></item>
   </manifest>
-  <spine toc=\\"tocncx\\" page-progression-direction=\\"rtl\\">
+  <spine page-progression-direction=\\"rtl\\">
     <itemref idref=\\"indexxhtml\\"></itemref>
   </spine>
   <guide>
@@ -224,48 +185,6 @@ exports[`generate EPUB from single HTML with pub manifest > index.xhtml 1`] = `
 "
 `;
 
-exports[`generate EPUB from single HTML with pub manifest > toc.ncx 1`] = `
-"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
-<ncx xmlns=\\"http://www.daisy.org/z3986/2005/ncx/\\" version=\\"2005-1\\">
-  <head>
-    
-    <meta name=\\"dtb:depth\\" content=\\"1\\"></meta>
-    <meta name=\\"dtb:totalPageCount\\" content=\\"0\\"></meta>
-    <meta name=\\"dtb:maxPageNumber\\" content=\\"0\\"></meta>
-  </head>
-  <docTitle>
-    <text>Document</text>
-  </docTitle>
-  <navMap>
-    <navPoint id=\\"navpoint-1\\">
-      <navLabel>
-        <text>Intro</text>
-      </navLabel>
-      <content src=\\"index.xhtml#intro\\"></content>
-    </navPoint>
-    <navPoint id=\\"navpoint-2\\">
-      <navLabel>
-        <text>Main</text>
-      </navLabel>
-      <content src=\\"index.xhtml#main\\"></content>
-      <navPoint id=\\"navpoint-3\\">
-        <navLabel>
-          <text>Main 1</text>
-        </navLabel>
-        <content src=\\"index.xhtml#main-1\\"></content>
-      </navPoint>
-      <navPoint id=\\"navpoint-4\\">
-        <navLabel>
-          <text>Main 2</text>
-        </navLabel>
-        <content src=\\"index.xhtml#main-2\\"></content>
-      </navPoint>
-    </navPoint>
-  </navMap>
-</ncx>
-"
-`;
-
 exports[`generate EPUB from single HTML with pub manifest > tree 1`] = `
 "/
 ├─ tmp/
@@ -273,8 +192,7 @@ exports[`generate EPUB from single HTML with pub manifest > tree 1`] = `
 │     ├─ EPUB/
 │     │  ├─ content.opf
 │     │  ├─ cover.png
-│     │  ├─ index.xhtml
-│     │  └─ toc.ncx
+│     │  └─ index.xhtml
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
@@ -294,8 +212,7 @@ exports[`generate EPUB from single Markdown input > tree 1`] = `
 │  └─ 2/
 │     ├─ EPUB/
 │     │  ├─ content.opf
-│     │  ├─ index.xhtml
-│     │  └─ toc.ncx
+│     │  └─ index.xhtml
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
@@ -319,8 +236,7 @@ exports[`generate EPUB from vivliostyle.config.js > tree 1`] = `
 │     │  ├─ content.opf
 │     │  ├─ index.xhtml
 │     │  ├─ manuscript.xhtml
-│     │  ├─ my-theme.css
-│     │  └─ toc.ncx
+│     │  └─ my-theme.css
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
