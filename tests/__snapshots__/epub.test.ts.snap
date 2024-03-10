@@ -19,9 +19,6 @@ exports[`generate EPUB from series of HTML files > content.opf 1`] = `
     <itemref idref=\\"srcaindexxhtml\\"></itemref>
     <itemref idref=\\"srcbcdxhtml\\"></itemref>
   </spine>
-  <guide>
-    <reference type=\\"toc\\" href=\\"src/index.xhtml#toc\\" title=\\"Table of Contents\\"></reference>
-  </guide>
 </package>
 "
 `;
@@ -130,9 +127,6 @@ exports[`generate EPUB from single HTML with pub manifest > content.opf 1`] = `
   <spine page-progression-direction=\\"rtl\\">
     <itemref idref=\\"indexxhtml\\"></itemref>
   </spine>
-  <guide>
-    <reference type=\\"toc\\" href=\\"index.xhtml#toc\\" title=\\"Table of Contents\\"></reference>
-  </guide>
 </package>
 "
 `;

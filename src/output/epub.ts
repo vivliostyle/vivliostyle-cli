@@ -363,7 +363,6 @@ export async function exportEpub({
       manifest,
       spineItems,
       manifestItems: Object.values(manifestItem),
-      landmarks,
     }),
     'utf8',
   );
@@ -567,7 +566,6 @@ function buildEpubPackageDocument({
   docLanguages,
   spineItems,
   manifestItems,
-  landmarks,
 }: Pick<Parameters<typeof exportEpub>[0], 'epubVersion'> & {
   manifest: PublicationManifest;
   uid: string;
@@ -575,7 +573,6 @@ function buildEpubPackageDocument({
   docLanguages: string[];
   spineItems: SpineEntry[];
   manifestItems: ManifestEntry[];
-  landmarks: LandmarkEntry[];
 }): string {
   const slugger = new GithubSlugger();
   slugger.reset();
@@ -698,13 +695,6 @@ function buildEpubPackageDocument({
             _idref: itemIdMap.get(href),
           })),
         ],
-      },
-      guide: {
-        reference: landmarks.map(({ type, href, text }) => ({
-          _type: type,
-          _href: href,
-          _title: text,
-        })),
       },
     },
   });
