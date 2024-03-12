@@ -1,19 +1,23 @@
-
-
-# [8.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.8.0...v8.9.0) (2024-03-03)
-
+## [8.9.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.9.0...v8.9.1) (2024-03-12)
 
 ### Bug Fixes
 
-* Do not generate nav element if `nav[epub:type]` exists in ToC HTML ([8a09ea7](https://github.com/vivliostyle/vivliostyle-cli/commit/8a09ea762f39d66fd51dbfc93a99fe955a705796))
-* Improved order of inserting nav elements in EPUB ([177f18e](https://github.com/vivliostyle/vivliostyle-cli/commit/177f18ee4bce883071081f4564bac3add464ccb9))
-* Insert titles into generated nav elements in EPUB ([bcc441b](https://github.com/vivliostyle/vivliostyle-cli/commit/bcc441b8fdfa66ec5e14fdc1d6035ff6f9381a18))
+- Drop support exporting a legacy NCX document ([b7c4fde](https://github.com/vivliostyle/vivliostyle-cli/commit/b7c4fdedb813e6d40fa61cdaadddcc5913a52e6a))
+- Drop support setting a legacy `guide` element in EPUB OPF ([21200d6](https://github.com/vivliostyle/vivliostyle-cli/commit/21200d663614310595f0d6f49516ffd49327c5d1))
+- Update Vivliostyle.js to 2.28.1: Bug Fix ([e47c2f3](https://github.com/vivliostyle/vivliostyle-cli/commit/e47c2f3fb5fd1008d1e7c1fe5f543a89403ac5ec))
 
+# [8.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.8.0...v8.9.0) (2024-03-03)
+
+### Bug Fixes
+
+- Do not generate nav element if `nav[epub:type]` exists in ToC HTML ([8a09ea7](https://github.com/vivliostyle/vivliostyle-cli/commit/8a09ea762f39d66fd51dbfc93a99fe955a705796))
+- Improved order of inserting nav elements in EPUB ([177f18e](https://github.com/vivliostyle/vivliostyle-cli/commit/177f18ee4bce883071081f4564bac3add464ccb9))
+- Insert titles into generated nav elements in EPUB ([bcc441b](https://github.com/vivliostyle/vivliostyle-cli/commit/bcc441b8fdfa66ec5e14fdc1d6035ff6f9381a18))
 
 ### Features
 
-* Update Playwright to 1.42.1 (Chromium 123.0.6312.4) ([6822bdb](https://github.com/vivliostyle/vivliostyle-cli/commit/6822bdbbcc064b660d882fad4836bf82413db52c))
-* Update Vivliostyle.js to 2.28.0: Bug fixes and error handling ([0d610db](https://github.com/vivliostyle/vivliostyle-cli/commit/0d610db06ab440af2cf6621b923a3e9ccad1fb48))
+- Update Playwright to 1.42.1 (Chromium 123.0.6312.4) ([6822bdb](https://github.com/vivliostyle/vivliostyle-cli/commit/6822bdbbcc064b660d882fad4836bf82413db52c))
+- Update Vivliostyle.js to 2.28.0: Bug fixes and error handling ([0d610db](https://github.com/vivliostyle/vivliostyle-cli/commit/0d610db06ab440af2cf6621b923a3e9ccad1fb48))
 
 # [8.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.7.0...v8.8.0) (2024-02-09)
 
