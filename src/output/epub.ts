@@ -20,7 +20,6 @@ import {
 } from '../const.js';
 import {
   PageListResourceTreeRoot,
-  TocResourceTreeItem,
   TocResourceTreeRoot,
   getJsdomFromUrlOrFile,
   parsePageListDocument,
@@ -345,25 +344,6 @@ export async function exportEpub({
     delete manifestItem[relManifestPath];
   }
 
-  // EPUB/toc.ncx
-  // note: NCX is not required for EPUB 3.0
-  if (tocResourceTree) {
-    fs.writeFileSync(
-      upath.join(tmpDir, 'EPUB/toc.ncx'),
-      buildNcx({
-        toc: tocResourceTree,
-        docTitle,
-        uid,
-        tocHtml,
-      }),
-      'utf8',
-    );
-    manifestItem['toc.ncx'] = {
-      href: 'toc.ncx',
-      mediaType: 'application/x-dtbncx+xml',
-    };
-  }
-
   // META-INF/container.xml
   fs.writeFileSync(
     upath.join(tmpDir, 'META-INF/container.xml'),
@@ -383,7 +363,6 @@ export async function exportEpub({
       manifest,
       spineItems,
       manifestItems: Object.values(manifestItem),
-      landmarks,
     }),
     'utf8',
   );
@@ -587,7 +566,6 @@ function buildEpubPackageDocument({
   docLanguages,
   spineItems,
   manifestItems,
-  landmarks,
 }: Pick<Parameters<typeof exportEpub>[0], 'epubVersion'> & {
   manifest: PublicationManifest;
   uid: string;
@@ -595,7 +573,6 @@ function buildEpubPackageDocument({
   docLanguages: string[];
   spineItems: SpineEntry[];
   manifestItems: ManifestEntry[];
-  landmarks: LandmarkEntry[];
 }): string {
   const slugger = new GithubSlugger();
   slugger.reset();
@@ -710,10 +687,6 @@ function buildEpubPackageDocument({
         })),
       },
       spine: {
-        ...(() => {
-          const toc = manifestItems.find(({ href }) => href === 'toc.ncx');
-          return toc ? { _toc: itemIdMap.get(toc.href) } : {};
-        })(),
         ...(manifest.readingProgression
           ? { '_page-progression-direction': manifest.readingProgression }
           : {}),
@@ -722,87 +695,6 @@ function buildEpubPackageDocument({
             _idref: itemIdMap.get(href),
           })),
         ],
-      },
-      guide: {
-        reference: landmarks.map(({ type, href, text }) => ({
-          _type: type,
-          _href: href,
-          _title: text,
-        })),
-      },
-    },
-  });
-}
-
-function buildNcx({
-  toc,
-  docTitle,
-  uid,
-  tocHtml,
-}: {
-  toc: TocResourceTreeRoot;
-  docTitle: string;
-  uid: string;
-  tocHtml: string;
-}): string {
-  const slugger = new GithubSlugger();
-  slugger.reset();
-  // Dummy incremental to increase sequential counts
-  slugger.slug('navPoint');
-
-  const transformNavItem = (
-    item: TocResourceTreeItem,
-  ): Record<string, unknown> => {
-    return {
-      _id: slugger.slug('navPoint'),
-      navLabel: {
-        text: (item.label.textContent ?? '').trim(),
-      },
-      ...(item.label.tagName === 'A' && item.label.getAttribute('href')
-        ? {
-            content: {
-              _src: getRelativeHref(
-                item.label.getAttribute('href')!,
-                tocHtml,
-                '',
-              ),
-            },
-          }
-        : {}),
-      ...(item.children && item.children.length > 0
-        ? {
-            navPoint: item.children.map(transformNavItem),
-          }
-        : {}),
-    };
-  };
-
-  const builder = new XMLBuilder({
-    format: true,
-    ignoreAttributes: false,
-    attributeNamePrefix: '_',
-  });
-  return builder.build({
-    '?xml': {
-      _version: '1.0',
-      _encoding: 'UTF-8',
-    },
-    ncx: {
-      _xmlns: 'http://www.daisy.org/z3986/2005/ncx/',
-      _version: '2005-1',
-      head: {
-        meta: [
-          { _name: 'dtb:uid', _content: uid },
-          { _name: 'dtb:depth', _content: '1' },
-          { _name: 'dtb:totalPageCount', _content: '0' },
-          { _name: 'dtb:maxPageNumber', _content: '0' },
-        ],
-      },
-      docTitle: {
-        text: docTitle,
-      },
-      navMap: {
-        navPoint: toc.children.map(transformNavItem),
       },
     },
   });
