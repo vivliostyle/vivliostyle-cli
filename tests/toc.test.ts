@@ -5,7 +5,10 @@ import fs from 'node:fs';
 import { afterAll, expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import { compile, prepareThemeDirectory } from '../src/processor/compile.js';
-import { generateTocHtml } from '../src/processor/html.js';
+import {
+  generateTocHtml,
+  getStructuredSectionFromHtml,
+} from '../src/processor/html.js';
 import { removeSync } from '../src/util.js';
 import {
   assertSingleItem,
@@ -27,11 +30,15 @@ afterAll(() => {
   ].forEach((f) => removeSync(f));
 });
 
-it('generateTocHtml', () => {
-  const toc = generateTocHtml({
-    entries: [{ target: 'test.html', title: 'Title' }],
-    manifestPath: '.vivliostyle/publication.json',
-    distDir: '.vivliostyle',
+it('generateTocHtml', async () => {
+  const toc = await generateTocHtml({
+    entries: [
+      { target: resolveFixture('toc/manuscript/empty.html'), title: 'Title' },
+    ],
+    manifestPath: resolveFixture(
+      'toc/manuscript/.vivliostyle/publication.json',
+    ),
+    distDir: resolveFixture('toc/manuscript/.vivliostyle'),
     title: 'Book title',
     tocTitle: 'Table of Contents',
   });
@@ -51,7 +58,7 @@ it('generateTocHtml', () => {
     <nav id="toc" role="doc-toc">
       <h2>Table of Contents</h2>
       <ol>
-        <li><a href="../test.html">Title</a></li>
+        <li><a href="../empty.html">Title</a></li>
       </ol>
     </nav>
   </body>
@@ -214,4 +221,59 @@ it('check ToC overwrite violation', async () => {
   expect(async () => {
     await compile(config);
   }).rejects.toThrow();
+});
+
+it('works with sectionized document', async () => {
+  const section = await getStructuredSectionFromHtml(
+    resolveFixture('toc/manuscript/section.html'),
+  );
+  expect(section).toEqual([
+    {
+      headingText: 'H1 content',
+      level: 1,
+      children: [
+        {
+          headingText: 'H2',
+          level: 2,
+          id: 'h2',
+          children: [
+            {
+              headingText: 'H3',
+              level: 3,
+              id: '#',
+              children: [
+                {
+                  headingText: 'Nested',
+                  level: 1,
+                  children: [],
+                },
+                {
+                  headingText: 'H4',
+                  level: 4,
+                  children: [
+                    {
+                      headingText: 'H5',
+                      level: 5,
+                      children: [
+                        {
+                          headingText: 'H6',
+                          level: 6,
+                          children: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      headingText: 'Another H2',
+      level: 2,
+      children: [],
+    },
+  ]);
 });

@@ -94,6 +94,59 @@ export async function getJsdomFromUrlOrFile(
   return { dom };
 }
 
+export interface StructuredDocument {
+  title: string;
+  href: string;
+  sections?: StructuredSection[];
+  children: StructuredDocument[];
+}
+
+export interface StructuredSection {
+  headingText: string;
+  level?: number;
+  id?: string;
+  children: StructuredSection[];
+}
+
+export async function getStructuredSectionFromHtml(htmlPath: string) {
+  const { dom } = await getJsdomFromUrlOrFile(htmlPath);
+  const { document } = dom.window;
+  const allSectionHeaders = [
+    ...document.querySelectorAll(
+      'section > :is(h1, h2, h3, h4, h5, h6, hgroup):first-child',
+    ),
+  ].sort((a, b) => {
+    const position = a.compareDocumentPosition(b);
+    return position & 2 /* DOCUMENT_POSITION_PRECEDING */
+      ? 1
+      : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
+      ? -1
+      : 0;
+  });
+
+  function traverse(headers: Element[]): StructuredSection[] {
+    if (headers.length === 0) {
+      return [];
+    }
+    const [head, ...tail] = headers;
+    const section = head.parentElement!;
+    let i = tail.findIndex((s) => !section.contains(s));
+    i = i === -1 ? tail.length : i;
+    return [
+      {
+        headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
+        level: /^h[1-6]$/i.test(head.tagName)
+          ? Number(head.tagName.slice(1))
+          : undefined,
+        id: head.id || undefined,
+        children: traverse(tail.slice(0, i)),
+      },
+      ...traverse(tail.slice(i)),
+    ];
+  }
+  return traverse(allSectionHeaders);
+}
+
 const getTocHtmlStyle = ({
   pageBreakBefore,
   pageCounterReset,
@@ -121,15 +174,44 @@ ${
 }
 `;
 };
-export function generateTocHtml({
+
+export const defaultTocNodeRenderer = {
+  docList: (_nodeList: StructuredDocument[]) => (children: any[]) => {
+    return h('ol', ...children);
+  },
+  docListItem: (node: StructuredDocument) => (children: any[]) => {
+    const { href, title } = node;
+    return h('li', h('a', { href }, title), ...children);
+  },
+  sectionList:
+    (_nodeList: (StructuredSection & { href: string | null })[]) =>
+    (children: any[]) => {
+      return h('ol', ...children);
+    },
+  sectionListItem:
+    (node: StructuredSection & { href: string | null }) =>
+    (children: any[]) => {
+      const { headingText, href, level } = node;
+      return h(
+        'li',
+        { dataSectionLevel: level },
+        href ? h('a', { href }, headingText) : headingText,
+        ...children,
+      );
+    },
+};
+
+export async function generateTocHtml({
   entries,
   manifestPath,
   distDir,
   language,
   title,
   tocTitle,
+  sectionLevel = -1,
   stylesheets = [],
   styleOptions = {},
+  nodeRenderer = defaultTocNodeRenderer,
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   manifestPath: string;
@@ -137,19 +219,60 @@ export function generateTocHtml({
   language?: string;
   title?: string;
   tocTitle: string;
+  sectionLevel?: number;
   stylesheets?: string[];
   styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
-}): string {
-  const items = entries.map((entry) =>
-    h(
-      'li',
-      h(
-        'a',
-        { href: encodeURI(upath.relative(distDir, entry.target)) },
-        entry.title || upath.basename(entry.target, '.html'),
-      ),
-    ),
+  nodeRenderer?: typeof defaultTocNodeRenderer;
+}): Promise<string> {
+  const {
+    docList = defaultTocNodeRenderer.docList,
+    docListItem = defaultTocNodeRenderer.docListItem,
+    sectionList = defaultTocNodeRenderer.sectionList,
+    sectionListItem = defaultTocNodeRenderer.sectionListItem,
+  } = nodeRenderer;
+
+  const structure = await Promise.all(
+    entries.map(async (entry): Promise<StructuredDocument> => {
+      const sections =
+        sectionLevel >= 1
+          ? await getStructuredSectionFromHtml(entry.target)
+          : [];
+      return {
+        title: entry.title || upath.basename(entry.target, '.html'),
+        href: encodeURI(upath.relative(distDir, entry.target)),
+        sections,
+        children: [], // TODO
+      };
+    }),
   );
+  const docToc = docList(structure)(
+    structure.map((doc) => {
+      function renderSectionList(
+        sections: StructuredSection[],
+      ): ReturnType<typeof h> {
+        const nodeList = sections.flatMap((section) => {
+          if (section.level && section.level > sectionLevel) {
+            return [];
+          }
+          const s = section as StructuredSection & { href: string | null };
+          s.href = section.id
+            ? `${doc.href}#${encodeURIComponent(section.id)}`
+            : null;
+          return s;
+        });
+        if (nodeList.length === 0) {
+          return [];
+        }
+        return sectionList(nodeList)(
+          nodeList.map((node) =>
+            sectionListItem(node)([renderSectionList(node.children)]),
+          ),
+        );
+      }
+      return docListItem(doc)([renderSectionList(doc.sections || [])]);
+    }),
+  );
+
   const toc = h(
     'html',
     { lang: language },
@@ -175,7 +298,7 @@ export function generateTocHtml({
     h(
       'body',
       h('h1', title || ''),
-      h('nav#toc', { role: 'doc-toc' }, h('h2', tocTitle), h('ol', items)),
+      h('nav#toc', { role: 'doc-toc' }, h('h2', tocTitle), docToc),
     ),
   );
   return prettier.format(toHTML(toc), { parser: 'html' });

@@ -296,7 +296,7 @@ export async function compile({
     const stylesheets = entry.themes.flatMap((theme) =>
       locateThemePath(theme, upath.dirname(entry.target)),
     );
-    const tocString = generateTocHtml({
+    const tocString = await generateTocHtml({
       entries: contentEntries,
       manifestPath,
       distDir: upath.dirname(entry.target),
