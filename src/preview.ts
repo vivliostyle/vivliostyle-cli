@@ -103,40 +103,95 @@ export async function preview(cliFlags: PreviewCliFlags) {
       );
     }
   }
-  const browser = await launchBrowser({
-    browserType,
-    executablePath: executableBrowser,
-    headless: false,
-    noSandbox: !config.sandbox,
-    disableWebSecurity: !config.viewer,
-  });
-  const page = await browser.newPage({ viewport: null });
 
-  let watcher: chokidar.FSWatcher | null = null;
+  const watcher = !isUrlString(config.input.entry)
+    ? chokidar.watch('**', {
+        ignored: (path: string) => {
+          if (/^node_modules$|^\.git/.test(upath.basename(path))) {
+            return true;
+          }
+          if (
+            !pathEquals(config.entryContextDir, config.workspaceDir) &&
+            pathContains(config.workspaceDir, path)
+          ) {
+            return true; // ignore saved intermediate files
+          }
+          if (
+            config.needToGenerateManifest &&
+            pathEquals(path, config.manifestPath)
+          ) {
+            return true; // ignore generated pub-manifest
+          }
+          if (
+            config.entries.length &&
+            /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
+            !config.entries.some(
+              (entry) =>
+                entry.rel !== 'contents' &&
+                pathEquals(path, (entry as ManuscriptEntry).source),
+            )
+          ) {
+            return true; // ignore md or html files not in entries source
+          }
+          if (pathContains(config.themesDir, path)) {
+            return true; // ignore theme packages
+          }
+          return false;
+        },
+        cwd: config.entries.length ? context : config.entryContextDir,
+        ignoreInitial: true,
+      })
+    : null;
 
-  // Terminate preview when the previewing page is closed
-  page.on('close', () => {
-    if (watcher) {
-      watcher.close();
+  let reload: (() => void) | null = null;
+  let closePreview: (() => void) | null = null;
+  async function openPreview() {
+    closePreview?.();
+
+    const browser = await launchBrowser({
+      browserType,
+      executablePath: executableBrowser,
+      headless: false,
+      noSandbox: !config.sandbox,
+      disableWebSecurity: !config.viewer,
+    });
+    const page = await browser.newPage({ viewport: null });
+
+    // Terminate preview when the previewing page is closed
+    function onPageClose() {
+      watcher?.close();
+      runExitHandlers();
     }
-    runExitHandlers();
-  });
+    page.on('close', onPageClose);
 
-  // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
-  const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-  await page.addInitScript(
-    `window.localStorage.setItem('i18nextLng', '${locale}');`,
-  );
+    // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    await page.addInitScript(
+      `window.localStorage.setItem('i18nextLng', '${locale}');`,
+    );
 
-  // Prevent confirm dialog from being auto-dismissed
-  page.on('dialog', () => {});
+    // Prevent confirm dialog from being auto-dismissed
+    page.on('dialog', () => {});
 
-  await page.goto(viewerFullUrl);
+    await page.goto(viewerFullUrl);
 
-  // Move focus from the address bar to the page
-  await page.bringToFront();
-  // Focus to the URL input box if available
-  await page.locator('#vivliostyle-input-url').focus();
+    // Move focus from the address bar to the page
+    await page.bringToFront();
+    // Focus to the URL input box if available
+    await page.locator('#vivliostyle-input-url').focus();
+
+    watcher?.on('all', handleFileChange);
+    reload = () => page.reload();
+    closePreview = () => {
+      watcher?.off('all', handleFileChange);
+      page.off('close', onPageClose);
+      browser.close();
+      reload = null;
+      closePreview = null;
+    };
+  }
+
+  await openPreview();
 
   // note: runExitHandlers() is not necessary here
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
@@ -147,6 +202,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
       const stopLogging = startLogging(
         `Config file change detected. Reloading ${path}`,
       );
+      closePreview?.();
       // reload vivliostyle config
       const loadedConf = await collectVivliostyleConfig(cliFlags);
       const { vivliostyleConfig } = loadedConf;
@@ -157,7 +213,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
         await compile(config);
         await copyAssets(config);
       }
-      page.reload();
+      await openPreview();
       logSuccess(`Reloaded ${path}`);
       stopLogging();
     }, 2000);
@@ -173,67 +229,26 @@ export async function preview(cliFlags: PreviewCliFlags) {
         await compile(config);
         await copyAssets(config);
       }
-      page.reload();
+      reload?.();
       logSuccess(`Built ${path}`);
       stopLogging();
     }, 2000);
   }
 
-  if (isUrlString(config.input.entry)) {
-    return;
+  function handleFileChange(event: unknown, path: string) {
+    if (
+      pathEquals(
+        upath.join(config.entryContextDir, path),
+        config.input.entry,
+      ) ||
+      /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
+    ) {
+      handleChangeEvent(path);
+    } else if (
+      vivliostyleConfigPath &&
+      pathEquals(path, upath.basename(vivliostyleConfigPath))
+    ) {
+      reloadConfig(path);
+    }
   }
-
-  watcher = chokidar
-    .watch('**', {
-      ignored: (path: string) => {
-        if (/^node_modules$|^\.git/.test(upath.basename(path))) {
-          return true;
-        }
-        if (
-          !pathEquals(config.entryContextDir, config.workspaceDir) &&
-          pathContains(config.workspaceDir, path)
-        ) {
-          return true; // ignore saved intermediate files
-        }
-        if (
-          config.needToGenerateManifest &&
-          pathEquals(path, config.manifestPath)
-        ) {
-          return true; // ignore generated pub-manifest
-        }
-        if (
-          config.entries.length &&
-          /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
-          !config.entries.some(
-            (entry) =>
-              entry.rel !== 'contents' &&
-              pathEquals(path, (entry as ManuscriptEntry).source),
-          )
-        ) {
-          return true; // ignore md or html files not in entries source
-        }
-        if (pathContains(config.themesDir, path)) {
-          return true; // ignore theme packages
-        }
-        return false;
-      },
-      cwd: config.entries.length ? context : config.entryContextDir,
-      ignoreInitial: true,
-    })
-    .on('all', (event, path) => {
-      if (
-        pathEquals(
-          upath.join(config.entryContextDir, path),
-          config.input.entry,
-        ) ||
-        /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
-      ) {
-        handleChangeEvent(path);
-      } else if (
-        vivliostyleConfigPath &&
-        pathEquals(path, upath.basename(vivliostyleConfigPath))
-      ) {
-        reloadConfig(path);
-      }
-    });
 }

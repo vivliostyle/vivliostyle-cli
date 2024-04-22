@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import cheerio from 'cheerio';
 import fs from 'fs';
+import { createRequire } from 'node:module';
 import { pathToFileURL } from 'url';
 import { getExecutableBrowserPath } from '../browser.js';
 import {
@@ -223,6 +224,8 @@ const DEFAULT_ASSET_EXTENSIONS = [
   'woff2',
 ];
 
+const require = createRequire(import.meta.url);
+
 export function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) && +val > 0 ? +val * 1000 : DEFAULT_TIMEOUT;
 }
@@ -390,7 +393,13 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
         jsonRaw = fs.readFileSync(configPath, 'utf8');
         config = JSON.parse(jsonRaw);
       } else {
-        config = (await import(pathToFileURL(configPath).href)).default;
+        // Clear require cache to reload CJS config files
+        delete require.cache[require.resolve(configPath)];
+        const url = pathToFileURL(configPath);
+        // Invalidate cache for ESM config files
+        // https://github.com/nodejs/node/issues/49442
+        url.search = `version=${Date.now()}`;
+        config = (await import(url.href)).default;
       }
     } catch (error) {
       const thrownError = error as Error;
