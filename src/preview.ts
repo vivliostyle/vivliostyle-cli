@@ -21,6 +21,7 @@ import { prepareServer } from './server.js';
 import {
   cwd,
   debug,
+  gracefulError,
   isUrlString,
   logSuccess,
   logUpdate,
@@ -196,46 +197,44 @@ export async function preview(cliFlags: PreviewCliFlags) {
   // note: runExitHandlers() is not necessary here
   stopLogging('Up and running ([ctrl+c] to quit)', '🚀');
 
-  function reloadConfig(path: string) {
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-      const stopLogging = startLogging(
-        `Config file change detected. Reloading ${path}`,
-      );
-      closePreview?.();
-      // reload vivliostyle config
-      const loadedConf = await collectVivliostyleConfig(cliFlags);
-      const { vivliostyleConfig } = loadedConf;
-      config = await mergeConfig(cliFlags, vivliostyleConfig?.[0], context);
-      // build artifacts
-      if (config.manifestPath) {
-        await prepareThemeDirectory(config);
-        await compile(config);
-        await copyAssets(config);
-      }
-      await openPreview();
-      logSuccess(`Reloaded ${path}`);
-      stopLogging();
-    }, 2000);
+  async function reloadConfig(path: string) {
+    const stopLogging = startLogging(
+      `Config file change detected. Reloading ${path}`,
+    );
+    closePreview?.();
+    // reload vivliostyle config
+    const loadedConf = await collectVivliostyleConfig(cliFlags);
+    const { vivliostyleConfig } = loadedConf;
+    config = await mergeConfig(cliFlags, vivliostyleConfig?.[0], context);
+    // build artifacts
+    if (config.manifestPath) {
+      await prepareThemeDirectory(config);
+      await compile(config);
+      await copyAssets(config);
+    }
+    await openPreview();
+    logSuccess(`Reloaded ${path}`);
+    stopLogging();
   }
 
-  function handleChangeEvent(path: string) {
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-      const stopLogging = startLogging(`Rebuilding ${path}`);
-      // build artifacts
-      if (config.manifestPath) {
-        await prepareThemeDirectory(config);
-        await compile(config);
-        await copyAssets(config);
-      }
-      reload?.();
-      logSuccess(`Built ${path}`);
-      stopLogging();
-    }, 2000);
+  async function rebuildFile(path: string) {
+    const stopLogging = startLogging(`Rebuilding ${path}`);
+    // build artifacts
+    if (config.manifestPath) {
+      await prepareThemeDirectory(config);
+      await compile(config);
+      await copyAssets(config);
+    }
+    reload?.();
+    logSuccess(`Built ${path}`);
+    stopLogging();
   }
 
   function handleFileChange(event: unknown, path: string) {
+    const handleError = (error: Error) => {
+      console.log(); // print newline
+      gracefulError(error);
+    };
     if (
       pathEquals(
         upath.join(config.entryContextDir, path),
@@ -243,12 +242,14 @@ export async function preview(cliFlags: PreviewCliFlags) {
       ) ||
       /\.(md|markdown|html?|xhtml|xht|css|jpe?g|png|gif|svg)$/i.test(path)
     ) {
-      handleChangeEvent(path);
+      clearTimeout(timer);
+      timer = setTimeout(() => rebuildFile(path).catch(handleError), 2000);
     } else if (
       vivliostyleConfigPath &&
       pathEquals(path, upath.basename(vivliostyleConfigPath))
     ) {
-      reloadConfig(path);
+      clearTimeout(timer);
+      timer = setTimeout(() => reloadConfig(path).catch(handleError), 2000);
     }
   }
 }
