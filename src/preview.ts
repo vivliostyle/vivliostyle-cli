@@ -249,7 +249,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
       pathEquals(path, upath.basename(vivliostyleConfigPath))
     ) {
       clearTimeout(timer);
-      timer = setTimeout(() => reloadConfig(path).catch(handleError), 2000);
+      timer = setTimeout(() => reloadConfig(path).catch(handleError), 0);
     }
   }
 }
