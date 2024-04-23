@@ -9,6 +9,7 @@ import { Options as GlobbyOptions, globby } from 'globby';
 import gitIgnore, { Ignore } from 'ignore';
 import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
+import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import util from 'node:util';
 import oraConstructor from 'ora';
@@ -55,11 +56,28 @@ export function runExitHandlers() {
 
 const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
 exitSignals.forEach((sig) => {
-  process.on(sig, (code: number) => {
+  process.on(sig, () => {
     runExitHandlers();
-    process.exit(code);
+    if (sig !== 'exit') {
+      process.exit(1);
+    }
   });
 });
+
+if (process.platform === 'win32') {
+  // Windows does not support signals, so use readline interface
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  rl.on('SIGINT', () => {
+    runExitHandlers();
+    process.exit(1);
+  });
+  beforeExitHandlers.push(() => {
+    rl.close();
+  });
+}
 
 /**
  * 0: silent

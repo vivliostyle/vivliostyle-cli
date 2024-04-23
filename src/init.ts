@@ -18,6 +18,7 @@ export async function init(cliFlags: InitCliFlags) {
   const vivliostyleConfigPath = upath.join(cwd, 'vivliostyle.config.js');
 
   if (fs.existsSync(vivliostyleConfigPath)) {
+    runExitHandlers();
     return log(
       `${chalk.yellow('vivliostyle.config.js already exists. aborting.')}`,
     );
