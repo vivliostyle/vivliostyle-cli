@@ -89,6 +89,7 @@ export interface ContentsEntry {
   rel: 'contents';
   title?: string;
   themes: ParsedTheme[];
+  source?: undefined;
   target: string;
   pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
   pageCounterReset?: number;
@@ -98,6 +99,7 @@ export interface CoverEntry {
   rel: 'cover';
   title?: string;
   themes: ParsedTheme[];
+  source?: undefined;
   target: string;
   coverImageSrc: string;
   coverImageAlt: string;

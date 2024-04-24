@@ -7,7 +7,6 @@ import {
 } from './browser.js';
 import {
   CliFlags,
-  ManuscriptEntry,
   collectVivliostyleConfig,
   mergeConfig,
 } from './input/config.js';
@@ -126,10 +125,8 @@ export async function preview(cliFlags: PreviewCliFlags) {
           if (
             config.entries.length &&
             /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
-            !config.entries.some(
-              (entry) =>
-                entry.rel !== 'contents' &&
-                pathEquals(path, (entry as ManuscriptEntry).source),
+            config.entries.every(
+              (entry) => !entry.source || !pathEquals(path, entry.source),
             )
           ) {
             return true; // ignore md or html files not in entries source
