@@ -122,19 +122,17 @@ export async function getStructuredSectionFromHtml(
     }
     const [head, ...tail] = headers;
     const section = head.parentElement!;
+    const id = head.id || section.id;
     let i = tail.findIndex((s) => !section.contains(s));
     i = i === -1 ? tail.length : i;
     return [
       {
         headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
-        href:
-          href && head.id
-            ? `${href}#${encodeURIComponent(head.id)}`
-            : undefined,
+        href: href && id ? `${href}#${encodeURIComponent(id)}` : undefined,
         level: /^h[1-6]$/i.test(head.tagName)
           ? Number(head.tagName.slice(1))
           : undefined,
-        id: head.id || undefined,
+        id: id || undefined,
         children: traverse(tail.slice(0, i)),
       },
       ...traverse(tail.slice(i)),
