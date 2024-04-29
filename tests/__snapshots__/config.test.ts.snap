@@ -564,7 +564,7 @@ Object {
     },
     Object {
       "rel": "contents",
-      "sectionDepth": 0,
+      "sectionDepth": 6,
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "themes": Array [
         Object {
@@ -573,7 +573,7 @@ Object {
           "type": "uri",
         },
       ],
-      "title": "Table of Contents",
+      "title": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
         "transformDocumentListItem": undefined,
@@ -722,7 +722,7 @@ Object {
     },
     Object {
       "rel": "contents",
-      "sectionDepth": 0,
+      "sectionDepth": 6,
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "themes": Array [
         Object {
@@ -733,7 +733,7 @@ Object {
           "type": "package",
         },
       ],
-      "title": "Table of Contents",
+      "title": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
         "transformDocumentListItem": undefined,
@@ -1049,7 +1049,7 @@ Object {
     },
     Object {
       "rel": "contents",
-      "sectionDepth": 0,
+      "sectionDepth": 6,
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "themes": Array [
         Object {
@@ -1060,7 +1060,7 @@ Object {
           "type": "package",
         },
       ],
-      "title": "Table of Contents",
+      "title": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
         "transformDocumentListItem": undefined,

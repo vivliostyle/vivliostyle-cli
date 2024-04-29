@@ -23,7 +23,11 @@ module.exports = {
   size: 'size',
   pressReady: true,
   language: 'language',
-  toc: './toc.html',
+  toc: {
+    title: 'TOC',
+    htmlPath: './toc.html',
+    sectionDepth: 6,
+  },
   cover: {
     src: './cover.png',
     name: 'Cover image alt',

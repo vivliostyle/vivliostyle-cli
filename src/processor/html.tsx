@@ -128,11 +128,11 @@ export async function getStructuredSectionFromHtml(
     return [
       {
         headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
-        href: href && id ? `${href}#${encodeURIComponent(id)}` : undefined,
-        level: /^h[1-6]$/i.test(head.tagName)
-          ? Number(head.tagName.slice(1))
-          : undefined,
-        id: id || undefined,
+        ...(href && id && { href: `${href}#${encodeURIComponent(id)}` }),
+        ...(/^h[1-6]$/i.test(head.tagName) && {
+          level: Number(head.tagName.slice(1)),
+        }),
+        ...(id && { id }),
         children: traverse(tail.slice(0, i)),
       },
       ...traverse(tail.slice(i)),
@@ -199,7 +199,11 @@ export const defaultTocTransform = {
       const { headingText, href, level } = node;
       return (
         <li data-section-level={level}>
-          {href ? <a {...{ href }}>{headingText}</a> : headingText}
+          {href ? (
+            <a {...{ href }}>{headingText}</a>
+          ) : (
+            <span>{headingText}</span>
+          )}
           {children}
         </li>
       );
