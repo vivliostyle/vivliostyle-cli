@@ -4,8 +4,8 @@ import jsdom, {
 } from '@vivliostyle/jsdom';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
-import toHTML from 'hast-util-to-html';
-import h from 'hastscript';
+import { toHtml } from 'hast-util-to-html';
+import { h } from 'hastscript';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
@@ -176,28 +176,25 @@ ${
 };
 
 export const defaultTocNodeRenderer = {
-  docList: (_nodeList: StructuredDocument[]) => (children: any[]) => {
-    return h('ol', ...children);
+  docList: (_nodeList: StructuredDocument[]) => (children: any) => {
+    return h('ol', [children].flat());
   },
-  docListItem: (node: StructuredDocument) => (children: any[]) => {
+  docListItem: (node: StructuredDocument) => (children: any) => {
     const { href, title } = node;
-    return h('li', h('a', { href }, title), ...children);
+    return h('li', [h('a', { href }, title), ...[children].flat()]);
   },
   sectionList:
     (_nodeList: (StructuredSection & { href: string | null })[]) =>
-    (children: any[]) => {
-      return h('ol', ...children);
+    (children: any) => {
+      return h('ol', [children].flat());
     },
   sectionListItem:
-    (node: StructuredSection & { href: string | null }) =>
-    (children: any[]) => {
+    (node: StructuredSection & { href: string | null }) => (children: any) => {
       const { headingText, href, level } = node;
-      return h(
-        'li',
-        { dataSectionLevel: level },
+      return h('li', { dataSectionLevel: level }, [
         href ? h('a', { href }, headingText) : headingText,
-        ...children,
-      );
+        ...[children].flat(),
+      ]);
     },
 };
 
@@ -245,11 +242,12 @@ export async function generateTocHtml({
       };
     }),
   );
+  type Element = ReturnType<typeof h>;
   const docToc = docList(structure)(
     structure.map((doc) => {
       function renderSectionList(
         sections: StructuredSection[],
-      ): ReturnType<typeof h> {
+      ): Element | Element[] {
         const nodeList = sections.flatMap((section) => {
           if (section.level && section.level > sectionLevel) {
             return [];
@@ -265,43 +263,37 @@ export async function generateTocHtml({
         }
         return sectionList(nodeList)(
           nodeList.map((node) =>
-            sectionListItem(node)([renderSectionList(node.children)]),
+            sectionListItem(node)([renderSectionList(node.children)].flat()),
           ),
         );
       }
-      return docListItem(doc)([renderSectionList(doc.sections || [])]);
+      return docListItem(doc)([renderSectionList(doc.sections || [])].flat());
     }),
   );
 
-  const toc = h(
-    'html',
-    { lang: language },
-    h(
-      'head',
-      ...[
-        h('meta', { charset: 'utf-8' }),
-        h('title', title ?? ''),
-        ...(() => {
-          const style = getTocHtmlStyle(styleOptions);
-          return style ? [h('style', getTocHtmlStyle(styleOptions))] : [];
-        })(),
-        h('link', {
-          href: encodeURI(upath.relative(distDir, manifestPath)),
-          rel: 'publication',
-          type: 'application/ld+json',
-        }),
-        ...stylesheets.map((s) =>
-          h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
-        ),
-      ].filter((n) => !!n),
-    ),
-    h(
-      'body',
+  const toc = h('html', { lang: language }, [
+    h('head', [
+      h('meta', { charset: 'utf-8' }),
+      h('title', title ?? ''),
+      ...(() => {
+        const style = getTocHtmlStyle(styleOptions);
+        return style ? [h('style', style)] : [];
+      })(),
+      h('link', {
+        href: encodeURI(upath.relative(distDir, manifestPath)),
+        rel: 'publication',
+        type: 'application/ld+json',
+      }),
+      ...stylesheets.map((s) =>
+        h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
+      ),
+    ]),
+    h('body', [
       h('h1', title || ''),
-      h('nav#toc', { role: 'doc-toc' }, h('h2', tocTitle), docToc),
-    ),
-  );
-  return prettier.format(toHTML(toc), { parser: 'html' });
+      h('nav#toc', { role: 'doc-toc' }, [h('h2', tocTitle), docToc]),
+    ]),
+  ]);
+  return prettier.format(toHtml(toc), { parser: 'html' });
 }
 
 const getCoverHtmlStyle = ({
@@ -344,30 +336,27 @@ export function generateCoverHtml({
   stylesheets?: string[];
   styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
 }): string {
-  const cover = h(
-    'html',
-    { lang: language },
-    h(
-      'head',
-      ...[
-        h('meta', { charset: 'utf-8' }),
-        h('title', title ?? ''),
-        h('style', getCoverHtmlStyle(styleOptions)),
-        ...stylesheets.map((s) =>
-          h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
-        ),
-      ].filter((n) => !!n),
-    ),
-    h(
-      'body',
+  const cover = h('html', { lang: language }, [
+    h('head', [
+      h('meta', { charset: 'utf-8' }),
+      h('title', title ?? ''),
+      ...(() => {
+        const style = getCoverHtmlStyle(styleOptions);
+        return style ? [h('style', style)] : [];
+      })(),
+      ...stylesheets.map((s) =>
+        h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
+      ),
+    ]),
+    h('body', [
       h(
         'section',
         { role: 'region', ariaLabel: 'Cover' },
         h('img', { src: imageSrc, alt: imageAlt, role: 'doc-cover' }),
       ),
-    ),
-  );
-  return prettier.format(toHTML(cover), { parser: 'html' });
+    ]),
+  ]);
+  return prettier.format(toHtml(cover), { parser: 'html' });
 }
 
 export function processManuscriptHtml(
