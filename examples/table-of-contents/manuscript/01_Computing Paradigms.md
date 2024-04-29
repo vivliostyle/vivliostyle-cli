@@ -2,6 +2,8 @@
 title: Computing Paradigms
 ---
 
+# Computing Paradigms #
+
 ## Introduction to Computational Thinking
 
 Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cupiditate molestiae ut repellendus vero modi molestias perferendis fugiat laboriosam aperiam incidunt! Magnam non hic error aliquam ut velit, provident odit beatae!

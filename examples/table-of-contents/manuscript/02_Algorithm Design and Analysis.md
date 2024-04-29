@@ -2,6 +2,8 @@
 title: Algorithm Design and Analysis
 ---
 
+# Algorithm Design and Analysis #
+
 ## Introduction to Algorithms
 
 Lorem ipsum dolor sit amet consectetur adipisicing elit. Commodi fugit nisi atque aperiam sed magnam tenetur nostrum unde quas eveniet laudantium aut repellendus iure dolor esse, inventore itaque excepturi molestias?

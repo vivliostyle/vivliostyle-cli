@@ -2,6 +2,8 @@
 title: Systems and Architecture
 ---
 
+# Systems and Architecture #
+
 ## Computer Organization
 
 Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta ex officia totam dolorem iusto repudiandae aliquid nam harum voluptatibus id! Iste accusantium nemo quisquam autem, ex ipsum iusto nam alias.
