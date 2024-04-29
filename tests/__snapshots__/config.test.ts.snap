@@ -564,6 +564,7 @@ Object {
     },
     Object {
       "rel": "contents",
+      "sectionDepth": 0,
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "themes": Array [
         Object {
@@ -573,6 +574,12 @@ Object {
         },
       ],
       "title": "Table of Contents",
+      "transform": Object {
+        "transformDocumentList": undefined,
+        "transformDocumentListItem": undefined,
+        "transformSectionList": undefined,
+        "transformSectionListItem": undefined,
+      },
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -715,6 +722,7 @@ Object {
     },
     Object {
       "rel": "contents",
+      "sectionDepth": 0,
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "themes": Array [
         Object {
@@ -726,6 +734,12 @@ Object {
         },
       ],
       "title": "Table of Contents",
+      "transform": Object {
+        "transformDocumentList": undefined,
+        "transformDocumentListItem": undefined,
+        "transformSectionList": undefined,
+        "transformSectionListItem": undefined,
+      },
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -1035,6 +1049,7 @@ Object {
     },
     Object {
       "rel": "contents",
+      "sectionDepth": 0,
       "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/toc.html",
       "themes": Array [
         Object {
@@ -1046,6 +1061,12 @@ Object {
         },
       ],
       "title": "Table of Contents",
+      "transform": Object {
+        "transformDocumentList": undefined,
+        "transformDocumentListItem": undefined,
+        "transformSectionList": undefined,
+        "transformSectionListItem": undefined,
+      },
     },
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",

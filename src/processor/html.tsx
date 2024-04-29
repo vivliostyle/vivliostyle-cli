@@ -8,8 +8,12 @@ import { toHtml } from 'hast-util-to-html';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
-import { ManuscriptEntry } from '../input/config.js';
+import type { ManuscriptEntry } from '../input/config.js';
 import type { PublicationManifest } from '../schema/publication.schema.js';
+import {
+  StructuredDocument,
+  StructuredDocumentSection,
+} from '../schema/vivliostyle.js';
 import {
   DetailError,
   assertPubManifestSchema,
@@ -93,21 +97,10 @@ export async function getJsdomFromUrlOrFile(
   return { dom };
 }
 
-export interface StructuredDocument {
-  title: string;
-  href: string;
-  sections?: StructuredSection[];
-  children: StructuredDocument[];
-}
-
-export interface StructuredSection {
-  headingText: string;
-  level?: number;
-  id?: string;
-  children: StructuredSection[];
-}
-
-export async function getStructuredSectionFromHtml(htmlPath: string) {
+export async function getStructuredSectionFromHtml(
+  htmlPath: string,
+  href?: string,
+) {
   const { dom } = await getJsdomFromUrlOrFile(htmlPath);
   const { document } = dom.window;
   const allSectionHeaders = [
@@ -123,7 +116,7 @@ export async function getStructuredSectionFromHtml(htmlPath: string) {
       : 0;
   });
 
-  function traverse(headers: Element[]): StructuredSection[] {
+  function traverse(headers: Element[]): StructuredDocumentSection[] {
     if (headers.length === 0) {
       return [];
     }
@@ -134,6 +127,10 @@ export async function getStructuredSectionFromHtml(htmlPath: string) {
     return [
       {
         headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
+        href:
+          href && head.id
+            ? `${href}#${encodeURIComponent(head.id)}`
+            : undefined,
         level: /^h[1-6]$/i.test(head.tagName)
           ? Number(head.tagName.slice(1))
           : undefined,
@@ -176,15 +173,15 @@ ${
 
 type HastElement = import('hast').Element | import('hast').Root;
 
-export const defaultTocNodeRenderer = {
-  docList:
+export const defaultTocTransform = {
+  transformDocumentList:
     (_nodeList: StructuredDocument[]) =>
-    (children: any): HastElement => {
+    ({ children }: { children: any }): HastElement => {
       return <ol>{children}</ol>;
     },
-  docListItem:
+  transformDocumentListItem:
     (node: StructuredDocument) =>
-    (children: any): HastElement => {
+    ({ children }: { children: any }): HastElement => {
       const { href, title } = node;
       return (
         <li>
@@ -193,14 +190,14 @@ export const defaultTocNodeRenderer = {
         </li>
       );
     },
-  sectionList:
-    (_nodeList: (StructuredSection & { href: string | null })[]) =>
-    (children: any): HastElement => {
+  transformSectionList:
+    (_nodeList: StructuredDocumentSection[]) =>
+    ({ children }: { children: any }): HastElement => {
       return <ol>{children}</ol>;
     },
-  sectionListItem:
-    (node: StructuredSection & { href: string | null }) =>
-    (children: any): HastElement => {
+  transformSectionListItem:
+    (node: StructuredDocumentSection) =>
+    ({ children }: { children: any }): HastElement => {
       const { headingText, href, level } = node;
       return (
         <li data-section-level={level}>
@@ -218,10 +215,10 @@ export async function generateTocHtml({
   language,
   title,
   tocTitle,
-  sectionLevel = -1,
+  sectionDepth,
   stylesheets = [],
   styleOptions = {},
-  nodeRenderer = defaultTocNodeRenderer,
+  transform = {},
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   manifestPath: string;
@@ -229,23 +226,24 @@ export async function generateTocHtml({
   language?: string;
   title?: string;
   tocTitle: string;
-  sectionLevel?: number;
+  sectionDepth: number;
   stylesheets?: string[];
   styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
-  nodeRenderer?: typeof defaultTocNodeRenderer;
+  transform?: Partial<typeof defaultTocTransform>;
 }): Promise<string> {
   const {
-    docList = defaultTocNodeRenderer.docList,
-    docListItem = defaultTocNodeRenderer.docListItem,
-    sectionList = defaultTocNodeRenderer.sectionList,
-    sectionListItem = defaultTocNodeRenderer.sectionListItem,
-  } = nodeRenderer;
+    transformDocumentList = defaultTocTransform.transformDocumentList,
+    transformDocumentListItem = defaultTocTransform.transformDocumentListItem,
+    transformSectionList = defaultTocTransform.transformSectionList,
+    transformSectionListItem = defaultTocTransform.transformSectionListItem,
+  } = transform;
 
   const structure = await Promise.all(
-    entries.map(async (entry): Promise<StructuredDocument> => {
+    entries.map(async (entry) => {
+      const href = encodeURI(upath.relative(distDir, entry.target));
       const sections =
-        sectionLevel >= 1
-          ? await getStructuredSectionFromHtml(entry.target)
+        sectionDepth >= 1
+          ? await getStructuredSectionFromHtml(entry.target, href)
           : [];
       return {
         title: entry.title || upath.basename(entry.target, '.html'),
@@ -255,33 +253,33 @@ export async function generateTocHtml({
       };
     }),
   );
-  const docToc = docList(structure)(
-    structure.map((doc) => {
+  const docToc = transformDocumentList(structure)({
+    children: structure.map((doc) => {
       function renderSectionList(
-        sections: StructuredSection[],
+        sections: StructuredDocumentSection[],
       ): HastElement | HastElement[] {
         const nodeList = sections.flatMap((section) => {
-          if (section.level && section.level > sectionLevel) {
+          if (section.level && section.level > sectionDepth) {
             return [];
           }
-          const s = section as StructuredSection & { href: string | null };
-          s.href = section.id
-            ? `${doc.href}#${encodeURIComponent(section.id)}`
-            : null;
-          return s;
+          return section;
         });
         if (nodeList.length === 0) {
           return [];
         }
-        return sectionList(nodeList)(
-          nodeList.map((node) =>
-            sectionListItem(node)([renderSectionList(node.children)].flat()),
+        return transformSectionList(nodeList)({
+          children: nodeList.map((node) =>
+            transformSectionListItem(node)({
+              children: [renderSectionList(node.children)].flat(),
+            }),
           ),
-        );
+        });
       }
-      return docListItem(doc)([renderSectionList(doc.sections || [])].flat());
+      return transformDocumentListItem(doc)({
+        children: [renderSectionList(doc.sections || [])].flat(),
+      });
     }),
-  );
+  });
 
   const toc = (
     <html lang={language}>

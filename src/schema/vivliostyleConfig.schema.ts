@@ -5,18 +5,13 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type VivliostyleConfigSchema =
-  | VivliostyleConfigEntry
-  | [VivliostyleConfigEntry, ...VivliostyleConfigEntry[]];
+export type VivliostyleConfigSchema = VivliostyleConfigEntry | [VivliostyleConfigEntry, ...VivliostyleConfigEntry[]];
 export type Theme = string;
 export type Entry = string;
 export type ThemeSpecifier = Theme | ThemeObject | (Theme | ThemeObject)[];
-export type EntryObject =
-  | ContentsEntryObject
-  | CoverEntryObject
-  | ArticleEntryObject;
+export type EntryObject = ContentsEntryObject | CoverEntryObject | ArticleEntryObject;
 export type Output = string;
-export type BrowserType = 'chromium' | 'firefox' | 'webkit';
+export type BrowserType = "chromium" | "firefox" | "webkit";
 
 export interface VivliostyleConfigEntry {
   /**
@@ -45,7 +40,7 @@ export interface VivliostyleConfigEntry {
   output?: (Output | OutputObject)[] | Output | OutputObject;
   workspaceDir?: string;
   /**
-   * @deprecated Use `copyAsset.includes` instead
+   * @deprecated Use 'copyAsset.includes' instead
    */
   includeAssets?: Entry[] | Entry;
   /**
@@ -82,13 +77,54 @@ export interface VivliostyleConfigEntry {
    * Language
    */
   language?: string;
-  readingProgression?: 'ltr' | 'rtl';
+  readingProgression?: "ltr" | "rtl";
   /**
-   * Specify whether to generate a table of contents (ToC) document. If a string is set, the ToC document will be saved at that location. (default: index.html)
+   * Options about Table of Contents (ToC) documents.
    */
-  toc?: boolean | string;
+  toc?:
+    | boolean
+    | string
+    | {
+        /**
+         * Specify the title of the generated ToC document.
+         */
+        title?: string;
+        /**
+         * Specify the location where the generated ToC document will be saved. (default: index.html)
+         */
+        htmlPath?: string;
+        /**
+         * Specify the depth of the section to be included in the ToC document. (default: 0)
+         */
+        sectionDepth?: number;
+        /**
+         * Specify the transform function for the document list.
+         */
+        transformDocumentList?: (
+          nodeList: import("@vivliostyle/cli").StructuredDocument[]
+        ) => (props: {children: any}) => any;
+        /**
+         * Specify the transform function for the document list.
+         */
+        transformDocumentListItem?: (
+          node: import("@vivliostyle/cli").StructuredDocument
+        ) => (props: {children: any}) => any;
+        /**
+         * Specify the transform function for the section list.
+         */
+        transformSectionList?: (
+          nodeList: import("@vivliostyle/cli").StructuredDocumentSection[]
+        ) => (props: {children: any}) => any;
+        /**
+         * Specify the transform function for the section list item.
+         */
+        transformSectionListItem?: (
+          node: import("@vivliostyle/cli").StructuredDocumentSection
+        ) => (props: {children: any}) => any;
+        [k: string]: unknown;
+      };
   /**
-   * Specify the title of the generated ToC document.
+   * @deprecated Use 'toc.title' instead
    */
   tocTitle?: string;
   /**
@@ -195,20 +231,20 @@ export interface ArticleEntryObject {
   rel?: string | string[];
 }
 export interface ContentsEntryObject {
-  rel: 'contents';
+  rel: "contents";
   title?: string;
   theme?: ThemeSpecifier;
   /**
    * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
    */
-  pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
+  pageBreakBefore?: "left" | "right" | "recto" | "verso";
   /**
    * Reset the starting page number of this document by the specified integer. It is useful when you want to control page numbers when including a cover page.
    */
   pageCounterReset?: number;
 }
 export interface CoverEntryObject {
-  rel: 'cover';
+  rel: "cover";
   path?: string;
   title?: string;
   theme?: ThemeSpecifier;
@@ -217,7 +253,7 @@ export interface CoverEntryObject {
   /**
    * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
    */
-  pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
+  pageBreakBefore?: "left" | "right" | "recto" | "verso";
 }
 export interface OutputObject {
   /**
@@ -231,11 +267,11 @@ export interface OutputObject {
   /**
    * if docker is set, Vivliostyle try to render PDF on Docker container [local].
    */
-  renderMode?: 'local' | 'docker';
+  renderMode?: "local" | "docker";
   /**
    * Apply the process to generate PDF for printing.
    */
-  preflight?: 'press-ready' | 'press-ready-local';
+  preflight?: "press-ready" | "press-ready-local";
   /**
    * Options for preflight process (ex: gray-scale, enforce-outline). Please refer the document of press-ready for further information. https://github.com/vibranthq/press-ready
    */
