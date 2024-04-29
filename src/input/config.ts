@@ -525,6 +525,14 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     );
   }
 
+  if (configEntries.some((config) => config.tocTitle)) {
+    logWarn(
+      chalk.yellowBright(
+        "'tocTitle' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'toc.title' property instead.",
+      ),
+    );
+  }
+
   return {
     cliFlags,
     ...configEntry,
