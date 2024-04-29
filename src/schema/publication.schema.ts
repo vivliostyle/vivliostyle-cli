@@ -7,10 +7,10 @@
 
 export type PublicationContexts =
   | []
-  | ["https://schema.org"]
+  | ['https://schema.org']
   | [
-      "https://schema.org",
-      "https://www.w3.org/ns/pub-context",
+      'https://schema.org',
+      'https://www.w3.org/ns/pub-context',
       ...(
         | string
         | {
@@ -19,13 +19,13 @@ export type PublicationContexts =
             [k: string]: unknown;
           }
         | {
-            direction: "ltr" | "rtl";
+            direction: 'ltr' | 'rtl';
             language?: false;
             [k: string]: unknown;
           }
         | {
             language: BCP47LanguageTag;
-            direction: "ltr" | "rtl";
+            direction: 'ltr' | 'rtl';
             [k: string]: unknown;
           }
         | {
@@ -38,17 +38,27 @@ export type PublicationContexts =
 export type BCP47LanguageTag = string;
 export type URL = string;
 export type UniqueStrings = string | string[];
-export type ListsOfItemList = SchemaOrgItemListObject | SchemaOrgItemListObject[];
-export type LocalizableStringOrObject = string | (string | LocalizableStringObject)[] | LocalizableStringObject;
-export type Contributor = string | (string | ContributorObject)[] | ContributorObject;
+export type ListsOfItemList =
+  | SchemaOrgItemListObject
+  | SchemaOrgItemListObject[];
+export type LocalizableStringOrObject =
+  | string
+  | (string | LocalizableStringObject)[]
+  | LocalizableStringObject;
+export type Contributor =
+  | string
+  | (string | ContributorObject)[]
+  | ContributorObject;
 export type URLs = string | string[];
 export type Duration = string;
 export type Languages = BCP47LanguageTag | BCP47LanguageTag[];
 export type Dates = string;
-export type ResourceCategorization = (URL | PublicationLinks) | (URL | PublicationLinks)[];
+export type ResourceCategorization =
+  | (URL | PublicationLinks)
+  | (URL | PublicationLinks)[];
 
 export interface PublicationManifest {
-  "@context": PublicationContexts;
+  '@context': PublicationContexts;
   type?: string | string[];
   conformsTo: URL | URL[];
   id?: string;
@@ -80,11 +90,11 @@ export interface PublicationManifest {
   readingOrder?: ResourceCategorization;
   resources?: ResourceCategorization;
   links?: ResourceCategorization;
-  readingProgression?: "ltr" | "rtl";
+  readingProgression?: 'ltr' | 'rtl';
   [k: string]: unknown;
 }
 export interface SchemaOrgItemListObject {
-  type: "ItemList" | string[];
+  type: 'ItemList' | string[];
   itemListElement: string[];
   [k: string]: unknown;
 }
@@ -96,13 +106,13 @@ export interface LocalizableStringObject {
 export interface ContributorObject {
   name: LocalizableStringOrObject;
   id?: URL;
-  type?: ("Person" | "Organization") | string[];
+  type?: ('Person' | 'Organization') | string[];
   url?: URL;
   identifier?: string[];
   [k: string]: unknown;
 }
 export interface PublicationLinks {
-  type?: "LinkedResource" | string[];
+  type?: 'LinkedResource' | string[];
   url: URL;
   encodingFormat?: string;
   name?: LocalizableStringOrObject;
