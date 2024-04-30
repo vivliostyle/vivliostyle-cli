@@ -218,6 +218,7 @@ export interface ThemeObject {
 }
 export interface ArticleEntryObject {
   path: string;
+  output?: string;
   title?: string;
   theme?: ThemeSpecifier;
   encodingFormat?: string;
@@ -225,6 +226,8 @@ export interface ArticleEntryObject {
 }
 export interface ContentsEntryObject {
   rel: 'contents';
+  path?: string;
+  output?: string;
   title?: string;
   theme?: ThemeSpecifier;
   /**
@@ -239,6 +242,7 @@ export interface ContentsEntryObject {
 export interface CoverEntryObject {
   rel: 'cover';
   path?: string;
+  output?: string;
   title?: string;
   theme?: ThemeSpecifier;
   imageSrc?: string;
