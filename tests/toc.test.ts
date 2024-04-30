@@ -214,18 +214,6 @@ it('Write ToC by myself', async () => {
   ).toBe('../sample-theme.css');
 });
 
-it('check ToC overwrite violation', async () => {
-  const config = await getMergedConfig([
-    '-c',
-    resolveFixture('toc/toc.invalid.1.config.cjs'),
-  ]);
-  assertSingleItem(config);
-  assertManifestPath(config);
-  expect(async () => {
-    await compile(config);
-  }).rejects.toThrow();
-});
-
 it('works with sectionized document', async () => {
   const section = await getStructuredSectionFromHtml(
     resolveFixture('toc/manuscript/section.html'),

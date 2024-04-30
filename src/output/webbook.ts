@@ -305,6 +305,10 @@ export async function copyWebPublicationAssets({
       },
     )),
   ]);
+  // Exclude files that will overwrite alias targets
+  for (const alias of relExportAliases) {
+    allFiles.delete(alias.target);
+  }
 
   debug(
     'webbook files',

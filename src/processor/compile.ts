@@ -30,11 +30,11 @@ import {
   useTmpDirectory,
 } from '../util.js';
 import {
-  generateCoverHtml,
-  generateTocHtml,
-  isCovertHtml,
-  isTocHtml,
+  generateDefaultCoverHtml,
+  generateDefaultTocHtml,
+  processCoverHtml,
   processManuscriptHtml,
+  processTocHtml,
 } from './html.js';
 import { processMarkdown } from './markdown.js';
 import {
@@ -225,98 +225,107 @@ export async function compile({
   cover,
   vfmOptions,
 }: MergedConfig & WebPublicationManifestConfig): Promise<void> {
-  const generativeContentsEntry = entries.find(
-    (e): e is ContentsEntry => !('source' in e) && e.rel === 'contents',
-  );
-  if (
-    generativeContentsEntry &&
-    fs.existsSync(generativeContentsEntry.target) &&
-    !isTocHtml(generativeContentsEntry.target)
-  ) {
-    throw new Error(
-      `${generativeContentsEntry.target} is set as a destination to create a ToC HTML file, but there is already a document other than the ToC file in this location. Please move this file, or set a 'toc' option in vivliostyle.config.js to specify another destination for the ToC file.`,
-    );
-  }
-
-  const generativeCoverPageEntries = entries.filter(
-    (e): e is CoverEntry => !('source' in e) && e.rel === 'cover',
-  );
-  generativeCoverPageEntries.forEach(({ target }) => {
-    if (fs.existsSync(target) && !isCovertHtml(target)) {
-      throw new Error(
-        `${target} is set as a destination to create a cover page HTML file, but there is already a document other than the cover page file in this location.`,
-      );
-    }
-  });
-
-  const contentEntries = entries.filter(
+  const manuscriptEntries = entries.filter(
     (e): e is ManuscriptEntry => 'source' in e,
   );
-  for (const entry of contentEntries) {
-    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
+  const processedTocEntries: { entry: ContentsEntry; content: string }[] = [];
+  const processedCoverEntries: { entry: CoverEntry; content: string }[] = [];
+
+  for (const entry of entries) {
+    const { source, type } =
+      entry.rel === 'contents' || entry.rel === 'cover'
+        ? (entry as ContentsEntry | CoverEntry).template || {}
+        : (entry as ManuscriptEntry);
+    let content: string;
 
     // calculate style path
     const style = entry.themes.flatMap((theme) =>
       locateThemePath(theme, upath.dirname(entry.target)),
     );
-    if (entry.type === 'text/markdown') {
-      // compile markdown
-      const vfile = processMarkdown(entry.source, {
-        ...vfmOptions,
-        style,
-        title: entry.title,
-        language: language ?? undefined,
-      });
-      const compiledEntry = String(vfile);
-      fs.writeFileSync(entry.target, compiledEntry);
-    } else if (
-      entry.type === 'text/html' ||
-      entry.type === 'application/xhtml+xml'
-    ) {
-      if (!pathEquals(entry.source, entry.target)) {
-        const html = processManuscriptHtml(entry.source, {
+
+    if (source && type) {
+      if (type === 'text/markdown') {
+        // compile markdown
+        const vfile = processMarkdown(source, {
+          ...vfmOptions,
           style,
           title: entry.title,
-          contentType: entry.type,
+          language: language ?? undefined,
+        });
+        content = String(vfile);
+      } else if (type === 'text/html' || type === 'application/xhtml+xml') {
+        content = fs.readFileSync(source, 'utf8');
+        content = processManuscriptHtml(content, {
+          style,
+          title: entry.title,
+          contentType: type,
           language,
         });
-        fs.writeFileSync(entry.target, html);
+      } else {
+        if (!pathEquals(source, entry.target)) {
+          await copy(source, entry.target);
+        }
+        continue;
       }
+    } else if (entry.rel === 'contents') {
+      content = generateDefaultTocHtml({
+        language,
+        title,
+      });
+      content = processManuscriptHtml(content, {
+        style,
+        title,
+        contentType: 'text/html',
+        language,
+      });
+    } else if (entry.rel === 'cover') {
+      content = generateDefaultCoverHtml({ language, title: entry.title });
+      content = processManuscriptHtml(content, {
+        style,
+        title: entry.title,
+        contentType: 'text/html',
+        language,
+      });
     } else {
-      if (!pathEquals(entry.source, entry.target)) {
-        await copy(entry.source, entry.target);
-      }
+      continue;
+    }
+
+    if (entry.rel === 'contents') {
+      processedTocEntries.push({
+        entry: entry as ContentsEntry,
+        content,
+      });
+      continue;
+    } else if (entry.rel === 'cover') {
+      processedCoverEntries.push({
+        entry: entry as CoverEntry,
+        content,
+      });
+      continue;
+    }
+
+    if (!source || !pathEquals(source, entry.target)) {
+      fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
+      fs.writeFileSync(entry.target, content);
     }
   }
 
-  // generate toc
-  if (generativeContentsEntry) {
-    const entry = generativeContentsEntry;
-    const stylesheets = entry.themes.flatMap((theme) =>
-      locateThemePath(theme, upath.dirname(entry.target)),
-    );
-    const tocString = await generateTocHtml({
-      entries: contentEntries,
+  for (const { entry, content } of processedTocEntries) {
+    const transformedContent = await processTocHtml(content, {
+      entries: manuscriptEntries,
       manifestPath,
       distDir: upath.dirname(entry.target),
-      language,
-      title,
       tocTitle: entry.title,
       sectionDepth: entry.sectionDepth,
-      stylesheets,
       styleOptions: entry,
       transform: entry.transform,
     });
     fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
-    fs.writeFileSync(entry.target, tocString);
+    fs.writeFileSync(entry.target, transformedContent);
   }
 
-  // generate cover
-  for (const entry of generativeCoverPageEntries) {
-    const stylesheets = entry.themes.flatMap((theme) =>
-      locateThemePath(theme, upath.dirname(entry.target)),
-    );
-    const coverHtml = generateCoverHtml({
+  for (const { entry, content } of processedCoverEntries) {
+    const transformedContent = await processCoverHtml(content, {
       imageSrc: upath.relative(
         upath.join(
           entryContextDir,
@@ -326,13 +335,10 @@ export async function compile({
         entry.coverImageSrc,
       ),
       imageAlt: entry.coverImageAlt,
-      language,
-      title: entry.title,
-      stylesheets,
       styleOptions: entry,
     });
     fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
-    fs.writeFileSync(entry.target, coverHtml, 'utf8');
+    fs.writeFileSync(entry.target, transformedContent);
   }
 
   // generate manifest
