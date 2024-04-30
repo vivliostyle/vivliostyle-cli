@@ -232,33 +232,42 @@ it('works with sectionized document', async () => {
   );
   expect(section).toEqual([
     {
-      headingText: 'H1 content',
+      headingHtml: 'H1',
+      headingText: 'H1',
       level: 1,
       children: [
         {
-          headingText: 'H2',
+          headingHtml: expect.stringMatching(
+            /^\s*<span>H2<\/span>\s*<span>content<\/span>\s*$/,
+          ),
+          headingText: 'H2 content',
           level: 2,
           id: 'h2',
           children: [
             {
+              headingHtml: 'H3',
               headingText: 'H3',
               level: 3,
               id: '#',
               children: [
                 {
+                  headingHtml: 'Nested',
                   headingText: 'Nested',
                   level: 1,
                   children: [],
                 },
                 {
+                  headingHtml: 'H4',
                   headingText: 'H4',
                   level: 4,
                   children: [
                     {
+                      headingHtml: 'H5',
                       headingText: 'H5',
                       level: 5,
                       children: [
                         {
+                          headingHtml: 'H6',
                           headingText: 'H6',
                           level: 6,
                           children: [],
@@ -274,7 +283,8 @@ it('works with sectionized document', async () => {
       ],
     },
     {
-      headingText: 'Another H2',
+      headingHtml: 'Another H2',
+      headingText: 'Another H2XSS',
       level: 2,
       children: [],
     },
@@ -320,7 +330,7 @@ it('generate toc with a sectionDepth config', async () => {
     expect(ol.children).toHaveLength(1);
     const li2 = ol.querySelector('li')!;
     expect(li2.dataset.sectionLevel).toBe('1');
-    expect(li2.innerHTML).toBe('<span>H1 content</span>');
+    expect(li2.innerHTML).toBe('<span>H1</span>');
     expect(li2.id).toBeFalsy();
   }
 
@@ -333,12 +343,14 @@ it('generate toc with a sectionDepth config', async () => {
       ),
     );
     const test = [
-      ['ol > li:nth-child(1)', 1, '<span>H1 content</span>'],
+      ['ol > li:nth-child(1)', 1, '<span>H1</span>'],
       ['ol > li:nth-child(2)', 2, '<span>Another H2</span>'],
       [
         'ol > li:nth-child(1) > ol > li:nth-child(1)',
         2,
-        '<a href="section.html#h2">H2</a>',
+        expect.stringMatching(
+          /^\s*<a href="section\.html#h2">\s*<span>H2<\/span>\s*<span>content<\/span>\s*<\/a>\s*$/,
+        ),
       ],
       [
         'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1)',
@@ -372,7 +384,7 @@ it('generate toc with a sectionDepth config', async () => {
       );
       expect(node).toBeTruthy();
       expect(node!.dataset.sectionLevel).toBe(`${level}`);
-      expect(node!.children.item(0)!.outerHTML).toBe(text);
+      expect(node!.children.item(0)!.outerHTML).toStrictEqual(text);
     }
   }
 });
@@ -419,7 +431,7 @@ it('generate toc with custom transform functions', async () => {
   const secListItem1 = secList.children.item(0) as HTMLElement;
   expect(secListItem1.className).toBe('sec-list-item');
   expect(JSON.parse(secListItem1.dataset.content!)).toEqual({
-    headingText: 'H1 content',
+    headingText: 'H1',
     level: 1,
   });
   expect(JSON.parse(secListItem1.dataset.children!)).toEqual(
@@ -430,7 +442,7 @@ it('generate toc with custom transform functions', async () => {
     .item(0)!
     .children.item(0) as HTMLElement;
   expect(JSON.parse(secListItem2.dataset.content!)).toEqual({
-    headingText: 'H2',
+    headingText: 'H2 content',
     href: 'section.html#h2',
     id: 'h2',
     level: 2,

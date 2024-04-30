@@ -15,6 +15,7 @@ export type StructuredDocument = {
 };
 
 export type StructuredDocumentSection = {
+  headingHtml: string;
   headingText: string;
   href?: string;
   level?: number;

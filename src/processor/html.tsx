@@ -4,6 +4,7 @@ import jsdom, {
 } from '@vivliostyle/jsdom';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
+import DOMPurify from 'dompurify';
 import { toHtml } from 'hast-util-to-html';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -54,6 +55,8 @@ virtualConsole.on('jsdomError', (error) => {
   );
 });
 /* c8 ignore end */
+
+export const htmlPurify = DOMPurify(new JSDOM('').window);
 
 export class ResourceLoader extends BaseResourceLoader {
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();
@@ -127,6 +130,7 @@ export async function getStructuredSectionFromHtml(
     i = i === -1 ? tail.length : i;
     return [
       {
+        headingHtml: htmlPurify.sanitize(head.innerHTML),
         headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
         ...(href && id && { href: `${href}#${encodeURIComponent(id)}` }),
         ...(/^h[1-6]$/i.test(head.tagName) && {
@@ -196,13 +200,17 @@ export const defaultTocTransform = {
   transformSectionListItem:
     (node: StructuredDocumentSection) =>
     ({ children }: { children: any }): HastElement => {
-      const { headingText, href, level } = node;
+      const { headingHtml, href, level } = node;
+      const headingContent = {
+        type: 'raw',
+        value: headingHtml,
+      };
       return (
         <li data-section-level={level}>
           {href ? (
-            <a {...{ href }}>{headingText}</a>
+            <a {...{ href }}>{headingContent}</a>
           ) : (
-            <span>{headingText}</span>
+            <span>{headingContent}</span>
           )}
           {children}
         </li>
@@ -310,7 +318,9 @@ export async function generateTocHtml({
       </body>
     </html>
   );
-  return prettier.format(toHtml(toc), { parser: 'html' });
+  return prettier.format(toHtml(toc, { allowDangerousHtml: true }), {
+    parser: 'html',
+  });
 }
 
 const getCoverHtmlStyle = ({
@@ -373,7 +383,9 @@ export function generateCoverHtml({
       </body>
     </html>
   );
-  return prettier.format(toHtml(cover), { parser: 'html' });
+  return prettier.format(toHtml(cover, { allowDangerousHtml: true }), {
+    parser: 'html',
+  });
 }
 
 export function processManuscriptHtml(
