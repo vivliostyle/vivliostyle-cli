@@ -543,6 +543,7 @@ export async function mergeConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfigEntry | undefined,
   context: string,
+  prevConfig?: MergedConfig,
 ): Promise<MergedConfig> {
   debug('context directory', context);
   debug('cliFlags', cliFlags);
@@ -807,8 +808,14 @@ export async function mergeConfig<T extends CliFlags>(
     );
   }
   const parsedConfig = cliFlags.input
-    ? await composeSingleInputConfig(commonOpts, cliFlags, config)
-    : await composeProjectConfig(commonOpts, cliFlags, config, context);
+    ? await composeSingleInputConfig(commonOpts, cliFlags, config, prevConfig)
+    : await composeProjectConfig(
+        commonOpts,
+        cliFlags,
+        config,
+        context,
+        prevConfig,
+      );
   debug('parsedConfig', JSON.stringify(parsedConfig, null, 2));
   return parsedConfig;
 }
@@ -830,6 +837,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
   otherConfig: CommonOpts,
   cliFlags: T,
   config: VivliostyleConfigEntry | undefined,
+  prevConfig?: MergedConfig,
 ): Promise<MergedConfig> {
   debug('entering single entry config mode');
 
@@ -860,14 +868,24 @@ async function composeSingleInputConfig<T extends CliFlags>(
       otherConfig.entryContextDir,
       upath.dirname(sourcePath),
     );
-    const target = upath
-      .resolve(
-        workspaceDir,
-        relDir,
-        `${tmpPrefix}${upath.basename(sourcePath)}`,
-      )
-      .replace(/\.md$/, '.html');
-    await touchTmpFile(target);
+
+    let target: string;
+    if (prevConfig) {
+      const prevEntry = prevConfig.entries.find((e) => e.source === sourcePath);
+      if (!prevEntry) {
+        throw new Error('Failed to reload config');
+      }
+      target = prevEntry.target;
+    } else {
+      target = upath
+        .resolve(
+          workspaceDir,
+          relDir,
+          `${tmpPrefix}${upath.basename(sourcePath)}`,
+        )
+        .replace(/\.md$/, '.html');
+      await touchTmpFile(target);
+    }
     const themes = metadata.themes ?? [...otherConfig.rootThemes];
     themes.forEach((t) => otherConfig.themeIndexes.add(t));
     entries.push({
@@ -947,6 +965,7 @@ async function composeProjectConfig<T extends CliFlags>(
   cliFlags: T,
   config: VivliostyleConfigEntry | undefined,
   context: string,
+  prevConfig?: MergedConfig,
 ): Promise<MergedConfig> {
   debug('entering project config mode');
 
