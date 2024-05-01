@@ -107,25 +107,13 @@ export interface VivliostyleConfigEntry {
          */
         transformDocumentList?: (
           nodeList: import('@vivliostyle/cli').StructuredDocument[],
-        ) => (props: { children: any }) => any;
-        /**
-         * Specify the transform function for the document list.
-         */
-        transformDocumentListItem?: (
-          node: import('@vivliostyle/cli').StructuredDocument,
-        ) => (props: { children: any }) => any;
+        ) => (propsList: { children: any }[]) => any;
         /**
          * Specify the transform function for the section list.
          */
         transformSectionList?: (
           nodeList: import('@vivliostyle/cli').StructuredDocumentSection[],
-        ) => (props: { children: any }) => any;
-        /**
-         * Specify the transform function for the section list item.
-         */
-        transformSectionListItem?: (
-          node: import('@vivliostyle/cli').StructuredDocumentSection,
-        ) => (props: { children: any }) => any;
+        ) => (propsList: { children: any }[]) => any;
         [k: string]: unknown;
       };
   /**

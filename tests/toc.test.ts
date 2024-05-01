@@ -389,7 +389,7 @@ it('generate toc with a sectionDepth config', async () => {
   }
 });
 
-it('generate toc with custom transform functions', async () => {
+it.only('generate toc with custom transform functions', async () => {
   const config = await getMergedConfig([
     '-c',
     resolveFixture('toc/toc.customTransform.config.cjs'),

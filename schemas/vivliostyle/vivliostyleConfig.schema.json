@@ -321,22 +321,12 @@
                 "transformDocumentList": {
                   "description": "Specify the transform function for the document list.",
                   "instanceOf": "Function",
-                  "tsType": "(nodeList: import('@vivliostyle/cli').StructuredDocument[]) => (props: { children: any }) => any"
-                },
-                "transformDocumentListItem": {
-                  "description": "Specify the transform function for the document list.",
-                  "instanceOf": "Function",
-                  "tsType": "(node: import('@vivliostyle/cli').StructuredDocument) => (props: { children: any }) => any"
+                  "tsType": "(nodeList: import('@vivliostyle/cli').StructuredDocument[]) => (propsList: { children: any }[]) => any"
                 },
                 "transformSectionList": {
                   "description": "Specify the transform function for the section list.",
                   "instanceOf": "Function",
-                  "tsType": "(nodeList: import('@vivliostyle/cli').StructuredDocumentSection[]) => (props: { children: any }) => any"
-                },
-                "transformSectionListItem": {
-                  "description": "Specify the transform function for the section list item.",
-                  "instanceOf": "Function",
-                  "tsType": "(node: import('@vivliostyle/cli').StructuredDocumentSection) => (props: { children: any }) => any"
+                  "tsType": "(nodeList: import('@vivliostyle/cli').StructuredDocumentSection[]) => (propsList: { children: any }[]) => any"
                 }
               },
               "required": []

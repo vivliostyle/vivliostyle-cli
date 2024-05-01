@@ -98,18 +98,14 @@ export interface ContentsEntry {
   sectionDepth: number;
   transform: {
     transformDocumentList:
-      | ((nodeList: StructuredDocument[]) => (props: { children: any }) => any)
-      | undefined;
-    transformDocumentListItem:
-      | ((node: StructuredDocument) => (props: { children: any }) => any)
+      | ((
+          nodeList: StructuredDocument[],
+        ) => (propsList: { children: any }[]) => any)
       | undefined;
     transformSectionList:
       | ((
           nodeList: StructuredDocumentSection[],
-        ) => (props: { children: any }) => any)
-      | undefined;
-    transformSectionListItem:
-      | ((node: StructuredDocumentSection) => (props: { children: any }) => any)
+        ) => (propsList: { children: any }[]) => any)
       | undefined;
   };
   pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';

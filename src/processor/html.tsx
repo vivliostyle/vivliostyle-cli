@@ -177,43 +177,47 @@ type HastElement = import('hast').Element | import('hast').Root;
 
 export const defaultTocTransform = {
   transformDocumentList:
-    (_nodeList: StructuredDocument[]) =>
-    ({ children }: { children: any }): HastElement => {
-      return <ol>{children}</ol>;
-    },
-  transformDocumentListItem:
-    (node: StructuredDocument) =>
-    ({ children }: { children: any }): HastElement => {
-      const { href, title } = node;
+    (nodeList: StructuredDocument[]) =>
+    (propsList: { children: any }[]): HastElement => {
       return (
-        <li>
-          <a {...{ href }}>{title}</a>
-          {children}
-        </li>
+        <ol>
+          {nodeList
+            .map((a, i) => [a, propsList[i]] as const)
+            .map(([{ href, title }, { children, ...otherProps }]) => (
+              <li {...otherProps}>
+                <a {...{ href }}>{title}</a>
+                {children}
+              </li>
+            ))}
+        </ol>
       );
     },
   transformSectionList:
-    (_nodeList: StructuredDocumentSection[]) =>
-    ({ children }: { children: any }): HastElement => {
-      return <ol>{children}</ol>;
-    },
-  transformSectionListItem:
-    (node: StructuredDocumentSection) =>
-    ({ children }: { children: any }): HastElement => {
-      const { headingHtml, href, level } = node;
-      const headingContent = {
-        type: 'raw',
-        value: headingHtml,
-      };
+    (nodeList: StructuredDocumentSection[]) =>
+    (propsList: { children: any }[]): HastElement => {
       return (
-        <li data-section-level={level}>
-          {href ? (
-            <a {...{ href }}>{headingContent}</a>
-          ) : (
-            <span>{headingContent}</span>
-          )}
-          {children}
-        </li>
+        <ol>
+          {nodeList
+            .map((a, i) => [a, propsList[i]] as const)
+            .map(
+              ([{ headingHtml, href, level }, { children, ...otherProps }]) => {
+                const headingContent = {
+                  type: 'raw',
+                  value: headingHtml,
+                };
+                return (
+                  <li {...otherProps} data-section-level={level}>
+                    {href ? (
+                      <a {...{ href }}>{headingContent}</a>
+                    ) : (
+                      <span>{headingContent}</span>
+                    )}
+                    {children}
+                  </li>
+                );
+              },
+            )}
+        </ol>
       );
     },
 };
@@ -243,9 +247,7 @@ export async function generateTocHtml({
 }): Promise<string> {
   const {
     transformDocumentList = defaultTocTransform.transformDocumentList,
-    transformDocumentListItem = defaultTocTransform.transformDocumentListItem,
     transformSectionList = defaultTocTransform.transformSectionList,
-    transformSectionListItem = defaultTocTransform.transformSectionListItem,
   } = transform;
 
   const structure = await Promise.all(
@@ -263,8 +265,8 @@ export async function generateTocHtml({
       };
     }),
   );
-  const docToc = transformDocumentList(structure)({
-    children: structure.map((doc) => {
+  const docToc = transformDocumentList(structure)(
+    structure.map((doc) => {
       function renderSectionList(
         sections: StructuredDocumentSection[],
       ): HastElement | HastElement[] {
@@ -277,19 +279,17 @@ export async function generateTocHtml({
         if (nodeList.length === 0) {
           return [];
         }
-        return transformSectionList(nodeList)({
-          children: nodeList.map((node) =>
-            transformSectionListItem(node)({
-              children: [renderSectionList(node.children)].flat(),
-            }),
-          ),
-        });
+        return transformSectionList(nodeList)(
+          nodeList.map((node) => ({
+            children: [renderSectionList(node.children || [])].flat(),
+          })),
+        );
       }
-      return transformDocumentListItem(doc)({
+      return {
         children: [renderSectionList(doc.sections || [])].flat(),
-      });
+      };
     }),
-  });
+  );
 
   const toc = (
     <html lang={language}>
