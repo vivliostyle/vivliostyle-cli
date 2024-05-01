@@ -173,28 +173,41 @@ ${
 `;
 };
 
-type HastElement = import('hast').Element | import('hast').Root;
+type HastElement = import('hast').ElementContent | import('hast').Root;
 
 export const defaultTocTransform = {
   transformDocumentList:
     (nodeList: StructuredDocument[]) =>
-    (propsList: { children: any }[]): HastElement => {
+    (propsList: { children: HastElement | HastElement[] }[]): HastElement => {
       return (
         <ol>
           {nodeList
             .map((a, i) => [a, propsList[i]] as const)
-            .map(([{ href, title }, { children, ...otherProps }]) => (
-              <li {...otherProps}>
-                <a {...{ href }}>{title}</a>
-                {children}
-              </li>
-            ))}
+            .flatMap(
+              ([{ href, title, sections }, { children, ...otherProps }]) => {
+                // don't display the document title if it has only one top-level H1 heading
+                if (sections?.length === 1 && sections[0].level === 1) {
+                  return [children].flat().flatMap((e) => {
+                    if (e.type === 'element' && e.tagName === 'ol') {
+                      return e.children;
+                    }
+                    return e;
+                  });
+                }
+                return (
+                  <li {...otherProps}>
+                    <a {...{ href }}>{title}</a>
+                    {children}
+                  </li>
+                );
+              },
+            )}
         </ol>
       );
     },
   transformSectionList:
     (nodeList: StructuredDocumentSection[]) =>
-    (propsList: { children: any }[]): HastElement => {
+    (propsList: { children: HastElement | HastElement[] }[]): HastElement => {
       return (
         <ol>
           {nodeList

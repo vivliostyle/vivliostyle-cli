@@ -2,7 +2,7 @@
 title: Systems and Architecture
 ---
 
-# Systems and Architecture #
+# Systems and Architecture
 
 ## Computer Organization
 

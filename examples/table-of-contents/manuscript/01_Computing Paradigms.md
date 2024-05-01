@@ -2,7 +2,7 @@
 title: Computing Paradigms
 ---
 
-# Computing Paradigms #
+# Computing Paradigms
 
 ## Introduction to Computational Thinking
 

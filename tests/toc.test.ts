@@ -280,13 +280,13 @@ it('works with sectionized document', async () => {
             },
           ],
         },
+        {
+          headingHtml: 'Another H2',
+          headingText: 'Another H2XSS',
+          level: 2,
+          children: [],
+        },
       ],
-    },
-    {
-      headingHtml: 'Another H2',
-      headingText: 'Another H2XSS',
-      level: 2,
-      children: [],
     },
   ]);
 });
@@ -322,16 +322,13 @@ it('generate toc with a sectionDepth config', async () => {
         'utf8',
       ),
     );
-    const li = tocHtml.window.document.querySelector(
+    const li = tocHtml.window.document.querySelector<HTMLElement>(
       'nav[role="doc-toc"] > ol > li',
     )!;
-    expect(li.children).toHaveLength(2);
-    const ol = li.querySelector('ol')!;
-    expect(ol.children).toHaveLength(1);
-    const li2 = ol.querySelector('li')!;
-    expect(li2.dataset.sectionLevel).toBe('1');
-    expect(li2.innerHTML).toBe('<span>H1</span>');
-    expect(li2.id).toBeFalsy();
+    expect(li.children).toHaveLength(1);
+    expect(li.dataset.sectionLevel).toBe('1');
+    expect(li.innerHTML).toBe('<span>H1</span>');
+    expect(li.id).toBeFalsy();
   }
 
   {
@@ -344,13 +341,17 @@ it('generate toc with a sectionDepth config', async () => {
     );
     const test = [
       ['ol > li:nth-child(1)', 1, '<span>H1</span>'],
-      ['ol > li:nth-child(2)', 2, '<span>Another H2</span>'],
       [
         'ol > li:nth-child(1) > ol > li:nth-child(1)',
         2,
         expect.stringMatching(
           /^\s*<a href="section\.html#h2">\s*<span>H2<\/span>\s*<span>content<\/span>\s*<\/a>\s*$/,
         ),
+      ],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(2)',
+        2,
+        '<span>Another H2</span>',
       ],
       [
         'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1)',
@@ -380,7 +381,7 @@ it('generate toc with a sectionDepth config', async () => {
     ];
     for (const [selector, level, text] of test) {
       const node = tocHtml.window.document.querySelector<HTMLElement>(
-        `[role="doc-toc"] > ol > li > ${selector}`,
+        `[role="doc-toc"] > ${selector}`,
       );
       expect(node).toBeTruthy();
       expect(node!.dataset.sectionLevel).toBe(`${level}`);
@@ -389,7 +390,7 @@ it('generate toc with a sectionDepth config', async () => {
   }
 });
 
-it.only('generate toc with custom transform functions', async () => {
+it('generate toc with custom transform functions', async () => {
   const config = await getMergedConfig([
     '-c',
     resolveFixture('toc/toc.customTransform.config.cjs'),
@@ -426,7 +427,7 @@ it.only('generate toc with custom transform functions', async () => {
 
   const secList = docListItem.children.item(0) as HTMLElement;
   expect(secList.className).toBe('sec-list');
-  expect(secList.dataset.nodeLength).toBe('2');
+  expect(secList.dataset.nodeLength).toBe('1');
 
   const secListItem1 = secList.children.item(0) as HTMLElement;
   expect(secListItem1.className).toBe('sec-list-item');
