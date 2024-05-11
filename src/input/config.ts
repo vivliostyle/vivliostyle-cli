@@ -995,9 +995,7 @@ async function composeProjectConfig<T extends CliFlags>(
       sectionDepth: c.sectionDepth ?? 0,
       transform: {
         transformDocumentList: c.transformDocumentList,
-        transformDocumentListItem: c.transformDocumentListItem,
         transformSectionList: c.transformSectionList,
-        transformSectionListItem: c.transformSectionListItem,
       },
     };
   })();

@@ -7,7 +7,7 @@ With the `toc` option, we can generate a file with a table of contents. The `toc
 - `title`: Specify the title of the generated ToC document. (default: Table of Contents)
 - `htmlPath`: Specify the location where the generated ToC document will be saved. (default: index.html)
 - `sectionDepth`: Specify the depth of the section to be included in the ToC document. (default: 0)
-- `transformDocumentList`, `transformDocumentListItem`, `transformSectionList`, `transformSectionListItem`: Specify the transform function to be used when generating the ToC document.
+- `transformDocumentList`, `transformSectionList`: Specify the transform function to be used when generating the ToC document.
 
 #### vivliostyle.config.js
 

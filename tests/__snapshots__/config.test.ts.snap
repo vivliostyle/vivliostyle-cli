@@ -576,9 +576,7 @@ Object {
       "title": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
-        "transformDocumentListItem": undefined,
         "transformSectionList": undefined,
-        "transformSectionListItem": undefined,
       },
     },
     Object {
@@ -736,9 +734,7 @@ Object {
       "title": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
-        "transformDocumentListItem": undefined,
         "transformSectionList": undefined,
-        "transformSectionListItem": undefined,
       },
     },
     Object {
@@ -1063,9 +1059,7 @@ Object {
       "title": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
-        "transformDocumentListItem": undefined,
         "transformSectionList": undefined,
-        "transformSectionListItem": undefined,
       },
     },
     Object {
