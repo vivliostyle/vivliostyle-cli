@@ -17,8 +17,8 @@ export type StructuredDocument = {
 export type StructuredDocumentSection = {
   headingHtml: string;
   headingText: string;
+  level: number;
   href?: string;
-  level?: number;
   id?: string;
   children: StructuredDocumentSection[];
 };

@@ -249,30 +249,30 @@ it('works with sectionized document', async () => {
               headingText: 'H3',
               level: 3,
               id: '#',
+              children: [],
+            },
+          ],
+        },
+        {
+          headingHtml: 'Nested',
+          headingText: 'Nested',
+          level: 2,
+          children: [
+            {
+              headingHtml: 'H4',
+              headingText: 'H4',
+              level: 4,
               children: [
                 {
-                  headingHtml: 'Nested',
-                  headingText: 'Nested',
-                  level: 1,
-                  children: [],
-                },
-                {
-                  headingHtml: 'H4',
-                  headingText: 'H4',
-                  level: 4,
+                  headingHtml: 'H5',
+                  headingText: 'H5',
+                  level: 5,
                   children: [
                     {
-                      headingHtml: 'H5',
-                      headingText: 'H5',
-                      level: 5,
-                      children: [
-                        {
-                          headingHtml: 'H6',
-                          headingText: 'H6',
-                          level: 6,
-                          children: [],
-                        },
-                      ],
+                      headingHtml: 'H6',
+                      headingText: 'H6',
+                      level: 6,
+                      children: [],
                     },
                   ],
                 },
@@ -349,34 +349,30 @@ it('generate toc with a sectionDepth config', async () => {
         ),
       ],
       [
-        'ol > li:nth-child(1) > ol > li:nth-child(2)',
-        2,
-        '<span>Another H2</span>',
-      ],
-      [
         'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1)',
         3,
         '<a href="section.html#%23">H3</a>',
       ],
+      ['ol > li:nth-child(1) > ol > li:nth-child(2)', 2, '<span>Nested</span>'],
       [
-        'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1)',
-        1,
-        '<span>Nested</span>',
-      ],
-      [
-        'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(2)',
+        'ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1)',
         4,
         '<span>H4</span>',
       ],
       [
-        'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1)',
+        'ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1) > ol > li:nth-child(1)',
         5,
         '<span>H5</span>',
       ],
       [
-        'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1) > ol > li:nth-child(1)',
+        'ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1)',
         6,
         '<span>H6</span>',
+      ],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(3)',
+        2,
+        '<span>Another H2</span>',
       ],
     ];
     for (const [selector, level, text] of test) {

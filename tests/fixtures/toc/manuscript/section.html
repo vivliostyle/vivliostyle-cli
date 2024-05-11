@@ -5,36 +5,27 @@
   </head>
   <body>
     <p>section</p>
+    <h1 id="">H1</h1>
+    <h2 id="h2">
+      <span>H2</span>
+      <span>content</span>
+    </h2>
     <section>
-      <h1 id="">H1</h1>
+      <hgroup>
+        <p></p>
+        <h3 id="#">H3</h3>
+      </hgroup>
       <section>
-        <h2 id="h2">
-          <span>H2</span>
-          <span>content</span>
-        </h2>
+        <h2>Nested</h2>
+      </section>
+      <h4>H4</h4>
+      <section>
+        <h5>H5</h5>
         <section>
-          <h3 id="#">H3</h3>
-          <section>
-            <section>
-              <section>
-                <h1>Nested</h1>
-              </section>
-            </section>
-          </section>
-          <section>
-            <h4>H4</h4>
-            <section>
-              <h5>H5</h5>
-              <section>
-                <h6>H6</h6>
-              </section>
-            </section>
-          </section>
+          <h6>H6</h6>
         </section>
       </section>
-      <section>
-        <h2>Another H2<script>XSS</script></h2>
-      </section>
     </section>
+    <h2>Another H2<script>XSS</script></h2>
   </body>
 </html>

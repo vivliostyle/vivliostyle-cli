@@ -106,10 +106,8 @@ export async function getStructuredSectionFromHtml(
 ) {
   const { dom } = await getJsdomFromUrlOrFile(htmlPath);
   const { document } = dom.window;
-  const allSectionHeaders = [
-    ...document.querySelectorAll(
-      'section > :is(h1, h2, h3, h4, h5, h6, hgroup):first-child',
-    ),
+  const allHeadings = [
+    ...document.querySelectorAll('h1, h2, h3, h4, h5, h6'),
   ].sort((a, b) => {
     const position = a.compareDocumentPosition(b);
     return position & 2 /* DOCUMENT_POSITION_PRECEDING */
@@ -126,23 +124,22 @@ export async function getStructuredSectionFromHtml(
     const [head, ...tail] = headers;
     const section = head.parentElement!;
     const id = head.id || section.id;
-    let i = tail.findIndex((s) => !section.contains(s));
+    const level = Number(head.tagName.slice(1));
+    let i = tail.findIndex((s) => Number(s.tagName.slice(1)) <= level);
     i = i === -1 ? tail.length : i;
     return [
       {
         headingHtml: htmlPurify.sanitize(head.innerHTML),
         headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
+        level,
         ...(href && id && { href: `${href}#${encodeURIComponent(id)}` }),
-        ...(/^h[1-6]$/i.test(head.tagName) && {
-          level: Number(head.tagName.slice(1)),
-        }),
         ...(id && { id }),
         children: traverse(tail.slice(0, i)),
       },
       ...traverse(tail.slice(i)),
     ];
   }
-  return traverse(allSectionHeaders);
+  return traverse(allHeadings);
 }
 
 const getTocHtmlStyle = ({
@@ -284,7 +281,7 @@ export async function generateTocHtml({
         sections: StructuredDocumentSection[],
       ): HastElement | HastElement[] {
         const nodeList = sections.flatMap((section) => {
-          if (section.level && section.level > sectionDepth) {
+          if (section.level > sectionDepth) {
             return [];
           }
           return section;
