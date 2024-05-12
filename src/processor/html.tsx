@@ -106,16 +106,20 @@ export async function getStructuredSectionFromHtml(
 ) {
   const { dom } = await getJsdomFromUrlOrFile(htmlPath);
   const { document } = dom.window;
-  const allHeadings = [
-    ...document.querySelectorAll('h1, h2, h3, h4, h5, h6'),
-  ].sort((a, b) => {
-    const position = a.compareDocumentPosition(b);
-    return position & 2 /* DOCUMENT_POSITION_PRECEDING */
-      ? 1
-      : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
-      ? -1
-      : 0;
-  });
+  const allHeadings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+    .filter((el) => {
+      // Exclude headings contained by blockquote
+      // TODO: Make customizable
+      return !el.matches('blockquote *');
+    })
+    .sort((a, b) => {
+      const position = a.compareDocumentPosition(b);
+      return position & 2 /* DOCUMENT_POSITION_PRECEDING */
+        ? 1
+        : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
+        ? -1
+        : 0;
+    });
 
   function traverse(headers: Element[]): StructuredDocumentSection[] {
     if (headers.length === 0) {
