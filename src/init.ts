@@ -53,7 +53,11 @@ const vivliostyleConfig = {
   //   },
   // ],
   // workspaceDir: '.vivliostyle', // directory which is saved intermediate files.
-  // toc: true, // whether generate and include ToC HTML or not, default to 'false'.
+  // toc: {
+  //   title: 'Table of Contents',
+  //   htmlPath: 'index.html',
+  //   sectionDepth: 3,
+  // },
   // cover: './cover.png', // cover image. default to undefined.
   // vfm: { // options of VFM processor
   //   replace: [ // specify replace handlers to modify HTML outputs
