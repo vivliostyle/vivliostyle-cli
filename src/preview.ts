@@ -216,6 +216,13 @@ export async function preview(cliFlags: PreviewCliFlags) {
 
   async function rebuildFile(path: string) {
     const stopLogging = startLogging(`Rebuilding ${path}`);
+    // update mergedConfig
+    config = await mergeConfig(
+      cliFlags,
+      vivliostyleConfig?.[0],
+      context,
+      config,
+    );
     // build artifacts
     if (config.manifestPath) {
       await prepareThemeDirectory(config);

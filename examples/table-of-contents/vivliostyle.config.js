@@ -3,18 +3,15 @@ module.exports = {
   author: 'spring-raining',
   language: 'en',
   size: 'A4',
-  theme: 'default-style.css',
   entry: [
-    './manuscript/prelude.md',
-    {
-      path: './manuscript/cadence.html',
-      encodingFormat: 'text/html',
-    },
-    {
-      path: './manuscript/finale.md',
-      theme: 'custom-style.css',
-    },
+    './manuscript/01_Computing Paradigms.md',
+    './manuscript/02_Algorithm Design and Analysis.md',
+    './manuscript/03_Systems and Architecture.md',
   ],
   output: 'draft.pdf',
-  toc: true,
+  toc: {
+    title: 'Table of Contents',
+    htmlPath: 'index.html',
+    sectionDepth: 4,
+  },
 };

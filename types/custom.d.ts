@@ -1,5 +1,3 @@
-declare module 'hastscript';
-
 declare type Without<T> = { [P in keyof T]?: never };
 type Tail<T extends any[]> = T extends [any, ...infer XS] ? XS : never;
 type Union<T extends any[]> = T extends [] ? {} : T[0] & Union<Tail<T>>;

@@ -45,7 +45,7 @@ export interface VivliostyleConfigEntry {
   output?: (Output | OutputObject)[] | Output | OutputObject;
   workspaceDir?: string;
   /**
-   * @deprecated Use `copyAsset.includes` instead
+   * @deprecated Use 'copyAsset.includes' instead
    */
   includeAssets?: Entry[] | Entry;
   /**
@@ -84,11 +84,40 @@ export interface VivliostyleConfigEntry {
   language?: string;
   readingProgression?: 'ltr' | 'rtl';
   /**
-   * Specify whether to generate a table of contents (ToC) document. If a string is set, the ToC document will be saved at that location. (default: index.html)
+   * Options about Table of Contents (ToC) documents.
    */
-  toc?: boolean | string;
+  toc?:
+    | boolean
+    | string
+    | {
+        /**
+         * Specify the title of the generated ToC document.
+         */
+        title?: string;
+        /**
+         * Specify the location where the generated ToC document will be saved. (default: index.html)
+         */
+        htmlPath?: string;
+        /**
+         * Specify the depth of the section to be included in the ToC document. (default: 0)
+         */
+        sectionDepth?: number;
+        /**
+         * Specify the transform function for the document list.
+         */
+        transformDocumentList?: (
+          nodeList: import('@vivliostyle/cli').StructuredDocument[],
+        ) => (propsList: { children: any }[]) => any;
+        /**
+         * Specify the transform function for the section list.
+         */
+        transformSectionList?: (
+          nodeList: import('@vivliostyle/cli').StructuredDocumentSection[],
+        ) => (propsList: { children: any }[]) => any;
+        [k: string]: unknown;
+      };
   /**
-   * Specify the title of the generated ToC document.
+   * @deprecated Use 'toc.title' instead
    */
   tocTitle?: string;
   /**

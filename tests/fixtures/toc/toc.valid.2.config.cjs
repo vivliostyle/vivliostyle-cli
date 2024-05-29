@@ -8,6 +8,8 @@ module.exports = {
   ],
   output: ['output1.pdf'],
   workspaceDir: '.vs-valid.2',
-  toc: 'manuscript/contents.html',
-  tocTitle: 'もくじ',
+  toc: {
+    title: 'もくじ',
+    htmlPath: 'manuscript/contents.html',
+  },
 };

@@ -5,7 +5,10 @@ import fs from 'node:fs';
 import { afterAll, expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import { compile, prepareThemeDirectory } from '../src/processor/compile.js';
-import { generateTocHtml } from '../src/processor/html.js';
+import {
+  generateTocHtml,
+  getStructuredSectionFromHtml,
+} from '../src/processor/html.js';
 import { removeSync } from '../src/util.js';
 import {
   assertSingleItem,
@@ -24,16 +27,23 @@ afterAll(() => {
     resolveFixture('toc/.vs-valid.1'),
     resolveFixture('toc/.vs-valid.2'),
     resolveFixture('toc/.vs-valid.3'),
+    resolveFixture('toc/.vs-sectionDepth'),
+    resolveFixture('toc/.vs-customTransform'),
   ].forEach((f) => removeSync(f));
 });
 
-it('generateTocHtml', () => {
-  const toc = generateTocHtml({
-    entries: [{ target: 'test.html', title: 'Title' }],
-    manifestPath: '.vivliostyle/publication.json',
-    distDir: '.vivliostyle',
+it('generateTocHtml', async () => {
+  const toc = await generateTocHtml({
+    entries: [
+      { target: resolveFixture('toc/manuscript/empty.html'), title: 'Title' },
+    ],
+    manifestPath: resolveFixture(
+      'toc/manuscript/.vivliostyle/publication.json',
+    ),
+    distDir: resolveFixture('toc/manuscript/.vivliostyle'),
     title: 'Book title',
     tocTitle: 'Table of Contents',
+    sectionDepth: 0,
   });
   expect(toc).toBe(
     `<html>
@@ -51,7 +61,7 @@ it('generateTocHtml', () => {
     <nav id="toc" role="doc-toc">
       <h2>Table of Contents</h2>
       <ol>
-        <li><a href="../test.html">Title</a></li>
+        <li><a href="../empty.html">Title</a></li>
       </ol>
     </nav>
   </body>
@@ -214,4 +224,227 @@ it('check ToC overwrite violation', async () => {
   expect(async () => {
     await compile(config);
   }).rejects.toThrow();
+});
+
+it('works with sectionized document', async () => {
+  const section = await getStructuredSectionFromHtml(
+    resolveFixture('toc/manuscript/section.html'),
+  );
+  expect(section).toEqual([
+    {
+      headingHtml: 'H1',
+      headingText: 'H1',
+      level: 1,
+      children: [
+        {
+          headingHtml: expect.stringMatching(
+            /^\s*<span>H2<\/span>\s*<span>content<\/span>\s*$/,
+          ),
+          headingText: 'H2 content',
+          level: 2,
+          id: 'h2',
+          children: [
+            {
+              headingHtml: 'H3',
+              headingText: 'H3',
+              level: 3,
+              id: '#',
+              children: [],
+            },
+          ],
+        },
+        {
+          headingHtml: 'Nested',
+          headingText: 'Nested',
+          level: 2,
+          children: [
+            {
+              headingHtml: 'H4',
+              headingText: 'H4',
+              level: 4,
+              children: [
+                {
+                  headingHtml: 'H5',
+                  headingText: 'H5',
+                  level: 5,
+                  children: [
+                    {
+                      headingHtml: 'H6',
+                      headingText: 'H6',
+                      level: 6,
+                      children: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          headingHtml: 'Another H2',
+          headingText: 'Another H2XSS',
+          level: 2,
+          children: [],
+        },
+      ],
+    },
+  ]);
+});
+
+it('generate toc with a sectionDepth config', async () => {
+  const run = async (p: string) => {
+    const config = await getMergedConfig(['-c', resolveFixture(p)]);
+    assertSingleItem(config);
+    assertManifestPath(config);
+    await prepareThemeDirectory(config);
+    await compile(config);
+  };
+
+  {
+    await run('toc/toc.sectionDepth.depth=0.config.cjs');
+    const tocHtml = new JSDOM(
+      fs.readFileSync(
+        resolveFixture('toc/.vs-sectionDepth/index.html'),
+        'utf8',
+      ),
+    );
+    const li = tocHtml.window.document.querySelector(
+      'nav[role="doc-toc"] > ol > li',
+    )!;
+    expect(li.children).toHaveLength(1);
+  }
+
+  {
+    await run('toc/toc.sectionDepth.depth=1.config.cjs');
+    const tocHtml = new JSDOM(
+      fs.readFileSync(
+        resolveFixture('toc/.vs-sectionDepth/index.html'),
+        'utf8',
+      ),
+    );
+    const li = tocHtml.window.document.querySelector<HTMLElement>(
+      'nav[role="doc-toc"] > ol > li',
+    )!;
+    expect(li.children).toHaveLength(1);
+    expect(li.dataset.sectionLevel).toBe('1');
+    expect(li.innerHTML).toBe('<span>H1</span>');
+    expect(li.id).toBeFalsy();
+  }
+
+  {
+    await run('toc/toc.sectionDepth.depth=6.config.cjs');
+    const tocHtml = new JSDOM(
+      fs.readFileSync(
+        resolveFixture('toc/.vs-sectionDepth/index.html'),
+        'utf8',
+      ),
+    );
+    const test = [
+      ['ol > li:nth-child(1)', 1, '<span>H1</span>'],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(1)',
+        2,
+        expect.stringMatching(
+          /^\s*<a href="section\.html#h2">\s*<span>H2<\/span>\s*<span>content<\/span>\s*<\/a>\s*$/,
+        ),
+      ],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1)',
+        3,
+        '<a href="section.html#%23">H3</a>',
+      ],
+      ['ol > li:nth-child(1) > ol > li:nth-child(2)', 2, '<span>Nested</span>'],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1)',
+        4,
+        '<span>H4</span>',
+      ],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1) > ol > li:nth-child(1)',
+        5,
+        '<span>H5</span>',
+      ],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(2) > ol > li:nth-child(1) > ol > li:nth-child(1) > ol > li:nth-child(1)',
+        6,
+        '<span>H6</span>',
+      ],
+      [
+        'ol > li:nth-child(1) > ol > li:nth-child(3)',
+        2,
+        '<span>Another H2</span>',
+      ],
+    ];
+    for (const [selector, level, text] of test) {
+      const node = tocHtml.window.document.querySelector<HTMLElement>(
+        `[role="doc-toc"] > ${selector}`,
+      );
+      expect(node).toBeTruthy();
+      expect(node!.dataset.sectionLevel).toBe(`${level}`);
+      expect(node!.children.item(0)!.outerHTML).toStrictEqual(text);
+    }
+  }
+});
+
+it('generate toc with custom transform functions', async () => {
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('toc/toc.customTransform.config.cjs'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await prepareThemeDirectory(config);
+  await compile(config);
+
+  const section = await getStructuredSectionFromHtml(
+    resolveFixture('toc/manuscript/section.html'),
+    'section.html',
+  );
+  const tocHtml = new JSDOM(
+    fs.readFileSync(
+      resolveFixture('toc/.vs-customTransform/index.html'),
+      'utf8',
+    ),
+  );
+  const { document } = tocHtml.window;
+  const docList = document.querySelector<HTMLElement>(
+    '[role="doc-toc"] > div',
+  )!;
+  expect(docList.className).toBe('doc-list');
+  expect(docList.dataset.nodeLength).toBe('1');
+
+  const docListItem = docList.children.item(0) as HTMLElement;
+  expect(docListItem.className).toBe('doc-list-item');
+  expect(JSON.parse(docListItem.dataset.content!)).toEqual({
+    href: 'section.html',
+    title: 'Section Example',
+  });
+  expect(JSON.parse(docListItem.dataset.sections!)).toEqual(section);
+
+  const secList = docListItem.children.item(0) as HTMLElement;
+  expect(secList.className).toBe('sec-list');
+  expect(secList.dataset.nodeLength).toBe('1');
+
+  const secListItem1 = secList.children.item(0) as HTMLElement;
+  expect(secListItem1.className).toBe('sec-list-item');
+  expect(JSON.parse(secListItem1.dataset.content!)).toEqual({
+    headingText: 'H1',
+    level: 1,
+  });
+  expect(JSON.parse(secListItem1.dataset.children!)).toEqual(
+    section[0].children,
+  );
+
+  const secListItem2 = secListItem1.children
+    .item(0)!
+    .children.item(0) as HTMLElement;
+  expect(JSON.parse(secListItem2.dataset.content!)).toEqual({
+    headingText: 'H2 content',
+    href: 'section.html#h2',
+    id: 'h2',
+    level: 2,
+  });
+  expect(JSON.parse(secListItem2.dataset.children!)).toEqual(
+    section[0].children[0].children,
+  );
 });

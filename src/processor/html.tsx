@@ -4,13 +4,17 @@ import jsdom, {
 } from '@vivliostyle/jsdom';
 import chalk from 'chalk';
 import cheerio from 'cheerio';
-import toHTML from 'hast-util-to-html';
-import h from 'hastscript';
+import DOMPurify from 'dompurify';
+import { toHtml } from 'hast-util-to-html';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
-import { ManuscriptEntry } from '../input/config.js';
+import type { ManuscriptEntry } from '../input/config.js';
 import type { PublicationManifest } from '../schema/publication.schema.js';
+import {
+  StructuredDocument,
+  StructuredDocumentSection,
+} from '../schema/vivliostyle.js';
 import {
   DetailError,
   assertPubManifestSchema,
@@ -51,6 +55,8 @@ virtualConsole.on('jsdomError', (error) => {
   );
 });
 /* c8 ignore end */
+
+export const htmlPurify = DOMPurify(new JSDOM('').window);
 
 export class ResourceLoader extends BaseResourceLoader {
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();
@@ -94,6 +100,52 @@ export async function getJsdomFromUrlOrFile(
   return { dom };
 }
 
+export async function getStructuredSectionFromHtml(
+  htmlPath: string,
+  href?: string,
+) {
+  const { dom } = await getJsdomFromUrlOrFile(htmlPath);
+  const { document } = dom.window;
+  const allHeadings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+    .filter((el) => {
+      // Exclude headings contained by blockquote
+      // TODO: Make customizable
+      return !el.matches('blockquote *');
+    })
+    .sort((a, b) => {
+      const position = a.compareDocumentPosition(b);
+      return position & 2 /* DOCUMENT_POSITION_PRECEDING */
+        ? 1
+        : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
+        ? -1
+        : 0;
+    });
+
+  function traverse(headers: Element[]): StructuredDocumentSection[] {
+    if (headers.length === 0) {
+      return [];
+    }
+    const [head, ...tail] = headers;
+    const section = head.parentElement!;
+    const id = head.id || section.id;
+    const level = Number(head.tagName.slice(1));
+    let i = tail.findIndex((s) => Number(s.tagName.slice(1)) <= level);
+    i = i === -1 ? tail.length : i;
+    return [
+      {
+        headingHtml: htmlPurify.sanitize(head.innerHTML),
+        headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
+        level,
+        ...(href && id && { href: `${href}#${encodeURIComponent(id)}` }),
+        ...(id && { id }),
+        children: traverse(tail.slice(0, i)),
+      },
+      ...traverse(tail.slice(i)),
+    ];
+  }
+  return traverse(allHeadings);
+}
+
 const getTocHtmlStyle = ({
   pageBreakBefore,
   pageCounterReset,
@@ -121,15 +173,80 @@ ${
 }
 `;
 };
-export function generateTocHtml({
+
+type HastElement = import('hast').ElementContent | import('hast').Root;
+
+export const defaultTocTransform = {
+  transformDocumentList:
+    (nodeList: StructuredDocument[]) =>
+    (propsList: { children: HastElement | HastElement[] }[]): HastElement => {
+      return (
+        <ol>
+          {nodeList
+            .map((a, i) => [a, propsList[i]] as const)
+            .flatMap(
+              ([{ href, title, sections }, { children, ...otherProps }]) => {
+                // don't display the document title if it has only one top-level H1 heading
+                if (sections?.length === 1 && sections[0].level === 1) {
+                  return [children].flat().flatMap((e) => {
+                    if (e.type === 'element' && e.tagName === 'ol') {
+                      return e.children;
+                    }
+                    return e;
+                  });
+                }
+                return (
+                  <li {...otherProps}>
+                    <a {...{ href }}>{title}</a>
+                    {children}
+                  </li>
+                );
+              },
+            )}
+        </ol>
+      );
+    },
+  transformSectionList:
+    (nodeList: StructuredDocumentSection[]) =>
+    (propsList: { children: HastElement | HastElement[] }[]): HastElement => {
+      return (
+        <ol>
+          {nodeList
+            .map((a, i) => [a, propsList[i]] as const)
+            .map(
+              ([{ headingHtml, href, level }, { children, ...otherProps }]) => {
+                const headingContent = {
+                  type: 'raw',
+                  value: headingHtml,
+                };
+                return (
+                  <li {...otherProps} data-section-level={level}>
+                    {href ? (
+                      <a {...{ href }}>{headingContent}</a>
+                    ) : (
+                      <span>{headingContent}</span>
+                    )}
+                    {children}
+                  </li>
+                );
+              },
+            )}
+        </ol>
+      );
+    },
+};
+
+export async function generateTocHtml({
   entries,
   manifestPath,
   distDir,
   language,
   title,
   tocTitle,
+  sectionDepth,
   stylesheets = [],
   styleOptions = {},
+  transform = {},
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
   manifestPath: string;
@@ -137,48 +254,87 @@ export function generateTocHtml({
   language?: string;
   title?: string;
   tocTitle: string;
+  sectionDepth: number;
   stylesheets?: string[];
   styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
-}): string {
-  const items = entries.map((entry) =>
-    h(
-      'li',
-      h(
-        'a',
-        { href: encodeURI(upath.relative(distDir, entry.target)) },
-        entry.title || upath.basename(entry.target, '.html'),
-      ),
-    ),
+  transform?: Partial<typeof defaultTocTransform>;
+}): Promise<string> {
+  const {
+    transformDocumentList = defaultTocTransform.transformDocumentList,
+    transformSectionList = defaultTocTransform.transformSectionList,
+  } = transform;
+
+  const structure = await Promise.all(
+    entries.map(async (entry) => {
+      const href = encodeURI(upath.relative(distDir, entry.target));
+      const sections =
+        sectionDepth >= 1
+          ? await getStructuredSectionFromHtml(entry.target, href)
+          : [];
+      return {
+        title: entry.title || upath.basename(entry.target, '.html'),
+        href: encodeURI(upath.relative(distDir, entry.target)),
+        sections,
+        children: [], // TODO
+      };
+    }),
   );
-  const toc = h(
-    'html',
-    { lang: language },
-    h(
-      'head',
-      ...[
-        h('meta', { charset: 'utf-8' }),
-        h('title', title ?? ''),
-        ...(() => {
+  const docToc = transformDocumentList(structure)(
+    structure.map((doc) => {
+      function renderSectionList(
+        sections: StructuredDocumentSection[],
+      ): HastElement | HastElement[] {
+        const nodeList = sections.flatMap((section) => {
+          if (section.level > sectionDepth) {
+            return [];
+          }
+          return section;
+        });
+        if (nodeList.length === 0) {
+          return [];
+        }
+        return transformSectionList(nodeList)(
+          nodeList.map((node) => ({
+            children: [renderSectionList(node.children || [])].flat(),
+          })),
+        );
+      }
+      return {
+        children: [renderSectionList(doc.sections || [])].flat(),
+      };
+    }),
+  );
+
+  const toc = (
+    <html lang={language}>
+      <head>
+        <meta charset="utf-8" />
+        <title>{title || ''}</title>
+        {(() => {
           const style = getTocHtmlStyle(styleOptions);
-          return style ? [h('style', getTocHtmlStyle(styleOptions))] : [];
-        })(),
-        h('link', {
-          href: encodeURI(upath.relative(distDir, manifestPath)),
-          rel: 'publication',
-          type: 'application/ld+json',
-        }),
-        ...stylesheets.map((s) =>
-          h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
-        ),
-      ].filter((n) => !!n),
-    ),
-    h(
-      'body',
-      h('h1', title || ''),
-      h('nav#toc', { role: 'doc-toc' }, h('h2', tocTitle), h('ol', items)),
-    ),
+          return style ? <style>{style}</style> : null;
+        })()}
+        <link
+          href={encodeURI(upath.relative(distDir, manifestPath))}
+          rel="publication"
+          type="application/ld+json"
+        />
+        {stylesheets.map((s) => (
+          <link type="text/css" href={s} rel="stylesheet" />
+        ))}
+      </head>
+      <body>
+        <h1>{title || ''}</h1>
+        <nav id="toc" role="doc-toc">
+          <h2>{tocTitle}</h2>
+          {docToc}
+        </nav>
+      </body>
+    </html>
   );
-  return prettier.format(toHTML(toc), { parser: 'html' });
+  return prettier.format(toHtml(toc, { allowDangerousHtml: true }), {
+    parser: 'html',
+  });
 }
 
 const getCoverHtmlStyle = ({
@@ -221,30 +377,29 @@ export function generateCoverHtml({
   stylesheets?: string[];
   styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
 }): string {
-  const cover = h(
-    'html',
-    { lang: language },
-    h(
-      'head',
-      ...[
-        h('meta', { charset: 'utf-8' }),
-        h('title', title ?? ''),
-        h('style', getCoverHtmlStyle(styleOptions)),
-        ...stylesheets.map((s) =>
-          h('link', { type: 'text/css', href: s, rel: 'stylesheet' }),
-        ),
-      ].filter((n) => !!n),
-    ),
-    h(
-      'body',
-      h(
-        'section',
-        { role: 'region', ariaLabel: 'Cover' },
-        h('img', { src: imageSrc, alt: imageAlt, role: 'doc-cover' }),
-      ),
-    ),
+  const cover = (
+    <html lang={language}>
+      <head>
+        <meta charset="utf-8" />
+        <title>{title || ''}</title>
+        {(() => {
+          const style = getCoverHtmlStyle(styleOptions);
+          return style ? <style>{style}</style> : null;
+        })()}
+        {stylesheets.map((s) => (
+          <link type="text/css" href={s} rel="stylesheet" />
+        ))}
+      </head>
+      <body>
+        <section role="region" aria-label="Cover">
+          <img src={imageSrc} alt={imageAlt} role="doc-cover" />
+        </section>
+      </body>
+    </html>
   );
-  return prettier.format(toHTML(cover), { parser: 'html' });
+  return prettier.format(toHtml(cover, { allowDangerousHtml: true }), {
+    parser: 'html',
+  });
 }
 
 export function processManuscriptHtml(

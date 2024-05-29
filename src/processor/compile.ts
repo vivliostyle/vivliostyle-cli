@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
-import { TOC_TITLE } from '../const.js';
 import {
   ContentsEntry,
   CoverEntry,
@@ -296,15 +295,17 @@ export async function compile({
     const stylesheets = entry.themes.flatMap((theme) =>
       locateThemePath(theme, upath.dirname(entry.target)),
     );
-    const tocString = generateTocHtml({
+    const tocString = await generateTocHtml({
       entries: contentEntries,
       manifestPath,
       distDir: upath.dirname(entry.target),
       language,
       title,
-      tocTitle: entry.title ?? TOC_TITLE,
+      tocTitle: entry.title,
+      sectionDepth: entry.sectionDepth,
       stylesheets,
       styleOptions: entry,
+      transform: entry.transform,
     });
     fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
     fs.writeFileSync(entry.target, tocString);

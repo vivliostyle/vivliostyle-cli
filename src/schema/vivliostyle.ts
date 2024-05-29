@@ -6,3 +6,19 @@ const require = createRequire(import.meta.url);
 const vivliostyleConfigSchema = require('../../schemas/vivliostyle/vivliostyleConfig.schema.json');
 
 export { vivliostyleConfigSchema };
+
+export type StructuredDocument = {
+  title: string;
+  href: string;
+  sections?: StructuredDocumentSection[];
+  children: StructuredDocument[];
+};
+
+export type StructuredDocumentSection = {
+  headingHtml: string;
+  headingText: string;
+  level: number;
+  href?: string;
+  id?: string;
+  children: StructuredDocumentSection[];
+};
