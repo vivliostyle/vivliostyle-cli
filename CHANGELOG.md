@@ -1,5 +1,18 @@
 
 
+# [8.11.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.10.0...v8.11.0) (2024-05-31)
+
+
+### Bug Fixes
+
+* Reflect manuscript title changes in preview mode ([695a636](https://github.com/vivliostyle/vivliostyle-cli/commit/695a636062e159e5281bf3fdbd69ce472b01e2ef))
+
+
+### Features
+
+* Support adding sections for generated ToC documents ([9abc3b5](https://github.com/vivliostyle/vivliostyle-cli/commit/9abc3b565b91baecbda6d8a25630355a700f8ecb))
+* Update a toc option of vivliostyle.config.js ([7525a6f](https://github.com/vivliostyle/vivliostyle-cli/commit/7525a6fd5ab59ebc5fb26cc880a9d8549b21fa43))
+
 # [8.10.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.9.1...v8.10.0) (2024-05-03)
 
 
