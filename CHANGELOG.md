@@ -1,33 +1,34 @@
+# [8.12.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.11.0...v8.12.0) (2024-06-04)
 
+### Features
+
+- Update Playwright to 1.44.1 (Chromium 125.0.6422.14) ([d32d6a4](https://github.com/vivliostyle/vivliostyle-cli/commit/d32d6a4b0e20b63ba70ddd59d0433ae150b1dca0))
+- Update Vivliostyle.js to 2.30.0: Chinese UI, Pagination bugfix, and more ([c2330ce](https://github.com/vivliostyle/vivliostyle-cli/commit/c2330ce08d4dbff6a70f0cf136f9fb7465466d56))
 
 # [8.11.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.10.0...v8.11.0) (2024-05-31)
 
-
 ### Bug Fixes
 
-* Reflect manuscript title changes in preview mode ([695a636](https://github.com/vivliostyle/vivliostyle-cli/commit/695a636062e159e5281bf3fdbd69ce472b01e2ef))
-
+- Reflect manuscript title changes in preview mode ([695a636](https://github.com/vivliostyle/vivliostyle-cli/commit/695a636062e159e5281bf3fdbd69ce472b01e2ef))
 
 ### Features
 
-* Support adding sections for generated ToC documents ([9abc3b5](https://github.com/vivliostyle/vivliostyle-cli/commit/9abc3b565b91baecbda6d8a25630355a700f8ecb))
-* Update a toc option of vivliostyle.config.js ([7525a6f](https://github.com/vivliostyle/vivliostyle-cli/commit/7525a6fd5ab59ebc5fb26cc880a9d8549b21fa43))
+- Support adding sections for generated ToC documents ([9abc3b5](https://github.com/vivliostyle/vivliostyle-cli/commit/9abc3b565b91baecbda6d8a25630355a700f8ecb))
+- Update a toc option of vivliostyle.config.js ([7525a6f](https://github.com/vivliostyle/vivliostyle-cli/commit/7525a6fd5ab59ebc5fb26cc880a9d8549b21fa43))
 
 # [8.10.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.9.1...v8.10.0) (2024-05-03)
 
-
 ### Bug Fixes
 
-* Chromium processes and tmp files remain after exit with Ctrl+C on Windows ([548b420](https://github.com/vivliostyle/vivliostyle-cli/commit/548b4200b66add5137cfc87ed7a10477f001cc85)), closes [#479](https://github.com/vivliostyle/vivliostyle-cli/issues/479)
-* Display errors that occurred during preview ([f7d14b2](https://github.com/vivliostyle/vivliostyle-cli/commit/f7d14b26a54635d9c552ca34ebb20c83a354c5b5))
-* Ensure to work reloading the config file correctly in preview mode ([59a3b33](https://github.com/vivliostyle/vivliostyle-cli/commit/59a3b336c5ee86bf5514d2378e732111c00f80d5))
-* Speed up reloading config files ([025581f](https://github.com/vivliostyle/vivliostyle-cli/commit/025581f4abb0da125429e9d7a30802838d2770a1))
-
+- Chromium processes and tmp files remain after exit with Ctrl+C on Windows ([548b420](https://github.com/vivliostyle/vivliostyle-cli/commit/548b4200b66add5137cfc87ed7a10477f001cc85)), closes [#479](https://github.com/vivliostyle/vivliostyle-cli/issues/479)
+- Display errors that occurred during preview ([f7d14b2](https://github.com/vivliostyle/vivliostyle-cli/commit/f7d14b26a54635d9c552ca34ebb20c83a354c5b5))
+- Ensure to work reloading the config file correctly in preview mode ([59a3b33](https://github.com/vivliostyle/vivliostyle-cli/commit/59a3b336c5ee86bf5514d2378e732111c00f80d5))
+- Speed up reloading config files ([025581f](https://github.com/vivliostyle/vivliostyle-cli/commit/025581f4abb0da125429e9d7a30802838d2770a1))
 
 ### Features
 
-* Update Playwright to 1.43.1 (Chromium 124.0.6367.29) ([07ce938](https://github.com/vivliostyle/vivliostyle-cli/commit/07ce9385b133cd6ebf4ce3299212c37ced0e5229))
-* Update Vivliostyle.js to 2.29.0: Update CSS text-spacing support ([4a36af9](https://github.com/vivliostyle/vivliostyle-cli/commit/4a36af92cccb861b3d026004a9f395c64d44da82))
+- Update Playwright to 1.43.1 (Chromium 124.0.6367.29) ([07ce938](https://github.com/vivliostyle/vivliostyle-cli/commit/07ce9385b133cd6ebf4ce3299212c37ced0e5229))
+- Update Vivliostyle.js to 2.29.0: Update CSS text-spacing support ([4a36af9](https://github.com/vivliostyle/vivliostyle-cli/commit/4a36af92cccb861b3d026004a9f395c64d44da82))
 
 ## [8.9.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.9.0...v8.9.1) (2024-03-12)
 
