@@ -100,6 +100,13 @@ export async function getJsdomFromUrlOrFile(
   return { dom };
 }
 
+export function getJsdomFromString(html: string): { dom: JSDOM } {
+  const dom = new JSDOM(html, {
+    virtualConsole,
+  });
+  return { dom };
+}
+
 export async function getStructuredSectionFromHtml(
   htmlPath: string,
   href?: string,
@@ -236,27 +243,37 @@ export const defaultTocTransform = {
     },
 };
 
-export async function generateTocHtml({
-  entries,
-  manifestPath,
-  distDir,
+export function generateDefaultTocHtml({
   language,
   title,
-  tocTitle,
+}: {
+  language?: string;
+  title?: string;
+}) {
+  const toc = (
+    <html lang={language}>
+      <head>
+        <meta charset="utf-8" />
+        <title>{title || ''}</title>
+      </head>
+      <body>
+        <h1>{title || ''}</h1>
+        <nav id="toc" role="doc-toc" />
+      </body>
+    </html>
+  );
+  return toHtml(toc);
+}
+
+export async function generateTocListSection({
+  entries,
+  distDir,
   sectionDepth,
-  stylesheets = [],
-  styleOptions = {},
   transform = {},
 }: {
   entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
-  manifestPath: string;
   distDir: string;
-  language?: string;
-  title?: string;
-  tocTitle: string;
   sectionDepth: number;
-  stylesheets?: string[];
-  styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
   transform?: Partial<typeof defaultTocTransform>;
 }): Promise<string> {
   const {
@@ -305,36 +322,63 @@ export async function generateTocHtml({
     }),
   );
 
-  const toc = (
-    <html lang={language}>
-      <head>
-        <meta charset="utf-8" />
-        <title>{title || ''}</title>
-        {(() => {
-          const style = getTocHtmlStyle(styleOptions);
-          return style ? <style>{style}</style> : null;
-        })()}
-        <link
-          href={encodeURI(upath.relative(distDir, manifestPath))}
-          rel="publication"
-          type="application/ld+json"
-        />
-        {stylesheets.map((s) => (
-          <link type="text/css" href={s} rel="stylesheet" />
-        ))}
-      </head>
-      <body>
-        <h1>{title || ''}</h1>
-        <nav id="toc" role="doc-toc">
-          <h2>{tocTitle}</h2>
-          {docToc}
-        </nav>
-      </body>
-    </html>
-  );
-  return prettier.format(toHtml(toc, { allowDangerousHtml: true }), {
-    parser: 'html',
-  });
+  return toHtml(docToc, { allowDangerousHtml: true });
+}
+
+export async function processTocHtml(
+  html: string,
+  {
+    manifestPath,
+    tocTitle,
+    styleOptions = {},
+    entries,
+    distDir,
+    sectionDepth,
+    transform,
+  }: Parameters<typeof generateTocListSection>[0] & {
+    manifestPath: string;
+    tocTitle: string;
+    styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
+  },
+): Promise<string> {
+  const { dom } = getJsdomFromString(html);
+  const { document } = dom.window;
+  if (
+    !document.querySelector(
+      'link[rel="publication"][type="application/ld+json"]',
+    )
+  ) {
+    const l = document.createElement('link');
+    l.setAttribute('rel', 'publication');
+    l.setAttribute('type', 'application/ld+json');
+    l.setAttribute('href', upath.relative(distDir, manifestPath));
+    document.head.appendChild(l);
+  }
+
+  if (!document.querySelector('style[data-vv-style]')) {
+    const textContent = getTocHtmlStyle(styleOptions);
+    if (textContent) {
+      const s = document.createElement('style');
+      s.setAttribute('data-vv-style', '');
+      s.textContent = textContent;
+      document.head.appendChild(s);
+    }
+  }
+
+  const nav = document.querySelector('nav, [role="doc-toc"]');
+  if (nav && !nav.hasChildNodes()) {
+    const h2 = document.createElement('h2');
+    h2.textContent = tocTitle;
+    nav.appendChild(h2);
+    nav.innerHTML += await generateTocListSection({
+      entries,
+      distDir,
+      sectionDepth,
+      transform,
+    });
+  }
+
+  return prettier.format(dom.serialize(), { parser: 'html' });
 }
 
 const getCoverHtmlStyle = ({
@@ -362,48 +406,67 @@ body {
   margin: 0;
 }
 `;
-export function generateCoverHtml({
-  imageSrc,
-  imageAlt,
+
+export function generateDefaultCoverHtml({
   language,
   title,
-  stylesheets = [],
-  styleOptions = {},
 }: {
-  imageSrc: string;
-  imageAlt: string;
   language?: string;
   title?: string;
-  stylesheets?: string[];
-  styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
-}): string {
-  const cover = (
+}) {
+  const toc = (
     <html lang={language}>
       <head>
         <meta charset="utf-8" />
         <title>{title || ''}</title>
-        {(() => {
-          const style = getCoverHtmlStyle(styleOptions);
-          return style ? <style>{style}</style> : null;
-        })()}
-        {stylesheets.map((s) => (
-          <link type="text/css" href={s} rel="stylesheet" />
-        ))}
       </head>
       <body>
         <section role="region" aria-label="Cover">
-          <img src={imageSrc} alt={imageAlt} role="doc-cover" />
+          <img role="doc-cover" />
         </section>
       </body>
     </html>
   );
-  return prettier.format(toHtml(cover, { allowDangerousHtml: true }), {
-    parser: 'html',
-  });
+  return toHtml(toc);
+}
+
+export async function processCoverHtml(
+  html: string,
+  {
+    imageSrc,
+    imageAlt,
+    styleOptions = {},
+  }: {
+    imageSrc: string;
+    imageAlt: string;
+    styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
+  },
+): Promise<string> {
+  const { dom } = getJsdomFromString(html);
+  const { document } = dom.window;
+  if (!document.querySelector('style[data-vv-style]')) {
+    const textContent = getCoverHtmlStyle(styleOptions);
+    if (textContent) {
+      const s = document.createElement('style');
+      s.setAttribute('data-vv-style', '');
+      s.textContent = textContent;
+      document.head.appendChild(s);
+    }
+  }
+
+  const cover = document.querySelector('img[role="doc-cover"]');
+  if (cover && !cover.hasAttribute('src')) {
+    cover.setAttribute('src', imageSrc);
+  }
+  if (cover && !cover.hasAttribute('alt')) {
+    cover.setAttribute('alt', imageAlt);
+  }
+
+  return prettier.format(dom.serialize(), { parser: 'html' });
 }
 
 export function processManuscriptHtml(
-  filepath: string,
+  html: string,
   {
     title,
     style,
@@ -416,7 +479,7 @@ export function processManuscriptHtml(
     language?: string | null;
   },
 ): string {
-  const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'), {
+  const $ = cheerio.load(html, {
     xmlMode: contentType === 'application/xhtml+xml',
   });
   if (title) {
