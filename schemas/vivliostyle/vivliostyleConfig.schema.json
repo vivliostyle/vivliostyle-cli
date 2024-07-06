@@ -8,6 +8,7 @@
       "type": "object",
       "properties": {
         "path": { "type": "string" },
+        "output": { "type": "string" },
         "title": { "type": "string" },
         "theme": { "$ref": "#/definitions/themeSpecifier" },
         "encodingFormat": { "type": "string" },
@@ -32,6 +33,8 @@
           "type": "string",
           "const": "contents"
         },
+        "path": { "type": "string" },
+        "output": { "type": "string" },
         "title": { "type": "string" },
         "theme": { "$ref": "#/definitions/themeSpecifier" },
         "pageBreakBefore": {
@@ -56,6 +59,7 @@
           "const": "cover"
         },
         "path": { "type": "string" },
+        "output": { "type": "string" },
         "title": { "type": "string" },
         "theme": { "$ref": "#/definitions/themeSpecifier" },
         "imageSrc": { "type": "string" },

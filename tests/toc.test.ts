@@ -6,8 +6,9 @@ import { afterAll, expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import { compile, prepareThemeDirectory } from '../src/processor/compile.js';
 import {
-  generateTocHtml,
+  generateDefaultTocHtml,
   getStructuredSectionFromHtml,
+  processTocHtml,
 } from '../src/processor/html.js';
 import { removeSync } from '../src/util.js';
 import {
@@ -33,7 +34,10 @@ afterAll(() => {
 });
 
 it('generateTocHtml', async () => {
-  const toc = await generateTocHtml({
+  let content = generateDefaultTocHtml({
+    title: 'Book title',
+  });
+  content = await processTocHtml(content, {
     entries: [
       { target: resolveFixture('toc/manuscript/empty.html'), title: 'Title' },
     ],
@@ -41,19 +45,18 @@ it('generateTocHtml', async () => {
       'toc/manuscript/.vivliostyle/publication.json',
     ),
     distDir: resolveFixture('toc/manuscript/.vivliostyle'),
-    title: 'Book title',
     tocTitle: 'Table of Contents',
     sectionDepth: 0,
   });
-  expect(toc).toBe(
+  expect(content).toBe(
     `<html>
   <head>
     <meta charset="utf-8" />
     <title>Book title</title>
     <link
-      href="publication.json"
       rel="publication"
       type="application/ld+json"
+      href="publication.json"
     />
   </head>
   <body>
@@ -212,18 +215,6 @@ it('Write ToC by myself', async () => {
   expect(
     document.querySelector('link[rel="stylesheet"]')!.getAttribute('href'),
   ).toBe('../sample-theme.css');
-});
-
-it('check ToC overwrite violation', async () => {
-  const config = await getMergedConfig([
-    '-c',
-    resolveFixture('toc/toc.invalid.1.config.cjs'),
-  ]);
-  assertSingleItem(config);
-  assertManifestPath(config);
-  expect(async () => {
-    await compile(config);
-  }).rejects.toThrow();
 });
 
 it('works with sectionized document', async () => {
