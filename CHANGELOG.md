@@ -1,3 +1,13 @@
+# [8.13.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.12.1...v8.13.0) (2024-07-25)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.30.2: Bug Fixes ([9fa6aca](https://github.com/vivliostyle/vivliostyle-cli/commit/9fa6aca5a448b17a3b3ba908c9d6345a54331454))
+
+### Features
+
+- Update Playwright to 1.45.2 (Chromium 127.0.6533.17) ([885878f](https://github.com/vivliostyle/vivliostyle-cli/commit/885878ffbead28e27cbf997a66a71cdba33cb247))
+
 ## [8.12.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.12.0...v8.12.1) (2024-06-14)
 
 ### Bug Fixes
