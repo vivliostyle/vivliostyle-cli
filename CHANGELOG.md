@@ -1,3 +1,9 @@
+## [8.13.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.13.0...v8.13.1) (2024-08-11)
+
+### Bug Fixes
+
+- error: cheerio does not provide an export named default ([45a1f6b](https://github.com/vivliostyle/vivliostyle-cli/commit/45a1f6b6e687ac508c97d783ca5cd6521878285a)), closes [#500](https://github.com/vivliostyle/vivliostyle-cli/issues/500)
+
 # [8.13.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.12.1...v8.13.0) (2024-07-25)
 
 ### Bug Fixes
