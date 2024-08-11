@@ -3,7 +3,7 @@ import jsdom, {
   JSDOM,
 } from '@vivliostyle/jsdom';
 import chalk from 'chalk';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import DOMPurify from 'dompurify';
 import { toHtml } from 'hast-util-to-html';
 import fs from 'node:fs';

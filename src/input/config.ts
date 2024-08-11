@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 import fs from 'fs';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'url';
