@@ -33,6 +33,7 @@ import {
   StructuredDocumentSection,
 } from '../schema/vivliostyle.js';
 import type {
+  ArticleEntryObject,
   BrowserType,
   ContentsEntryObject,
   CoverEntryObject,
@@ -1030,66 +1031,55 @@ async function composeProjectConfig<T extends CliFlags>(
     entry.rel === 'contents';
   const isCoverEntry = (entry: EntryObject): entry is CoverEntryObject =>
     entry.rel === 'cover';
-  async function parseEntry(entry: EntryObject): Promise<ParsedEntry> {
-    let inputInfo:
-      | (ReturnType<typeof parseFileMetadata> & {
-          source: string;
-          // target: string;
-          type: ManuscriptMediaType;
-        })
-      | undefined;
+  const isArticleEntry = (entry: EntryObject): entry is ArticleEntryObject =>
+    !isContentsEntry(entry) && !isCoverEntry(entry);
 
-    if (entry.path) {
-      const source = upath.resolve(entryContextDir, entry.path);
-      let sourceExists = true;
+  async function parseEntry(entry: EntryObject): Promise<ParsedEntry> {
+    const getInputInfo = (entryPath: string) => {
+      const source = upath.resolve(entryContextDir, entryPath);
       if (!isUrlString(source)) {
-        // Check file exists
-        try {
-          statFileSync(source);
-        } catch (error) {
-          if (entry.rel === 'contents' || entry.rel === 'cover') {
-            // For backward compatibility, we allow missing files then assume that option as `output` field.
-            logWarn(
-              chalk.yellowBright(
-                `The "path" option is set but the file does not exist: ${source}\nMaybe you want to set the "output" field instead.`,
-              ),
-            );
-            entry.output = entry.path;
-            sourceExists = false;
-          } else {
-            throw error;
-          }
-        }
+        statFileSync(source);
       }
-      if (sourceExists) {
-        const type = detectManuscriptMediaType(source);
-        inputInfo = {
-          ...parseFileMetadata({
-            type,
-            sourcePath: source,
-            workspaceDir,
-            themesDir,
-          }),
-          source,
+      const type = detectManuscriptMediaType(source);
+      return {
+        ...parseFileMetadata({
           type,
-        };
+          sourcePath: source,
+          workspaceDir,
+          themesDir,
+        }),
+        source,
+        type,
+      };
+    };
+
+    const getTargetPath = (source: string) =>
+      upath.resolve(
+        workspaceDir,
+        upath.relative(entryContextDir, source).replace(/\.md$/, '.html'),
+      );
+
+    if ((isContentsEntry(entry) || isCoverEntry(entry)) && entry.path) {
+      const source = upath.resolve(entryContextDir, entry.path);
+      try {
+        statFileSync(source);
+      } catch (error) {
+        // For backward compatibility, we allow missing files then assume that option as `output` field.
+        logWarn(
+          chalk.yellowBright(
+            `The "path" option is set but the file does not exist: ${source}\nMaybe you want to set the "output" field instead.`,
+          ),
+        );
+        entry.output = entry.path;
+        entry.path = undefined;
       }
     }
 
-    let target = entry.output
-      ? upath.resolve(workspaceDir, entry.output)
-      : inputInfo &&
-        (() => {
-          const contextEntryPath = upath.relative(
-            entryContextDir,
-            inputInfo.source,
-          );
-          return upath
-            .resolve(workspaceDir, contextEntryPath)
-            .replace(/\.md$/, '.html');
-        })();
-
     if (isContentsEntry(entry)) {
+      const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
+      let target = entry.output
+        ? upath.resolve(workspaceDir, entry.output)
+        : inputInfo?.source && getTargetPath(inputInfo.source);
       const themes = entry.theme
         ? [entry.theme].flat().map((theme) =>
             parseTheme({
@@ -1127,6 +1117,10 @@ async function composeProjectConfig<T extends CliFlags>(
     }
 
     if (isCoverEntry(entry)) {
+      const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
+      let target = entry.output
+        ? upath.resolve(workspaceDir, entry.output)
+        : inputInfo?.source && getTargetPath(inputInfo.source);
       const themes = entry.theme
         ? [entry.theme].flat().map((theme) =>
             parseTheme({
@@ -1172,34 +1166,38 @@ async function composeProjectConfig<T extends CliFlags>(
       return parsedEntry;
     }
 
-    // can assume that inputInfo and outputPath is not undefined
-    inputInfo = inputInfo!;
-    target = target!;
-    const themes = entry.theme
-      ? [entry.theme]
-          .flat()
-          .map((theme) =>
-            parseTheme({ theme, context, workspaceDir, themesDir }),
-          )
-      : inputInfo.themes ?? [...rootThemes];
-    themes.forEach((t) => themeIndexes.add(t));
+    if (isArticleEntry(entry)) {
+      const inputInfo = getInputInfo(entry.path);
+      const target = entry.output
+        ? upath.resolve(workspaceDir, entry.output)
+        : getTargetPath(inputInfo.source);
+      const themes = entry.theme
+        ? [entry.theme]
+            .flat()
+            .map((theme) =>
+              parseTheme({ theme, context, workspaceDir, themesDir }),
+            )
+        : inputInfo.themes ?? [...rootThemes];
+      themes.forEach((t) => themeIndexes.add(t));
 
-    const parsedEntry: ManuscriptEntry = {
-      type: inputInfo.type,
-      source: inputInfo.source,
-      target,
-      title: entry.title ?? inputInfo.title ?? projectTitle,
-      themes,
-      ...(entry.rel && { rel: entry.rel }),
-    };
-    return parsedEntry;
+      const parsedEntry: ManuscriptEntry = {
+        type: inputInfo.type,
+        source: inputInfo.source,
+        target,
+        title: entry.title ?? inputInfo.title ?? projectTitle,
+        themes,
+        ...(entry.rel && { rel: entry.rel }),
+      };
+      return parsedEntry;
+    }
+
+    /* istanbul ignore next */
+    throw new Error('Unknown entry type');
   }
 
-  const entries: ParsedEntry[] = config?.entry
-    ? await Promise.all(
-        [config.entry].flat().map(normalizeEntry).map(parseEntry),
-      )
-    : [];
+  const entries: ParsedEntry[] = await Promise.all(
+    [config?.entry || []].flat().map(normalizeEntry).map(parseEntry),
+  );
   if (!entries.length) {
     throw new Error(
       'The entry fields seems to be empty. Make sure your Vivliostyle configuration.',
