@@ -1,7 +1,7 @@
 import { JSDOM } from '@vivliostyle/jsdom';
 import { globby } from 'globby';
 import fs from 'node:fs';
-import { afterAll, expect, it } from 'vitest';
+import { expect, it } from 'vitest';
 import {
   compile,
   copyAssets,
@@ -11,19 +11,11 @@ import {
   generateDefaultCoverHtml,
   processCoverHtml,
 } from '../src/processor/html.js';
-import { removeSync } from '../src/util.js';
 import {
   assertSingleItem,
   getMergedConfig,
   resolveFixture,
 } from './commandUtil';
-
-afterAll(() => {
-  [
-    resolveFixture('cover/.vs-valid.1'),
-    resolveFixture('cover/.vs-valid.2'),
-  ].forEach((f) => removeSync(f));
-});
 
 it('generateCoverHtml', async () => {
   let content = generateDefaultCoverHtml({

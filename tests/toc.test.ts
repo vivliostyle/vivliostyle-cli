@@ -2,7 +2,7 @@ import { JSDOM } from '@vivliostyle/jsdom';
 import { globby } from 'globby';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { afterAll, expect, it } from 'vitest';
+import { expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import { compile, prepareThemeDirectory } from '../src/processor/compile.js';
 import {
@@ -10,7 +10,6 @@ import {
   getStructuredSectionFromHtml,
   processTocHtml,
 } from '../src/processor/html.js';
-import { removeSync } from '../src/util.js';
 import {
   assertSingleItem,
   getMergedConfig,
@@ -22,16 +21,6 @@ function assertManifestPath(
 ): asserts config is MergedConfig & { manifestPath: string } {
   assert(!!config.manifestPath);
 }
-
-afterAll(() => {
-  [
-    resolveFixture('toc/.vs-valid.1'),
-    resolveFixture('toc/.vs-valid.2'),
-    resolveFixture('toc/.vs-valid.3'),
-    resolveFixture('toc/.vs-sectionDepth'),
-    resolveFixture('toc/.vs-customTransform'),
-  ].forEach((f) => removeSync(f));
-});
 
 it('generateTocHtml', async () => {
   let content = generateDefaultTocHtml({

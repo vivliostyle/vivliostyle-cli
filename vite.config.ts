@@ -11,5 +11,6 @@ export default defineConfig({
       escapeString: true,
       printBasicPrototype: true,
     },
+    globalSetup: ['tests/globalSetup/clean.ts'],
   },
 });
