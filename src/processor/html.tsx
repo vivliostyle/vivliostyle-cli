@@ -25,7 +25,7 @@ import {
 } from '../util.js';
 
 const virtualConsole = new jsdom.VirtualConsole();
-/* c8 ignore start */
+/* v8 ignore start */
 virtualConsole.on('error', (message) => {
   debug('[JSDOM Console] error:', message);
 });
@@ -54,7 +54,7 @@ virtualConsole.on('jsdomError', (error) => {
     error.stack ?? error.message,
   );
 });
-/* c8 ignore end */
+/* v8 ignore stop */
 
 export const htmlPurify = DOMPurify(new JSDOM('').window);
 

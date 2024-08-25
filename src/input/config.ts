@@ -1063,7 +1063,8 @@ async function composeProjectConfig<T extends CliFlags>(
       const source = upath.resolve(entryContextDir, entry.path);
       try {
         statFileSync(source);
-      } catch (error) /* istanbul ignore next */ {
+        /* v8 ignore next 10 */
+      } catch (error) {
         // For backward compatibility, we allow missing files then assume that option as `output` field.
         logWarn(
           chalk.yellowBright(
@@ -1191,7 +1192,7 @@ async function composeProjectConfig<T extends CliFlags>(
       return parsedEntry;
     }
 
-    /* istanbul ignore next */
+    /* v8 ignore next */
     throw new Error('Unknown entry type');
   }
 

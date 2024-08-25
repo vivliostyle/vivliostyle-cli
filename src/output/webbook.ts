@@ -137,7 +137,7 @@ export async function retrieveWebbookEntry({
               if (contentType) {
                 encodingFormat = new MIMEType(contentType).essence;
               }
-              /* c8 ignore next 3 */
+              /* v8 ignore next 3 */
             } catch (e) {
               /* NOOP */
             }
@@ -147,7 +147,7 @@ export async function retrieveWebbookEntry({
             await fs.promises.mkdir(upath.dirname(target), { recursive: true });
             await fs.promises.writeFile(target, buffer);
           })
-          /* c8 ignore next 4 */
+          /* v8 ignore next 4 */
           .catch((error) => {
             debug(error);
             logError(`Failed to fetch webbook resources: ${url}`);
