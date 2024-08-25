@@ -36,6 +36,7 @@ afterAll(() => {
 it('generateTocHtml', async () => {
   let content = generateDefaultTocHtml({
     title: 'Book title',
+    language: 'ja',
   });
   content = await processTocHtml(content, {
     entries: [
@@ -47,12 +48,24 @@ it('generateTocHtml', async () => {
     distDir: resolveFixture('toc/manuscript/.vivliostyle'),
     tocTitle: 'Table of Contents',
     sectionDepth: 0,
+    styleOptions: {
+      pageBreakBefore: 'recto',
+      pageCounterReset: 1,
+    },
   });
   expect(content).toBe(
-    `<html>
+    `<html lang="ja">
   <head>
     <meta charset="utf-8" />
     <title>Book title</title>
+    <style data-vv-style="">
+      :root {
+        break-before: recto;
+      }
+      @page :nth(1) {
+        counter-reset: page 0;
+      }
+    </style>
     <link
       rel="publication"
       type="application/ld+json"
@@ -168,7 +181,7 @@ it("toc: 'manuscript/contents.html'", async () => {
   expect(li.item(2).innerHTML).toBe('<a href="c.html">C</a>');
 });
 
-it('Write ToC by myself', async () => {
+it('Customize ToC document', async () => {
   const config = await getMergedConfig([
     '-c',
     resolveFixture('toc/toc.valid.3.config.cjs'),
@@ -182,10 +195,10 @@ it('Write ToC by myself', async () => {
   });
   expect(new Set(fileList)).toMatchObject(
     new Set([
+      'index.html',
       'manuscript/a.html',
       'manuscript/b.html',
       'manuscript/c.html',
-      'manuscript/ToC.html',
       'publication.json',
       'sample-theme.css',
       'themes/package-lock.json',
@@ -200,21 +213,54 @@ it('Write ToC by myself', async () => {
   );
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
-    name: 'Hand-written ToC',
+    name: 'ToC Title',
     type: 'LinkedResource',
-    url: 'manuscript/ToC.html',
+    url: 'index.html',
   });
   const tocHtml = new JSDOM(
-    fs.readFileSync(
-      resolveFixture('toc/.vs-valid.3/manuscript/ToC.html'),
-      'utf8',
-    ),
+    fs.readFileSync(resolveFixture('toc/.vs-valid.3/index.html'), 'utf8'),
   );
   const { document } = tocHtml.window;
-  expect(document.querySelector('title')!.text).toBe('Hand-written ToC');
+  expect(document.querySelector('title')!.text).toBe('ToC Title');
+  const toc = document.querySelector('.toc-wrapper > nav[role="doc-toc"]')!;
+  expect(toc.querySelector('h2')!.innerHTML).toBe('ToC Title');
+  expect(toc.querySelector('ol')!.children).toHaveLength(3);
   expect(
     document.querySelector('link[rel="stylesheet"]')!.getAttribute('href'),
-  ).toBe('../sample-theme.css');
+  ).toBe('sample-theme.css');
+  expect(
+    document.querySelector('link[rel="publication"]')!.getAttribute('href'),
+  ).toBe('publication.json');
+});
+
+it('in-place ToC document', async () => {
+  const srcTocContent = fs.readFileSync(
+    resolveFixture('toc/inplace/index.html'),
+    'utf-8',
+  );
+  const config = await getMergedConfig([
+    '-c',
+    resolveFixture('toc/toc.valid.4.config.cjs'),
+  ]);
+  assertSingleItem(config);
+  assertManifestPath(config);
+  await prepareThemeDirectory(config);
+  await compile(config);
+  expect(
+    fs.readFileSync(resolveFixture('toc/inplace/index.html'), 'utf-8'),
+  ).toBe(srcTocContent);
+
+  const fileList = await globby('**', {
+    cwd: resolveFixture('toc/inplace'),
+    dot: true,
+  });
+  const tmpTocPath = fileList.find((f) => /^\.vs-/.test(f));
+  expect(tmpTocPath).toBeTruthy();
+  const tmpTocContent = fs.readFileSync(
+    resolveFixture(`toc/inplace/${tmpTocPath}`),
+    'utf-8',
+  );
+  expect(tmpTocContent).toMatch(/<title>in-place toc page<\/title>/);
 });
 
 it('works with sectionized document', async () => {

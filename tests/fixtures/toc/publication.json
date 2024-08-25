@@ -1,0 +1,20 @@
+{
+  "@context": [
+    "https://schema.org",
+    "https://www.w3.org/ns/pub-context"
+  ],
+  "type": "Book",
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "name": "In-place toc conversion",
+  "dateModified": "2024-08-25T07:40:56.928Z",
+  "readingOrder": [
+    {
+      "url": "inplace/.vs-1724571656911.index.html",
+      "name": "in-place toc page",
+      "rel": "contents",
+      "type": "LinkedResource"
+    }
+  ],
+  "resources": [],
+  "links": []
+}

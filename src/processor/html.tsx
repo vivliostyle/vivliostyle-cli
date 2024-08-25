@@ -255,6 +255,7 @@ export function generateDefaultTocHtml({
       <head>
         <meta charset="utf-8" />
         <title>{title || ''}</title>
+        <style data-vv-style></style>
       </head>
       <body>
         <h1>{title || ''}</h1>
@@ -355,13 +356,13 @@ export async function processTocHtml(
     document.head.appendChild(l);
   }
 
-  if (!document.querySelector('style[data-vv-style]')) {
+  const style = document.querySelector('style[data-vv-style]');
+  if (style) {
     const textContent = getTocHtmlStyle(styleOptions);
     if (textContent) {
-      const s = document.createElement('style');
-      s.setAttribute('data-vv-style', '');
-      s.textContent = textContent;
-      document.head.appendChild(s);
+      style.textContent = textContent;
+    } else {
+      style.remove();
     }
   }
 
@@ -419,6 +420,7 @@ export function generateDefaultCoverHtml({
       <head>
         <meta charset="utf-8" />
         <title>{title || ''}</title>
+        <style data-vv-style></style>
       </head>
       <body>
         <section role="region" aria-label="Cover">
@@ -444,13 +446,13 @@ export async function processCoverHtml(
 ): Promise<string> {
   const { dom } = getJsdomFromString(html);
   const { document } = dom.window;
-  if (!document.querySelector('style[data-vv-style]')) {
+  const style = document.querySelector('style[data-vv-style]');
+  if (style) {
     const textContent = getCoverHtmlStyle(styleOptions);
     if (textContent) {
-      const s = document.createElement('style');
-      s.setAttribute('data-vv-style', '');
-      s.textContent = textContent;
-      document.head.appendChild(s);
+      style.textContent = textContent;
+    } else {
+      style.remove();
     }
   }
 

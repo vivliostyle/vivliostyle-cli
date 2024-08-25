@@ -1063,7 +1063,7 @@ async function composeProjectConfig<T extends CliFlags>(
       const source = upath.resolve(entryContextDir, entry.path);
       try {
         statFileSync(source);
-      } catch (error) {
+      } catch (error) /* istanbul ignore next */ {
         // For backward compatibility, we allow missing files then assume that option as `output` field.
         logWarn(
           chalk.yellowBright(
