@@ -87,6 +87,7 @@ export interface ManuscriptEntry {
   title?: string;
   themes: ParsedTheme[];
   source: string;
+  template?: undefined;
   target: string;
   rel?: string | string[];
 }
