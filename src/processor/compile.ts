@@ -315,7 +315,7 @@ export async function compile({
       entries: manuscriptEntries,
       manifestPath,
       distDir: upath.dirname(entry.target),
-      tocTitle: entry.title,
+      tocTitle: entry.tocTitle,
       sectionDepth: entry.sectionDepth,
       styleOptions: entry,
       transform: entry.transform,
@@ -344,7 +344,9 @@ export async function compile({
   // generate manifest
   if (needToGenerateManifest) {
     const manifestEntries: ArticleEntryObject[] = entries.map((entry) => ({
-      title: entry.title,
+      title:
+        (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||
+        entry.title,
       path: upath.relative(workspaceDir, entry.target),
       encodingFormat:
         !('type' in entry) ||

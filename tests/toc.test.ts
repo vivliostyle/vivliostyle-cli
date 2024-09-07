@@ -202,7 +202,7 @@ it('Customize ToC document', async () => {
   );
   expect(manifest.readingOrder[0]).toEqual({
     rel: 'contents',
-    name: 'ToC Title',
+    name: 'xxx',
     type: 'LinkedResource',
     url: 'index.html',
   });
@@ -210,9 +210,9 @@ it('Customize ToC document', async () => {
     fs.readFileSync(resolveFixture('toc/.vs-valid.3/index.html'), 'utf8'),
   );
   const { document } = tocHtml.window;
-  expect(document.querySelector('title')!.text).toBe('ToC Title');
+  expect(document.querySelector('title')!.text).toBe('yuno');
   const toc = document.querySelector('.toc-wrapper > nav[role="doc-toc"]')!;
-  expect(toc.querySelector('h2')!.innerHTML).toBe('ToC Title');
+  expect(toc.querySelector('h2')!.innerHTML).toBe('xxx');
   expect(toc.querySelector('ol')!.children).toHaveLength(3);
   expect(
     document.querySelector('link[rel="stylesheet"]')!.getAttribute('href'),

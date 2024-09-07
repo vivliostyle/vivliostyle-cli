@@ -93,7 +93,7 @@ export interface ManuscriptEntry {
 
 export interface ContentsEntry {
   rel: 'contents';
-  title: string;
+  title?: string;
   themes: ParsedTheme[];
   source?: undefined;
   template?: {
@@ -101,6 +101,7 @@ export interface ContentsEntry {
     type: ManuscriptMediaType;
   };
   target: string;
+  tocTitle: string;
   sectionDepth: number;
   transform: {
     transformDocumentList:
@@ -393,7 +394,7 @@ function parseFileMetadata({
     }
   } else {
     const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
-    title = $('title')?.text() ?? undefined;
+    title = $('title')?.text() || undefined;
   }
   return { title, themes };
 }
@@ -1002,7 +1003,7 @@ async function composeProjectConfig<T extends CliFlags>(
         ? { htmlPath: config.toc }
         : {};
     return {
-      title: c.title ?? config?.tocTitle ?? TOC_TITLE,
+      tocTitle: c.title ?? config?.tocTitle ?? TOC_TITLE,
       target: upath.resolve(workspaceDir, c.htmlPath ?? TOC_FILENAME),
       sectionDepth: c.sectionDepth ?? 0,
       transform: {
@@ -1106,7 +1107,7 @@ async function composeProjectConfig<T extends CliFlags>(
         rel: 'contents',
         ...tocConfig,
         target,
-        title: entry.title ?? inputInfo?.title ?? tocConfig.title,
+        title: entry.title ?? inputInfo?.title ?? projectTitle,
         themes,
         pageBreakBefore: entry.pageBreakBefore,
         pageCounterReset: entry.pageCounterReset,

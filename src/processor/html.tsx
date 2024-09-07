@@ -485,7 +485,7 @@ export function processManuscriptHtml(
     xmlMode: contentType === 'application/xhtml+xml',
   });
   if (title) {
-    if (!$('title')) {
+    if (!$('title').html()) {
       $('head').append($('<title></title>'));
     }
     $('title').text(title);
