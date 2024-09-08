@@ -379,7 +379,7 @@ export async function processTocHtml(
     });
   }
 
-  return prettier.format(dom.serialize(), { parser: 'html' });
+  return await  prettier.format(dom.serialize(), { parser: 'html' });
 }
 
 const getCoverHtmlStyle = ({
@@ -464,7 +464,7 @@ export async function processCoverHtml(
     cover.setAttribute('alt', imageAlt);
   }
 
-  return prettier.format(dom.serialize(), { parser: 'html' });
+  return await prettier.format(dom.serialize(), { parser: 'html' });
 }
 
 export function processManuscriptHtml(

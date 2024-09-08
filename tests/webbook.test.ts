@@ -59,7 +59,7 @@ it('generate webpub from vivliostyle.config.js', async () => {
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
   const toc = file['/work/output/index.html'];
-  expect(format(toc as string, { parser: 'html' })).toMatchSnapshot();
+  expect(await format(toc as string, { parser: 'html' })).toMatchSnapshot();
 
   const manifest2 = JSON.parse(
     file['/work/input/output/publication.json'] as string,
@@ -96,7 +96,7 @@ it('generate webpub from a plain HTML', async () => {
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
   const entry = file['/work/output/webbook.html'];
-  expect(format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
 });
 
 it('generate webpub from a single-document publication', async () => {
@@ -145,7 +145,7 @@ it('generate webpub from a single-document publication', async () => {
   expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const entry = file['/work/output/webbook.html'];
-  expect(format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
 });
 
 it('generate webpub from a remote HTML document', async () => {
@@ -172,7 +172,7 @@ it('generate webpub from a remote HTML document', async () => {
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
   const entry = file['/work/output/work/input/index.html'];
-  expect(format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
 });
 
 it('generate webpub with complex copyAsset settings', async () => {
