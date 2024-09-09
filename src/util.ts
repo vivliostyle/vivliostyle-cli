@@ -4,9 +4,8 @@ import {
   evaluate,
   parse,
 } from '@humanwhocodes/momoa';
-import AjvModule, { ErrorObject, Schema } from 'ajv';
+import AjvModule, { Schema } from 'ajv';
 import AjvFormatsModule from 'ajv-formats';
-import betterAjvErrors, { IInputOptions } from 'better-ajv-errors';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import fastGlob from 'fast-glob';
@@ -240,87 +239,6 @@ If you think this is a bug, please report at https://github.com/vivliostyle/vivl
   process.exit(1);
 }
 
-// Filter errors for human readability
-// ref. https://github.com/atlassian/better-ajv-errors/issues/76
-export function filterRelevantAjvErrors(
-  allErrors: ErrorObject[],
-): ErrorObject[] {
-  function split<T>(items: T[], splitFn: (item: T) => boolean): [T[], T[]] {
-    return [items.filter(splitFn), items.filter((error) => !splitFn(error))];
-  }
-  function removeShadowingErrors(
-    singleErrors: ErrorObject[],
-    metaErrors: ErrorObject[],
-  ): ErrorObject[] {
-    return singleErrors.filter((error) => {
-      if (
-        metaErrors.some((metaError) =>
-          error.instancePath.startsWith(metaError.instancePath),
-        )
-      ) {
-        return !singleErrors.some(
-          (otherError) =>
-            otherError.instancePath.startsWith(error.instancePath) &&
-            otherError.instancePath.length > error.instancePath.length,
-        );
-      } else {
-        return true;
-      }
-    });
-  }
-  function mergeTypeErrorsByPath(typeErrors: ErrorObject[]): ErrorObject[] {
-    const typeErrorsByPath = typeErrors.reduce(
-      (acc, error) => {
-        const key = error.instancePath;
-        return {
-          ...acc,
-          [key]: [...(acc[key] ?? []), error],
-        };
-      },
-      {} as Record<string, ErrorObject[]>,
-    );
-    return Object.values(typeErrorsByPath).map(mergeTypeErrors);
-
-    function mergeTypeErrors(typeErrors: ErrorObject[]): ErrorObject {
-      const params = {
-        type: typeErrors.map((error) => error.params.type).join(','),
-      };
-      return {
-        ...typeErrors[0],
-        params,
-      };
-    }
-  }
-
-  const META_SCHEMA_KEYWORDS = Object.freeze(['anyOf', 'allOf', 'oneOf']);
-
-  // Split the meta errors from what I call "single errors" (the real errors)
-  const [metaErrors, singleErrors] = split(allErrors, (error) =>
-    META_SCHEMA_KEYWORDS.includes(error.keyword),
-  );
-  // Filter out the single errors we want to show
-  const nonShadowedSingleErrors = removeShadowingErrors(
-    singleErrors,
-    metaErrors,
-  );
-  // We're handling type errors differently, split them out
-  const [typeErrors, nonTypeErrors] = split(
-    nonShadowedSingleErrors,
-    (error) => error.keyword === 'type',
-  );
-  // Filter out the type errors that already have other errors as well.
-  // For example when setting `logLevel: 4`, we don't want to see the error specifying that logLevel should be a string,
-  // if the other error already specified that it should be one of the enum values.
-  const nonShadowingTypeErrors = typeErrors.filter(
-    (typeError) =>
-      !nonTypeErrors.some(
-        (nonTypeError) => nonTypeError.instancePath === typeError.instancePath,
-      ),
-  );
-  const typeErrorsMerged = mergeTypeErrorsByPath(nonShadowingTypeErrors);
-  return [...nonTypeErrors, ...typeErrorsMerged];
-}
-
 export function readJSON(path: string) {
   try {
     return JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -552,9 +470,9 @@ export async function openEpubToTmpDirectory(filePath: string): Promise<{
 const Ajv = AjvModule.default;
 const addFormats = AjvFormatsModule.default;
 
-const getValidatorFunction =
+const getAjvValidatorFunction =
   <T extends Schema>(schema: T, refSchemas?: Schema | Schema[]) =>
-  (obj: unknown, errorFormatOption?: IInputOptions): obj is T => {
+  (obj: unknown): obj is T => {
     const ajv = new Ajv({ strict: false });
     addFormats(ajv);
     if (refSchemas) {
@@ -563,21 +481,13 @@ const getValidatorFunction =
     const validate = ajv.compile(schema);
     const valid = validate(obj);
     if (!valid) {
-      const detailMessage =
-        validate.errors &&
-        betterAjvErrors(
-          schema,
-          obj,
-          filterRelevantAjvErrors(validate.errors),
-          errorFormatOption,
-        );
-      throw detailMessage || new Error();
+      throw validate.errors?.[0] || new Error();
     }
     return true;
   };
 
 export const assertPubManifestSchema =
-  getValidatorFunction<PublicationManifest>(
+  getAjvValidatorFunction<PublicationManifest>(
     publicationSchema,
     publicationSchemas,
   );

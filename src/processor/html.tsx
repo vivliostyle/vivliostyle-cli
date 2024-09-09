@@ -124,8 +124,8 @@ export async function getStructuredSectionFromHtml(
       return position & 2 /* DOCUMENT_POSITION_PRECEDING */
         ? 1
         : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
-        ? -1
-        : 0;
+          ? -1
+          : 0;
     });
 
   function traverse(headers: Element[]): StructuredDocumentSection[] {
@@ -379,7 +379,7 @@ export async function processTocHtml(
     });
   }
 
-  return await  prettier.format(dom.serialize(), { parser: 'html' });
+  return await prettier.format(dom.serialize(), { parser: 'html' });
 }
 
 const getCoverHtmlStyle = ({
@@ -586,7 +586,7 @@ export async function fetchLinkedPublicationManifest({
   }
 
   try {
-    assertPubManifestSchema(manifest, { json: manifestJson });
+    assertPubManifestSchema(manifest);
   } catch (error) {
     logWarn(
       `${chalk.yellowBright(
