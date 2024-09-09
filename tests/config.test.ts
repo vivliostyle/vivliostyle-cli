@@ -21,7 +21,7 @@ const configFilePath = configFiles.reduce(
     ...p,
     [v]: resolveFixture(`config/vivliostyle.config.${v}.cjs`),
   }),
-  {} as { [k in typeof configFiles[number]]: string },
+  {} as { [k in (typeof configFiles)[number]]: string },
 );
 
 it('parse vivliostyle config', async () => {

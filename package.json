@@ -8,9 +8,7 @@
     "build": "yarn clean && run-s build:*",
     "build:vendors": "node vendors/build.js",
     "build:cli": "tsc && shx chmod +x dist/cli.js",
-    "generate:schema": "run-p generate:schema:*",
-    "generate:schema:pubManifest": "json2ts -i schemas/pubManifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pubManifest",
-    "generate:schema:vivliostyleConfig": "json2ts -i schemas/vivliostyle/vivliostyleConfig.schema.json -o src/schema/vivliostyleConfig.schema.ts --cwd schemas/vivliostyle",
+    "generate:schema": "json2ts -i schemas/pubManifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pubManifest",
     "clean": "shx rm -rf dist tmp",
     "dev": "run-p dev:*",
     "dev:vendors": "node vendors/build.js -w",
@@ -22,6 +20,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
+    "@babel/code-frame": "^7.24.7",
     "@napi-rs/canvas": "0.1.41",
     "@npmcli/arborist": "^6.1.3",
     "@vivliostyle/jsdom": "22.1.0-vivliostyle-cli.1",
@@ -63,15 +62,18 @@
     "terminal-link": "^2.1.1",
     "tmp": "^0.2.1",
     "uuid": "^8.3.2",
+    "valibot": "^0.41.0",
     "vfile": "^4.2.1",
     "w3c-xmlserializer": "^4.0.0",
     "whatwg-mimetype": "^3.0.0"
   },
   "devDependencies": {
+    "@humanwhocodes/momoa": "^3.2.1",
     "@hyrious/esbuild-plugin-commonjs": "^0.2.2",
     "@release-it/conventional-changelog": "^5.1.1",
     "@types/adm-zip": "^0.5.5",
     "@types/archiver": "^5.3.2",
+    "@types/babel__code-frame": "^7.0.6",
     "@types/command-exists": "1.2.0",
     "@types/debug": "^4.1.7",
     "@types/dompurify": "^3.0.5",

@@ -9,12 +9,12 @@ import {
   ParsedTheme,
   WebPublicationManifestConfig,
 } from '../input/config.js';
+import type { ArticleEntryObject } from '../input/schema.js';
 import type {
   PublicationLinks,
   PublicationManifest,
   URL as PublicationURL,
 } from '../schema/publication.schema.js';
-import type { ArticleEntryObject } from '../schema/vivliostyleConfig.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,

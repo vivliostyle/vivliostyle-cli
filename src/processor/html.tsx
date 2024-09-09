@@ -10,11 +10,11 @@ import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
 import type { ManuscriptEntry } from '../input/config.js';
-import type { PublicationManifest } from '../schema/publication.schema.js';
-import {
+import type {
   StructuredDocument,
   StructuredDocumentSection,
-} from '../schema/vivliostyle.js';
+} from '../input/schema.js';
+import type { PublicationManifest } from '../schema/publication.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,

@@ -3,6 +3,7 @@ import * as cheerio from 'cheerio';
 import fs from 'fs';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'url';
+import * as v from 'valibot';
 import { getExecutableBrowserPath } from '../browser.js';
 import {
   COVER_HTML_FILENAME,
@@ -28,36 +29,35 @@ import {
 } from '../output/output-types.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import { parsePackageName } from '../processor/theme.js';
-import {
-  StructuredDocument,
-  StructuredDocumentSection,
-} from '../schema/vivliostyle.js';
-import type {
-  ArticleEntryObject,
-  BrowserType,
-  ContentsEntryObject,
-  CoverEntryObject,
-  EntryObject,
-  ThemeObject,
-  VivliostyleConfigEntry,
-  VivliostyleConfigSchema,
-} from '../schema/vivliostyleConfig.schema.js';
 import { PageSize } from '../server.js';
 import {
   DetailError,
-  assertVivliostyleConfigSchema,
   cwd,
   debug,
   isUrlString,
   log,
   logWarn,
   openEpubToTmpDirectory,
+  parseJsonc,
   pathEquals,
+  prettifySchemaError,
   readJSON,
   statFileSync,
   touchTmpFile,
   upath,
 } from '../util.js';
+import {
+  ArticleEntryObject,
+  BrowserType,
+  ContentsEntryObject,
+  CoverEntryObject,
+  EntryObject,
+  StructuredDocument,
+  StructuredDocumentSection,
+  ThemeObject,
+  VivliostyleConfigEntry,
+  VivliostyleConfigSchema,
+} from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -417,12 +417,12 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
   )
 > {
   const load = async (configPath: string) => {
-    let config: VivliostyleConfigSchema;
+    let config: unknown;
     let jsonRaw: string | undefined;
     try {
       if (upath.extname(configPath) === '.json') {
         jsonRaw = fs.readFileSync(configPath, 'utf8');
-        config = JSON.parse(jsonRaw);
+        config = parseJsonc(jsonRaw);
       } else {
         // Clear require cache to reload CJS config files
         delete require.cache[require.resolve(configPath)];
@@ -431,6 +431,7 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
         // https://github.com/nodejs/node/issues/49442
         url.search = `version=${Date.now()}`;
         config = (await import(url.href)).default;
+        jsonRaw = JSON.stringify(config, null, 2);
       }
     } catch (error) {
       const thrownError = error as Error;
@@ -440,21 +441,16 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
       );
     }
 
-    try {
-      assertVivliostyleConfigSchema(
-        config,
-        typeof jsonRaw === 'string' ? { json: jsonRaw } : { indent: 2 },
-      );
-    } catch (error) {
-      const thrownError = error as Error | string;
+    const result = v.safeParse(VivliostyleConfigSchema, config);
+    if (result.success) {
+      return result.output;
+    } else {
+      const errorString = prettifySchemaError(jsonRaw, result.issues);
       throw new DetailError(
-        `Validation of vivliostyle.config failed. Please check the schema: ${configPath}`,
-        typeof thrownError === 'string'
-          ? thrownError
-          : thrownError.stack ?? thrownError.message,
+        `Validation of vivliostyle config failed. Please check the schema: ${configPath}`,
+        errorString,
       );
     }
-    return config;
   };
 
   let configEntry:
@@ -565,7 +561,7 @@ export async function mergeConfig<T extends CliFlags>(
     entryContextDir = upath.resolve(
       cliFlags.input && !config
         ? upath.dirname(upath.resolve(context, cliFlags.input))
-        : contextResolve(context, config?.entryContext) ?? context,
+        : (contextResolve(context, config?.entryContext) ?? context),
     );
     workspaceDir =
       contextResolve(context, config?.workspaceDir) ?? entryContextDir;
@@ -628,15 +624,15 @@ export async function mergeConfig<T extends CliFlags>(
         }),
       ]
     : config?.theme
-    ? [config.theme].flat().map((theme) =>
-        parseTheme({
-          theme,
-          context,
-          workspaceDir,
-          themesDir,
-        }),
-      )
-    : [];
+      ? [config.theme].flat().map((theme) =>
+          parseTheme({
+            theme,
+            context,
+            workspaceDir,
+            themesDir,
+          }),
+        )
+      : [];
   const themeIndexes = new Set(rootThemes);
 
   const outputs = ((): OutputFormat[] => {
@@ -1001,8 +997,8 @@ async function composeProjectConfig<T extends CliFlags>(
       typeof config?.toc === 'object'
         ? config.toc
         : typeof config?.toc === 'string'
-        ? { htmlPath: config.toc }
-        : {};
+          ? { htmlPath: config.toc }
+          : {};
     return {
       tocTitle: c.title ?? config?.tocTitle ?? TOC_TITLE,
       target: upath.resolve(workspaceDir, c.htmlPath ?? TOC_FILENAME),
@@ -1092,7 +1088,7 @@ async function composeProjectConfig<T extends CliFlags>(
               themesDir,
             }),
           )
-        : inputInfo?.themes ?? [...rootThemes];
+        : (inputInfo?.themes ?? [...rootThemes]);
       themes.forEach((t) => themeIndexes.add(t));
       target ??= tocConfig.target;
       if (inputInfo?.source && pathEquals(inputInfo.source, target)) {
@@ -1133,7 +1129,7 @@ async function composeProjectConfig<T extends CliFlags>(
               themesDir,
             }),
           )
-        : inputInfo?.themes ?? []; // Don't inherit rootThemes for cover documents
+        : (inputInfo?.themes ?? []); // Don't inherit rootThemes for cover documents
       themes.forEach((t) => themeIndexes.add(t));
       const coverImageSrc = ensureCoverImage(entry.imageSrc || cover?.src);
       if (!coverImageSrc) {
@@ -1180,7 +1176,7 @@ async function composeProjectConfig<T extends CliFlags>(
             .map((theme) =>
               parseTheme({ theme, context, workspaceDir, themesDir }),
             )
-        : inputInfo.themes ?? [...rootThemes];
+        : (inputInfo.themes ?? [...rootThemes]);
       themes.forEach((t) => themeIndexes.add(t));
 
       const parsedEntry: ManuscriptEntry = {

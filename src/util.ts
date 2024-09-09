@@ -1,3 +1,9 @@
+import { codeFrameColumns } from '@babel/code-frame';
+import {
+  ValueNode as JsonValueNode,
+  evaluate,
+  parse,
+} from '@humanwhocodes/momoa';
 import AjvModule, { ErrorObject, Schema } from 'ajv';
 import AjvFormatsModule from 'ajv-formats';
 import betterAjvErrors, { IInputOptions } from 'better-ajv-errors';
@@ -16,6 +22,7 @@ import oraConstructor from 'ora';
 import portfinder from 'portfinder';
 import slash from 'slash';
 import tmp from 'tmp';
+import { BaseIssue } from 'valibot';
 import {
   copy,
   copySync,
@@ -27,8 +34,6 @@ import {
 } from '../vendors/index.js';
 import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
 import type { PublicationManifest } from './schema/publication.schema.js';
-import { vivliostyleConfigSchema } from './schema/vivliostyle.js';
-import type { VivliostyleConfigSchema } from './schema/vivliostyleConfig.schema.js';
 
 export { copy, copySync, move, moveSync, remove, removeSync, upath };
 
@@ -206,7 +211,10 @@ export function logInfo(...obj: string[]) {
 }
 
 export class DetailError extends Error {
-  constructor(message: string | undefined, public detail: string | undefined) {
+  constructor(
+    message: string | undefined,
+    public detail: string | undefined,
+  ) {
     super(message);
   }
 }
@@ -216,8 +224,8 @@ export function gracefulError<T extends Error>(err: T) {
     err instanceof DetailError
       ? `${chalk.red.bold('Error:')} ${err.message}\n${err.detail}`
       : err.stack
-      ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
-      : `${chalk.red.bold('Error:')} ${err.message}`;
+        ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
+        : `${chalk.red.bold('Error:')} ${err.message}`;
 
   if (ora.isSpinning) {
     ora.fail(message);
@@ -261,13 +269,16 @@ export function filterRelevantAjvErrors(
     });
   }
   function mergeTypeErrorsByPath(typeErrors: ErrorObject[]): ErrorObject[] {
-    const typeErrorsByPath = typeErrors.reduce((acc, error) => {
-      const key = error.instancePath;
-      return {
-        ...acc,
-        [key]: [...(acc[key] ?? []), error],
-      };
-    }, {} as Record<string, ErrorObject[]>);
+    const typeErrorsByPath = typeErrors.reduce(
+      (acc, error) => {
+        const key = error.instancePath;
+        return {
+          ...acc,
+          [key]: [...(acc[key] ?? []), error],
+        };
+      },
+      {} as Record<string, ErrorObject[]>,
+    );
     return Object.values(typeErrorsByPath).map(mergeTypeErrors);
 
     function mergeTypeErrors(typeErrors: ErrorObject[]): ErrorObject {
@@ -565,11 +576,73 @@ const getValidatorFunction =
     return true;
   };
 
-export const assertVivliostyleConfigSchema =
-  getValidatorFunction<VivliostyleConfigSchema>(vivliostyleConfigSchema);
-
 export const assertPubManifestSchema =
   getValidatorFunction<PublicationManifest>(
     publicationSchema,
     publicationSchemas,
   );
+
+export function parseJsonc(rawJsonc: string) {
+  const ast = parse(rawJsonc, {
+    mode: 'jsonc',
+    ranges: false,
+    tokens: false,
+  });
+  return evaluate(ast);
+}
+
+export function prettifySchemaError(
+  rawJsonc: string,
+  issues: BaseIssue<unknown>[],
+) {
+  const parsed = parse(rawJsonc, {
+    mode: 'jsonc',
+    ranges: false,
+    tokens: false,
+  });
+
+  // Traverse to the deepest issue
+  function traverse(issues: BaseIssue<unknown>[], depth: number) {
+    return issues.flatMap((issue): [BaseIssue<unknown>[], number][] => {
+      const p = issue.path?.length || 0;
+      if (!issue.issues) {
+        return [[[issue], depth + p]];
+      }
+      return traverse(issue.issues, depth + p).map(([i, d]) => [
+        [issue, ...i],
+        d,
+      ]);
+    });
+  }
+  const all = traverse(issues, 0);
+  const maxDepth = Math.max(...all.map(([, d]) => d));
+  const issuesTraversed = all.find(([, d]) => d === maxDepth)![0];
+
+  let jsonValue = parsed.body as JsonValueNode;
+  for (const p of issuesTraversed.flatMap((v) => v.path ?? [])) {
+    let childValue: JsonValueNode | undefined;
+    if (p.type === 'object' && jsonValue.type === 'Object') {
+      childValue = jsonValue.members.find(
+        (m) =>
+          (m.name.type === 'Identifier' && m.name.name === p.key) ||
+          (m.name.type === 'String' && m.name.value === p.key),
+      )?.value;
+    }
+    if (p.type === 'array' && jsonValue.type === 'Array') {
+      childValue = jsonValue.elements[p.key]?.value;
+    }
+    if (childValue) {
+      jsonValue = childValue;
+    } else {
+      break;
+    }
+  }
+
+  let message = `${chalk.red(issuesTraversed.at(-1)!.message)}`;
+  if (jsonValue) {
+    message += `\n${codeFrameColumns(rawJsonc, jsonValue.loc, {
+      highlightCode: true,
+    })}`;
+  }
+  return message;
+}

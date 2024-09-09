@@ -2,7 +2,7 @@ import { fs as memfs, vol } from 'memfs';
 import { format } from 'prettier';
 import { afterEach, expect, it, vi } from 'vitest';
 import { build } from '../src/index.js';
-import { VivliostyleConfigSchema } from '../src/schema/vivliostyleConfig.schema.js';
+import { VivliostyleConfigSchema } from '../src/input/schema.js';
 import { toTree } from './commandUtil.js';
 
 vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
