@@ -16,7 +16,11 @@ export type StructuredDocumentSection = {
   children: StructuredDocumentSection[];
 };
 
-export const ValidString = v.string();
+export const ValidString = v.pipe(
+  v.string(),
+  v.trim(),
+  v.minLength(1, 'At least one character is required'),
+);
 
 export const ThemeObject = v.intersect([
   v.required(
