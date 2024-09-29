@@ -237,13 +237,11 @@ export async function buildPDF({
 
   await page.setDefaultTimeout(timeout);
   await page.goto(viewerFullUrl, { waitUntil: 'networkidle' });
-  await page.waitForFunction(
-    /* istanbul ignore next */ () => !!window.coreViewer,
-  );
+  await page.waitForFunction(() => !!window.coreViewer);
 
   await page.emulateMedia({ media: 'print' });
   await page.waitForFunction(
-    /* istanbul ignore next */
+    /* v8 ignore next */
     () => window.coreViewer.readyState === 'complete',
     undefined,
     { polling: 1000 },
@@ -253,19 +251,19 @@ export async function buildPDF({
     logSuccess(stringifyEntry(lastEntry));
   }
 
-  const pageProgression = await page.evaluate(
-    /* istanbul ignore next */ () =>
-      document
-        .querySelector('#vivliostyle-viewer-viewport')
-        ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
-        ? 'rtl'
-        : 'ltr',
+  const pageProgression = await page.evaluate(() =>
+    /* v8 ignore next 5 */
+    document
+      .querySelector('#vivliostyle-viewer-viewport')
+      ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
+      ? 'rtl'
+      : 'ltr',
   );
-  const viewerCoreVersion = await page.evaluate(
-    /* istanbul ignore next */ () =>
-      document
-        .querySelector('#vivliostyle-menu_settings .version')
-        ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
+  const viewerCoreVersion = await page.evaluate(() =>
+    /* v8 ignore next 3 */
+    document
+      .querySelector('#vivliostyle-menu_settings .version')
+      ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
   );
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
@@ -317,17 +315,16 @@ export async function buildPDF({
 }
 
 async function loadMetadata(page: Page): Promise<Meta> {
-  return page.evaluate(
-    /* istanbul ignore next */ () => window.coreViewer.getMetadata(),
-  );
+  return page.evaluate(() => window.coreViewer.getMetadata());
 }
 
 // Show and hide the TOC in order to read its contents.
 // Chromium needs to see the TOC links in the DOM to add
 // the PDF destinations used during postprocessing.
 async function loadTOC(page: Page): Promise<TOCItem[]> {
+  /* v8 ignore start */
   return page.evaluate(
-    /* istanbul ignore next */ () =>
+    () =>
       new Promise<TOCItem[]>((resolve) => {
         function listener(payload: Payload) {
           if (payload.a !== 'toc') {
@@ -341,28 +338,29 @@ async function loadTOC(page: Page): Promise<TOCItem[]> {
         window.coreViewer.showTOC(true);
       }),
   );
+  /* v8 ignore stop */
 }
 
 async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
-  return page.evaluate(
-    /* istanbul ignore next */ () => {
-      const sizeData: PageSizeData[] = [];
-      const pageContainers = document.querySelectorAll(
-        '#vivliostyle-viewer-viewport > div > div > div[data-vivliostyle-page-container]',
-      ) as NodeListOf<HTMLElement>;
+  /* v8 ignore start */
+  return page.evaluate(() => {
+    const sizeData: PageSizeData[] = [];
+    const pageContainers = document.querySelectorAll(
+      '#vivliostyle-viewer-viewport > div > div > div[data-vivliostyle-page-container]',
+    ) as NodeListOf<HTMLElement>;
 
-      for (const pageContainer of pageContainers) {
-        const bleedBox = pageContainer.querySelector(
-          'div[data-vivliostyle-bleed-box]',
-        ) as HTMLElement;
-        sizeData.push({
-          mediaWidth: parseFloat(pageContainer.style.width) * 0.75,
-          mediaHeight: parseFloat(pageContainer.style.height) * 0.75,
-          bleedOffset: parseFloat(bleedBox?.style.left) * 0.75,
-          bleedSize: parseFloat(bleedBox?.style.paddingLeft) * 0.75,
-        });
-      }
-      return sizeData;
-    },
-  );
+    for (const pageContainer of pageContainers) {
+      const bleedBox = pageContainer.querySelector(
+        'div[data-vivliostyle-bleed-box]',
+      ) as HTMLElement;
+      sizeData.push({
+        mediaWidth: parseFloat(pageContainer.style.width) * 0.75,
+        mediaHeight: parseFloat(pageContainer.style.height) * 0.75,
+        bleedOffset: parseFloat(bleedBox?.style.left) * 0.75,
+        bleedSize: parseFloat(bleedBox?.style.paddingLeft) * 0.75,
+      });
+    }
+    return sizeData;
+  });
+  /* v8 ignore stop */
 }

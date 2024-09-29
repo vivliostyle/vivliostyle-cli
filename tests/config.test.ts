@@ -1,5 +1,4 @@
-import { afterAll, expect, it } from 'vitest';
-import { removeSync } from '../src/util.js';
+import { expect, it } from 'vitest';
 import {
   assertArray,
   assertSingleItem,
@@ -24,10 +23,6 @@ const configFilePath = configFiles.reduce(
   }),
   {} as { [k in typeof configFiles[number]]: string },
 );
-
-afterAll(() => {
-  removeSync(resolveFixture('config/.vs-*'));
-});
 
 it('parse vivliostyle config', async () => {
   const validConfig1 = await getMergedConfig(['-c', configFilePath['valid.1']]);

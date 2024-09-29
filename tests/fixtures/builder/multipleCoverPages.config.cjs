@@ -14,7 +14,7 @@ module.exports = {
     'manuscript/soda.md',
     {
       rel: 'cover',
-      path: 'another-cover.html',
+      output: 'another-cover.html',
       theme: 'manuscript/sample-theme.css',
       imageSrc: 'manuscript/cover2.png',
       imageAlt: 'yuno',

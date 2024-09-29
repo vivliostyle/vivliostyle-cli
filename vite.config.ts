@@ -5,11 +5,12 @@ export default defineConfig({
     include: ['**/src/__tests__/*.+(ts|tsx|js)', '**/tests/*.test.(ts|tsx|js)'],
     coverage: {
       provider: 'v8',
-      exclude: ['node_modules/', 'tests/', 'tmp/', 'vendors/'],
+      include: ['schemas/**', 'src/**'],
     },
     snapshotFormat: {
       escapeString: true,
       printBasicPrototype: true,
     },
+    globalSetup: ['tests/globalSetup/clean.ts'],
   },
 });

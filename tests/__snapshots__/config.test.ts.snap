@@ -573,7 +573,7 @@ Object {
           "type": "uri",
         },
       ],
-      "title": "TOC",
+      "tocTitle": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
         "transformSectionList": undefined,
@@ -731,7 +731,7 @@ Object {
           "type": "package",
         },
       ],
-      "title": "TOC",
+      "tocTitle": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
         "transformSectionList": undefined,
@@ -1056,7 +1056,7 @@ Object {
           "type": "package",
         },
       ],
-      "title": "TOC",
+      "tocTitle": "TOC",
       "transform": Object {
         "transformDocumentList": undefined,
         "transformSectionList": undefined,

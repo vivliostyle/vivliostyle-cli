@@ -2,7 +2,7 @@ import jsdom, { JSDOM } from '@vivliostyle/jsdom';
 import { globby } from 'globby';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { afterAll, expect, it } from 'vitest';
+import { expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import {
   checkOverwriteViolation,
@@ -12,7 +12,6 @@ import {
   prepareThemeDirectory,
 } from '../src/processor/compile.js';
 import { checkThemeInstallationNecessity } from '../src/processor/theme.js';
-import { removeSync } from '../src/util.js';
 import {
   assertArray,
   assertSingleItem,
@@ -25,23 +24,6 @@ function assertManifestPath(
 ): asserts config is MergedConfig & { manifestPath: string } {
   assert(!!config.manifestPath);
 }
-
-afterAll(() => {
-  [
-    resolveFixture('builder/.vs-workspace'),
-    resolveFixture('builder/.vs-entryContext'),
-    resolveFixture('builder/.vs-variousManuscriptFormat'),
-    resolveFixture('builder/.vs-vfm'),
-    resolveFixture('builder/.vs-multipleEntry'),
-    resolveFixture('builder/.vs-multipleCoverPages'),
-    resolveFixture('builder/.vs-localTheme'),
-    resolveFixture('builder/.vs-remoteTheme'),
-    resolveFixture('builder/.vs-multipleTheme'),
-    resolveFixture('builder/.vs-nonExistTheme'),
-    resolveFixture('builder/.vs-invalidTheme'),
-    resolveFixture('builder/.vs-nonExistImport'),
-  ].map((f) => removeSync(f));
-});
 
 it('generate workspace directory', async () => {
   const config = await getMergedConfig([

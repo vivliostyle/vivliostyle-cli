@@ -303,9 +303,9 @@ exports[`generate webpub from vivliostyle.config.js 3`] = `
     <meta charset=\\"utf-8\\" />
     <title>output</title>
     <link
-      href=\\"publication.json\\"
       rel=\\"publication\\"
       type=\\"application/ld+json\\"
+      href=\\"publication.json\\"
     />
   </head>
   <body>

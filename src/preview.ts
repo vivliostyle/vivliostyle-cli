@@ -125,8 +125,10 @@ export async function preview(cliFlags: PreviewCliFlags) {
           if (
             config.entries.length &&
             /\.(md|markdown|html?|xhtml|xht)$/i.test(path) &&
-            config.entries.every(
-              (entry) => !entry.source || !pathEquals(path, entry.source),
+            !config.entries.some(
+              (entry) =>
+                (entry.source && pathEquals(path, entry.source)) ||
+                (entry.template && pathEquals(path, entry.template.source)),
             )
           ) {
             return true; // ignore md or html files not in entries source

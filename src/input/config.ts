@@ -33,6 +33,7 @@ import {
   StructuredDocumentSection,
 } from '../schema/vivliostyle.js';
 import type {
+  ArticleEntryObject,
   BrowserType,
   ContentsEntryObject,
   CoverEntryObject,
@@ -51,6 +52,7 @@ import {
   log,
   logWarn,
   openEpubToTmpDirectory,
+  pathEquals,
   readJSON,
   statFileSync,
   touchTmpFile,
@@ -85,16 +87,22 @@ export interface ManuscriptEntry {
   title?: string;
   themes: ParsedTheme[];
   source: string;
+  template?: undefined;
   target: string;
   rel?: string | string[];
 }
 
 export interface ContentsEntry {
   rel: 'contents';
-  title: string;
+  title?: string;
   themes: ParsedTheme[];
   source?: undefined;
+  template?: {
+    source: string;
+    type: ManuscriptMediaType;
+  };
   target: string;
+  tocTitle: string;
   sectionDepth: number;
   transform: {
     transformDocumentList:
@@ -117,6 +125,10 @@ export interface CoverEntry {
   title?: string;
   themes: ParsedTheme[];
   source?: undefined;
+  template?: {
+    source: string;
+    type: ManuscriptMediaType;
+  };
   target: string;
   coverImageSrc: string;
   coverImageAlt: string;
@@ -383,7 +395,7 @@ function parseFileMetadata({
     }
   } else {
     const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
-    title = $('title')?.text() ?? undefined;
+    title = $('title')?.text() || undefined;
   }
   return { title, themes };
 }
@@ -981,6 +993,8 @@ async function composeProjectConfig<T extends CliFlags>(
   if (pkgJson) {
     debug('located package.json path', pkgJsonPath);
   }
+  const exportAliases: { source: string; target: string }[] = [];
+  const tmpPrefix = `.vs-${Date.now()}.`;
 
   const tocConfig = (() => {
     const c =
@@ -990,7 +1004,7 @@ async function composeProjectConfig<T extends CliFlags>(
         ? { htmlPath: config.toc }
         : {};
     return {
-      title: c.title ?? config?.tocTitle ?? TOC_TITLE,
+      tocTitle: c.title ?? config?.tocTitle ?? TOC_TITLE,
       target: upath.resolve(workspaceDir, c.htmlPath ?? TOC_FILENAME),
       sectionDepth: c.sectionDepth ?? 0,
       transform: {
@@ -1016,11 +1030,59 @@ async function composeProjectConfig<T extends CliFlags>(
     cliFlags.author ?? config?.author ?? pkgJson?.author;
 
   const isContentsEntry = (entry: EntryObject): entry is ContentsEntryObject =>
-    entry.rel === 'contents' && !('path' in entry);
+    entry.rel === 'contents';
   const isCoverEntry = (entry: EntryObject): entry is CoverEntryObject =>
     entry.rel === 'cover';
-  function parseEntry(entry: EntryObject): ParsedEntry {
+  const isArticleEntry = (entry: EntryObject): entry is ArticleEntryObject =>
+    !isContentsEntry(entry) && !isCoverEntry(entry);
+
+  async function parseEntry(entry: EntryObject): Promise<ParsedEntry> {
+    const getInputInfo = (entryPath: string) => {
+      const source = upath.resolve(entryContextDir, entryPath);
+      if (!isUrlString(source)) {
+        statFileSync(source);
+      }
+      const type = detectManuscriptMediaType(source);
+      return {
+        ...parseFileMetadata({
+          type,
+          sourcePath: source,
+          workspaceDir,
+          themesDir,
+        }),
+        source,
+        type,
+      };
+    };
+
+    const getTargetPath = (source: string) =>
+      upath.resolve(
+        workspaceDir,
+        upath.relative(entryContextDir, source).replace(/\.md$/, '.html'),
+      );
+
+    if ((isContentsEntry(entry) || isCoverEntry(entry)) && entry.path) {
+      const source = upath.resolve(entryContextDir, entry.path);
+      try {
+        statFileSync(source);
+        /* v8 ignore next 10 */
+      } catch (error) {
+        // For backward compatibility, we allow missing files then assume that option as `output` field.
+        logWarn(
+          chalk.yellowBright(
+            `The "path" option is set but the file does not exist: ${source}\nMaybe you want to set the "output" field instead.`,
+          ),
+        );
+        entry.output = entry.path;
+        entry.path = undefined;
+      }
+    }
+
     if (isContentsEntry(entry)) {
+      const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
+      let target = entry.output
+        ? upath.resolve(workspaceDir, entry.output)
+        : inputInfo?.source && getTargetPath(inputInfo.source);
       const themes = entry.theme
         ? [entry.theme].flat().map((theme) =>
             parseTheme({
@@ -1030,19 +1092,38 @@ async function composeProjectConfig<T extends CliFlags>(
               themesDir,
             }),
           )
-        : [...rootThemes];
+        : inputInfo?.themes ?? [...rootThemes];
       themes.forEach((t) => themeIndexes.add(t));
+      target ??= tocConfig.target;
+      if (inputInfo?.source && pathEquals(inputInfo.source, target)) {
+        const tmpPath = upath.resolve(
+          upath.dirname(target),
+          `${tmpPrefix}${upath.basename(target)}`,
+        );
+        exportAliases.push({ source: tmpPath, target });
+        await touchTmpFile(tmpPath);
+        target = tmpPath;
+      }
       const parsedEntry: ContentsEntry = {
         rel: 'contents',
         ...tocConfig,
-        title: entry.title ?? tocConfig.title,
+        target,
+        title: entry.title ?? inputInfo?.title ?? projectTitle,
         themes,
         pageBreakBefore: entry.pageBreakBefore,
         pageCounterReset: entry.pageCounterReset,
+        ...(inputInfo && {
+          template: { source: inputInfo.source, type: inputInfo.type },
+        }),
       };
       return parsedEntry;
     }
+
     if (isCoverEntry(entry)) {
+      const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
+      let target = entry.output
+        ? upath.resolve(workspaceDir, entry.output)
+        : inputInfo?.source && getTargetPath(inputInfo.source);
       const themes = entry.theme
         ? [entry.theme].flat().map((theme) =>
             parseTheme({
@@ -1052,7 +1133,7 @@ async function composeProjectConfig<T extends CliFlags>(
               themesDir,
             }),
           )
-        : []; // Don't inherit rootThemes for cover documents
+        : inputInfo?.themes ?? []; // Don't inherit rootThemes for cover documents
       themes.forEach((t) => themeIndexes.add(t));
       const coverImageSrc = ensureCoverImage(entry.imageSrc || cover?.src);
       if (!coverImageSrc) {
@@ -1060,63 +1141,66 @@ async function composeProjectConfig<T extends CliFlags>(
           `A CoverEntryObject is set in the entry list but a location of cover file is not set. Please set 'cover' property in your config file.`,
         );
       }
+      target ??= upath.resolve(
+        workspaceDir,
+        entry.path || cover?.htmlPath || COVER_HTML_FILENAME,
+      );
+      if (inputInfo?.source && pathEquals(inputInfo.source, target)) {
+        const tmpPath = upath.resolve(
+          upath.dirname(target),
+          `${tmpPrefix}${upath.basename(target)}`,
+        );
+        exportAliases.push({ source: tmpPath, target });
+        await touchTmpFile(tmpPath);
+        target = tmpPath;
+      }
       const parsedEntry: CoverEntry = {
         rel: 'cover',
-        target: upath.resolve(
-          workspaceDir,
-          entry.path || cover?.htmlPath || COVER_HTML_FILENAME,
-        ),
-        title: entry.title ?? projectTitle,
+        target,
+        title: entry.title ?? inputInfo?.title ?? projectTitle,
         themes,
         coverImageSrc,
         coverImageAlt: entry.imageAlt || cover?.name || COVER_HTML_IMAGE_ALT,
         pageBreakBefore: entry.pageBreakBefore,
+        ...(inputInfo && {
+          template: { source: inputInfo.source, type: inputInfo.type },
+        }),
       };
       return parsedEntry;
     }
-    const sourcePath = upath.resolve(entryContextDir, entry.path); // abs
-    const contextEntryPath = upath.relative(entryContextDir, sourcePath); // rel
-    const targetPath = upath
-      .resolve(workspaceDir, contextEntryPath)
-      .replace(/\.md$/, '.html');
-    if (!isUrlString(sourcePath)) {
-      // Check file exists
-      statFileSync(sourcePath);
+
+    if (isArticleEntry(entry)) {
+      const inputInfo = getInputInfo(entry.path);
+      const target = entry.output
+        ? upath.resolve(workspaceDir, entry.output)
+        : getTargetPath(inputInfo.source);
+      const themes = entry.theme
+        ? [entry.theme]
+            .flat()
+            .map((theme) =>
+              parseTheme({ theme, context, workspaceDir, themesDir }),
+            )
+        : inputInfo.themes ?? [...rootThemes];
+      themes.forEach((t) => themeIndexes.add(t));
+
+      const parsedEntry: ManuscriptEntry = {
+        type: inputInfo.type,
+        source: inputInfo.source,
+        target,
+        title: entry.title ?? inputInfo.title ?? projectTitle,
+        themes,
+        ...(entry.rel && { rel: entry.rel }),
+      };
+      return parsedEntry;
     }
-    const type = detectManuscriptMediaType(sourcePath);
-    const metadata = parseFileMetadata({
-      type,
-      sourcePath,
-      workspaceDir,
-      themesDir,
-    });
 
-    const title = entry.title ?? metadata.title ?? projectTitle;
-    const themes = entry.theme
-      ? [entry.theme]
-          .flat()
-          .map((theme) =>
-            parseTheme({ theme, context, workspaceDir, themesDir }),
-          )
-      : metadata.themes ?? [...rootThemes];
-    themes.forEach((t) => themeIndexes.add(t));
-
-    const parsedEntry: ManuscriptEntry = {
-      type,
-      source: sourcePath,
-      target: targetPath,
-      title,
-      themes,
-      ...(entry.rel && { rel: entry.rel }),
-    };
-    return parsedEntry;
+    /* v8 ignore next */
+    throw new Error('Unknown entry type');
   }
 
-  const entries: ParsedEntry[] = config?.entry
-    ? (Array.isArray(config.entry) ? config.entry : [config.entry])
-        .map(normalizeEntry)
-        .map(parseEntry)
-    : [];
+  const entries: ParsedEntry[] = await Promise.all(
+    [config?.entry || []].flat().map(normalizeEntry).map(parseEntry),
+  );
   if (!entries.length) {
     throw new Error(
       'The entry fields seems to be empty. Make sure your Vivliostyle configuration.',
@@ -1170,7 +1254,7 @@ async function composeProjectConfig<T extends CliFlags>(
       format: 'pub-manifest',
       entry: upath.join(workspaceDir, MANIFEST_FILENAME),
     },
-    exportAliases: [],
+    exportAliases,
     manifestPath: upath.join(workspaceDir, MANIFEST_FILENAME),
     title: projectTitle || fallbackProjectTitle,
     author: projectAuthor,

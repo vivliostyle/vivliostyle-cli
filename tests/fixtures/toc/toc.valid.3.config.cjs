@@ -4,6 +4,7 @@ module.exports = {
     {
       rel: 'contents',
       path: 'manuscript/ToC.html',
+      output: 'index.html',
       theme: 'sample-theme.css',
     },
     'manuscript/a.md',
@@ -13,7 +14,6 @@ module.exports = {
   output: ['output1.pdf'],
   theme: '../themes/debug-theme',
   workspaceDir: '.vs-valid.3',
-  // if { rel: 'contents'; path: string } is set on entry, the configure below is no effect.
   toc: {
     title: 'xxx',
   },
