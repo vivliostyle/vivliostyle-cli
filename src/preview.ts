@@ -176,7 +176,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     // Move focus from the address bar to the page
     await page.bringToFront();
     // Focus to the URL input box if available
-    await page.locator('#vivliostyle-input-url').focus();
+    await page.locator('#vivliostyle-input-url').focus({ timeout: 0 });
 
     watcher?.on('all', handleFileChange);
     reload = () => page.reload();
