@@ -1,3 +1,4 @@
+/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
 module.exports = {
   title: 'Demonstration of Render mode',
   language: 'en',

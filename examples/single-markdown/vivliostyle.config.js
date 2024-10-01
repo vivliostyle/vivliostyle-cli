@@ -1,3 +1,4 @@
+/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
 module.exports = {
   title: 'Single Markdown publication',
   author: 'spring-raining',

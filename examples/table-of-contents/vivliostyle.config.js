@@ -1,3 +1,4 @@
+/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
 module.exports = {
   title: 'Example of Table of Contents',
   author: 'spring-raining',

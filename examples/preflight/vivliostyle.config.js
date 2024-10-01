@@ -1,3 +1,4 @@
+/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
 module.exports = {
   title: 'Preflight',
   language: 'en',
