@@ -25,21 +25,26 @@ export const ValidString = v.pipe(
 export const ThemeObject = v.intersect([
   v.required(
     v.object({
-      /**
-       * Specifier name of importing theme package or a path of CSS file.
-       * - A npm-style package argument is allowed (ex: @vivliostyle/theme-academic@1 ./local-pkg)
-       * - A URL or a local path of CSS is allowed (ex: ./style.css, https://example.com/style.css)
-       */
-      specifier: ValidString,
+      specifier: v.pipe(
+        ValidString,
+        v.description(`
+          Specifier name of importing theme package or a path of CSS file.
+          - A npm-style package argument is allowed (ex: @vivliostyle/theme-academic@1 ./local-pkg)
+          - A URL or a local path of CSS is allowed (ex: ./style.css, https://example.com/style.css)
+        `),
+      ),
     }),
     'Missing required field: specifier',
   ),
   v.partial(
     v.object({
-      /**
-       * Importing CSS path(s) of the package. Specify this if you want to import other than the default file.
-       */
-      import: v.union([v.array(ValidString), ValidString]),
+      import: v.pipe(
+        v.union([v.array(ValidString), ValidString]),
+        v.description(`
+          Importing CSS path(s) of the package.
+          Specify this if you want to import other than the default file.
+        `),
+      ),
     }),
   ),
 ]);
@@ -75,15 +80,20 @@ export const ContentsEntryObject = v.object({
   output: v.optional(ValidString),
   title: v.optional(ValidString),
   theme: v.optional(ThemeSpecifier),
-  /**
-   * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
-   */
-  pageBreakBefore: v.optional(PageBreak),
-  /**
-   * Reset the starting page number of this document by the specified integer. It is useful when you want to control page numbers when including a
-   *  page.
-   */
-  pageCounterReset: v.optional(v.pipe(v.number(), v.safeInteger())),
+  pageBreakBefore: v.pipe(
+    v.optional(PageBreak),
+    v.description(`
+      Specify the page break position before this document.
+      It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+    `),
+  ),
+  pageCounterReset: v.pipe(
+    v.optional(v.pipe(v.number(), v.safeInteger())),
+    v.description(`
+      Reset the starting page number of this document by the specified integer.
+      It is useful when you want to control page numbers when including a page.
+    `),
+  ),
 });
 export type ContentsEntryObject = v.InferInput<typeof ContentsEntryObject>;
 
@@ -95,10 +105,13 @@ export const CoverEntryObject = v.object({
   theme: v.optional(ThemeSpecifier),
   imageSrc: v.optional(ValidString),
   imageAlt: v.optional(v.string()), // Allow empty string
-  /**
-   * Specify the page break position before this document. It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
-   */
-  pageBreakBefore: v.optional(PageBreak),
+  pageBreakBefore: v.pipe(
+    v.optional(PageBreak),
+    v.description(`
+      Specify the page break position before this document.
+      It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+    `),
+  ),
 });
 export type CoverEntryObject = v.InferInput<typeof CoverEntryObject>;
 
@@ -112,34 +125,33 @@ export type EntryObject = v.InferInput<typeof EntryObject>;
 export const OutputObject = v.intersect([
   v.required(
     v.object({
-      /**
-       * Specify output file name or directory [<title>.pdf].
-       */
-      path: ValidString,
+      path: v.pipe(
+        ValidString,
+        v.description(`Specify output file name or directory [<title>.pdf].`),
+      ),
     }),
     'Missing required field: path',
   ),
   v.partial(
     v.object({
-      /**
-       * Specify output format.
-       */
-      format: ValidString,
-      /**
-       * if docker is set, Vivliostyle try to render PDF on Docker container [local].
-       */
-      renderMode: v.union([v.literal('local'), v.literal('docker')]),
-      /**
-       * Apply the process to generate PDF for printing.
-       */
-      preflight: v.union([
-        v.literal('press-ready'),
-        v.literal('press-ready-local'),
-      ]),
-      /**
-       * Options for preflight process (ex: gray-scale, enforce-outline). Please refer the document of press-ready for further information. https://github.com/vibranthq/press-ready
-       */
-      preflightOption: v.array(ValidString),
+      format: v.pipe(ValidString, v.description(`Specify output format.`)),
+      renderMode: v.pipe(
+        v.union([v.literal('local'), v.literal('docker')]),
+        v.description(
+          `if docker is set, Vivliostyle try to render PDF on Docker container [local].`,
+        ),
+      ),
+      preflight: v.pipe(
+        v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
+        v.description(`Apply the process to generate PDF for printing.`),
+      ),
+      preflightOption: v.pipe(
+        v.array(ValidString),
+        v.description(`
+          Options for preflight process (ex: gray-scale, enforce-outline).
+          Please refer the document of press-ready for further information. https://github.com/vibranthq/press-ready
+        `),
+      ),
     }),
   ),
 ]);
@@ -164,236 +176,276 @@ export type BrowserType = v.InferInput<typeof BrowserType>;
 export const VivliostyleConfigEntry = v.intersect([
   v.required(
     v.object({
-      /**
-       * Entry file(s) of document.
-       */
-      entry: v.union([
-        v.pipe(
-          v.array(v.union([ValidString, EntryObject])),
-          v.minLength(1, 'At least one entry is required'),
-        ),
-        v.required(
-          ArticleEntryObject,
-          ['path'],
-          'Missing required field: path',
-        ),
-        ValidString,
-      ]),
+      entry: v.pipe(
+        v.union([
+          v.pipe(
+            v.array(v.union([ValidString, EntryObject])),
+            v.minLength(1, 'At least one entry is required'),
+          ),
+          v.required(
+            ArticleEntryObject,
+            ['path'],
+            'Missing required field: path',
+          ),
+          ValidString,
+        ]),
+        v.description(`Entry file(s) of document.`),
+      ),
     }),
     'Missing required field: entry',
   ),
   v.partial(
     v.object({
-      /**
-       * Title
-       */
-      title: ValidString,
-      /**
-       * Author
-       */
-      author: ValidString,
-      /**
-       * Theme package path(s) or URL(s) of css file.
-       */
-      theme: ThemeSpecifier,
-      /**
-       * Directory of referencing entry file(s).
-       */
-      entryContext: ValidString,
-      /**
-       * Options about outputs.
-       */
-      output: v.union([
-        v.array(v.union([OutputObject, ValidString])),
-        OutputObject,
-        ValidString,
-      ]),
-      /**
-       * Specify the directory where the intermediate files (manuscript HTMLs, publication.json, etc.) are saved.
-       * If not specified, theses files are saved in the same directory as the input file.
-       */
-      workspaceDir: ValidString,
-      /**
-       * @deprecated Use 'copyAsset.includes' instead
-       */
-      includeAssets: v.union([v.array(ValidString), ValidString]),
-      /**
-       * Options about asset files to be copied when exporting output.
-       */
-      copyAsset: v.partial(
-        v.object({
-          /**
-           * Specify directories and files you want to include as asset files. This option supports wildcard characters to make glob patterns.
-           */
-          includes: v.array(ValidString),
-          /**
-           * Specify directories and files you want to exclude from the asset file. This option supports wildcard characters to make glob patterns.
-           */
-          excludes: v.array(ValidString),
-          /**
-           * Specify extensions of the file you want to include as an asset file. (default: [png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2])
-           */
-          includeFileExtensions: v.array(ValidString),
-          /**
-           * Specify extensions of the file you want to exclude as an asset file.
-           */
-          excludeFileExtensions: v.array(ValidString),
-        }),
+      title: v.pipe(ValidString, v.description(`Title`)),
+      author: v.pipe(ValidString, v.description(`Author`)),
+      theme: v.pipe(
+        ThemeSpecifier,
+        v.description(`Theme package path(s) or URL(s) of css file.`),
       ),
-      /**
-       * Output pdf size [Letter]. preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger. custom(comma separated): 182mm,257mm or 8.5in,11in.
-       */
-      size: ValidString,
-      /**
-       * Make generated PDF compatible with press ready PDF/X-1a [false]. This option is equivalent with "preflight": "press-ready"
-       */
-      pressReady: v.boolean(),
-      /**
-       * Language
-       */
-      language: ValidString,
-      readingProgression: v.union([v.literal('ltr'), v.literal('rtl')]),
-      /**
-       * Options about Table of Contents (ToC) documents.
-       */
-      toc: v.union([
+      entryContext: v.pipe(
+        ValidString,
+        v.description(`Directory of referencing entry file(s).`),
+      ),
+      output: v.pipe(
+        v.union([
+          v.array(v.union([OutputObject, ValidString])),
+          OutputObject,
+          ValidString,
+        ]),
+        v.description(`Options about outputs.`),
+      ),
+      workspaceDir: v.pipe(
+        ValidString,
+        v.description(`
+          Specify the directory where the intermediate files (manuscript HTMLs, publication.json, etc.) are saved.
+          If not specified, theses files are saved in the same directory as the input file.
+        `),
+      ),
+      /** @deprecated */
+      includeAssets: v.pipe(
+        v.union([v.array(ValidString), ValidString]),
+        v.metadata({ deprecated: true }),
+        v.description(`Use 'copyAsset.includes' instead`),
+      ),
+      copyAsset: v.pipe(
         v.partial(
           v.object({
-            /**
-             * Specify the title of the generated ToC document.
-             */
-            title: ValidString,
-            /**
-             * Specify the location where the generated ToC document will be saved. (default: index.html)
-             */
-            htmlPath: ValidString,
-            /**
-             * Specify the depth of the section to be included in the ToC document. (default: 0)
-             */
-            sectionDepth: v.pipe(
-              v.number(),
-              v.integer(),
-              v.minValue(0),
-              v.maxValue(6),
+            includes: v.pipe(
+              v.array(ValidString),
+              v.description(`
+                Specify directories and files you want to include as asset files.
+                This option supports wildcard characters to make glob patterns.
+              `),
             ),
-            /**
-             * Specify the transform function for the document list.
-             */
-            transformDocumentList: v.function() as v.GenericSchema<
-              (
-                nodeList: StructuredDocument[],
-              ) => (propsList: { children: any }[]) => any
-            >,
-            /**
-             * Specify the transform function for the section list.
-             */
-            transformSectionList: v.function() as v.GenericSchema<
-              (
-                nodeList: StructuredDocumentSection[],
-              ) => (propsList: { children: any }[]) => any
-            >,
+            excludes: v.pipe(
+              v.array(ValidString),
+              v.description(`
+                Specify directories and files you want to exclude from the asset file.
+                This option supports wildcard characters to make glob patterns.
+              `),
+            ),
+            includeFileExtensions: v.pipe(
+              v.array(ValidString),
+              v.description(
+                `Specify extensions of the file you want to include as an asset file. (default: [png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2])`,
+              ),
+            ),
+            excludeFileExtensions: v.pipe(
+              v.array(ValidString),
+              v.description(
+                `Specify extensions of the file you want to exclude as an asset file.`,
+              ),
+            ),
           }),
         ),
-        v.boolean(),
+        v.description(
+          `Options about asset files to be copied when exporting output.`,
+        ),
+      ),
+      size: v.pipe(
         ValidString,
-      ]),
-      /**
-       * @deprecated Use 'toc.title' instead
-       */
-      tocTitle: ValidString,
-      /**
-       * Options about cover images and cover page documents
-       */
-      cover: v.union([
-        v.intersect([
-          v.required(
-            v.object({
-              /**
-               * Specify the cover image to be used for the cover page.
-               */
-              src: ValidString,
-            }),
-            'Missing required field: src',
-          ),
+        v.description(`
+          Output pdf size [Letter].
+          preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger.
+          custom(comma separated): 182mm,257mm or 8.5in,11in.`),
+      ),
+      pressReady: v.pipe(
+        v.boolean(),
+        v.description(`
+          Make generated PDF compatible with press ready PDF/X-1a [false].
+          This option is equivalent with "preflight": "press-ready"
+        `),
+      ),
+      language: v.pipe(ValidString, v.description(`Language`)),
+      readingProgression: v.union([v.literal('ltr'), v.literal('rtl')]),
+      toc: v.pipe(
+        v.union([
           v.partial(
             v.object({
-              /**
-               * Specify alternative text for the cover image.
-               */
-              name: v.string(), // Allow empty string
-              /**
-               * Specify the location where the generated cover document will be saved. (default: cover.html) If falsy value is set, the cover document won't be generated.
-               */
-              htmlPath: v.union([ValidString, v.boolean()]),
+              title: v.pipe(
+                ValidString,
+                v.description(
+                  `Specify the title of the generated ToC document.`,
+                ),
+              ),
+              htmlPath: v.pipe(
+                ValidString,
+                v.description(
+                  `Specify the location where the generated ToC document will be saved. (default: index.html)`,
+                ),
+              ),
+              sectionDepth: v.pipe(
+                v.number(),
+                v.integer(),
+                v.minValue(0),
+                v.maxValue(6),
+                v.description(
+                  `Specify the depth of the section to be included in the ToC document. (default: 0)`,
+                ),
+              ),
+              transformDocumentList: v.pipe(
+                v.function() as v.GenericSchema<
+                  (
+                    nodeList: StructuredDocument[],
+                  ) => (propsList: { children: any }[]) => any
+                >,
+                v.description(
+                  `Specify the transform function for the document list.`,
+                ),
+              ),
+              transformSectionList: v.pipe(
+                v.function() as v.GenericSchema<
+                  (
+                    nodeList: StructuredDocumentSection[],
+                  ) => (propsList: { children: any }[]) => any
+                >,
+                v.description(
+                  `Specify the transform function for the section list.`,
+                ),
+              ),
             }),
           ),
+          v.boolean(),
+          ValidString,
         ]),
-        ValidString,
-      ]),
-      /**
-       * Timeout limit for waiting Vivliostyle process [120000]
-       */
-      timeout: v.number(),
-      /**
-       * Option for convert Markdown to a stringify (HTML).
-       */
-      vfm: v.partial(
-        // Use v.looseObject to allow unknown keys in future VFM versions
-        v.looseObject({
-          /**
-           * Custom stylesheet path/URL.
-           */
-          style: v.union([v.array(ValidString), ValidString]),
-          /**
-           * Output markdown fragments.
-           */
-          partial: v.boolean(),
-          /**
-           * Document title (ignored in partial mode).
-           */
-          title: ValidString,
-          /**
-           * Document language (ignored in partial mode).
-           */
-          language: ValidString,
-          /**
-           * Replacement handler for HTML string.
-           */
-          replace: v.array(VfmReplaceRule),
-          /**
-           * Add `<br>` at the position of hard line breaks, without needing spaces.
-           */
-          hardLineBreaks: v.boolean(),
-          /**
-           * Disable automatic HTML format.
-           */
-          disableFormatHtml: v.boolean(),
-          /**
-           * Enable math syntax.
-           */
-          math: v.boolean(),
-        }),
+        v.description(`Options about Table of Contents (ToC) documents.`),
       ),
-      /**
-       * Specify a docker image to render.
-       */
-      image: ValidString,
-      /**
-       * Launch an HTTP server hosting contents instead of file protocol. It is useful that requires CORS such as external web fonts.
-       */
-      http: v.boolean(),
-      /**
-       * Specify a URL of displaying viewer instead of vivliostyle-cli's one. It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
-       */
-      viewer: ValidString,
-      /**
-       * specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
-       */
-      viewerParam: ValidString,
-      /**
-       * EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer. Currently, Firefox and Webkit support preview command only!
-       */
-      browser: BrowserType,
+      /** @deprecated */
+      tocTitle: v.pipe(
+        ValidString,
+        v.metadata({ deprecated: true }),
+        v.description(`Use 'toc.title' instead`),
+      ),
+      cover: v.pipe(
+        v.union([
+          v.intersect([
+            v.required(
+              v.object({
+                src: v.pipe(
+                  ValidString,
+                  v.description(
+                    `Specify the cover image to be used for the cover page.`,
+                  ),
+                ),
+              }),
+              'Missing required field: src',
+            ),
+            v.partial(
+              v.object({
+                name: v.pipe(
+                  v.string(), // Allow empty string
+                  v.description(
+                    `Specify alternative text for the cover image.`,
+                  ),
+                ),
+                htmlPath: v.pipe(
+                  v.union([ValidString, v.boolean()]),
+                  v.description(`
+                    Specify the location where the generated cover document will be saved. (default: cover.html)
+                    If falsy value is set, the cover document won't be generated.
+                  `),
+                ),
+              }),
+            ),
+          ]),
+          ValidString,
+        ]),
+        v.description(`Options about cover images and cover page documents.`),
+      ),
+      timeout: v.pipe(
+        v.number(),
+        v.description(`Timeout limit for waiting Vivliostyle process [120000]`),
+      ),
+      vfm: v.pipe(
+        v.partial(
+          // Use v.looseObject to allow unknown keys in future VFM versions
+          v.looseObject({
+            style: v.pipe(
+              v.union([v.array(ValidString), ValidString]),
+              v.description(`Custom stylesheet path/URL.`),
+            ),
+            partial: v.pipe(
+              v.boolean(),
+              v.description(`Output markdown fragments.`),
+            ),
+            title: v.pipe(
+              ValidString,
+              v.description(`Document title (ignored in partial mode).`),
+            ),
+            language: v.pipe(
+              ValidString,
+              v.description(`Document language (ignored in partial mode).`),
+            ),
+            replace: v.pipe(
+              v.array(VfmReplaceRule),
+              v.description(`Replacement handler for HTML string.`),
+            ),
+            hardLineBreaks: v.pipe(
+              v.boolean(),
+              v.description(
+                `Add \`<br>\` at the position of hard line breaks, without needing spaces.`,
+              ),
+            ),
+            disableFormatHtml: v.pipe(
+              v.boolean(),
+              v.description(`Disable automatic HTML format.`),
+            ),
+            math: v.pipe(v.boolean(), v.description(`Enable math syntax.`)),
+          }),
+        ),
+        v.description(`Option for convert Markdown to a stringify (HTML).`),
+      ),
+      image: v.pipe(
+        ValidString,
+        v.description(`Specify a docker image to render.`),
+      ),
+      http: v.pipe(
+        v.boolean(),
+        v.description(`
+          Launch an HTTP server hosting contents instead of file protocol.
+          It is useful that requires CORS such as external web fonts.
+        `),
+      ),
+      viewer: v.pipe(
+        ValidString,
+        v.description(`
+          Specify a URL of displaying viewer instead of vivliostyle-cli's one.
+          It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
+        `),
+      ),
+      viewerParam: v.pipe(
+        ValidString,
+        v.description(
+          `specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")`,
+        ),
+      ),
+      browser: v.pipe(
+        BrowserType,
+        v.description(`
+          EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer.
+          Currently, Firefox and Webkit support preview command only!
+        `),
+      ),
     }),
   ),
 ]);

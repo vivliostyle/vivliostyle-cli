@@ -62,7 +62,7 @@
     "terminal-link": "^2.1.1",
     "tmp": "^0.2.1",
     "uuid": "^8.3.2",
-    "valibot": "^0.41.0",
+    "valibot": "^0.42.1",
     "vfile": "^4.2.1",
     "w3c-xmlserializer": "^4.0.0",
     "whatwg-mimetype": "^3.0.0"

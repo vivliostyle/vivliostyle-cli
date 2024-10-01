@@ -8249,10 +8249,10 @@ uuid@^8.1.0, uuid@^8.3.2:
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
-valibot@^0.41.0:
-  version "0.41.0"
-  resolved "https://registry.yarnpkg.com/valibot/-/valibot-0.41.0.tgz#5c2efd49c078e455f7862379365f6036f3cd9f96"
-  integrity sha512-igDBb8CTYr8YTQlOKgaN9nSS0Be7z+WRuaeYqGf3Cjz3aKmSnqEmYnkfVjzIuumGqfHpa3fLIvMEAfhrpqN8ng==
+valibot@^0.42.1:
+  version "0.42.1"
+  resolved "https://registry.yarnpkg.com/valibot/-/valibot-0.42.1.tgz#a31183d8e9d7552f98e22ca0977172cab8815188"
+  integrity sha512-3keXV29Ar5b//Hqi4MbSdV7lfVp6zuYLZuA9V1PvQUsXqogr+u5lvLPLk3A4f74VUXDnf/JfWMN6sB+koJ/FFw==
 
 validate-npm-package-license@^3.0.1, validate-npm-package-license@^3.0.4:
   version "3.0.4"
