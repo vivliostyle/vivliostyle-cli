@@ -1,6 +1,10 @@
 # Vivliostyle CLI ドキュメント
 
-## ガイド
+<nav role="doc-toc">
+<ul>
+<li>
+
+### ガイド
 
 - [はじめに](./getting-started.md)
 - [テーマと CSS](./themes-and-css.md)
@@ -9,7 +13,14 @@
 - [表紙ページの作成](./cover-page.md)
 - [特別な出力設定](./special-output-settings.md)
 
-## API
+</li>
+<li>
+
+### API
 
 - [Config Reference](../config.md)
 - [JavaScript API](../api-javascript.md)
+
+</li>
+</ul>
+</nav>
