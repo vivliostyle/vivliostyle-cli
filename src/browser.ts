@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import * as playwright from 'playwright-core';
 import { registry } from 'playwright-core/lib/server';
-import type { BrowserType } from './schema/vivliostyleConfig.schema.js';
+import type { BrowserType } from './input/schema.js';
 import {
   beforeExitHandlers,
   logInfo,

@@ -158,7 +158,7 @@ it('generate EPUB from single HTML with pub manifest', async () => {
       .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
   ).toMatchSnapshot('content.opf');
   const entry = file['/tmp/1/EPUB/index.xhtml'];
-  expect(format(entry as string, { parser: 'html' })).toMatchSnapshot(
+  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot(
     'index.xhtml',
   );
 });
@@ -217,7 +217,7 @@ it('generate EPUB from series of HTML files', async () => {
       .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
   ).toMatchSnapshot('content.opf');
   const first = file['/tmp/1/EPUB/src/index.xhtml'];
-  expect(format(first as string, { parser: 'html' })).toMatchSnapshot(
+  expect(await format(first as string, { parser: 'html' })).toMatchSnapshot(
     'src/index.xhtml',
   );
 });

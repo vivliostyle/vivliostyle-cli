@@ -10,11 +10,11 @@ import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
 import type { ManuscriptEntry } from '../input/config.js';
-import type { PublicationManifest } from '../schema/publication.schema.js';
-import {
+import type {
   StructuredDocument,
   StructuredDocumentSection,
-} from '../schema/vivliostyle.js';
+} from '../input/schema.js';
+import type { PublicationManifest } from '../schema/publication.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,
@@ -124,8 +124,8 @@ export async function getStructuredSectionFromHtml(
       return position & 2 /* DOCUMENT_POSITION_PRECEDING */
         ? 1
         : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
-        ? -1
-        : 0;
+          ? -1
+          : 0;
     });
 
   function traverse(headers: Element[]): StructuredDocumentSection[] {
@@ -379,7 +379,7 @@ export async function processTocHtml(
     });
   }
 
-  return prettier.format(dom.serialize(), { parser: 'html' });
+  return await prettier.format(dom.serialize(), { parser: 'html' });
 }
 
 const getCoverHtmlStyle = ({
@@ -464,7 +464,7 @@ export async function processCoverHtml(
     cover.setAttribute('alt', imageAlt);
   }
 
-  return prettier.format(dom.serialize(), { parser: 'html' });
+  return await prettier.format(dom.serialize(), { parser: 'html' });
 }
 
 export function processManuscriptHtml(
@@ -586,7 +586,7 @@ export async function fetchLinkedPublicationManifest({
   }
 
   try {
-    assertPubManifestSchema(manifest, { json: manifestJson });
+    assertPubManifestSchema(manifest);
   } catch (error) {
     logWarn(
       `${chalk.yellowBright(
