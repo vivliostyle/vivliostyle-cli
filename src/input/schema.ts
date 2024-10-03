@@ -1,11 +1,15 @@
 import * as v from 'valibot';
 
+/**
+ * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+ */
 export type StructuredDocument = {
   title: string;
   href: string;
   children: StructuredDocument[];
   sections?: StructuredDocumentSection[];
 };
+/** @hidden */
 export const StructuredDocument: v.GenericSchema<StructuredDocument> = v.pipe(
   v.object({
     title: v.string(),
@@ -16,6 +20,9 @@ export const StructuredDocument: v.GenericSchema<StructuredDocument> = v.pipe(
   v.title('StructuredDocument'),
 );
 
+/**
+ * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+ */
 export type StructuredDocumentSection = {
   headingHtml: string;
   headingText: string;
@@ -24,6 +31,7 @@ export type StructuredDocumentSection = {
   href?: string;
   id?: string;
 };
+/** @hidden */
 export const StructuredDocumentSection: v.GenericSchema<StructuredDocumentSection> =
   v.pipe(
     v.object({
@@ -518,6 +526,7 @@ export type VivliostyleConfigEntry = v.InferInput<
   typeof VivliostyleConfigEntry
 >;
 
+/** @hidden */
 export const VivliostyleConfigSchema = v.pipe(
   v.union([
     v.pipe(
@@ -528,6 +537,9 @@ export const VivliostyleConfigSchema = v.pipe(
   ]),
   v.title('VivliostyleConfigSchema'),
 );
+/**
+ * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+ */
 export type VivliostyleConfigSchema = v.InferInput<
   typeof VivliostyleConfigSchema
 >;

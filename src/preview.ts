@@ -36,6 +36,12 @@ let timer: NodeJS.Timeout;
 
 export interface PreviewCliFlags extends CliFlags {}
 
+/**
+ * Open a preview of the publication.
+ *
+ * @param cliFlags
+ * @returns
+ */
 export async function preview(cliFlags: PreviewCliFlags) {
   setLogLevel(cliFlags.logLevel);
 

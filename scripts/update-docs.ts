@@ -1,7 +1,12 @@
+import { exec } from 'node:child_process';
 import * as fs from 'node:fs';
+import path from 'node:path';
+import { promisify } from 'node:util';
 import prettier from 'prettier';
+import { JSONOutput } from 'typedoc';
 import * as v from 'valibot';
-import { VivliostyleConfigSchema } from './../src/input/schema.js';
+import { VivliostyleConfigSchema } from '../src/input/schema.js';
+import { useTmpDirectory } from '../src/util.js';
 
 function insertDocs(
   input: string,
@@ -216,10 +221,46 @@ async function buildConfigDocs(): Promise<string> {
   return await traverse(VivliostyleConfigSchema);
 }
 
+async function buildApiDocs() {
+  const [tmp, removeTmpDir] = await useTmpDirectory();
+  // Overwrite API docs by typedoc
+  const execAsync = promisify(exec);
+  const { stderr } = await execAsync(
+    `node ./node_modules/.bin/typedoc --logLevel Error --out ${tmp} --json ${path.join(tmp, 'api.json')}`,
+  );
+  if (stderr) {
+    throw new Error(stderr);
+  }
+
+  const json = JSON.parse(
+    fs.readFileSync(path.join(tmp, 'api.json'), 'utf-8'),
+  ) as JSONOutput.ProjectReflection;
+  let docs = `## Exported members\n\n`;
+  for (const group of json.groups || []) {
+    docs += `### ${group.title}\n\n`;
+    for (const memberId of group.children || []) {
+      const member = json.children?.find((child) => child.id === memberId);
+      if (!member) {
+        continue;
+      }
+      docs += `- [\`${member.name}\`](#${member.name.toLowerCase()})\n`;
+    }
+    docs += '\n';
+  }
+
+  docs += fs.readFileSync(path.join(tmp, 'README.md'), 'utf-8');
+  removeTmpDir();
+  return docs;
+}
+
 async function main() {
   let configMd = fs.readFileSync('docs/config.md', 'utf-8');
   configMd = insertDocs(configMd, 'config API', await buildConfigDocs());
   fs.writeFileSync('docs/config.md', configMd);
+
+  let apiMd = fs.readFileSync('docs/api-javascript.md', 'utf-8');
+  apiMd = insertDocs(apiMd, 'JavaScript API', await buildApiDocs());
+  fs.writeFileSync('docs/api-javascript.md', apiMd);
 }
 
 await main();

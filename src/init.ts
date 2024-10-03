@@ -12,6 +12,12 @@ export interface InitCliFlags {
   logLevel?: 'silent' | 'info' | 'debug';
 }
 
+/**
+ * Initialize a new vivliostyle.config.js file.
+ *
+ * @param cliFlags
+ * @returns
+ */
 export async function init(cliFlags: InitCliFlags) {
   setLogLevel(cliFlags.logLevel);
 
