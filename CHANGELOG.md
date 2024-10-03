@@ -1,3 +1,19 @@
+
+
+# [8.15.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.14.1...v8.15.0) (2024-10-03)
+
+
+### Bug Fixes
+
+* Set a project title if ToC title is not set ([88b227c](https://github.com/vivliostyle/vivliostyle-cli/commit/88b227c07d5048a2b6a2f144ff36b7c954f8dda9))
+* Upgreade Prettier formatter to v3 ([1d9ea0c](https://github.com/vivliostyle/vivliostyle-cli/commit/1d9ea0caeb334040ca4776d8e9e418ea813fac2b))
+
+
+### Features
+
+* Add feature generating ToC/cover documents from existing MD/HTML ([92764d8](https://github.com/vivliostyle/vivliostyle-cli/commit/92764d8a2df2e859502de2ef55ad8c89622e1f0d))
+* Renew internal config schema validator ([9e485ab](https://github.com/vivliostyle/vivliostyle-cli/commit/9e485abd65f18de8d1a466acaf14531688397a15))
+
 ## [8.14.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.14.0...v8.14.1) (2024-08-20)
 
 ### Bug Fixes
