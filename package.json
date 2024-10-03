@@ -8,6 +8,7 @@
     "build": "yarn clean && run-s build:*",
     "build:vendors": "node vendors/build.js",
     "build:cli": "tsc && shx chmod +x dist/cli.js",
+    "build:docs": "node --loader ts-node/esm --disable-warning ExperimentalWarning --disable-warning DeprecationWarning scripts/update-docs.ts",
     "generate:schema": "json2ts -i schemas/pubManifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pubManifest",
     "clean": "shx rm -rf dist tmp",
     "dev": "run-p dev:*",
@@ -103,6 +104,7 @@
     "pretty-quick": "^3.1.1",
     "release-it": "^15.6.0",
     "shx": "^0.3.3",
+    "ts-node": "^10.9.2",
     "typescript": "^5.5.4",
     "upath": "^2.0.1",
     "vitest": "^2.0.5"
