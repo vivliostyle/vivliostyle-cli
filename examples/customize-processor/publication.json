@@ -1,0 +1,18 @@
+{
+  "@context": [
+    "https://schema.org",
+    "https://www.w3.org/ns/pub-context"
+  ],
+  "type": "Book",
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "name": "Markdown processor customization example",
+  "dateModified": "2024-10-04T16:18:20.477Z",
+  "readingOrder": [
+    {
+      "url": "manuscript.html",
+      "name": "Custom Processor Example"
+    }
+  ],
+  "resources": [],
+  "links": []
+}

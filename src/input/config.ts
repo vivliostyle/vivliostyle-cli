@@ -58,6 +58,8 @@ import {
   VivliostyleConfigEntry,
   VivliostyleConfigSchema,
 } from './schema.js';
+import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
+import { Processor } from 'unified';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -185,6 +187,10 @@ export interface WebbookEntryConfig {
 export type ManifestConfig = XOR<
   [WebPublicationManifestConfig, WebbookEntryConfig, EpubManifestConfig]
 >;
+export type DocumentProcessorFactory = (
+  options: StringifyMarkdownOptions,
+  metadata: Metadata,
+) => Processor;
 
 export type MergedConfig = {
   entryContextDir: string;
@@ -217,6 +223,7 @@ export type MergedConfig = {
   author: string | undefined;
   language: string | undefined;
   readingProgression: 'ltr' | 'rtl' | undefined;
+  documentProcessorFactory: DocumentProcessorFactory;
   vfmOptions: {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
@@ -594,6 +601,8 @@ export async function mergeConfig<T extends CliFlags>(
   const preflight = cliFlags.preflight ?? (pressReady ? 'press-ready' : null);
   const preflightOption = cliFlags.preflightOption ?? [];
 
+  const documentProcessorFactory = config?.documentProcessor ?? VFM;
+
   const vfmOptions = {
     ...config?.vfm,
     hardLineBreaks: config?.vfm?.hardLineBreaks ?? false,
@@ -794,6 +803,7 @@ export async function mergeConfig<T extends CliFlags>(
     quick,
     language,
     readingProgression,
+    documentProcessorFactory,
     vfmOptions,
     cover,
     timeout,
