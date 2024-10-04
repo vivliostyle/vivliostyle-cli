@@ -223,10 +223,9 @@ async function buildConfigDocs(): Promise<string> {
 
 async function buildApiDocs() {
   const [tmp, removeTmpDir] = await useTmpDirectory();
-  // Overwrite API docs by typedoc
   const execAsync = promisify(exec);
   const { stderr } = await execAsync(
-    `node ./node_modules/.bin/typedoc --logLevel Error --out ${tmp} --json ${path.join(tmp, 'api.json')}`,
+    `npx typedoc --logLevel Error --out ${tmp} --json ${path.join(tmp, 'api.json')}`,
   );
   if (stderr) {
     throw new Error(stderr);
@@ -248,7 +247,7 @@ async function buildApiDocs() {
     docs += '\n';
   }
 
-  docs += fs.readFileSync(path.join(tmp, 'README.md'), 'utf-8');
+  docs += fs.readFileSync(path.join(tmp, 'api-javascript.md'), 'utf-8');
   removeTmpDir();
   return docs;
 }

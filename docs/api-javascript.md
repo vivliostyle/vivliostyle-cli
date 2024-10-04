@@ -39,15 +39,11 @@ build({
 
 #### Parameters
 
-• **cliFlags**: [`BuildCliFlags`](README.md#buildcliflags)
+• **cliFlags**: [`BuildCliFlags`](api-javascript.md#buildcliflags)
 
 #### Returns
 
 `Promise`\<`void`\>
-
-#### Defined in
-
-[src/build.ts:74](https://github.com/vivliostyle/vivliostyle-savepdf/blob/9cc5dc33679356b8489ef5d413afb669ea106d94/src/build.ts#L74)
 
 ***
 
@@ -59,15 +55,11 @@ Initialize a new vivliostyle.config.js file.
 
 #### Parameters
 
-• **cliFlags**: [`InitCliFlags`](README.md#initcliflags)
+• **cliFlags**: [`InitCliFlags`](api-javascript.md#initcliflags)
 
 #### Returns
 
 `Promise`\<`void`\>
-
-#### Defined in
-
-[src/init.ts:21](https://github.com/vivliostyle/vivliostyle-savepdf/blob/9cc5dc33679356b8489ef5d413afb669ea106d94/src/init.ts#L21)
 
 ***
 
@@ -79,15 +71,11 @@ Open a preview of the publication.
 
 #### Parameters
 
-• **cliFlags**: [`PreviewCliFlags`](README.md#previewcliflags)
+• **cliFlags**: [`PreviewCliFlags`](api-javascript.md#previewcliflags)
 
 #### Returns
 
 `Promise`\<`void`\>
-
-#### Defined in
-
-[src/preview.ts:45](https://github.com/vivliostyle/vivliostyle-savepdf/blob/9cc5dc33679356b8489ef5d413afb669ea106d94/src/preview.ts#L45)
 
 ## Interfaces
 
@@ -205,18 +193,14 @@ Open a preview of the publication.
 
 | Name | Type |
 | ------ | ------ |
-| `children` | [`StructuredDocument`](README.md#structureddocument)[] |
+| `children` | [`StructuredDocument`](api-javascript.md#structureddocument)[] |
 | `href` | `string` |
-| `sections`? | [`StructuredDocumentSection`](README.md#structureddocumentsection)[] |
+| `sections`? | [`StructuredDocumentSection`](api-javascript.md#structureddocumentsection)[] |
 | `title` | `string` |
 
 #### See
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
-
-#### Defined in
-
-[src/input/schema.ts:6](https://github.com/vivliostyle/vivliostyle-savepdf/blob/9cc5dc33679356b8489ef5d413afb669ea106d94/src/input/schema.ts#L6)
 
 ***
 
@@ -228,7 +212,7 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 
 | Name | Type |
 | ------ | ------ |
-| `children` | [`StructuredDocumentSection`](README.md#structureddocumentsection)[] |
+| `children` | [`StructuredDocumentSection`](api-javascript.md#structureddocumentsection)[] |
 | `headingHtml` | `string` |
 | `headingText` | `string` |
 | `href`? | `string` |
@@ -239,22 +223,14 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 
-#### Defined in
-
-[src/input/schema.ts:26](https://github.com/vivliostyle/vivliostyle-savepdf/blob/9cc5dc33679356b8489ef5d413afb669ea106d94/src/input/schema.ts#L26)
-
 ***
 
 ### VivliostyleConfigSchema
 
-> **VivliostyleConfigSchema**: `v.InferInput`\<*typeof* [`VivliostyleConfigSchema`](README.md#vivliostyleconfigschema)\>
+> **VivliostyleConfigSchema**: `v.InferInput`\<*typeof* [`VivliostyleConfigSchema`](api-javascript.md#vivliostyleconfigschema)\>
 
 #### See
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
-
-#### Defined in
-
-[src/input/schema.ts:530](https://github.com/vivliostyle/vivliostyle-savepdf/blob/9cc5dc33679356b8489ef5d413afb669ea106d94/src/input/schema.ts#L530)
 
 <!-- END JavaScript API -->
