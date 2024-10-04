@@ -1,0 +1,24 @@
+
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src/index.ts"],
+  "out": "./typedoc",
+  "json": "./typedoc/api.json",
+  "readme": "none",
+  "groupOrder": ["Functions"],
+  "disableSources": true,
+  "plugin": ["typedoc-plugin-markdown"],
+  "outputFileStrategy": "modules",
+  "entryFileName": "api-javascript",
+  "hidePageHeader": true,
+  "hidePageTitle": true,
+  "interfacePropertiesFormat": "table",
+  "typeDeclarationFormat": "table",
+  "tableColumnSettings": {
+    "hideDefaults": true,
+    "hideInherited": true,
+    "hideModifiers": true,
+    "hideOverrides": true,
+    "hideSources": true
+  }
+}

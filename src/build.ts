@@ -57,6 +57,20 @@ export async function getFullConfig(
   return configEntries;
 }
 
+/**
+ * Build publication file(s) from the given configuration.
+ *
+ * ```ts
+ * import { build } from '@vivliostyle/cli';
+ * build({
+ *   configPath: './vivliostyle.config.js',
+ *   logLevel: 'silent',
+ * });
+ * ```
+ *
+ * @param cliFlags
+ * @returns
+ */
 export async function build(cliFlags: BuildCliFlags) {
   setLogLevel(cliFlags.logLevel);
 
