@@ -1,4 +1,6 @@
 import * as v from 'valibot';
+import { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
+import { type Processor } from 'unified';
 
 /**
  * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
@@ -445,6 +447,14 @@ export const VivliostyleConfigEntry = v.pipe(
           v.number(),
           v.description(
             `Timeout limit for waiting Vivliostyle process (ms). (default: \`120000\`)`,
+          ),
+        ),
+        documentProcessor: v.pipe(
+          v.function() as v.GenericSchema<
+            (option: StringifyMarkdownOptions, metadata: Metadata) => Processor
+          >,
+          v.description(
+            'Custom function to provide unified Processor from markdown into html',
           ),
         ),
         vfm: v.pipe(

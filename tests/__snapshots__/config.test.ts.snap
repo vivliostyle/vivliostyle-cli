@@ -28,6 +28,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -131,6 +132,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS",
   "epubOpfPath": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
@@ -201,6 +203,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/epubs",
   "epubOpfPath": "__SNIP__",
@@ -271,6 +274,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__",
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -341,6 +345,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub",
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -408,6 +413,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub",
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -475,6 +481,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
@@ -553,6 +560,7 @@ Object {
   "css": undefined,
   "customStyle": "https://vivlostyle.org",
   "customUserStyle": "file://__WORKSPACE__/user/style/dummy.css",
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "coverImageAlt": "Cover image alt",
@@ -709,6 +717,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "coverImageAlt": "Cover image alt",
@@ -868,6 +877,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -947,6 +957,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -1034,6 +1045,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "coverImageAlt": "Cover image alt",
@@ -1193,6 +1205,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -1272,6 +1285,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
@@ -1359,6 +1373,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/nestedDir/01.md",
@@ -1480,6 +1495,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "source": "__WORKSPACE__/tests/fixtures/config/sample.md",

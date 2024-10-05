@@ -6,6 +6,7 @@ import {
 } from '@vivliostyle/vfm';
 import fs from 'node:fs';
 import vfile, { VFile } from 'vfile';
+import { DocumentProcessorFactory } from '../input/config.js';
 
 export interface VSFile extends VFile {
   data: {
@@ -14,15 +15,19 @@ export interface VSFile extends VFile {
   };
 }
 
-export function processMarkdown(
+export async function processMarkdown(
+  documentProcessorFactory: DocumentProcessorFactory,
   filepath: string,
   options: StringifyMarkdownOptions = {},
-): VSFile {
+): Promise<VSFile> {
   const markdownString = fs.readFileSync(filepath, 'utf8');
-  const vfm = VFM(options, readMetadata(markdownString));
-  const processed = vfm.processSync(
+  const processor = documentProcessorFactory(
+    options,
+    readMetadata(markdownString),
+  );
+  const processed = (await processor.process(
     vfile({ path: filepath, contents: markdownString }),
-  ) as VSFile;
+  )) as VSFile;
   return processed;
 }
 

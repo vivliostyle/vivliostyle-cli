@@ -33,7 +33,7 @@ export type PublicationContexts =
             direction?: never;
             [k: string]: unknown;
           }
-      )[]
+      )[],
     ];
 export type BCP47LanguageTag = string;
 export type URL = string;

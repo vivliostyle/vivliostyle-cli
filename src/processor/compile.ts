@@ -221,6 +221,7 @@ export async function compile({
   language,
   readingProgression,
   cover,
+  documentProcessorFactory,
   vfmOptions,
 }: MergedConfig & WebPublicationManifestConfig): Promise<void> {
   const manuscriptEntries = entries.filter(
@@ -244,7 +245,7 @@ export async function compile({
     if (source && type) {
       if (type === 'text/markdown') {
         // compile markdown
-        const vfile = processMarkdown(source, {
+        const vfile = await processMarkdown(documentProcessorFactory, source, {
           ...vfmOptions,
           style,
           title: entry.title,
