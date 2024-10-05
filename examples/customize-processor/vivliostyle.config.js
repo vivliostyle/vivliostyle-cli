@@ -9,9 +9,9 @@ import remarkRuby from "remark-ruby"
 const config = {
   title: 'Markdown processor customization example',
   entry: [
-    'manuscript.md', // `title` is automatically guessed from the file (frontmatter > first heading).
+    'manuscript.md',
   ],
-  documentProcessor: unified()
+  documentProcessor: (config, metadata) => unified()
       .use(remarkParse)
       .use(remarkRuby)
       .use(remark2rehype)
