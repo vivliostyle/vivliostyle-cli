@@ -1,14 +1,31 @@
-# Customize Processor
+# Customize Unified Processor
 
-description
+You can use customized [unified](https://unifiedjs.com/) processor other than [VFM](https://github.com/vivliostyle/vfm) via `vivliostyle.config.js`.
 
-> created by [create-book](https://github.com/vivliostyle/create-book).
+```js
+import unified from "unified"
+import remarkParse from "remark-parse";
+import remark2rehype from "remark-rehype";
+import rehypeExpressiveCode from "rehype-expressive-code";
+import rehypeStringify from "rehype-stringify";
+import remarkRuby from "remark-ruby"
 
-## References
+const config = {
+    title: 'Markdown processor customization example',
+    entry: [
+        'manuscript.md'
+    ],
+    // config is StringifyMarkdownOptions in @vivliostyle/vfm
+    // metadata is Metadata in @vivliostyle/vfm
+    // Generated Unified processor should be able to process markdown into HTML
+    documentProcessor: (config, metadata) => unified()
+        .use(remarkParse)
+        .use(remarkRuby)
+        .use(remark2rehype)
+        .use(rehypeExpressiveCode, {frames: {showCopyToClipboardButton: false}})
+        .use(rehypeStringify),
+    output: "draft.pdf"
+}
 
-- VFM <https://vivliostyle.github.io/vfm/#/vfm>
-- Vivliostyle CLI <https://github.com/vivliostyle/vivliostyle-cli#readme>
-- Vivliostyle Themes <https://github.com/vivliostyle/themes#readme>
-- Awesome Vivliostyle <https://github.com/vivliostyle/awesome-vivliostyle#readme>
-- Vivliostyle (GitHub) <https://github.com/vivliostyle>
-- Vivliostyle <https://vivliostyle.org>
+export default config;
+```
