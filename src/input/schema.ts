@@ -1,6 +1,6 @@
-import * as v from 'valibot';
 import { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 import { type Processor } from 'unified';
+import * as v from 'valibot';
 
 /**
  * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
@@ -453,6 +453,10 @@ export const VivliostyleConfigEntry = v.pipe(
           v.function() as v.GenericSchema<
             (option: StringifyMarkdownOptions, metadata: Metadata) => Processor
           >,
+          v.metadata({
+            typeString:
+              '(option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor',
+          }),
           v.description(
             'Custom function to provide unified Processor from markdown into html',
           ),

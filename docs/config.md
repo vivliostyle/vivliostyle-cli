@@ -62,6 +62,8 @@ type VivliostyleConfigSchema =
     - Options about cover images and cover page documents.
   - `timeout` number
     - Timeout limit for waiting Vivliostyle process (ms). (default: `120000`)
+  - `documentProcessor` Function
+    - Custom function to provide unified Processor from markdown into html
   - `vfm` Object
     - Option for convert Markdown to a stringify (HTML).
   - `image` string
@@ -145,6 +147,10 @@ type VivliostyleConfigEntry = {
       }
     | string;
   timeout?: number;
+  documentProcessor?: (
+    option: import("@vivliostyle/vfm").StringifyMarkdownOptions,
+    metadata: import("@vivliostyle/vfm").Metadata,
+  ) => import("unified").Processor;
   vfm?: {
     style?: string[] | string;
     partial?: boolean;
