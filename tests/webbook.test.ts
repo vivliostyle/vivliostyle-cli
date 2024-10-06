@@ -37,17 +37,30 @@ it('generate webpub from single markdown file', async () => {
 
 it('generate webpub from vivliostyle.config.js', async () => {
   const config: VivliostyleConfigSchema = {
-    entry: ['doc/one.md', 'doc/two.md'],
+    entry: ['doc/one.md', 'doc/two.md', 'doc/escape check%.md'],
     output: ['/work/input/output', '/work/output'],
     toc: true,
     cover: 'cover.png',
+    theme: ['../mytheme', './style sheet.css'],
     readingProgression: 'rtl',
   };
   vol.fromJSON({
     '/work/input/vivliostyle.config.json': JSON.stringify(config),
     '/work/input/doc/one.md': 'yuno',
     '/work/input/doc/two.md': 'yunocchi',
+    '/work/input/doc/escape check%.md': 'txt',
     '/work/input/cover.png': '',
+    '/work/input/style sheet.css': '/* style */',
+    '/work/mytheme/package.json': JSON.stringify({
+      name: 'mytheme',
+      main: './%style%.css',
+    }),
+    '/work/mytheme/%style%.css': '/* style */',
+    '/work/input/themes/packages/mytheme/package.json': JSON.stringify({
+      name: 'mytheme',
+      main: './%style%.css',
+    }),
+    '/work/input/themes/packages/mytheme/%style%.css': '/* style */',
   });
   await build({
     configPath: '/work/input/vivliostyle.config.json',
@@ -113,8 +126,13 @@ it('generate webpub from a single-document publication', async () => {
               'https://www.w3.org/ns/wp-context',
             ],
             conformsTo: 'yuno',
-            resources: ['assets/figure.svg'],
-            readingOrder: ['#foo', '../bar.html', 'subdir/index.html'],
+            resources: ['assets/%E6%97%A5%E6%9C%AC%E8%AA%9E.svg'],
+            readingOrder: [
+              '#foo',
+              '../bar.html',
+              'subdir/index.html',
+              'escape%20check%25.html',
+            ],
           })}
         </script>
       </head>
@@ -134,7 +152,17 @@ it('generate webpub from a single-document publication', async () => {
       </body>
       </html>
     `,
-    '/work/input/assets/figure.svg': '<svg></svg>',
+    '/work/input/escape check%.html': /* html */ `
+      <!DOCTYPE html>
+      <html lang="ja">
+      <head>
+        <title>Escape check</title>
+      </head>
+      <body>
+      </body>
+      </html>
+    `,
+    '/work/input/assets/日本語.svg': '<svg></svg>',
     '/work/input/assets/subdir.css': '',
   });
   await build({
@@ -146,24 +174,80 @@ it('generate webpub from a single-document publication', async () => {
   const file = vol.toJSON();
   const entry = file['/work/output/webbook.html'];
   expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  expect(file['/work/output/escape check%.html']).toBe(
+    file['/work/input/escape check%.html'],
+  );
+  expect(file['/work/output/assets/日本語.svg']).toBe(
+    file['/work/input/assets/日本語.svg'],
+  );
 });
 
-it('generate webpub from a remote HTML document', async () => {
+it('generate webpub from remote HTML documents with publication manifest', async () => {
   vol.fromJSON({
-    '/work/input/index.html': /* html */ `
+    '/remote/dir/index.html': /* html */ `
       <html lang="en">
       <head>
         <title>Document</title>
-        <link rel="stylesheet" type="text/css" href="../assets/style.css">
+        <link rel="publication" href="../publication.json">
       </head>
       <body>
       </body>
       </html>
     `,
-    '/work/assets/style.css': '',
+    '/remote/dir/escape check%.html': /* html */ `
+      <!DOCTYPE html>
+      <html lang="ja">
+      <head>
+        <title>Escape check</title>
+      </head>
+      <body>
+      </body>
+      </html>
+    `,
+    '/remote/publication.json': JSON.stringify({
+      '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],
+      conformsTo: 'yuno',
+      resources: ['../assets/%E6%97%A5%E6%9C%AC%E8%AA%9E.png'],
+      readingOrder: ['dir/index.html', 'dir/escape%20check%25.html'],
+    }),
+    '/assets/日本語.png': 'image',
   });
   await build({
-    input: 'https://example.com/work/input',
+    input: 'https://example.com/remote/dir',
+    targets: [{ path: '/work/output', format: 'webpub' }],
+  });
+  expect(toTree(vol)).toMatchSnapshot();
+  const file = vol.toJSON();
+  expect(file['/work/output/remote/dir/index.html']).toBe(
+    file['/remote/dir/index.html'],
+  );
+  expect(file['/work/output/remote/publication.json']).toBe(
+    file['/remote/publication.json'],
+  );
+  expect(file['/work/output/remote/dir/escape check%.html']).toBe(
+    file['/remote/dir/escape check%.html'],
+  );
+  expect(file['/work/output/assets/日本語.png']).toBe(
+    file['/assets/日本語.png'],
+  );
+});
+
+it('generate webpub from a remote HTML document', async () => {
+  vol.fromJSON({
+    '/remote/foo bar%/escape check%.html': /* html */ `
+      <html lang="en">
+      <head>
+        <title>Document</title>
+        <link rel="stylesheet" type="text/css" href="../%E3%81%82/%E6%97%A5%E6%9C%AC%E8%AA%9E.css">
+      </head>
+      <body>
+      </body>
+      </html>
+    `,
+    '/remote/あ/日本語.css': '/* css */',
+  });
+  await build({
+    input: 'https://example.com/remote/foo%20bar%25/escape%20check%25.html',
     targets: [{ path: '/work/output', format: 'webpub' }],
   });
   expect(toTree(vol)).toMatchSnapshot();
@@ -171,8 +255,11 @@ it('generate webpub from a remote HTML document', async () => {
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
-  const entry = file['/work/output/work/input/index.html'];
+  const entry = file['/work/output/remote/foo bar%/escape check%.html'];
   expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  expect(file['/work/output/remote/あ/日本語.css']).toBe(
+    file['/remote/あ/日本語.css'],
+  );
 });
 
 it('generate webpub with complex copyAsset settings', async () => {

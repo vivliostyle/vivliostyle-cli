@@ -85,9 +85,10 @@ export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
 export async function getMockedJSDOM(): Promise<
   typeof import('@vivliostyle/jsdom')
 > {
-  const jsdom = await vi.importActual<typeof import('@vivliostyle/jsdom')>(
-    '@vivliostyle/jsdom',
-  );
+  const jsdom =
+    await vi.importActual<typeof import('@vivliostyle/jsdom')>(
+      '@vivliostyle/jsdom',
+    );
   const { JSDOM: JSDOMBase, ResourceLoader: ResourceLoaderBase } = jsdom;
 
   // https://github.com/jsdom/jsdom/blob/a39e0ec4ce9a8806692d986a7ed0cd565ec7498a/lib/api.js#L183
@@ -114,7 +115,7 @@ export async function getMockedJSDOM(): Promise<
     if (!path.extname(pathname)) {
       pathname = path.posix.join(pathname, 'index.html');
     }
-    return pathname;
+    return decodeURI(pathname);
   }
 
   class JSDOM extends JSDOMBase {

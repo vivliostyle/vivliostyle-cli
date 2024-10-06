@@ -1,5 +1,3 @@
-import chalk from 'chalk';
-import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import {
   ContentsEntry,
@@ -10,17 +8,11 @@ import {
   WebPublicationManifestConfig,
 } from '../input/config.js';
 import type { ArticleEntryObject } from '../input/schema.js';
-import type {
-  PublicationLinks,
-  PublicationManifest,
-  URL as PublicationURL,
-} from '../schema/publication.schema.js';
+import { writePublicationManifest } from '../output/webbook.js';
 import {
   DetailError,
-  assertPubManifestSchema,
   copy,
   debug,
-  log,
   pathContains,
   pathEquals,
   remove,
@@ -121,93 +113,6 @@ export async function prepareThemeDirectory({
       await copy(theme.source, theme.location);
     }
   }
-}
-
-// https://www.w3.org/TR/pub-manifest/
-export function generateManifest(
-  outputPath: string,
-  entryContextDir: string,
-  options: {
-    title?: string;
-    author?: string;
-    language?: string;
-    readingProgression?: 'ltr' | 'rtl';
-    modified: string;
-    entries: ArticleEntryObject[];
-    cover?: {
-      url: string;
-      name: string;
-    };
-    links?: (PublicationURL | PublicationLinks)[];
-    resources?: (PublicationURL | PublicationLinks)[];
-  },
-): PublicationManifest {
-  const entries: PublicationLinks[] = options.entries.map((entry) => ({
-    url: encodeURI(entry.path),
-    ...(entry.title && { name: entry.title }),
-    ...(entry.encodingFormat && { encodingFormat: entry.encodingFormat }),
-    ...(entry.rel && { rel: entry.rel }),
-    ...((entry.rel === 'contents' || entry.rel === 'cover') && {
-      type: 'LinkedResource',
-    }),
-  }));
-  const links: (PublicationURL | PublicationLinks)[] = [
-    options.links || [],
-  ].flat();
-  const resources: (PublicationURL | PublicationLinks)[] = [
-    options.resources || [],
-  ].flat();
-
-  if (options.cover) {
-    const mimeType = mime(options.cover.url);
-    if (mimeType) {
-      resources.push({
-        rel: 'cover',
-        url: encodeURI(options.cover.url),
-        name: options.cover.name,
-        encodingFormat: mimeType,
-      });
-    } else {
-      log(
-        `\n${chalk.yellow('Cover image ')}${chalk.bold.yellow(
-          `"${options.cover}"`,
-        )}${chalk.yellow(
-          ' was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.',
-        )}`,
-      );
-    }
-  }
-
-  const publication: PublicationManifest = {
-    '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],
-    type: 'Book',
-    conformsTo: 'https://github.com/vivliostyle/vivliostyle-cli',
-    ...(options.title && { name: options.title }),
-    ...(options.author && { author: options.author }),
-    ...(options.language && { inLanguage: options.language }),
-    ...(options.readingProgression && {
-      readingProgression: options.readingProgression,
-    }),
-    dateModified: options.modified,
-    readingOrder: entries,
-    resources,
-    links,
-  };
-
-  try {
-    assertPubManifestSchema(publication);
-  } catch (error) {
-    const thrownError = error as Error | string;
-    throw new DetailError(
-      `Validation of pubManifest failed. Please check the schema: ${outputPath}`,
-      typeof thrownError === 'string'
-        ? thrownError
-        : (thrownError.stack ?? thrownError.message),
-    );
-  }
-  const publicationJson = JSON.stringify(publication, null, 2);
-  fs.writeFileSync(outputPath, publicationJson);
-  return publication;
 }
 
 export async function compile({
@@ -355,7 +260,7 @@ export async function compile({
           : entry.type,
       rel: entry.rel,
     }));
-    generateManifest(manifestPath, entryContextDir, {
+    writePublicationManifest(manifestPath, {
       title,
       author,
       language,

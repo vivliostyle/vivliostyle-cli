@@ -23,7 +23,7 @@ it('generateCoverHtml', async () => {
     language: 'ja',
   });
   content = await processCoverHtml(content, {
-    imageSrc: './cover.jpg',
+    imageSrc: './escape check%.jpg',
     imageAlt: 'Cover image',
     styleOptions: {
       pageBreakBefore: 'recto',
@@ -54,7 +54,7 @@ it('generateCoverHtml', async () => {
   </head>
   <body>
     <section role="region" aria-label="Cover">
-      <img role="doc-cover" src="./cover.jpg" alt="Cover image" />
+      <img role="doc-cover" src="./escape%20check%25.jpg" alt="Cover image" />
     </section>
   </body>
 </html>
