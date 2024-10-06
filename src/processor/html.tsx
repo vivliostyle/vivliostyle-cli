@@ -14,6 +14,7 @@ import type {
   StructuredDocument,
   StructuredDocumentSection,
 } from '../input/schema.js';
+import { decodePublicationManifest } from '../output/webbook.js';
 import type { PublicationManifest } from '../schema/publication.schema.js';
 import {
   DetailError,
@@ -352,7 +353,7 @@ export async function processTocHtml(
     const l = document.createElement('link');
     l.setAttribute('rel', 'publication');
     l.setAttribute('type', 'application/ld+json');
-    l.setAttribute('href', upath.relative(distDir, manifestPath));
+    l.setAttribute('href', encodeURI(upath.relative(distDir, manifestPath)));
     document.head.appendChild(l);
   }
 
@@ -458,7 +459,7 @@ export async function processCoverHtml(
 
   const cover = document.querySelector('img[role="doc-cover"]');
   if (cover && !cover.hasAttribute('src')) {
-    cover.setAttribute('src', imageSrc);
+    cover.setAttribute('src', encodeURI(imageSrc));
   }
   if (cover && !cover.hasAttribute('alt')) {
     cover.setAttribute('alt', imageAlt);
@@ -492,7 +493,7 @@ export function processManuscriptHtml(
   }
   for (const s of style ?? []) {
     $('head').append(`<link rel="stylesheet" type="text/css" />`);
-    $('head > *:last-child').attr('href', s);
+    $('head > *:last-child').attr('href', encodeURI(s));
   }
   if (language) {
     if (contentType === 'application/xhtml+xml') {
@@ -540,7 +541,7 @@ export async function fetchLinkedPublicationManifest({
   dom: JSDOM;
   resourceLoader: ResourceLoader;
   baseUrl: string;
-}): Promise<PublicationManifest | null> {
+}): Promise<{ manifest: PublicationManifest; manifestUrl: string } | null> {
   const { document } = dom.window;
 
   const linkEl = document.querySelector('link[href][rel="publication"]');
@@ -549,7 +550,7 @@ export async function fetchLinkedPublicationManifest({
   }
   const href = linkEl.getAttribute('href')!.trim();
   let manifest: PublicationManifest;
-  let manifestJson: string;
+  let manifestUrl = baseUrl;
   if (href.startsWith('#')) {
     const scriptEl = document.getElementById(href.slice(1));
     if (scriptEl?.getAttribute('type') !== 'application/ld+json') {
@@ -565,15 +566,15 @@ export async function fetchLinkedPublicationManifest({
         typeof thrownError.stack ?? thrownError.message,
       );
     }
-    manifestJson = JSON.stringify(manifest, null, 2);
   } else {
     debug(`Found linked publication manifest: ${href}`);
     const url = new URL(href, baseUrl);
+    manifestUrl = url.href;
     const buffer = await resourceLoader.fetch(url.href);
     if (!buffer) {
       throw new Error(`Failed to fetch manifest JSON file: ${url.href}`);
     }
-    manifestJson = buffer.toString();
+    const manifestJson = buffer.toString();
     try {
       manifest = JSON.parse(manifestJson);
     } catch (error) {
@@ -594,7 +595,10 @@ export async function fetchLinkedPublicationManifest({
       )}\n${error}`,
     );
   }
-  return manifest;
+  return {
+    manifest: decodePublicationManifest(manifest),
+    manifestUrl,
+  };
 }
 
 export type TocResourceTreeItem = {

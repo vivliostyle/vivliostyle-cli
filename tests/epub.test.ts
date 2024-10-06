@@ -4,7 +4,10 @@ import { format } from 'prettier';
 import tmp from 'tmp';
 import { afterEach, expect, it, vi } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
-import { buildWebPublication } from '../src/output/webbook.js';
+import {
+  buildWebPublication,
+  decodePublicationManifest,
+} from '../src/output/webbook.js';
 import {
   compile,
   copyAssets,
@@ -74,7 +77,7 @@ it('generate EPUB from single HTML with pub manifest', async () => {
     conformsTo: 'yuno',
     readingProgression: 'rtl',
     resources: [
-      { url: 'cover.png', rel: 'cover' },
+      { url: 'cover%20image%25.png', rel: 'cover' },
       { url: 'index.html', rel: 'pagelist' },
     ],
     author: {
@@ -136,12 +139,12 @@ it('generate EPUB from single HTML with pub manifest', async () => {
       </body>
       </html>
     `,
-    '/work/input/cover.png': '',
+    '/work/input/cover image%.png': '',
   });
   await exportEpub({
     webpubDir: '/work/input',
     entryHtmlFile: 'index.html',
-    manifest,
+    manifest: decodePublicationManifest(manifest),
     relManifestPath: 'publication.json',
     target: '/work/output.epub',
     epubVersion: '3.0',
@@ -167,7 +170,12 @@ it('generate EPUB from series of HTML files', async () => {
   const manifest: PublicationManifest = {
     '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],
     conformsTo: 'yuno',
-    readingOrder: ['src/index.html', 'src/a/index.html', 'src/b/c/d.html'],
+    readingOrder: [
+      'src/index.html',
+      'src/a/index.html',
+      'src/b/c/d.html',
+      'src/escape%20check%25.html',
+    ],
   };
   vol.fromJSON({
     '/work/input/publication.json': JSON.stringify(manifest),
@@ -180,6 +188,7 @@ it('generate EPUB from series of HTML files', async () => {
         <a href="#foo">1</a>
         <a href="a">2</a>
         <a href="./b/c/d/">3</a>
+        <a href="./././escape%20check%25.html">3</a>
       </body>
       </html>
     `,
@@ -200,10 +209,18 @@ it('generate EPUB from series of HTML files', async () => {
       <body></body>
       </html>
     `,
+    '/work/input/src/escape check%.html': /* html */ `
+      <html lang="en">
+      <head>
+        <title>日本語</title>
+      </head>
+      <body></body>
+      </html>
+    `,
   });
   await exportEpub({
     webpubDir: '/work/input',
-    manifest,
+    manifest: decodePublicationManifest(manifest),
     relManifestPath: 'publication.json',
     target: '/work/output.epub',
     epubVersion: '3.0',
@@ -224,10 +241,10 @@ it('generate EPUB from series of HTML files', async () => {
 
 it('generate EPUB from single Markdown input', async () => {
   vol.fromJSON({
-    '/work/input/index.md': '# Hello',
+    '/work/input/foo bar%.md': '# 日本語',
   });
   const config = await getMergedConfig([
-    '/work/input/index.md',
+    '/work/input/foo bar%.md',
     '--output',
     '/work/output.epub',
   ]);
@@ -252,18 +269,38 @@ it('generate EPUB from single Markdown input', async () => {
     mimetype: 'application/epub+zip',
     ...vol.toJSON('/tmp/2', undefined, true),
   });
+  const file = vol.toJSON();
+  expect(
+    file['/tmp/2/EPUB/content.opf']
+      ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
+      .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
+  ).toMatchSnapshot('content.opf');
+  expect(file['/tmp/2/EPUB/foo bar%.xhtml']).toMatchSnapshot('foo bar%.xhtml');
 });
 
 it('generate EPUB from vivliostyle.config.js', async () => {
   vol.fromJSON({
     '/work/input/vivliostyle.config.json': JSON.stringify({
-      entry: 'manuscript.md',
+      entry: '日本語.md',
       output: './output.epub',
-      theme: './my-theme.css',
-      toc: true,
+      theme: './escape check%.css',
+      toc: {
+        title: 'もくじ',
+        htmlPath: 'gen content%/index file%.html',
+        sectionDepth: 2,
+      },
+      cover: {
+        src: 'cover image%.png',
+        htmlPath: 'gen content%/cover document%.html',
+      },
     }),
-    '/work/input/manuscript.md': '# Hello',
-    '/work/input/my-theme.css': '/* theme CSS */',
+    '/work/input/日本語.md': `
+# 日本語
+## Sec. 1.1
+### Sec. 1.1.1
+    `,
+    '/work/input/cover image%.png': '',
+    '/work/input/escape check%.css': '/* theme CSS */',
   });
   const config = await getMergedConfig([
     '-c',
@@ -291,6 +328,18 @@ it('generate EPUB from vivliostyle.config.js', async () => {
     mimetype: 'application/epub+zip',
     ...vol.toJSON('/tmp/2', undefined, true),
   });
+  const file = vol.toJSON();
+  expect(
+    file['/tmp/2/EPUB/content.opf']
+      ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
+      .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
+  ).toMatchSnapshot('content.opf');
+  expect(
+    file['/tmp/2/EPUB/gen content%/cover document%.xhtml'],
+  ).toMatchSnapshot('cover document%.xhtml');
+  expect(file['/tmp/2/EPUB/gen content%/index file%.xhtml']).toMatchSnapshot(
+    'index file%.xhtml',
+  );
 });
 
 it('Do not insert nav element to HTML that have nav[epub:type]', async () => {

@@ -13,11 +13,13 @@ exports[`generate EPUB from series of HTML files > content.opf 1`] = `
     <item id=\\"srcindexxhtml\\" href=\\"src/index.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav\\"></item>
     <item id=\\"srcaindexxhtml\\" href=\\"src/a/index.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
     <item id=\\"srcbcdxhtml\\" href=\\"src/b/c/d.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
+    <item id=\\"srcescape-checkxhtml\\" href=\\"src/escape%20check%25.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
   </manifest>
   <spine>
     <itemref idref=\\"srcindexxhtml\\"></itemref>
     <itemref idref=\\"srcaindexxhtml\\"></itemref>
     <itemref idref=\\"srcbcdxhtml\\"></itemref>
+    <itemref idref=\\"srcescape-checkxhtml\\"></itemref>
   </spine>
 </package>
 "
@@ -37,6 +39,7 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
     <a href=\\"index.xhtml#foo\\">1</a>
     <a href=\\"a\\">2</a>
     <a href=\\"b/c/d\\">3</a>
+    <a href=\\"escape%20check%25.xhtml\\">3</a>
 
     <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\" hidden=\\"\\">
       <h2>Table of Contents</h2>
@@ -44,6 +47,7 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
         <li><a href=\\"index.xhtml\\">My book</a></li>
         <li><a href=\\"a/index.xhtml\\">yuno</a></li>
         <li><a href=\\"b/c/d.xhtml\\">yunocchi</a></li>
+        <li><a href=\\"escape%20check%25.xhtml\\">日本語</a></li>
       </ol>
     </nav>
     <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
@@ -69,6 +73,7 @@ exports[`generate EPUB from series of HTML files > tree 1`] = `
 │     │     ├─ b/
 │     │     │  └─ c/
 │     │     │     └─ d.xhtml
+│     │     ├─ escape check%.xhtml
 │     │     └─ index.xhtml
 │     └─ META-INF/
 │        └─ container.xml
@@ -81,6 +86,7 @@ exports[`generate EPUB from series of HTML files > tree 1`] = `
    │     ├─ b/
    │     │  └─ c/
    │     │     └─ d.html
+   │     ├─ escape check%.html
    │     └─ index.html
    └─ output.epub"
 `;
@@ -118,10 +124,10 @@ exports[`generate EPUB from single HTML with pub manifest > content.opf 1`] = `
     <dc:rights>© 2023 Acme Corporation</dc:rights>
     <dc:subject>Subject</dc:subject>
     
-    <meta name=\\"cover\\" content=\\"coverpng\\"></meta>
+    <meta name=\\"cover\\" content=\\"cover-imagepng\\"></meta>
   </metadata>
   <manifest>
-    <item id=\\"coverpng\\" href=\\"cover.png\\" media-type=\\"image/png\\" properties=\\"cover-image\\"></item>
+    <item id=\\"cover-imagepng\\" href=\\"cover%20image%25.png\\" media-type=\\"image/png\\" properties=\\"cover-image\\"></item>
     <item id=\\"indexxhtml\\" href=\\"index.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav mathml remote-resources scripted svg\\"></item>
   </manifest>
   <spine page-progression-direction=\\"rtl\\">
@@ -185,61 +191,188 @@ exports[`generate EPUB from single HTML with pub manifest > tree 1`] = `
 │  └─ 1/
 │     ├─ EPUB/
 │     │  ├─ content.opf
-│     │  ├─ cover.png
+│     │  ├─ cover image%.png
 │     │  └─ index.xhtml
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
    ├─ input/
-   │  ├─ cover.png
+   │  ├─ cover image%.png
    │  ├─ index.html
    │  └─ publication.json
    └─ output.epub"
+`;
+
+exports[`generate EPUB from single Markdown input > content.opf 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<package xmlns=\\"http://www.idpf.org/2007/opf\\" version=\\"3.0\\" unique-identifier=\\"bookid\\" xml:lang=\\"en\\">
+  <metadata xmlns:dc=\\"http://purl.org/dc/elements/1.1/\\">
+    
+    <dc:title>日本語</dc:title>
+    <dc:language>en</dc:language>
+    
+  </metadata>
+  <manifest>
+    <item id=\\"foo-barxhtml\\" href=\\"foo%20bar%25.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav\\"></item>
+  </manifest>
+  <spine>
+    <itemref idref=\\"foo-barxhtml\\"></itemref>
+  </spine>
+</package>
+"
+`;
+
+exports[`generate EPUB from single Markdown input > foo bar%.xhtml 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<!DOCTYPE html><html xmlns=\\"http://www.w3.org/1999/xhtml\\" xmlns:epub=\\"http://www.idpf.org/2007/ops\\"><head>
+    <meta charset=\\"utf-8\\" />
+    <title>日本語</title>
+    <meta name=\\"viewport\\" content=\\"width=device-width, initial-scale=1\\" />
+  </head>
+  <body>
+    <section class=\\"level1\\" aria-labelledby=\\"日本語\\">
+      <h1 id=\\"日本語\\">日本語</h1>
+    </section>
+  
+
+<nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\" hidden=\\"\\"><h2>Table of Contents</h2><ol><li><a href=\\"foo%20bar%25.xhtml\\">日本語</a></li></ol></nav><nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\"><h2>Landmarks</h2><ol><li><a epub:type=\\"toc\\" href=\\"foo%20bar%25.xhtml#toc\\">Table of Contents</a></li></ol></nav></body></html>"
 `;
 
 exports[`generate EPUB from single Markdown input > tree 1`] = `
 "/
 ├─ tmp/
 │  ├─ 1/
-│  │  ├─ index.html
+│  │  ├─ foo bar%.html
 │  │  └─ publication.json
 │  └─ 2/
 │     ├─ EPUB/
 │     │  ├─ content.opf
-│     │  └─ index.xhtml
+│     │  └─ foo bar%.xhtml
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
    ├─ input/
-   │  ├─ .vs-0.index.html
+   │  ├─ .vs-0.foo bar%.html
    │  ├─ .vs-0.publication.json
-   │  └─ index.md
+   │  └─ foo bar%.md
    └─ output.epub"
+`;
+
+exports[`generate EPUB from vivliostyle.config.js > content.opf 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<package xmlns=\\"http://www.idpf.org/2007/opf\\" version=\\"3.0\\" unique-identifier=\\"bookid\\" xml:lang=\\"en\\">
+  <metadata xmlns:dc=\\"http://purl.org/dc/elements/1.1/\\">
+    
+    <dc:title>日本語</dc:title>
+    <dc:language>en</dc:language>
+    
+    <meta name=\\"cover\\" content=\\"cover-imagepng\\"></meta>
+  </metadata>
+  <manifest>
+    <item id=\\"gen-contentcover-documentxhtml\\" href=\\"gen%20content%25/cover%20document%25.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
+    <item id=\\"gen-contentindex-filexhtml\\" href=\\"gen%20content%25/index%20file%25.xhtml\\" media-type=\\"application/xhtml+xml\\" properties=\\"nav\\"></item>
+    <item id=\\"日本語xhtml\\" href=\\"%E6%97%A5%E6%9C%AC%E8%AA%9E.xhtml\\" media-type=\\"application/xhtml+xml\\"></item>
+    <item id=\\"cover-imagepng\\" href=\\"cover%20image%25.png\\" media-type=\\"image/png\\" properties=\\"cover-image\\"></item>
+    <item id=\\"escape-checkcss\\" href=\\"escape%20check%25.css\\" media-type=\\"text/css\\"></item>
+  </manifest>
+  <spine>
+    <itemref idref=\\"gen-contentcover-documentxhtml\\"></itemref>
+    <itemref idref=\\"gen-contentindex-filexhtml\\"></itemref>
+    <itemref idref=\\"日本語xhtml\\"></itemref>
+  </spine>
+</package>
+"
+`;
+
+exports[`generate EPUB from vivliostyle.config.js > cover document%.xhtml 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<html xmlns=\\"http://www.w3.org/1999/xhtml\\" xmlns:epub=\\"http://www.idpf.org/2007/ops\\"><head>
+    <meta charset=\\"utf-8\\" />
+    <title></title>
+    <style data-vv-style=\\"\\">
+      body {
+        margin: 0;
+      }
+      [role=\\"doc-cover\\"] {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+      }
+      @page {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <section role=\\"region\\" aria-label=\\"Cover\\">
+      <img role=\\"doc-cover\\" src=\\"../cover%20image%25.png\\" alt=\\"Cover image\\" />
+    </section>
+  
+
+</body></html>"
+`;
+
+exports[`generate EPUB from vivliostyle.config.js > index file%.xhtml 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<html xmlns=\\"http://www.w3.org/1999/xhtml\\" xmlns:epub=\\"http://www.idpf.org/2007/ops\\"><head>
+    <meta charset=\\"utf-8\\" />
+    <title>日本語</title>
+    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"../escape%20check%25.css\\" />
+    
+  </head>
+  <body>
+    <h1>日本語</h1>
+    <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\">
+      <h2>もくじ</h2>
+      <ol>
+        <li data-section-level=\\"1\\">
+          <a href=\\"../%E6%97%A5%E6%9C%AC%E8%AA%9E.xhtml#%E6%97%A5%E6%9C%AC%E8%AA%9E\\">日本語</a>
+          <ol>
+            <li data-section-level=\\"2\\">
+              <a href=\\"../%E6%97%A5%E6%9C%AC%E8%AA%9E.xhtml#sec-11\\">Sec. 1.1</a>
+            </li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+  
+
+<nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\"><h2>Landmarks</h2><ol><li><a epub:type=\\"toc\\" href=\\"index%20file%25.xhtml#toc\\">Table of Contents</a></li><li><a epub:type=\\"cover\\" href=\\"cover%20document%25.xhtml\\">Cover Page</a></li></ol></nav></body></html>"
 `;
 
 exports[`generate EPUB from vivliostyle.config.js > tree 1`] = `
 "/
 ├─ tmp/
 │  ├─ 1/
-│  │  ├─ index.html
-│  │  ├─ manuscript.html
-│  │  ├─ my-theme.css
-│  │  └─ publication.json
+│  │  ├─ cover image%.png
+│  │  ├─ escape check%.css
+│  │  ├─ gen content%/
+│  │  │  ├─ cover document%.html
+│  │  │  └─ index file%.html
+│  │  ├─ publication.json
+│  │  └─ 日本語.html
 │  └─ 2/
 │     ├─ EPUB/
 │     │  ├─ content.opf
-│     │  ├─ index.xhtml
-│     │  ├─ manuscript.xhtml
-│     │  └─ my-theme.css
+│     │  ├─ cover image%.png
+│     │  ├─ escape check%.css
+│     │  ├─ gen content%/
+│     │  │  ├─ cover document%.xhtml
+│     │  │  └─ index file%.xhtml
+│     │  └─ 日本語.xhtml
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
    └─ input/
-      ├─ index.html
-      ├─ manuscript.html
-      ├─ manuscript.md
-      ├─ my-theme.css
+      ├─ cover image%.png
+      ├─ escape check%.css
+      ├─ gen content%/
+      │  ├─ cover document%.html
+      │  └─ index file%.html
       ├─ output.epub
       ├─ publication.json
-      └─ vivliostyle.config.json"
+      ├─ vivliostyle.config.json
+      ├─ 日本語.html
+      └─ 日本語.md"
 `;
