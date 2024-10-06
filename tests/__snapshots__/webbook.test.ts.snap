@@ -248,9 +248,7 @@ Object {
       "url": "foo.html",
     },
   ],
-  "resources": Array [
-    "publication.json",
-  ],
+  "resources": Array [],
   "type": "Book",
 }
 `;
@@ -349,7 +347,6 @@ Object {
       "rel": "cover",
       "url": "cover.png",
     },
-    "publication.json",
     "style%20sheet.css",
     "themes/packages/mytheme/%25style%25.css",
   ],

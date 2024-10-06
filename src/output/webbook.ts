@@ -522,7 +522,11 @@ export async function copyWebPublicationAssets({
   manifest.resources = [
     ...[manifest.resources || []].flat(),
     ...resources.flatMap((file) => {
-      if (preDefinedResources.includes(file)) {
+      if (
+        preDefinedResources.includes(file) ||
+        // Omit publication.json itself
+        pathEquals(file, upath.relative(outputDir, actualManifestPath))
+      ) {
         return [];
       }
       return file;
