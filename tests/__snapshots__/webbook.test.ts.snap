@@ -253,6 +253,16 @@ Object {
 }
 `;
 
+exports[`generate webpub from vivliostyle.config.js > cover.html 1`] = `
+"<html>
+  <head></head>
+  <body>
+    <img role=\\"doc-cover\\" data-test=\\"true\\" src=\\"cover.png\\" alt=\\"Cover image\\" />
+  </body>
+</html>
+"
+`;
+
 exports[`generate webpub from vivliostyle.config.js 1`] = `
 "/
 └─ work/
@@ -288,6 +298,9 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
    │  │     └─ mytheme/
    │  │        ├─ %style%.css
    │  │        └─ package.json
+   │  ├─ tmpl/
+   │  │  ├─ cover-template.html
+   │  │  └─ toc-template.html
    │  └─ vivliostyle.config.json
    ├─ mytheme/
    │  ├─ %style%.css
@@ -357,8 +370,6 @@ Object {
 exports[`generate webpub from vivliostyle.config.js 3`] = `
 "<html>
   <head>
-    <meta charset=\\"utf-8\\" />
-    <title>output</title>
     <link
       rel=\\"stylesheet\\"
       type=\\"text/css\\"
@@ -372,8 +383,7 @@ exports[`generate webpub from vivliostyle.config.js 3`] = `
     />
   </head>
   <body>
-    <h1>output</h1>
-    <nav id=\\"toc\\" role=\\"doc-toc\\">
+    <nav role=\\"doc-toc\\" data-test=\\"true\\">
       <h2>Table of Contents</h2>
       <ol>
         <li><a href=\\"doc/one.html\\">one</a></li>

@@ -37,7 +37,13 @@ it('generate webpub from single markdown file', async () => {
 
 it('generate webpub from vivliostyle.config.js', async () => {
   const config: VivliostyleConfigSchema = {
-    entry: ['doc/one.md', 'doc/two.md', 'doc/escape check%.md'],
+    entry: [
+      { rel: 'cover', path: 'tmpl/cover-template.html', output: 'cover.html' },
+      { rel: 'contents', path: 'tmpl/toc-template.html', output: 'index.html' },
+      'doc/one.md',
+      'doc/two.md',
+      'doc/escape check%.md',
+    ],
     output: ['/work/input/output', '/work/output'],
     toc: true,
     cover: 'cover.png',
@@ -51,6 +57,10 @@ it('generate webpub from vivliostyle.config.js', async () => {
     '/work/input/doc/escape check%.md': 'txt',
     '/work/input/cover.png': '',
     '/work/input/style sheet.css': '/* style */',
+    '/work/input/tmpl/cover-template.html':
+      '<html><body><img role="doc-cover" data-test="true" /></body></html>',
+    '/work/input/tmpl/toc-template.html':
+      '<html><body><nav role="doc-toc" data-test="true"></nav></body></html>',
     '/work/mytheme/package.json': JSON.stringify({
       name: 'mytheme',
       main: './%style%.css',
@@ -73,6 +83,10 @@ it('generate webpub from vivliostyle.config.js', async () => {
   expect(manifest).toMatchSnapshot();
   const toc = file['/work/output/index.html'];
   expect(await format(toc as string, { parser: 'html' })).toMatchSnapshot();
+  const cover = file['/work/output/cover.html'];
+  expect(await format(cover as string, { parser: 'html' })).toMatchSnapshot(
+    'cover.html',
+  );
 
   const manifest2 = JSON.parse(
     file['/work/input/output/publication.json'] as string,
