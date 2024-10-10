@@ -161,7 +161,10 @@ export async function preview(cliFlags: PreviewCliFlags) {
       noSandbox: !config.sandbox,
       disableWebSecurity: !config.viewer,
     });
-    const page = await browser.newPage({ viewport: null });
+    const page = await browser.newPage({
+      viewport: null,
+      ignoreHTTPSErrors: config.ignoreHttpsErrors,
+    });
 
     // Terminate preview when the previewing page is closed
     function onPageClose() {

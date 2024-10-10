@@ -77,6 +77,12 @@ Currently, Firefox and Webkit support preview command only!`,
         .choices(['silent', 'info', 'verbose', 'debug'])
         .default('info'),
     )
+    .addOption(
+      new Option(
+        '--ignore-https-errors',
+        `true to ignore HTTPS errors when Playwright browser opens a new page`,
+      ),
+    )
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp());

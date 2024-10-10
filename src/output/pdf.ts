@@ -94,6 +94,7 @@ export async function buildPDF({
   viewer,
   viewerParam,
   logLevel,
+  ignoreHttpsErrors,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
@@ -149,6 +150,7 @@ export async function buildPDF({
       width: 800,
       height: 600,
     },
+    ignoreHTTPSErrors: ignoreHttpsErrors,
   });
 
   page.on('pageerror', (error) => {

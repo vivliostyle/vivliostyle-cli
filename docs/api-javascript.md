@@ -100,6 +100,7 @@ Open a preview of the publication.
 | `executableBrowser?` | `string` | - |
 | ~~`executableChromium?`~~ | `string` | **Deprecated** |
 | `http?` | `boolean` | - |
+| `ignoreHttpsErrors?` | `boolean` | - |
 | `image?` | `string` | - |
 | `input?` | `string` | - |
 | `language?` | `string` | - |
@@ -160,6 +161,7 @@ Open a preview of the publication.
 | `executableBrowser?` | `string` | - |
 | ~~`executableChromium?`~~ | `string` | **Deprecated** |
 | `http?` | `boolean` | - |
+| `ignoreHttpsErrors?` | `boolean` | - |
 | `image?` | `string` | - |
 | `input?` | `string` | - |
 | `language?` | `string` | - |

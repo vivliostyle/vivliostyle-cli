@@ -118,6 +118,7 @@ Options:
                                      "allowScripts=false&pixelRatio=16")
   --log-level <level>                specify a log level of console outputs (choices: "silent",
                                      "info", "verbose", "debug", default: "info")
+  --ignore-https-errors              true to ignore HTTPS errors when Playwright browser opens a new page
   -h, --help                         display help for command
 ```
 
@@ -167,6 +168,7 @@ Options:
                                      (choices: "chromium", "firefox", "webkit")
   --log-level <level>                specify a log level of console outputs (choices: "silent",
                                      "info", "verbose", "debug", default: "info")
+  --ignore-https-errors              true to ignore HTTPS errors when Playwright browser opens a new page
   -h, --help                         display help for command
 ```
 

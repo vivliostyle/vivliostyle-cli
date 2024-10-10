@@ -60,6 +60,7 @@ it('override option by CLI command', async () => {
     'myLanguage',
     '--timeout',
     '42',
+    '--ignore-https-errors',
     '--executable-browser',
     'myFirefox',
     // '--browser',

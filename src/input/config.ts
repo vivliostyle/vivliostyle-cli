@@ -171,6 +171,7 @@ export interface CliFlags {
   browser?: 'chromium' | 'firefox' | 'webkit';
   readingProgression?: 'ltr' | 'rtl';
   logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
+  ignoreHttpsErrors?: boolean;
   /** @deprecated */ executableChromium?: string;
 }
 
@@ -244,6 +245,7 @@ export type MergedConfig = {
   viewer: string | undefined;
   viewerParam: string | undefined;
   logLevel: 'silent' | 'info' | 'verbose' | 'debug';
+  ignoreHttpsErrors: boolean;
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -622,6 +624,7 @@ export async function mergeConfig<T extends CliFlags>(
     cliFlags.logLevel ??
     ((cliFlags.verbose && 'verbose') || undefined) ??
     'silent';
+  const ignoreHttpsErrors = cliFlags.ignoreHttpsErrors ?? false;
 
   const rootThemes = cliFlags.theme
     ? [
@@ -815,6 +818,7 @@ export async function mergeConfig<T extends CliFlags>(
     viewer,
     viewerParam,
     logLevel,
+    ignoreHttpsErrors,
   };
   if (!cliFlags.input && !config) {
     throw new Error(

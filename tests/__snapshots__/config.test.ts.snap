@@ -50,6 +50,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
@@ -139,6 +140,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive/OPS/content.opf",
@@ -210,6 +212,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/epubs/adaptive.epub",
@@ -280,6 +283,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol1/",
@@ -351,6 +355,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/webbooks/readium-webpub/manifest.jsonld",
@@ -419,6 +424,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/webbooks/w3c-webpub/publication.json",
@@ -487,6 +493,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/sample.html",
@@ -619,6 +626,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": true,
+  "ignoreHttpsErrors": true,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
@@ -780,6 +788,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
@@ -891,6 +900,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
@@ -971,6 +981,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
@@ -1108,6 +1119,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/workspaceDir/publication.json",
@@ -1219,6 +1231,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
@@ -1299,6 +1312,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/publication.json",
@@ -1404,6 +1418,7 @@ Object {
     },
   ],
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/nestedDir/01.md",
@@ -1509,6 +1524,7 @@ Object {
   "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": "__SNIP__",
   "httpServer": false,
+  "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
   "input": Object {
     "entry": "__WORKSPACE__/tests/fixtures/config/sample.md",

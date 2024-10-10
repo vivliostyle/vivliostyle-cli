@@ -32,6 +32,7 @@ try {
     viewerParam: options.viewerParam,
     browser: options.browser,
     logLevel: options.logLevel,
+    ignoreHttpsErrors: options.ignoreHttpsErrors,
     executableChromium: options.executableChromium, // TODO: Remove it in the next major version up
   }).catch(gracefulError);
 } catch (err) {
