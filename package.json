@@ -18,7 +18,8 @@
     "pretest": "playwright-core install chromium",
     "release": "release-it",
     "release:pre": "release-it --preRelease --npm.tag=next",
-    "test": "vitest run --coverage"
+    "test": "vitest run --coverage",
+    "prepare": "husky"
   },
   "dependencies": {
     "@babel/code-frame": "^7.24.7",
@@ -94,7 +95,7 @@
     "esbuild": "^0.18.11",
     "file-type": "^16.5.3",
     "fs-extra": "^11.1.1",
-    "husky": "^4.3.8",
+    "husky": "^9.1.6",
     "json-schema-to-typescript": "^15.0.2",
     "lint-staged": "^11.1.2",
     "memfs": "^4.2.0",
@@ -133,12 +134,6 @@
     "types",
     "vendors"
   ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged",
-      "pre-push": "yarn test"
-    }
-  },
   "publishConfig": {
     "access": "public"
   },
