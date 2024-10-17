@@ -96,7 +96,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     quick: config.quick,
   });
 
-  const { browserType, executableBrowser } = config;
+  const { browserType, proxy, executableBrowser } = config;
   debug(`Executing browser path: ${executableBrowser}`);
   if (!checkBrowserAvailability(executableBrowser)) {
     if (isPlaywrightExecutable(executableBrowser)) {
@@ -156,12 +156,16 @@ export async function preview(cliFlags: PreviewCliFlags) {
 
     const browser = await launchBrowser({
       browserType,
+      proxy,
       executablePath: executableBrowser,
       headless: false,
       noSandbox: !config.sandbox,
       disableWebSecurity: !config.viewer,
     });
-    const page = await browser.newPage({ viewport: null });
+    const page = await browser.newPage({
+      viewport: null,
+      ignoreHTTPSErrors: config.ignoreHttpsErrors,
+    });
 
     // Terminate preview when the previewing page is closed
     function onPageClose() {

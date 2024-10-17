@@ -84,6 +84,7 @@ export async function buildPDF({
   customUserStyle,
   singleDoc,
   executableBrowser,
+  proxy,
   browserType,
   image,
   sandbox,
@@ -94,6 +95,7 @@ export async function buildPDF({
   viewer,
   viewerParam,
   logLevel,
+  ignoreHttpsErrors,
 }: BuildPdfOptions): Promise<string | null> {
   const isInContainer = checkContainerEnvironment();
   logUpdate(`Launching build environment`);
@@ -130,6 +132,7 @@ export async function buildPDF({
   }
   const browser = await launchBrowser({
     browserType,
+    proxy,
     executablePath: executableBrowser,
     headless: true,
     noSandbox: !sandbox,
@@ -149,6 +152,7 @@ export async function buildPDF({
       width: 800,
       height: 600,
     },
+    ignoreHTTPSErrors: ignoreHttpsErrors,
   });
 
   page.on('pageerror', (error) => {

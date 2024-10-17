@@ -100,6 +100,7 @@ Open a preview of the publication.
 | `executableBrowser?` | `string` | - |
 | ~~`executableChromium?`~~ | `string` | **Deprecated** |
 | `http?` | `boolean` | - |
+| `ignoreHttpsErrors?` | `boolean` | - |
 | `image?` | `string` | - |
 | `input?` | `string` | - |
 | `language?` | `string` | - |
@@ -107,6 +108,10 @@ Open a preview of the publication.
 | `preflight?` | `"press-ready"` \| `"press-ready-local"` | - |
 | `preflightOption?` | `string`[] | - |
 | `pressReady?` | `boolean` | - |
+| `proxyBypass?` | `string` | - |
+| `proxyPass?` | `string` | - |
+| `proxyServer?` | `string` | - |
+| `proxyUser?` | `string` | - |
 | `quick?` | `boolean` | - |
 | `readingProgression?` | `"ltr"` \| `"rtl"` | - |
 | `renderMode?` | `"local"` \| `"docker"` | - |
@@ -160,6 +165,7 @@ Open a preview of the publication.
 | `executableBrowser?` | `string` | - |
 | ~~`executableChromium?`~~ | `string` | **Deprecated** |
 | `http?` | `boolean` | - |
+| `ignoreHttpsErrors?` | `boolean` | - |
 | `image?` | `string` | - |
 | `input?` | `string` | - |
 | `language?` | `string` | - |
@@ -167,6 +173,10 @@ Open a preview of the publication.
 | `preflight?` | `"press-ready"` \| `"press-ready-local"` | - |
 | `preflightOption?` | `string`[] | - |
 | `pressReady?` | `boolean` | - |
+| `proxyBypass?` | `string` | - |
+| `proxyPass?` | `string` | - |
+| `proxyServer?` | `string` | - |
+| `proxyUser?` | `string` | - |
 | `quick?` | `boolean` | - |
 | `readingProgression?` | `"ltr"` \| `"rtl"` | - |
 | `renderMode?` | `"local"` \| `"docker"` | - |
