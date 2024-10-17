@@ -31,6 +31,10 @@ try {
     viewer: options.viewer,
     viewerParam: options.viewerParam,
     browser: options.browser,
+    proxyServer: options.proxyServer,
+    proxyBypass: options.proxyBypass,
+    proxyUser: options.proxyUser,
+    proxyPass: options.proxyPass,
     logLevel: options.logLevel,
     ignoreHttpsErrors: options.ignoreHttpsErrors,
     executableChromium: options.executableChromium, // TODO: Remove it in the next major version up

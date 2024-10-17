@@ -116,6 +116,10 @@ Options:
                                      (ex: https://vivliostyle.vercel.app/)
   --viewer-param <parameters>        specify viewer parameters. (ex:
                                      "allowScripts=false&pixelRatio=16")
+  --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
+  --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
+  --proxy-user <proxyUser>           optional username for HTTP proxy authentication
+  --proxy-pass <proxyPass>           optional password for HTTP proxy authentication
   --log-level <level>                specify a log level of console outputs (choices: "silent",
                                      "info", "verbose", "debug", default: "info")
   --ignore-https-errors              true to ignore HTTPS errors when Playwright browser opens a new page
@@ -166,6 +170,10 @@ Options:
                                      Vivliostyle viewer [chromium]
                                      Currently, Firefox and Webkit support preview command only!
                                      (choices: "chromium", "firefox", "webkit")
+  --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
+  --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
+  --proxy-user <proxyUser>           optional username for HTTP proxy authentication
+  --proxy-pass <proxyPass>           optional password for HTTP proxy authentication
   --log-level <level>                specify a log level of console outputs (choices: "silent",
                                      "info", "verbose", "debug", default: "info")
   --ignore-https-errors              true to ignore HTTPS errors when Playwright browser opens a new page

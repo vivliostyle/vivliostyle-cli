@@ -71,6 +71,30 @@ Currently, Firefox and Webkit support preview command only!`,
     )
     .addOption(
       new Option(
+        '--proxy-server <proxyServer>',
+        `HTTP/SOCK proxy server url for underlying Playwright`,
+      ),
+    )
+    .addOption(
+      new Option(
+        '--proxy-bypass <proxyBypass>',
+        `optional comma-separated domains to bypass proxy`,
+      ),
+    )
+    .addOption(
+      new Option(
+        '--proxy-user <proxyUser>',
+        `optional username for HTTP proxy authentication`,
+      ),
+    )
+    .addOption(
+      new Option(
+        '--proxy-pass <proxyPass>',
+        `optional password for HTTP proxy authentication`,
+      ),
+    )
+    .addOption(
+      new Option(
         '--log-level <level>',
         'specify a log level of console outputs',
       )

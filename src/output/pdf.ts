@@ -84,6 +84,7 @@ export async function buildPDF({
   customUserStyle,
   singleDoc,
   executableBrowser,
+  proxy,
   browserType,
   image,
   sandbox,
@@ -131,6 +132,7 @@ export async function buildPDF({
   }
   const browser = await launchBrowser({
     browserType,
+    proxy,
     executablePath: executableBrowser,
     headless: true,
     noSandbox: !sandbox,
