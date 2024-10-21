@@ -12,6 +12,7 @@ import {
 
 export async function launchBrowser({
   browserType,
+  proxy,
   executablePath,
   headless,
   noSandbox,
@@ -19,6 +20,14 @@ export async function launchBrowser({
   disableDevShmUsage,
 }: {
   browserType: BrowserType;
+  proxy:
+    | {
+        server: string;
+        bypass: string | undefined;
+        username: string | undefined;
+        password: string | undefined;
+      }
+    | undefined;
   executablePath: string;
   headless: boolean;
   noSandbox?: boolean;
@@ -42,6 +51,7 @@ export async function launchBrowser({
               : []),
           ],
           env: { ...process.env, LANG: 'en.UTF-8' },
+          proxy: proxy,
         }
       : // TODO: Investigate appropriate settings on Firefox & Webkit
         { executablePath, headless };

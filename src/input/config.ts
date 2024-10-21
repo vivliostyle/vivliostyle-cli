@@ -169,8 +169,13 @@ export interface CliFlags {
   viewer?: string;
   viewerParam?: string;
   browser?: 'chromium' | 'firefox' | 'webkit';
+  proxyServer?: string;
+  proxyBypass?: string;
+  proxyUser?: string;
+  proxyPass?: string;
   readingProgression?: 'ltr' | 'rtl';
   logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
+  ignoreHttpsErrors?: boolean;
   /** @deprecated */ executableChromium?: string;
 }
 
@@ -239,11 +244,20 @@ export type MergedConfig = {
   sandbox: boolean;
   executableBrowser: string;
   browserType: BrowserType;
+  proxy:
+    | {
+        server: string;
+        bypass: string | undefined;
+        username: string | undefined;
+        password: string | undefined;
+      }
+    | undefined;
   image: string;
   httpServer: boolean;
   viewer: string | undefined;
   viewerParam: string | undefined;
   logLevel: 'silent' | 'info' | 'verbose' | 'debug';
+  ignoreHttpsErrors: boolean;
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -612,6 +626,16 @@ export async function mergeConfig<T extends CliFlags>(
   const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
   const sandbox = cliFlags.sandbox ?? false;
   const browserType = cliFlags.browser ?? config?.browser ?? 'chromium';
+  const proxyServer =
+    cliFlags.proxyServer ?? process.env.HTTP_PROXY ?? undefined;
+  const proxy = proxyServer
+    ? {
+        server: proxyServer,
+        bypass: cliFlags.proxyBypass ?? process.env.NOPROXY ?? undefined,
+        username: cliFlags.proxyUser,
+        password: cliFlags.proxyPass,
+      }
+    : undefined;
   const executableBrowser =
     cliFlags.executableBrowser ?? getExecutableBrowserPath(browserType);
   const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
@@ -622,6 +646,7 @@ export async function mergeConfig<T extends CliFlags>(
     cliFlags.logLevel ??
     ((cliFlags.verbose && 'verbose') || undefined) ??
     'silent';
+  const ignoreHttpsErrors = cliFlags.ignoreHttpsErrors ?? false;
 
   const rootThemes = cliFlags.theme
     ? [
@@ -810,11 +835,13 @@ export async function mergeConfig<T extends CliFlags>(
     sandbox,
     executableBrowser,
     browserType,
+    proxy,
     image,
     httpServer,
     viewer,
     viewerParam,
     logLevel,
+    ignoreHttpsErrors,
   };
   if (!cliFlags.input && !config) {
     throw new Error(
