@@ -1,18 +1,30 @@
-
-
-# [8.15.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.14.1...v8.15.0) (2024-10-03)
-
+# [8.16.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.15.0...v8.16.0) (2024-10-21)
 
 ### Bug Fixes
 
-* Set a project title if ToC title is not set ([88b227c](https://github.com/vivliostyle/vivliostyle-cli/commit/88b227c07d5048a2b6a2f144ff36b7c954f8dda9))
-* Upgreade Prettier formatter to v3 ([1d9ea0c](https://github.com/vivliostyle/vivliostyle-cli/commit/1d9ea0caeb334040ca4776d8e9e418ea813fac2b))
-
+- Ensure template files are not copied into webpub/epub ([da93797](https://github.com/vivliostyle/vivliostyle-cli/commit/da9379771c2422c0ac13bc758db19bcc008ccd3b))
+- Escape path references that includes non-ascii chars ([ea882d1](https://github.com/vivliostyle/vivliostyle-cli/commit/ea882d16c6755afa0b3afbf1c88a4f54fe5adc1e)), closes [#525](https://github.com/vivliostyle/vivliostyle-cli/issues/525)
+- Fix not to include publication.json itself in its resources property ([0c55356](https://github.com/vivliostyle/vivliostyle-cli/commit/0c55356e21444773ca0b65d146b5570ae901b1e3)), closes [#523](https://github.com/vivliostyle/vivliostyle-cli/issues/523)
+- Update Vivliostyle.js to 2.30.5: Bug Fixes ([cfe3095](https://github.com/vivliostyle/vivliostyle-cli/commit/cfe3095b5ff5f5a65443b888faafb73ae7430373))
 
 ### Features
 
-* Add feature generating ToC/cover documents from existing MD/HTML ([92764d8](https://github.com/vivliostyle/vivliostyle-cli/commit/92764d8a2df2e859502de2ef55ad8c89622e1f0d))
-* Renew internal config schema validator ([9e485ab](https://github.com/vivliostyle/vivliostyle-cli/commit/9e485abd65f18de8d1a466acaf14531688397a15))
+- add document processor from markdown into html extension point ([919de86](https://github.com/vivliostyle/vivliostyle-cli/commit/919de86fbd5289a50d0075c5a66ca311b1dcd8e3))
+- support HTTP Proxy configuration via cli flag or environment variable ([c8f2c69](https://github.com/vivliostyle/vivliostyle-cli/commit/c8f2c69646f95918fd3190e481781c890726877f))
+- support ignoreHTTPSErrors when Playwright browser opens a new page ([63f2557](https://github.com/vivliostyle/vivliostyle-cli/commit/63f2557710715b8d6b2383a5ed07e150103211d4))
+- Update Playwright to 1.48.1 (Chromium 130.0.6723.31) ([865cf5f](https://github.com/vivliostyle/vivliostyle-cli/commit/865cf5fe5990ec0838a990f1de74ff069e425131))
+
+# [8.15.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.14.1...v8.15.0) (2024-10-03)
+
+### Bug Fixes
+
+- Set a project title if ToC title is not set ([88b227c](https://github.com/vivliostyle/vivliostyle-cli/commit/88b227c07d5048a2b6a2f144ff36b7c954f8dda9))
+- Upgreade Prettier formatter to v3 ([1d9ea0c](https://github.com/vivliostyle/vivliostyle-cli/commit/1d9ea0caeb334040ca4776d8e9e418ea813fac2b))
+
+### Features
+
+- Add feature generating ToC/cover documents from existing MD/HTML ([92764d8](https://github.com/vivliostyle/vivliostyle-cli/commit/92764d8a2df2e859502de2ef55ad8c89622e1f0d))
+- Renew internal config schema validator ([9e485ab](https://github.com/vivliostyle/vivliostyle-cli/commit/9e485abd65f18de8d1a466acaf14531688397a15))
 
 ## [8.14.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.14.0...v8.14.1) (2024-08-20)
 
