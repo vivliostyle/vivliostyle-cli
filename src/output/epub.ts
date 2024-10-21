@@ -78,7 +78,7 @@ const changeExtname = (filepath: string, newExt: string) => {
 const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
   const absBasePath = upath.join('/', baseUrl);
   const absRootPath = upath.join('/', rootUrl);
-  const hrefUrl = new URL(target, pathToFileURL(absBasePath));
+  const hrefUrl = new URL(encodeURI(target), pathToFileURL(absBasePath));
   if (hrefUrl.protocol !== 'file:') {
     return target;
   }
@@ -396,7 +396,7 @@ async function transpileHtmlToXhtml({
   document.documentElement.setAttribute('xmlns:epub', EPUB_NS);
 
   document.querySelectorAll('a[href]').forEach((el) => {
-    const href = el.getAttribute('href')!;
+    const href = decodeURI(el.getAttribute('href')!);
     el.setAttribute('href', getRelativeHref(href, target, target));
   });
 
@@ -681,7 +681,7 @@ function buildEpubPackageDocument({
       manifest: {
         item: manifestItems.map(({ href, mediaType, properties }) => ({
           _id: itemIdMap.get(href),
-          _href: href,
+          _href: encodeURI(href),
           '_media-type': mediaType,
           ...(properties ? { _properties: properties } : {}),
         })),

@@ -101,18 +101,19 @@ exports[`generate webpub from a plain HTML 3`] = `
 
 exports[`generate webpub from a remote HTML document 1`] = `
 "/
+├─ remote/
+│  ├─ foo bar%/
+│  │  └─ escape check%.html
+│  └─ あ/
+│     └─ 日本語.css
 └─ work/
-   ├─ assets/
-   │  └─ style.css
-   ├─ input/
-   │  └─ index.html
    └─ output/
       ├─ publication.json
-      └─ work/
-         ├─ assets/
-         │  └─ style.css
-         └─ input/
-            └─ index.html"
+      └─ remote/
+         ├─ foo bar%/
+         │  └─ escape check%.html
+         └─ あ/
+            └─ 日本語.css"
 `;
 
 exports[`generate webpub from a remote HTML document 2`] = `
@@ -127,11 +128,11 @@ Object {
   "name": "Document",
   "readingOrder": Array [
     Object {
-      "url": "work/input/index.html",
+      "url": "remote/foo%20bar%25/escape%20check%25.html",
     },
   ],
   "resources": Array [
-    "work/assets/style.css",
+    "remote/%E3%81%82/%E6%97%A5%E6%9C%AC%E8%AA%9E.css",
   ],
   "type": "Book",
 }
@@ -141,7 +142,11 @@ exports[`generate webpub from a remote HTML document 3`] = `
 "<html lang=\\"en\\">
   <head>
     <title>Document</title>
-    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"../assets/style.css\\" />
+    <link
+      rel=\\"stylesheet\\"
+      type=\\"text/css\\"
+      href=\\"../%E3%81%82/%E6%97%A5%E6%9C%AC%E8%AA%9E.css\\"
+    />
     <link
       rel=\\"publication\\"
       type=\\"application/ld+json\\"
@@ -158,15 +163,17 @@ exports[`generate webpub from a single-document publication 1`] = `
 └─ work/
    ├─ input/
    │  ├─ assets/
-   │  │  ├─ figure.svg
-   │  │  └─ subdir.css
+   │  │  ├─ subdir.css
+   │  │  └─ 日本語.svg
+   │  ├─ escape check%.html
    │  ├─ subdir/
    │  │  └─ index.html
    │  └─ webbook.html
    └─ output/
       ├─ assets/
-      │  ├─ figure.svg
-      │  └─ subdir.css
+      │  ├─ subdir.css
+      │  └─ 日本語.svg
+      ├─ escape check%.html
       ├─ subdir/
       │  └─ index.html
       └─ webbook.html"
@@ -181,14 +188,39 @@ exports[`generate webpub from a single-document publication 2`] = `
       {
         \\"@context\\": [\\"https://schema.org\\", \\"https://www.w3.org/ns/wp-context\\"],
         \\"conformsTo\\": \\"yuno\\",
-        \\"resources\\": [\\"assets/figure.svg\\"],
-        \\"readingOrder\\": [\\"#foo\\", \\"../bar.html\\", \\"subdir/index.html\\"]
+        \\"resources\\": [\\"assets/%E6%97%A5%E6%9C%AC%E8%AA%9E.svg\\"],
+        \\"readingOrder\\": [
+          \\"#foo\\",
+          \\"../bar.html\\",
+          \\"subdir/index.html\\",
+          \\"escape%20check%25.html\\"
+        ]
       }
     </script>
   </head>
   <body></body>
 </html>
 "
+`;
+
+exports[`generate webpub from remote HTML documents with publication manifest 1`] = `
+"/
+├─ assets/
+│  └─ 日本語.png
+├─ remote/
+│  ├─ dir/
+│  │  ├─ escape check%.html
+│  │  └─ index.html
+│  └─ publication.json
+└─ work/
+   └─ output/
+      ├─ assets/
+      │  └─ 日本語.png
+      └─ remote/
+         ├─ dir/
+         │  ├─ escape check%.html
+         │  └─ index.html
+         └─ publication.json"
 `;
 
 exports[`generate webpub from single markdown file 1`] = `
@@ -216,11 +248,19 @@ Object {
       "url": "foo.html",
     },
   ],
-  "resources": Array [
-    "publication.json",
-  ],
+  "resources": Array [],
   "type": "Book",
 }
+`;
+
+exports[`generate webpub from vivliostyle.config.js > cover.html 1`] = `
+"<html>
+  <head></head>
+  <body>
+    <img role=\\"doc-cover\\" data-test=\\"true\\" src=\\"cover.png\\" alt=\\"Cover image\\" />
+  </body>
+</html>
+"
 `;
 
 exports[`generate webpub from vivliostyle.config.js 1`] = `
@@ -230,6 +270,8 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
    │  ├─ cover.html
    │  ├─ cover.png
    │  ├─ doc/
+   │  │  ├─ escape check%.html
+   │  │  ├─ escape check%.md
    │  │  ├─ one.html
    │  │  ├─ one.md
    │  │  ├─ two.html
@@ -239,20 +281,44 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
    │  │  ├─ cover.html
    │  │  ├─ cover.png
    │  │  ├─ doc/
+   │  │  │  ├─ escape check%.html
    │  │  │  ├─ one.html
    │  │  │  └─ two.html
    │  │  ├─ index.html
-   │  │  └─ publication.json
+   │  │  ├─ publication.json
+   │  │  ├─ style sheet.css
+   │  │  └─ themes/
+   │  │     └─ packages/
+   │  │        └─ mytheme/
+   │  │           └─ %style%.css
    │  ├─ publication.json
+   │  ├─ style sheet.css
+   │  ├─ themes/
+   │  │  └─ packages/
+   │  │     └─ mytheme/
+   │  │        ├─ %style%.css
+   │  │        └─ package.json
+   │  ├─ tmpl/
+   │  │  ├─ cover-template.html
+   │  │  └─ toc-template.html
    │  └─ vivliostyle.config.json
+   ├─ mytheme/
+   │  ├─ %style%.css
+   │  └─ package.json
    └─ output/
       ├─ cover.html
       ├─ cover.png
       ├─ doc/
+      │  ├─ escape check%.html
       │  ├─ one.html
       │  └─ two.html
       ├─ index.html
-      └─ publication.json"
+      ├─ publication.json
+      ├─ style sheet.css
+      └─ themes/
+         └─ packages/
+            └─ mytheme/
+               └─ %style%.css"
 `;
 
 exports[`generate webpub from vivliostyle.config.js 2`] = `
@@ -282,6 +348,9 @@ Object {
     Object {
       "url": "doc/two.html",
     },
+    Object {
+      "url": "doc/escape%20check%25.html",
+    },
   ],
   "readingProgression": "rtl",
   "resources": Array [
@@ -291,7 +360,8 @@ Object {
       "rel": "cover",
       "url": "cover.png",
     },
-    "publication.json",
+    "style%20sheet.css",
+    "themes/packages/mytheme/%25style%25.css",
   ],
   "type": "Book",
 }
@@ -300,8 +370,12 @@ Object {
 exports[`generate webpub from vivliostyle.config.js 3`] = `
 "<html>
   <head>
-    <meta charset=\\"utf-8\\" />
-    <title>output</title>
+    <link
+      rel=\\"stylesheet\\"
+      type=\\"text/css\\"
+      href=\\"themes/packages/mytheme/%25style%25.css\\"
+    />
+    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style%20sheet.css\\" />
     <link
       rel=\\"publication\\"
       type=\\"application/ld+json\\"
@@ -309,12 +383,12 @@ exports[`generate webpub from vivliostyle.config.js 3`] = `
     />
   </head>
   <body>
-    <h1>output</h1>
-    <nav id=\\"toc\\" role=\\"doc-toc\\">
+    <nav role=\\"doc-toc\\" data-test=\\"true\\">
       <h2>Table of Contents</h2>
       <ol>
         <li><a href=\\"doc/one.html\\">one</a></li>
         <li><a href=\\"doc/two.html\\">two</a></li>
+        <li><a href=\\"doc/escape%20check%25.html\\">escape check%</a></li>
       </ol>
     </nav>
   </body>
