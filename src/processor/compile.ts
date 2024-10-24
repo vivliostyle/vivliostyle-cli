@@ -12,6 +12,7 @@ import { writePublicationManifest } from '../output/webbook.js';
 import {
   DetailError,
   copy,
+  copyWithSymlinkHandling,
   debug,
   pathContains,
   pathEquals,
@@ -87,12 +88,12 @@ export async function cleanupWorkspace({
   let movedThemePath: string | undefined;
   if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
     [movedThemePath] = await useTmpDirectory();
-    await copy(themesDir, movedThemePath);
+    await copyWithSymlinkHandling(themesDir, movedThemePath);
   }
   await remove(workspaceDir);
   if (movedThemePath) {
     fs.mkdirSync(upath.dirname(themesDir), { recursive: true });
-    await copy(movedThemePath, themesDir);
+    await copyWithSymlinkHandling(movedThemePath, themesDir);
   }
 }
 
