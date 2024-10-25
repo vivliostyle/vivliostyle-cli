@@ -13,13 +13,13 @@ import {
   DetailError,
   copy,
   debug,
+  move,
   pathContains,
   pathEquals,
   remove,
   safeGlob,
   startLogging,
   upath,
-  useTmpDirectory,
 } from '../util.js';
 import {
   generateDefaultCoverHtml,
@@ -84,15 +84,28 @@ export async function cleanupWorkspace({
   }
   // workspaceDir is placed on different directory; delete everything excepting theme files
   debug('cleanup workspace files', workspaceDir);
-  let movedThemePath: string | undefined;
-  if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
-    [movedThemePath] = await useTmpDirectory();
-    await copy(themesDir, movedThemePath);
-  }
-  await remove(workspaceDir);
-  if (movedThemePath) {
-    fs.mkdirSync(upath.dirname(themesDir), { recursive: true });
-    await copy(movedThemePath, themesDir);
+  let movedWorkspacePath: string | undefined;
+  try {
+    if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
+      movedWorkspacePath = upath.join(
+        upath.dirname(workspaceDir),
+        `.vs-${Date.now()}`,
+      );
+      const movedThemePath = upath.join(
+        movedWorkspacePath,
+        upath.relative(workspaceDir, themesDir),
+      );
+      fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
+      await move(themesDir, movedThemePath);
+    }
+    await remove(workspaceDir);
+    if (movedWorkspacePath) {
+      await move(movedWorkspacePath, workspaceDir);
+    }
+  } finally {
+    if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {
+      await remove(movedWorkspacePath);
+    }
   }
 }
 
