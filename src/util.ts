@@ -25,8 +25,6 @@ import { BaseIssue } from 'valibot';
 import {
   copy,
   copySync,
-  ensureDir,
-  ensureSymlink,
   move,
   moveSync,
   remove,
@@ -326,24 +324,6 @@ export function pathEquals(path1: string, path2: string): boolean {
 export function pathContains(parentPath: string, childPath: string): boolean {
   const rel = upath.relative(parentPath, childPath);
   return rel !== '' && !rel.startsWith('..');
-}
-
-export async function copyWithSymlinkHandling(src: string, dest: string) {
-  const stats = fs.lstatSync(src);
-  if (stats.isSymbolicLink()) {
-    const target = fs.readlinkSync(src);
-    await ensureSymlink(target, dest, 'junction');
-  } else if (stats.isDirectory()) {
-    await ensureDir(dest);
-    const items = fs.readdirSync(src);
-    for (const item of items) {
-      const srcItem = upath.join(src, item);
-      const destItem = upath.join(dest, item);
-      await copyWithSymlinkHandling(srcItem, destItem);
-    }
-  } else {
-    await copy(src, dest);
-  }
 }
 
 export function isUrlString(str: string): boolean {
