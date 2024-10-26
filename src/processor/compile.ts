@@ -11,15 +11,16 @@ import type { ArticleEntryObject } from '../input/schema.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
   DetailError,
+  beforeExitHandlers,
   copy,
   debug,
+  move,
   pathContains,
   pathEquals,
   remove,
   safeGlob,
   startLogging,
   upath,
-  useTmpDirectory,
 } from '../util.js';
 import {
   generateDefaultCoverHtml,
@@ -84,15 +85,27 @@ export async function cleanupWorkspace({
   }
   // workspaceDir is placed on different directory; delete everything excepting theme files
   debug('cleanup workspace files', workspaceDir);
-  let movedThemePath: string | undefined;
+  let movedWorkspacePath: string | undefined;
   if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
-    [movedThemePath] = await useTmpDirectory();
-    await copy(themesDir, movedThemePath);
+    movedWorkspacePath = upath.join(
+      upath.dirname(workspaceDir),
+      `.vs-${Date.now()}`,
+    );
+    const movedThemePath = upath.join(
+      movedWorkspacePath,
+      upath.relative(workspaceDir, themesDir),
+    );
+    fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
+    beforeExitHandlers.push(() => {
+      if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {
+        fs.rmSync(movedWorkspacePath, { recursive: true, force: true });
+      }
+    });
+    await move(themesDir, movedThemePath);
   }
   await remove(workspaceDir);
-  if (movedThemePath) {
-    fs.mkdirSync(upath.dirname(themesDir), { recursive: true });
-    await copy(movedThemePath, themesDir);
+  if (movedWorkspacePath) {
+    await move(movedWorkspacePath, workspaceDir);
   }
 }
 
