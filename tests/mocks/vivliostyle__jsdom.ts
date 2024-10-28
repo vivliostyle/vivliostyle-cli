@@ -1,3 +1,4 @@
+/// <reference path="../../types/jsdom.d.ts" />
 import {
   AbortablePromise,
   BaseOptions,
