@@ -1,8 +1,10 @@
+import './mocks/fs.js';
+
 import AdmZip from 'adm-zip';
 import { fs as memfs, vol } from 'memfs';
 import { format } from 'prettier';
 import tmp from 'tmp';
-import { afterEach, expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
 import {
   buildWebPublication,
@@ -16,8 +18,6 @@ import {
 import { PublicationManifest } from '../src/schema/publication.schema.js';
 import { upath } from '../vendors/index.js';
 import { getMergedConfig, toTree } from './commandUtil.js';
-
-vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
 
 vi.mock('@vivliostyle/jsdom', () =>
   import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
@@ -55,7 +55,7 @@ vi.mock('archiver', async () => {
   };
 });
 
-afterEach(() => {
+beforeEach(() => {
   vol.reset();
   (tmp as any).__count = 0;
 });

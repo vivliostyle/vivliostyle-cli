@@ -1,7 +1,9 @@
+import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 import chalk from 'chalk';
 import * as cheerio from 'cheerio';
 import fs from 'fs';
 import { createRequire } from 'node:module';
+import { Processor } from 'unified';
 import { pathToFileURL } from 'url';
 import * as v from 'valibot';
 import { getExecutableBrowserPath } from '../browser.js';
@@ -58,8 +60,6 @@ import {
   VivliostyleConfigEntry,
   VivliostyleConfigSchema,
 } from './schema.js';
-import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
-import { Processor } from 'unified';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -778,7 +778,7 @@ export async function mergeConfig<T extends CliFlags>(
     const includes = _includes || [config?.includeAssets ?? []].flat();
     const notAllowedPatternRe = /(^\s*[/\\]|^(.*[/\\])?\s*\.\.\s*([/\\].*)?$)/g;
     // See the special characters of glob pattern
-    // https://github.com/mrmlnc/fast-glob
+    // https://github.com/micromatch/picomatch
     const notAllowedExtensionRe = /([\\/*?@+!|(){}[\]]|\.\.|^\s*\.)/g;
     Object.entries({ includes, excludes }).forEach(([propName, patterns]) => {
       patterns.forEach((pattern) => {

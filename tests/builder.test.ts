@@ -1,7 +1,7 @@
 import jsdom, { JSDOM } from '@vivliostyle/jsdom';
-import { globby } from 'globby';
 import assert from 'node:assert';
 import fs from 'node:fs';
+import { glob } from 'tinyglobby';
 import { expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import {
@@ -39,7 +39,7 @@ it('generate workspace directory', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('builder/.vs-workspace'),
   });
   expect(new Set(fileList)).toEqual(
@@ -122,7 +122,7 @@ it('generate workspace directory', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = await globby('**', {
+  const fileList2 = await glob('**', {
     cwd: resolveFixture('builder/.vs-workspace'),
   });
   expect(new Set(fileList2)).toEqual(new Set(fileList));
@@ -142,7 +142,7 @@ it('generate files with entryContext', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('builder/.vs-entryContext'),
   });
   expect(new Set(fileList)).toEqual(
@@ -201,7 +201,7 @@ it('generate files with entryContext', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = await globby('**', {
+  const fileList2 = await glob('**', {
     cwd: resolveFixture('builder/.vs-entryContext'),
   });
   expect(new Set(fileList2)).toEqual(new Set(fileList));
@@ -221,7 +221,7 @@ it('generate from various manuscript formats', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('builder/.vs-variousManuscriptFormat'),
   });
   expect(new Set(fileList)).toEqual(
@@ -555,7 +555,7 @@ it('install local themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('builder/.vs-localTheme'),
   });
   expect(new Set(fileList)).toEqual(
@@ -574,7 +574,7 @@ it('install local themes', async () => {
     ]),
   );
   // checking symlink-referenced directory
-  const themePackageFileList = await globby('**', {
+  const themePackageFileList = await glob('**', {
     cwd: resolveFixture('builder/.vs-localTheme/themes/packages/debug-theme'),
   });
   expect(new Set(themePackageFileList)).toEqual(
@@ -608,7 +608,7 @@ it('install local themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = await globby('**', {
+  const fileList2 = await glob('**', {
     cwd: resolveFixture('builder/.vs-localTheme'),
   });
   expect(new Set(fileList2)).toEqual(new Set(fileList));
@@ -625,7 +625,7 @@ it('install remote themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('builder/.vs-remoteTheme'),
   });
   expect(fileList).toContain(
@@ -649,7 +649,7 @@ it('install remote themes', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList2 = await globby('**', {
+  const fileList2 = await glob('**', {
     cwd: resolveFixture('builder/.vs-remoteTheme'),
   });
   expect(new Set(fileList2)).toEqual(new Set(fileList));

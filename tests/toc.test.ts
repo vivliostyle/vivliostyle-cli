@@ -1,7 +1,7 @@
 import { JSDOM } from '@vivliostyle/jsdom';
-import { globby } from 'globby';
 import assert from 'node:assert';
 import fs from 'node:fs';
+import { glob } from 'tinyglobby';
 import { expect, it } from 'vitest';
 import { MergedConfig } from '../src/input/config.js';
 import { compile, prepareThemeDirectory } from '../src/processor/compile.js';
@@ -84,7 +84,7 @@ it('toc: true', async () => {
   assertManifestPath(config);
   await prepareThemeDirectory(config);
   await compile(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('toc/.vs-valid.1'),
   });
   expect(new Set(fileList)).toEqual(
@@ -127,7 +127,7 @@ it("toc: 'manuscript/contents.html'", async () => {
   assertManifestPath(config);
   await prepareThemeDirectory(config);
   await compile(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('toc/.vs-valid.2'),
   });
   expect(new Set(fileList)).toMatchObject(
@@ -179,7 +179,7 @@ it('Customize ToC document', async () => {
   assertManifestPath(config);
   await prepareThemeDirectory(config);
   await compile(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('toc/.vs-valid.3'),
   });
   expect(new Set(fileList)).toMatchObject(
@@ -239,7 +239,7 @@ it('in-place ToC document', async () => {
     fs.readFileSync(resolveFixture('toc/inplace/index.html'), 'utf-8'),
   ).toBe(srcTocContent);
 
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('toc/inplace'),
     dot: true,
   });
