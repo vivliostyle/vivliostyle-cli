@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 
 const mocked = await vi.hoisted(async () => {
   const { vol } = await import('memfs');
-  const { upath } = await import('../../vendors/index.js');
+  const { default: upath } = await import('upath');
   const { mockRequire } = await import('./index.js');
 
   const { default: archiver } = await vi.importActual<{

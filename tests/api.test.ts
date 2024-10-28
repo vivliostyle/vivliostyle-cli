@@ -1,8 +1,8 @@
 import fileType from 'file-type';
 import fs from 'node:fs';
+import upath from 'upath';
 import { expect, test } from 'vitest';
 import { build } from '../src/index.js';
-import { upath } from '../src/util.js';
 import { rootPath } from './command-util.js';
 
 const fixtureRoot = upath.resolve(rootPath, 'tests/fixtures/wood');

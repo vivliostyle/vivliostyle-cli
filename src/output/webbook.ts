@@ -1,7 +1,9 @@
 import chalk from 'chalk';
+import { copy, remove } from 'fs-extra/esm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { glob } from 'tinyglobby';
+import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
 import { MANIFEST_FILENAME } from '../const.js';
 import { MergedConfig, WebbookEntryConfig } from '../input/config.js';
@@ -24,15 +26,12 @@ import type {
 } from '../schema/publication.schema.js';
 import {
   assertPubManifestSchema,
-  copy,
   debug,
   DetailError,
   log,
   logError,
   logUpdate,
   pathEquals,
-  remove,
-  upath,
   useTmpDirectory,
 } from '../util.js';
 import { exportEpub } from './epub.js';

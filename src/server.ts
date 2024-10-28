@@ -1,13 +1,13 @@
 import http from 'node:http';
 import { fileURLToPath, pathToFileURL, URL } from 'node:url';
 import handler from 'serve-handler';
+import upath from 'upath';
 import { viewerRoot } from './const.js';
 import {
   beforeExitHandlers,
   debug,
   findAvailablePort,
   isUrlString,
-  upath,
 } from './util.js';
 
 export type PageSize = { format: string } | { width: string; height: string };
@@ -46,19 +46,19 @@ export async function prepareServer(option: ServerOption): Promise<{
   const viewerUrl = await (option.viewer && isUrlString(option.viewer)
     ? new URL(option.viewer)
     : option.httpServer
-    ? (async () => {
-        _viewerServer = _viewerServer || (await launchServer(viewerRoot));
+      ? (async () => {
+          _viewerServer = _viewerServer || (await launchServer(viewerRoot));
 
-        const viewerUrl = new URL('http://localhost');
-        viewerUrl.port = `${_viewerServer.port}`;
-        viewerUrl.pathname = '/lib/index.html';
-        return viewerUrl;
-      })()
-    : (() => {
-        const viewerUrl = new URL('file://');
-        viewerUrl.pathname = upath.join(viewerRoot, 'lib/index.html');
-        return viewerUrl;
-      })());
+          const viewerUrl = new URL('http://localhost');
+          viewerUrl.port = `${_viewerServer.port}`;
+          viewerUrl.pathname = '/lib/index.html';
+          return viewerUrl;
+        })()
+      : (() => {
+          const viewerUrl = new URL('file://');
+          viewerUrl.pathname = upath.join(viewerRoot, 'lib/index.html');
+          return viewerUrl;
+        })());
 
   const inputUrl = isUrlString(option.input)
     ? new URL(option.input)

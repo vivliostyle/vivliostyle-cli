@@ -1,9 +1,9 @@
 import execa from 'execa';
 import fileType from 'file-type';
 import fs from 'node:fs';
+import upath from 'upath';
 import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
-import { upath } from '../src/util.js';
 import { rootPath } from './command-util.js';
 
 const cliPath = upath.join(rootPath, packageJSON.bin.vivliostyle);

@@ -11,6 +11,7 @@ import {
   ReadingDirection,
 } from 'pdf-lib';
 import * as pressReadyModule from 'press-ready';
+import upath from 'upath';
 import { v1 as uuid } from 'uuid';
 import { coreVersion } from '../const.js';
 import {
@@ -20,7 +21,7 @@ import {
 } from '../container.js';
 import type { Meta, TOCItem } from '../global-viewer.js';
 import { MergedConfig } from '../input/config.js';
-import { checkContainerEnvironment, suspendLogging, upath } from '../util.js';
+import { checkContainerEnvironment, suspendLogging } from '../util.js';
 import type { PdfOutput } from './output-types.js';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &

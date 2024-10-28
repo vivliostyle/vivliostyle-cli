@@ -1,4 +1,5 @@
 import chokidar from 'chokidar';
+import upath from 'upath';
 import {
   checkBrowserAvailability,
   downloadBrowser,
@@ -29,7 +30,6 @@ import {
   runExitHandlers,
   setLogLevel,
   startLogging,
-  upath,
 } from './util.js';
 
 let timer: NodeJS.Timeout;

@@ -1,5 +1,7 @@
+import { copy, move, remove } from 'fs-extra/esm';
 import fs from 'node:fs';
 import { glob } from 'tinyglobby';
+import upath from 'upath';
 import {
   ContentsEntry,
   CoverEntry,
@@ -13,14 +15,10 @@ import { writePublicationManifest } from '../output/webbook.js';
 import {
   DetailError,
   beforeExitHandlers,
-  copy,
   debug,
-  move,
   pathContains,
   pathEquals,
-  remove,
   startLogging,
-  upath,
 } from '../util.js';
 import {
   generateDefaultCoverHtml,

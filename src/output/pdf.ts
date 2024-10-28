@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { URL } from 'node:url';
 import { Page } from 'playwright-core';
 import terminalLink from 'terminal-link';
+import upath from 'upath';
 import {
   checkBrowserAvailability,
   downloadBrowser,
@@ -27,7 +28,6 @@ import {
   logUpdate,
   pathEquals,
   startLogging,
-  upath,
 } from '../util.js';
 import type { PdfOutput } from './output-types.js';
 import { PageSizeData, PostProcess } from './pdf-postprocess.js';

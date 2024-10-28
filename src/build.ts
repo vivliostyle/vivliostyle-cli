@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import terminalLink from 'terminal-link';
+import upath from 'upath';
 import { getExecutableBrowserPath } from './browser.js';
 import {
   CliFlags,
@@ -25,7 +26,6 @@ import {
   runExitHandlers,
   setLogLevel,
   startLogging,
-  upath,
 } from './util.js';
 
 export interface BuildCliFlags extends CliFlags {

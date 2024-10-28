@@ -3,10 +3,12 @@ import archiver from 'archiver';
 import { lookup as lookupLanguage } from 'bcp-47-match';
 import chalk from 'chalk';
 import { XMLBuilder } from 'fast-xml-parser';
+import { copy, remove } from 'fs-extra/esm';
 import GithubSlugger from 'github-slugger';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import upath from 'upath';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
 import {
@@ -33,15 +35,7 @@ import type {
   PublicationManifest,
   ResourceCategorization,
 } from '../schema/publication.schema.js';
-import {
-  DetailError,
-  copy,
-  debug,
-  logWarn,
-  remove,
-  upath,
-  useTmpDirectory,
-} from '../util.js';
+import { DetailError, debug, logWarn, useTmpDirectory } from '../util.js';
 
 interface ManifestEntry {
   href: string;
@@ -197,33 +191,36 @@ export async function exportEpub({
     ...[manifest.links || []].flat(),
     ...[manifest.readingOrder || []].flat(),
     ...[manifest.resources || []].flat(),
-  ].reduce((acc, val) => {
-    const { url, encodingFormat } =
-      typeof val === 'string' ? ({ url: val } as PublicationLinks) : val;
-    // Only accepts path-like url
-    try {
-      new URL(url);
+  ].reduce(
+    (acc, val) => {
+      const { url, encodingFormat } =
+        typeof val === 'string' ? ({ url: val } as PublicationLinks) : val;
+      // Only accepts path-like url
+      try {
+        new URL(url);
+        return acc;
+      } catch (e) {
+        /* NOOP */
+      }
+      if (!fs.existsSync(upath.join(tmpDir, 'EPUB', url))) {
+        return acc;
+      }
+      const mediaType = encodingFormat || mime(url) || 'text/plain';
+      acc[url] = {
+        href: url,
+        mediaType,
+      };
+      if (/\.html?$/.test(url)) {
+        acc[url].href = changeExtname(url, '.xhtml');
+        acc[url].mediaType = 'application/xhtml+xml';
+      }
+      if (url === pictureCoverResource?.url) {
+        acc[url].properties = 'cover-image';
+      }
       return acc;
-    } catch (e) {
-      /* NOOP */
-    }
-    if (!fs.existsSync(upath.join(tmpDir, 'EPUB', url))) {
-      return acc;
-    }
-    const mediaType = encodingFormat || mime(url) || 'text/plain';
-    acc[url] = {
-      href: url,
-      mediaType,
-    };
-    if (/\.html?$/.test(url)) {
-      acc[url].href = changeExtname(url, '.xhtml');
-      acc[url].mediaType = 'application/xhtml+xml';
-    }
-    if (url === pictureCoverResource?.url) {
-      acc[url].properties = 'cover-image';
-    }
-    return acc;
-  }, {} as Record<string, ManifestEntry>);
+    },
+    {} as Record<string, ManifestEntry>,
+  );
 
   const htmlFiles = Object.keys(manifestItem).filter((url) =>
     /\.html?$/.test(url),

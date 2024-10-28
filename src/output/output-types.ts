@@ -1,4 +1,4 @@
-import { upath } from '../util.js';
+import upath from 'upath';
 
 interface OutputFormatTrait<T extends string = string> {
   format: T;

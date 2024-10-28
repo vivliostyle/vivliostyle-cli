@@ -9,6 +9,7 @@ import AjvFormatsModule from 'ajv-formats';
 import chalk from 'chalk';
 import debugConstructor from 'debug';
 import { XMLParser } from 'fast-xml-parser';
+import { removeSync } from 'fs-extra/esm';
 import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
 import readline from 'node:readline';
@@ -16,23 +17,13 @@ import util from 'node:util';
 import oraConstructor from 'ora';
 import portfinder from 'portfinder';
 import tmp from 'tmp';
+import upath from 'upath';
 import { BaseIssue } from 'valibot';
-import {
-  copy,
-  copySync,
-  move,
-  moveSync,
-  remove,
-  removeSync,
-  upath,
-} from '../vendors/index.js';
 import {
   publicationSchema,
   publicationSchemas,
 } from './schema/pub-manifest.js';
 import type { PublicationManifest } from './schema/publication.schema.js';
-
-export { copy, copySync, move, moveSync, remove, removeSync, upath };
 
 export const debug = debugConstructor('vs-cli');
 export const cwd = upath.normalize(process.cwd());

@@ -4,13 +4,13 @@ import './mocks/portfinder.js';
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import portfinder from 'portfinder';
+import upath from 'upath';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import {
   getViewerFullUrl,
   prepareServer,
   teardownServer,
 } from '../src/server.js';
-import { upath } from '../src/util.js';
 import { maskConfig, rootPath } from './command-util.js';
 
 const mockedCreateServer = vi.mocked(http).createServer;

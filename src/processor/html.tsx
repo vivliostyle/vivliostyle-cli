@@ -9,6 +9,7 @@ import { toHtml } from 'hast-util-to-html';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
+import upath from 'upath';
 import type { ManuscriptEntry } from '../input/config.js';
 import type {
   StructuredDocument,
@@ -22,7 +23,6 @@ import {
   debug,
   isUrlString,
   logWarn,
-  upath,
 } from '../util.js';
 
 const virtualConsole = new jsdom.VirtualConsole();

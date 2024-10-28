@@ -4,6 +4,7 @@ import * as cheerio from 'cheerio';
 import fs from 'fs';
 import { createRequire } from 'node:module';
 import { Processor } from 'unified';
+import upath from 'upath';
 import { pathToFileURL } from 'url';
 import * as v from 'valibot';
 import { getExecutableBrowserPath } from '../browser.js';
@@ -46,7 +47,6 @@ import {
   readJSON,
   statFileSync,
   touchTmpFile,
-  upath,
 } from '../util.js';
 import {
   ArticleEntryObject,

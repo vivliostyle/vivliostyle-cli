@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*", "types/**/*", "vendors"],
+  "include": ["src/**/*", "types/**/*"],
   "exclude": ["dist", "tests"],
   "compilerOptions": {
     "skipLibCheck": true,
@@ -52,9 +52,7 @@
     // "paths": {},                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
     // "typeRoots": [],                       /* List of folders to include type definitions from. */
-    "types": [
-      "vitest/importMeta"
-    ],
+    "types": ["vitest/importMeta"],
     // "allowSyntheticDefaultImports": true,  /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     // "preserveSymlinks": true,              /* Do not resolve the real path of symlinks. */
@@ -73,6 +71,6 @@
   "ts-node": {
     "experimentalSpecifierResolution": "node",
     "transpileOnly": true,
-    "esm": true,
+    "esm": true
   }
 }

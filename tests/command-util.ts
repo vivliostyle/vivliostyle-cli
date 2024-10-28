@@ -2,13 +2,13 @@ import { printTree } from 'json-joy/es6/util/print/printTree';
 import { Volume } from 'memfs/lib/volume.js';
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
+import upath from 'upath';
 import { setupBuildParserProgram } from '../src/commands/build.parser.js';
 import {
   MergedConfig,
   collectVivliostyleConfig,
   mergeConfig,
 } from '../src/input/config.js';
-import { upath } from '../src/util.js';
 
 export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
 

@@ -2,7 +2,6 @@ import {
   Metadata,
   readMetadata,
   StringifyMarkdownOptions,
-  VFM,
 } from '@vivliostyle/vfm';
 import fs from 'node:fs';
 import vfile, { VFile } from 'vfile';

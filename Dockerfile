@@ -74,7 +74,6 @@ RUN yarn install --frozen-lockfile --production --network-timeout 600000 \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm
 COPY --from=builder /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/
-COPY --from=builder /opt/vivliostyle-cli/vendors/index.js /opt/vivliostyle-cli/vendors/index.js
 
 WORKDIR /data
 ENTRYPOINT [ "vivliostyle" ]
