@@ -1,3 +1,6 @@
+import './mocks/http.js';
+import './mocks/portfinder.js';
+
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import portfinder from 'portfinder';
@@ -10,30 +13,7 @@ import {
 import { upath } from '../src/util.js';
 import { maskConfig, rootPath } from './commandUtil.js';
 
-vi.mock('http', async () => {
-  const { Agent } = await vi.importActual<typeof import('http')>('http');
-  return {
-    default: {
-      createServer: vi.fn(() => ({
-        listen: (port: number, host: string, callback: () => void) => {
-          callback();
-        },
-        close: () => {},
-      })),
-    },
-    // `agentkeepalive` package requires this
-    Agent,
-  };
-});
 const mockedCreateServer = vi.mocked(http).createServer;
-
-vi.mock('portfinder', () => ({
-  default: {
-    getPortPromise: vi.fn(async () => {
-      return 33333;
-    }),
-  },
-}));
 const mockedGetPortPromise = vi.mocked(portfinder).getPortPromise;
 
 beforeEach(() => {

@@ -1,4 +1,5 @@
 import './mocks/fs.js';
+import './mocks/vivliostyle__jsdom.js';
 
 import { vol } from 'memfs';
 import { format } from 'prettier';
@@ -6,10 +7,6 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { build } from '../src/index.js';
 import { VivliostyleConfigSchema } from '../src/input/schema.js';
 import { toTree } from './commandUtil.js';
-
-vi.mock('@vivliostyle/jsdom', () =>
-  import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
-);
 
 vi.mock('../src/processor/theme.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/processor/theme.js')>()),

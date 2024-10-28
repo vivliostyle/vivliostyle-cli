@@ -1,15 +1,16 @@
 import { vi } from 'vitest';
 
-const mockedFs = await vi.hoisted(async () => {
+const mocked = await vi.hoisted(async () => {
   const { fs: memfs } = await import('memfs');
-  const { mock } = await import('./index.js');
+  const { mockRequire } = await import('./index.js');
 
-  const stub = { ...memfs, default: memfs };
-  await mock('fs', stub);
-  return stub;
+  const fs = { ...memfs, default: memfs };
+
+  await mockRequire('fs', fs);
+  return { fs };
 });
 
-vi.mock('fs', () => mockedFs);
-vi.mock('node:fs', () => mockedFs);
-vi.mock('fs/promises', () => mockedFs.promises);
-vi.mock('node:fs/promises', () => mockedFs.promises);
+vi.mock('fs', () => mocked.fs);
+vi.mock('node:fs', () => mocked.fs);
+vi.mock('fs/promises', () => mocked.fs.promises);
+vi.mock('node:fs/promises', () => mocked.fs.promises);
