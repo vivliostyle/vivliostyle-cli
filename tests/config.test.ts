@@ -1,11 +1,11 @@
-import { expect, it, vi, onTestFinished } from 'vitest';
+import { expect, it, onTestFinished, vi } from 'vitest';
 import {
   assertArray,
   assertSingleItem,
   getMergedConfig,
   maskConfig,
   resolveFixture,
-} from './commandUtil.js';
+} from './command-util.js';
 
 const configFiles = [
   'valid.1',

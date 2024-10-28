@@ -19,7 +19,7 @@ import {
   prepareThemeDirectory,
 } from '../src/processor/compile.js';
 import { PublicationManifest } from '../src/schema/publication.schema.js';
-import { getMergedConfig, toTree } from './commandUtil.js';
+import { getMergedConfig, toTree } from './command-util.js';
 
 beforeEach(() => {
   vol.reset();

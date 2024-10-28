@@ -26,7 +26,10 @@ import {
   removeSync,
   upath,
 } from '../vendors/index.js';
-import { publicationSchema, publicationSchemas } from './schema/pubManifest.js';
+import {
+  publicationSchema,
+  publicationSchemas,
+} from './schema/pub-manifest.js';
 import type { PublicationManifest } from './schema/publication.schema.js';
 
 export { copy, copySync, move, moveSync, remove, removeSync, upath };

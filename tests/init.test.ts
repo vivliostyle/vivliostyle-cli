@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
 import { moveSync, upath } from '../src/util.js';
-import { rootPath } from './commandUtil.js';
+import { rootPath } from './command-util.js';
 
 const cliPath = upath.join(rootPath, packageJSON.bin.vivliostyle);
 

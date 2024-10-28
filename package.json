@@ -9,7 +9,7 @@
     "build:vendors": "node vendors/build.js",
     "build:cli": "tsc && shx chmod +x dist/cli.js",
     "build:docs": "node --loader ts-node/esm --no-warnings scripts/update-docs.ts",
-    "generate:schema": "json2ts -i schemas/pubManifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pubManifest",
+    "generate:schema": "json2ts -i schemas/pub-manifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pub-manifest",
     "clean": "shx rm -rf dist tmp",
     "dev": "run-p dev:*",
     "dev:vendors": "node vendors/build.js -w",

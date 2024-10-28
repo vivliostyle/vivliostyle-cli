@@ -11,7 +11,7 @@ import {
   teardownServer,
 } from '../src/server.js';
 import { upath } from '../src/util.js';
-import { maskConfig, rootPath } from './commandUtil.js';
+import { maskConfig, rootPath } from './command-util.js';
 
 const mockedCreateServer = vi.mocked(http).createServer;
 const mockedGetPortPromise = vi.mocked(portfinder).getPortPromise;

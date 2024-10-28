@@ -17,7 +17,7 @@ import {
   assertSingleItem,
   getMergedConfig,
   resolveFixture,
-} from './commandUtil.js';
+} from './command-util.js';
 
 function assertManifestPath(
   config: MergedConfig,

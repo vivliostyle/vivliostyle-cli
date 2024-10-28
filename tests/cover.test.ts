@@ -15,7 +15,7 @@ import {
   assertSingleItem,
   getMergedConfig,
   resolveFixture,
-} from './commandUtil';
+} from './command-util';
 
 it('generateCoverHtml', async () => {
   let content = generateDefaultCoverHtml({

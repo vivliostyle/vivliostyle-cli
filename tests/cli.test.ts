@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
 import { upath } from '../src/util.js';
-import { rootPath } from './commandUtil.js';
+import { rootPath } from './command-util.js';
 
 const cliPath = upath.join(rootPath, packageJSON.bin.vivliostyle);
 const fixtureRoot = upath.resolve(rootPath, 'tests/fixtures/wood');
