@@ -290,6 +290,7 @@ export async function buildPDF({
     },
     printBackground: true,
     preferCSSPageSize: true,
+    tagged: true,
     // timeout: remainTime,
   });
 
