@@ -1,3 +1,10 @@
+## [8.16.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.16.0...v8.16.1) (2024-11-06)
+
+### Bug Fixes
+
+- Fixed to generate tagged PDF ([d75a47d](https://github.com/vivliostyle/vivliostyle-cli/commit/d75a47d5a0911ed5849832a5a82976dbc9f77c93)), closes [#539](https://github.com/vivliostyle/vivliostyle-cli/issues/539)
+- Handle symlinks correctly when copying workspace directory ([#536](https://github.com/vivliostyle/vivliostyle-cli/issues/536)) ([a96f678](https://github.com/vivliostyle/vivliostyle-cli/commit/a96f67832c87e2dc528b0fe76edf02832b8fada7))
+
 # [8.16.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.15.0...v8.16.0) (2024-10-21)
 
 ### Bug Fixes
