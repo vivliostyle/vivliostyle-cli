@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import resolvePkg from 'resolve-pkg';
-import { upath } from '../vendors/index.js';
+import upath from 'upath';
 
 export const MANIFEST_FILENAME = 'publication.json';
 export const TOC_FILENAME = 'index.html';

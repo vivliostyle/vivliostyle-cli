@@ -1,5 +1,5 @@
-import { globby } from 'globby';
 import fs from 'node:fs';
+import { glob } from 'tinyglobby';
 
 const tmpFilePatterns = [
   'tests/fixtures/**/.vs-*',
@@ -9,7 +9,7 @@ const tmpFilePatterns = [
 
 export default function clean() {
   return async () => {
-    const files = await globby(tmpFilePatterns, {
+    const files = await glob(tmpFilePatterns, {
       onlyFiles: false,
       dot: true,
     });

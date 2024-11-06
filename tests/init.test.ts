@@ -1,9 +1,10 @@
 import execa from 'execa';
+import { moveSync } from 'fs-extra/esm';
 import fs from 'node:fs';
+import upath from 'upath';
 import { expect, it } from 'vitest';
 import packageJSON from '../package.json';
-import { moveSync, upath } from '../src/util.js';
-import { rootPath } from './commandUtil.js';
+import { rootPath } from './command-util.js';
 
 const cliPath = upath.join(rootPath, packageJSON.bin.vivliostyle);
 

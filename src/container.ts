@@ -4,15 +4,9 @@ import execa from 'execa';
 import isInteractive from 'is-interactive';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import upath from 'upath';
 import { cliVersion } from './const.js';
-import {
-  debug,
-  isUrlString,
-  log,
-  pathEquals,
-  suspendLogging,
-  upath,
-} from './util.js';
+import { debug, isUrlString, log, pathEquals, suspendLogging } from './util.js';
 
 export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
 export const CONTAINER_ROOT_DIR = '/data';

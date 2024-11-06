@@ -1,4 +1,7 @@
+import { copy, move, remove } from 'fs-extra/esm';
 import fs from 'node:fs';
+import { glob } from 'tinyglobby';
+import upath from 'upath';
 import {
   ContentsEntry,
   CoverEntry,
@@ -12,15 +15,10 @@ import { writePublicationManifest } from '../output/webbook.js';
 import {
   DetailError,
   beforeExitHandlers,
-  copy,
   debug,
-  move,
   pathContains,
   pathEquals,
-  remove,
-  safeGlob,
   startLogging,
-  upath,
 } from '../util.js';
 import {
   generateDefaultCoverHtml,
@@ -355,22 +353,20 @@ export async function globAssetFiles({
   const assets = new Set([
     // Step 1: Glob files with an extension in `fileExtension`
     // Ignore files in node_modules directory, theme example files and files matched `excludes`
-    ...(await safeGlob(
+    ...(await glob(
       fileExtensions.map((ext) => `**/*.${ext}`),
       {
         cwd,
         ignore: [...ignorePatterns, ...weakIgnorePatterns],
         followSymbolicLinks: true,
-        gitignore: false,
       },
     )),
     // Step 2: Glob files matched with `includes`
     // Ignore only files matched `excludes`
-    ...(await safeGlob(includes, {
+    ...(await glob(includes, {
       cwd,
       ignore: ignorePatterns,
       followSymbolicLinks: true,
-      gitignore: false,
     })),
   ]);
   return assets;

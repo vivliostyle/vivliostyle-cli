@@ -1,8 +1,13 @@
+// Mocked modules: don't reorder this list
+import './mocks/fs.js';
+import './mocks/tmp.js';
+//
+import './mocks/archiver.js';
+
 import AdmZip from 'adm-zip';
-import { fs as memfs, vol } from 'memfs';
+import { vol } from 'memfs';
 import { format } from 'prettier';
-import tmp from 'tmp';
-import { afterEach, expect, it, vi } from 'vitest';
+import { beforeEach, expect, it } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
 import {
   buildWebPublication,
@@ -14,50 +19,10 @@ import {
   prepareThemeDirectory,
 } from '../src/processor/compile.js';
 import { PublicationManifest } from '../src/schema/publication.schema.js';
-import { upath } from '../vendors/index.js';
-import { getMergedConfig, toTree } from './commandUtil.js';
+import { getMergedConfig, toTree } from './command-util.js';
 
-vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
-
-vi.mock('@vivliostyle/jsdom', () =>
-  import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
-);
-
-vi.mock('tmp', () => {
-  const mod = {
-    __count: 0,
-    dir: (_, cb) => {
-      const target = `/tmp/${++mod.__count}`;
-      memfs.mkdirSync(target, { recursive: true });
-      cb(null, target);
-    },
-  };
-  return { default: mod };
-});
-
-vi.mock('archiver', async () => {
-  const { default: archiver } = await vi.importActual<{
-    default: typeof import('archiver');
-  }>('archiver');
-  return {
-    default: (...args: Parameters<typeof archiver>) => {
-      const archive = archiver(...args);
-      archive.directory = (dirpath, destpath) => {
-        for (const p in vol.toJSON(dirpath, undefined, true)) {
-          archive.append(vol.readFileSync(upath.join(dirpath, p)), {
-            name: upath.join(destpath, p),
-          });
-        }
-        return archive;
-      };
-      return archive;
-    },
-  };
-});
-
-afterEach(() => {
+beforeEach(() => {
   vol.reset();
-  (tmp as any).__count = 0;
 });
 
 function checkValidEpubZip(epub: Buffer) {

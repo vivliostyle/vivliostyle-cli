@@ -1,5 +1,5 @@
 import { lookup as mime } from 'mime-types';
-import { upath } from '../util.js';
+import upath from 'upath';
 
 interface InputFormatTrait<T extends string = string> {
   format: T;
@@ -64,7 +64,7 @@ export const manuscriptMediaTypes = [
   'text/html',
   'application/xhtml+xml',
 ] as const;
-export type ManuscriptMediaType = typeof manuscriptMediaTypes[number];
+export type ManuscriptMediaType = (typeof manuscriptMediaTypes)[number];
 
 export function detectManuscriptMediaType(entry: string): ManuscriptMediaType {
   const mediaType = mime(entry);

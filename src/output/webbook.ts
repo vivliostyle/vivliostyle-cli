@@ -1,6 +1,9 @@
 import chalk from 'chalk';
+import { copy, remove } from 'fs-extra/esm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
+import { glob } from 'tinyglobby';
+import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
 import { MANIFEST_FILENAME } from '../const.js';
 import { MergedConfig, WebbookEntryConfig } from '../input/config.js';
@@ -23,16 +26,12 @@ import type {
 } from '../schema/publication.schema.js';
 import {
   assertPubManifestSchema,
-  copy,
   debug,
   DetailError,
   log,
   logError,
   logUpdate,
   pathEquals,
-  remove,
-  safeGlob,
-  upath,
   useTmpDirectory,
 } from '../util.js';
 import { exportEpub } from './epub.js';
@@ -353,9 +352,8 @@ export async function supplyWebPublicationManifestForWebbook({
     '';
 
   const entry = upath.relative(outputDir, entryHtmlFile);
-  const allFiles = await safeGlob('**', {
+  const allFiles = await glob('**', {
     cwd: outputDir,
-    gitignore: false,
   });
 
   const manifest = writePublicationManifest(
@@ -422,7 +420,7 @@ export async function copyWebPublicationAssets({
       themesDir,
       entries,
     })),
-    ...(await safeGlob(
+    ...(await glob(
       [
         `**/${upath.relative(input, manifestPath)}`,
         '**/*.{html,htm,xhtml,xht,css}',
@@ -444,7 +442,6 @@ export async function copyWebPublicationAssets({
         ],
         // follow symbolic links to copy local theme packages
         followSymbolicLinks: true,
-        gitignore: false,
         dot: true,
       },
     )),

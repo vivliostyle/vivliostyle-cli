@@ -1,6 +1,6 @@
 import { JSDOM } from '@vivliostyle/jsdom';
-import { globby } from 'globby';
 import fs from 'node:fs';
+import { glob } from 'tinyglobby';
 import { expect, it } from 'vitest';
 import {
   compile,
@@ -15,7 +15,7 @@ import {
   assertSingleItem,
   getMergedConfig,
   resolveFixture,
-} from './commandUtil';
+} from './command-util';
 
 it('generateCoverHtml', async () => {
   let content = generateDefaultCoverHtml({
@@ -71,7 +71,7 @@ it('cover config', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('cover/.vs-valid.1'),
   });
   expect(new Set(fileList)).toMatchObject(
@@ -123,7 +123,7 @@ it('customize cover page', async () => {
   await prepareThemeDirectory(config);
   await compile(config);
   await copyAssets(config);
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('cover/.vs-valid.2'),
   });
   expect(new Set(fileList)).toMatchObject(
@@ -217,7 +217,7 @@ it('in-place cover page conversion', async () => {
     fs.readFileSync(resolveFixture('cover/inplace/cover.html'), 'utf-8'),
   ).toBe(srcCoverContent);
 
-  const fileList = await globby('**', {
+  const fileList = await glob('**', {
     cwd: resolveFixture('cover/inplace'),
     dot: true,
   });

@@ -1,15 +1,12 @@
-import { fs as memfs, vol } from 'memfs';
+import './mocks/fs.js';
+import './mocks/vivliostyle__jsdom.js';
+
+import { vol } from 'memfs';
 import { format } from 'prettier';
-import { afterEach, expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import { build } from '../src/index.js';
 import { VivliostyleConfigSchema } from '../src/input/schema.js';
-import { toTree } from './commandUtil.js';
-
-vi.mock('node:fs', () => ({ ...memfs, default: memfs }));
-
-vi.mock('@vivliostyle/jsdom', () =>
-  import('./commandUtil.js').then(({ getMockedJSDOM }) => getMockedJSDOM()),
-);
+import { toTree } from './command-util.js';
 
 vi.mock('../src/processor/theme.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/processor/theme.js')>()),
@@ -17,7 +14,7 @@ vi.mock('../src/processor/theme.ts', async (importOriginal) => ({
   installThemeDependencies: () => Promise.resolve(),
 }));
 
-afterEach(() => vol.reset());
+beforeEach(() => vol.reset());
 
 it('generate webpub from single markdown file', async () => {
   vol.fromJSON({
@@ -279,11 +276,7 @@ it('generate webpub from a remote HTML document', async () => {
 it('generate webpub with complex copyAsset settings', async () => {
   const config: VivliostyleConfigSchema = {
     copyAsset: {
-      includes: [
-        // The following line should also work, but under the mock environment of memfs, fast-glob does not work without '/**'.
-        // 'node_modules/pkgB',
-        'node_modules/pkgB/**',
-      ],
+      includes: ['node_modules/pkgB'],
       excludes: ['cover.png'],
       includeFileExtensions: ['jxl'],
       excludeFileExtensions: ['svg'],
