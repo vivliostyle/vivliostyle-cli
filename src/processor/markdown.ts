@@ -14,6 +14,16 @@ export interface VSFile extends VFile {
   };
 }
 
+function safeReadMetadata(content: string): Metadata {
+  // The input assumes VFM format, but errors during metadata extraction
+  // should be suppressed to allow processing of non-VFM files as well.
+  try {
+    return readMetadata(content);
+  } catch {
+    return {};
+  }
+}
+
 export async function processMarkdown(
   documentProcessorFactory: DocumentProcessorFactory,
   filepath: string,
@@ -22,7 +32,7 @@ export async function processMarkdown(
   const markdownString = fs.readFileSync(filepath, 'utf8');
   const processor = documentProcessorFactory(
     options,
-    readMetadata(markdownString),
+    safeReadMetadata(markdownString),
   );
   const processed = (await processor.process(
     vfile({ path: filepath, contents: markdownString }),
@@ -31,5 +41,5 @@ export async function processMarkdown(
 }
 
 export function readMarkdownMetadata(filepath: string): Metadata {
-  return readMetadata(fs.readFileSync(filepath, 'utf8'));
+  return safeReadMetadata(fs.readFileSync(filepath, 'utf8'));
 }
