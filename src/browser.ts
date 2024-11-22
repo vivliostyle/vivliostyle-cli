@@ -63,7 +63,8 @@ export async function launchBrowser({
 }
 
 export function getExecutableBrowserPath(browserType: BrowserType): string {
-  return playwright[browserType].executablePath();
+  const executable = registry.findExecutable(getBrowserName(browserType))!;
+  return executable.executablePath()!;
 }
 
 export function getFullBrowserName(browserType: BrowserType): string {
@@ -87,11 +88,21 @@ export function isPlaywrightExecutable(path: string): boolean {
 export async function downloadBrowser(
   browserType: BrowserType,
 ): Promise<string> {
-  const executable = registry.findExecutable(browserType);
+  const executable = registry.findExecutable(getBrowserName(browserType))!;
   logInfo('Rendering browser is not installed yet. Downloading now...');
   const restartLogging = suspendLogging();
   await registry.install([executable], false);
   logSuccess(`Successfully downloaded browser`);
   restartLogging();
   return executable.executablePath()!;
+}
+
+function getBrowserName(
+  browserType: BrowserType,
+): BrowserType | 'chromium-headless-shell' {
+  if (browserType === 'chromium' && !process.argv[1].endsWith('preview.js')) {
+    return 'chromium-headless-shell';
+  } else {
+    return browserType;
+  }
 }
