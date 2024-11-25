@@ -12,7 +12,7 @@
     "clean": "shx rm -rf dist tmp",
     "dev": "tsc -w --preserveWatchOutput",
     "example": "yarn --cwd example build",
-    "pretest": "playwright-core install chromium",
+    "pretest": "playwright-core install chromium --no-shell",
     "release": "release-it",
     "release:pre": "release-it --preRelease --npm.tag=next",
     "test": "vitest run --coverage",

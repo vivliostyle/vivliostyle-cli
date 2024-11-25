@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: yarn install
-      - run: yarn playwright-core install chromium
+      - run: yarn playwright-core install chromium --no-shell
       - run: yarn build
       - run: yarn test
   build-and-push-image:
