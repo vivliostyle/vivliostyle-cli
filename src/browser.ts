@@ -44,6 +44,8 @@ export async function launchBrowser({
             '--allow-file-access-from-files',
             disableWebSecurity ? '--disable-web-security' : '',
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
+            // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
+            headless ? '--force-device-scale-factor=1' : '',
             // set Chromium language to English to avoid locale-dependent issues (e.g. minimum font size)
             '--lang=en',
             ...(!headless && process.platform === 'darwin'
