@@ -44,6 +44,8 @@ export async function launchBrowser({
             '--allow-file-access-from-files',
             disableWebSecurity ? '--disable-web-security' : '',
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
+            // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
+            headless ? '--force-device-scale-factor=1' : '',
             // set Chromium language to English to avoid locale-dependent issues (e.g. minimum font size)
             '--lang=en',
             ...(!headless && process.platform === 'darwin'
@@ -79,9 +81,9 @@ export function checkBrowserAvailability(path: string): boolean {
 }
 
 export function isPlaywrightExecutable(path: string): boolean {
-  return registry
-    .executables()
-    .some((exe) => pathEquals(exe.executablePath() ?? '', path));
+  return [playwright.chromium, playwright.firefox, playwright.webkit].some(
+    (exe) => pathEquals(exe.executablePath() ?? '', path),
+  );
 }
 
 export async function downloadBrowser(
