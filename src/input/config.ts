@@ -215,6 +215,8 @@ export type MergedConfig = {
     source: string;
     target: string;
   }[];
+  cliFlags: CliFlags;
+  tmpPrefix: string;
   size: PageSize | undefined;
   cropMarks: boolean;
   bleed: string | undefined;
@@ -360,7 +362,7 @@ export function parseTheme({
     type: 'package',
     name,
     specifier: resolvedSpecifier,
-    location: upath.join(themesDir, 'packages', name),
+    location: upath.join(themesDir, 'node_modules', name),
     importPath,
   };
 }
@@ -421,82 +423,62 @@ function parseFileMetadata({
   return { title, themes };
 }
 
-export async function collectVivliostyleConfig<T extends CliFlags>(
-  cliFlags: T,
-): Promise<
-  {
-    cliFlags: T;
-  } & (
-    | {
-        vivliostyleConfig: VivliostyleConfigEntry[];
-        vivliostyleConfigPath: string;
-      }
-    | {
-        vivliostyleConfig?: undefined;
-        vivliostyleConfigPath?: undefined;
-      }
-  )
-> {
-  const load = async (configPath: string) => {
-    let config: unknown;
-    let jsonRaw: string | undefined;
-    try {
-      if (upath.extname(configPath) === '.json') {
-        jsonRaw = fs.readFileSync(configPath, 'utf8');
-        config = parseJsonc(jsonRaw);
-      } else {
-        // Clear require cache to reload CJS config files
-        delete require.cache[require.resolve(configPath)];
-        const url = pathToFileURL(configPath);
-        // Invalidate cache for ESM config files
-        // https://github.com/nodejs/node/issues/49442
-        url.search = `version=${Date.now()}`;
-        config = (await import(url.href)).default;
-        jsonRaw = JSON.stringify(config, null, 2);
-      }
-    } catch (error) {
-      const thrownError = error as Error;
-      throw new DetailError(
-        `An error occurred on loading a config file: ${configPath}`,
-        thrownError.stack ?? thrownError.message,
-      );
-    }
-
-    const result = v.safeParse(VivliostyleConfigSchema, config);
-    if (result.success) {
-      return result.output;
+export async function loadVivliostyleConfig(configPath: string) {
+  let config: unknown;
+  let jsonRaw: string | undefined;
+  try {
+    if (upath.extname(configPath) === '.json') {
+      jsonRaw = fs.readFileSync(configPath, 'utf8');
+      config = parseJsonc(jsonRaw);
     } else {
-      const errorString = prettifySchemaError(jsonRaw, result.issues);
-      throw new DetailError(
-        `Validation of vivliostyle config failed. Please check the schema: ${configPath}`,
-        errorString,
-      );
+      // Clear require cache to reload CJS config files
+      delete require.cache[require.resolve(configPath)];
+      const url = pathToFileURL(configPath);
+      // Invalidate cache for ESM config files
+      // https://github.com/nodejs/node/issues/49442
+      url.search = `version=${Date.now()}`;
+      config = (await import(url.href)).default;
+      jsonRaw = JSON.stringify(config, null, 2);
     }
-  };
+  } catch (error) {
+    const thrownError = error as Error;
+    throw new DetailError(
+      `An error occurred on loading a config file: ${configPath}`,
+      thrownError.stack ?? thrownError.message,
+    );
+  }
 
-  let configEntry:
-    | {
-        vivliostyleConfig: VivliostyleConfigEntry[];
-        vivliostyleConfigPath: string;
-      }
-    | {
-        vivliostyleConfig?: undefined;
-        vivliostyleConfigPath?: undefined;
-      } = {};
-  let vivliostyleConfigPath: string | undefined;
-  if (cliFlags.configPath) {
-    vivliostyleConfigPath = upath.resolve(cwd, cliFlags.configPath);
+  const result = v.safeParse(VivliostyleConfigSchema, config);
+  if (result.success) {
+    return result.output;
   } else {
-    vivliostyleConfigPath = ['.js', '.mjs', '.cjs']
+    const errorString = prettifySchemaError(jsonRaw, result.issues);
+    throw new DetailError(
+      `Validation of vivliostyle config failed. Please check the schema: ${configPath}`,
+      errorString,
+    );
+  }
+}
+
+export async function collectVivliostyleConfig<T extends CliFlags>(
+  _cliFlags: T,
+): Promise<{
+  cliFlags: T;
+  config?: VivliostyleConfigEntry[];
+}> {
+  const cliFlags = { ..._cliFlags };
+  let config: VivliostyleConfigEntry[] | undefined;
+  let configPath: string | undefined;
+  if (cliFlags.configPath) {
+    configPath = upath.resolve(cwd, cliFlags.configPath);
+  } else {
+    configPath = ['.js', '.mjs', '.cjs']
       .map((ext) => upath.join(cwd, `vivliostyle.config${ext}`))
       .find((p) => fs.existsSync(p));
   }
-  // let vivliostyleConfig: VivliostyleConfigSchema | undefined;
-  if (vivliostyleConfigPath) {
-    configEntry = {
-      vivliostyleConfigPath,
-      vivliostyleConfig: [await load(vivliostyleConfigPath)].flat(),
-    };
+  if (configPath) {
+    config = [await loadVivliostyleConfig(configPath)].flat();
+    cliFlags.configPath = configPath;
   } else if (
     cliFlags.input &&
     upath.basename(cliFlags.input).startsWith('vivliostyle.config')
@@ -504,16 +486,13 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     // Load an input argument as a Vivliostyle config
     try {
       const inputPath = upath.resolve(cwd, cliFlags.input);
-      const inputConfig = await load(inputPath);
-      cliFlags = {
-        ...cliFlags,
-        input: undefined,
-      };
-      configEntry = {
-        vivliostyleConfigPath: inputPath,
-        vivliostyleConfig: [inputConfig].flat(),
-      };
-    } catch (_err) {}
+      const inputConfig = await loadVivliostyleConfig(inputPath);
+      cliFlags.configPath = inputPath;
+      cliFlags.input = undefined;
+      config = [inputConfig].flat();
+    } catch (_err) {
+      // Ignore here because input may be a normal manuscript file
+    }
   }
 
   if (cliFlags.executableChromium) {
@@ -541,7 +520,7 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     );
   }
 
-  const configEntries = (configEntry.vivliostyleConfig ?? []).flat();
+  const configEntries = (config ?? []).flat();
   if (configEntries.some((config) => config.includeAssets)) {
     logWarn(
       chalk.yellowBright(
@@ -558,10 +537,7 @@ export async function collectVivliostyleConfig<T extends CliFlags>(
     );
   }
 
-  return {
-    cliFlags,
-    ...configEntry,
-  };
+  return { cliFlags, config };
 }
 
 export async function mergeConfig<T extends CliFlags>(
@@ -614,6 +590,7 @@ export async function mergeConfig<T extends CliFlags>(
   const renderMode = cliFlags.renderMode ?? 'local';
   const preflight = cliFlags.preflight ?? (pressReady ? 'press-ready' : null);
   const preflightOption = cliFlags.preflightOption ?? [];
+  const tmpPrefix = prevConfig?.tmpPrefix || `.vs-${Date.now()}.`;
 
   const documentProcessorFactory = config?.documentProcessor ?? VFM;
 
@@ -817,6 +794,8 @@ export async function mergeConfig<T extends CliFlags>(
     outputs,
     themeIndexes,
     rootThemes,
+    cliFlags,
+    tmpPrefix,
     size,
     cropMarks,
     bleed,
@@ -889,7 +868,6 @@ async function composeSingleInputConfig<T extends CliFlags>(
   const workspaceDir = otherConfig.workspaceDir;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
-  const tmpPrefix = `.vs-${Date.now()}.`;
 
   if (cliFlags.input && isUrlString(cliFlags.input)) {
     sourcePath = cliFlags.input;
@@ -922,7 +900,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
         .resolve(
           workspaceDir,
           relDir,
-          `${tmpPrefix}${upath.basename(sourcePath)}`,
+          `${otherConfig.tmpPrefix}${upath.basename(sourcePath)}`,
         )
         .replace(/\.md$/, '.html');
       await touchTmpFile(target);
@@ -951,7 +929,7 @@ async function composeSingleInputConfig<T extends CliFlags>(
       // create temporary manifest file
       const manifestPath = upath.resolve(
         workspaceDir,
-        `${tmpPrefix}${MANIFEST_FILENAME}`,
+        `${otherConfig.tmpPrefix}${MANIFEST_FILENAME}`,
       );
       await touchTmpFile(manifestPath);
       exportAliases.push({
@@ -1027,7 +1005,6 @@ async function composeProjectConfig<T extends CliFlags>(
     debug('located package.json path', pkgJsonPath);
   }
   const exportAliases: { source: string; target: string }[] = [];
-  const tmpPrefix = `.vs-${Date.now()}.`;
 
   const tocConfig = (() => {
     const c =
@@ -1131,7 +1108,7 @@ async function composeProjectConfig<T extends CliFlags>(
       if (inputInfo?.source && pathEquals(inputInfo.source, target)) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
-          `${tmpPrefix}${upath.basename(target)}`,
+          `${otherConfig.tmpPrefix}${upath.basename(target)}`,
         );
         exportAliases.push({ source: tmpPath, target });
         await touchTmpFile(tmpPath);
@@ -1181,7 +1158,7 @@ async function composeProjectConfig<T extends CliFlags>(
       if (inputInfo?.source && pathEquals(inputInfo.source, target)) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
-          `${tmpPrefix}${upath.basename(target)}`,
+          `${otherConfig.tmpPrefix}${upath.basename(target)}`,
         );
         exportAliases.push({ source: tmpPath, target });
         await touchTmpFile(tmpPath);

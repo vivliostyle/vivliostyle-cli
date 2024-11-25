@@ -191,6 +191,7 @@ export function writePublicationManifest(
         : (thrownError.stack ?? thrownError.message),
     );
   }
+  fs.mkdirSync(upath.dirname(output), { recursive: true });
   fs.writeFileSync(output, JSON.stringify(encodedManifest, null, 2));
   return publication;
 }

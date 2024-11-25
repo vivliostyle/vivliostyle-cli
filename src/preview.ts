@@ -1,4 +1,5 @@
 import chokidar from 'chokidar';
+import { AddressInfo } from 'node:net';
 import upath from 'upath';
 import {
   checkBrowserAvailability,
@@ -17,7 +18,7 @@ import {
   copyAssets,
   prepareThemeDirectory,
 } from './processor/compile.js';
-import { prepareServer } from './server.js';
+import { createViteServer, prepareServer } from './server.js';
 import {
   cwd,
   debug,
@@ -36,26 +37,39 @@ let timer: NodeJS.Timeout;
 
 export interface PreviewCliFlags extends CliFlags {}
 
+export async function preview(cliFlags: PreviewCliFlags) {
+  const { cliFlags: resolvedCliFlags } =
+    await collectVivliostyleConfig(cliFlags);
+  const { configPath } = resolvedCliFlags;
+  const context = configPath ? upath.dirname(configPath) : cwd;
+  const viteServer = await createViteServer({
+    cliFlags: resolvedCliFlags,
+    context,
+  });
+  const dev = await viteServer.listen(13000);
+  const { port } = dev.httpServer!.address() as AddressInfo;
+  console.log(`Vite server running at http://localhost:${port}`);
+}
+
 /**
  * Open a preview of the publication.
  *
  * @param cliFlags
  * @returns
  */
-export async function preview(cliFlags: PreviewCliFlags) {
+export async function _preview(cliFlags: PreviewCliFlags) {
   setLogLevel(cliFlags.logLevel);
 
   const stopLogging = startLogging('Collecting preview config');
 
   const loadedConf = await collectVivliostyleConfig(cliFlags);
-  const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
+  const { config: jsConfig, cliFlags: resolvedCliFlags } = loadedConf;
+  const { configPath } = resolvedCliFlags;
   cliFlags = loadedConf.cliFlags;
 
-  const context = vivliostyleConfig
-    ? upath.dirname(vivliostyleConfigPath)
-    : cwd;
+  const context = configPath ? upath.dirname(configPath) : cwd;
 
-  if (!cliFlags.input && !vivliostyleConfig) {
+  if (!cliFlags.input && !jsConfig) {
     // Empty input, open Viewer start page
     cliFlags.input = 'data:,';
   }
@@ -63,7 +77,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
   let config = await mergeConfig(
     cliFlags,
     // Only show preview of first entry
-    vivliostyleConfig?.[0],
+    jsConfig?.[0],
     context,
   );
 
@@ -213,8 +227,8 @@ export async function preview(cliFlags: PreviewCliFlags) {
     closePreview?.();
     // reload vivliostyle config
     const loadedConf = await collectVivliostyleConfig(cliFlags);
-    const { vivliostyleConfig } = loadedConf;
-    config = await mergeConfig(cliFlags, vivliostyleConfig?.[0], context);
+    const { config: jsConfig } = loadedConf;
+    config = await mergeConfig(cliFlags, jsConfig?.[0], context);
     // build artifacts
     if (config.manifestPath) {
       await prepareThemeDirectory(config);
@@ -229,12 +243,12 @@ export async function preview(cliFlags: PreviewCliFlags) {
   async function rebuildFile(path: string) {
     const stopLogging = startLogging(`Rebuilding ${path}`);
     // update mergedConfig
-    config = await mergeConfig(
-      cliFlags,
-      vivliostyleConfig?.[0],
-      context,
-      config,
-    );
+    // config = await mergeConfig(
+    //   cliFlags,
+    //   vivliostyleConfig?.[0],
+    //   context,
+    //   config,
+    // );
     // build artifacts
     if (config.manifestPath) {
       await prepareThemeDirectory(config);
@@ -260,10 +274,7 @@ export async function preview(cliFlags: PreviewCliFlags) {
     ) {
       clearTimeout(timer);
       timer = setTimeout(() => rebuildFile(path).catch(handleError), 2000);
-    } else if (
-      vivliostyleConfigPath &&
-      pathEquals(path, upath.basename(vivliostyleConfigPath))
-    ) {
+    } else if (configPath && pathEquals(path, upath.basename(configPath))) {
       clearTimeout(timer);
       timer = setTimeout(() => reloadConfig(path).catch(handleError), 0);
     }

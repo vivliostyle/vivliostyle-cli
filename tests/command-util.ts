@@ -21,22 +21,19 @@ export const getMergedConfig = async (
     ...args,
   ]);
   const options = program.opts();
-  const { vivliostyleConfig, vivliostyleConfigPath, cliFlags } =
-    await collectVivliostyleConfig({
-      ...program.opts(),
-      input: program.args?.[0],
-      configPath: options.config,
-      targets: options.targets,
-    });
-  const context = vivliostyleConfig
-    ? upath.dirname(vivliostyleConfigPath)
+  const { config, cliFlags } = await collectVivliostyleConfig({
+    ...program.opts(),
+    input: program.args?.[0],
+    configPath: options.config,
+    targets: options.targets,
+  });
+  const context = cliFlags.configPath
+    ? upath.dirname(cliFlags.configPath)
     : upath.join(rootPath, 'tests');
-  const config = await Promise.all(
-    (vivliostyleConfig ?? [vivliostyleConfig]).map((entry) =>
-      mergeConfig(cliFlags, entry, context),
-    ),
+  const mergedConfig = await Promise.all(
+    (config ?? [config]).map((entry) => mergeConfig(cliFlags, entry, context)),
   );
-  return config.length > 1 ? config : config[0];
+  return mergedConfig.length > 1 ? mergedConfig : mergedConfig[0];
 };
 
 export const maskConfig = (obj: any) => {
