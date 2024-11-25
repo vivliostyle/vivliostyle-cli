@@ -7,6 +7,7 @@ import {
   CoverEntry,
   ManuscriptEntry,
   MergedConfig,
+  ParsedEntry,
   ParsedTheme,
   WebPublicationManifestConfig,
 } from '../input/config.js';
@@ -63,7 +64,7 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
     if (!maybeStyle) {
       throw new DetailError(
         `Could not find a style file for the theme: ${theme.name}.`,
-        'Please ensure this package satisfies a `vivliostyle.theme.style` propertiy.',
+        'Please ensure this package satisfies a `vivliostyle.theme.style` property.',
       );
     }
     return upath.relative(from, upath.join(theme.location, maybeStyle));
@@ -111,6 +112,17 @@ export async function prepareThemeDirectory({
   themesDir,
   themeIndexes,
 }: MergedConfig) {
+  // Backward compatibility: v8 to v9
+  if (
+    fs.existsSync(upath.join(themesDir, 'packages')) &&
+    !fs.existsSync(upath.join(themesDir, 'node_modules'))
+  ) {
+    fs.renameSync(
+      upath.join(themesDir, 'packages'),
+      upath.join(themesDir, 'node_modules'),
+    );
+  }
+
   // install theme packages
   if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
     startLogging('Installing theme files');
@@ -126,163 +138,172 @@ export async function prepareThemeDirectory({
   }
 }
 
-export async function compile({
+export async function transformManuscript(
+  entry: ParsedEntry,
+  {
+    entryContextDir,
+    workspaceDir,
+    manifestPath,
+    title,
+    entries,
+    language,
+    documentProcessorFactory,
+    vfmOptions,
+  }: MergedConfig & WebPublicationManifestConfig,
+): Promise<string | undefined> {
+  const { source, type } =
+    entry.rel === 'contents' || entry.rel === 'cover'
+      ? (entry as ContentsEntry | CoverEntry).template || {}
+      : (entry as ManuscriptEntry);
+  let content: string | undefined = undefined;
+
+  // calculate style path
+  const style = entry.themes.flatMap((theme) =>
+    locateThemePath(theme, upath.dirname(entry.target)),
+  );
+
+  if (source && type) {
+    if (type === 'text/markdown') {
+      // compile markdown
+      const vfile = await processMarkdown(documentProcessorFactory, source, {
+        ...vfmOptions,
+        style,
+        title: entry.title,
+        language: language ?? undefined,
+      });
+      content = String(vfile);
+    } else if (type === 'text/html' || type === 'application/xhtml+xml') {
+      content = fs.readFileSync(source, 'utf8');
+      content = processManuscriptHtml(content, {
+        style,
+        title: entry.title,
+        contentType: type,
+        language,
+      });
+    } else {
+      if (!pathEquals(source, entry.target)) {
+        await copy(source, entry.target);
+      }
+    }
+  } else if (entry.rel === 'contents') {
+    content = generateDefaultTocHtml({
+      language,
+      title,
+    });
+    content = processManuscriptHtml(content, {
+      style,
+      title,
+      contentType: 'text/html',
+      language,
+    });
+  } else if (entry.rel === 'cover') {
+    content = generateDefaultCoverHtml({ language, title: entry.title });
+    content = processManuscriptHtml(content, {
+      style,
+      title: entry.title,
+      contentType: 'text/html',
+      language,
+    });
+  }
+
+  if (!content) {
+    return;
+  }
+
+  if (entry.rel === 'contents') {
+    const contentsEntry = entry as ContentsEntry;
+    const manuscriptEntries = entries.filter(
+      (e): e is ManuscriptEntry => 'source' in e,
+    );
+    content = await processTocHtml(content, {
+      entries: manuscriptEntries,
+      manifestPath,
+      distDir: upath.dirname(contentsEntry.target),
+      tocTitle: contentsEntry.tocTitle,
+      sectionDepth: contentsEntry.sectionDepth,
+      styleOptions: contentsEntry,
+      transform: contentsEntry.transform,
+    });
+  }
+
+  if (entry.rel === 'cover') {
+    const coverEntry = entry as CoverEntry;
+    content = await processCoverHtml(content, {
+      imageSrc: upath.relative(
+        upath.join(
+          entryContextDir,
+          upath.relative(workspaceDir, coverEntry.target),
+          '..',
+        ),
+        coverEntry.coverImageSrc,
+      ),
+      imageAlt: coverEntry.coverImageAlt,
+      styleOptions: coverEntry,
+    });
+  }
+
+  const contentBuffer = Buffer.from(content, 'utf8');
+  if (
+    (!source || !pathEquals(source, entry.target)) &&
+    // write only if the content is changed to avoid file update events
+    (!fs.existsSync(entry.target) ||
+      !fs.readFileSync(entry.target).equals(contentBuffer))
+  ) {
+    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
+    fs.writeFileSync(entry.target, contentBuffer);
+  }
+
+  return content;
+}
+
+export async function generateManifest({
   entryContextDir,
   workspaceDir,
   manifestPath,
-  needToGenerateManifest,
   title,
   author,
   entries,
   language,
   readingProgression,
   cover,
-  documentProcessorFactory,
-  vfmOptions,
-}: MergedConfig & WebPublicationManifestConfig): Promise<void> {
-  const manuscriptEntries = entries.filter(
-    (e): e is ManuscriptEntry => 'source' in e,
-  );
-  const processedTocEntries: { entry: ContentsEntry; content: string }[] = [];
-  const processedCoverEntries: { entry: CoverEntry; content: string }[] = [];
+}: MergedConfig & WebPublicationManifestConfig) {
+  const manifestEntries: ArticleEntryObject[] = entries.map((entry) => ({
+    title:
+      (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||
+      entry.title,
+    path: upath.relative(workspaceDir, entry.target),
+    encodingFormat:
+      !('type' in entry) ||
+      entry.type === 'text/markdown' ||
+      entry.type === 'text/html'
+        ? undefined
+        : entry.type,
+    rel: entry.rel,
+  }));
+  writePublicationManifest(manifestPath, {
+    title,
+    author,
+    language,
+    readingProgression,
+    cover: cover && {
+      url: upath.relative(entryContextDir, cover.src),
+      name: cover.name,
+    },
+    entries: manifestEntries,
+    modified: new Date().toISOString(),
+  });
+}
 
-  for (const entry of entries) {
-    const { source, type } =
-      entry.rel === 'contents' || entry.rel === 'cover'
-        ? (entry as ContentsEntry | CoverEntry).template || {}
-        : (entry as ManuscriptEntry);
-    let content: string;
-
-    // calculate style path
-    const style = entry.themes.flatMap((theme) =>
-      locateThemePath(theme, upath.dirname(entry.target)),
-    );
-
-    if (source && type) {
-      if (type === 'text/markdown') {
-        // compile markdown
-        const vfile = await processMarkdown(documentProcessorFactory, source, {
-          ...vfmOptions,
-          style,
-          title: entry.title,
-          language: language ?? undefined,
-        });
-        content = String(vfile);
-      } else if (type === 'text/html' || type === 'application/xhtml+xml') {
-        content = fs.readFileSync(source, 'utf8');
-        content = processManuscriptHtml(content, {
-          style,
-          title: entry.title,
-          contentType: type,
-          language,
-        });
-      } else {
-        if (!pathEquals(source, entry.target)) {
-          await copy(source, entry.target);
-        }
-        continue;
-      }
-    } else if (entry.rel === 'contents') {
-      content = generateDefaultTocHtml({
-        language,
-        title,
-      });
-      content = processManuscriptHtml(content, {
-        style,
-        title,
-        contentType: 'text/html',
-        language,
-      });
-    } else if (entry.rel === 'cover') {
-      content = generateDefaultCoverHtml({ language, title: entry.title });
-      content = processManuscriptHtml(content, {
-        style,
-        title: entry.title,
-        contentType: 'text/html',
-        language,
-      });
-    } else {
-      continue;
-    }
-
-    if (entry.rel === 'contents') {
-      processedTocEntries.push({
-        entry: entry as ContentsEntry,
-        content,
-      });
-      continue;
-    } else if (entry.rel === 'cover') {
-      processedCoverEntries.push({
-        entry: entry as CoverEntry,
-        content,
-      });
-      continue;
-    }
-
-    if (!source || !pathEquals(source, entry.target)) {
-      fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
-      fs.writeFileSync(entry.target, content);
-    }
-  }
-
-  for (const { entry, content } of processedTocEntries) {
-    const transformedContent = await processTocHtml(content, {
-      entries: manuscriptEntries,
-      manifestPath,
-      distDir: upath.dirname(entry.target),
-      tocTitle: entry.tocTitle,
-      sectionDepth: entry.sectionDepth,
-      styleOptions: entry,
-      transform: entry.transform,
-    });
-    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
-    fs.writeFileSync(entry.target, transformedContent);
-  }
-
-  for (const { entry, content } of processedCoverEntries) {
-    const transformedContent = await processCoverHtml(content, {
-      imageSrc: upath.relative(
-        upath.join(
-          entryContextDir,
-          upath.relative(workspaceDir, entry.target),
-          '..',
-        ),
-        entry.coverImageSrc,
-      ),
-      imageAlt: entry.coverImageAlt,
-      styleOptions: entry,
-    });
-    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
-    fs.writeFileSync(entry.target, transformedContent);
+export async function compile(
+  config: MergedConfig & WebPublicationManifestConfig,
+): Promise<void> {
+  for (const entry of config.entries) {
+    await transformManuscript(entry, config);
   }
 
   // generate manifest
-  if (needToGenerateManifest) {
-    const manifestEntries: ArticleEntryObject[] = entries.map((entry) => ({
-      title:
-        (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||
-        entry.title,
-      path: upath.relative(workspaceDir, entry.target),
-      encodingFormat:
-        !('type' in entry) ||
-        entry.type === 'text/markdown' ||
-        entry.type === 'text/html'
-          ? undefined
-          : entry.type,
-      rel: entry.rel,
-    }));
-    writePublicationManifest(manifestPath, {
-      title,
-      author,
-      language,
-      readingProgression,
-      cover: cover && {
-        url: upath.relative(entryContextDir, cover.src),
-        name: cover.name,
-      },
-      entries: manifestEntries,
-      modified: new Date().toISOString(),
-    });
+  if (config.needToGenerateManifest) {
+    await generateManifest(config);
   }
 }
 

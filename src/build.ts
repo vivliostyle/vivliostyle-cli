@@ -36,15 +36,15 @@ export async function getFullConfig(
   cliFlags: BuildCliFlags,
 ): Promise<MergedConfig[]> {
   const loadedConf = await collectVivliostyleConfig(cliFlags);
-  const { vivliostyleConfig, vivliostyleConfigPath } = loadedConf;
+  const { config: jsConfig } = loadedConf;
   const loadedCliFlags = loadedConf.cliFlags;
 
-  const context = vivliostyleConfig
-    ? upath.dirname(vivliostyleConfigPath)
+  const context = loadedCliFlags.configPath
+    ? upath.dirname(loadedCliFlags.configPath)
     : cwd;
 
   const configEntries: MergedConfig[] = [];
-  for (const entry of vivliostyleConfig ?? [vivliostyleConfig]) {
+  for (const entry of jsConfig ?? [jsConfig]) {
     const config = await mergeConfig(loadedCliFlags, entry, context);
     checkUnsupportedOutputs(config);
 
