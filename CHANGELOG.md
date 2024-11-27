@@ -1,3 +1,9 @@
+## [8.17.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.0...v8.17.1) (2024-11-27)
+
+### Bug Fixes
+
+- Fix accidental release ([ddd92b3](https://github.com/vivliostyle/vivliostyle-cli/commit/ddd92b31f169fc87d8ab8a6b61cb1e84a4f5eb61))
+
 # [8.17.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.16.2...v8.17.0) (2024-11-27)
 
 ### Bug Fixes
