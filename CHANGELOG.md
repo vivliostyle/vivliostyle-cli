@@ -1,3 +1,14 @@
+# [8.17.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.16.2...v8.17.0) (2024-11-27)
+
+### Bug Fixes
+
+- Fix to work `--browser` option ([da522f7](https://github.com/vivliostyle/vivliostyle-cli/commit/da522f7aad8d45e5ea1e77c7778ad450b6a6034e)), closes [#546](https://github.com/vivliostyle/vivliostyle-cli/issues/546)
+- Update Vivliostyle.js to 2.30.7: Layout bug fixes ([3e3310c](https://github.com/vivliostyle/vivliostyle-cli/commit/3e3310c6d246002cd3dc261aaf3e7bf9edf26b7e))
+
+### Features
+
+- Update Playwright to 1.49.0 (Chromium 131.0.6778.33) ([eadf6da](https://github.com/vivliostyle/vivliostyle-cli/commit/eadf6da7c6507ff16576b4dbf088c4eec7578e1d))
+
 ## [8.16.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.16.1...v8.16.2) (2024-11-18)
 
 ### Bug Fixes
