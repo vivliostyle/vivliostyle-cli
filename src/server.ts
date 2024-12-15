@@ -4,16 +4,15 @@ import handler from 'serve-handler';
 import upath from 'upath';
 import * as vite from 'vite';
 import { viewerRoot } from './const.js';
-import { CliFlags } from './input/config.js';
+import { CliFlags, MergedConfig } from './input/config.js';
 import {
   beforeExitHandlers,
   debug,
   findAvailablePort,
   isUrlString,
 } from './util.js';
-import { reloadConfig } from './vite/plugin-util.js';
+import { loadConfig } from './vite/plugin-util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
-import { vsCopyAssetsPlugin } from './vite/vite-plugin-copy-assets.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
@@ -224,26 +223,17 @@ async function launchServer(root: string): Promise<Server> {
   });
 }
 
-export async function createViteConfig({
-  cliFlags,
-  context,
-}: {
-  cliFlags: CliFlags;
-  context: string;
-}) {
-  const config = await reloadConfig({ cliFlags, context });
-
+export async function createViteConfig({ config }: { config: MergedConfig }) {
   const viteConfig = {
     clearScreen: false,
     configFile: false,
     appType: 'custom',
-    root: config.workspaceDir,
     plugins: [
       vsDevServerPlugin({ config }),
       vsViewerPlugin({ config }),
-      vsCopyAssetsPlugin({ config }),
       vsBrowserPlugin({ config }),
     ],
+    server: config.server,
   } satisfies vite.InlineConfig;
   return viteConfig;
 }
@@ -255,8 +245,9 @@ export async function createViteServer({
   cliFlags: CliFlags;
   context: string;
 }) {
-  const viteConfig = await createViteConfig({ cliFlags, context });
+  const config = await loadConfig({ cliFlags, context });
+  const viteConfig = await createViteConfig({ config });
   const server = await vite.createServer(viteConfig);
 
-  return server;
+  return { server, config };
 }

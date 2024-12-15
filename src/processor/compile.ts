@@ -1,7 +1,10 @@
+import jsdom from '@vivliostyle/jsdom';
 import { copy, move, remove } from 'fs-extra/esm';
 import fs from 'node:fs';
+import picomatch from 'picomatch';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
+import MIMEType from 'whatwg-mimetype';
 import {
   ContentsEntry,
   CoverEntry,
@@ -14,19 +17,23 @@ import {
 import type { ArticleEntryObject } from '../input/schema.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
-  DetailError,
   beforeExitHandlers,
   debug,
+  DetailError,
   pathContains,
   pathEquals,
   startLogging,
+  writeFileIfChanged,
 } from '../util.js';
 import {
+  createVirtualConsole,
   generateDefaultCoverHtml,
   generateDefaultTocHtml,
+  getJsdomFromUrlOrFile,
   processCoverHtml,
   processManuscriptHtml,
   processTocHtml,
+  ResourceLoader,
 } from './html.js';
 import { processMarkdown } from './markdown.js';
 import {
@@ -149,41 +156,83 @@ export async function transformManuscript(
     language,
     documentProcessorFactory,
     vfmOptions,
+    base,
   }: MergedConfig & WebPublicationManifestConfig,
 ): Promise<string | undefined> {
-  const { source, type } =
+  const source =
     entry.rel === 'contents' || entry.rel === 'cover'
-      ? (entry as ContentsEntry | CoverEntry).template || {}
-      : (entry as ManuscriptEntry);
-  let content: string | undefined = undefined;
+      ? (entry as ContentsEntry | CoverEntry).template
+      : (entry as ManuscriptEntry).source;
+  let content: string | undefined;
+  let resourceLoader: ResourceLoader | undefined;
 
   // calculate style path
   const style = entry.themes.flatMap((theme) =>
     locateThemePath(theme, upath.dirname(entry.target)),
   );
 
-  if (source && type) {
-    if (type === 'text/markdown') {
+  if (source?.type === 'file') {
+    if (source.contentType === 'text/markdown') {
       // compile markdown
-      const vfile = await processMarkdown(documentProcessorFactory, source, {
-        ...vfmOptions,
-        style,
-        title: entry.title,
-        language: language ?? undefined,
-      });
+      const vfile = await processMarkdown(
+        documentProcessorFactory,
+        source.pathname,
+        {
+          ...vfmOptions,
+          style,
+          title: entry.title,
+          language: language ?? undefined,
+        },
+      );
       content = String(vfile);
-    } else if (type === 'text/html' || type === 'application/xhtml+xml') {
-      content = fs.readFileSync(source, 'utf8');
+    } else if (
+      source.contentType === 'text/html' ||
+      source.contentType === 'application/xhtml+xml'
+    ) {
+      content = fs.readFileSync(source.pathname, 'utf8');
       content = processManuscriptHtml(content, {
         style,
         title: entry.title,
-        contentType: type,
+        contentType: source.contentType,
         language,
       });
     } else {
-      if (!pathEquals(source, entry.target)) {
-        await copy(source, entry.target);
+      if (!pathEquals(source.pathname, entry.target)) {
+        await copy(source.pathname, entry.target);
       }
+    }
+  } else if (source?.type === 'uri') {
+    resourceLoader = new ResourceLoader();
+    const virtualConsole = createVirtualConsole(() => {
+      // TODO: handle console messages
+    });
+    try {
+      await getJsdomFromUrlOrFile({
+        src: source.href,
+        resourceLoader,
+        virtualConsole,
+      });
+    } catch (error: any) {
+      throw new DetailError(
+        `Failed to fetch the content from ${source.href}`,
+        error.stack ?? error.message,
+      );
+    }
+
+    const contentFetcher = resourceLoader.fetcherMap.get(source.href);
+    if (contentFetcher) {
+      const buffer = await contentFetcher;
+      const contentType = contentFetcher.response?.headers['content-type'];
+      if (!contentType || new MIMEType(contentType).essence !== 'text/html') {
+        throw new Error(`The content is not an HTML document: ${source.href}`);
+      }
+      content = buffer.toString('utf8');
+      content = processManuscriptHtml(content, {
+        style,
+        title: entry.title,
+        contentType: 'text/html',
+        language,
+      });
     }
   } else if (entry.rel === 'contents') {
     content = generateDefaultTocHtml({
@@ -244,13 +293,26 @@ export async function transformManuscript(
 
   const contentBuffer = Buffer.from(content, 'utf8');
   if (
-    (!source || !pathEquals(source, entry.target)) &&
-    // write only if the content is changed to avoid file update events
-    (!fs.existsSync(entry.target) ||
-      !fs.readFileSync(entry.target).equals(contentBuffer))
+    !source ||
+    (source.type === 'file' && !pathEquals(source.pathname, entry.target))
   ) {
-    fs.mkdirSync(upath.dirname(entry.target), { recursive: true });
-    fs.writeFileSync(entry.target, contentBuffer);
+    writeFileIfChanged(entry.target, contentBuffer);
+  }
+
+  if (source?.type === 'uri' && resourceLoader) {
+    const { response } = resourceLoader.fetcherMap.get(source.href)!;
+    const contentFetcher = Promise.resolve(
+      contentBuffer,
+    ) as jsdom.AbortablePromise<Buffer>;
+    contentFetcher.abort = () => {};
+    contentFetcher.response = response;
+    resourceLoader.fetcherMap.set(source.href, contentFetcher);
+
+    await ResourceLoader.saveFetchedResources({
+      fetcherMap: resourceLoader.fetcherMap,
+      rootUrl: source.href,
+      outputDir: source.rootDir,
+    });
   }
 
   return content;
@@ -273,11 +335,11 @@ export async function generateManifest({
       entry.title,
     path: upath.relative(workspaceDir, entry.target),
     encodingFormat:
-      !('type' in entry) ||
-      entry.type === 'text/markdown' ||
-      entry.type === 'text/html'
+      !('contentType' in entry) ||
+      entry.contentType === 'text/markdown' ||
+      entry.contentType === 'text/html'
         ? undefined
-        : entry.type,
+        : entry.contentType,
     rel: entry.rel,
   }));
   writePublicationManifest(manifestPath, {
@@ -342,16 +404,15 @@ export function getIgnoreAssetPatterns({
           ? upath.join(upath.relative(cwd, p), '**')
           : upath.relative(cwd, p),
     ),
-    ...entries.flatMap((entry) => {
-      const source = entry.template?.source;
-      return source && pathContains(cwd, source)
-        ? upath.relative(cwd, source)
+    ...entries.flatMap(({ template }) => {
+      return template?.type === 'file' && pathContains(cwd, template.pathname)
+        ? upath.relative(cwd, template.pathname)
         : [];
     }),
   ];
 }
 
-export async function globAssetFiles({
+function getAssetMatcherSettings({
   copyAsset: { fileExtensions, includes, excludes },
   outputs,
   themesDir,
@@ -361,7 +422,7 @@ export async function globAssetFiles({
 }: Pick<MergedConfig, 'copyAsset' | 'outputs' | 'themesDir' | 'entries'> & {
   cwd: string;
   ignore?: string[];
-}): Promise<Set<string>> {
+}): { patterns: string[]; ignore: string[] }[] {
   const ignorePatterns = [
     ...ignore,
     ...excludes,
@@ -371,26 +432,48 @@ export async function globAssetFiles({
   debug('globAssetFiles > ignorePatterns', ignorePatterns);
   debug('globAssetFiles > weakIgnorePatterns', weakIgnorePatterns);
 
-  const assets = new Set([
+  return [
     // Step 1: Glob files with an extension in `fileExtension`
     // Ignore files in node_modules directory, theme example files and files matched `excludes`
-    ...(await glob(
-      fileExtensions.map((ext) => `**/*.${ext}`),
-      {
-        cwd,
-        ignore: [...ignorePatterns, ...weakIgnorePatterns],
-        followSymbolicLinks: true,
-      },
-    )),
+    {
+      patterns: fileExtensions.map((ext) => `**/*.${ext}`),
+      ignore: [...ignorePatterns, ...weakIgnorePatterns],
+    },
     // Step 2: Glob files matched with `includes`
     // Ignore only files matched `excludes`
-    ...(await glob(includes, {
-      cwd,
+    {
+      patterns: includes,
       ignore: ignorePatterns,
-      followSymbolicLinks: true,
-    })),
-  ]);
-  return assets;
+    },
+  ];
+}
+
+export function getAssetMatcher(
+  arg: Parameters<typeof getAssetMatcherSettings>[0],
+) {
+  const matchers = getAssetMatcherSettings(arg).map(({ patterns, ignore }) =>
+    picomatch(patterns, { ignore }),
+  );
+  return (test: string) => matchers.some((matcher) => matcher(test));
+}
+
+export async function globAssetFiles(
+  arg: Parameters<typeof getAssetMatcherSettings>[0],
+): Promise<Set<string>> {
+  const settings = getAssetMatcherSettings(arg);
+  return new Set(
+    (
+      await Promise.all(
+        settings.map(({ patterns, ignore }) =>
+          glob(patterns, {
+            cwd: arg.cwd,
+            ignore,
+            followSymbolicLinks: true,
+          }),
+        ),
+      )
+    ).flat(),
+  );
 }
 
 export async function copyAssets({

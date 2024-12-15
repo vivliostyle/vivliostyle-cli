@@ -4,7 +4,6 @@ import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
-import MIMEType from 'whatwg-mimetype';
 import { MANIFEST_FILENAME } from '../const.js';
 import { MergedConfig, WebbookEntryConfig } from '../input/config.js';
 import { ArticleEntryObject } from '../input/schema.js';
@@ -14,6 +13,7 @@ import {
   globAssetFiles,
 } from '../processor/compile.js';
 import {
+  createVirtualConsole,
   fetchLinkedPublicationManifest,
   getJsdomFromUrlOrFile,
   ResourceLoader,
@@ -209,7 +209,10 @@ export async function retrieveWebbookEntry({
     logUpdate('Fetching remote contents');
   }
   const resourceLoader = new ResourceLoader();
-  const { dom } = await getJsdomFromUrlOrFile(webbookEntryUrl, resourceLoader);
+  const { dom } = await getJsdomFromUrlOrFile({
+    src: webbookEntryUrl,
+    resourceLoader,
+  });
   const { manifest, manifestUrl } =
     (await fetchLinkedPublicationManifest({
       dom,
@@ -248,55 +251,29 @@ export async function retrieveWebbookEntry({
         continue;
       }
       const subpathResourceLoader = new ResourceLoader();
-      await getJsdomFromUrlOrFile(fullUrl, subpathResourceLoader);
+      await getJsdomFromUrlOrFile({
+        src: fullUrl,
+        resourceLoader: subpathResourceLoader,
+        virtualConsole: createVirtualConsole((error) => {
+          logError(`Failed to fetch webbook resources: ${error.detail}`);
+        }),
+      });
       subpathResourceLoader.fetcherMap.forEach(
         (v, k) => !retriever.has(k) && retriever.set(k, v),
       );
     }
   }
 
-  const normalizeToLocalPath = (urlString: string, mimeType?: string) => {
-    const url = new URL(urlString);
-    url.hash = '';
-    let relTarget = upath.relative(rootUrl, url.href);
-    if (!relTarget || (mimeType === 'text/html' && !upath.extname(relTarget))) {
-      relTarget = upath.join(relTarget, 'index.html');
-    }
-    return decodeURI(relTarget);
-  };
-  const fetchedResources: { url: string; encodingFormat?: string }[] = [];
-  await Promise.allSettled(
-    Array.from(retriever.entries()).flatMap(([url, fetcher]) => {
-      if (!pathContains(url)) {
-        return [];
-      }
-      return (
-        fetcher
-          .then(async (buffer) => {
-            let encodingFormat: string | undefined;
-            try {
-              const contentType = fetcher.response?.headers['content-type'];
-              if (contentType) {
-                encodingFormat = new MIMEType(contentType).essence;
-              }
-              /* v8 ignore next 3 */
-            } catch (e) {
-              /* NOOP */
-            }
-            const relTarget = normalizeToLocalPath(url, encodingFormat);
-            const target = upath.join(outputDir, relTarget);
-            fetchedResources.push({ url: relTarget, encodingFormat });
-            await fs.promises.mkdir(upath.dirname(target), { recursive: true });
-            await fs.promises.writeFile(target, buffer);
-          })
-          /* v8 ignore next 4 */
-          .catch((error) => {
-            debug(error);
-            logError(`Failed to fetch webbook resources: ${url}`);
-          })
-      );
-    }),
-  );
+  const fetchedResources = await ResourceLoader.saveFetchedResources({
+    fetcherMap: retriever,
+    rootUrl: webbookEntryUrl,
+    outputDir,
+    /* v8 ignore next 4 */
+    onError: (error) => {
+      debug(error);
+      logError(`Failed to fetch webbook resources: ${error}`);
+    },
+  });
 
   if (manifest) {
     const referencedContents = [
@@ -324,7 +301,9 @@ export async function retrieveWebbookEntry({
   return {
     entryHtmlFile: upath.join(
       outputDir,
-      normalizeToLocalPath(webbookEntryUrl, 'text/html'),
+      upath.extname(webbookEntryUrl)
+        ? upath.basename(webbookEntryUrl)
+        : 'index.html',
     ),
     manifest,
   };
@@ -342,7 +321,7 @@ export async function supplyWebPublicationManifestForWebbook({
   outputDir: string;
 }): Promise<PublicationManifest> {
   debug(`Generating publication manifest from HTML: ${entryHtmlFile}`);
-  const { dom } = await getJsdomFromUrlOrFile(entryHtmlFile);
+  const { dom } = await getJsdomFromUrlOrFile({ src: entryHtmlFile });
   const { document } = dom.window;
   const language =
     config.language || document.documentElement.lang || undefined;

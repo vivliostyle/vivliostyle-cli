@@ -84,11 +84,25 @@ export interface PackageTheme {
   importPath?: string | string[];
 }
 
+export type EntrySource = FileEntrySource | UriEntrySource;
+
+export interface FileEntrySource {
+  type: 'file';
+  pathname: string;
+  contentType: ManuscriptMediaType;
+}
+
+export interface UriEntrySource {
+  type: 'uri';
+  href: string;
+  rootDir: string;
+}
+
 export interface ManuscriptEntry {
-  type: ManuscriptMediaType;
+  contentType: ManuscriptMediaType;
   title?: string;
   themes: ParsedTheme[];
-  source: string;
+  source: EntrySource;
   template?: undefined;
   target: string;
   rel?: string | string[];
@@ -99,10 +113,7 @@ export interface ContentsEntry {
   title?: string;
   themes: ParsedTheme[];
   source?: undefined;
-  template?: {
-    source: string;
-    type: ManuscriptMediaType;
-  };
+  template?: EntrySource;
   target: string;
   tocTitle: string;
   sectionDepth: number;
@@ -127,10 +138,7 @@ export interface CoverEntry {
   title?: string;
   themes: ParsedTheme[];
   source?: undefined;
-  template?: {
-    source: string;
-    type: ManuscriptMediaType;
-  };
+  template?: EntrySource;
   target: string;
   coverImageSrc: string;
   coverImageAlt: string;
@@ -198,6 +206,7 @@ export type DocumentProcessorFactory = (
 ) => Processor;
 
 export type MergedConfig = {
+  context: string;
   entryContextDir: string;
   workspaceDir: string;
   themesDir: string;
@@ -260,6 +269,11 @@ export type MergedConfig = {
   viewerParam: string | undefined;
   logLevel: 'silent' | 'info' | 'verbose' | 'debug';
   ignoreHttpsErrors: boolean;
+  base: string;
+  server: {
+    host: string | boolean;
+    port: number;
+  };
 } & ManifestConfig;
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
@@ -384,12 +398,12 @@ function parsePageSize(size: string): PageSize {
 }
 
 function parseFileMetadata({
-  type,
+  contentType,
   sourcePath,
   workspaceDir,
   themesDir,
 }: {
-  type: ManuscriptMediaType;
+  contentType: ManuscriptMediaType;
   sourcePath: string;
   workspaceDir: string;
   themesDir?: string;
@@ -397,7 +411,7 @@ function parseFileMetadata({
   const sourceDir = upath.dirname(sourcePath);
   let title: string | undefined;
   let themes: ParsedTheme[] | undefined;
-  if (type === 'text/markdown') {
+  if (contentType === 'text/markdown') {
     const metadata = readMarkdownMetadata(sourcePath);
     title = metadata.title;
     if (metadata.vfm?.theme && themesDir) {
@@ -437,7 +451,7 @@ export async function loadVivliostyleConfig(configPath: string) {
       // Invalidate cache for ESM config files
       // https://github.com/nodejs/node/issues/49442
       url.search = `version=${Date.now()}`;
-      config = (await import(url.href)).default;
+      config = (await import(/* @vite-ignore */ url.href)).default;
       jsonRaw = JSON.stringify(config, null, 2);
     }
   } catch (error) {
@@ -624,6 +638,11 @@ export async function mergeConfig<T extends CliFlags>(
     ((cliFlags.verbose && 'verbose') || undefined) ??
     'silent';
   const ignoreHttpsErrors = cliFlags.ignoreHttpsErrors ?? false;
+  const base = config?.base?.replace(/\/+$/, '') ?? '/vivliostyle';
+  const server = {
+    host: config?.server?.host ?? false,
+    port: config?.server?.port ?? 13000,
+  };
 
   const rootThemes = cliFlags.theme
     ? [
@@ -787,6 +806,7 @@ export async function mergeConfig<T extends CliFlags>(
   })();
 
   const commonOpts: CommonOpts = {
+    context,
     entryContextDir,
     workspaceDir,
     themesDir,
@@ -821,6 +841,8 @@ export async function mergeConfig<T extends CliFlags>(
     viewerParam,
     logLevel,
     ignoreHttpsErrors,
+    base,
+    server,
   };
   if (!cliFlags.input && !config) {
     throw new Error(
@@ -881,8 +903,12 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
   if (input.format === 'markdown') {
     // Single input file; create temporary file
-    const type = detectManuscriptMediaType(sourcePath);
-    const metadata = parseFileMetadata({ type, sourcePath, workspaceDir });
+    const contentType = detectManuscriptMediaType(sourcePath);
+    const metadata = parseFileMetadata({
+      contentType,
+      sourcePath,
+      workspaceDir,
+    });
     const relDir = upath.relative(
       otherConfig.entryContextDir,
       upath.dirname(sourcePath),
@@ -890,7 +916,9 @@ async function composeSingleInputConfig<T extends CliFlags>(
 
     let target: string;
     if (prevConfig) {
-      const prevEntry = prevConfig.entries.find((e) => e.source === sourcePath);
+      const prevEntry = prevConfig.entries.find(
+        (e) => e.source?.type === 'file' && e.source.pathname === sourcePath,
+      );
       if (!prevEntry) {
         throw new Error('Failed to reload config');
       }
@@ -908,8 +936,12 @@ async function composeSingleInputConfig<T extends CliFlags>(
     const themes = metadata.themes ?? [...otherConfig.rootThemes];
     themes.forEach((t) => otherConfig.themeIndexes.add(t));
     entries.push({
-      type,
-      source: sourcePath,
+      contentType,
+      source: {
+        type: 'file',
+        pathname: sourcePath,
+        contentType,
+      },
       target,
       title: metadata.title,
       themes,
@@ -996,6 +1028,7 @@ async function composeProjectConfig<T extends CliFlags>(
     rootThemes,
     outputs,
     cover,
+    server,
   } = otherConfig;
   const pkgJsonPath = upath.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
@@ -1005,6 +1038,13 @@ async function composeProjectConfig<T extends CliFlags>(
     debug('located package.json path', pkgJsonPath);
   }
   const exportAliases: { source: string; target: string }[] = [];
+
+  const host = !server.host
+    ? 'localhost'
+    : server.host === true
+      ? '0.0.0.0'
+      : server.host;
+  const localOrigin = `http://${host}:${server.port}`;
 
   const tocConfig = (() => {
     const c =
@@ -1047,29 +1087,61 @@ async function composeProjectConfig<T extends CliFlags>(
     !isContentsEntry(entry) && !isCoverEntry(entry);
 
   async function parseEntry(entry: EntryObject): Promise<ParsedEntry> {
-    const getInputInfo = (entryPath: string) => {
-      const source = upath.resolve(entryContextDir, entryPath);
-      if (!isUrlString(source)) {
-        statFileSync(source);
+    const getInputInfo = (
+      entryPath: string,
+    ):
+      | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
+      | (UriEntrySource & { metadata?: undefined }) => {
+      if (/^https?:/.test(entryPath)) {
+        return {
+          type: 'uri',
+          href: entryPath,
+          rootDir: upath.join(workspaceDir, new URL(entryPath).host),
+        };
+      } else if (entryPath.startsWith('/')) {
+        return {
+          type: 'uri',
+          href: localOrigin ? `${localOrigin}${entryPath}` : entryPath,
+          rootDir: upath.join(workspaceDir, '.local'),
+        };
       }
-      const type = detectManuscriptMediaType(source);
+      const pathname = upath.resolve(entryContextDir, entryPath);
+      statFileSync(pathname);
+      const contentType = detectManuscriptMediaType(pathname);
       return {
-        ...parseFileMetadata({
-          type,
-          sourcePath: source,
+        type: 'file',
+        pathname,
+        contentType,
+        metadata: parseFileMetadata({
+          contentType,
+          sourcePath: pathname,
           workspaceDir,
           themesDir,
         }),
-        source,
-        type,
       };
     };
 
-    const getTargetPath = (source: string) =>
-      upath.resolve(
-        workspaceDir,
-        upath.relative(entryContextDir, source).replace(/\.md$/, '.html'),
-      );
+    const getTargetPath = (source: EntrySource) => {
+      switch (source.type) {
+        case 'file':
+          return upath.resolve(
+            workspaceDir,
+            upath
+              .relative(entryContextDir, source.pathname)
+              .replace(/\.md$/, '.html'),
+          );
+        case 'uri': {
+          const url = new URL(source.href, 'a://dummy');
+          let pathname = url.pathname;
+          if (!/\.html?$/.test(pathname)) {
+            pathname = `${pathname.replace(/\/$/, '')}/index.html`;
+          }
+          return upath.join(source.rootDir, pathname);
+        }
+        default:
+          return source satisfies never;
+      }
+    };
 
     if ((isContentsEntry(entry) || isCoverEntry(entry)) && entry.path) {
       const source = upath.resolve(entryContextDir, entry.path);
@@ -1090,9 +1162,10 @@ async function composeProjectConfig<T extends CliFlags>(
 
     if (isContentsEntry(entry)) {
       const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
+      const { metadata, ...template } = inputInfo || {};
       let target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
-        : inputInfo?.source && getTargetPath(inputInfo.source);
+        : inputInfo && getTargetPath(inputInfo);
       const themes = entry.theme
         ? [entry.theme].flat().map((theme) =>
             parseTheme({
@@ -1102,10 +1175,13 @@ async function composeProjectConfig<T extends CliFlags>(
               themesDir,
             }),
           )
-        : (inputInfo?.themes ?? [...rootThemes]);
+        : (metadata?.themes ?? [...rootThemes]);
       themes.forEach((t) => themeIndexes.add(t));
       target ??= tocConfig.target;
-      if (inputInfo?.source && pathEquals(inputInfo.source, target)) {
+      if (
+        inputInfo?.type === 'file' &&
+        pathEquals(inputInfo.pathname, target)
+      ) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
           `${otherConfig.tmpPrefix}${upath.basename(target)}`,
@@ -1118,22 +1194,21 @@ async function composeProjectConfig<T extends CliFlags>(
         rel: 'contents',
         ...tocConfig,
         target,
-        title: entry.title ?? inputInfo?.title ?? projectTitle,
+        title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         pageBreakBefore: entry.pageBreakBefore,
         pageCounterReset: entry.pageCounterReset,
-        ...(inputInfo && {
-          template: { source: inputInfo.source, type: inputInfo.type },
-        }),
+        ...('type' in template && { template }),
       };
       return parsedEntry;
     }
 
     if (isCoverEntry(entry)) {
       const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
+      const { metadata, ...template } = inputInfo || {};
       let target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
-        : inputInfo?.source && getTargetPath(inputInfo.source);
+        : inputInfo && getTargetPath(inputInfo);
       const themes = entry.theme
         ? [entry.theme].flat().map((theme) =>
             parseTheme({
@@ -1143,7 +1218,7 @@ async function composeProjectConfig<T extends CliFlags>(
               themesDir,
             }),
           )
-        : (inputInfo?.themes ?? []); // Don't inherit rootThemes for cover documents
+        : (metadata?.themes ?? []); // Don't inherit rootThemes for cover documents
       themes.forEach((t) => themeIndexes.add(t));
       const coverImageSrc = ensureCoverImage(entry.imageSrc || cover?.src);
       if (!coverImageSrc) {
@@ -1155,7 +1230,10 @@ async function composeProjectConfig<T extends CliFlags>(
         workspaceDir,
         entry.path || cover?.htmlPath || COVER_HTML_FILENAME,
       );
-      if (inputInfo?.source && pathEquals(inputInfo.source, target)) {
+      if (
+        inputInfo?.type === 'file' &&
+        pathEquals(inputInfo.pathname, target)
+      ) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
           `${otherConfig.tmpPrefix}${upath.basename(target)}`,
@@ -1167,37 +1245,37 @@ async function composeProjectConfig<T extends CliFlags>(
       const parsedEntry: CoverEntry = {
         rel: 'cover',
         target,
-        title: entry.title ?? inputInfo?.title ?? projectTitle,
+        title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         coverImageSrc,
         coverImageAlt: entry.imageAlt || cover?.name || COVER_HTML_IMAGE_ALT,
         pageBreakBefore: entry.pageBreakBefore,
-        ...(inputInfo && {
-          template: { source: inputInfo.source, type: inputInfo.type },
-        }),
+        ...('type' in template && { template }),
       };
       return parsedEntry;
     }
 
     if (isArticleEntry(entry)) {
       const inputInfo = getInputInfo(entry.path);
+      const { metadata, ...source } = inputInfo;
       const target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
-        : getTargetPath(inputInfo.source);
+        : getTargetPath(inputInfo);
       const themes = entry.theme
         ? [entry.theme]
             .flat()
             .map((theme) =>
               parseTheme({ theme, context, workspaceDir, themesDir }),
             )
-        : (inputInfo.themes ?? [...rootThemes]);
+        : (metadata?.themes ?? [...rootThemes]);
       themes.forEach((t) => themeIndexes.add(t));
 
       const parsedEntry: ManuscriptEntry = {
-        type: inputInfo.type,
-        source: inputInfo.source,
+        contentType:
+          inputInfo.type === 'file' ? inputInfo.contentType : 'text/html',
+        source,
         target,
-        title: entry.title ?? inputInfo.title ?? projectTitle,
+        title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         ...(entry.rel && { rel: entry.rel }),
       };
