@@ -8,5 +8,6 @@ export type {
   VivliostyleConfigSchema,
 } from './input/schema.js';
 export { preview, PreviewCliFlags } from './preview.js';
+export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */
 export type PublicationManifest = _PublicationManifest;

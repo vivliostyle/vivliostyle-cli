@@ -1,6 +1,7 @@
 import jsdom, {
   ResourceLoader as BaseResourceLoader,
   JSDOM,
+  VirtualConsole,
 } from '@vivliostyle/jsdom';
 import chalk from 'chalk';
 import * as cheerio from 'cheerio';
@@ -10,6 +11,7 @@ import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
 import upath from 'upath';
+import MIMEType from 'whatwg-mimetype';
 import type { ManuscriptEntry } from '../input/config.js';
 import type {
   StructuredDocument,
@@ -23,39 +25,45 @@ import {
   debug,
   isUrlString,
   logWarn,
+  writeFileIfChanged,
 } from '../util.js';
 
-const virtualConsole = new jsdom.VirtualConsole();
-/* v8 ignore start */
-virtualConsole.on('error', (message) => {
-  debug('[JSDOM Console] error:', message);
-});
-virtualConsole.on('warn', (message) => {
-  debug('[JSDOM Console] warn:', message);
-});
-virtualConsole.on('log', (message) => {
-  debug('[JSDOM Console] log:', message);
-});
-virtualConsole.on('info', (message) => {
-  debug('[JSDOM Console] info:', message);
-});
-virtualConsole.on('dir', (message) => {
-  debug('[JSDOM Console] dir:', message);
-});
-virtualConsole.on('jsdomError', (error) => {
-  // Most of CSS using Paged media will be failed to run CSS parser of JSDOM.
-  // We just ignore it because we don't use CSS parse results.
-  // https://github.com/jsdom/jsdom/blob/a39e0ec4ce9a8806692d986a7ed0cd565ec7498a/lib/jsdom/living/helpers/stylesheets.js#L33-L44
-  // see also: https://github.com/jsdom/jsdom/issues/2005
-  if (error.message === 'Could not parse CSS stylesheet') {
-    return;
-  }
-  throw new DetailError(
-    'Error occurred when loading HTML',
-    error.stack ?? error.message,
-  );
-});
-/* v8 ignore stop */
+export const createVirtualConsole = (onError: (error: DetailError) => void) => {
+  const virtualConsole = new jsdom.VirtualConsole();
+  /* v8 ignore start */
+  virtualConsole.on('error', (message) => {
+    debug('[JSDOM Console] error:', message);
+  });
+  virtualConsole.on('warn', (message) => {
+    debug('[JSDOM Console] warn:', message);
+  });
+  virtualConsole.on('log', (message) => {
+    debug('[JSDOM Console] log:', message);
+  });
+  virtualConsole.on('info', (message) => {
+    debug('[JSDOM Console] info:', message);
+  });
+  virtualConsole.on('dir', (message) => {
+    debug('[JSDOM Console] dir:', message);
+  });
+  virtualConsole.on('jsdomError', (error) => {
+    // Most of CSS using Paged media will be failed to run CSS parser of JSDOM.
+    // We just ignore it because we don't use CSS parse results.
+    // https://github.com/jsdom/jsdom/blob/a39e0ec4ce9a8806692d986a7ed0cd565ec7498a/lib/jsdom/living/helpers/stylesheets.js#L33-L44
+    // see also: https://github.com/jsdom/jsdom/issues/2005
+    if (error.message === 'Could not parse CSS stylesheet') {
+      return;
+    }
+    onError(
+      new DetailError(
+        'Error occurred when loading content',
+        error.stack ?? error.message,
+      ),
+    );
+  });
+  /* v8 ignore stop */
+  return virtualConsole;
+};
 
 export const htmlPurify = DOMPurify(new JSDOM('').window);
 
@@ -70,12 +78,76 @@ export class ResourceLoader extends BaseResourceLoader {
     }
     return fetcher;
   }
+
+  static async saveFetchedResources({
+    fetcherMap,
+    rootUrl,
+    outputDir,
+    onError,
+  }: {
+    fetcherMap: Map<string, jsdom.AbortablePromise<Buffer>>;
+    rootUrl: string;
+    outputDir: string;
+    onError?: (error: Error) => void;
+  }) {
+    const rootHref = /^https?:/i.test(new URL(rootUrl).protocol)
+      ? new URL('/', rootUrl).href
+      : new URL('.', rootUrl).href;
+
+    const normalizeToLocalPath = (urlString: string, mimeType?: string) => {
+      let url = new URL(urlString);
+      url.hash = '';
+      if (mimeType === 'text/html' && !/\.html?$/.test(url.pathname)) {
+        url.pathname = `${url.pathname.replace(/\/$/, '')}/index.html`;
+      }
+      let relTarget = upath.relative(rootHref, url.href);
+      return decodeURI(relTarget);
+    };
+
+    const fetchedResources: { url: string; encodingFormat?: string }[] = [];
+    await Promise.allSettled(
+      [...fetcherMap.entries()].flatMap(async ([url, fetcher]) => {
+        if (!url.startsWith(rootHref)) {
+          return [];
+        }
+        return (
+          fetcher
+            .then(async (buffer) => {
+              let encodingFormat: string | undefined;
+              try {
+                const contentType = fetcher.response?.headers['content-type'];
+                if (contentType) {
+                  encodingFormat = new MIMEType(contentType).essence;
+                }
+                /* v8 ignore next 3 */
+              } catch (e) {
+                /* NOOP */
+              }
+              const relTarget = normalizeToLocalPath(url, encodingFormat);
+              const target = upath.join(outputDir, relTarget);
+              fetchedResources.push({ url: relTarget, encodingFormat });
+              writeFileIfChanged(target, buffer);
+            })
+            /* v8 ignore next */
+            .catch(onError)
+        );
+      }),
+    );
+    return fetchedResources;
+  }
 }
 
-export async function getJsdomFromUrlOrFile(
-  src: string,
-  resourceLoader?: ResourceLoader,
-): Promise<{
+export async function getJsdomFromUrlOrFile({
+  src,
+  resourceLoader,
+  virtualConsole = createVirtualConsole((error) => {
+    throw error;
+  }),
+}: {
+  src: string;
+  resourceLoader?: ResourceLoader;
+  virtualConsole?: VirtualConsole;
+}): Promise<{
   dom: JSDOM;
 }> {
   const url = isUrlString(src) ? new URL(src) : pathToFileURL(src);
@@ -101,7 +173,17 @@ export async function getJsdomFromUrlOrFile(
   return { dom };
 }
 
-export function getJsdomFromString(html: string): { dom: JSDOM } {
+export function getJsdomFromString({
+  html,
+  virtualConsole = createVirtualConsole((error) => {
+    throw error;
+  }),
+}: {
+  html: string;
+  virtualConsole?: VirtualConsole;
+}): {
+  dom: JSDOM;
+} {
   const dom = new JSDOM(html, {
     virtualConsole,
   });
@@ -112,7 +194,7 @@ export async function getStructuredSectionFromHtml(
   htmlPath: string,
   href?: string,
 ) {
-  const { dom } = await getJsdomFromUrlOrFile(htmlPath);
+  const { dom } = await getJsdomFromUrlOrFile({ src: htmlPath });
   const { document } = dom.window;
   const allHeadings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
     .filter((el) => {
@@ -343,7 +425,7 @@ export async function processTocHtml(
     styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
   },
 ): Promise<string> {
-  const { dom } = getJsdomFromString(html);
+  const { dom } = getJsdomFromString({ html });
   const { document } = dom.window;
   if (
     !document.querySelector(
@@ -445,7 +527,7 @@ export async function processCoverHtml(
     styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
   },
 ): Promise<string> {
-  const { dom } = getJsdomFromString(html);
+  const { dom } = getJsdomFromString({ html });
   const { document } = dom.window;
   const style = document.querySelector('style[data-vv-style]');
   if (style) {

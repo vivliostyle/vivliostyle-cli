@@ -187,11 +187,19 @@ export async function buildPDF({
 
   function stringifyEntry(entry: ManuscriptEntry) {
     const formattedSourcePath = chalk.bold.cyan(
-      upath.relative(entryContextDir, entry.source),
+      entry.source.type === 'file'
+        ? upath.relative(entryContextDir, entry.source.pathname)
+        : entry.source.href,
     );
-    return `${terminalLink(formattedSourcePath, 'file://' + entry.source, {
-      fallback: () => formattedSourcePath,
-    })} ${entry.title ? chalk.gray(entry.title) : ''}`;
+    return `${terminalLink(
+      formattedSourcePath,
+      entry.source.type === 'file'
+        ? `file://${entry.source.pathname}`
+        : entry.source.href,
+      {
+        fallback: () => formattedSourcePath,
+      },
+    )} ${entry.title ? chalk.gray(entry.title) : ''}`;
   }
 
   function handleEntry(response: any) {

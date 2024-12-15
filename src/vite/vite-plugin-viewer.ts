@@ -57,9 +57,7 @@ export function vsViewerPlugin(_: { config: MergedConfig }): vite.Plugin {
       } satisfies vite.UserConfig;
     },
     configureServer(viteServer) {
-      return () => {
-        viteServer.middlewares.use(middleware);
-      };
+      viteServer.middlewares.use(middleware);
     },
     load(id) {
       if (id === viewerClientRequestPath) {

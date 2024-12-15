@@ -207,13 +207,16 @@ export class DetailError extends Error {
   }
 }
 
-export function gracefulError<T extends Error>(err: T) {
-  const message =
-    err instanceof DetailError
-      ? `${chalk.red.bold('Error:')} ${err.message}\n${err.detail}`
-      : err.stack
-        ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
-        : `${chalk.red.bold('Error:')} ${err.message}`;
+export function getFormattedError(err: Error) {
+  return err instanceof DetailError
+    ? `${chalk.red.bold('Error:')} ${err.message}\n${err.detail}`
+    : err.stack
+      ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
+      : `${chalk.red.bold('Error:')} ${err.message}`;
+}
+
+export function gracefulError(err: Error) {
+  const message = getFormattedError(err);
 
   if (ora.isSpinning) {
     ora.fail(message);
@@ -437,4 +440,11 @@ export function prettifySchemaError(
     })}`;
   }
   return message;
+}
+
+export function writeFileIfChanged(filePath: string, content: Buffer) {
+  if (!fs.existsSync(filePath) || !fs.readFileSync(filePath).equals(content)) {
+    fs.mkdirSync(upath.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, content);
+  }
 }

@@ -531,6 +531,35 @@ export const VivliostyleConfigEntry = v.pipe(
             Currently, Firefox and Webkit support preview command only!
           `),
         ),
+        base: v.pipe(
+          ValidString,
+          v.regex(/^\//, 'Base path must start with a slash'),
+          v.check((value) => value !== '/', 'Base path must not be root'),
+          v.description(
+            `Specify the base path of the document. (default: \`/vivliostyle\`)`,
+          ),
+        ),
+        server: v.pipe(
+          v.partial(
+            v.object({
+              host: v.pipe(
+                v.union([v.boolean(), ValidString]),
+                v.description(
+                  `Specify which IP address the server should listen on. (default: \`false\`)`,
+                ),
+              ),
+              port: v.pipe(
+                v.number(),
+                v.minValue(0),
+                v.maxValue(65535),
+                v.description(
+                  `Specify which port the server should listen on. (default: \`13000\`)`,
+                ),
+              ),
+            }),
+          ),
+          v.description(`Options for the preview server.`),
+        ),
       }),
     ),
   ]),

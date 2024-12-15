@@ -24,7 +24,7 @@ async function openPreview(
   const viewerUrl = new URL(`${viewerRootPath}/index.html`, listenUrl);
   const sourceUrl = new URL(listenUrl);
   sourceUrl.pathname = upath.join(
-    '/',
+    config.base,
     upath.relative(config.workspaceDir, fileURLToPath(inputUrl)),
   );
   const viewerFullUrl = getViewerFullUrl(
@@ -98,15 +98,16 @@ async function openPreview(
 }
 
 export function vsBrowserPlugin({
-  config,
+  config: _config,
 }: {
   config: MergedConfig;
 }): vite.Plugin {
+  let config = _config;
   let server: vite.ViteDevServer | undefined;
 
   return {
     name: 'vivliostyle:browser',
-    configureServer(viteServer) {
+    async configureServer(viteServer) {
       server = viteServer;
 
       const _listen = viteServer.listen;

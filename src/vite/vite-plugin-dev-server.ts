@@ -1,7 +1,11 @@
 import { NextHandleFunction } from 'connect';
+import escapeRe from 'escape-string-regexp';
 import { pathToFileURL } from 'node:url';
+import picomatch from 'picomatch';
+import sirv, { RequestHandler } from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
+import { MANIFEST_FILENAME } from '../const.js';
 import {
   MergedConfig,
   ParsedEntry,
@@ -9,13 +13,12 @@ import {
 } from '../input/config.js';
 import {
   generateManifest,
+  getAssetMatcher,
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';
-import { prependToHead, reloadConfig } from './plugin-util.js';
-
-const themesRequestPath = `/@vivliostyle:themes`;
-const urlSplitRe = /^([^?#]*)([?#].*)?$/;
+import { getFormattedError, pathContains } from '../util.js';
+import { reloadConfig } from './plugin-util.js';
 
 // Ref: https://github.com/lukeed/sirv
 function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
@@ -59,21 +62,24 @@ export function vsDevServerPlugin({
 }): vite.Plugin {
   let config = _config;
   let server: vite.ViteDevServer | undefined;
-  let transformCache: Map<string, { content: string; etag: string }> =
-    new Map();
+  let transformCache: Map<
+    string,
+    Promise<{ content: string; etag: string } | undefined>
+  > = new Map();
   let entriesLookup: (
     uri: string,
   ) => readonly [ParsedEntry, string] | undefined;
+  let urlMatchRe: RegExp | undefined;
+  let serveWorkspace: RequestHandler | undefined;
+  let serveWorkspaceMatcher: picomatch.Matcher | undefined;
+  let serveAssets: RequestHandler | undefined;
+  let serveAssetsMatcher: picomatch.Matcher | undefined;
+
   const projectDeps = new Set<string>();
-  let themesRootPath: string | undefined;
 
   async function reload(forceUpdate = false) {
     const prevConfig = config;
-    config = await reloadConfig({
-      cliFlags: config.cliFlags,
-      context: config.entryContextDir,
-      prevConfig,
-    });
+    config = await reloadConfig(prevConfig);
 
     transformCache.clear();
     const needToUpdateManifest =
@@ -84,18 +90,42 @@ export function vsDevServerPlugin({
       await generateManifest(config);
     }
 
-    const cwd = pathToFileURL(config.workspaceDir);
-    const themesDir = pathToFileURL(config.themesDir);
-    themesRootPath =
-      themesDir.href.indexOf(cwd.href) === 0
-        ? themesDir.pathname.slice(cwd.pathname.length)
-        : undefined;
     await prepareThemeDirectory(config);
 
     entriesLookup = createEntriesRouteLookup(
       config.entries,
       config.workspaceDir,
     );
+    urlMatchRe = new RegExp(`^${escapeRe(config.base)}(/[^?#]*)([?#].*)?$`);
+    serveWorkspace = sirv(config.workspaceDir, {
+      dev: true,
+      etag: false,
+      extensions: [],
+    });
+    serveWorkspaceMatcher = picomatch(
+      [
+        MANIFEST_FILENAME,
+        ...(pathContains(config.workspaceDir, config.themesDir)
+          ? [
+              upath.join(
+                upath.relative(config.workspaceDir, config.themesDir),
+                '**',
+              ),
+            ]
+          : []),
+      ],
+      { dot: true, ignore: ['node_modules/**'] },
+    );
+    serveAssets = sirv(config.entryContextDir, {
+      dev: true,
+      etag: false,
+      extensions: [],
+    });
+    serveAssetsMatcher = getAssetMatcher({
+      ...config,
+      cwd: config.entryContextDir,
+    });
+
     if (config.cliFlags.configPath) {
       projectDeps.add(config.cliFlags.configPath);
       server?.watcher.add(config.cliFlags.configPath);
@@ -110,21 +140,26 @@ export function vsDevServerPlugin({
     entry: ParsedEntry,
     config: MergedConfig & WebPublicationManifestConfig,
   ) {
-    let html = await transformManuscript(entry, config);
-    if (!html) {
-      return;
-    }
-    // Inject Vite client script to enable HMR
-    html = prependToHead(
-      html,
-      '<script type="module" src="/@vite/client"></script>',
-    );
-    const etag = `W/"${Date.now()}"`;
-    transformCache.set(entry.target, { content: html, etag });
-    if (entry.source) {
-      server?.watcher.add(entry.source);
-    }
-    return { content: html, etag };
+    const promise = (async () => {
+      try {
+        const html = await transformManuscript(entry, config);
+        if (!html) {
+          transformCache.delete(entry.target);
+          return;
+        }
+        const etag = `W/"${Date.now()}"`;
+        if (entry.source?.type === 'file') {
+          server?.watcher.add(entry.source.pathname);
+        }
+        return { content: html, etag };
+      } catch (error: any) {
+        console.error(getFormattedError(error));
+        transformCache.delete(entry.target);
+        return;
+      }
+    })();
+    transformCache.set(entry.target, promise);
+    return await promise;
   }
 
   async function invalidate(entry: ParsedEntry, config: MergedConfig) {
@@ -145,15 +180,15 @@ export function vsDevServerPlugin({
     });
   }
 
-  const middleware = async function vivliostyleDevServerMiddleware(
+  const devServerMiddleware = async function vivliostyleDevServerMiddleware(
     req,
     res,
     next,
   ) {
-    if (!config.manifestPath) {
+    if (!config?.manifestPath || !urlMatchRe) {
       return next();
     }
-    const [_, pathname, qs] = decodeURI(req.url!).match(urlSplitRe) ?? [];
+    const [_, pathname, qs] = decodeURI(req.url!).match(urlMatchRe) ?? [];
     const match = pathname && entriesLookup?.(pathname);
     if (!match) {
       return next();
@@ -165,8 +200,12 @@ export function vsDevServerPlugin({
       res.setHeader('Location', `${expected}${qs || ''}`);
       return res.end();
     }
-    const cached = transformCache.get(entry.target);
-    if (cached) {
+    const cachePromise = transformCache.get(entry.target);
+    if (cachePromise) {
+      const cached = await cachePromise;
+      if (!cached) {
+        return next();
+      }
       if (req.headers['if-none-match'] === cached.etag) {
         res.statusCode = 304;
         return res.end();
@@ -181,10 +220,11 @@ export function vsDevServerPlugin({
 
     if (entry.rel === 'contents') {
       // To transpile the table of contents, all dependent content must be transpiled in advance
+      const _config = { ...config };
       await Promise.all(
-        config.entries.flatMap((e) =>
-          config.manifestPath && e.rel !== 'contents' && e.rel !== 'cover'
-            ? transform(e, config)
+        _config.entries.flatMap((e) =>
+          _config.manifestPath && e.rel !== 'contents' && e.rel !== 'cover'
+            ? transform(e, _config)
             : [],
         ),
       );
@@ -200,6 +240,30 @@ export function vsDevServerPlugin({
     res.setHeader('Etag', result.etag);
     return res.end(result.content);
   } satisfies NextHandleFunction;
+
+  const serveWorkspaceMiddleware =
+    async function vivliostyleServeWorkspaceMiddleware(req, res, next) {
+      if (
+        !config ||
+        !urlMatchRe ||
+        !serveWorkspace ||
+        !serveWorkspaceMatcher ||
+        !serveAssets ||
+        !serveAssetsMatcher
+      ) {
+        return next();
+      }
+      const [_, pathname] = decodeURI(req.url!).match(urlMatchRe) ?? [];
+      if (pathname && serveWorkspaceMatcher(pathname.slice(1))) {
+        req.url = req.url!.slice(config.base.length);
+        return serveWorkspace(req, res, next);
+      }
+      if (pathname && serveAssetsMatcher(pathname.slice(1))) {
+        req.url = req.url!.slice(config.base.length);
+        return serveAssets(req, res, next);
+      }
+      next();
+    } satisfies NextHandleFunction;
 
   return {
     name: 'vivliostyle:dev-server',
@@ -223,23 +287,21 @@ export function vsDevServerPlugin({
       viteServer.watcher.on('unlink', handleUpdate);
 
       return () => {
-        viteServer.middlewares.use(middleware);
+        viteServer.middlewares.use(devServerMiddleware);
+        viteServer.middlewares.use(serveWorkspaceMiddleware);
       };
     },
     async buildStart() {
       await reload(true);
     },
     async handleHotUpdate(ctx) {
-      const entry = config.entries.find(
-        (e) => e.source === ctx.file || (!e.source && e.target === ctx.file),
+      const entry = config?.entries.find(
+        (e) =>
+          (e.source?.type === 'file' && e.source.pathname === ctx.file) ||
+          (!e.source && e.target === ctx.file),
       );
-      if (entry) {
+      if (config && entry) {
         await invalidate(entry, config);
-      }
-    },
-    resolveId(id) {
-      if (themesRootPath && id.startsWith(themesRootPath)) {
-        return `${themesRequestPath}${id.slice(themesRootPath.length)}`;
       }
     },
   };
