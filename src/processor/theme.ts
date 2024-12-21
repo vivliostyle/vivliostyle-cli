@@ -1,13 +1,13 @@
 import Arborist from '@npmcli/arborist';
 import fs from 'node:fs';
 import npa from 'npm-package-arg';
-import type { MergedConfig } from '../input/config.js';
+import { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
 
 export async function checkThemeInstallationNecessity({
   themesDir,
   themeIndexes,
-}: Pick<MergedConfig, 'themesDir' | 'themeIndexes'>): Promise<boolean> {
+}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<boolean> {
   if (!fs.existsSync(themesDir)) {
     return [...themeIndexes].some((theme) => theme.type === 'package');
   }
@@ -27,7 +27,7 @@ export async function checkThemeInstallationNecessity({
 export async function installThemeDependencies({
   themesDir,
   themeIndexes,
-}: Pick<MergedConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
+}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
   fs.mkdirSync(themesDir, { recursive: true });
 
   try {

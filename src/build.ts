@@ -1,77 +1,8 @@
-import chalk from 'chalk';
-import terminalLink from 'terminal-link';
-import upath from 'upath';
-import { getExecutableBrowserPath } from './browser.js';
-import {
-  CliFlags,
-  MergedConfig,
-  collectVivliostyleConfig,
-  mergeConfig,
-} from './input/config.js';
-import { buildPDF, buildPDFWithContainer } from './output/pdf.js';
-import { buildWebPublication } from './output/webbook.js';
-import {
-  checkOverwriteViolation,
-  cleanupWorkspace,
-  compile,
-  copyAssets,
-  prepareThemeDirectory,
-} from './processor/compile.js';
-import { teardownServer } from './server.js';
-import {
-  checkContainerEnvironment,
-  cwd,
-  debug,
-  log,
-  runExitHandlers,
-  setLogLevel,
-  startLogging,
-} from './util.js';
+import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 
-export interface BuildCliFlags extends CliFlags {
-  bypassedPdfBuilderOption?: string;
-}
-
-export async function getFullConfig(
-  cliFlags: BuildCliFlags,
-): Promise<MergedConfig[]> {
-  const loadedConf = await collectVivliostyleConfig(cliFlags);
-  const { config: jsConfig } = loadedConf;
-  const loadedCliFlags = loadedConf.cliFlags;
-
-  const context = loadedCliFlags.configPath
-    ? upath.dirname(loadedCliFlags.configPath)
-    : cwd;
-
-  const configEntries: MergedConfig[] = [];
-  for (const entry of jsConfig ?? [jsConfig]) {
-    const config = await mergeConfig(loadedCliFlags, entry, context);
-    checkUnsupportedOutputs(config);
-
-    // check output path not to overwrite source files
-    for (const target of config.outputs) {
-      checkOverwriteViolation(config, target.path, target.format);
-    }
-    configEntries.push(config);
-  }
-  return configEntries;
-}
-
-/**
- * Build publication file(s) from the given configuration.
- *
- * ```ts
- * import { build } from '@vivliostyle/cli';
- * build({
- *   configPath: './vivliostyle.config.js',
- *   logLevel: 'silent',
- * });
- * ```
- *
- * @param cliFlags
- * @returns
- */
-export async function build(cliFlags: BuildCliFlags) {
+export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
+  // TODO
+  /*
   setLogLevel(cliFlags.logLevel);
 
   if (cliFlags.bypassedPdfBuilderOption) {
@@ -147,17 +78,5 @@ export async function build(cliFlags: BuildCliFlags) {
 
   runExitHandlers();
   stopLogging('Built successfully.', '🎉');
-}
-
-function checkUnsupportedOutputs({ epubOpfPath, outputs }: MergedConfig) {
-  if (epubOpfPath && outputs.some((t) => t.format === 'webpub')) {
-    throw new Error(
-      'Exporting webpub format from EPUB or OPF file is not supported.',
-    );
-  }
-  if (epubOpfPath && outputs.some((t) => t.format === 'epub')) {
-    throw new Error(
-      'Exporting EPUB format from EPUB or OPF file is not supported.',
-    );
-  }
+  */
 }

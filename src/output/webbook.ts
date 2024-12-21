@@ -4,9 +4,13 @@ import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
+import {
+  EpubOutput,
+  ResolvedTaskConfig,
+  WebPublicationOutput,
+} from '../config/resolve.js';
+import { ArticleEntryObject } from '../config/schema.js';
 import { MANIFEST_FILENAME } from '../const.js';
-import { MergedConfig, WebbookEntryConfig } from '../input/config.js';
-import { ArticleEntryObject } from '../input/schema.js';
 import {
   getDefaultIgnorePatterns,
   getIgnoreAssetPatterns,
@@ -35,7 +39,6 @@ import {
   useTmpDirectory,
 } from '../util.js';
 import { exportEpub } from './epub.js';
-import { EpubOutput, WebPublicationOutput } from './output-types.js';
 
 function sortManifestResources(manifest: PublicationManifest) {
   if (!Array.isArray(manifest.resources)) {
@@ -199,7 +202,8 @@ export function writePublicationManifest(
 export async function retrieveWebbookEntry({
   webbookEntryUrl,
   outputDir,
-}: WebbookEntryConfig & {
+}: {
+  webbookEntryUrl: string;
   outputDir: string;
 }): Promise<{
   entryHtmlFile: string;
@@ -314,7 +318,7 @@ export async function supplyWebPublicationManifestForWebbook({
   outputDir,
   ...config
 }: Pick<
-  MergedConfig,
+  ResolvedTaskConfig,
   'language' | 'title' | 'author' | 'readingProgression'
 > & {
   entryHtmlFile: string;
@@ -379,7 +383,7 @@ export async function copyWebPublicationAssets({
   outputDir,
   entries,
 }: Pick<
-  MergedConfig,
+  ResolvedTaskConfig,
   'exportAliases' | 'outputs' | 'copyAsset' | 'themesDir' | 'entries'
 > & {
   input: string;
@@ -520,7 +524,7 @@ export async function copyWebPublicationAssets({
   return { manifest, actualManifestPath };
 }
 
-export type BuildWebPublicationOptions = Omit<MergedConfig, 'target'> & {
+export type BuildWebPublicationOptions = Omit<ResolvedTaskConfig, 'target'> & {
   target: WebPublicationOutput | EpubOutput;
 };
 
@@ -539,12 +543,12 @@ export async function buildWebPublication({
   let entryHtmlFile: string | undefined;
   let manifest: PublicationManifest;
   let actualManifestPath: string | undefined;
-  if (config.manifestPath) {
+  if (config.viewerInput.type === 'webpub') {
     const ret = await copyWebPublicationAssets({
       ...config,
       input: config.workspaceDir,
       outputDir,
-      manifestPath: config.manifestPath,
+      manifestPath: config.viewerInput.manifestPath,
     });
     manifest = ret.manifest;
     actualManifestPath = ret.actualManifestPath;
@@ -557,9 +561,9 @@ export async function buildWebPublication({
         );
       }
     }
-  } else if (config.webbookEntryUrl) {
+  } else if (config.viewerInput.type === 'webbook') {
     const ret = await retrieveWebbookEntry({
-      webbookEntryUrl: config.webbookEntryUrl,
+      webbookEntryUrl: config.viewerInput.webbookEntryUrl,
       outputDir,
     });
     entryHtmlFile = ret.entryHtmlFile;

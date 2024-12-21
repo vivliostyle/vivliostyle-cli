@@ -1,28 +1,17 @@
 import chalk from 'chalk';
 import fs from 'node:fs';
 import upath from 'upath';
-import { CONTAINER_IMAGE } from './container.js';
-import { cwd, log, runExitHandlers, setLogLevel } from './util.js';
+import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { CONTAINER_IMAGE } from '../container.js';
+import { cwd, log, runExitHandlers, setLogLevel } from '../util.js';
 
-export interface InitCliFlags {
-  title?: string;
-  author?: string;
-  language?: string;
-  theme?: string;
-  size?: string;
-  logLevel?: 'silent' | 'info' | 'debug';
-}
+export async function init(inlineConfig: ParsedVivliostyleInlineConfig) {
+  setLogLevel(inlineConfig.logLevel);
 
-/**
- * Initialize a new vivliostyle.config.js file.
- *
- * @param cliFlags
- * @returns
- */
-export async function init(cliFlags: InitCliFlags) {
-  setLogLevel(cliFlags.logLevel);
-
-  const vivliostyleConfigPath = upath.join(cwd, 'vivliostyle.config.js');
+  const vivliostyleConfigPath = upath.join(
+    inlineConfig.cwd ?? cwd,
+    'vivliostyle.config.js',
+  );
 
   if (fs.existsSync(vivliostyleConfigPath)) {
     runExitHandlers();
@@ -35,12 +24,12 @@ export async function init(cliFlags: InitCliFlags) {
   const vivliostyleConfig = `// @ts-check
 /** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
 const vivliostyleConfig = {
-  title: '${ cliFlags.title || 'Principia'}', // populated into 'publication.json', default to 'title' of the first entry or 'name' in 'package.json'.
-  author: '${cliFlags.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
-  ${cliFlags.language ? '' : '// '}language: '${cliFlags.language || 'la'}',
+  title: '${ inlineConfig.title || 'Principia'}', // populated into 'publication.json', default to 'title' of the first entry or 'name' in 'package.json'.
+  author: '${inlineConfig.author || 'Isaac Newton'}', // default to 'author' in 'package.json' or undefined
+  ${inlineConfig.language ? '' : '// '}language: '${inlineConfig.language || 'la'}',
   // readingProgression: 'rtl', // reading progression direction, 'ltr' or 'rtl'.
-  ${cliFlags.size ? '' : '// '}size: '${cliFlags.size || 'A4'}',
-  ${cliFlags.theme ? '' : '// '}theme: '${cliFlags.theme || ''}', // .css or local dir or npm package. default to undefined
+  ${inlineConfig.size ? '' : '// '}size: '${inlineConfig.size || 'A4'}',
+  ${inlineConfig.theme ? '' : '// '}theme: '${inlineConfig.theme || ''}', // .css or local dir or npm package. default to undefined
   image: '${CONTAINER_IMAGE}',
   entry: [ // **required field**
     // 'introduction.md', // 'title' is automatically guessed from the file (frontmatter > first heading)

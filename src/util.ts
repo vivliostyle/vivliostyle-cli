@@ -211,7 +211,7 @@ export function getFormattedError(err: Error) {
   return err instanceof DetailError
     ? `${chalk.red.bold('Error:')} ${err.message}\n${err.detail}`
     : err.stack
-      ? err.stack.replace(/^Error:/, chalk.red.bold('Error:'))
+      ? err.stack.replace(/^\w*Error:/, (v) => chalk.red.bold(v))
       : `${chalk.red.bold('Error:')} ${err.message}`;
 }
 
@@ -296,7 +296,7 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
   });
 }
 
-export async function touchTmpFile(path: string): Promise<() => void> {
+export function touchTmpFile(path: string): () => void {
   fs.mkdirSync(upath.dirname(path), { recursive: true });
   // Create file if not exist
   fs.closeSync(fs.openSync(path, 'a'));
@@ -318,7 +318,7 @@ export function pathContains(parentPath: string, childPath: string): boolean {
   return rel !== '' && !rel.startsWith('..');
 }
 
-export function isUrlString(str: string): boolean {
+export function isValidUri(str: string): boolean {
   return /^(https?|file|data):/i.test(str);
 }
 

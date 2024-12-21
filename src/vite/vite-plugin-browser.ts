@@ -7,19 +7,31 @@ import {
   isPlaywrightExecutable,
   launchBrowser,
 } from '../browser.js';
-import { MergedConfig } from '../input/config.js';
+import { ResolvedTaskConfig } from '../config/resolve.js';
+import { InlineOptions } from '../config/schema.js';
 import { getViewerFullUrl } from '../server.js';
-import { debug, isUrlString, runExitHandlers } from '../util.js';
+import { debug, isValidUri, runExitHandlers } from '../util.js';
 import { viewerRootPath } from './vite-plugin-viewer.js';
 
 async function openPreview(
   { listenUrl, handleClose }: { listenUrl: string; handleClose: () => void },
-  config: MergedConfig,
+  config: ResolvedTaskConfig,
 ) {
-  const input = (config.manifestPath ??
-    config.webbookEntryUrl ??
-    config.epubOpfPath) as string;
-  const inputUrl = isUrlString(input) ? new URL(input) : pathToFileURL(input);
+  const input = (() => {
+    switch (config.viewerInput.type) {
+      case 'webpub':
+        return config.viewerInput.manifestPath;
+      case 'webbook':
+        return config.viewerInput.webbookEntryUrl;
+      case 'epub-opf':
+        return config.viewerInput.epubOpfPath;
+      case 'epub':
+        throw new Error('TODO');
+      default:
+        return config.viewerInput satisfies never;
+    }
+  })();
+  const inputUrl = isValidUri(input) ? new URL(input) : pathToFileURL(input);
   viewerRootPath;
   const viewerUrl = new URL(`${viewerRootPath}/index.html`, listenUrl);
   const sourceUrl = new URL(listenUrl);
@@ -100,7 +112,8 @@ async function openPreview(
 export function vsBrowserPlugin({
   config: _config,
 }: {
-  config: MergedConfig;
+  config: ResolvedTaskConfig;
+  options: InlineOptions;
 }): vite.Plugin {
   let config = _config;
   let server: vite.ViteDevServer | undefined;

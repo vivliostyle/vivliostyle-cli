@@ -5,12 +5,13 @@ import picomatch from 'picomatch';
 import sirv, { RequestHandler } from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
-import { MANIFEST_FILENAME } from '../const.js';
 import {
-  MergedConfig,
   ParsedEntry,
+  ResolvedTaskConfig,
   WebPublicationManifestConfig,
-} from '../input/config.js';
+} from '../config/resolve.js';
+import { InlineOptions } from '../config/schema.js';
+import { MANIFEST_FILENAME } from '../const.js';
 import {
   generateManifest,
   getAssetMatcher,
@@ -19,6 +20,14 @@ import {
 } from '../processor/compile.js';
 import { getFormattedError, pathContains } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
+
+function isWebPubConfig(
+  config: ResolvedTaskConfig,
+): config is ResolvedTaskConfig & {
+  viewerInput: WebPublicationManifestConfig;
+} {
+  return config.viewerInput.type === 'webpub';
+}
 
 // Ref: https://github.com/lukeed/sirv
 function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
@@ -54,11 +63,12 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
     }
   };
 }
-
 export function vsDevServerPlugin({
   config: _config,
+  options,
 }: {
-  config: MergedConfig;
+  config: ResolvedTaskConfig;
+  options: InlineOptions;
 }): vite.Plugin {
   let config = _config;
   let server: vite.ViteDevServer | undefined;
@@ -79,14 +89,18 @@ export function vsDevServerPlugin({
 
   async function reload(forceUpdate = false) {
     const prevConfig = config;
-    config = await reloadConfig(prevConfig);
+    config = await reloadConfig(prevConfig, options);
 
     transformCache.clear();
     const needToUpdateManifest =
       forceUpdate ||
       // FIXME: More precise comparison
       JSON.stringify(prevConfig) !== JSON.stringify(config);
-    if (config.needToGenerateManifest && needToUpdateManifest) {
+    if (
+      isWebPubConfig(config) &&
+      config.viewerInput.needToGenerateManifest &&
+      needToUpdateManifest
+    ) {
       await generateManifest(config);
     }
 
@@ -126,19 +140,19 @@ export function vsDevServerPlugin({
       cwd: config.entryContextDir,
     });
 
-    if (config.cliFlags.configPath) {
-      projectDeps.add(config.cliFlags.configPath);
-      server?.watcher.add(config.cliFlags.configPath);
+    if (options.config) {
+      projectDeps.add(options.config);
+      server?.watcher.add(options.config);
     }
-    if (config.manifestPath) {
-      projectDeps.add(config.manifestPath);
-      server?.watcher.add(config.manifestPath);
+    if (config.viewerInput.type === 'webpub') {
+      projectDeps.add(config.viewerInput.manifestPath);
+      server?.watcher.add(config.viewerInput.manifestPath);
     }
   }
 
   async function transform(
     entry: ParsedEntry,
-    config: MergedConfig & WebPublicationManifestConfig,
+    config: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
   ) {
     const promise = (async () => {
       try {
@@ -162,7 +176,7 @@ export function vsDevServerPlugin({
     return await promise;
   }
 
-  async function invalidate(entry: ParsedEntry, config: MergedConfig) {
+  async function invalidate(entry: ParsedEntry, config: ResolvedTaskConfig) {
     const cwd = pathToFileURL(config.workspaceDir);
     const target = pathToFileURL(entry.target);
     if (target.href.indexOf(cwd.href) !== 0) {
@@ -185,7 +199,7 @@ export function vsDevServerPlugin({
     res,
     next,
   ) {
-    if (!config?.manifestPath || !urlMatchRe) {
+    if (!isWebPubConfig(config) || !urlMatchRe) {
       return next();
     }
     const [_, pathname, qs] = decodeURI(req.url!).match(urlMatchRe) ?? [];
@@ -223,7 +237,7 @@ export function vsDevServerPlugin({
       const _config = { ...config };
       await Promise.all(
         _config.entries.flatMap((e) =>
-          _config.manifestPath && e.rel !== 'contents' && e.rel !== 'cover'
+          isWebPubConfig(_config) && e.rel !== 'contents' && e.rel !== 'cover'
             ? transform(e, _config)
             : [],
         ),

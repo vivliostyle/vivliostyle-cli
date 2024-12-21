@@ -1,17 +1,18 @@
 import http from 'node:http';
-import { fileURLToPath, pathToFileURL, URL } from 'node:url';
+import { pathToFileURL, URL } from 'node:url';
 import handler from 'serve-handler';
 import upath from 'upath';
 import * as vite from 'vite';
+import { resolveTaskConfig } from './config/resolve.js';
+import { ParsedVivliostyleConfigSchema } from './config/schema.js';
+import { prepareViteConfig } from './config/vite.js';
 import { viewerRoot } from './const.js';
-import { CliFlags, MergedConfig } from './input/config.js';
 import {
   beforeExitHandlers,
   debug,
   findAvailablePort,
-  isUrlString,
+  isValidUri,
 } from './util.js';
-import { loadConfig } from './vite/plugin-util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
@@ -39,7 +40,6 @@ export type ViewerUrlOption = {
 export type ServerOption = ViewerUrlOption & {
   input: string;
   workspaceDir: string;
-  httpServer: boolean;
   viewer: string | undefined;
 };
 
@@ -49,44 +49,18 @@ let _sourceServer: Server | undefined;
 export async function prepareServer(option: ServerOption): Promise<{
   viewerFullUrl: string;
 }> {
-  const viewerUrl = await (option.viewer && isUrlString(option.viewer)
+  const viewerUrl = await (option.viewer && isValidUri(option.viewer)
     ? new URL(option.viewer)
-    : option.httpServer
-      ? (async () => {
-          _viewerServer = _viewerServer || (await launchServer(viewerRoot));
+    : (() => {
+        const viewerUrl = new URL('file://');
+        viewerUrl.pathname = upath.join(viewerRoot, 'lib/index.html');
+        return viewerUrl;
+      })());
 
-          const viewerUrl = new URL('http://localhost');
-          viewerUrl.port = `${_viewerServer.port}`;
-          viewerUrl.pathname = '/lib/index.html';
-          return viewerUrl;
-        })()
-      : (() => {
-          const viewerUrl = new URL('file://');
-          viewerUrl.pathname = upath.join(viewerRoot, 'lib/index.html');
-          return viewerUrl;
-        })());
-
-  const inputUrl = isUrlString(option.input)
+  const inputUrl = isValidUri(option.input)
     ? new URL(option.input)
     : pathToFileURL(option.input);
   const sourceUrl = await (async () => {
-    if (
-      inputUrl.protocol === 'file:' &&
-      (option.httpServer ||
-        // Use http server because http viewer cannot access to file protocol
-        (option.viewer && /^https?:/i.test(option.viewer)))
-    ) {
-      _sourceServer =
-        _sourceServer || (await launchServer(option.workspaceDir));
-
-      const sourceUrl = new URL('http://localhost');
-      sourceUrl.port = `${_sourceServer.port}`;
-      sourceUrl.pathname = upath.relative(
-        option.workspaceDir,
-        fileURLToPath(inputUrl),
-      );
-      return sourceUrl;
-    }
     return inputUrl;
   })();
 
@@ -223,31 +197,27 @@ async function launchServer(root: string): Promise<Server> {
   });
 }
 
-export async function createViteConfig({ config }: { config: MergedConfig }) {
-  const viteConfig = {
+export async function createViteServer({
+  vivliostyleConfig,
+}: {
+  vivliostyleConfig: ParsedVivliostyleConfigSchema;
+}) {
+  // const merged = mergeInlineConfig(vivliostyleConfig, inlineConfig);
+  const { tasks, inlineOptions: options } = vivliostyleConfig;
+  const config = resolveTaskConfig(tasks[0], options);
+  let viteConfig = await prepareViteConfig(config);
+  viteConfig = vite.mergeConfig(viteConfig, {
     clearScreen: false,
     configFile: false,
     appType: 'custom',
     plugins: [
-      vsDevServerPlugin({ config }),
-      vsViewerPlugin({ config }),
-      vsBrowserPlugin({ config }),
+      vsDevServerPlugin({ config, options }),
+      vsViewerPlugin({ config, options }),
+      vsBrowserPlugin({ config, options }),
     ],
-    server: config.server,
-  } satisfies vite.InlineConfig;
-  return viteConfig;
-}
+    server: viteConfig.server ?? config.server,
+  } satisfies vite.InlineConfig);
 
-export async function createViteServer({
-  cliFlags,
-  context,
-}: {
-  cliFlags: CliFlags;
-  context: string;
-}) {
-  const config = await loadConfig({ cliFlags, context });
-  const viteConfig = await createViteConfig({ config });
   const server = await vite.createServer(viteConfig);
-
-  return { server, config };
+  return { server };
 }

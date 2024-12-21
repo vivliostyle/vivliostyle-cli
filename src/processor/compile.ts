@@ -9,12 +9,12 @@ import {
   ContentsEntry,
   CoverEntry,
   ManuscriptEntry,
-  MergedConfig,
   ParsedEntry,
   ParsedTheme,
+  ResolvedTaskConfig,
   WebPublicationManifestConfig,
-} from '../input/config.js';
-import type { ArticleEntryObject } from '../input/schema.js';
+} from '../config/resolve.js';
+import type { ArticleEntryObject } from '../config/schema.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
   beforeExitHandlers,
@@ -82,7 +82,7 @@ export async function cleanupWorkspace({
   entryContextDir,
   workspaceDir,
   themesDir,
-}: MergedConfig) {
+}: ResolvedTaskConfig) {
   if (
     pathEquals(workspaceDir, entryContextDir) ||
     pathContains(workspaceDir, entryContextDir)
@@ -118,7 +118,7 @@ export async function cleanupWorkspace({
 export async function prepareThemeDirectory({
   themesDir,
   themeIndexes,
-}: MergedConfig) {
+}: ResolvedTaskConfig) {
   // Backward compatibility: v8 to v9
   if (
     fs.existsSync(upath.join(themesDir, 'packages')) &&
@@ -150,14 +150,14 @@ export async function transformManuscript(
   {
     entryContextDir,
     workspaceDir,
-    manifestPath,
+    viewerInput: { manifestPath },
     title,
     entries,
     language,
     documentProcessorFactory,
     vfmOptions,
     base,
-  }: MergedConfig & WebPublicationManifestConfig,
+  }: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
 ): Promise<string | undefined> {
   const source =
     entry.rel === 'contents' || entry.rel === 'cover'
@@ -321,14 +321,14 @@ export async function transformManuscript(
 export async function generateManifest({
   entryContextDir,
   workspaceDir,
-  manifestPath,
+  viewerInput: { manifestPath },
   title,
   author,
   entries,
   language,
   readingProgression,
   cover,
-}: MergedConfig & WebPublicationManifestConfig) {
+}: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig }) {
   const manifestEntries: ArticleEntryObject[] = entries.map((entry) => ({
     title:
       (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||
@@ -357,14 +357,14 @@ export async function generateManifest({
 }
 
 export async function compile(
-  config: MergedConfig & WebPublicationManifestConfig,
+  config: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
 ): Promise<void> {
   for (const entry of config.entries) {
     await transformManuscript(entry, config);
   }
 
   // generate manifest
-  if (config.needToGenerateManifest) {
+  if (config.viewerInput.needToGenerateManifest) {
     await generateManifest(config);
   }
 }
@@ -372,7 +372,7 @@ export async function compile(
 export function getDefaultIgnorePatterns({
   themesDir,
   cwd,
-}: Pick<MergedConfig, 'themesDir'> & {
+}: Pick<ResolvedTaskConfig, 'themesDir'> & {
   cwd: string;
 }): string[] {
   const ignorePatterns = [
@@ -393,7 +393,7 @@ export function getIgnoreAssetPatterns({
   outputs,
   entries,
   cwd,
-}: Pick<MergedConfig, 'outputs' | 'entries'> & {
+}: Pick<ResolvedTaskConfig, 'outputs' | 'entries'> & {
   cwd: string;
 }): string[] {
   return [
@@ -419,7 +419,10 @@ function getAssetMatcherSettings({
   entries,
   cwd,
   ignore = [],
-}: Pick<MergedConfig, 'copyAsset' | 'outputs' | 'themesDir' | 'entries'> & {
+}: Pick<
+  ResolvedTaskConfig,
+  'copyAsset' | 'outputs' | 'themesDir' | 'entries'
+> & {
   cwd: string;
   ignore?: string[];
 }): { patterns: string[]; ignore: string[] }[] {
@@ -483,7 +486,7 @@ export async function copyAssets({
   outputs,
   themesDir,
   entries,
-}: MergedConfig): Promise<void> {
+}: ResolvedTaskConfig): Promise<void> {
   if (pathEquals(entryContextDir, workspaceDir)) {
     return;
   }
@@ -508,7 +511,7 @@ export async function copyAssets({
 }
 
 export function checkOverwriteViolation(
-  { entryContextDir, workspaceDir }: MergedConfig,
+  { entryContextDir, workspaceDir }: ResolvedTaskConfig,
   target: string,
   fileInformation: string,
 ) {
