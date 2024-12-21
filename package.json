@@ -33,7 +33,7 @@
     "chalk": "^4.1.2",
     "cheerio": "^1.0.0",
     "command-exists": "1.2.9",
-    "commander": "^9.4.1",
+    "commander": "^12.1.0",
     "debug": "^4.3.2",
     "decamelize": "5.0.0",
     "dompurify": "^3.1.2",

@@ -1,25 +1,19 @@
-import { AddressInfo } from 'node:net';
-import upath from 'upath';
-import { CliFlags, collectVivliostyleConfig } from './input/config.js';
-import { createViteServer } from './server.js';
-import { cwd } from './util.js';
+import { setupConfigFromFlags } from '../commands/cli-flags.js';
+import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
+import { mergeInlineConfig } from '../config/merge.js';
+import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { createViteServer } from '../server.js';
 
-export interface PreviewCliFlags extends CliFlags {}
-
-/**
- * @param cliFlags
- * @returns
- */
-export async function preview(cliFlags: PreviewCliFlags) {
-  const { cliFlags: resolvedCliFlags } =
-    await collectVivliostyleConfig(cliFlags);
-  const { configPath } = resolvedCliFlags;
-  const context = configPath ? upath.dirname(configPath) : cwd;
-  const { server } = await createViteServer({
-    cliFlags: resolvedCliFlags,
-    context,
-  });
-  const dev = await server.listen(server.config.server.port);
-  const { port } = dev.httpServer!.address() as AddressInfo;
+export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
+  let vivliostyleConfig =
+    (await loadVivliostyleConfig({
+      configPath: inlineConfig.config,
+      cwd: inlineConfig.cwd,
+    })) ?? setupConfigFromFlags(inlineConfig);
+  warnDeprecatedConfig(vivliostyleConfig);
+  vivliostyleConfig = mergeInlineConfig(vivliostyleConfig, inlineConfig);
+  const { server } = await createViteServer({ vivliostyleConfig });
+  const dev = await server.listen();
+  const { port } = dev.httpServer!.address() as { port: number };
   console.log(`Vite server running at http://localhost:${port}`);
 }

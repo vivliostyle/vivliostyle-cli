@@ -1,35 +1,26 @@
-import {
-  CliFlags,
-  loadVivliostyleConfig,
-  mergeConfig,
-  MergedConfig,
-} from '../input/config.js';
+import { setupConfigFromFlags } from '../commands/cli-flags.js';
+import { loadVivliostyleConfig } from '../config/load.js';
+import { mergeConfig } from '../config/merge.js';
+import { ResolvedTaskConfig, resolveTaskConfig } from '../config/resolve.js';
+import { InlineOptions } from '../config/schema.js';
+// import { mergeConfig, MergedConfig } from '../input/config.js';
 
 const headStartTagRe = /<head[^>]*>/i;
 export const prependToHead = (html: string, content: string) =>
   html.replace(headStartTagRe, (match) => `${match}\n${content}`);
 
-export async function loadConfig({
-  cliFlags,
-  context,
-}: {
-  cliFlags: CliFlags;
-  context: string;
-}): Promise<MergedConfig> {
-  const jsConfig = cliFlags.configPath
-    ? [await loadVivliostyleConfig(cliFlags.configPath)].flat()[0]
-    : undefined;
-  return await mergeConfig(cliFlags, jsConfig, context);
-}
-
-export async function reloadConfig(prevConfig: MergedConfig) {
-  const jsConfig = prevConfig.cliFlags.configPath
-    ? [await loadVivliostyleConfig(prevConfig.cliFlags.configPath)].flat()[0]
-    : undefined;
-  return await mergeConfig(
-    prevConfig.cliFlags,
-    jsConfig,
-    prevConfig.context,
-    prevConfig,
-  );
+export async function reloadConfig(
+  prevConfig: ResolvedTaskConfig,
+  options: InlineOptions,
+) {
+  let config =
+    (await loadVivliostyleConfig({
+      configPath: options.config,
+      cwd: options.cwd,
+    })) ?? setupConfigFromFlags(options);
+  config = mergeConfig(config, {
+    temporaryFilePrefix: prevConfig.temporaryFilePrefix,
+  });
+  const taskConfig = resolveTaskConfig(config.tasks[0], config.inlineOptions);
+  return taskConfig;
 }

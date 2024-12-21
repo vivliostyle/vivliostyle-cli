@@ -3,8 +3,9 @@ import fs from 'node:fs';
 import sirv from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
+import { ResolvedTaskConfig } from '../config/resolve.js';
+import { InlineOptions } from '../config/schema.js';
 import { viewerRoot } from '../const.js';
-import { MergedConfig } from '../input/config.js';
 import { prependToHead } from './plugin-util.js';
 
 const viewerClientId = '@vivliostyle:viewer:client';
@@ -17,7 +18,10 @@ if (import.meta.hot) {
 }`;
 export const viewerRootPath = '/__vivliostyle-viewer';
 
-export function vsViewerPlugin(_: { config: MergedConfig }): vite.Plugin {
+export function vsViewerPlugin(_: {
+  config: ResolvedTaskConfig;
+  options: InlineOptions;
+}): vite.Plugin {
   const serveRootDir = upath.join(viewerRoot, 'lib');
   const serve = sirv(serveRootDir, { dev: false, etag: true });
   let cachedIndexHtml: string;

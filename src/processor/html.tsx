@@ -12,18 +12,18 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import prettier from 'prettier';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
-import type { ManuscriptEntry } from '../input/config.js';
+import { ManuscriptEntry } from '../config/resolve.js';
 import type {
   StructuredDocument,
   StructuredDocumentSection,
-} from '../input/schema.js';
+} from '../config/schema.js';
 import { decodePublicationManifest } from '../output/webbook.js';
 import type { PublicationManifest } from '../schema/publication.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,
   debug,
-  isUrlString,
+  isValidUri,
   logWarn,
   writeFileIfChanged,
 } from '../util.js';
@@ -150,7 +150,7 @@ export async function getJsdomFromUrlOrFile({
 }): Promise<{
   dom: JSDOM;
 }> {
-  const url = isUrlString(src) ? new URL(src) : pathToFileURL(src);
+  const url = isValidUri(src) ? new URL(src) : pathToFileURL(src);
   let dom: JSDOM;
   if (url.protocol === 'http:' || url.protocol === 'https:') {
     dom = await JSDOM.fromURL(src, {

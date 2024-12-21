@@ -1,13 +1,23 @@
 import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 import chalk from 'chalk';
-import * as cheerio from 'cheerio';
-import fs from 'fs';
-import { createRequire } from 'node:module';
+import { lookup as mime } from 'mime-types';
+import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { Processor } from 'unified';
 import upath from 'upath';
-import { pathToFileURL } from 'url';
-import * as v from 'valibot';
+import { UserConfig } from 'vite';
 import { getExecutableBrowserPath } from '../browser.js';
+import {
+  ArticleEntryObject,
+  BrowserType,
+  ContentsEntryObject,
+  CoverEntryObject,
+  EntryObject,
+  InputFormat,
+  StructuredDocument,
+  StructuredDocumentSection,
+  ThemeObject,
+} from '../config/schema.js';
 import {
   COVER_HTML_FILENAME,
   COVER_HTML_IMAGE_ALT,
@@ -17,49 +27,20 @@ import {
   TOC_TITLE,
 } from '../const.js';
 import { CONTAINER_IMAGE } from '../container.js';
-import {
-  InputFormat,
-  ManuscriptMediaType,
-  detectInputFormat,
-  detectManuscriptMediaType,
-} from '../input/input-types.js';
-import {
-  OutputFormat,
-  checkOutputFormat,
-  checkPreflightMode,
-  checkRenderMode,
-  detectOutputFormat,
-} from '../output/output-types.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import { parsePackageName } from '../processor/theme.js';
 import { PageSize } from '../server.js';
 import {
-  DetailError,
-  cwd,
   debug,
-  isUrlString,
-  log,
+  cwd as defaultCwd,
+  isValidUri,
   logWarn,
-  openEpubToTmpDirectory,
-  parseJsonc,
   pathEquals,
-  prettifySchemaError,
   readJSON,
   statFileSync,
   touchTmpFile,
 } from '../util.js';
-import {
-  ArticleEntryObject,
-  BrowserType,
-  ContentsEntryObject,
-  CoverEntryObject,
-  EntryObject,
-  StructuredDocument,
-  StructuredDocumentSection,
-  ThemeObject,
-  VivliostyleConfigEntry,
-  VivliostyleConfigSchema,
-} from './schema.js';
+import { InlineOptions, ParsedBuildTask } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -97,6 +78,13 @@ export interface UriEntrySource {
   href: string;
   rootDir: string;
 }
+
+export const manuscriptMediaTypes = [
+  'text/markdown',
+  'text/html',
+  'application/xhtml+xml',
+] as const;
+export type ManuscriptMediaType = (typeof manuscriptMediaTypes)[number];
 
 export interface ManuscriptEntry {
   contentType: ManuscriptMediaType;
@@ -147,72 +135,72 @@ export interface CoverEntry {
 
 export type ParsedEntry = ManuscriptEntry | ContentsEntry | CoverEntry;
 
-export interface CliFlags {
-  input?: string;
-  configPath?: string;
-  targets?: Pick<OutputFormat, 'path' | 'format'>[];
-  theme?: string;
-  size?: string;
-  cropMarks?: boolean;
-  bleed?: string;
-  cropOffset?: string;
-  css?: string;
-  style?: string;
-  userStyle?: string;
-  singleDoc?: boolean;
-  quick?: boolean;
-  pressReady?: boolean;
-  title?: string;
-  author?: string;
-  language?: string;
-  /** @deprecated */ verbose?: boolean;
-  timeout?: number;
-  renderMode?: 'local' | 'docker';
-  preflight?: 'press-ready' | 'press-ready-local';
-  preflightOption?: string[];
-  sandbox?: boolean;
-  executableBrowser?: string;
-  image?: string;
-  http?: boolean;
-  viewer?: string;
-  viewerParam?: string;
-  browser?: 'chromium' | 'firefox' | 'webkit';
-  proxyServer?: string;
-  proxyBypass?: string;
-  proxyUser?: string;
-  proxyPass?: string;
-  readingProgression?: 'ltr' | 'rtl';
-  logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
-  ignoreHttpsErrors?: boolean;
-  /** @deprecated */ executableChromium?: string;
+export interface WebPublicationManifestConfig {
+  type: 'webpub';
+  manifestPath: string;
+  needToGenerateManifest: boolean;
 }
 
-export interface WebPublicationManifestConfig {
-  manifestPath: string;
-  needToGenerateManifest?: boolean;
+export interface EpubEntryConfig {
+  type: 'epub';
+  epubPath: string;
+  epubTmpOutputDir: string;
 }
-export interface EpubManifestConfig {
+
+export interface EpubOpfEntryConfig {
+  type: 'epub-opf';
   epubOpfPath: string;
 }
-export interface WebbookEntryConfig {
+
+export interface WebBookEntryConfig {
+  type: 'webbook';
   webbookEntryUrl: string;
 }
-export type ManifestConfig = XOR<
-  [WebPublicationManifestConfig, WebbookEntryConfig, EpubManifestConfig]
->;
+
+export type ViewerInputConfig =
+  | WebPublicationManifestConfig
+  | EpubEntryConfig
+  | EpubOpfEntryConfig
+  | WebBookEntryConfig;
+
+export interface PdfOutput {
+  format: 'pdf';
+  path: string;
+  renderMode: 'local' | 'docker';
+  preflight: 'press-ready' | 'press-ready-local' | null;
+  preflightOption: string[];
+}
+
+export interface WebPublicationOutput {
+  format: 'webpub';
+  path: string;
+}
+
+export interface EpubOutput {
+  format: 'epub';
+  path: string;
+  version: '3.0'; // Reserved for future updates
+}
+
+export type OutputConfig = PdfOutput | WebPublicationOutput | EpubOutput;
+
 export type DocumentProcessorFactory = (
   options: StringifyMarkdownOptions,
   metadata: Metadata,
 ) => Processor;
 
-export type MergedConfig = {
+export type ResolvedTaskConfig = {
   context: string;
   entryContextDir: string;
   workspaceDir: string;
   themesDir: string;
   entries: ParsedEntry[];
-  input: InputFormat;
-  outputs: OutputFormat[];
+  input: {
+    format: InputFormat;
+    entry: string;
+  };
+  viewerInput: ViewerInputConfig;
+  outputs: OutputConfig[];
   themeIndexes: Set<ParsedTheme>;
   rootThemes: ParsedTheme[];
   copyAsset: {
@@ -224,8 +212,7 @@ export type MergedConfig = {
     source: string;
     target: string;
   }[];
-  cliFlags: CliFlags;
-  tmpPrefix: string;
+  temporaryFilePrefix: string;
   size: PageSize | undefined;
   cropMarks: boolean;
   bleed: string | undefined;
@@ -264,7 +251,6 @@ export type MergedConfig = {
       }
     | undefined;
   image: string;
-  httpServer: boolean;
   viewer: string | undefined;
   viewerParam: string | undefined;
   logLevel: 'silent' | 'info' | 'verbose' | 'debug';
@@ -274,9 +260,9 @@ export type MergedConfig = {
     host: string | boolean;
     port: number;
   };
-} & ManifestConfig;
-
-const DEFAULT_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+  vite: UserConfig | undefined;
+  viteConfigFile: string | boolean;
+};
 
 const DEFAULT_ASSET_EXTENSIONS = [
   'png',
@@ -292,24 +278,12 @@ const DEFAULT_ASSET_EXTENSIONS = [
   'woff2',
 ];
 
-const require = createRequire(import.meta.url);
-
-export function validateTimeoutFlag(val: string) {
-  return Number.isFinite(+val) && +val > 0 ? +val * 1000 : DEFAULT_TIMEOUT;
-}
-
-export function contextResolve(
-  context: string,
-  loc: string | undefined,
-): string | undefined {
-  return loc && upath.resolve(context, loc);
-}
-
-function normalizeEntry(e: string | EntryObject): EntryObject {
-  if (typeof e === 'object') {
-    return e;
-  }
-  return { path: e };
+function isManuscriptMediaType(
+  mediaType: string | false,
+): mediaType is ManuscriptMediaType {
+  return !!(
+    mediaType && manuscriptMediaTypes.includes(mediaType as ManuscriptMediaType)
+  );
 }
 
 // parse theme locator
@@ -328,7 +302,7 @@ export function parseTheme({
     typeof theme === 'string' ? { specifier: theme, import: undefined } : theme;
 
   // url
-  if (isUrlString(specifier)) {
+  if (isValidUri(specifier)) {
     return {
       type: 'uri',
       name: upath.basename(specifier),
@@ -431,180 +405,51 @@ function parseFileMetadata({
         );
     }
   } else {
-    const $ = cheerio.load(fs.readFileSync(sourcePath, 'utf8'));
-    title = $('title')?.text() || undefined;
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    title = content.match(/<title>([^<]*)<\/title>/)?.[1] || undefined;
   }
   return { title, themes };
 }
 
-export async function loadVivliostyleConfig(configPath: string) {
-  let config: unknown;
-  let jsonRaw: string | undefined;
-  try {
-    if (upath.extname(configPath) === '.json') {
-      jsonRaw = fs.readFileSync(configPath, 'utf8');
-      config = parseJsonc(jsonRaw);
-    } else {
-      // Clear require cache to reload CJS config files
-      delete require.cache[require.resolve(configPath)];
-      const url = pathToFileURL(configPath);
-      // Invalidate cache for ESM config files
-      // https://github.com/nodejs/node/issues/49442
-      url.search = `version=${Date.now()}`;
-      config = (await import(/* @vite-ignore */ url.href)).default;
-      jsonRaw = JSON.stringify(config, null, 2);
-    }
-  } catch (error) {
-    const thrownError = error as Error;
-    throw new DetailError(
-      `An error occurred on loading a config file: ${configPath}`,
-      thrownError.stack ?? thrownError.message,
-    );
-  }
-
-  const result = v.safeParse(VivliostyleConfigSchema, config);
-  if (result.success) {
-    return result.output;
-  } else {
-    const errorString = prettifySchemaError(jsonRaw, result.issues);
-    throw new DetailError(
-      `Validation of vivliostyle config failed. Please check the schema: ${configPath}`,
-      errorString,
-    );
-  }
-}
-
-export async function collectVivliostyleConfig<T extends CliFlags>(
-  _cliFlags: T,
-): Promise<{
-  cliFlags: T;
-  config?: VivliostyleConfigEntry[];
-}> {
-  const cliFlags = { ..._cliFlags };
-  let config: VivliostyleConfigEntry[] | undefined;
-  let configPath: string | undefined;
-  if (cliFlags.configPath) {
-    configPath = upath.resolve(cwd, cliFlags.configPath);
-  } else {
-    configPath = ['.js', '.mjs', '.cjs']
-      .map((ext) => upath.join(cwd, `vivliostyle.config${ext}`))
-      .find((p) => fs.existsSync(p));
-  }
-  if (configPath) {
-    config = [await loadVivliostyleConfig(configPath)].flat();
-    cliFlags.configPath = configPath;
-  } else if (
-    cliFlags.input &&
-    upath.basename(cliFlags.input).startsWith('vivliostyle.config')
-  ) {
-    // Load an input argument as a Vivliostyle config
-    try {
-      const inputPath = upath.resolve(cwd, cliFlags.input);
-      const inputConfig = await loadVivliostyleConfig(inputPath);
-      cliFlags.configPath = inputPath;
-      cliFlags.input = undefined;
-      config = [inputConfig].flat();
-    } catch (_err) {
-      // Ignore here because input may be a normal manuscript file
-    }
-  }
-
-  if (cliFlags.executableChromium) {
-    logWarn(
-      chalk.yellowBright(
-        "'--executable-chromium' option was deprecated and will be removed in a future release. Please replace with '--executable-browser' option.",
-      ),
-    );
-    cliFlags.executableBrowser = cliFlags.executableChromium;
-  }
-
-  if (cliFlags.verbose) {
-    logWarn(
-      chalk.yellowBright(
-        "'--verbose' option was deprecated and will be removed in a future release. Please replace with '--log-level verbose' option.",
-      ),
-    );
-  }
-
-  if (cliFlags.sandbox === false) {
-    logWarn(
-      chalk.yellowBright(
-        "'--no-sandbox' option was deprecated and will be removed in a future release. It is no longer necessary because the sandbox is disabled by default.",
-      ),
-    );
-  }
-
-  const configEntries = (config ?? []).flat();
-  if (configEntries.some((config) => config.includeAssets)) {
-    logWarn(
-      chalk.yellowBright(
-        "'includeAssets' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'copyAsset.includes' property instead.",
-      ),
-    );
-  }
-
-  if (configEntries.some((config) => config.tocTitle)) {
-    logWarn(
-      chalk.yellowBright(
-        "'tocTitle' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'toc.title' property instead.",
-      ),
-    );
-  }
-
-  return { cliFlags, config };
-}
-
-export async function mergeConfig<T extends CliFlags>(
-  cliFlags: T,
-  config: VivliostyleConfigEntry | undefined,
-  context: string,
-  prevConfig?: MergedConfig,
-): Promise<MergedConfig> {
+export function resolveTaskConfig(
+  config: ParsedBuildTask,
+  options: InlineOptions,
+): ResolvedTaskConfig {
+  const context = options.cwd ?? defaultCwd;
   debug('context directory', context);
-  debug('cliFlags', cliFlags);
+  debug('inlineOptions', options);
   debug('vivliostyle.config.js', config);
-  let entryContextDir: string;
-  let workspaceDir: string;
 
-  if (cliFlags.input && !config && isUrlString(cliFlags.input)) {
-    workspaceDir = entryContextDir = cwd;
-  } else {
-    entryContextDir = upath.resolve(
-      cliFlags.input && !config
-        ? upath.dirname(upath.resolve(context, cliFlags.input))
-        : (contextResolve(context, config?.entryContext) ?? context),
-    );
-    workspaceDir =
-      contextResolve(context, config?.workspaceDir) ?? entryContextDir;
-  }
-  const themesDir = upath.join(workspaceDir, 'themes');
+  const entryContextDir = config.entryContext
+    ? upath.resolve(context, config.entryContext)
+    : context;
+  const workspaceDir = upath.resolve(
+    context,
+    config.workspaceDir ?? '.vivliostyle',
+  );
+  const themesDir = upath.resolve(workspaceDir, 'themes');
 
-  const language = cliFlags.language ?? config?.language ?? undefined;
-  const readingProgression =
-    cliFlags.readingProgression ?? config?.readingProgression ?? undefined;
-  const sizeFlag = cliFlags.size ?? config?.size;
-  const size = sizeFlag ? parsePageSize(sizeFlag) : undefined;
-  const cropMarks = cliFlags.cropMarks ?? false;
-  const bleed = cliFlags.bleed;
-  const cropOffset = cliFlags.cropOffset;
-  const css = cliFlags.css;
+  const language = config.language;
+  const readingProgression = config.readingProgression;
+  const size = config.size ? parsePageSize(config.size) : undefined;
+  const cropMarks = options.cropMarks ?? false;
+  const bleed = options.bleed;
+  const cropOffset = options.cropOffset;
+  const css = options.css;
   const customStyle =
-    cliFlags.style &&
-    (isUrlString(cliFlags.style)
-      ? cliFlags.style
-      : pathToFileURL(cliFlags.style).href);
+    options.style &&
+    (isValidUri(options.style)
+      ? options.style
+      : pathToFileURL(options.style).href);
   const customUserStyle =
-    cliFlags.userStyle &&
-    (isUrlString(cliFlags.userStyle)
-      ? cliFlags.userStyle
-      : pathToFileURL(cliFlags.userStyle).href);
-  const singleDoc = cliFlags.singleDoc ?? false;
-  const quick = cliFlags.quick ?? false;
-  const pressReady = cliFlags.pressReady ?? config?.pressReady ?? false;
-  const renderMode = cliFlags.renderMode ?? 'local';
-  const preflight = cliFlags.preflight ?? (pressReady ? 'press-ready' : null);
-  const preflightOption = cliFlags.preflightOption ?? [];
-  const tmpPrefix = prevConfig?.tmpPrefix || `.vs-${Date.now()}.`;
+    options.userStyle &&
+    (isValidUri(options.userStyle)
+      ? options.userStyle
+      : pathToFileURL(options.userStyle).href);
+  const singleDoc = options.singleDoc ?? false;
+  const quick = options.quick ?? false;
+  const temporaryFilePrefix =
+    config.temporaryFilePrefix ?? `.vs-${Date.now()}.`;
 
   const documentProcessorFactory = config?.documentProcessor ?? VFM;
 
@@ -614,208 +459,127 @@ export async function mergeConfig<T extends CliFlags>(
     disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
   };
 
-  const timeout = cliFlags.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT;
-  const sandbox = cliFlags.sandbox ?? false;
-  const browserType = cliFlags.browser ?? config?.browser ?? 'chromium';
+  const timeout = config.timeout ?? 120_000; // 2 minutes
+  const sandbox = options.sandbox ?? false;
+  const browserType = config.browser ?? 'chromium';
   const proxyServer =
-    cliFlags.proxyServer ?? process.env.HTTP_PROXY ?? undefined;
+    options.proxyServer ?? process.env.HTTP_PROXY ?? undefined;
   const proxy = proxyServer
     ? {
         server: proxyServer,
-        bypass: cliFlags.proxyBypass ?? process.env.NOPROXY ?? undefined,
-        username: cliFlags.proxyUser,
-        password: cliFlags.proxyPass,
+        bypass: options.proxyBypass ?? process.env.NOPROXY ?? undefined,
+        username: options.proxyUser,
+        password: options.proxyPass,
       }
     : undefined;
   const executableBrowser =
-    cliFlags.executableBrowser ?? getExecutableBrowserPath(browserType);
-  const image = cliFlags.image ?? config?.image ?? CONTAINER_IMAGE;
-  const httpServer = cliFlags.http ?? config?.http ?? false;
-  const viewer = cliFlags.viewer ?? config?.viewer ?? undefined;
-  const viewerParam = cliFlags.viewerParam ?? config?.viewerParam ?? undefined;
-  const logLevel =
-    cliFlags.logLevel ??
-    ((cliFlags.verbose && 'verbose') || undefined) ??
-    'silent';
-  const ignoreHttpsErrors = cliFlags.ignoreHttpsErrors ?? false;
-  const base = config?.base?.replace(/\/+$/, '') ?? '/vivliostyle';
+    options.executableBrowser ?? getExecutableBrowserPath(browserType);
+  const image = config.image ?? CONTAINER_IMAGE;
+  const viewer = config.viewer ?? undefined;
+  const viewerParam = config.viewerParam ?? undefined;
+  const logLevel = options.logLevel ?? 'silent';
+  const ignoreHttpsErrors = options.ignoreHttpsErrors ?? false;
+  const base = config.base ?? '/vivliostyle';
   const server = {
-    host: config?.server?.host ?? false,
-    port: config?.server?.port ?? 13000,
+    host: config.server?.host ?? false,
+    port: config.server?.port ?? 13000,
   };
+  const vite = config.vite;
+  const viteConfigFile = config.viteConfigFile ?? true;
 
-  const rootThemes = cliFlags.theme
-    ? [
-        parseTheme({
-          theme: cliFlags.theme,
-          context: cwd,
-          workspaceDir,
-          themesDir,
-        }),
-      ]
-    : config?.theme
-      ? [config.theme].flat().map((theme) =>
-          parseTheme({
-            theme,
-            context,
-            workspaceDir,
-            themesDir,
-          }),
-        )
-      : [];
+  const rootThemes =
+    config.theme?.map((theme) =>
+      parseTheme({
+        theme,
+        context,
+        workspaceDir,
+        themesDir,
+      }),
+    ) ?? [];
   const themeIndexes = new Set(rootThemes);
 
-  const outputs = ((): OutputFormat[] => {
-    if (cliFlags.targets?.length) {
-      return cliFlags.targets.map(({ path: outputPath, format }) => {
-        if (format === 'pdf') {
-          return {
-            path: upath.resolve(outputPath),
-            format,
-            renderMode,
-            preflight,
-            preflightOption,
-          };
-        } else if (format === 'epub') {
-          return {
-            path: upath.resolve(outputPath),
-            format,
-            version: EPUB_OUTPUT_VERSION,
-          };
-        } else {
-          return {
-            path: upath.resolve(outputPath),
-            format,
-          };
-        }
-      });
-    }
-    if (config?.output) {
-      return (
-        Array.isArray(config.output) ? config.output : [config.output]
-      ).map((target): OutputFormat => {
-        const targetObj =
-          typeof target === 'string' ? { path: target } : target;
-        const outputPath = upath.resolve(context, targetObj.path);
-        const format = targetObj.format ?? detectOutputFormat(outputPath);
-        if (!checkOutputFormat(format)) {
-          throw new Error(`Unknown format: ${format}`);
-        }
-        if (format === 'pdf') {
-          const outputRenderMode = targetObj.renderMode ?? renderMode;
-          const outputPreflight = targetObj.preflight ?? preflight;
-          if (!checkRenderMode(outputRenderMode)) {
-            throw new Error(`Unknown renderMode: ${outputRenderMode}`);
-          }
-          if (
-            outputPreflight !== null &&
-            !checkPreflightMode(outputPreflight)
-          ) {
-            throw new Error(`Unknown preflight: ${outputPreflight}`);
-          }
-          return {
-            ...targetObj,
-            path: outputPath,
-            format,
-            renderMode: outputRenderMode,
-            preflight: outputPreflight,
-            preflightOption: targetObj.preflightOption ?? preflightOption,
-          };
-        } else if (format === 'epub') {
-          return {
-            ...targetObj,
-            path: outputPath,
-            format,
-            version: EPUB_OUTPUT_VERSION,
-          };
-        } else {
-          return { ...targetObj, path: outputPath, format };
+  const outputs = ((): OutputConfig[] => {
+    const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
+      format: 'pdf',
+      renderMode: 'local',
+      preflight: config.pressReady ? 'press-ready' : null,
+      preflightOption: [],
+    };
+    if (config.output) {
+      return config.output.map((target): OutputConfig => {
+        const outputPath = upath.resolve(context, target.path);
+        const format = target.format;
+        switch (format) {
+          case 'pdf':
+            return {
+              ...defaultPdfOptions,
+              ...target,
+              format,
+              path: outputPath,
+            };
+          case 'epub':
+            return {
+              ...target,
+              format,
+              path: outputPath,
+              version: EPUB_OUTPUT_VERSION,
+            };
+          case 'webpub':
+            return {
+              ...target,
+              format,
+              path: outputPath,
+            };
+          default:
+            return format satisfies never;
         }
       });
     }
     // Outputs a pdf file if any output configuration is not set
-    const filename = config?.title ? `${config.title}.pdf` : 'output.pdf';
+    const filename = config.title ? `${config.title}.pdf` : 'output.pdf';
     return [
       {
+        ...defaultPdfOptions,
         path: upath.resolve(context, filename),
-        format: 'pdf',
-        renderMode,
-        preflight,
-        preflightOption,
       },
     ];
   })();
 
-  const cover = ((): MergedConfig['cover'] => {
-    if (!config?.cover) {
-      return undefined;
-    }
-    const obj =
-      typeof config.cover === 'string' ? { src: config.cover } : config.cover;
-    if (!('htmlPath' in obj)) {
-      obj.htmlPath = COVER_HTML_FILENAME;
-    }
-    return {
-      src: upath.resolve(entryContextDir, obj.src),
-      name: obj.name || COVER_HTML_IMAGE_ALT,
-      htmlPath:
-        (obj.htmlPath && upath.resolve(workspaceDir, obj.htmlPath)) ||
-        undefined,
-    };
-  })();
+  const cover = config.cover && {
+    src: upath.resolve(entryContextDir, config.cover.src),
+    name: config.cover.name || COVER_HTML_IMAGE_ALT,
+    htmlPath:
+      'htmlPath' in config.cover && !config.cover.htmlPath
+        ? undefined
+        : upath.resolve(
+            workspaceDir,
+            config.cover.htmlPath || COVER_HTML_FILENAME,
+          ),
+  };
 
-  const copyAsset = (() => {
-    const {
-      includes: _includes,
-      excludes = [],
-      includeFileExtensions = [],
-      excludeFileExtensions = [],
-    } = config?.copyAsset || {};
-    const includes = _includes || [config?.includeAssets ?? []].flat();
-    const notAllowedPatternRe = /(^\s*[/\\]|^(.*[/\\])?\s*\.\.\s*([/\\].*)?$)/g;
-    // See the special characters of glob pattern
-    // https://github.com/micromatch/picomatch
-    const notAllowedExtensionRe = /([\\/*?@+!|(){}[\]]|\.\.|^\s*\.)/g;
-    Object.entries({ includes, excludes }).forEach(([propName, patterns]) => {
-      patterns.forEach((pattern) => {
-        if (notAllowedPatternRe.test(pattern)) {
-          throw new Error(
-            `Invalid pattern was found in copyAsset.${propName} option: ${pattern}`,
-          );
-        }
-      });
-    });
-    Object.entries({ includeFileExtensions, excludeFileExtensions }).forEach(
-      ([propName, patterns]) => {
-        patterns.forEach((pattern) => {
-          if (notAllowedExtensionRe.test(pattern)) {
-            throw new Error(
-              `Invalid pattern was found in copyAsset.${propName} option: ${pattern}`,
-            );
-          }
-        });
-      },
-    );
-    return {
-      includes,
-      excludes,
-      fileExtensions: [
-        ...new Set([...DEFAULT_ASSET_EXTENSIONS, ...includeFileExtensions]),
-      ].filter((ext) => !excludeFileExtensions.includes(ext)),
-    };
-  })();
+  const copyAsset = {
+    includes: config.copyAsset?.includes ?? config.includeAssets ?? [],
+    excludes: config.copyAsset?.excludes ?? [],
+    fileExtensions: [
+      ...new Set([
+        ...DEFAULT_ASSET_EXTENSIONS,
+        ...(config.copyAsset?.includeFileExtensions ?? []),
+      ]),
+    ].filter(
+      (ext) => !(config.copyAsset?.excludeFileExtensions ?? []).includes(ext),
+    ),
+  };
 
   const commonOpts: CommonOpts = {
     context,
     entryContextDir,
     workspaceDir,
     themesDir,
-    copyAsset,
     outputs,
     themeIndexes,
     rootThemes,
-    cliFlags,
-    tmpPrefix,
+    copyAsset,
+    temporaryFilePrefix,
     size,
     cropMarks,
     bleed,
@@ -836,104 +600,71 @@ export async function mergeConfig<T extends CliFlags>(
     browserType,
     proxy,
     image,
-    httpServer,
     viewer,
     viewerParam,
     logLevel,
     ignoreHttpsErrors,
     base,
     server,
+    vite,
+    viteConfigFile,
   };
-  if (!cliFlags.input && !config) {
-    throw new Error(
-      'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
-    );
-  }
-  const parsedConfig = cliFlags.input
-    ? await composeSingleInputConfig(commonOpts, cliFlags, config, prevConfig)
-    : await composeProjectConfig(
-        commonOpts,
-        cliFlags,
-        config,
-        context,
-        prevConfig,
-      );
-  debug('parsedConfig', JSON.stringify(parsedConfig, null, 2));
-  return parsedConfig;
+  const resolvedConfig =
+    !options.config && options.input
+      ? composeSingleInputConfig(commonOpts, config, options.input)
+      : composeProjectConfig(commonOpts, config);
+  debug('resolvedConfig', JSON.stringify(resolvedConfig, null, 2));
+  return resolvedConfig;
 }
 
 type CommonOpts = Omit<
-  MergedConfig,
-  | 'input'
-  | 'entries'
-  | 'exportAliases'
-  | 'manifestPath'
-  | 'needToGenerateManifest'
-  | 'epubOpfPath'
-  | 'webbookEntryUrl'
-  | 'title'
-  | 'author'
+  ResolvedTaskConfig,
+  'input' | 'viewerInput' | 'entries' | 'exportAliases' | 'title' | 'author'
 >;
 
-async function composeSingleInputConfig<T extends CliFlags>(
+function composeSingleInputConfig(
   otherConfig: CommonOpts,
-  cliFlags: T,
-  config: VivliostyleConfigEntry | undefined,
-  prevConfig?: MergedConfig,
-): Promise<MergedConfig> {
+  config: ParsedBuildTask,
+  input: NonNullable<InlineOptions['input']>,
+): ResolvedTaskConfig {
   debug('entering single entry config mode');
 
+  const { entryContextDir, workspaceDir, temporaryFilePrefix, rootThemes } =
+    otherConfig;
+
   let sourcePath: string;
-  let input: InputFormat;
-  const title = cliFlags.title ?? config?.title;
-  const author = cliFlags.author ?? config?.author;
-  const workspaceDir = otherConfig.workspaceDir;
+  const inputFormat = input.format;
+  const title = config?.title;
+  const author = config?.author;
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
 
-  if (cliFlags.input && isUrlString(cliFlags.input)) {
-    sourcePath = cliFlags.input;
-    input = { format: 'webbook', entry: sourcePath };
+  if (!isValidUri(input.entry)) {
+    sourcePath = input.entry;
   } else {
-    sourcePath = upath.resolve(cliFlags.input);
-    input = detectInputFormat(sourcePath);
+    sourcePath = upath.resolve(entryContextDir, input.entry);
     // Check file exists
     statFileSync(sourcePath);
   }
 
   if (input.format === 'markdown') {
     // Single input file; create temporary file
-    const contentType = detectManuscriptMediaType(sourcePath);
+    const contentType = 'text/markdown';
     const metadata = parseFileMetadata({
       contentType,
       sourcePath,
       workspaceDir,
     });
-    const relDir = upath.relative(
-      otherConfig.entryContextDir,
-      upath.dirname(sourcePath),
-    );
-
-    let target: string;
-    if (prevConfig) {
-      const prevEntry = prevConfig.entries.find(
-        (e) => e.source?.type === 'file' && e.source.pathname === sourcePath,
-      );
-      if (!prevEntry) {
-        throw new Error('Failed to reload config');
-      }
-      target = prevEntry.target;
-    } else {
-      target = upath
-        .resolve(
-          workspaceDir,
-          relDir,
-          `${otherConfig.tmpPrefix}${upath.basename(sourcePath)}`,
-        )
-        .replace(/\.md$/, '.html');
-      await touchTmpFile(target);
-    }
-    const themes = metadata.themes ?? [...otherConfig.rootThemes];
+    const relDir = upath.relative(entryContextDir, upath.dirname(sourcePath));
+    const target = upath
+      .resolve(
+        workspaceDir,
+        relDir,
+        `${temporaryFilePrefix}${upath.basename(sourcePath)}`,
+      )
+      .replace(/\.md$/, '.html');
+    touchTmpFile(target);
+    const themes = metadata.themes ?? [...rootThemes];
     themes.forEach((t) => otherConfig.themeIndexes.add(t));
     entries.push({
       contentType,
@@ -956,71 +687,84 @@ async function composeSingleInputConfig<T extends CliFlags>(
   }
 
   let fallbackTitle: string | undefined;
-  const manifestDeclaration = await (async (): Promise<ManifestConfig> => {
-    if (input.format === 'markdown') {
-      // create temporary manifest file
-      const manifestPath = upath.resolve(
-        workspaceDir,
-        `${otherConfig.tmpPrefix}${MANIFEST_FILENAME}`,
-      );
-      await touchTmpFile(manifestPath);
-      exportAliases.push({
-        source: manifestPath,
-        target: upath.resolve(workspaceDir, MANIFEST_FILENAME),
-      });
-      fallbackTitle =
-        entries.length === 1 && entries[0].title
-          ? (entries[0].title as string)
-          : upath.basename(sourcePath);
-      return { manifestPath, needToGenerateManifest: true };
-    } else if (input.format === 'html' || input.format === 'webbook') {
-      const url = isUrlString(input.entry)
-        ? new URL(input.entry)
-        : pathToFileURL(input.entry);
-      // Ensures trailing slash or explicit HTML extensions
-      if (
-        (url.protocol === 'http:' || url.protocol === 'https:') &&
-        !url.pathname.endsWith('/') &&
-        !/\.html?$/.test(url.pathname)
-      ) {
-        url.pathname = `${url.pathname}/`;
-      }
-      return {
-        webbookEntryUrl: url.href,
-      };
-    } else if (input.format === 'pub-manifest') {
-      return { manifestPath: input.entry };
-    } else if (input.format === 'epub-opf') {
-      return { epubOpfPath: input.entry };
-    } else if (input.format === 'epub') {
-      const { epubOpfPath } = await openEpubToTmpDirectory(input.entry);
-      return { epubOpfPath };
-    } else {
-      throw new Error('Failed to export manifest declaration');
+  let viewerInput: ViewerInputConfig;
+
+  if (inputFormat === 'markdown') {
+    // create temporary manifest file
+    const manifestPath = upath.resolve(
+      workspaceDir,
+      `${temporaryFilePrefix}${MANIFEST_FILENAME}`,
+    );
+    touchTmpFile(manifestPath);
+    exportAliases.push({
+      source: manifestPath,
+      target: upath.resolve(workspaceDir, MANIFEST_FILENAME),
+    });
+    fallbackTitle =
+      entries.length === 1 && entries[0].title
+        ? (entries[0].title as string)
+        : upath.basename(sourcePath);
+    viewerInput = {
+      type: 'webpub',
+      manifestPath,
+      needToGenerateManifest: true,
+    };
+  } else if (inputFormat === 'webbook') {
+    const url = isValidUri(sourcePath)
+      ? new URL(sourcePath)
+      : pathToFileURL(sourcePath);
+    // Ensures trailing slash or explicit HTML extensions
+    if (
+      /^https?:/i.test(url.protocol) &&
+      !url.pathname.endsWith('/') &&
+      !/\.html?$/.test(url.pathname)
+    ) {
+      url.pathname = `${url.pathname}/`;
     }
-  })();
+    viewerInput = { type: 'webbook', webbookEntryUrl: url.href };
+  } else if (inputFormat === 'pub-manifest') {
+    viewerInput = {
+      type: 'webpub',
+      manifestPath: sourcePath,
+      needToGenerateManifest: false,
+    };
+  } else if (inputFormat === 'epub-opf') {
+    viewerInput = { type: 'epub-opf', epubOpfPath: sourcePath };
+  } else if (inputFormat === 'epub') {
+    viewerInput = {
+      type: 'epub',
+      epubPath: sourcePath,
+      epubTmpOutputDir: upath.join(
+        sourcePath,
+        `../${temporaryFilePrefix}${upath.basename(sourcePath)}`,
+      ),
+    };
+  } else {
+    return inputFormat satisfies never;
+  }
 
   return {
     ...otherConfig,
-    ...manifestDeclaration,
     entries,
-    input,
+    input: {
+      format: inputFormat,
+      entry: sourcePath,
+    },
+    viewerInput,
     exportAliases,
     title: title || fallbackTitle,
-    author: author,
+    author,
   };
 }
 
-async function composeProjectConfig<T extends CliFlags>(
+function composeProjectConfig(
   otherConfig: CommonOpts,
-  cliFlags: T,
-  config: VivliostyleConfigEntry | undefined,
-  context: string,
-  prevConfig?: MergedConfig,
-): Promise<MergedConfig> {
+  config: ParsedBuildTask,
+): ResolvedTaskConfig {
   debug('entering project config mode');
 
   const {
+    context,
     entryContextDir,
     workspaceDir,
     themesDir,
@@ -1046,23 +790,15 @@ async function composeProjectConfig<T extends CliFlags>(
       : server.host;
   const localOrigin = `http://${host}:${server.port}`;
 
-  const tocConfig = (() => {
-    const c =
-      typeof config?.toc === 'object'
-        ? config.toc
-        : typeof config?.toc === 'string'
-          ? { htmlPath: config.toc }
-          : {};
-    return {
-      tocTitle: c.title ?? config?.tocTitle ?? TOC_TITLE,
-      target: upath.resolve(workspaceDir, c.htmlPath ?? TOC_FILENAME),
-      sectionDepth: c.sectionDepth ?? 0,
-      transform: {
-        transformDocumentList: c.transformDocumentList,
-        transformSectionList: c.transformSectionList,
-      },
-    };
-  })();
+  const tocConfig = {
+    tocTitle: config.toc?.title ?? config?.tocTitle ?? TOC_TITLE,
+    target: upath.resolve(workspaceDir, config.toc?.htmlPath ?? TOC_FILENAME),
+    sectionDepth: config.toc?.sectionDepth ?? 0,
+    transform: {
+      transformDocumentList: config.toc?.transformDocumentList,
+      transformSectionList: config.toc?.transformSectionList,
+    },
+  };
 
   const ensureCoverImage = (src?: string) => {
     const absPath = src && upath.resolve(entryContextDir, src);
@@ -1074,10 +810,8 @@ async function composeProjectConfig<T extends CliFlags>(
     return absPath;
   };
 
-  const projectTitle: string | undefined =
-    cliFlags.title ?? config?.title ?? pkgJson?.name;
-  const projectAuthor: string | undefined =
-    cliFlags.author ?? config?.author ?? pkgJson?.author;
+  const projectTitle: string | undefined = config?.title ?? pkgJson?.name;
+  const projectAuthor: string | undefined = config?.author ?? pkgJson?.author;
 
   const isContentsEntry = (entry: EntryObject): entry is ContentsEntryObject =>
     entry.rel === 'contents';
@@ -1086,7 +820,7 @@ async function composeProjectConfig<T extends CliFlags>(
   const isArticleEntry = (entry: EntryObject): entry is ArticleEntryObject =>
     !isContentsEntry(entry) && !isCoverEntry(entry);
 
-  async function parseEntry(entry: EntryObject): Promise<ParsedEntry> {
+  function parseEntry(entry: EntryObject): ParsedEntry {
     const getInputInfo = (
       entryPath: string,
     ):
@@ -1107,7 +841,13 @@ async function composeProjectConfig<T extends CliFlags>(
       }
       const pathname = upath.resolve(entryContextDir, entryPath);
       statFileSync(pathname);
-      const contentType = detectManuscriptMediaType(pathname);
+      const contentType = mime(pathname);
+      if (!isManuscriptMediaType(contentType)) {
+        throw new Error(
+          `Invalid manuscript type ${contentType} detected: ${entry}`,
+        );
+      }
+
       return {
         type: 'file',
         pathname,
@@ -1184,10 +924,10 @@ async function composeProjectConfig<T extends CliFlags>(
       ) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
-          `${otherConfig.tmpPrefix}${upath.basename(target)}`,
+          `${otherConfig.temporaryFilePrefix}${upath.basename(target)}`,
         );
         exportAliases.push({ source: tmpPath, target });
-        await touchTmpFile(tmpPath);
+        touchTmpFile(tmpPath);
         target = tmpPath;
       }
       const parsedEntry: ContentsEntry = {
@@ -1236,10 +976,10 @@ async function composeProjectConfig<T extends CliFlags>(
       ) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
-          `${otherConfig.tmpPrefix}${upath.basename(target)}`,
+          `${otherConfig.temporaryFilePrefix}${upath.basename(target)}`,
         );
         exportAliases.push({ source: tmpPath, target });
-        await touchTmpFile(tmpPath);
+        touchTmpFile(tmpPath);
         target = tmpPath;
       }
       const parsedEntry: CoverEntry = {
@@ -1283,17 +1023,10 @@ async function composeProjectConfig<T extends CliFlags>(
     }
 
     /* v8 ignore next */
-    throw new Error('Unknown entry type');
+    return entry satisfies never;
   }
 
-  const entries: ParsedEntry[] = await Promise.all(
-    [config?.entry || []].flat().map(normalizeEntry).map(parseEntry),
-  );
-  if (!entries.length) {
-    throw new Error(
-      'The entry fields seems to be empty. Make sure your Vivliostyle configuration.',
-    );
-  }
+  const entries = config.entry.map(parseEntry);
 
   let fallbackProjectTitle: string | undefined;
   if (!projectTitle) {
@@ -1301,13 +1034,6 @@ async function composeProjectConfig<T extends CliFlags>(
       fallbackProjectTitle = entries[0].title;
     } else {
       fallbackProjectTitle = upath.basename(outputs[0].path);
-      log(
-        `\n${chalk.yellow(
-          'Could not find any appropriate publication title. We set ',
-        )}${chalk.bold.yellow(`"${fallbackProjectTitle}"`)}${chalk.yellow(
-          ' as a fallback.',
-        )}`,
-      );
     }
   }
   if (!!config?.toc && !entries.find(({ rel }) => rel === 'contents')) {
@@ -1328,13 +1054,6 @@ async function composeProjectConfig<T extends CliFlags>(
     });
   }
 
-  const coverEntires = entries.filter(({ rel }) => rel === 'cover');
-  if (coverEntires.length !== new Set(coverEntires.map((v) => v.target)).size) {
-    throw new Error(
-      'Multiple cover entries which has same output were found. Each cover entries must have an unique path.',
-    );
-  }
-
   return {
     ...otherConfig,
     entries,
@@ -1342,10 +1061,13 @@ async function composeProjectConfig<T extends CliFlags>(
       format: 'pub-manifest',
       entry: upath.join(workspaceDir, MANIFEST_FILENAME),
     },
+    viewerInput: {
+      type: 'webpub',
+      manifestPath: upath.join(workspaceDir, MANIFEST_FILENAME),
+      needToGenerateManifest: true,
+    },
     exportAliases,
-    manifestPath: upath.join(workspaceDir, MANIFEST_FILENAME),
     title: projectTitle || fallbackProjectTitle,
     author: projectAuthor,
-    needToGenerateManifest: true,
   };
 }

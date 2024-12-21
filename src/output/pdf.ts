@@ -12,12 +12,16 @@ import {
   launchBrowser,
 } from '../browser.js';
 import {
+  ManuscriptEntry,
+  PdfOutput,
+  ResolvedTaskConfig,
+} from '../config/resolve.js';
+import {
   collectVolumeArgs,
   runContainer,
   toContainerPath,
 } from '../container.js';
 import { Meta, Payload, TOCItem } from '../global-viewer.js';
-import { ManuscriptEntry, MergedConfig } from '../input/config.js';
 import { prepareServer } from '../server.js';
 import {
   checkContainerEnvironment,
@@ -29,10 +33,9 @@ import {
   pathEquals,
   startLogging,
 } from '../util.js';
-import type { PdfOutput } from './output-types.js';
 import { PageSizeData, PostProcess } from './pdf-postprocess.js';
 
-export type BuildPdfOptions = Omit<MergedConfig, 'outputs' | 'input'> & {
+export type BuildPdfOptions = Omit<ResolvedTaskConfig, 'outputs' | 'input'> & {
   input: string;
   target: PdfOutput;
 };
@@ -91,7 +94,6 @@ export async function buildPDF({
   timeout,
   entryContextDir,
   entries,
-  httpServer,
   viewer,
   viewerParam,
   logLevel,
@@ -103,7 +105,6 @@ export async function buildPDF({
   const { viewerFullUrl } = await prepareServer({
     input,
     workspaceDir,
-    httpServer,
     viewer,
     viewerParam,
     size,

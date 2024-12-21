@@ -1,19 +1,28 @@
-import { CliFlags } from './input/config.js';
-import { loadConfig } from './vite/plugin-util.js';
+import * as v from 'valibot';
+import { setupConfigFromFlags } from './commands/cli-flags.js';
+import { loadVivliostyleConfig, warnDeprecatedConfig } from './config/load.js';
+import { mergeInlineConfig } from './config/merge.js';
+import { resolveTaskConfig } from './config/resolve.js';
+import { VivliostyleInlineConfig } from './config/schema.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
-export async function createVitePlugin({
-  cliFlags = {},
-  context = process.cwd(),
-}: {
-  cliFlags?: CliFlags;
-  context?: string;
-} = {}) {
-  const config = await loadConfig({ cliFlags, context });
+export async function createVitePlugin(
+  inlineConfig: VivliostyleInlineConfig = {},
+) {
+  const parsed = v.parse(VivliostyleInlineConfig, inlineConfig);
+  const vivliostyleConfig =
+    (await loadVivliostyleConfig({
+      configPath: parsed.config,
+      cwd: parsed.cwd,
+    })) ?? setupConfigFromFlags(parsed);
+  warnDeprecatedConfig(vivliostyleConfig);
+  const merged = mergeInlineConfig(vivliostyleConfig, parsed);
+  const config = resolveTaskConfig(merged.tasks[0], merged.inlineOptions);
+
   return [
-    vsDevServerPlugin({ config }),
-    vsViewerPlugin({ config }),
+    vsDevServerPlugin({ config, options: merged.inlineOptions }),
+    vsViewerPlugin({ config, options: merged.inlineOptions }),
     // vsBrowserPlugin({ config }),
   ];
 }
