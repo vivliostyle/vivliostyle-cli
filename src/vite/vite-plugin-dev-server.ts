@@ -89,7 +89,7 @@ export function vsDevServerPlugin({
 
   async function reload(forceUpdate = false) {
     const prevConfig = config;
-    config = await reloadConfig(prevConfig, options);
+    config = await reloadConfig(prevConfig, options, server?.config);
 
     transformCache.clear();
     const needToUpdateManifest =

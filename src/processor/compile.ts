@@ -156,7 +156,6 @@ export async function transformManuscript(
     language,
     documentProcessorFactory,
     vfmOptions,
-    base,
   }: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
 ): Promise<string | undefined> {
   const source =

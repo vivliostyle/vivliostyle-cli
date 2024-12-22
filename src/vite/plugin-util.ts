@@ -1,9 +1,9 @@
+import { ResolvedConfig as ResolvedViteConfig } from 'vite';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig } from '../config/load.js';
 import { mergeConfig } from '../config/merge.js';
 import { ResolvedTaskConfig, resolveTaskConfig } from '../config/resolve.js';
 import { InlineOptions } from '../config/schema.js';
-// import { mergeConfig, MergedConfig } from '../input/config.js';
 
 const headStartTagRe = /<head[^>]*>/i;
 export const prependToHead = (html: string, content: string) =>
@@ -12,6 +12,7 @@ export const prependToHead = (html: string, content: string) =>
 export async function reloadConfig(
   prevConfig: ResolvedTaskConfig,
   options: InlineOptions,
+  resolvedViteConfig?: ResolvedViteConfig,
 ) {
   let config =
     (await loadVivliostyleConfig({
@@ -20,6 +21,7 @@ export async function reloadConfig(
     })) ?? setupConfigFromFlags(options);
   config = mergeConfig(config, {
     temporaryFilePrefix: prevConfig.temporaryFilePrefix,
+    server: resolvedViteConfig?.server,
   });
   const taskConfig = resolveTaskConfig(config.tasks[0], config.inlineOptions);
   return taskConfig;
