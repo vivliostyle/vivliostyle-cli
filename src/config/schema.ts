@@ -907,6 +907,10 @@ export const VivliostyleInlineConfig = v.pipe(
           `true to ignore HTTPS errors when Playwright browser opens a new page.`,
         ),
       ),
+      openViewer: v.pipe(
+        v.boolean(),
+        v.description(`Open a browser to display the document preview.`),
+      ),
     }),
   ),
   v.check(
@@ -955,4 +959,5 @@ export type InlineOptions = Pick<
   | 'proxyPass'
   | 'logLevel'
   | 'ignoreHttpsErrors'
+  | 'openViewer'
 >;
