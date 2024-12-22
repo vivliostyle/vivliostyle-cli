@@ -6,16 +6,15 @@ export async function prepareViteConfig({
   vite,
   viteConfigFile,
 }: ResolvedTaskConfig) {
-  let viteConfig =
-    (viteConfigFile &&
-      (
-        await loadConfigFromFile(
-          { command: 'serve', mode: 'development' },
-          typeof viteConfigFile === 'string' ? viteConfigFile : undefined,
-          context,
-        )
-      )?.config) ||
-    {};
-  viteConfig = mergeViteConfig(viteConfig, vite || {});
-  return viteConfig;
+  const loadedViteConfig =
+    viteConfigFile &&
+    (
+      await loadConfigFromFile(
+        { command: 'serve', mode: 'development' },
+        typeof viteConfigFile === 'string' ? viteConfigFile : undefined,
+        context,
+      )
+    )?.config;
+  const viteConfig = mergeViteConfig(loadedViteConfig || {}, vite || {});
+  return { viteConfig, viteConfigLoaded: !!loadedViteConfig };
 }

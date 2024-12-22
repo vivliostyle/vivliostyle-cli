@@ -7,6 +7,7 @@ import { VivliostyleInlineConfig } from './config/schema.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
+import { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
 
 export async function createVitePlugin(
   inlineConfig: VivliostyleInlineConfig = {},
@@ -28,5 +29,6 @@ export async function createVitePlugin(
     vsDevServerPlugin({ config, options }),
     vsViewerPlugin({ config, options }),
     vsBrowserPlugin({ config, options }),
+    vsStaticServePlugin({ config, options }),
   ];
 }

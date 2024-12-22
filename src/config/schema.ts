@@ -648,9 +648,52 @@ export const BuildTask = v.pipe(
                   `Specify which port the server should listen on. (default: \`13000\`)`,
                 ),
               ),
+              proxy: v.pipe(
+                v.record(
+                  ValidString,
+                  v.union([
+                    v.pipe(
+                      v.custom<import('vite').ProxyOptions>((value) =>
+                        Boolean(value && typeof value === 'object'),
+                      ),
+                      v.metadata({
+                        typeString: 'import("vite").ProxyOptions',
+                      }),
+                    ),
+                    ValidString,
+                  ]),
+                ),
+                v.description(
+                  `Specify custom proxy rules for the Vivliostyle preview server.`,
+                ),
+              ),
             }),
           ),
           v.description(`Options for the preview server.`),
+        ),
+        static: v.pipe(
+          v.record(
+            v.pipe(
+              ValidString,
+              v.regex(/^\//, 'Base path must start with a slash'),
+              v.transform((value) => value.replace(/\/+$/, '')),
+            ),
+            v.pipe(
+              v.union([v.array(ValidString), ValidString]),
+              v.transform((input) => [input].flat()),
+            ),
+          ),
+          v.description(`
+            Specify static files to be served by the Vivliostyle preview server.
+            \`\`\`js
+            export default {
+              static: {
+                '/static': 'path/to/static',
+                '/': ['root1', 'root2'],
+              },
+            };
+            \`\`\`
+          `),
         ),
         temporaryFilePrefix: v.pipe(
           ValidString,
@@ -767,8 +810,7 @@ export const VivliostyleInlineConfig = v.pipe(
         v.description(`Output file name or directory.`),
       ),
       theme: v.pipe(
-        v.union([v.array(ValidString), ValidString]),
-        v.transform((input) => [input].flat()),
+        ThemeSpecifier,
         v.description(`Theme path or package name.`),
       ),
       size: v.pipe(
@@ -911,6 +953,12 @@ export const VivliostyleInlineConfig = v.pipe(
         v.boolean(),
         v.description(`Open a browser to display the document preview.`),
       ),
+      enableStaticServe: v.pipe(
+        v.boolean(),
+        v.description(
+          `Enable static file serving as configured in the Vivliostyle config file.`,
+        ),
+      ),
     }),
   ),
   v.check(
@@ -960,4 +1008,5 @@ export type InlineOptions = Pick<
   | 'logLevel'
   | 'ignoreHttpsErrors'
   | 'openViewer'
+  | 'enableStaticServe'
 >;

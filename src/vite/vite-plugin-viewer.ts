@@ -5,7 +5,7 @@ import upath from 'upath';
 import * as vite from 'vite';
 import { ResolvedTaskConfig } from '../config/resolve.js';
 import { InlineOptions } from '../config/schema.js';
-import { viewerRoot } from '../const.js';
+import { VIEWER_ROOT_PATH, viewerRoot } from '../const.js';
 import { prependToHead } from './plugin-util.js';
 
 const viewerClientId = '@vivliostyle:viewer:client';
@@ -16,7 +16,6 @@ if (import.meta.hot) {
     location.reload();
   });
 }`;
-export const viewerRootPath = '/__vivliostyle-viewer';
 
 export function vsViewerPlugin(_: {
   config: ResolvedTaskConfig;
@@ -31,12 +30,6 @@ export function vsViewerPlugin(_: {
     res,
     next,
   ) {
-    const pathname = req.url!;
-    if (!pathname.startsWith(viewerRootPath)) {
-      return next();
-    }
-
-    req.url = pathname.slice(viewerRootPath.length);
     if (req.url === '/' || req.url === '/index.html') {
       cachedIndexHtml ??= prependToHead(
         fs.readFileSync(upath.join(serveRootDir, 'index.html'), 'utf-8'),
@@ -61,7 +54,10 @@ export function vsViewerPlugin(_: {
       } satisfies vite.UserConfig;
     },
     configureServer(viteServer) {
-      viteServer.middlewares.use(middleware);
+      viteServer.middlewares.use(VIEWER_ROOT_PATH, middleware);
+    },
+    configurePreviewServer(viteServer) {
+      viteServer.middlewares.use(VIEWER_ROOT_PATH, serve);
     },
     load(id) {
       if (id === viewerClientRequestPath) {

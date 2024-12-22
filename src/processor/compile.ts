@@ -358,7 +358,16 @@ export async function generateManifest({
 export async function compile(
   config: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
 ): Promise<void> {
+  const tocEntries: ParsedEntry[] = [];
   for (const entry of config.entries) {
+    if (entry.rel === 'contents') {
+      // To transpile the table of contents, all dependent entries must be transpiled in advance
+      tocEntries.push(entry);
+      continue;
+    }
+    await transformManuscript(entry, config);
+  }
+  for (const entry of tocEntries) {
     await transformManuscript(entry, config);
   }
 

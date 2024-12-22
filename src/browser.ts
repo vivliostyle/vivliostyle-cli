@@ -1,9 +1,12 @@
 import fs from 'node:fs';
 import * as playwright from 'playwright-core';
 import { registry } from 'playwright-core/lib/server';
+import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
 import {
   beforeExitHandlers,
+  debug,
+  isInContainer,
   logInfo,
   logSuccess,
   pathEquals,
@@ -94,4 +97,78 @@ export async function downloadBrowser(
   logSuccess(`Successfully downloaded browser`);
   restartLogging();
   return executable.executablePath()!;
+}
+
+export async function launchPreview({
+  mode,
+  url,
+  onBrowserOpen,
+  onPageOpen,
+  config: {
+    browserType,
+    proxy,
+    executableBrowser,
+    sandbox,
+    viewer,
+    ignoreHttpsErrors,
+  },
+}: {
+  mode: 'preview' | 'build';
+  url: string;
+  onBrowserOpen?: (browser: playwright.Browser) => void | Promise<void>;
+  onPageOpen?: (page: playwright.Page) => void | Promise<void>;
+  config: Pick<
+    ResolvedTaskConfig,
+    | 'browserType'
+    | 'proxy'
+    | 'executableBrowser'
+    | 'sandbox'
+    | 'viewer'
+    | 'ignoreHttpsErrors'
+  >;
+}) {
+  debug(`Executing browser path: ${executableBrowser}`);
+  if (!checkBrowserAvailability(executableBrowser)) {
+    if (isPlaywrightExecutable(executableBrowser)) {
+      // The browser isn't downloaded first time starting CLI so try to download it
+      await downloadBrowser(browserType);
+    } else {
+      // executableBrowser seems to be specified explicitly
+      throw new Error(
+        `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
+      );
+    }
+  }
+
+  const browser = await launchBrowser({
+    browserType,
+    proxy,
+    executablePath: executableBrowser,
+    headless: mode === 'build',
+    noSandbox: !sandbox,
+    disableWebSecurity: !viewer,
+    disableDevShmUsage: isInContainer(),
+  });
+  await onBrowserOpen?.(browser);
+
+  const page = await browser.newPage({
+    viewport:
+      mode === 'build'
+        ? // This viewport size important to detect headless environment in Vivliostyle viewer
+          // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
+          {
+            width: 800,
+            height: 600,
+          }
+        : null,
+    ignoreHTTPSErrors: ignoreHttpsErrors,
+  });
+  await onPageOpen?.(page);
+
+  // Prevent confirm dialog from being auto-dismissed
+  page.on('dialog', () => {});
+
+  await page.goto(url);
+
+  return { browser, page };
 }
