@@ -32,7 +32,6 @@ async function openPreview(
     }
   })();
   const inputUrl = isValidUri(input) ? new URL(input) : pathToFileURL(input);
-  viewerRootPath;
   const viewerUrl = new URL(`${viewerRootPath}/index.html`, listenUrl);
   const sourceUrl = new URL(listenUrl);
   sourceUrl.pathname = upath.join(
@@ -101,22 +100,23 @@ async function openPreview(
   await page.locator('#vivliostyle-input-url').focus({ timeout: 0 });
 
   return {
-    reload: () => page.reload(),
-    close: () => {
+    close: async () => {
       page.off('close', handleClose);
-      browser.close();
+      await browser.close();
     },
   };
 }
 
 export function vsBrowserPlugin({
   config: _config,
+  options,
 }: {
   config: ResolvedTaskConfig;
   options: InlineOptions;
 }): vite.Plugin {
   let config = _config;
   let server: vite.ViteDevServer | undefined;
+  let preview: Awaited<ReturnType<typeof openPreview>> | undefined;
 
   return {
     name: 'vivliostyle:browser',
@@ -126,24 +126,23 @@ export function vsBrowserPlugin({
       const _listen = viteServer.listen;
       viteServer.listen = async (...args) => {
         const server = await _listen(...args);
+        if (!options.openViewer || !server.resolvedUrls?.local.length) {
+          return server;
+        }
 
+        const listenUrl = server.resolvedUrls.local[0];
         // Terminate preview when the previewing page is closed
         async function handleClose() {
           await server?.close();
           runExitHandlers();
         }
 
-        if (server.resolvedUrls?.local.length) {
-          openPreview(
-            {
-              listenUrl: server.resolvedUrls.local[0],
-              handleClose,
-            },
-            config,
-          );
-        }
+        preview = await openPreview({ listenUrl, handleClose }, config);
         return server;
       };
+    },
+    closeBundle() {
+      preview?.close();
     },
   };
 }

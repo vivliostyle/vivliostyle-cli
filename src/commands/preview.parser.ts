@@ -102,6 +102,7 @@ Currently, Firefox and Webkit support preview command only!`,
         `true to ignore HTTPS errors when Playwright browser opens a new page`,
       ),
     )
+    .option('--no-open-viewer', 'do not open viewer')
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp())

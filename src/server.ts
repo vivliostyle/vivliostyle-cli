@@ -206,7 +206,6 @@ export async function createViteServer({
 }: {
   vivliostyleConfig: ParsedVivliostyleConfigSchema;
 }) {
-  // const merged = mergeInlineConfig(vivliostyleConfig, inlineConfig);
   const { tasks, inlineOptions: options } = vivliostyleConfig;
   const config = resolveTaskConfig(tasks[0], options);
   let viteConfig = await prepareViteConfig(config);

@@ -78,6 +78,7 @@ export function mergeInlineConfig(
         proxyPass: inlineConfig.proxyPass,
         logLevel: inlineConfig.logLevel,
         ignoreHttpsErrors: inlineConfig.ignoreHttpsErrors,
+        openViewer: inlineConfig.openViewer,
       }),
     },
   };

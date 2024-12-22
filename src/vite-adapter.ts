@@ -4,6 +4,7 @@ import { loadVivliostyleConfig, warnDeprecatedConfig } from './config/load.js';
 import { mergeInlineConfig } from './config/merge.js';
 import { resolveTaskConfig } from './config/resolve.js';
 import { VivliostyleInlineConfig } from './config/schema.js';
+import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
@@ -17,12 +18,15 @@ export async function createVitePlugin(
       cwd: parsed.cwd,
     })) ?? setupConfigFromFlags(parsed);
   warnDeprecatedConfig(vivliostyleConfig);
-  const merged = mergeInlineConfig(vivliostyleConfig, parsed);
-  const config = resolveTaskConfig(merged.tasks[0], merged.inlineOptions);
+  const { tasks, inlineOptions: options } = mergeInlineConfig(
+    vivliostyleConfig,
+    parsed,
+  );
+  const config = resolveTaskConfig(tasks[0], options);
 
   return [
-    vsDevServerPlugin({ config, options: merged.inlineOptions }),
-    vsViewerPlugin({ config, options: merged.inlineOptions }),
-    // vsBrowserPlugin({ config }),
+    vsDevServerPlugin({ config, options }),
+    vsViewerPlugin({ config, options }),
+    vsBrowserPlugin({ config, options }),
   ];
 }
