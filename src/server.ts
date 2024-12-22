@@ -1,106 +1,49 @@
-import http from 'node:http';
-import { pathToFileURL, URL } from 'node:url';
-import handler from 'serve-handler';
+import { fileURLToPath, pathToFileURL, URL } from 'node:url';
 import upath from 'upath';
 import {
   createServer,
   InlineConfig,
   mergeConfig as mergeViteConfig,
+  preview,
 } from 'vite';
-import { resolveTaskConfig } from './config/resolve.js';
-import { ParsedVivliostyleConfigSchema } from './config/schema.js';
+import { ResolvedTaskConfig } from './config/resolve.js';
+import { InlineOptions } from './config/schema.js';
 import { prepareViteConfig } from './config/vite.js';
-import { viewerRoot } from './const.js';
-import {
-  beforeExitHandlers,
-  debug,
-  findAvailablePort,
-  isValidUri,
-} from './util.js';
+import { VIEWER_ROOT_PATH } from './const.js';
+import { isValidUri } from './util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
+import { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
-export type PageSize = { format: string } | { width: string; height: string };
+export type ViewerUrlOption = Pick<
+  ResolvedTaskConfig,
+  | 'size'
+  | 'cropMarks'
+  | 'bleed'
+  | 'cropOffset'
+  | 'css'
+  | 'customStyle'
+  | 'customUserStyle'
+  | 'singleDoc'
+  | 'quick'
+  | 'viewerParam'
+>;
 
-export interface Server {
-  server: http.Server;
-  port: number;
-}
-
-export type ViewerUrlOption = {
-  size?: PageSize;
-  cropMarks?: boolean;
-  bleed?: string;
-  cropOffset?: string;
-  css?: string;
-  style?: string;
-  userStyle?: string;
-  singleDoc?: boolean;
-  quick?: boolean;
-  viewerParam?: string | undefined;
-};
-
-export type ServerOption = ViewerUrlOption & {
-  input: string;
-  workspaceDir: string;
-  viewer: string | undefined;
-};
-
-let _viewerServer: Server | undefined;
-let _sourceServer: Server | undefined;
-
-export async function prepareServer(option: ServerOption): Promise<{
-  viewerFullUrl: string;
-}> {
-  const viewerUrl = await (option.viewer && isValidUri(option.viewer)
-    ? new URL(option.viewer)
-    : (() => {
-        const viewerUrl = new URL('file://');
-        viewerUrl.pathname = upath.join(viewerRoot, 'lib/index.html');
-        return viewerUrl;
-      })());
-
-  const inputUrl = isValidUri(option.input)
-    ? new URL(option.input)
-    : pathToFileURL(option.input);
-  const sourceUrl = await (async () => {
-    return inputUrl;
-  })();
-
-  return {
-    viewerFullUrl: getViewerFullUrl(option, {
-      viewerUrl,
-      sourceUrl,
-    }),
-  };
-}
-
-export function teardownServer() {
-  if (_viewerServer) {
-    _viewerServer.server.close();
-    _viewerServer = undefined;
-  }
-  if (_sourceServer) {
-    _sourceServer.server.close();
-    _sourceServer = undefined;
-  }
-}
-
-export function getViewerFullUrl(
+export function getViewerParams(
+  src: string | undefined,
   {
     size,
     cropMarks,
     bleed,
     cropOffset,
     css,
-    style,
-    userStyle,
+    customStyle,
+    customUserStyle,
     singleDoc,
     quick,
     viewerParam,
   }: ViewerUrlOption,
-  { viewerUrl, sourceUrl }: { viewerUrl: URL; sourceUrl: URL },
 ): string {
   const pageSizeValue =
     size && ('format' in size ? size.format : `${size.width} ${size.height}`);
@@ -109,18 +52,15 @@ export function getViewerFullUrl(
     return url.replace(/&/g, '%26');
   }
 
-  let viewerParams =
-    sourceUrl.href === 'data:,'
-      ? '' // open Viewer start page
-      : `src=${escapeParam(sourceUrl.href)}`;
+  let viewerParams = src ? `src=${escapeParam(src)}` : '';
   viewerParams += `&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
-  if (style) {
-    viewerParams += `&style=${escapeParam(style)}`;
+  if (customStyle) {
+    viewerParams += `&style=${escapeParam(customStyle)}`;
   }
 
-  if (userStyle) {
-    viewerParams += `&userStyle=${escapeParam(userStyle)}`;
+  if (customUserStyle) {
+    viewerParams += `&userStyle=${escapeParam(customUserStyle)}`;
   }
 
   if (pageSizeValue || cropMarks || bleed || cropOffset || css) {
@@ -153,62 +93,58 @@ export function getViewerFullUrl(
     viewerParams += `&${viewerParam}`;
   }
 
+  return viewerParams;
+}
+
+export function getViewerFullUrl({
+  viewerInput,
+  base,
+  workspaceDir,
+  rootUrl,
+  ...config
+}: ViewerUrlOption &
+  Pick<
+    ResolvedTaskConfig,
+    'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
+  >) {
+  const input = (() => {
+    switch (viewerInput.type) {
+      case 'webpub':
+        return viewerInput.manifestPath;
+      case 'webbook':
+        return viewerInput.webbookEntryUrl;
+      case 'epub-opf':
+        return viewerInput.epubOpfPath;
+      case 'epub':
+        throw new Error('TODO');
+      default:
+        return viewerInput satisfies never;
+    }
+  })();
+  const inputUrl = isValidUri(input) ? new URL(input) : pathToFileURL(input);
+  const viewerUrl = new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
+  const sourceUrl = new URL(rootUrl);
+  sourceUrl.pathname = upath.posix.join(
+    base,
+    upath.relative(workspaceDir, fileURLToPath(inputUrl)),
+  );
+  const viewerParams = getViewerParams(
+    input === 'data:,'
+      ? undefined // open Viewer start page
+      : sourceUrl.href,
+    config,
+  );
   return `${viewerUrl.href}#${viewerParams}`;
 }
 
-function startEndpoint(root: string): http.Server {
-  const serve = (req: http.IncomingMessage, res: http.ServerResponse) =>
-    handler(req, res, {
-      public: root,
-      cleanUrls: false,
-      directoryListing: false,
-      headers: [
-        {
-          source: '**',
-          headers: [
-            {
-              key: 'access-control-allow-headers',
-              value: 'Origin, X-Requested-With, Content-Type, Accept, Range',
-            },
-            {
-              key: 'access-control-allow-origin',
-              value: '*',
-            },
-            {
-              key: 'cache-control',
-              value: 'no-cache, no-store, must-revalidate',
-            },
-          ],
-        },
-      ],
-    });
-  return http.createServer(serve);
-}
-
-async function launchServer(root: string): Promise<Server> {
-  const port = await findAvailablePort();
-  debug(`Launching server... root: ${root} port: ${port}`);
-
-  const server = startEndpoint(root);
-
-  return await new Promise((resolve) => {
-    server.listen(port, 'localhost', () => {
-      beforeExitHandlers.push(() => {
-        server.close();
-      });
-      resolve({ server, port });
-    });
-  });
-}
-
 export async function createViteServer({
-  vivliostyleConfig,
+  config,
+  inlineOptions: options,
 }: {
-  vivliostyleConfig: ParsedVivliostyleConfigSchema;
+  config: ResolvedTaskConfig;
+  inlineOptions: InlineOptions;
 }) {
-  const { tasks, inlineOptions: options } = vivliostyleConfig;
-  const config = resolveTaskConfig(tasks[0], options);
-  let viteConfig = await prepareViteConfig(config);
+  let { viteConfig } = await prepareViteConfig(config);
   viteConfig = mergeViteConfig(viteConfig, {
     clearScreen: false,
     configFile: false,
@@ -217,10 +153,35 @@ export async function createViteServer({
       vsDevServerPlugin({ config, options }),
       vsViewerPlugin({ config, options }),
       vsBrowserPlugin({ config, options }),
+      vsStaticServePlugin({ config, options }),
     ],
     server: viteConfig.server ?? config.server,
   } satisfies InlineConfig);
 
   const server = await createServer(viteConfig);
   return { server };
+}
+
+export async function listenVitePreviewServer({
+  config,
+  inlineOptions: options,
+}: {
+  config: ResolvedTaskConfig;
+  inlineOptions: InlineOptions;
+}) {
+  let { viteConfig } = await prepareViteConfig(config);
+  viteConfig = mergeViteConfig(viteConfig, {
+    clearScreen: false,
+    configFile: false,
+    appType: 'custom',
+    plugins: [
+      vsDevServerPlugin({ config, options }),
+      vsViewerPlugin({ config, options }),
+      vsBrowserPlugin({ config, options }),
+      vsStaticServePlugin({ config, options }),
+    ],
+    server: viteConfig.server ?? config.server,
+  } satisfies InlineConfig);
+
+  return await preview(viteConfig);
 }

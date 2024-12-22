@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { Processor } from 'unified';
 import upath from 'upath';
-import { UserConfig } from 'vite';
+import { ProxyOptions, UserConfig } from 'vite';
 import { getExecutableBrowserPath } from '../browser.js';
 import {
   ArticleEntryObject,
@@ -29,7 +29,6 @@ import {
 import { CONTAINER_IMAGE } from '../container.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import { parsePackageName } from '../processor/theme.js';
-import { PageSize } from '../server.js';
 import {
   debug,
   cwd as defaultCwd,
@@ -184,6 +183,8 @@ export interface EpubOutput {
 
 export type OutputConfig = PdfOutput | WebPublicationOutput | EpubOutput;
 
+export type PageSize = { format: string } | { width: string; height: string };
+
 export type DocumentProcessorFactory = (
   options: StringifyMarkdownOptions,
   metadata: Metadata,
@@ -259,7 +260,10 @@ export type ResolvedTaskConfig = {
   server: {
     host: string | boolean;
     port: number;
+    proxy: Record<string, string | ProxyOptions>;
   };
+  static: Record<string, string[]>;
+  rootUrl: string;
   vite: UserConfig | undefined;
   viteConfigFile: string | boolean;
 };
@@ -284,6 +288,14 @@ function isManuscriptMediaType(
   return !!(
     mediaType && manuscriptMediaTypes.includes(mediaType as ManuscriptMediaType)
   );
+}
+
+export function isWebPubConfig(
+  config: ResolvedTaskConfig,
+): config is ResolvedTaskConfig & {
+  viewerInput: WebPublicationManifestConfig;
+} {
+  return config.viewerInput.type === 'webpub';
 }
 
 // parse theme locator
@@ -483,9 +495,17 @@ export function resolveTaskConfig(
   const server = {
     host: config.server?.host ?? false,
     port: config.server?.port ?? 13000,
+    proxy: config.server?.proxy ?? {},
   };
+  const staticRoutes = config.static ?? {};
   const vite = config.vite;
   const viteConfigFile = config.viteConfigFile ?? true;
+  const host = !server.host
+    ? 'localhost'
+    : server.host === true
+      ? '0.0.0.0'
+      : server.host;
+  const rootUrl = `http://${host}:${server.port}`;
 
   const rootThemes =
     config.theme?.map((theme) =>
@@ -606,6 +626,8 @@ export function resolveTaskConfig(
     ignoreHttpsErrors,
     base,
     server,
+    static: staticRoutes,
+    rootUrl,
     vite,
     viteConfigFile,
   };
@@ -772,7 +794,7 @@ function composeProjectConfig(
     rootThemes,
     outputs,
     cover,
-    server,
+    rootUrl,
   } = otherConfig;
   const pkgJsonPath = upath.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
@@ -782,13 +804,6 @@ function composeProjectConfig(
     debug('located package.json path', pkgJsonPath);
   }
   const exportAliases: { source: string; target: string }[] = [];
-
-  const host = !server.host
-    ? 'localhost'
-    : server.host === true
-      ? '0.0.0.0'
-      : server.host;
-  const localOrigin = `http://${host}:${server.port}`;
 
   const tocConfig = {
     tocTitle: config.toc?.title ?? config?.tocTitle ?? TOC_TITLE,
@@ -835,8 +850,8 @@ function composeProjectConfig(
       } else if (entryPath.startsWith('/')) {
         return {
           type: 'uri',
-          href: localOrigin ? `${localOrigin}${entryPath}` : entryPath,
-          rootDir: upath.join(workspaceDir, '.local'),
+          href: `${rootUrl}${entryPath}`,
+          rootDir: upath.join(workspaceDir, 'localhost'),
         };
       }
       const pathname = upath.resolve(entryContextDir, entryPath);

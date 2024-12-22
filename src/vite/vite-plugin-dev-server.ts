@@ -6,6 +6,7 @@ import sirv, { RequestHandler } from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
 import {
+  isWebPubConfig,
   ParsedEntry,
   ResolvedTaskConfig,
   WebPublicationManifestConfig,
@@ -20,14 +21,6 @@ import {
 } from '../processor/compile.js';
 import { getFormattedError, pathContains } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
-
-function isWebPubConfig(
-  config: ResolvedTaskConfig,
-): config is ResolvedTaskConfig & {
-  viewerInput: WebPublicationManifestConfig;
-} {
-  return config.viewerInput.type === 'webpub';
-}
 
 // Ref: https://github.com/lukeed/sirv
 function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
@@ -283,7 +276,7 @@ export function vsDevServerPlugin({
     name: 'vivliostyle:dev-server',
     enforce: 'pre',
 
-    async configureServer(viteServer) {
+    configureServer(viteServer) {
       server = viteServer;
 
       const handleUpdate = async (pathname: string) => {
@@ -303,6 +296,14 @@ export function vsDevServerPlugin({
       return () => {
         viteServer.middlewares.use(devServerMiddleware);
         viteServer.middlewares.use(serveWorkspaceMiddleware);
+      };
+    },
+    configurePreviewServer(viteServer) {
+      return () => {
+        viteServer.middlewares.use(
+          config.base,
+          sirv(config.workspaceDir, { dev: true, etag: false, extensions: [] }),
+        );
       };
     },
     async buildStart() {

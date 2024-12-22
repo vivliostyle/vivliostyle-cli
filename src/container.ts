@@ -99,3 +99,39 @@ export async function runContainer({
     process.exit(1);
   }
 }
+
+export async function buildPDFWithContainer(): Promise<string | null> {
+  // TODO
+  /*
+  const bypassedOption = {
+    ...config,
+    input: toContainerPath(config.input),
+    target: {
+      ...option.target,
+      path: toContainerPath(option.target.path),
+    },
+    entryContextDir: toContainerPath(option.entryContextDir),
+    workspaceDir: toContainerPath(option.workspaceDir),
+    customStyle: option.customStyle && toContainerPath(option.customStyle),
+    customUserStyle:
+      option.customUserStyle && toContainerPath(option.customUserStyle),
+    sandbox: false,
+  };
+
+  await runContainer({
+    image: option.image,
+    userVolumeArgs: collectVolumeArgs([
+      option.workspaceDir,
+      upath.dirname(option.target.path),
+    ]),
+    commandArgs: [
+      'build',
+      '--bypassed-pdf-builder-option',
+      JSON.stringify(bypassedOption),
+    ],
+  });
+
+  return option.target.path;
+  */
+  return null;
+}

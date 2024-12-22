@@ -21,7 +21,7 @@ import {
   toContainerPath,
 } from '../container.js';
 import type { Meta, TOCItem } from '../global-viewer.js';
-import { checkContainerEnvironment, suspendLogging } from '../util.js';
+import { isInContainer, suspendLogging } from '../util.js';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
   Pick<ResolvedTaskConfig, 'image'>;
@@ -99,7 +99,6 @@ export class PostProcess {
     output: string,
     { preflight, preflightOption, image }: SaveOption,
   ) {
-    const isInContainer = checkContainerEnvironment();
     const input = preflight
       ? upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
       : output;
@@ -109,7 +108,7 @@ export class PostProcess {
 
     if (
       preflight === 'press-ready-local' ||
-      (preflight === 'press-ready' && isInContainer)
+      (preflight === 'press-ready' && isInContainer())
     ) {
       const restartLogging = suspendLogging('Running press-ready', '🚀');
       await pressReadyModule.build({

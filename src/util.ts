@@ -15,7 +15,6 @@ import fs from 'node:fs';
 import readline from 'node:readline';
 import util from 'node:util';
 import oraConstructor from 'ora';
-import portfinder from 'portfinder';
 import tmp from 'tmp';
 import upath from 'upath';
 import { BaseIssue } from 'valibot';
@@ -33,7 +32,7 @@ const ora = oraConstructor({
   spinner: 'circle',
   // Prevent stream output in docker so that not to spawn process
   // In other environment, check TTY context
-  isEnabled: checkContainerEnvironment() ? false : undefined,
+  isEnabled: isInContainer() ? false : undefined,
 });
 
 export let beforeExitHandlers: (() => void)[] = [];
@@ -322,12 +321,7 @@ export function isValidUri(str: string): boolean {
   return /^(https?|file|data):/i.test(str);
 }
 
-export function findAvailablePort(): Promise<number> {
-  portfinder.basePort = 13000;
-  return portfinder.getPortPromise();
-}
-
-export function checkContainerEnvironment(): boolean {
+export function isInContainer(): boolean {
   return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
 }
 

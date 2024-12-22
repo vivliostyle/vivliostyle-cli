@@ -524,14 +524,13 @@ export async function copyWebPublicationAssets({
   return { manifest, actualManifestPath };
 }
 
-export type BuildWebPublicationOptions = Omit<ResolvedTaskConfig, 'target'> & {
-  target: WebPublicationOutput | EpubOutput;
-};
-
 export async function buildWebPublication({
   target,
-  ...config
-}: BuildWebPublicationOptions): Promise<string> {
+  config,
+}: {
+  target: WebPublicationOutput | EpubOutput;
+  config: ResolvedTaskConfig;
+}): Promise<string> {
   let outputDir: string;
   if (target.format === 'webpub') {
     outputDir = target.path;
