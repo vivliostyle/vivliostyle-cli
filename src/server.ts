@@ -2,7 +2,11 @@ import http from 'node:http';
 import { pathToFileURL, URL } from 'node:url';
 import handler from 'serve-handler';
 import upath from 'upath';
-import * as vite from 'vite';
+import {
+  createServer,
+  InlineConfig,
+  mergeConfig as mergeViteConfig,
+} from 'vite';
 import { resolveTaskConfig } from './config/resolve.js';
 import { ParsedVivliostyleConfigSchema } from './config/schema.js';
 import { prepareViteConfig } from './config/vite.js';
@@ -206,7 +210,7 @@ export async function createViteServer({
   const { tasks, inlineOptions: options } = vivliostyleConfig;
   const config = resolveTaskConfig(tasks[0], options);
   let viteConfig = await prepareViteConfig(config);
-  viteConfig = vite.mergeConfig(viteConfig, {
+  viteConfig = mergeViteConfig(viteConfig, {
     clearScreen: false,
     configFile: false,
     appType: 'custom',
@@ -216,8 +220,8 @@ export async function createViteServer({
       vsBrowserPlugin({ config, options }),
     ],
     server: viteConfig.server ?? config.server,
-  } satisfies vite.InlineConfig);
+  } satisfies InlineConfig);
 
-  const server = await vite.createServer(viteConfig);
+  const server = await createServer(viteConfig);
   return { server };
 }

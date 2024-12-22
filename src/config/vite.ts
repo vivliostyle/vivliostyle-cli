@@ -1,4 +1,4 @@
-import { loadConfigFromFile, mergeConfig } from 'vite';
+import { loadConfigFromFile, mergeConfig as mergeViteConfig } from 'vite';
 import { ResolvedTaskConfig } from './resolve.js';
 
 export async function prepareViteConfig({
@@ -16,6 +16,6 @@ export async function prepareViteConfig({
         )
       )?.config) ||
     {};
-  viteConfig = mergeConfig(viteConfig, vite || {});
+  viteConfig = mergeViteConfig(viteConfig, vite || {});
   return viteConfig;
 }

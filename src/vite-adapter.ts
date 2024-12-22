@@ -9,7 +9,7 @@ import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
 export async function createVitePlugin(
   inlineConfig: VivliostyleInlineConfig = {},
-) {
+): Promise<import('vite').Plugin[]> {
   const parsed = v.parse(VivliostyleInlineConfig, inlineConfig);
   const vivliostyleConfig =
     (await loadVivliostyleConfig({
