@@ -1506,10 +1506,10 @@
     loupe "^3.1.1"
     tinyrainbow "^1.2.0"
 
-"@vivliostyle/core@^2.30.5":
-  version "2.30.5"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.30.5.tgz#fc9412aa81b07bcb79932f46f82a044bb5c0c212"
-  integrity sha512-54/ZAxP5PK0lqkmUrOY7d9vL9rwvDSOiq8rbEA9YDQxiZJniLuQifqZt2Dtm1885e69yGXlfmztsZ3PWS8I4iw==
+"@vivliostyle/core@^2.30.7":
+  version "2.30.7"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/core/-/core-2.30.7.tgz#7ea8e45067b20031748d69d2591f649ac9023082"
+  integrity sha512-4BOtX4olH48NhljInvtDmwj5QSwcU6zjfH5ZsYSncXByljsBYQXVKrmjPMZrmHpjXNYXvk0+JQzd6qp65VVVTQ==
   dependencies:
     fast-diff "^1.2.0"
 
@@ -1581,12 +1581,12 @@
     unist-util-visit "^2.0.3"
     unist-util-visit-parents "^3.1.1"
 
-"@vivliostyle/viewer@2.30.5":
-  version "2.30.5"
-  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.30.5.tgz#d708212b7ac7852c7f5a4d7fbcd030c16ed15c1a"
-  integrity sha512-vffbyd3K1kQsBhOwqdBd9f5MMLvyIOqhUnFixLYriB1C6edjykEVfQTmd2iN+TSVOcPYpE4mJuc0kUL6Ffb57g==
+"@vivliostyle/viewer@2.30.7":
+  version "2.30.7"
+  resolved "https://registry.yarnpkg.com/@vivliostyle/viewer/-/viewer-2.30.7.tgz#76095131403be0dc89a050a3e07cdec64288fd9d"
+  integrity sha512-RwER9A2qzDP27CRHfYm3tLE1ySRYkQDBMk8zSMoe2srPoxwSqaGSk+Zk9NOEskb+AZPuccaAWAuZ2Hp90+0nEg==
   dependencies:
-    "@vivliostyle/core" "^2.30.5"
+    "@vivliostyle/core" "^2.30.7"
     i18next-ko "^3.0.1"
     knockout "^3.5.0"
 
@@ -6636,10 +6636,10 @@ pify@^3.0.0:
   resolved "https://registry.yarnpkg.com/pify/-/pify-3.0.0.tgz#e5a4acd2c101fdf3d9a4d07f0dbc4db49dd28176"
   integrity sha512-C3FsVNH1udSEX48gGX1xfvwTWfsYWj5U+8/uK15BGzIGrKoUpghX8hWZwa/OFnakBiiVNmBvemTJR5mcy7iPcg==
 
-playwright-core@1.48.1:
-  version "1.48.1"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.48.1.tgz#5fe28fb9a9326dae88d4608c35e819163cceeb23"
-  integrity sha512-Yw/t4VAFX/bBr1OzwCuOMZkY1Cnb4z/doAFSwf4huqAGWmf9eMNjmK7NiOljCdLmxeRYcGPPmcDgU0zOlzP0YA==
+playwright-core@1.49.0:
+  version "1.49.0"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.49.0.tgz#8e69ffed3f41855b854982f3632f2922c890afcb"
+  integrity sha512-R+3KKTQF3npy5GTiKH/T+kdhoJfJojjHESR1YEWhYuEKRVfVaxH3+4+GvXE5xyCngCxhxnykk0Vlah9v8fs3jA==
 
 possible-typed-array-names@^1.0.0:
   version "1.0.0"
