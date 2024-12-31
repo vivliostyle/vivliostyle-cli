@@ -12,7 +12,6 @@ import {
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import { InlineOptions } from '../config/schema.js';
-import { MANIFEST_FILENAME } from '../const.js';
 import {
   generateManifest,
   getAssetMatcher,
@@ -56,6 +55,44 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
     }
   };
 }
+
+function getWorkspaceMatcher({
+  workspaceDir,
+  themesDir,
+  viewerInput,
+}: ResolvedTaskConfig) {
+  let entryFiles: string[] = [];
+  switch (viewerInput.type) {
+    case 'webpub':
+      entryFiles = [upath.relative(workspaceDir, viewerInput.manifestPath)];
+      break;
+    case 'epub':
+      entryFiles = [
+        upath.join(
+          upath.relative(workspaceDir, viewerInput.epubTmpOutputDir),
+          '**',
+        ),
+      ];
+      break;
+    case 'epub-opf':
+    case 'webbook':
+      entryFiles = ['**'];
+      break;
+    default:
+      entryFiles = viewerInput satisfies never;
+  }
+
+  return picomatch(
+    [
+      ...entryFiles,
+      ...(pathContains(workspaceDir, themesDir)
+        ? [upath.join(upath.relative(workspaceDir, themesDir), '**')]
+        : []),
+    ],
+    { dot: true, ignore: ['node_modules/**'] },
+  );
+}
+
 export function vsDevServerPlugin({
   config: _config,
   options,
@@ -65,19 +102,23 @@ export function vsDevServerPlugin({
 }): vite.Plugin {
   let config = _config;
   let server: vite.ViteDevServer | undefined;
-  let transformCache: Map<
+  let program:
+    | {
+        entriesLookup: (
+          uri: string,
+        ) => readonly [ParsedEntry, string] | undefined;
+        urlMatchRe: RegExp;
+        serveWorkspace: RequestHandler;
+        serveWorkspaceMatcher: picomatch.Matcher;
+        serveAssets: RequestHandler;
+        serveAssetsMatcher: picomatch.Matcher;
+      }
+    | undefined;
+
+  const transformCache: Map<
     string,
     Promise<{ content: string; etag: string } | undefined>
   > = new Map();
-  let entriesLookup: (
-    uri: string,
-  ) => readonly [ParsedEntry, string] | undefined;
-  let urlMatchRe: RegExp | undefined;
-  let serveWorkspace: RequestHandler | undefined;
-  let serveWorkspaceMatcher: picomatch.Matcher | undefined;
-  let serveAssets: RequestHandler | undefined;
-  let serveAssetsMatcher: picomatch.Matcher | undefined;
-
   const projectDeps = new Set<string>();
 
   async function reload(forceUpdate = false) {
@@ -99,39 +140,37 @@ export function vsDevServerPlugin({
 
     await prepareThemeDirectory(config);
 
-    entriesLookup = createEntriesRouteLookup(
+    const entriesLookup = createEntriesRouteLookup(
       config.entries,
       config.workspaceDir,
     );
-    urlMatchRe = new RegExp(`^${escapeRe(config.base)}(/[^?#]*)([?#].*)?$`);
-    serveWorkspace = sirv(config.workspaceDir, {
-      dev: true,
-      etag: false,
-      extensions: [],
-    });
-    serveWorkspaceMatcher = picomatch(
-      [
-        MANIFEST_FILENAME,
-        ...(pathContains(config.workspaceDir, config.themesDir)
-          ? [
-              upath.join(
-                upath.relative(config.workspaceDir, config.themesDir),
-                '**',
-              ),
-            ]
-          : []),
-      ],
-      { dot: true, ignore: ['node_modules/**'] },
+    const urlMatchRe = new RegExp(
+      `^${escapeRe(config.base)}(/[^?#]*)([?#].*)?$`,
     );
-    serveAssets = sirv(config.entryContextDir, {
+    const serveWorkspace = sirv(config.workspaceDir, {
+      dev: true,
+      etag: false,
+      dotfiles: true,
+      extensions: [],
+    });
+    const serveWorkspaceMatcher = getWorkspaceMatcher(config);
+    const serveAssets = sirv(config.entryContextDir, {
       dev: true,
       etag: false,
       extensions: [],
     });
-    serveAssetsMatcher = getAssetMatcher({
+    const serveAssetsMatcher = getAssetMatcher({
       ...config,
       cwd: config.entryContextDir,
     });
+    program = {
+      entriesLookup,
+      urlMatchRe,
+      serveWorkspace,
+      serveWorkspaceMatcher,
+      serveAssets,
+      serveAssetsMatcher,
+    };
 
     if (options.config) {
       projectDeps.add(options.config);
@@ -192,11 +231,12 @@ export function vsDevServerPlugin({
     res,
     next,
   ) {
-    if (!isWebPubConfig(config) || !urlMatchRe) {
+    if (!isWebPubConfig(config) || !program) {
       return next();
     }
+    const { entriesLookup, urlMatchRe } = program;
     const [_, pathname, qs] = decodeURI(req.url!).match(urlMatchRe) ?? [];
-    const match = pathname && entriesLookup?.(pathname);
+    const match = pathname && entriesLookup(pathname);
     if (!match) {
       return next();
     }
@@ -250,16 +290,16 @@ export function vsDevServerPlugin({
 
   const serveWorkspaceMiddleware =
     async function vivliostyleServeWorkspaceMiddleware(req, res, next) {
-      if (
-        !config ||
-        !urlMatchRe ||
-        !serveWorkspace ||
-        !serveWorkspaceMatcher ||
-        !serveAssets ||
-        !serveAssetsMatcher
-      ) {
+      if (!config || !program) {
         return next();
       }
+      const {
+        urlMatchRe,
+        serveWorkspace,
+        serveWorkspaceMatcher,
+        serveAssets,
+        serveAssetsMatcher,
+      } = program;
       const [_, pathname] = decodeURI(req.url!).match(urlMatchRe) ?? [];
       if (pathname && serveWorkspaceMatcher(pathname.slice(1))) {
         req.url = req.url!.slice(config.base.length);

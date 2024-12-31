@@ -26,7 +26,7 @@ export function vsBrowserPlugin({
     if (!server?.resolvedUrls?.local.length) {
       return;
     }
-    const url = getViewerFullUrl(config);
+    const url = await getViewerFullUrl(config);
     const { page, browser } = await launchPreview({
       mode: 'preview',
       url,

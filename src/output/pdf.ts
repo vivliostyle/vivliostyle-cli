@@ -32,7 +32,7 @@ export async function buildPDF({
 }): Promise<string | null> {
   logUpdate(`Launching build environment`);
 
-  const viewerFullUrl = getViewerFullUrl(config);
+  const viewerFullUrl = await getViewerFullUrl(config);
   debug('viewerFullUrl', viewerFullUrl);
 
   let lastEntry: ManuscriptEntry | undefined;

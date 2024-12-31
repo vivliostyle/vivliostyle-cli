@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { URL } from 'node:url';
 import upath from 'upath';
 import {
@@ -12,7 +13,7 @@ import { ResolvedTaskConfig } from './config/resolve.js';
 import { InlineOptions } from './config/schema.js';
 import { prepareViteConfig } from './config/vite.js';
 import { VIEWER_ROOT_PATH } from './const.js';
-import { isValidUri } from './util.js';
+import { getDefaultEpubOpfPath, isValidUri, openEpub } from './util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
 import { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
@@ -98,7 +99,7 @@ export function getViewerParams(
   return viewerParams;
 }
 
-export function getSourceUrl({
+export async function getSourceUrl({
   viewerInput,
   base,
   workspaceDir,
@@ -107,20 +108,27 @@ export function getSourceUrl({
   ResolvedTaskConfig,
   'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
 >) {
-  const input = (() => {
-    switch (viewerInput.type) {
-      case 'webpub':
-        return viewerInput.manifestPath;
-      case 'webbook':
-        return viewerInput.webbookEntryUrl;
-      case 'epub-opf':
-        return viewerInput.epubOpfPath;
-      case 'epub':
-        throw new Error('TODO');
-      default:
-        return viewerInput satisfies never;
+  let input: string;
+  switch (viewerInput.type) {
+    case 'webpub':
+      input = viewerInput.manifestPath;
+      break;
+    case 'webbook':
+      input = viewerInput.webbookEntryUrl;
+      break;
+    case 'epub-opf':
+      input = viewerInput.epubOpfPath;
+      break;
+    case 'epub': {
+      if (!fs.existsSync(viewerInput.epubTmpOutputDir)) {
+        await openEpub(viewerInput.epubPath, viewerInput.epubTmpOutputDir);
+      }
+      input = getDefaultEpubOpfPath(viewerInput.epubTmpOutputDir);
+      break;
     }
-  })();
+    default:
+      input = viewerInput satisfies never;
+  }
   return (
     isValidUri(input)
       ? new URL(input)
@@ -131,7 +139,7 @@ export function getSourceUrl({
   ).href;
 }
 
-export function getViewerFullUrl({
+export async function getViewerFullUrl({
   viewerInput,
   base,
   workspaceDir,
@@ -142,24 +150,15 @@ export function getViewerFullUrl({
     ResolvedTaskConfig,
     'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
   >) {
-  const input = (() => {
-    switch (viewerInput.type) {
-      case 'webpub':
-        return viewerInput.manifestPath;
-      case 'webbook':
-        return viewerInput.webbookEntryUrl;
-      case 'epub-opf':
-        return viewerInput.epubOpfPath;
-      case 'epub':
-        throw new Error('TODO');
-      default:
-        return viewerInput satisfies never;
-    }
-  })();
   const viewerUrl = new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
-  const sourceUrl = getSourceUrl({ viewerInput, base, workspaceDir, rootUrl });
+  const sourceUrl = await getSourceUrl({
+    viewerInput,
+    base,
+    workspaceDir,
+    rootUrl,
+  });
   const viewerParams = getViewerParams(
-    input === 'data:,'
+    sourceUrl === 'data:,'
       ? undefined // open Viewer start page
       : sourceUrl,
     config,

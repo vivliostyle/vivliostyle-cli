@@ -134,7 +134,7 @@ export async function buildPDFWithContainer({
   config: ResolvedTaskConfig;
   inlineConfig: ParsedVivliostyleInlineConfig;
 }): Promise<string | null> {
-  const sourceUrl = new URL(getSourceUrl(config));
+  const sourceUrl = new URL(await getSourceUrl(config));
   if (sourceUrl.origin === config.rootUrl) {
     sourceUrl.hostname = CONTAINER_LOCAL_HOSTNAME;
   }

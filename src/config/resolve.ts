@@ -32,6 +32,7 @@ import { parsePackageName } from '../processor/theme.js';
 import {
   debug,
   cwd as defaultCwd,
+  getEpubRootDir,
   isInContainer,
   isValidUri,
   logWarn,
@@ -204,7 +205,6 @@ export type ResolvedTaskConfig = {
   viewerInput: ViewerInputConfig;
   outputs: OutputConfig[];
   themeIndexes: Set<ParsedTheme>;
-  rootThemes: ParsedTheme[];
   copyAsset: {
     includes: string[];
     excludes: string[];
@@ -237,7 +237,6 @@ export type ResolvedTaskConfig = {
     | {
         src: string;
         name: string;
-        htmlPath: string | undefined;
       }
     | undefined;
   timeout: number;
@@ -436,12 +435,6 @@ export function resolveTaskConfig(
   const entryContextDir = config.entryContext
     ? upath.resolve(context, config.entryContext)
     : context;
-  const workspaceDir = upath.resolve(
-    context,
-    config.workspaceDir ?? '.vivliostyle',
-  );
-  const themesDir = upath.resolve(workspaceDir, 'themes');
-
   const language = config.language;
   const readingProgression = config.readingProgression;
   const size = config.size ? parsePageSize(config.size) : undefined;
@@ -496,17 +489,6 @@ export function resolveTaskConfig(
   const staticRoutes = config.static ?? {};
   const viteConfig = config.vite;
   const viteConfigFile = config.viteConfigFile ?? true;
-
-  const rootThemes =
-    config.theme?.map((theme) =>
-      parseTheme({
-        theme,
-        context,
-        workspaceDir,
-        themesDir,
-      }),
-    ) ?? [];
-  const themeIndexes = new Set(rootThemes);
 
   const outputs = ((): OutputConfig[] => {
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
@@ -586,13 +568,6 @@ export function resolveTaskConfig(
   const cover = config.cover && {
     src: upath.resolve(entryContextDir, config.cover.src),
     name: config.cover.name || COVER_HTML_IMAGE_ALT,
-    htmlPath:
-      'htmlPath' in config.cover && !config.cover.htmlPath
-        ? undefined
-        : upath.resolve(
-            workspaceDir,
-            config.cover.htmlPath || COVER_HTML_FILENAME,
-          ),
   };
 
   const copyAsset = {
@@ -608,14 +583,33 @@ export function resolveTaskConfig(
     ),
   };
 
-  const commonOpts: CommonOpts = {
+  const themeIndexes = new Set<ParsedTheme>();
+  const projectConfig =
+    !options.config && options.input
+      ? resolveSingleInputConfig({
+          config,
+          input: options.input!,
+          context,
+          temporaryFilePrefix,
+          themeIndexes,
+        })
+      : resolveComposedProjectConfig({
+          config,
+          context,
+          entryContextDir,
+          outputs,
+          temporaryFilePrefix,
+          themeIndexes,
+          rootUrl,
+          cover,
+        });
+
+  const resolvedConfig = {
+    ...projectConfig,
     context,
     entryContextDir,
-    workspaceDir,
-    themesDir,
     outputs,
     themeIndexes,
-    rootThemes,
     copyAsset,
     temporaryFilePrefix,
     size,
@@ -648,31 +642,40 @@ export function resolveTaskConfig(
     rootUrl,
     viteConfig,
     viteConfigFile,
-  };
-  const resolvedConfig =
-    !options.config && options.input
-      ? composeSingleInputConfig(commonOpts, config, options.input)
-      : composeProjectConfig(commonOpts, config);
+  } satisfies ResolvedTaskConfig;
   debug('resolvedConfig', JSON.stringify(resolvedConfig, null, 2));
   return resolvedConfig;
 }
 
-type CommonOpts = Omit<
+type ProjectConfig = Pick<
   ResolvedTaskConfig,
-  'input' | 'viewerInput' | 'entries' | 'exportAliases' | 'title' | 'author'
+  | 'workspaceDir'
+  | 'themesDir'
+  | 'entries'
+  | 'input'
+  | 'viewerInput'
+  | 'exportAliases'
+  | 'title'
+  | 'author'
 >;
 
-function composeSingleInputConfig(
-  otherConfig: CommonOpts,
-  config: ParsedBuildTask,
-  input: NonNullable<InlineOptions['input']>,
-): ResolvedTaskConfig {
+function resolveSingleInputConfig({
+  config,
+  input,
+  context,
+  temporaryFilePrefix,
+  themeIndexes,
+}: Pick<
+  ResolvedTaskConfig,
+  'context' | 'temporaryFilePrefix' | 'themeIndexes'
+> & {
+  config: ParsedBuildTask;
+  input: NonNullable<InlineOptions['input']>;
+}): ProjectConfig {
   debug('entering single entry config mode');
 
-  const { entryContextDir, workspaceDir, temporaryFilePrefix, rootThemes } =
-    otherConfig;
-
   let sourcePath: string;
+  let workspaceDir: string;
   const inputFormat = input.format;
   const title = config?.title;
   const author = config?.author;
@@ -681,11 +684,35 @@ function composeSingleInputConfig(
 
   if (isValidUri(input.entry)) {
     sourcePath = input.entry;
+    workspaceDir = context;
   } else {
-    sourcePath = upath.resolve(entryContextDir, input.entry);
+    sourcePath = upath.resolve(context, input.entry);
     // Check file exists
     statFileSync(sourcePath);
+    switch (input.format) {
+      case 'webbook':
+        workspaceDir = context;
+        break;
+      case 'markdown':
+      case 'pub-manifest':
+      case 'epub':
+        workspaceDir = upath.dirname(sourcePath);
+        break;
+      case 'epub-opf': {
+        const rootDir = getEpubRootDir(sourcePath);
+        if (!rootDir) {
+          throw new Error(
+            `Could not determine the EPUB root directory for the OPF file: ${sourcePath}`,
+          );
+        }
+        workspaceDir = rootDir;
+        break;
+      }
+      default:
+        return input.format satisfies never;
+    }
   }
+  const themesDir = upath.resolve(workspaceDir, 'themes');
 
   if (input.format === 'markdown') {
     // Single input file; create temporary file
@@ -695,7 +722,7 @@ function composeSingleInputConfig(
       sourcePath,
       workspaceDir,
     });
-    const relDir = upath.relative(entryContextDir, upath.dirname(sourcePath));
+    const relDir = upath.relative(context, upath.dirname(sourcePath));
     const target = upath
       .resolve(
         workspaceDir,
@@ -704,8 +731,18 @@ function composeSingleInputConfig(
       )
       .replace(/\.md$/, '.html');
     touchTmpFile(target);
-    const themes = metadata.themes ?? [...rootThemes];
-    themes.forEach((t) => otherConfig.themeIndexes.add(t));
+    const themes =
+      metadata.themes ??
+      config.theme?.map((theme) =>
+        parseTheme({
+          theme,
+          context,
+          workspaceDir,
+          themesDir,
+        }),
+      ) ??
+      [];
+    themes.forEach((t) => themeIndexes.add(t));
     entries.push({
       contentType,
       source: {
@@ -784,7 +821,8 @@ function composeSingleInputConfig(
   }
 
   return {
-    ...otherConfig,
+    workspaceDir,
+    themesDir,
     entries,
     input: {
       format: inputFormat,
@@ -797,23 +835,32 @@ function composeSingleInputConfig(
   };
 }
 
-function composeProjectConfig(
-  otherConfig: CommonOpts,
-  config: ParsedBuildTask,
-): ResolvedTaskConfig {
-  debug('entering project config mode');
+function resolveComposedProjectConfig({
+  config,
+  context,
+  entryContextDir,
+  outputs,
+  temporaryFilePrefix,
+  themeIndexes,
+  rootUrl,
+  cover,
+}: Pick<
+  ResolvedTaskConfig,
+  | 'context'
+  | 'entryContextDir'
+  | 'outputs'
+  | 'temporaryFilePrefix'
+  | 'themeIndexes'
+  | 'rootUrl'
+  | 'cover'
+> & { config: ParsedBuildTask }): ProjectConfig {
+  debug('entering composed project config mode');
 
-  const {
+  const workspaceDir = upath.resolve(
     context,
-    entryContextDir,
-    workspaceDir,
-    themesDir,
-    themeIndexes,
-    rootThemes,
-    outputs,
-    cover,
-    rootUrl,
-  } = otherConfig;
+    config.workspaceDir ?? '.vivliostyle',
+  );
+  const themesDir = upath.resolve(workspaceDir, 'themes');
   const pkgJsonPath = upath.resolve(entryContextDir, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
     ? readJSON(pkgJsonPath)
@@ -823,6 +870,15 @@ function composeProjectConfig(
   }
   const exportAliases: { source: string; target: string }[] = [];
 
+  const rootThemes =
+    config.theme?.map((theme) =>
+      parseTheme({
+        theme,
+        context,
+        workspaceDir,
+        themesDir,
+      }),
+    ) ?? [];
   const tocConfig = {
     tocTitle: config.toc?.title ?? config?.tocTitle ?? TOC_TITLE,
     target: upath.resolve(workspaceDir, config.toc?.htmlPath ?? TOC_FILENAME),
@@ -832,6 +888,14 @@ function composeProjectConfig(
       transformSectionList: config.toc?.transformSectionList,
     },
   };
+  const coverHtml =
+    config.cover &&
+    ('htmlPath' in config.cover && !config.cover.htmlPath
+      ? undefined
+      : upath.resolve(
+          workspaceDir,
+          config.cover?.htmlPath || COVER_HTML_FILENAME,
+        ));
 
   const ensureCoverImage = (src?: string) => {
     const absPath = src && upath.resolve(entryContextDir, src);
@@ -957,7 +1021,7 @@ function composeProjectConfig(
       ) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
-          `${otherConfig.temporaryFilePrefix}${upath.basename(target)}`,
+          `${temporaryFilePrefix}${upath.basename(target)}`,
         );
         exportAliases.push({ source: tmpPath, target });
         touchTmpFile(tmpPath);
@@ -1001,7 +1065,7 @@ function composeProjectConfig(
       }
       target ??= upath.resolve(
         workspaceDir,
-        entry.path || cover?.htmlPath || COVER_HTML_FILENAME,
+        entry.path || coverHtml || COVER_HTML_FILENAME,
       );
       if (
         inputInfo?.type === 'file' &&
@@ -1009,7 +1073,7 @@ function composeProjectConfig(
       ) {
         const tmpPath = upath.resolve(
           upath.dirname(target),
-          `${otherConfig.temporaryFilePrefix}${upath.basename(target)}`,
+          `${temporaryFilePrefix}${upath.basename(target)}`,
         );
         exportAliases.push({ source: tmpPath, target });
         touchTmpFile(tmpPath);
@@ -1076,10 +1140,10 @@ function composeProjectConfig(
       themes: [...rootThemes],
     });
   }
-  if (cover?.htmlPath && !entries.find(({ rel }) => rel === 'cover')) {
+  if (cover && coverHtml && !entries.find(({ rel }) => rel === 'cover')) {
     entries.unshift({
       rel: 'cover',
-      target: cover.htmlPath,
+      target: coverHtml,
       title: projectTitle,
       themes: [], // Don't inherit rootThemes for cover documents
       coverImageSrc: ensureCoverImage(cover.src)!,
@@ -1088,7 +1152,8 @@ function composeProjectConfig(
   }
 
   return {
-    ...otherConfig,
+    workspaceDir,
+    themesDir,
     entries,
     input: {
       format: 'pub-manifest',

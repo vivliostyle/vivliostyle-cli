@@ -325,15 +325,19 @@ export function isInContainer(): boolean {
   return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
 }
 
-export async function openEpubToTmpDirectory(filePath: string): Promise<{
-  dest: string;
-  epubOpfPath: string;
-  deleteEpub: () => void;
-}> {
-  const [tmpDir, deleteEpub] = await useTmpDirectory();
-  await inflateZip(filePath, tmpDir);
+export async function openEpub(epubPath: string, tmpDir: string) {
+  await inflateZip(epubPath, tmpDir);
+  debug(`Created the temporary EPUB directory: ${tmpDir}`);
+  const deleteEpub = () => {
+    fs.rmSync(tmpDir, { recursive: true });
+    debug(`Removed the temporary EPUB directory: ${tmpDir}`);
+  };
+  beforeExitHandlers.push(deleteEpub);
+  return deleteEpub;
+}
 
-  const containerXmlPath = upath.join(tmpDir, 'META-INF/container.xml');
+export function getDefaultEpubOpfPath(epubDir: string) {
+  const containerXmlPath = upath.join(epubDir, 'META-INF/container.xml');
   const xmlParser = new XMLParser({
     ignoreAttributes: false,
   });
@@ -341,8 +345,26 @@ export async function openEpubToTmpDirectory(filePath: string): Promise<{
     fs.readFileSync(containerXmlPath, 'utf8'),
   );
   const rootfile = [container.rootfiles.rootfile].flat()[0]; // Only supports a default rendition
-  const epubOpfPath = upath.join(tmpDir, rootfile['@_full-path']);
-  return { dest: tmpDir, epubOpfPath, deleteEpub };
+  const epubOpfPath = upath.join(epubDir, rootfile['@_full-path']);
+  return epubOpfPath;
+}
+
+export function getEpubRootDir(epubOpfPath: string) {
+  function traverse(dir: string) {
+    const files = fs.readdirSync(dir);
+    if (
+      files.includes('META-INF') &&
+      pathEquals(epubOpfPath, getDefaultEpubOpfPath(dir))
+    ) {
+      return dir;
+    }
+    const next = upath.dirname(dir);
+    if (pathEquals(dir, next)) {
+      return;
+    }
+    return traverse(next);
+  }
+  return traverse(upath.dirname(epubOpfPath));
 }
 
 // FIXME: https://github.com/ajv-validator/ajv/issues/2047

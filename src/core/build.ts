@@ -66,7 +66,11 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
         await viteBuild(viteConfig);
       }
 
-      server = await createViteServer({ config, inlineOptions, mode: 'build' });
+      server = await createViteServer({
+        config,
+        inlineOptions,
+        mode: 'build',
+      });
 
       // build artifacts
       if (isWebPubConfig(config)) {

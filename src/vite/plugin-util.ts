@@ -1,7 +1,7 @@
 import { ResolvedConfig as ResolvedViteConfig } from 'vite';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig } from '../config/load.js';
-import { mergeConfig } from '../config/merge.js';
+import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { ResolvedTaskConfig, resolveTaskConfig } from '../config/resolve.js';
 import { InlineOptions } from '../config/schema.js';
 
@@ -19,6 +19,7 @@ export async function reloadConfig(
       configPath: options.config,
       cwd: options.cwd,
     })) ?? setupConfigFromFlags(options);
+  config = mergeInlineConfig(config, options);
   config = mergeConfig(config, {
     temporaryFilePrefix: prevConfig.temporaryFilePrefix,
     server: resolvedViteConfig?.server,
