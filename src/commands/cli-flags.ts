@@ -9,6 +9,7 @@ import {
   ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfig,
 } from '../config/schema.js';
+import { EMPTY_DATA_URI } from '../const.js';
 import { logWarn } from '../util.js';
 
 export interface CliFlags {
@@ -74,9 +75,18 @@ export function setupConfigFromFlags(
   flags: InlineOptions,
 ): ParsedVivliostyleConfigSchema {
   if (!flags.input) {
-    throw new Error(
-      'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
-    );
+    if (flags.enableViewerStartPage) {
+      return {
+        tasks: [{ entry: [] }],
+        inlineOptions: {
+          input: { format: 'webbook', entry: EMPTY_DATA_URI },
+        },
+      };
+    } else {
+      throw new Error(
+        'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
+      );
+    }
   }
   return {
     tasks: [{ entry: [] }],

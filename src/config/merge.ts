@@ -1,4 +1,5 @@
 import {
+  InlineOptions,
   ParsedBuildTask,
   ParsedVivliostyleConfigSchema,
   ParsedVivliostyleInlineConfig,
@@ -48,7 +49,29 @@ export function mergeInlineConfig(
     renderMode,
     preflight,
     preflightOption,
-    ...passedOptions
+    // InlineOptions
+    cwd,
+    config,
+    input,
+    cropMarks,
+    bleed,
+    cropOffset,
+    css,
+    style,
+    userStyle,
+    singleDoc,
+    quick,
+    sandbox,
+    executableBrowser,
+    proxyServer,
+    proxyBypass,
+    proxyUser,
+    proxyPass,
+    logLevel,
+    ignoreHttpsErrors,
+    openViewer,
+    enableStaticServe,
+    enableViewerStartPage,
   } = inlineConfig;
 
   return {
@@ -79,7 +102,32 @@ export function mergeInlineConfig(
     })),
     inlineOptions: {
       ...pruneObject(inlineOptions),
-      ...pruneObject(passedOptions),
+      ...pruneObject({
+        cwd,
+        config,
+        input,
+        cropMarks,
+        bleed,
+        cropOffset,
+        css,
+        style,
+        userStyle,
+        singleDoc,
+        quick,
+        sandbox,
+        executableBrowser,
+        proxyServer,
+        proxyBypass,
+        proxyUser,
+        proxyPass,
+        logLevel,
+        ignoreHttpsErrors,
+        openViewer,
+        enableStaticServe,
+        enableViewerStartPage,
+      } satisfies {
+        [K in keyof Required<InlineOptions>]: InlineOptions[K];
+      }),
     },
   };
 }

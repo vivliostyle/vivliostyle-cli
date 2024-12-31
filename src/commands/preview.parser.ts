@@ -104,6 +104,7 @@ Currently, Firefox and Webkit support preview command only!`,
     )
     .option('--no-open-viewer', 'do not open viewer')
     .option('--no-enable-static-serve', 'disable static file serving')
+    .option('--no-enable-viewer-start-page', 'disable viewer start page')
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp())

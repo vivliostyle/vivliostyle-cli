@@ -961,6 +961,12 @@ export const VivliostyleInlineConfig = v.pipe(
           `Enable static file serving as configured in the Vivliostyle config file.`,
         ),
       ),
+      enableViewerStartPage: v.pipe(
+        v.boolean(),
+        v.description(
+          `Open a start page of the viewer when the input file is not specified.`,
+        ),
+      ),
     }),
   ),
   v.check(
@@ -1011,4 +1017,5 @@ export type InlineOptions = Pick<
   | 'ignoreHttpsErrors'
   | 'openViewer'
   | 'enableStaticServe'
+  | 'enableViewerStartPage'
 >;

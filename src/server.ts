@@ -12,7 +12,7 @@ import {
 import { ResolvedTaskConfig } from './config/resolve.js';
 import { InlineOptions } from './config/schema.js';
 import { prepareViteConfig } from './config/vite.js';
-import { VIEWER_ROOT_PATH } from './const.js';
+import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
 import { getDefaultEpubOpfPath, isValidUri, openEpub } from './util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
@@ -158,7 +158,7 @@ export async function getViewerFullUrl({
     rootUrl,
   });
   const viewerParams = getViewerParams(
-    sourceUrl === 'data:,'
+    sourceUrl === EMPTY_DATA_URI
       ? undefined // open Viewer start page
       : sourceUrl,
     config,
