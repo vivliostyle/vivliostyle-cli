@@ -726,11 +726,12 @@ export const BuildTask = v.pipe(
             Docker image used for rendering.
           `),
         ),
+        /** @deprecated */
         http: v.pipe(
           v.boolean(),
+          v.metadata({ deprecated: true }),
           v.description($`
-            Launches an HTTP server to host contents instead of using the file protocol.
-            Useful for cases requiring CORS, such as external web fonts.
+            This option is enabled by default, and the file protocol is no longer supported.
           `),
         ),
         viewer: v.pipe(

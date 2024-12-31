@@ -98,4 +98,12 @@ export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
       ),
     );
   }
+
+  if (config.tasks.some((task) => task.http)) {
+    logWarn(
+      chalk.yellowBright(
+        "'http' property of Vivliostyle config was deprecated and will be removed in a future release. This option is enabled by default, and the file protocol is no longer supported.",
+      ),
+    );
+  }
 }
