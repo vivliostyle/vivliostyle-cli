@@ -26,12 +26,13 @@ import {
   TOC_FILENAME,
   TOC_TITLE,
 } from '../const.js';
-import { CONTAINER_IMAGE } from '../container.js';
+import { CONTAINER_IMAGE, CONTAINER_LOCAL_HOSTNAME } from '../container.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import { parsePackageName } from '../processor/theme.js';
 import {
   debug,
   cwd as defaultCwd,
+  isInContainer,
   isValidUri,
   logWarn,
   pathEquals,
@@ -166,7 +167,7 @@ export interface PdfOutput {
   format: 'pdf';
   path: string;
   renderMode: 'local' | 'docker';
-  preflight: 'press-ready' | 'press-ready-local' | null;
+  preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
 }
 
@@ -264,7 +265,7 @@ export type ResolvedTaskConfig = {
   };
   static: Record<string, string[]>;
   rootUrl: string;
-  vite: UserConfig | undefined;
+  viteConfig: UserConfig | undefined;
   viteConfigFile: string | boolean;
 };
 
@@ -492,20 +493,9 @@ export function resolveTaskConfig(
   const logLevel = options.logLevel ?? 'silent';
   const ignoreHttpsErrors = options.ignoreHttpsErrors ?? false;
   const base = config.base ?? '/vivliostyle';
-  const server = {
-    host: config.server?.host ?? false,
-    port: config.server?.port ?? 13000,
-    proxy: config.server?.proxy ?? {},
-  };
   const staticRoutes = config.static ?? {};
-  const vite = config.vite;
+  const viteConfig = config.vite;
   const viteConfigFile = config.viteConfigFile ?? true;
-  const host = !server.host
-    ? 'localhost'
-    : server.host === true
-      ? '0.0.0.0'
-      : server.host;
-  const rootUrl = `http://${host}:${server.port}`;
 
   const rootThemes =
     config.theme?.map((theme) =>
@@ -522,7 +512,7 @@ export function resolveTaskConfig(
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
       format: 'pdf',
       renderMode: 'local',
-      preflight: config.pressReady ? 'press-ready' : null,
+      preflight: config.pressReady ? 'press-ready' : undefined,
       preflightOption: [],
     };
     if (config.output) {
@@ -563,6 +553,34 @@ export function resolveTaskConfig(
         path: upath.resolve(context, filename),
       },
     ];
+  })();
+
+  const { server, rootUrl } = (() => {
+    let host = config.server?.host ?? false;
+    const port = config.server?.port ?? 13000;
+    if (
+      outputs.some(
+        (target) => target.format === 'pdf' && target.renderMode === 'docker',
+      )
+    ) {
+      // Docker render mode requires wildcard host to allow access from the container
+      host = true;
+    }
+    const rootHostname = isInContainer()
+      ? CONTAINER_LOCAL_HOSTNAME
+      : !host
+        ? 'localhost'
+        : host === true
+          ? '0.0.0.0'
+          : host;
+    return {
+      server: {
+        host,
+        port,
+        proxy: config.server?.proxy ?? {},
+      } satisfies ResolvedTaskConfig['server'],
+      rootUrl: `http://${rootHostname}:${port}`,
+    };
   })();
 
   const cover = config.cover && {
@@ -628,7 +646,7 @@ export function resolveTaskConfig(
     server,
     static: staticRoutes,
     rootUrl,
-    vite,
+    viteConfig,
     viteConfigFile,
   };
   const resolvedConfig =
@@ -661,7 +679,7 @@ function composeSingleInputConfig(
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
 
-  if (!isValidUri(input.entry)) {
+  if (isValidUri(input.entry)) {
     sourcePath = input.entry;
   } else {
     sourcePath = upath.resolve(entryContextDir, input.entry);

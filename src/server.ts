@@ -1,10 +1,12 @@
-import { fileURLToPath, pathToFileURL, URL } from 'node:url';
+import { URL } from 'node:url';
 import upath from 'upath';
 import {
   createServer,
   InlineConfig,
   mergeConfig as mergeViteConfig,
   preview,
+  PreviewServer,
+  ViteDevServer,
 } from 'vite';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import { InlineOptions } from './config/schema.js';
@@ -96,6 +98,39 @@ export function getViewerParams(
   return viewerParams;
 }
 
+export function getSourceUrl({
+  viewerInput,
+  base,
+  workspaceDir,
+  rootUrl,
+}: Pick<
+  ResolvedTaskConfig,
+  'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
+>) {
+  const input = (() => {
+    switch (viewerInput.type) {
+      case 'webpub':
+        return viewerInput.manifestPath;
+      case 'webbook':
+        return viewerInput.webbookEntryUrl;
+      case 'epub-opf':
+        return viewerInput.epubOpfPath;
+      case 'epub':
+        throw new Error('TODO');
+      default:
+        return viewerInput satisfies never;
+    }
+  })();
+  return (
+    isValidUri(input)
+      ? new URL(input)
+      : new URL(
+          upath.posix.join(base, upath.relative(workspaceDir, input)),
+          rootUrl,
+        )
+  ).href;
+}
+
 export function getViewerFullUrl({
   viewerInput,
   base,
@@ -121,30 +156,38 @@ export function getViewerFullUrl({
         return viewerInput satisfies never;
     }
   })();
-  const inputUrl = isValidUri(input) ? new URL(input) : pathToFileURL(input);
   const viewerUrl = new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
-  const sourceUrl = new URL(rootUrl);
-  sourceUrl.pathname = upath.posix.join(
-    base,
-    upath.relative(workspaceDir, fileURLToPath(inputUrl)),
-  );
+  const sourceUrl = getSourceUrl({ viewerInput, base, workspaceDir, rootUrl });
   const viewerParams = getViewerParams(
     input === 'data:,'
       ? undefined // open Viewer start page
-      : sourceUrl.href,
+      : sourceUrl,
     config,
   );
-  return `${viewerUrl.href}#${viewerParams}`;
+  viewerUrl.hash = viewerParams;
+  return viewerUrl.href;
 }
 
+export async function createViteServer(args: {
+  config: ResolvedTaskConfig;
+  inlineOptions: InlineOptions;
+  mode: 'preview';
+}): Promise<ViteDevServer>;
+export async function createViteServer(args: {
+  config: ResolvedTaskConfig;
+  inlineOptions: InlineOptions;
+  mode: 'build';
+}): Promise<PreviewServer>;
 export async function createViteServer({
   config,
   inlineOptions: options,
+  mode,
 }: {
   config: ResolvedTaskConfig;
   inlineOptions: InlineOptions;
+  mode: 'preview' | 'build';
 }) {
-  let { viteConfig } = await prepareViteConfig(config);
+  let { viteConfig } = await prepareViteConfig({ ...config, mode });
   viteConfig = mergeViteConfig(viteConfig, {
     clearScreen: false,
     configFile: false,
@@ -158,30 +201,9 @@ export async function createViteServer({
     server: viteConfig.server ?? config.server,
   } satisfies InlineConfig);
 
-  const server = await createServer(viteConfig);
-  return { server };
-}
-
-export async function listenVitePreviewServer({
-  config,
-  inlineOptions: options,
-}: {
-  config: ResolvedTaskConfig;
-  inlineOptions: InlineOptions;
-}) {
-  let { viteConfig } = await prepareViteConfig(config);
-  viteConfig = mergeViteConfig(viteConfig, {
-    clearScreen: false,
-    configFile: false,
-    appType: 'custom',
-    plugins: [
-      vsDevServerPlugin({ config, options }),
-      vsViewerPlugin({ config, options }),
-      vsBrowserPlugin({ config, options }),
-      vsStaticServePlugin({ config, options }),
-    ],
-    server: viteConfig.server ?? config.server,
-  } satisfies InlineConfig);
-
-  return await preview(viteConfig);
+  if (mode === 'preview') {
+    return await createServer(viteConfig);
+  } else {
+    return await preview(viteConfig);
+  }
 }

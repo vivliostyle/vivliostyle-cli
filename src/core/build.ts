@@ -2,13 +2,13 @@ import chalk from 'chalk';
 import { log } from 'console';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
-import { build as viteBuild } from 'vite';
+import { PreviewServer, build as viteBuild } from 'vite';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { isWebPubConfig, resolveTaskConfig } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
-import { prepareViteConfig } from '../config/vite.js';
+import { prepareViteConfig, resolveViteConfig } from '../config/vite.js';
 import { buildPDFWithContainer } from '../container.js';
 import { buildPDF } from '../output/pdf.js';
 import { buildWebPublication } from '../output/webbook.js';
@@ -18,7 +18,7 @@ import {
   copyAssets,
   prepareThemeDirectory,
 } from '../processor/compile.js';
-import { listenVitePreviewServer } from '../server.js';
+import { createViteServer } from '../server.js';
 import {
   cwd,
   isInContainer,
@@ -29,26 +29,6 @@ import {
 
 export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
   setLogLevel(inlineConfig.logLevel);
-
-  // TODO
-  /*
-  if (cliFlags.bypassedPdfBuilderOption) {
-    const option = JSON.parse(cliFlags.bypassedPdfBuilderOption);
-    // Host doesn't know browser path inside of container
-    option.executableBrowser = getExecutableBrowserPath(
-      option.browserType ?? 'chromium',
-    );
-    debug('bypassedPdfBuilderOption', option);
-
-    const stopLogging = startLogging();
-    await buildPDF(option);
-    // Stop remaining stream output and kill process
-    stopLogging();
-
-    teardownServer();
-    return;
-  }
-  */
 
   const stopLogging = startLogging('Collecting build config');
 
@@ -66,28 +46,35 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
 
   for (let [i, task] of vivliostyleConfig.tasks.entries()) {
     let config = resolveTaskConfig(task, inlineOptions);
-
-    // build dependents first
-    const { viteConfig, viteConfigLoaded } = await prepareViteConfig(config);
-    if (viteConfigLoaded) {
-      await viteBuild(viteConfig);
-    }
-
-    const server = await listenVitePreviewServer({ config, inlineOptions });
+    const { viteConfig, viteConfigLoaded } = await prepareViteConfig({
+      ...config,
+      mode: 'build',
+    });
+    const resolvedViteConfig = await resolveViteConfig(viteConfig, 'build');
 
     // reload config to get the latest server URL
     vivliostyleConfig = mergeConfig(vivliostyleConfig, {
-      server: server.config.preview,
+      server: resolvedViteConfig.preview,
     });
     task = vivliostyleConfig.tasks[i];
     config = resolveTaskConfig(task, inlineOptions);
 
-    // build artifacts
-    if (isWebPubConfig(config)) {
-      await cleanupWorkspace(config);
-      await prepareThemeDirectory(config);
-      await compile(config);
-      await copyAssets(config);
+    let server: PreviewServer | undefined;
+    if (!isInContainer()) {
+      // build dependents first
+      if (viteConfigLoaded) {
+        await viteBuild(viteConfig);
+      }
+
+      server = await createViteServer({ config, inlineOptions, mode: 'build' });
+
+      // build artifacts
+      if (isWebPubConfig(config)) {
+        await cleanupWorkspace(config);
+        await prepareThemeDirectory(config);
+        await compile(config);
+        await copyAssets(config);
+      }
     }
 
     // generate files
@@ -96,7 +83,11 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
       const { format } = target;
       if (format === 'pdf') {
         if (!isInContainer() && target.renderMode === 'docker') {
-          output = await buildPDFWithContainer();
+          output = await buildPDFWithContainer({
+            target,
+            config,
+            inlineConfig,
+          });
         } else {
           output = await buildPDF({ target, config });
         }
@@ -115,9 +106,11 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
       }
     }
 
-    await server.close();
+    await server?.close();
   }
 
   runExitHandlers();
-  stopLogging('Built successfully.', '🎉');
+  if (!isInContainer()) {
+    stopLogging('Built successfully.', '🎉');
+  }
 }

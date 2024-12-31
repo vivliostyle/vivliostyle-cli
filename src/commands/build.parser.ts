@@ -180,7 +180,6 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
       ),
     )
     .option('--no-enable-static-serve', 'disable static file serving')
-    .addOption(new Option('--bypassed-pdf-builder-option <json>').hideHelp())
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp())

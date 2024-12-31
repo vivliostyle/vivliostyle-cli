@@ -1,15 +1,25 @@
 import chalk from 'chalk';
 import commandExists from 'command-exists';
-import execa from 'execa';
+import { execa } from 'execa';
 import isInteractive from 'is-interactive';
+import { execFile } from 'node:child_process';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { promisify } from 'node:util';
 import upath from 'upath';
+import { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
+import { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { cliVersion } from './const.js';
+import { getSourceUrl } from './server.js';
 import { debug, isValidUri, log, pathEquals, suspendLogging } from './util.js';
+
+const execFileAsync = promisify(execFile);
 
 export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
 export const CONTAINER_ROOT_DIR = '/data';
+// Special hostname to access host machine from container
+// https://docs.docker.com/desktop/features/networking/#use-cases-and-workarounds
+export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 
 export function toContainerPath(urlOrAbsPath: string): string {
   if (isValidUri(urlOrAbsPath)) {
@@ -55,15 +65,31 @@ export async function runContainer({
   userVolumeArgs,
   commandArgs,
   entrypoint,
+  env,
+  workdir,
 }: {
   image: string;
   userVolumeArgs: string[];
   commandArgs: string[];
   entrypoint?: string;
-}): Promise<execa.ExecaReturnValue> {
+  env?: [string, string][];
+  workdir?: string;
+}) {
   if (!(await commandExists('docker'))) {
     throw new Error(
       `Docker isn't be installed. To use this feature, you'll need to install Docker.`,
+    );
+  }
+  const versionCmd = await execFileAsync('docker', [
+    'version',
+    '--format',
+    '{{.Server.Version}}',
+  ]);
+  const version = versionCmd.stdout.trim();
+  const [major, minor] = version.split('.').map(Number);
+  if (major < 20 || (major === 20 && minor < 10)) {
+    throw new Error(
+      `Docker version ${version} is not supported. Please upgrade to Docker 20.10.0 or later.`,
     );
   }
 
@@ -73,10 +99,12 @@ export async function runContainer({
     ...(isInteractive() ? ['-it'] : []),
     '--rm',
     ...(entrypoint ? ['--entrypoint', entrypoint] : []),
+    ...(env ? env.flatMap(([k, v]) => ['-e', `${k}=${v}`]) : []),
     ...(process.env.DEBUG
       ? ['-e', `DEBUG=${process.env.DEBUG}`] // escape seems to work well
       : []),
     ...userVolumeArgs.flatMap((arg) => ['-v', arg]),
+    ...(workdir ? ['-w', workdir] : []),
     image,
     ...commandArgs,
   ];
@@ -85,11 +113,8 @@ export async function runContainer({
     const proc = execa('docker', args, {
       stdio: 'inherit',
     });
-    proc.stdout?.pipe(process.stdout);
-    proc.stderr?.pipe(process.stderr);
-    const ret = await proc;
+    await proc;
     restartLogging();
-    return ret;
   } catch (error) {
     log(
       `\n${chalk.red.bold(
@@ -100,38 +125,43 @@ export async function runContainer({
   }
 }
 
-export async function buildPDFWithContainer(): Promise<string | null> {
-  // TODO
-  /*
+export async function buildPDFWithContainer({
+  target,
+  config,
+  inlineConfig,
+}: {
+  target: PdfOutput;
+  config: ResolvedTaskConfig;
+  inlineConfig: ParsedVivliostyleInlineConfig;
+}): Promise<string | null> {
+  const sourceUrl = new URL(getSourceUrl(config));
+  if (sourceUrl.origin === config.rootUrl) {
+    sourceUrl.hostname = CONTAINER_LOCAL_HOSTNAME;
+  }
   const bypassedOption = {
-    ...config,
-    input: toContainerPath(config.input),
-    target: {
-      ...option.target,
-      path: toContainerPath(option.target.path),
+    ...inlineConfig,
+    input: {
+      format: 'webbook',
+      entry: sourceUrl.href,
     },
-    entryContextDir: toContainerPath(option.entryContextDir),
-    workspaceDir: toContainerPath(option.workspaceDir),
-    customStyle: option.customStyle && toContainerPath(option.customStyle),
-    customUserStyle:
-      option.customUserStyle && toContainerPath(option.customUserStyle),
-    sandbox: false,
-  };
+    output: [
+      {
+        ...target,
+        path: toContainerPath(target.path),
+      },
+    ],
+  } satisfies ParsedVivliostyleInlineConfig;
 
   await runContainer({
-    image: option.image,
+    image: config.image,
     userVolumeArgs: collectVolumeArgs([
-      option.workspaceDir,
-      upath.dirname(option.target.path),
+      config.context,
+      upath.dirname(target.path),
     ]),
-    commandArgs: [
-      'build',
-      '--bypassed-pdf-builder-option',
-      JSON.stringify(bypassedOption),
-    ],
+    env: [['VS_CLI_BUILD_PDF_OPTIONS', JSON.stringify(bypassedOption)]],
+    commandArgs: ['build'],
+    workdir: toContainerPath(config.context),
   });
 
-  return option.target.path;
-  */
-  return null;
+  return target.path;
 }

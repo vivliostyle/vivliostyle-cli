@@ -637,7 +637,9 @@ export const BuildTask = v.pipe(
               host: v.pipe(
                 v.union([v.boolean(), ValidString]),
                 v.description(
-                  `Specify which IP address the server should listen on. (default: \`false\`)`,
+                  `Specify which IP address the server should listen on.
+                  Set this to \`true\` to listen on all addresses.
+                  (default: \`true\` if a PDF build with docker render mode is required, otherwise \`false\`)`,
                 ),
               ),
               port: v.pipe(

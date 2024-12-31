@@ -21,7 +21,11 @@ export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
   );
   // Only show preview of first entry
   const config = resolveTaskConfig(tasks[0], inlineOptions);
-  const { server } = await createViteServer({ config, inlineOptions });
+  const server = await createViteServer({
+    config,
+    inlineOptions,
+    mode: 'preview',
+  });
   const dev = await server.listen();
   const { port } = dev.httpServer!.address() as { port: number };
   console.log(`Vite server running at http://localhost:${port}`);
