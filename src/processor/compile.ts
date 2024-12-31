@@ -14,7 +14,7 @@ import {
   ResolvedTaskConfig,
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
-import type { ArticleEntryObject } from '../config/schema.js';
+import type { ArticleEntryConfig } from '../config/schema.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
   beforeExitHandlers,
@@ -328,7 +328,7 @@ export async function generateManifest({
   readingProgression,
   cover,
 }: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig }) {
-  const manifestEntries: ArticleEntryObject[] = entries.map((entry) => ({
+  const manifestEntries: ArticleEntryConfig[] = entries.map((entry) => ({
     title:
       (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||
       entry.title,

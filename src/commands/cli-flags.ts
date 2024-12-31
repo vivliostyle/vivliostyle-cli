@@ -4,7 +4,7 @@ import upath from 'upath';
 import * as v from 'valibot';
 import {
   InlineOptions,
-  OutputObject,
+  OutputConfig,
   ParsedVivliostyleConfigSchema,
   ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfig,
@@ -15,7 +15,7 @@ import { logWarn } from '../util.js';
 export interface CliFlags {
   input?: string;
   config?: string;
-  outputs?: Pick<OutputObject, 'path' | 'format'>[];
+  outputs?: Pick<OutputConfig, 'path' | 'format'>[];
   theme?: string[];
   size?: string;
   cropMarks?: boolean;

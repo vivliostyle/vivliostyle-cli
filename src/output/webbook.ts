@@ -9,7 +9,7 @@ import {
   ResolvedTaskConfig,
   WebPublicationOutput,
 } from '../config/resolve.js';
-import { ArticleEntryObject } from '../config/schema.js';
+import { ArticleEntryConfig } from '../config/schema.js';
 import { MANIFEST_FILENAME } from '../const.js';
 import {
   getDefaultIgnorePatterns,
@@ -116,7 +116,7 @@ export function writePublicationManifest(
     language?: string;
     readingProgression?: 'ltr' | 'rtl';
     modified: string;
-    entries: ArticleEntryObject[];
+    entries: ArticleEntryConfig[];
     cover?: {
       url: string;
       name: string;

@@ -8,15 +8,15 @@ import upath from 'upath';
 import { ProxyOptions, UserConfig } from 'vite';
 import { getExecutableBrowserPath } from '../browser.js';
 import {
-  ArticleEntryObject,
+  ArticleEntryConfig,
   BrowserType,
-  ContentsEntryObject,
-  CoverEntryObject,
-  EntryObject,
+  ContentsEntryConfig,
+  CoverEntryConfig,
+  EntryConfig,
   InputFormat,
   StructuredDocument,
   StructuredDocumentSection,
-  ThemeObject,
+  ThemeConfig,
 } from '../config/schema.js';
 import {
   COVER_HTML_FILENAME,
@@ -305,7 +305,7 @@ export function parseTheme({
   workspaceDir,
   themesDir,
 }: {
-  theme: string | ThemeObject;
+  theme: string | ThemeConfig;
   context: string;
   workspaceDir: string;
   themesDir: string;
@@ -910,14 +910,14 @@ function resolveComposedProjectConfig({
   const projectTitle: string | undefined = config?.title ?? pkgJson?.name;
   const projectAuthor: string | undefined = config?.author ?? pkgJson?.author;
 
-  const isContentsEntry = (entry: EntryObject): entry is ContentsEntryObject =>
+  const isContentsEntry = (entry: EntryConfig): entry is ContentsEntryConfig =>
     entry.rel === 'contents';
-  const isCoverEntry = (entry: EntryObject): entry is CoverEntryObject =>
+  const isCoverEntry = (entry: EntryConfig): entry is CoverEntryConfig =>
     entry.rel === 'cover';
-  const isArticleEntry = (entry: EntryObject): entry is ArticleEntryObject =>
+  const isArticleEntry = (entry: EntryConfig): entry is ArticleEntryConfig =>
     !isContentsEntry(entry) && !isCoverEntry(entry);
 
-  function parseEntry(entry: EntryObject): ParsedEntry {
+  function parseEntry(entry: EntryConfig): ParsedEntry {
     const getInputInfo = (
       entryPath: string,
     ):
@@ -1060,7 +1060,7 @@ function resolveComposedProjectConfig({
       const coverImageSrc = ensureCoverImage(entry.imageSrc || cover?.src);
       if (!coverImageSrc) {
         throw new Error(
-          `A CoverEntryObject is set in the entry list but a location of cover file is not set. Please set 'cover' property in your config file.`,
+          `A CoverEntryConfig is set in the entry list but a location of cover file is not set. Please set 'cover' property in your config file.`,
         );
       }
       target ??= upath.resolve(
