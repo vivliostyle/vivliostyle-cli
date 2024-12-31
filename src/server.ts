@@ -144,13 +144,16 @@ export async function getViewerFullUrl({
   base,
   workspaceDir,
   rootUrl,
+  viewer,
   ...config
 }: ViewerUrlOption &
   Pick<
     ResolvedTaskConfig,
-    'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
+    'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl' | 'viewer'
   >) {
-  const viewerUrl = new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
+  const viewerUrl = viewer
+    ? new URL(viewer)
+    : new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
   const sourceUrl = await getSourceUrl({
     viewerInput,
     base,

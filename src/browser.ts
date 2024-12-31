@@ -106,14 +106,7 @@ export async function launchPreview({
   url,
   onBrowserOpen,
   onPageOpen,
-  config: {
-    browserType,
-    proxy,
-    executableBrowser,
-    sandbox,
-    viewer,
-    ignoreHttpsErrors,
-  },
+  config: { browserType, proxy, executableBrowser, sandbox, ignoreHttpsErrors },
 }: {
   mode: 'preview' | 'build';
   url: string;
@@ -125,7 +118,6 @@ export async function launchPreview({
     | 'proxy'
     | 'executableBrowser'
     | 'sandbox'
-    | 'viewer'
     | 'ignoreHttpsErrors'
   >;
 }) {
@@ -148,7 +140,6 @@ export async function launchPreview({
     executablePath: executableBrowser,
     headless: mode === 'build',
     noSandbox: !sandbox,
-    disableWebSecurity: !viewer,
     disableDevShmUsage: isInContainer(),
   });
   await onBrowserOpen?.(browser);
