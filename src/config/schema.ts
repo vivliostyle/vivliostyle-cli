@@ -73,9 +73,9 @@ export const ThemeConfig = v.pipe(
         specifier: v.pipe(
           ValidString,
           v.description($`
-          Specifier name of importing theme package or a path of CSS file.
-          - A npm-style package argument is allowed (ex: \`@vivliostyle/theme-academic@1\` \`./local-pkg\`)
-          - A URL or a local path of CSS is allowed (ex: \`./style.css\`, \`https://example.com/style.css\`)
+          The specifier name for importing the theme package or the path to a CSS file.
+          - An npm-style package argument is allowed (e.g., \`@vivliostyle/theme-academic@1\`, \`./local-pkg\`).
+          - A URL or a local path to a CSS file is allowed (e.g., \`./style.css\`, \`https://example.com/style.css\`).
         `),
         ),
       }),
@@ -87,8 +87,8 @@ export const ThemeConfig = v.pipe(
           v.union([v.array(ValidString), ValidString]),
           v.transform((input) => [input].flat()),
           v.description($`
-          Importing CSS path(s) of the package.
-          Specify this if you want to import other than the default file.
+          The path(s) to the CSS file(s) to import from the package.
+          Specify this if you want to import files other than the default.
         `),
         ),
       }),
@@ -151,15 +151,15 @@ export const ContentsEntryConfig = v.pipe(
     pageBreakBefore: v.pipe(
       v.optional(PageBreak),
       v.description($`
-        Specify the page break position before this document.
-        It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+        Specifies the page break position before this document.
+        Useful for determining which side the first page of the document should be placed on in a two-page spread.
       `),
     ),
     pageCounterReset: v.pipe(
       v.optional(v.pipe(v.number(), v.safeInteger())),
       v.description($`
-        Reset the starting page number of this document by the specified integer.
-        It is useful when you want to control page numbers when including a page.
+        Resets the starting page number of this document to the specified integer.
+        Useful for controlling page numbers when including a page.
       `),
     ),
   }),
@@ -179,8 +179,8 @@ export const CoverEntryConfig = v.pipe(
     pageBreakBefore: v.pipe(
       v.optional(PageBreak),
       v.description($`
-        Specify the page break position before this document.
-        It is useful when you want to specify which side a first page of the document should be placed on a two-page spread.
+        Specifies the page break position before this document.
+        Useful for determining which side the first page of the document should be placed on in a two-page spread.
       `),
     ),
   }),
@@ -212,7 +212,7 @@ export const OutputConfig = v.pipe(
         path: v.pipe(
           ValidString,
           v.description($`
-            Specify output file name or directory. (default: \`<title>.pdf\`)
+            Specifies the output file name or directory. (default: \`<title>.pdf\`)
           `),
         ),
       }),
@@ -223,26 +223,26 @@ export const OutputConfig = v.pipe(
         format: v.pipe(
           OutputFormat,
           v.description($`
-            Specify output format.
+            Specifies the output format.
           `),
         ),
         renderMode: v.pipe(
           RenderMode,
           v.description($`
-            if \`docker\` is set, Vivliostyle try to render PDF on Docker container. (default: \`local\`)
+            If set to \`docker\`, Vivliostyle will render the PDF using a Docker container. (default: \`local\`)
           `),
         ),
         preflight: v.pipe(
           v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
           v.description($`
-            Apply the process to generate PDF for printing.
+            Apply the process to generate a print-ready PDF.
           `),
         ),
         preflightOption: v.pipe(
           v.array(ValidString),
           v.description($`
-            Options for preflight process. (ex: \`gray-scale\`, \`enforce-outline\`)
-            Please refer the document of press-ready for further information. https://github.com/vibranthq/press-ready
+            Options for the preflight process (e.g., \`gray-scale\`, \`enforce-outline\`).
+            Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
           `),
         ),
       }),
@@ -308,30 +308,28 @@ export const CopyAssetConfig = v.pipe(
         v.array(ValidString),
         validateAssetPatternSettings('includes'),
         v.description($`
-          Specify directories and files you want to include as asset files.
-          This option supports wildcard characters to make glob patterns.
+          Directories and files to include as asset files. Supports wildcard characters for glob patterns.
         `),
       ),
       excludes: v.pipe(
         v.array(ValidString),
         validateAssetPatternSettings('excludes'),
         v.description($`
-          Specify directories and files you want to exclude from the asset file.
-          This option supports wildcard characters to make glob patterns.
+          Directories and files to exclude from asset files. Supports wildcard characters for glob patterns.
         `),
       ),
       includeFileExtensions: v.pipe(
         v.array(ValidString),
         validateAssetExtensionSettings('includeFileExtensions'),
         v.description($`
-          Specify extensions of the file you want to include as an asset file. (default: \`[png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2]\`)
+          File extensions to include as asset files. (default: \`[png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2]\`)
         `),
       ),
       excludeFileExtensions: v.pipe(
         v.array(ValidString),
         validateAssetExtensionSettings('excludeFileExtensions'),
         v.description($`
-          Specify extensions of the file you want to exclude as an asset file.
+          File extensions to exclude from asset files.
         `),
       ),
     }),
@@ -346,13 +344,13 @@ export const TocConfig = v.pipe(
       title: v.pipe(
         ValidString,
         v.description($`
-          Specify the title of the generated ToC document.
+          Title of the generated ToC document.
         `),
       ),
       htmlPath: v.pipe(
         ValidString,
         v.description($`
-          Specify the location where the generated ToC document will be saved. (default: \`index.html\`)
+          Location where the generated ToC document will be saved. (default: \`index.html\`)
         `),
       ),
       sectionDepth: v.pipe(
@@ -361,7 +359,7 @@ export const TocConfig = v.pipe(
         v.minValue(0),
         v.maxValue(6),
         v.description($`
-          Specify the depth of the section to be included in the ToC document. (default: \`0\`)
+          Depth of sections to include in the ToC document. (default: \`0\`)
         `),
       ),
       transformDocumentList: v.pipe(
@@ -376,7 +374,7 @@ export const TocConfig = v.pipe(
           typeReferences: [StructuredDocument],
         }),
         v.description($`
-          Specify the transform function for the document list.
+          Function to transform the document list.
         `),
       ),
       transformSectionList: v.pipe(
@@ -391,7 +389,7 @@ export const TocConfig = v.pipe(
           typeReferences: [StructuredDocumentSection],
         }),
         v.description($`
-          Specify the transform function for the section list.
+          Function to transform the section list.
         `),
       ),
     }),
@@ -407,8 +405,8 @@ export const CoverConfig = v.pipe(
         src: v.pipe(
           ValidString,
           v.description($`
-          Specify the cover image to be used for the cover page.
-        `),
+            Path to the cover image for the cover page.
+          `),
         ),
       }),
       'Missing required field: src',
@@ -418,15 +416,15 @@ export const CoverConfig = v.pipe(
         name: v.pipe(
           v.string(), // Allow empty string
           v.description($`
-          Specify alternative text for the cover image.
-        `),
+            Alternative text for the cover image.
+          `),
         ),
         htmlPath: v.pipe(
           v.union([ValidString, v.boolean()]),
           v.description($`
-          Specify the location where the generated cover document will be saved. (default: cover.html)
-          If falsy value is set, the cover document won't be generated.
-        `),
+            Path where the generated cover document will be saved. (default: \`cover.html\`)
+            If set to a falsy value, the cover document will not be generated.
+          `),
         ),
       }),
     ),
@@ -444,49 +442,49 @@ const VfmConfig = v.pipe(
 
         v.transform((input) => [input].flat()),
         v.description($`
-          Custom stylesheet path/URL.
+          Path(s) or URL(s) to custom stylesheets.
         `),
       ),
       partial: v.pipe(
         v.boolean(),
         v.description($`
-          Output markdown fragments.
+          Output markdown fragments instead of a full document.
         `),
       ),
       title: v.pipe(
         ValidString,
         v.description($`
-          Document title (ignored in partial mode).
+          Title of the document (ignored in partial mode).
         `),
       ),
       language: v.pipe(
         ValidString,
         v.description($`
-          Document language (ignored in partial mode).
+          Language of the document (ignored in partial mode).
         `),
       ),
       replace: v.pipe(
         v.array(VfmReplaceRule),
         v.description($`
-          Replacement handler for HTML string.
+          Handlers for replacing matched HTML strings.
         `),
       ),
       hardLineBreaks: v.pipe(
         v.boolean(),
         v.description($`
-          Add \`<br>\` at the position of hard line breaks, without needing spaces.
+          Insert \`<br>\` tags at hard line breaks without requiring spaces.
         `),
       ),
       disableFormatHtml: v.pipe(
         v.boolean(),
         v.description($`
-          Disable automatic HTML format.
+          Disable automatic HTML formatting.
         `),
       ),
       math: v.pipe(
         v.boolean(),
         v.description($`
-          Enable math syntax.
+          Enable support for math syntax.
         `),
       ),
     }),
@@ -501,9 +499,9 @@ export const ServerConfig = v.pipe(
       host: v.pipe(
         v.union([v.boolean(), ValidString]),
         v.description($`
-          Specify which IP address the server should listen on.
-          Set this to \`true\` to listen on all addresses.
-          (default: \`true\` if a PDF build with docker render mode is required, otherwise \`false\`)
+          IP address the server should listen on.
+          Set to \`true\` to listen on all addresses.
+          (default: \`true\` if a PDF build with Docker render mode is required, otherwise \`false\`)
         `),
       ),
       port: v.pipe(
@@ -511,7 +509,7 @@ export const ServerConfig = v.pipe(
         v.minValue(0),
         v.maxValue(65535),
         v.description($`
-          Specify which port the server should listen on. (default: \`13000\`)
+          Port the server should listen on. (default: \`13000\`)
         `),
       ),
       proxy: v.pipe(
@@ -530,7 +528,7 @@ export const ServerConfig = v.pipe(
           ]),
         ),
         v.description($`
-          Specify custom proxy rules for the Vivliostyle preview server.
+          Custom proxy rules for the Vivliostyle preview server.
         `),
       ),
     }),
@@ -560,7 +558,7 @@ export const BuildTask = v.pipe(
               ),
           ),
           v.description($`
-            Entry file(s) of document.
+            Entry file(s) of the document.
           `),
         ),
       }),
@@ -568,18 +566,28 @@ export const BuildTask = v.pipe(
     ),
     v.partial(
       v.object({
-        title: v.pipe(ValidString, v.description($`Title`)),
-        author: v.pipe(ValidString, v.description($`Author`)),
+        title: v.pipe(
+          ValidString,
+          v.description($`
+            Title of the document.
+          `),
+        ),
+        author: v.pipe(
+          ValidString,
+          v.description($`
+            Author of the document.
+          `),
+        ),
         theme: v.pipe(
           ThemeSpecifier,
           v.description($`
-            Theme package path(s) or URL(s) of css file.
+            Theme package path(s) or URL(s) of the CSS file.
           `),
         ),
         entryContext: v.pipe(
           ValidString,
           v.description($`
-            Directory of referencing entry file(s).
+            Directory containing the referenced entry file(s).
           `),
         ),
         output: v.pipe(
@@ -605,13 +613,13 @@ export const BuildTask = v.pipe(
             }),
           ),
           v.description($`
-            Options about outputs.
+            Output options.
           `),
         ),
         workspaceDir: v.pipe(
           ValidString,
           v.description($`
-            Specify the directory where the intermediate files (manuscript HTMLs, publication.json, etc.) are saved. (default: \`.vivliostyle\`)
+            Directory where intermediate files (e.g., manuscript HTMLs, publication.json) are saved. (default: \`.vivliostyle\`)
           `),
         ),
         /** @deprecated */
@@ -620,35 +628,42 @@ export const BuildTask = v.pipe(
           v.transform((input) => [input].flat()),
           v.metadata({ deprecated: true }),
           v.description($`
-            Use \`copyAsset.includes\` instead
+            Use \`copyAsset.includes\` instead.
           `),
         ),
         copyAsset: v.pipe(
           v.union([CopyAssetConfig]),
           v.description($`
-            Options about asset files to be copied when exporting output.
+            Options for asset files to be copied when exporting output.
           `),
         ),
         size: v.pipe(
           ValidString,
           v.description($`
-            Output pdf size. (default: \`letter\`)
-            - preset: \`A5\`, \`A4\`, \`A3\`, \`B5\`, \`B4\`, \`JIS-B5\`, \`JIS-B4\`, \`letter\`, \`legal\`, \`ledger\`
-            - custom(comma separated): \`182mm,257mm\` or \`8.5in,11in\`
+            PDF output size. (default: \`letter\`)
+            - Preset: \`A5\`, \`A4\`, \`A3\`, \`B5\`, \`B4\`, \`JIS-B5\`, \`JIS-B4\`, \`letter\`, \`legal\`, \`ledger\`
+            - Custom (comma-separated): \`182mm,257mm\` or \`8.5in,11in\`
           `),
         ),
         pressReady: v.pipe(
           v.boolean(),
           v.description($`
-            Make generated PDF compatible with press ready PDF/X-1a. (default: \`false\`)
-            This option is equivalent with \`"preflight": "press-ready"\`
+            Generate a press-ready PDF compatible with PDF/X-1a. (default: \`false\`)
+            This option is equivalent to setting \`"preflight": "press-ready"\`.
           `),
         ),
-        language: v.pipe(ValidString, v.description($`Language`)),
+        language: v.pipe(
+          ValidString,
+          v.description($`
+            Language of the document.
+          `),
+        ),
         readingProgression: v.pipe(
           ReadingProgression,
           v.description($`
-            Specify the reading progression of the document. This is typically determined automatically by the CSS writing-mode, so use this option only if you need to set it explicitly.
+            Specifies the reading progression of the document.
+            This is typically determined automatically by the CSS writing-mode.
+            Use this option only if explicit configuration is needed.
           `),
         ),
         toc: v.pipe(
@@ -661,7 +676,7 @@ export const BuildTask = v.pipe(
                 : input,
           ),
           v.description($`
-            Options about Table of Contents (ToC) documents.
+            Options for Table of Contents (ToC) documents.
           `),
         ),
         /** @deprecated */
@@ -678,13 +693,13 @@ export const BuildTask = v.pipe(
             typeof input === 'string' ? { src: input } : input,
           ),
           v.description($`
-            Options about cover images and cover page documents.
+            Options for cover images and cover page documents.
           `),
         ),
         timeout: v.pipe(
           v.number(),
           v.description($`
-            Timeout limit for waiting Vivliostyle process (ms). (default: \`120000\`)
+            Timeout limit for waiting for the Vivliostyle process (in ms). (default: \`120000\`)
           `),
         ),
         documentProcessor: v.pipe(
@@ -696,46 +711,46 @@ export const BuildTask = v.pipe(
               '(option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor',
           }),
           v.description($`
-            Custom function to provide unified Processor from markdown into html
+            Custom function to provide a unified Processor for converting markdown to HTML.
           `),
         ),
         vfm: v.pipe(
           v.union([VfmConfig]),
           v.description($`
-            Option for convert Markdown to a stringify (HTML).
+            Options for converting Markdown into a stringified format (HTML).
           `),
         ),
         image: v.pipe(
           ValidString,
           v.description($`
-            Specify a docker image to render.
+            Docker image used for rendering.
           `),
         ),
         http: v.pipe(
           v.boolean(),
           v.description($`
-            Launch an HTTP server hosting contents instead of file protocol.
-            It is useful that requires CORS such as external web fonts.
+            Launches an HTTP server to host contents instead of using the file protocol.
+            Useful for cases requiring CORS, such as external web fonts.
           `),
         ),
         viewer: v.pipe(
           ValidString,
           v.description($`
-            Specify a URL of displaying viewer instead of vivliostyle-cli's one.
-            It is useful that using own viewer that has staging features. (ex: \`https://vivliostyle.vercel.app/\`)
+            URL of a custom viewer to display content instead of the default Vivliostyle CLI viewer.
+            Useful for using a custom viewer with staging features (e.g., \`https://vivliostyle.vercel.app/\`).
           `),
         ),
         viewerParam: v.pipe(
           ValidString,
           v.description($`
-            specify viewer parameters. (ex: \`allowScripts=false&pixelRatio=16\`)
+            Parameters for the Vivliostyle viewer (e.g., \`allowScripts=false&pixelRatio=16\`).
           `),
         ),
         browser: v.pipe(
           BrowserType,
           v.description($`
-            EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer.
-            Currently, Firefox and Webkit support preview command only!
+            EXPERIMENTAL SUPPORT: Specifies the browser type for launching the Vivliostyle viewer.
+            Currently, Firefox and Webkit support only the preview command.
           `),
         ),
         base: v.pipe(
@@ -744,7 +759,7 @@ export const BuildTask = v.pipe(
           v.check((value) => value !== '/', 'Base path must not be root'),
           v.transform((value) => value.replace(/(?!^)\/+$/, '')),
           v.description($`
-            Specify the base path of the document. (default: \`/vivliostyle\`)
+            Base path of the served documents. (default: \`/vivliostyle\`)
           `),
         ),
         server: v.pipe(
@@ -766,7 +781,7 @@ export const BuildTask = v.pipe(
             ),
           ),
           v.description($`
-            Specify static files to be served by the Vivliostyle preview server.
+            Specifies static files to be served by the preview server.
             \`\`\`js
             export default {
               static: {
@@ -783,7 +798,7 @@ export const BuildTask = v.pipe(
         temporaryFilePrefix: v.pipe(
           ValidString,
           v.description($`
-            Specify the prefix of the temporary file names.
+            Prefix for temporary file names.
           `),
         ),
         vite: v.pipe(
@@ -792,14 +807,14 @@ export const BuildTask = v.pipe(
             typeString: 'import("vite").UserConfig',
           }),
           v.description($`
-            Options for Vite server.
+            Configuration options for the Vite server.
           `),
         ),
         viteConfigFile: v.pipe(
           v.union([ValidString, v.boolean()]),
           v.description($`
-            Specify a path of Vite config file.
-            If falsy value is set, Vivliostyle CLI ignores the existing Vite config file.
+            Path to the Vite config file.
+            If a falsy value is provided, Vivliostyle CLI ignores the existing Vite config file.
           `),
         ),
       }),
