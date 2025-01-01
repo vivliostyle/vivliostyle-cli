@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { Command, OptionValues } from 'commander';
 import upath from 'upath';
 import * as v from 'valibot';
@@ -10,7 +9,7 @@ import {
   VivliostyleInlineConfig,
 } from '../config/schema.js';
 import { EMPTY_DATA_URI } from '../const.js';
-import { logWarn } from '../util.js';
+import { Logger } from '../logger.js';
 
 export interface CliFlags {
   input?: string;
@@ -98,36 +97,28 @@ function warnDeprecatedFlags(options: OptionValues): OptionValues {
   const modifiedOptions = { ...options };
 
   if (options.executableChromium) {
-    logWarn(
-      chalk.yellowBright(
-        "'--executable-chromium' option was deprecated and will be removed in a future release. Please replace with '--executable-browser' option.",
-      ),
+    Logger.logWarn(
+      "'--executable-chromium' option was deprecated and will be removed in a future release. Please replace with '--executable-browser' option.",
     );
     modifiedOptions.executableBrowser = options.executableChromium;
   }
 
   if (options.verbose) {
-    logWarn(
-      chalk.yellowBright(
-        "'--verbose' option was deprecated and will be removed in a future release. Please replace with '--log-level verbose' option.",
-      ),
+    Logger.logWarn(
+      "'--verbose' option was deprecated and will be removed in a future release. Please replace with '--log-level verbose' option.",
     );
     modifiedOptions.logLevel = 'verbose';
   }
 
   if (options.sandbox === false) {
-    logWarn(
-      chalk.yellowBright(
-        "'--no-sandbox' option was deprecated and will be removed in a future release. It is no longer necessary because the sandbox is disabled by default.",
-      ),
+    Logger.logWarn(
+      "'--no-sandbox' option was deprecated and will be removed in a future release. It is no longer necessary because the sandbox is disabled by default.",
     );
   }
 
   if (options.http) {
-    logWarn(
-      chalk.yellowBright(
-        "'--http' option was deprecated and will be removed in a future release. It is unnecessary because the HTTP server starts automatically.",
-      ),
+    Logger.logWarn(
+      "'--http' option was deprecated and will be removed in a future release. It is unnecessary because the HTTP server starts automatically.",
     );
   }
 

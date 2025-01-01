@@ -1,5 +1,4 @@
 import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
-import chalk from 'chalk';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -27,15 +26,14 @@ import {
   TOC_TITLE,
 } from '../const.js';
 import { CONTAINER_IMAGE, CONTAINER_LOCAL_HOSTNAME } from '../container.js';
+import { Logger } from '../logger.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import { parsePackageName } from '../processor/theme.js';
 import {
-  debug,
   cwd as defaultCwd,
   getEpubRootDir,
   isInContainer,
   isValidUri,
-  logWarn,
   pathEquals,
   readJSON,
   statFileSync,
@@ -428,9 +426,9 @@ export function resolveTaskConfig(
   options: InlineOptions,
 ): ResolvedTaskConfig {
   const context = options.cwd ?? defaultCwd;
-  debug('context directory', context);
-  debug('inlineOptions', options);
-  debug('vivliostyle.config.js', config);
+  Logger.debug('context directory', context);
+  Logger.debug('inlineOptions', options);
+  Logger.debug('vivliostyle.config.js', config);
 
   const entryContextDir = config.entryContext
     ? upath.resolve(context, config.entryContext)
@@ -643,7 +641,7 @@ export function resolveTaskConfig(
     viteConfig,
     viteConfigFile,
   } satisfies ResolvedTaskConfig;
-  debug('resolvedConfig', JSON.stringify(resolvedConfig, null, 2));
+  Logger.debug('resolvedConfig', JSON.stringify(resolvedConfig, null, 2));
   return resolvedConfig;
 }
 
@@ -672,7 +670,7 @@ function resolveSingleInputConfig({
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
 }): ProjectConfig {
-  debug('entering single entry config mode');
+  Logger.debug('entering single entry config mode');
 
   let sourcePath: string;
   let workspaceDir: string;
@@ -854,7 +852,7 @@ function resolveComposedProjectConfig({
   | 'rootUrl'
   | 'cover'
 > & { config: ParsedBuildTask }): ProjectConfig {
-  debug('entering composed project config mode');
+  Logger.debug('entering composed project config mode');
 
   const workspaceDir = upath.resolve(
     context,
@@ -866,7 +864,7 @@ function resolveComposedProjectConfig({
     ? readJSON(pkgJsonPath)
     : undefined;
   if (pkgJson) {
-    debug('located package.json path', pkgJsonPath);
+    Logger.debug('located package.json path', pkgJsonPath);
   }
   const exportAliases: { source: string; target: string }[] = [];
 
@@ -987,10 +985,8 @@ function resolveComposedProjectConfig({
         /* v8 ignore next 10 */
       } catch (error) {
         // For backward compatibility, we allow missing files then assume that option as `output` field.
-        logWarn(
-          chalk.yellowBright(
-            `The "path" option is set but the file does not exist: ${source}\nMaybe you want to set the "output" field instead.`,
-          ),
+        Logger.logWarn(
+          `The "path" option is set but the file does not exist: ${source}\nMaybe you want to set the "output" field instead.`,
         );
         entry.output = entry.path;
         entry.path = undefined;

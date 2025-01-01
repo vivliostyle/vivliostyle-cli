@@ -1,12 +1,13 @@
-import chalk from 'chalk';
 import fs from 'node:fs';
 import upath from 'upath';
+import { cyan, yellow } from 'yoctocolors';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { CONTAINER_IMAGE } from '../container.js';
-import { cwd, log, runExitHandlers, setLogLevel } from '../util.js';
+import { Logger } from '../logger.js';
+import { cwd, runExitHandlers } from '../util.js';
 
 export async function init(inlineConfig: ParsedVivliostyleInlineConfig) {
-  setLogLevel(inlineConfig.logLevel);
+  Logger.setLogLevel(inlineConfig.logLevel);
 
   const vivliostyleConfigPath = upath.join(
     inlineConfig.cwd ?? cwd,
@@ -15,8 +16,8 @@ export async function init(inlineConfig: ParsedVivliostyleInlineConfig) {
 
   if (fs.existsSync(vivliostyleConfigPath)) {
     runExitHandlers();
-    return log(
-      `${chalk.yellow('vivliostyle.config.js already exists. aborting.')}`,
+    return Logger.log(
+      `${yellow('vivliostyle.config.js already exists. aborting.')}`,
     );
   }
 
@@ -77,5 +78,5 @@ module.exports = vivliostyleConfig;
   fs.writeFileSync(vivliostyleConfigPath, vivliostyleConfig);
 
   runExitHandlers();
-  log(`Successfully created ${chalk.cyan('vivliostyle.config.js')}`);
+  Logger.log(`Successfully created ${cyan('vivliostyle.config.js')}`);
 }

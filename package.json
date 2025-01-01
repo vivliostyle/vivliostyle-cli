@@ -30,7 +30,6 @@
     "ajv-formats": "^2.1.1",
     "archiver": "^5.3.1",
     "bcp-47-match": "^2.0.3",
-    "chalk": "^4.1.2",
     "command-exists": "1.2.9",
     "commander": "^12.1.0",
     "debug": "^4.3.2",
@@ -43,10 +42,8 @@
     "github-slugger": "^2.0.0",
     "hast-util-to-html": "^9.0.1",
     "hastscript": "^9.0.0",
-    "is-interactive": "1.0.0",
     "mime-types": "^2.1.32",
     "node-stream-zip": "^1.14.0",
-    "ora": "^5.4.1",
     "pdf-lib": "^1.16.0",
     "playwright-core": "1.49.0",
     "press-ready": "^4.0.3",
@@ -62,7 +59,9 @@
     "vfile": "^4.2.1",
     "vite": "6.0.3",
     "w3c-xmlserializer": "^4.0.0",
-    "whatwg-mimetype": "^3.0.0"
+    "whatwg-mimetype": "^3.0.0",
+    "yocto-spinner": "^0.1.2",
+    "yoctocolors": "^2.1.1"
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^5.1.1",

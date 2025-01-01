@@ -1,6 +1,7 @@
 import process from 'node:process';
 import { build } from '../core/build.js';
-import { debug, gracefulError, isInContainer } from '../util.js';
+import { Logger } from '../logger.js';
+import { gracefulError, isInContainer } from '../util.js';
 import { setupBuildParserProgram } from './build.parser.js';
 import { parseFlagsToInlineConfig } from './cli-flags.js';
 
@@ -11,7 +12,10 @@ try {
   );
   if (isInContainer()) {
     inlineConfig = JSON.parse(process.env.VS_CLI_BUILD_PDF_OPTIONS!);
-    debug('bypassedPdfBuilderOption', JSON.stringify(inlineConfig, null, 2));
+    Logger.debug(
+      'bypassedPdfBuilderOption',
+      JSON.stringify(inlineConfig, null, 2),
+    );
   }
   await build(inlineConfig);
 } catch (err) {

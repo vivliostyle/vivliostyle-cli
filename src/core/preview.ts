@@ -1,13 +1,16 @@
+import terminalLink from 'terminal-link';
+import { blueBright, cyan, dim } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeInlineConfig } from '../config/merge.js';
 import { resolveTaskConfig } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
-import { createViteServer } from '../server.js';
-import { setLogLevel } from '../util.js';
+import { cliVersion } from '../const.js';
+import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
+import { createViteServer, getViewerFullUrl } from '../server.js';
 
 export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
-  setLogLevel(inlineConfig.logLevel);
+  Logger.setLogLevel(inlineConfig.logLevel);
 
   const vivliostyleConfig =
     (await loadVivliostyleConfig({
@@ -21,12 +24,21 @@ export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
   );
   // Only show preview of first entry
   const config = resolveTaskConfig(tasks[0], inlineOptions);
-  const server = await createViteServer({
-    config,
-    inlineOptions,
-    mode: 'preview',
-  });
-  const dev = await server.listen();
-  const { port } = dev.httpServer!.address() as { port: number };
-  console.log(`Vite server running at http://localhost:${port}`);
+
+  {
+    using _ = Logger.startLogging('Start preview');
+    const server = await createViteServer({
+      config,
+      inlineOptions,
+      mode: 'preview',
+    });
+    await server.listen();
+  }
+
+  const url = await getViewerFullUrl(config);
+  Logger.log(`
+${cyan(`Vivliostyle CLI v${cliVersion}`)}
+${blueBright('║')} ${isUnicodeSupported ? `${randomBookSymbol} ` : ''}Up and running (press Ctrl+C to quit)
+${blueBright('╙─')} ${dim(`Preview URL: ${terminalLink(url, url, { fallback: () => url })}`)}
+`);
 }

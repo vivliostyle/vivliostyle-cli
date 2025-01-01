@@ -1,7 +1,5 @@
-import chalk from 'chalk';
 import commandExists from 'command-exists';
 import { execa } from 'execa';
-import isInteractive from 'is-interactive';
 import { execFile } from 'node:child_process';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -10,8 +8,9 @@ import upath from 'upath';
 import { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { cliVersion } from './const.js';
+import { Logger } from './logger.js';
 import { getSourceUrl } from './server.js';
-import { debug, isValidUri, log, pathEquals, suspendLogging } from './util.js';
+import { isValidUri, pathEquals } from './util.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -93,35 +92,31 @@ export async function runContainer({
     );
   }
 
-  const restartLogging = suspendLogging('Launching docker container', '📦');
-  const args = [
-    'run',
-    ...(isInteractive() ? ['-it'] : []),
-    '--rm',
-    ...(entrypoint ? ['--entrypoint', entrypoint] : []),
-    ...(env ? env.flatMap(([k, v]) => ['-e', `${k}=${v}`]) : []),
-    ...(process.env.DEBUG
-      ? ['-e', `DEBUG=${process.env.DEBUG}`] // escape seems to work well
-      : []),
-    ...userVolumeArgs.flatMap((arg) => ['-v', arg]),
-    ...(workdir ? ['-w', workdir] : []),
-    image,
-    ...commandArgs,
-  ];
-  debug(`docker ${args.join(' ')}`);
   try {
+    using _ = Logger.suspendLogging('Launching docker container');
+    const args = [
+      'run',
+      ...(Logger.isInteractive ? ['-it'] : []),
+      '--rm',
+      ...(entrypoint ? ['--entrypoint', entrypoint] : []),
+      ...(env ? env.flatMap(([k, v]) => ['-e', `${k}=${v}`]) : []),
+      ...(process.env.DEBUG
+        ? ['-e', `DEBUG=${process.env.DEBUG}`] // escape seems to work well
+        : []),
+      ...userVolumeArgs.flatMap((arg) => ['-v', arg]),
+      ...(workdir ? ['-w', workdir] : []),
+      image,
+      ...commandArgs,
+    ];
+    Logger.debug(`docker ${args.join(' ')}`);
     const proc = execa('docker', args, {
       stdio: 'inherit',
     });
     await proc;
-    restartLogging();
   } catch (error) {
-    log(
-      `\n${chalk.red.bold(
-        'Error:',
-      )} An error occurred on the running container. Please see logs above.`,
+    throw new Error(
+      'An error occurred on the running container. Please see logs above.',
     );
-    process.exit(1);
   }
 }
 

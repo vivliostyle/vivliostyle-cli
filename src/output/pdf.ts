@@ -1,9 +1,9 @@
-import chalk from 'chalk';
 import fs from 'node:fs';
 import { URL } from 'node:url';
 import { Page } from 'playwright-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
+import { cyan, gray, green, red } from 'yoctocolors';
 import { getFullBrowserName, launchPreview } from '../browser.js';
 import {
   ManuscriptEntry,
@@ -11,16 +11,9 @@ import {
   ResolvedTaskConfig,
 } from '../config/resolve.js';
 import { Meta, Payload, TOCItem } from '../global-viewer.js';
+import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
-import {
-  debug,
-  logError,
-  logInfo,
-  logSuccess,
-  logUpdate,
-  pathEquals,
-  startLogging,
-} from '../util.js';
+import { pathEquals } from '../util.js';
 import { PageSizeData, PostProcess } from './pdf-postprocess.js';
 
 export async function buildPDF({
@@ -30,15 +23,15 @@ export async function buildPDF({
   target: PdfOutput;
   config: ResolvedTaskConfig;
 }): Promise<string | null> {
-  logUpdate(`Launching build environment`);
+  Logger.logUpdate(`Launching PDF build environment`);
 
   const viewerFullUrl = await getViewerFullUrl(config);
-  debug('viewerFullUrl', viewerFullUrl);
+  Logger.debug('viewerFullUrl', viewerFullUrl);
 
   let lastEntry: ManuscriptEntry | undefined;
 
   function stringifyEntry(entry: ManuscriptEntry) {
-    const formattedSourcePath = chalk.bold.cyan(
+    const formattedSourcePath = cyan(
       entry.source.type === 'file'
         ? upath.relative(config.entryContextDir, entry.source.pathname)
         : entry.source.href,
@@ -51,7 +44,7 @@ export async function buildPDF({
       {
         fallback: () => formattedSourcePath,
       },
-    )} ${entry.title ? chalk.gray(entry.title) : ''}`;
+    )} ${entry.title ? gray(entry.title) : ''}`;
   }
 
   function handleEntry(response: any) {
@@ -70,10 +63,11 @@ export async function buildPDF({
     if (entry) {
       if (!lastEntry) {
         lastEntry = entry;
-        return logUpdate(stringifyEntry(entry));
+        Logger.logUpdate(stringifyEntry(entry));
+        return;
       }
-      logSuccess(stringifyEntry(lastEntry));
-      startLogging(stringifyEntry(entry));
+      Logger.logSuccess(stringifyEntry(lastEntry));
+      Logger.startLogging(stringifyEntry(entry));
       lastEntry = entry;
     }
   }
@@ -83,18 +77,18 @@ export async function buildPDF({
     url: viewerFullUrl,
     config,
     onBrowserOpen: () => {
-      logUpdate('Building pages');
+      Logger.logUpdate('Building pages');
     },
     onPageOpen: async (page) => {
       page.on('pageerror', (error) => {
-        logError(chalk.red(error.message));
+        Logger.logError(red(error.message));
       });
 
       page.on('console', (msg) => {
         switch (msg.type()) {
           case 'error':
             if (/\/vivliostyle-viewer\.js$/.test(msg.location().url ?? '')) {
-              logError(msg.text());
+              Logger.logError(msg.text());
               throw msg.text();
             }
             return;
@@ -104,20 +98,17 @@ export async function buildPDF({
             }
             break;
         }
-        if (config.logLevel === 'silent' || config.logLevel === 'info') {
-          return;
-        }
         if (msg.type() === 'error') {
-          logError(msg.text());
+          Logger.logVerbose(red('console.error()'), msg.text());
         } else {
-          logInfo(msg.text());
+          Logger.logVerbose(gray(`console.${msg.type()}()`), msg.text());
         }
       });
 
       page.on('response', (response) => {
-        debug(
-          chalk.gray('viewer:response'),
-          chalk.green(response.status().toString()),
+        Logger.debug(
+          gray('viewer:response'),
+          green(response.status().toString()),
           response.url(),
         );
 
@@ -127,8 +118,7 @@ export async function buildPDF({
         // file protocol doesn't have status code
         if (response.url().startsWith('file://') && response.ok()) return;
 
-        logError(chalk.red(`${response.status()}`, response.url()));
-        startLogging();
+        Logger.logError(red(`${response.status()}`), response.url());
       });
 
       await page.setDefaultTimeout(config.timeout);
@@ -137,7 +127,7 @@ export async function buildPDF({
 
   const browserName = getFullBrowserName(config.browserType);
   const browserVersion = `${browserName}/${await browser.version()}`;
-  debug(chalk.green('success'), `browserVersion=${browserVersion}`);
+  Logger.debug(green('success'), `browserVersion=${browserVersion}`);
 
   let remainTime = config.timeout;
   const startTime = Date.now();
@@ -154,7 +144,7 @@ export async function buildPDF({
   );
 
   if (lastEntry) {
-    logSuccess(stringifyEntry(lastEntry));
+    Logger.logSuccess(stringifyEntry(lastEntry));
   }
 
   const pageProgression = await page.evaluate(() =>
@@ -179,9 +169,9 @@ export async function buildPDF({
   if (remainTime <= 0) {
     throw new Error('Typesetting process timed out');
   }
-  debug('Remaining timeout:', remainTime);
+  Logger.debug('Remaining timeout:', remainTime);
 
-  logUpdate('Building PDF');
+  Logger.logUpdate('Building PDF');
 
   const pdf = await page.pdf({
     margin: {
@@ -198,7 +188,7 @@ export async function buildPDF({
 
   await browser.close();
 
-  logUpdate('Processing PDF');
+  Logger.logUpdate('Processing PDF');
   fs.mkdirSync(upath.dirname(target.path), { recursive: true });
 
   const post = await PostProcess.load(pdf);

@@ -16,14 +16,13 @@ import {
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import type { ArticleEntryConfig } from '../config/schema.js';
+import { Logger } from '../logger.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
   beforeExitHandlers,
-  debug,
   DetailError,
   pathContains,
   pathEquals,
-  startLogging,
   writeFileIfChanged,
 } from '../util.js';
 import {
@@ -92,7 +91,7 @@ export async function cleanupWorkspace({
     return;
   }
   // workspaceDir is placed on different directory; delete everything excepting theme files
-  debug('cleanup workspace files', workspaceDir);
+  Logger.debug('cleanup workspace files', workspaceDir);
   let movedWorkspacePath: string | undefined;
   if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
     movedWorkspacePath = upath.join(
@@ -134,7 +133,7 @@ export async function prepareThemeDirectory({
 
   // install theme packages
   if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
-    startLogging('Installing theme files');
+    Logger.startLogging('Installing theme files');
     await installThemeDependencies({ themesDir, themeIndexes });
   }
 
@@ -447,8 +446,8 @@ function getAssetMatcherSettings({
     ...getIgnoreAssetPatterns({ outputs, entries, cwd }),
   ];
   const weakIgnorePatterns = getDefaultIgnorePatterns({ themesDir, cwd });
-  debug('globAssetFiles > ignorePatterns', ignorePatterns);
-  debug('globAssetFiles > weakIgnorePatterns', weakIgnorePatterns);
+  Logger.debug('globAssetFiles > ignorePatterns', ignorePatterns);
+  Logger.debug('globAssetFiles > weakIgnorePatterns', weakIgnorePatterns);
 
   return [
     // Step 1: Glob files with an extension in `fileExtension`
@@ -517,7 +516,7 @@ export async function copyAssets({
       ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
     ],
   });
-  debug('assets', assets);
+  Logger.debug('assets', assets);
   for (const asset of assets) {
     const target = upath.join(workspaceDir, asset);
     fs.mkdirSync(upath.dirname(target), { recursive: true });

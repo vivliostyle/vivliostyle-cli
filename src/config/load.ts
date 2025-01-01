@@ -1,13 +1,12 @@
-import chalk from 'chalk';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import upath from 'upath';
 import * as v from 'valibot';
+import { Logger } from '../logger.js';
 import {
   cwd as defaultRoot,
   DetailError,
-  logWarn,
   parseJsonc,
   prettifySchemaError,
 } from '../util.js';
@@ -84,26 +83,20 @@ export async function loadVivliostyleConfig({
 
 export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
   if (config.tasks.some((task) => task.includeAssets)) {
-    logWarn(
-      chalk.yellowBright(
-        "'includeAssets' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'copyAsset.includes' property instead.",
-      ),
+    Logger.logWarn(
+      "'includeAssets' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'copyAsset.includes' property instead.",
     );
   }
 
   if (config.tasks.some((task) => task.tocTitle)) {
-    logWarn(
-      chalk.yellowBright(
-        "'tocTitle' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'toc.title' property instead.",
-      ),
+    Logger.logWarn(
+      "'tocTitle' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'toc.title' property instead.",
     );
   }
 
   if (config.tasks.some((task) => task.http)) {
-    logWarn(
-      chalk.yellowBright(
-        "'http' property of Vivliostyle config was deprecated and will be removed in a future release. This option is enabled by default, and the file protocol is no longer supported.",
-      ),
+    Logger.logWarn(
+      "'http' property of Vivliostyle config was deprecated and will be removed in a future release. This option is enabled by default, and the file protocol is no longer supported.",
     );
   }
 }

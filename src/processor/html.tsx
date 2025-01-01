@@ -3,7 +3,6 @@ import jsdom, {
   JSDOM,
   VirtualConsole,
 } from '@vivliostyle/jsdom';
-import chalk from 'chalk';
 import DOMPurify from 'dompurify';
 import { toHtml } from 'hast-util-to-html';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -14,14 +13,13 @@ import type {
   StructuredDocument,
   StructuredDocumentSection,
 } from '../config/schema.js';
+import { Logger } from '../logger.js';
 import { decodePublicationManifest } from '../output/webbook.js';
 import type { PublicationManifest } from '../schema/publication.schema.js';
 import {
   DetailError,
   assertPubManifestSchema,
-  debug,
   isValidUri,
-  logWarn,
   writeFileIfChanged,
 } from '../util.js';
 
@@ -29,19 +27,19 @@ export const createVirtualConsole = (onError: (error: DetailError) => void) => {
   const virtualConsole = new jsdom.VirtualConsole();
   /* v8 ignore start */
   virtualConsole.on('error', (message) => {
-    debug('[JSDOM Console] error:', message);
+    Logger.debug('[JSDOM Console] error:', message);
   });
   virtualConsole.on('warn', (message) => {
-    debug('[JSDOM Console] warn:', message);
+    Logger.debug('[JSDOM Console] warn:', message);
   });
   virtualConsole.on('log', (message) => {
-    debug('[JSDOM Console] log:', message);
+    Logger.debug('[JSDOM Console] log:', message);
   });
   virtualConsole.on('info', (message) => {
-    debug('[JSDOM Console] info:', message);
+    Logger.debug('[JSDOM Console] info:', message);
   });
   virtualConsole.on('dir', (message) => {
-    debug('[JSDOM Console] dir:', message);
+    Logger.debug('[JSDOM Console] dir:', message);
   });
   virtualConsole.on('jsdomError', (error) => {
     // Most of CSS using Paged media will be failed to run CSS parser of JSDOM.
@@ -68,7 +66,7 @@ export class ResourceLoader extends BaseResourceLoader {
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();
 
   fetch(url: string, options?: jsdom.FetchOptions) {
-    debug(`[JSDOM] Fetching resource: ${url}`);
+    Logger.debug(`[JSDOM] Fetching resource: ${url}`);
     const fetcher = super.fetch(url, options);
     if (fetcher) {
       this.fetcherMap.set(url, fetcher);
@@ -605,7 +603,7 @@ export async function fetchLinkedPublicationManifest({
     if (scriptEl?.getAttribute('type') !== 'application/ld+json') {
       return null;
     }
-    debug(`Found embedded publication manifest: ${href}`);
+    Logger.debug(`Found embedded publication manifest: ${href}`);
     try {
       manifest = JSON.parse(scriptEl.innerHTML);
     } catch (error) {
@@ -616,7 +614,7 @@ export async function fetchLinkedPublicationManifest({
       );
     }
   } else {
-    debug(`Found linked publication manifest: ${href}`);
+    Logger.debug(`Found linked publication manifest: ${href}`);
     const url = new URL(href, baseUrl);
     manifestUrl = url.href;
     const buffer = await resourceLoader.fetch(url.href);
@@ -638,10 +636,8 @@ export async function fetchLinkedPublicationManifest({
   try {
     assertPubManifestSchema(manifest);
   } catch (error) {
-    logWarn(
-      `${chalk.yellowBright(
-        'Publication manifest validation failed. Processing continues, but some problems may occur.',
-      )}\n${error}`,
+    Logger.logWarn(
+      `Publication manifest validation failed. Processing continues, but some problems may occur.\n${error}`,
     );
   }
   return {

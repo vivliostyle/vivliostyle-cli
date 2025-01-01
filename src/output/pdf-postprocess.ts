@@ -21,7 +21,8 @@ import {
   toContainerPath,
 } from '../container.js';
 import type { Meta, TOCItem } from '../global-viewer.js';
-import { isInContainer, suspendLogging } from '../util.js';
+import { Logger } from '../logger.js';
+import { isInContainer } from '../util.js';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
   Pick<ResolvedTaskConfig, 'image'>;
@@ -110,7 +111,7 @@ export class PostProcess {
       preflight === 'press-ready-local' ||
       (preflight === 'press-ready' && isInContainer())
     ) {
-      const restartLogging = suspendLogging('Running press-ready', '🚀');
+      using _ = Logger.suspendLogging('Running press-ready');
       await pressReadyModule.build({
         ...preflightOption.reduce((acc, opt) => {
           const optName = decamelize(opt, { separator: '-' });
@@ -127,16 +128,14 @@ export class PostProcess {
         input,
         output,
       });
-      restartLogging();
     } else if (preflight === 'press-ready') {
-      const restartLogging = suspendLogging('Running press-ready', '🚀');
+      using _ = Logger.suspendLogging('Running press-ready');
       await pressReadyWithContainer({
         input,
         output,
         preflightOption,
         image,
       });
-      restartLogging();
     }
   }
 

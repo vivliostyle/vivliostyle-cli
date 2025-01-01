@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { copy, remove } from 'fs-extra/esm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
@@ -11,6 +10,7 @@ import {
 } from '../config/resolve.js';
 import { ArticleEntryConfig } from '../config/schema.js';
 import { MANIFEST_FILENAME } from '../const.js';
+import { Logger } from '../logger.js';
 import {
   getDefaultIgnorePatterns,
   getIgnoreAssetPatterns,
@@ -30,11 +30,7 @@ import type {
 } from '../schema/publication.schema.js';
 import {
   assertPubManifestSchema,
-  debug,
   DetailError,
-  log,
-  logError,
-  logUpdate,
   pathEquals,
   useTmpDirectory,
 } from '../util.js';
@@ -57,7 +53,7 @@ export async function prepareWebPublicationDirectory({
   outputDir: string;
 }): Promise<void> {
   if (fs.existsSync(outputDir)) {
-    debug('going to remove existing webpub', outputDir);
+    Logger.debug('going to remove existing webpub', outputDir);
     await remove(outputDir);
   }
   fs.mkdirSync(outputDir, { recursive: true });
@@ -151,12 +147,8 @@ export function writePublicationManifest(
         encodingFormat: mimeType,
       });
     } else {
-      log(
-        `\n${chalk.yellow('Cover image ')}${chalk.bold.yellow(
-          `"${options.cover}"`,
-        )}${chalk.yellow(
-          ' was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.',
-        )}`,
+      Logger.logWarn(
+        `Cover image "${options.cover}" was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.`,
       );
     }
   }
@@ -178,7 +170,7 @@ export function writePublicationManifest(
   };
 
   const encodedManifest = encodePublicationManifest(publication);
-  debug(
+  Logger.debug(
     'writePublicationManifest',
     output,
     JSON.stringify(encodedManifest, null, 2),
@@ -210,7 +202,7 @@ export async function retrieveWebbookEntry({
   manifest: PublicationManifest | undefined;
 }> {
   if (/^https?:/i.test(webbookEntryUrl)) {
-    logUpdate('Fetching remote contents');
+    Logger.logUpdate('Fetching remote contents');
   }
   const resourceLoader = new ResourceLoader();
   const dom = await getJsdomFromUrlOrFile({
@@ -259,7 +251,7 @@ export async function retrieveWebbookEntry({
         src: fullUrl,
         resourceLoader: subpathResourceLoader,
         virtualConsole: createVirtualConsole((error) => {
-          logError(`Failed to fetch webbook resources: ${error.detail}`);
+          Logger.logError(`Failed to fetch webbook resources: ${error.detail}`);
         }),
       });
       subpathResourceLoader.fetcherMap.forEach(
@@ -274,8 +266,8 @@ export async function retrieveWebbookEntry({
     outputDir,
     /* v8 ignore next 4 */
     onError: (error) => {
-      debug(error);
-      logError(`Failed to fetch webbook resources: ${error}`);
+      Logger.debug(error);
+      Logger.logError(`Failed to fetch webbook resources: ${error}`);
     },
   });
 
@@ -293,11 +285,11 @@ export async function retrieveWebbookEntry({
     sortManifestResources(manifest);
   }
 
-  debug(
+  Logger.debug(
     'Saved webbook resources',
     fetchedResources.map((v) => v.url),
   );
-  debug(
+  Logger.debug(
     'Publication manifest from webbook',
     manifest && JSON.stringify(manifest, null, 2),
   );
@@ -324,7 +316,7 @@ export async function supplyWebPublicationManifestForWebbook({
   entryHtmlFile: string;
   outputDir: string;
 }): Promise<PublicationManifest> {
-  debug(`Generating publication manifest from HTML: ${entryHtmlFile}`);
+  Logger.debug(`Generating publication manifest from HTML: ${entryHtmlFile}`);
   const dom = await getJsdomFromUrlOrFile({ src: entryHtmlFile });
   const { document } = dom.window;
   const language =
@@ -366,7 +358,7 @@ export async function supplyWebPublicationManifestForWebbook({
   document.head.appendChild(link);
   await fs.promises.writeFile(entryHtmlFile, dom.serialize(), 'utf8');
 
-  debug(
+  Logger.debug(
     'Generated publication manifest from HTML',
     JSON.stringify(manifest, null, 2),
   );
@@ -435,7 +427,7 @@ export async function copyWebPublicationAssets({
     allFiles.delete(alias.target);
   }
 
-  debug(
+  Logger.debug(
     'webbook files',
     JSON.stringify(
       [...allFiles].map((file) => {
@@ -463,7 +455,7 @@ export async function copyWebPublicationAssets({
     }
   }
 
-  debug('webbook publication.json', actualManifestPath);
+  Logger.debug('webbook publication.json', actualManifestPath);
   // Overwrite copied publication.json
   const manifest = decodePublicationManifest(
     JSON.parse(fs.readFileSync(actualManifestPath, 'utf8')),

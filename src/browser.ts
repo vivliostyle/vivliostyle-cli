@@ -3,15 +3,8 @@ import * as playwright from 'playwright-core';
 import { registry } from 'playwright-core/lib/server';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
-import {
-  beforeExitHandlers,
-  debug,
-  isInContainer,
-  logInfo,
-  logSuccess,
-  pathEquals,
-  suspendLogging,
-} from './util.js';
+import { Logger } from './logger.js';
+import { beforeExitHandlers, isInContainer, pathEquals } from './util.js';
 
 export async function launchBrowser({
   browserType,
@@ -51,9 +44,9 @@ export async function launchBrowser({
             headless && '--force-device-scale-factor=1',
             // set Chromium language to English to avoid locale-dependent issues (e.g. minimum font size)
             '--lang=en',
-            ...(!headless && process.platform === 'darwin'
-              ? ['-AppleLanguages', '(en)']
-              : []),
+            // ...(!headless && process.platform === 'darwin'
+            //   ? ['-AppleLanguages', '(en)']
+            //   : []),
           ].filter((value): value is string => Boolean(value)),
           env: { ...process.env, LANG: 'en.UTF-8' },
           proxy: proxy,
@@ -93,11 +86,12 @@ export async function downloadBrowser(
   browserType: BrowserType,
 ): Promise<string> {
   const executable = registry.findExecutable(browserType);
-  logInfo('Rendering browser is not installed yet. Downloading now...');
-  const restartLogging = suspendLogging();
-  await registry.install([executable], false);
-  logSuccess(`Successfully downloaded browser`);
-  restartLogging();
+  {
+    using _ = Logger.suspendLogging(
+      'Rendering browser is not installed yet. Downloading now.',
+    );
+    await registry.install([executable], false);
+  }
   return executable.executablePath()!;
 }
 
@@ -121,7 +115,7 @@ export async function launchPreview({
     | 'ignoreHttpsErrors'
   >;
 }) {
-  debug(`Executing browser path: ${executableBrowser}`);
+  Logger.debug(`Executing browser path: ${executableBrowser}`);
   if (!checkBrowserAvailability(executableBrowser)) {
     if (isPlaywrightExecutable(executableBrowser)) {
       // The browser isn't downloaded first time starting CLI so try to download it
