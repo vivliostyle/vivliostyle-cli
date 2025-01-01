@@ -45,16 +45,16 @@ export async function launchBrowser({
           headless,
           args: [
             '--allow-file-access-from-files',
-            disableWebSecurity ? '--disable-web-security' : '',
-            disableDevShmUsage ? '--disable-dev-shm-usage' : '',
+            disableWebSecurity && '--disable-web-security',
+            disableDevShmUsage && '--disable-dev-shm-usage',
             // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
-            headless ? '--force-device-scale-factor=1' : '',
+            headless && '--force-device-scale-factor=1',
             // set Chromium language to English to avoid locale-dependent issues (e.g. minimum font size)
             '--lang=en',
             ...(!headless && process.platform === 'darwin'
               ? ['-AppleLanguages', '(en)']
               : []),
-          ],
+          ].filter((value): value is string => Boolean(value)),
           env: { ...process.env, LANG: 'en.UTF-8' },
           proxy: proxy,
         }
