@@ -386,7 +386,7 @@ async function transpileHtmlToXhtml({
   hasSvgContent: boolean;
 }> {
   const absPath = upath.join(contextDir, target);
-  const { dom } = await getJsdomFromUrlOrFile({ src: absPath });
+  const dom = await getJsdomFromUrlOrFile({ src: absPath });
   const { document } = dom.window;
   // `xmlns` will be supplied in later serialization process
   document.documentElement.removeAttribute('xmlns');
@@ -467,7 +467,7 @@ async function processTocDocument({
       for (const content of readingOrder) {
         let name = normalizeLocalizableString(content.name, docLanguages);
         if (!name) {
-          const { dom } = await getJsdomFromUrlOrFile({
+          const dom = await getJsdomFromUrlOrFile({
             src: upath.join(contextDir, changeExtname(content.url, '.xhtml')),
           });
           name = dom.window.document.title;

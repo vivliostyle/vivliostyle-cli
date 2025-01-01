@@ -213,7 +213,7 @@ export async function retrieveWebbookEntry({
     logUpdate('Fetching remote contents');
   }
   const resourceLoader = new ResourceLoader();
-  const { dom } = await getJsdomFromUrlOrFile({
+  const dom = await getJsdomFromUrlOrFile({
     src: webbookEntryUrl,
     resourceLoader,
   });
@@ -325,7 +325,7 @@ export async function supplyWebPublicationManifestForWebbook({
   outputDir: string;
 }): Promise<PublicationManifest> {
   debug(`Generating publication manifest from HTML: ${entryHtmlFile}`);
-  const { dom } = await getJsdomFromUrlOrFile({ src: entryHtmlFile });
+  const dom = await getJsdomFromUrlOrFile({ src: entryHtmlFile });
   const { document } = dom.window;
   const language =
     config.language || document.documentElement.lang || undefined;

@@ -4,12 +4,9 @@ import jsdom, {
   VirtualConsole,
 } from '@vivliostyle/jsdom';
 import chalk from 'chalk';
-import * as cheerio from 'cheerio';
 import DOMPurify from 'dompurify';
 import { toHtml } from 'hast-util-to-html';
-import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import prettier from 'prettier';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
 import { ManuscriptEntry } from '../config/resolve.js';
@@ -147,9 +144,7 @@ export async function getJsdomFromUrlOrFile({
   src: string;
   resourceLoader?: ResourceLoader;
   virtualConsole?: VirtualConsole;
-}): Promise<{
-  dom: JSDOM;
-}> {
+}) {
   const url = isValidUri(src) ? new URL(src) : pathToFileURL(src);
   let dom: JSDOM;
   if (url.protocol === 'http:' || url.protocol === 'https:') {
@@ -170,7 +165,7 @@ export async function getJsdomFromUrlOrFile({
   } else {
     throw new Error(`Unsupported protocol: ${url.protocol}`);
   }
-  return { dom };
+  return dom;
 }
 
 export function getJsdomFromString({
@@ -181,20 +176,17 @@ export function getJsdomFromString({
 }: {
   html: string;
   virtualConsole?: VirtualConsole;
-}): {
-  dom: JSDOM;
-} {
-  const dom = new JSDOM(html, {
+}) {
+  return new JSDOM(html, {
     virtualConsole,
   });
-  return { dom };
 }
 
 export async function getStructuredSectionFromHtml(
   htmlPath: string,
   href?: string,
 ) {
-  const { dom } = await getJsdomFromUrlOrFile({ src: htmlPath });
+  const dom = await getJsdomFromUrlOrFile({ src: htmlPath });
   const { document } = dom.window;
   const allHeadings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
     .filter((el) => {
@@ -410,7 +402,7 @@ export async function generateTocListSection({
 }
 
 export async function processTocHtml(
-  html: string,
+  dom: JSDOM,
   {
     manifestPath,
     tocTitle,
@@ -424,8 +416,7 @@ export async function processTocHtml(
     tocTitle: string;
     styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
   },
-): Promise<string> {
-  const { dom } = getJsdomFromString({ html });
+): Promise<JSDOM> {
   const { document } = dom.window;
   if (
     !document.querySelector(
@@ -461,8 +452,7 @@ export async function processTocHtml(
       transform,
     });
   }
-
-  return await prettier.format(dom.serialize(), { parser: 'html' });
+  return dom;
 }
 
 const getCoverHtmlStyle = ({
@@ -516,7 +506,7 @@ export function generateDefaultCoverHtml({
 }
 
 export async function processCoverHtml(
-  html: string,
+  dom: JSDOM,
   {
     imageSrc,
     imageAlt,
@@ -526,8 +516,7 @@ export async function processCoverHtml(
     imageAlt: string;
     styleOptions?: Parameters<typeof getCoverHtmlStyle>[0];
   },
-): Promise<string> {
-  const { dom } = getJsdomFromString({ html });
+): Promise<JSDOM> {
   const { document } = dom.window;
   const style = document.querySelector('style[data-vv-style]');
   if (style) {
@@ -546,12 +535,11 @@ export async function processCoverHtml(
   if (cover && !cover.hasAttribute('alt')) {
     cover.setAttribute('alt', imageAlt);
   }
-
-  return await prettier.format(dom.serialize(), { parser: 'html' });
+  return dom;
 }
 
-export function processManuscriptHtml(
-  html: string,
+export async function processManuscriptHtml(
+  dom: JSDOM,
   {
     title,
     style,
@@ -563,56 +551,35 @@ export function processManuscriptHtml(
     contentType?: 'text/html' | 'application/xhtml+xml';
     language?: string | null;
   },
-): string {
-  const $ = cheerio.load(html, {
-    xmlMode: contentType === 'application/xhtml+xml',
-  });
+): Promise<JSDOM> {
+  const { document } = dom.window;
   if (title) {
-    if (!$('title').html()) {
-      $('head').append($('<title></title>'));
+    if (!document.querySelector('title')) {
+      const t = document.createElement('title');
+      document.head.appendChild(t);
     }
-    $('title').text(title);
+    document.title = title;
   }
   for (const s of style ?? []) {
-    $('head').append(`<link rel="stylesheet" type="text/css" />`);
-    $('head > *:last-child').attr('href', encodeURI(s));
+    const l = document.createElement('link');
+    l.setAttribute('rel', 'stylesheet');
+    l.setAttribute('type', 'text/css');
+    l.setAttribute('href', encodeURI(s));
+    document.head.appendChild(l);
   }
   if (language) {
     if (contentType === 'application/xhtml+xml') {
-      if (!$('html').attr('xml:lang')) {
-        $('html').attr('lang', language);
-        $('html').attr('xml:lang', language);
+      if (!document.documentElement.getAttribute('xml:lang')) {
+        document.documentElement.setAttribute('lang', language);
+        document.documentElement.setAttribute('xml:lang', language);
       }
     } else {
-      if (!$('html').attr('lang')) {
-        $('html').attr('lang', language);
+      if (!document.documentElement.getAttribute('lang')) {
+        document.documentElement.setAttribute('lang', language);
       }
     }
   }
-  let processed = $.html();
-  return processed;
-}
-
-export function isTocHtml(filepath: string): boolean {
-  try {
-    const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'));
-    return (
-      $('[role="doc-toc"], [role="directory"], nav, .toc, #toc').length > 0
-    );
-  } catch (err) {
-    // seems not to be a html file
-    return false;
-  }
-}
-
-export function isCovertHtml(filepath: string): boolean {
-  try {
-    const $ = cheerio.load(fs.readFileSync(filepath, 'utf8'));
-    return $('[role="doc-cover"]').length > 0;
-  } catch (err) {
-    // seems not to be a html file
-    return false;
-  }
+  return dom;
 }
 
 export async function fetchLinkedPublicationManifest({
@@ -645,7 +612,7 @@ export async function fetchLinkedPublicationManifest({
       const thrownError = error as Error;
       throw new DetailError(
         'Failed to parse manifest data',
-        typeof thrownError.stack ?? thrownError.message,
+        typeof thrownError.stack,
       );
     }
   } else {
@@ -663,7 +630,7 @@ export async function fetchLinkedPublicationManifest({
       const thrownError = error as Error;
       throw new DetailError(
         'Failed to parse manifest data',
-        typeof thrownError.stack ?? thrownError.message,
+        typeof thrownError.stack,
       );
     }
   }

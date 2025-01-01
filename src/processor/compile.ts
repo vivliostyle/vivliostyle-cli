@@ -1,7 +1,8 @@
-import jsdom from '@vivliostyle/jsdom';
+import jsdom, { JSDOM } from '@vivliostyle/jsdom';
 import { copy, move, remove } from 'fs-extra/esm';
 import fs from 'node:fs';
 import picomatch from 'picomatch';
+import prettier from 'prettier';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
@@ -29,6 +30,7 @@ import {
   createVirtualConsole,
   generateDefaultCoverHtml,
   generateDefaultTocHtml,
+  getJsdomFromString,
   getJsdomFromUrlOrFile,
   processCoverHtml,
   processManuscriptHtml,
@@ -162,7 +164,7 @@ export async function transformManuscript(
     entry.rel === 'contents' || entry.rel === 'cover'
       ? (entry as ContentsEntry | CoverEntry).template
       : (entry as ManuscriptEntry).source;
-  let content: string | undefined;
+  let content: JSDOM | undefined;
   let resourceLoader: ResourceLoader | undefined;
 
   // calculate style path
@@ -183,13 +185,13 @@ export async function transformManuscript(
           language: language ?? undefined,
         },
       );
-      content = String(vfile);
+      content = getJsdomFromString({ html: String(vfile) });
     } else if (
       source.contentType === 'text/html' ||
       source.contentType === 'application/xhtml+xml'
     ) {
-      content = fs.readFileSync(source.pathname, 'utf8');
-      content = processManuscriptHtml(content, {
+      content = await getJsdomFromUrlOrFile({ src: source.pathname });
+      content = await processManuscriptHtml(content, {
         style,
         title: entry.title,
         contentType: source.contentType,
@@ -225,8 +227,8 @@ export async function transformManuscript(
       if (!contentType || new MIMEType(contentType).essence !== 'text/html') {
         throw new Error(`The content is not an HTML document: ${source.href}`);
       }
-      content = buffer.toString('utf8');
-      content = processManuscriptHtml(content, {
+      content = getJsdomFromString({ html: buffer.toString('utf8') });
+      content = await processManuscriptHtml(content, {
         style,
         title: entry.title,
         contentType: 'text/html',
@@ -234,19 +236,23 @@ export async function transformManuscript(
       });
     }
   } else if (entry.rel === 'contents') {
-    content = generateDefaultTocHtml({
-      language,
-      title,
+    content = getJsdomFromString({
+      html: generateDefaultTocHtml({
+        language,
+        title,
+      }),
     });
-    content = processManuscriptHtml(content, {
+    content = await processManuscriptHtml(content, {
       style,
       title,
       contentType: 'text/html',
       language,
     });
   } else if (entry.rel === 'cover') {
-    content = generateDefaultCoverHtml({ language, title: entry.title });
-    content = processManuscriptHtml(content, {
+    content = getJsdomFromString({
+      html: generateDefaultCoverHtml({ language, title: entry.title }),
+    });
+    content = await processManuscriptHtml(content, {
       style,
       title: entry.title,
       contentType: 'text/html',
@@ -290,18 +296,19 @@ export async function transformManuscript(
     });
   }
 
-  const contentBuffer = Buffer.from(content, 'utf8');
+  const html = await prettier.format(content.serialize(), { parser: 'html' });
+  const htmlBuffer = Buffer.from(html, 'utf8');
   if (
     !source ||
     (source.type === 'file' && !pathEquals(source.pathname, entry.target))
   ) {
-    writeFileIfChanged(entry.target, contentBuffer);
+    writeFileIfChanged(entry.target, htmlBuffer);
   }
 
   if (source?.type === 'uri' && resourceLoader) {
     const { response } = resourceLoader.fetcherMap.get(source.href)!;
     const contentFetcher = Promise.resolve(
-      contentBuffer,
+      htmlBuffer,
     ) as jsdom.AbortablePromise<Buffer>;
     contentFetcher.abort = () => {};
     contentFetcher.response = response;
@@ -314,7 +321,7 @@ export async function transformManuscript(
     });
   }
 
-  return content;
+  return html;
 }
 
 export async function generateManifest({
