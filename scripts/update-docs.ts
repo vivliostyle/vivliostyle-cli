@@ -5,7 +5,7 @@ import { promisify } from 'node:util';
 import prettier from 'prettier';
 import { JSONOutput } from 'typedoc';
 import * as v from 'valibot';
-import { VivliostyleConfigSchema } from '../src/input/schema.js';
+import { VivliostyleConfigSchema } from '../src/config/schema.js';
 import { useTmpDirectory } from '../src/util.js';
 
 function insertDocs(
