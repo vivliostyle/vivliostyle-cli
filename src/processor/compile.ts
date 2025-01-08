@@ -523,23 +523,3 @@ export async function copyAssets({
     await copy(upath.resolve(entryContextDir, asset), target);
   }
 }
-
-export function checkOverwriteViolation(
-  { entryContextDir, workspaceDir }: ResolvedTaskConfig,
-  target: string,
-  fileInformation: string,
-) {
-  if (
-    pathContains(target, entryContextDir) ||
-    pathEquals(target, entryContextDir)
-  ) {
-    throw new Error(
-      `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the manuscript file(s). Please specify other paths.`,
-    );
-  }
-  if (pathContains(target, workspaceDir) || pathEquals(target, workspaceDir)) {
-    throw new Error(
-      `${target} is set as output destination of ${fileInformation}, however, this output path will overwrite the working directory of Vivliostyle. Please specify other paths.`,
-    );
-  }
-}
