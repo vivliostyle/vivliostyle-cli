@@ -30,7 +30,7 @@ const vivliostyleConfig = {
   ${inlineConfig.language ? '' : '// '}language: '${inlineConfig.language || 'la'}',
   // readingProgression: 'rtl', // reading progression direction, 'ltr' or 'rtl'.
   ${inlineConfig.size ? '' : '// '}size: '${inlineConfig.size || 'A4'}',
-  ${inlineConfig.theme ? '' : '// '}theme: '${inlineConfig.theme || ''}', // .css or local dir or npm package. default to undefined
+  ${inlineConfig.theme ? '' : '// '}theme: '${inlineConfig.theme?.[0].specifier || ''}', // .css or local dir or npm package. default to undefined
   image: '${CONTAINER_IMAGE}',
   entry: [ // **required field**
     // 'introduction.md', // 'title' is automatically guessed from the file (frontmatter > first heading)
@@ -75,6 +75,7 @@ const vivliostyleConfig = {
 module.exports = vivliostyleConfig;
 `;
 
+  fs.mkdirSync(upath.dirname(vivliostyleConfigPath), { recursive: true });
   fs.writeFileSync(vivliostyleConfigPath, vivliostyleConfig);
 
   runExitHandlers();

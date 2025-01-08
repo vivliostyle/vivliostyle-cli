@@ -9,11 +9,36 @@ import {
   parseFlagsToInlineConfig,
   setupConfigFromFlags,
 } from '../src/commands/cli-flags.js';
+import { setupInitParserProgram } from '../src/commands/init.parser.js';
+import { setupPreviewParserProgram } from '../src/commands/preview.parser.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
+import { build } from '../src/core/build.js';
+import { init } from '../src/core/init.js';
+import { preview } from '../src/core/preview.js';
 import { ResolvedTaskConfig, resolveTaskConfig } from './../src/config/resolve';
-import { VivliostyleConfigSchema } from './../src/config/schema';
+import { LogLevel, VivliostyleConfigSchema } from './../src/config/schema';
 
 export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
+
+export const runCommand = async (
+  args: ['init' | 'build' | 'preview', ...string[]],
+  {
+    cwd,
+    config,
+    logLevel = 'silent',
+  }: { cwd: string; config?: VivliostyleConfigSchema; logLevel?: LogLevel },
+) => {
+  let inlineConfig = parseFlagsToInlineConfig(
+    ['vivliostyle', ...args],
+    {
+      init: setupInitParserProgram,
+      build: setupBuildParserProgram,
+      preview: setupPreviewParserProgram,
+    }[args[0]],
+  );
+  inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel };
+  await { init, build, preview }[args[0]](inlineConfig);
+};
 
 export const getTaskConfig = async (
   args: string[],
