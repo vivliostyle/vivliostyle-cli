@@ -880,6 +880,15 @@ export const VivliostyleInlineConfig = v.pipe(
           Path to vivliostyle.config.js.
         `),
       ),
+      configData: v.pipe(
+        v.custom<VivliostyleConfigSchema | null | undefined>(() => true),
+        v.metadata({
+          typeString: 'VivliostyleConfigSchema',
+        }),
+        v.description($`
+          Vivliostyle config object.
+        `),
+      ),
       input: v.pipe(
         ValidString,
         v.transform((input): { format: InputFormat; entry: string } => {

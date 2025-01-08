@@ -17,6 +17,7 @@ export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
   let vivliostyleConfig =
     (await loadVivliostyleConfig({
       configPath: inlineConfig.config,
+      configObject: inlineConfig.configData,
       cwd: inlineConfig.cwd,
     })) ?? setupConfigFromFlags(inlineConfig);
   warnDeprecatedConfig(vivliostyleConfig);

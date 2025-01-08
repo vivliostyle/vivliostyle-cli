@@ -25,11 +25,17 @@ function locateVivliostyleConfig(cwd: string) {
 
 export async function loadVivliostyleConfig({
   configPath,
+  configObject,
   cwd,
 }: {
   configPath?: string;
+  configObject?: unknown;
   cwd?: string;
 }): Promise<ParsedVivliostyleConfigSchema | undefined> {
+  if (configObject) {
+    return v.parse(VivliostyleConfigSchema, configObject);
+  }
+
   const absPath = configPath
     ? upath.resolve(cwd ?? defaultRoot, configPath)
     : locateVivliostyleConfig(cwd ?? defaultRoot);

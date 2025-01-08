@@ -18,6 +18,7 @@ export async function createVitePlugin(
   const vivliostyleConfig =
     (await loadVivliostyleConfig({
       configPath: parsed.config,
+      configObject: inlineConfig.configData,
       cwd: parsed.cwd,
     })) ?? setupConfigFromFlags(parsed);
   warnDeprecatedConfig(vivliostyleConfig);

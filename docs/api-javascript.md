@@ -44,6 +44,8 @@ build({
 
 • **options.config?**: `string` = `...`
 
+• **options.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
+
 • **options.cropMarks?**: `boolean` = `...`
 
 • **options.cropOffset?**: `string` = `...`
@@ -133,6 +135,8 @@ build({
 • **inlineConfig.browser?**: `"chromium"` \| `"firefox"` \| `"webkit"` = `...`
 
 • **inlineConfig.config?**: `string` = `...`
+
+• **inlineConfig.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
 
 • **inlineConfig.cropMarks?**: `boolean` = `...`
 
@@ -226,6 +230,8 @@ Initialize a new vivliostyle.config.js file.
 
 • **options.config?**: `string` = `...`
 
+• **options.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
+
 • **options.cropMarks?**: `boolean` = `...`
 
 • **options.cropOffset?**: `string` = `...`
@@ -317,6 +323,8 @@ Open a browser for previewing the publication.
 • **options.browser?**: `"chromium"` \| `"firefox"` \| `"webkit"` = `...`
 
 • **options.config?**: `string` = `...`
+
+• **options.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
 
 • **options.cropMarks?**: `boolean` = `...`
 

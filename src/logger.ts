@@ -42,6 +42,7 @@ export class Logger {
       process.stderr.isTTY &&
         process.env.TERM !== 'dumb' &&
         !('CI' in process.env) &&
+        !import.meta.env?.VITEST &&
         !debug.enabled('vs-cli') &&
         // Prevent stream output in docker container so that not to spawn process
         !isInContainer(),
