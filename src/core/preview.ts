@@ -5,30 +5,38 @@ import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeInlineConfig } from '../config/merge.js';
 import { resolveTaskConfig } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { resolveViteConfig } from '../config/vite.js';
 import { cliVersion } from '../const.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { createViteServer, getViewerFullUrl } from '../server.js';
 
 export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.setLogLevel(inlineConfig.logLevel);
+  Logger.debug('preview > inlineConfig %O', inlineConfig);
 
-  const vivliostyleConfig =
+  let vivliostyleConfig =
     (await loadVivliostyleConfig({
       configPath: inlineConfig.config,
       cwd: inlineConfig.cwd,
     })) ?? setupConfigFromFlags(inlineConfig);
   warnDeprecatedConfig(vivliostyleConfig);
-  const { tasks, inlineOptions } = mergeInlineConfig(
-    vivliostyleConfig,
-    inlineConfig,
-  );
+  vivliostyleConfig = mergeInlineConfig(vivliostyleConfig, inlineConfig);
+  const { tasks, inlineOptions } = vivliostyleConfig;
+  Logger.debug('preview > vivliostyleConfig %O', vivliostyleConfig);
+
   // Only show preview of first entry
   const config = resolveTaskConfig(tasks[0], inlineOptions);
+  Logger.debug('preview > config %O', config);
 
   {
     using _ = Logger.startLogging('Start preview');
+    const viteConfig = await resolveViteConfig({
+      ...config,
+      mode: 'preview',
+    });
     const server = await createViteServer({
       config,
+      viteConfig,
       inlineOptions,
       mode: 'preview',
     });

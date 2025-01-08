@@ -5,10 +5,10 @@ import { PreviewServer, build as viteBuild } from 'vite';
 import { cyan } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
-import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
+import { mergeInlineConfig } from '../config/merge.js';
 import { isWebPubConfig, resolveTaskConfig } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
-import { prepareViteConfig, resolveViteConfig } from '../config/vite.js';
+import { resolveViteConfig } from '../config/vite.js';
 import { buildPDFWithContainer } from '../container.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { buildPDF } from '../output/pdf.js';
@@ -24,6 +24,7 @@ import { cwd, isInContainer, runExitHandlers } from '../util.js';
 
 export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.setLogLevel(inlineConfig.logLevel);
+  Logger.debug('build > inlineConfig %O', inlineConfig);
 
   let vivliostyleConfig =
     (await loadVivliostyleConfig({
@@ -36,34 +37,33 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
     quick: false,
   });
   const { inlineOptions } = vivliostyleConfig;
+  Logger.debug('build > vivliostyleConfig %O', vivliostyleConfig);
 
   for (let [i, task] of vivliostyleConfig.tasks.entries()) {
     using _ = Logger.startLogging('Start building');
 
-    let config = resolveTaskConfig(task, inlineOptions);
-    const { viteConfig, viteConfigLoaded } = await prepareViteConfig({
+    const config = resolveTaskConfig(task, inlineOptions);
+    Logger.debug('build > config %O', config);
+    const viteConfig = await resolveViteConfig({
       ...config,
       mode: 'build',
     });
-    const resolvedViteConfig = await resolveViteConfig(viteConfig, 'build');
-
-    // reload config to get the latest server URL
-    vivliostyleConfig = mergeConfig(vivliostyleConfig, {
-      server: resolvedViteConfig.preview,
-    });
-    task = vivliostyleConfig.tasks[i];
-    config = resolveTaskConfig(task, inlineOptions);
 
     let server: PreviewServer | undefined;
     if (!isInContainer()) {
       // build dependents first
-      if (viteConfigLoaded) {
+      Logger.log('build > viteConfig.configFile %s', viteConfig.configFile);
+      if (viteConfig.configFile) {
         using _ = Logger.suspendLogging('Building Vite project');
-        await viteBuild(viteConfig);
+        await viteBuild({
+          configFile: viteConfig.configFile,
+          root: config.context,
+        });
       }
 
       server = await createViteServer({
         config,
+        viteConfig,
         inlineOptions,
         mode: 'build',
       });

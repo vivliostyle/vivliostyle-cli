@@ -171,9 +171,9 @@ export function writePublicationManifest(
 
   const encodedManifest = encodePublicationManifest(publication);
   Logger.debug(
-    'writePublicationManifest',
+    'writePublicationManifest path: %s content: %O',
     output,
-    JSON.stringify(encodedManifest, null, 2),
+    encodedManifest,
   );
   try {
     assertPubManifestSchema(encodedManifest);

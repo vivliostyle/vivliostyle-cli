@@ -4,15 +4,15 @@ import upath from 'upath';
 import {
   createServer,
   InlineConfig,
-  mergeConfig as mergeViteConfig,
   preview,
   PreviewServer,
+  ResolvedConfig as ResolvedViteConfig,
   ViteDevServer,
 } from 'vite';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import { InlineOptions } from './config/schema.js';
-import { prepareViteConfig } from './config/vite.js';
 import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
+import { Logger } from './logger.js';
 import { getDefaultEpubOpfPath, isValidUri, openEpub } from './util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
@@ -172,25 +172,28 @@ export async function getViewerFullUrl({
 
 export async function createViteServer(args: {
   config: ResolvedTaskConfig;
+  viteConfig: ResolvedViteConfig;
   inlineOptions: InlineOptions;
   mode: 'preview';
 }): Promise<ViteDevServer>;
 export async function createViteServer(args: {
   config: ResolvedTaskConfig;
+  viteConfig: ResolvedViteConfig;
   inlineOptions: InlineOptions;
   mode: 'build';
 }): Promise<PreviewServer>;
 export async function createViteServer({
   config,
+  viteConfig,
   inlineOptions: options,
   mode,
 }: {
   config: ResolvedTaskConfig;
+  viteConfig: ResolvedViteConfig;
   inlineOptions: InlineOptions;
   mode: 'preview' | 'build';
 }) {
-  let { viteConfig } = await prepareViteConfig({ ...config, mode });
-  viteConfig = mergeViteConfig(viteConfig, {
+  const inlineConfig = {
     clearScreen: false,
     configFile: false,
     appType: 'custom',
@@ -200,12 +203,14 @@ export async function createViteServer({
       vsBrowserPlugin({ config, options }),
       vsStaticServePlugin({ config, options }),
     ],
-    server: viteConfig.server ?? config.server,
-  } satisfies InlineConfig);
+    server: viteConfig.server,
+    preview: viteConfig.preview,
+  } satisfies InlineConfig;
+  Logger.debug('createViteServer > inlineConfig %O', inlineConfig);
 
   if (mode === 'preview') {
-    return await createServer(viteConfig);
+    return await createServer(inlineConfig);
   } else {
-    return await preview(viteConfig);
+    return await preview(inlineConfig);
   }
 }

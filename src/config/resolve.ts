@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { Processor } from 'unified';
 import upath from 'upath';
-import { ProxyOptions, UserConfig } from 'vite';
+import { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
 import { getExecutableBrowserPath } from '../browser.js';
 import {
   ArticleEntryConfig,
@@ -255,11 +255,9 @@ export type ResolvedTaskConfig = {
   logLevel: 'silent' | 'info' | 'verbose' | 'debug';
   ignoreHttpsErrors: boolean;
   base: string;
-  server: {
-    host: string | boolean;
-    port: number;
-    proxy: Record<string, string | ProxyOptions>;
-  };
+  server: Required<
+    Pick<ResolvedViteConfig['server'], 'host' | 'port' | 'proxy'>
+  >;
   static: Record<string, string[]>;
   rootUrl: string;
   viteConfig: UserConfig | undefined;
@@ -426,9 +424,7 @@ export function resolveTaskConfig(
   options: InlineOptions,
 ): ResolvedTaskConfig {
   const context = options.cwd ?? defaultCwd;
-  Logger.debug('context directory', context);
-  Logger.debug('inlineOptions', options);
-  Logger.debug('vivliostyle.config.js', config);
+  Logger.debug('resolveTaskConfig > context %s', context);
 
   const entryContextDir = config.entryContext
     ? upath.resolve(context, config.entryContext)
@@ -590,6 +586,7 @@ export function resolveTaskConfig(
           context,
           temporaryFilePrefix,
           themeIndexes,
+          base,
         })
       : resolveComposedProjectConfig({
           config,
@@ -641,7 +638,6 @@ export function resolveTaskConfig(
     viteConfig,
     viteConfigFile,
   } satisfies ResolvedTaskConfig;
-  Logger.debug('resolvedConfig', JSON.stringify(resolvedConfig, null, 2));
   return resolvedConfig;
 }
 
@@ -663,9 +659,10 @@ function resolveSingleInputConfig({
   context,
   temporaryFilePrefix,
   themeIndexes,
+  base,
 }: Pick<
   ResolvedTaskConfig,
-  'context' | 'temporaryFilePrefix' | 'themeIndexes'
+  'context' | 'temporaryFilePrefix' | 'themeIndexes' | 'base'
 > & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
@@ -689,8 +686,6 @@ function resolveSingleInputConfig({
     statFileSync(sourcePath);
     switch (input.format) {
       case 'webbook':
-        workspaceDir = context;
-        break;
       case 'markdown':
       case 'pub-manifest':
       case 'epub':
@@ -720,11 +715,9 @@ function resolveSingleInputConfig({
       sourcePath,
       workspaceDir,
     });
-    const relDir = upath.relative(context, upath.dirname(sourcePath));
     const target = upath
       .resolve(
         workspaceDir,
-        relDir,
         `${temporaryFilePrefix}${upath.basename(sourcePath)}`,
       )
       .replace(/\.md$/, '.html');
@@ -785,18 +778,24 @@ function resolveSingleInputConfig({
       needToGenerateManifest: true,
     };
   } else if (inputFormat === 'webbook') {
-    const url = isValidUri(sourcePath)
-      ? new URL(sourcePath)
-      : pathToFileURL(sourcePath);
-    // Ensures trailing slash or explicit HTML extensions
-    if (
-      /^https?:/i.test(url.protocol) &&
-      !url.pathname.endsWith('/') &&
-      !/\.html?$/.test(url.pathname)
-    ) {
-      url.pathname = `${url.pathname}/`;
+    let webbookEntryUrl: string;
+    if (isValidUri(sourcePath)) {
+      const url = new URL(sourcePath);
+      // Ensures trailing slash or explicit HTML extensions
+      if (
+        /^https?:/i.test(url.protocol) &&
+        !url.pathname.endsWith('/') &&
+        !/\.html?$/.test(url.pathname)
+      ) {
+        url.pathname = `${url.pathname}/`;
+      }
+      webbookEntryUrl = url.href;
+    } else {
+      const rootFileUrl = pathToFileURL(workspaceDir).href;
+      const urlPath = pathToFileURL(sourcePath).href.slice(rootFileUrl.length);
+      webbookEntryUrl = `${base}${urlPath}`;
     }
-    viewerInput = { type: 'webbook', webbookEntryUrl: url.href };
+    viewerInput = { type: 'webbook', webbookEntryUrl };
   } else if (inputFormat === 'pub-manifest') {
     viewerInput = {
       type: 'webpub',

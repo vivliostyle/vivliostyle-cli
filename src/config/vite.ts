@@ -1,9 +1,9 @@
 import {
   ConfigEnv,
-  loadConfigFromFile,
+  InlineConfig,
   mergeConfig as mergeViteConfig,
   resolveConfig,
-  UserConfig,
+  ResolvedConfig as ResolvedViteConfig,
 } from 'vite';
 import { ResolvedTaskConfig } from './resolve.js';
 
@@ -15,43 +15,29 @@ const defaultConfigEnv: Record<'preview' | 'build', ConfigEnv> = {
   build: { command: 'serve', mode: 'production', isPreview: true },
 };
 
-export async function prepareViteConfig({
+export async function resolveViteConfig({
   context,
-  viteConfig: overrideViteConfig,
+  server,
+  viteConfig,
   viteConfigFile,
   mode,
-}: Pick<ResolvedTaskConfig, 'context' | 'viteConfig' | 'viteConfigFile'> & {
+}: Pick<
+  ResolvedTaskConfig,
+  'context' | 'server' | 'viteConfig' | 'viteConfigFile'
+> & {
   mode: 'preview' | 'build';
-}): Promise<{
-  viteConfig: UserConfig;
-  viteConfigLoaded: boolean;
-}> {
-  const loadedViteConfig =
-    viteConfigFile &&
-    (
-      await loadConfigFromFile(
-        defaultConfigEnv[mode],
-        typeof viteConfigFile === 'string' ? viteConfigFile : undefined,
-        context,
-      )
-    )?.config;
-  const viteConfig = mergeViteConfig(
-    loadedViteConfig || {},
-    overrideViteConfig || {},
-  );
-  return { viteConfig, viteConfigLoaded: !!loadedViteConfig };
-}
-
-export async function resolveViteConfig(
-  userConfig: UserConfig,
-  mode: 'preview' | 'build',
-) {
-  const env = defaultConfigEnv[mode];
+}): Promise<ResolvedViteConfig> {
+  const finalUserConfig = mergeViteConfig(viteConfig || {}, {
+    server,
+    preview: server,
+    configFile: viteConfigFile === true ? undefined : viteConfigFile,
+    root: context,
+  } satisfies InlineConfig);
   return await resolveConfig(
-    userConfig,
-    env.command,
-    env.mode,
-    undefined,
-    env.isPreview,
+    finalUserConfig,
+    defaultConfigEnv[mode].command,
+    defaultConfigEnv[mode].mode,
+    'development',
+    defaultConfigEnv[mode].isPreview,
   );
 }

@@ -12,10 +12,7 @@ try {
   );
   if (isInContainer()) {
     inlineConfig = JSON.parse(process.env.VS_CLI_BUILD_PDF_OPTIONS!);
-    Logger.debug(
-      'bypassedPdfBuilderOption',
-      JSON.stringify(inlineConfig, null, 2),
-    );
+    Logger.debug('bypassedPdfBuilderOption %O', inlineConfig);
   }
   await build(inlineConfig);
 } catch (err) {

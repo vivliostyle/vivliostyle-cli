@@ -3,37 +3,41 @@ import { Volume } from 'memfs/lib/volume.js';
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import upath from 'upath';
+import * as v from 'valibot';
 import { setupBuildParserProgram } from '../src/commands/build.parser.js';
 import {
-  MergedConfig,
-  collectVivliostyleConfig,
-  mergeConfig,
-} from '../src/input/config.js';
+  parseFlagsToInlineConfig,
+  setupConfigFromFlags,
+} from '../src/commands/cli-flags.js';
+import { mergeInlineConfig } from '../src/config/merge.js';
+import { ResolvedTaskConfig, resolveTaskConfig } from './../src/config/resolve';
+import { VivliostyleConfigSchema } from './../src/config/schema';
 
 export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
 
-export const getMergedConfig = async (
+export const getTaskConfig = async (
   args: string[],
-): Promise<MergedConfig | MergedConfig[]> => {
-  const program = setupBuildParserProgram().parse([
-    'vivliostyle',
-    'build',
-    ...args,
-  ]);
-  const options = program.opts();
-  const { config, cliFlags } = await collectVivliostyleConfig({
-    ...program.opts(),
-    input: program.args?.[0],
-    configPath: options.config,
-    targets: options.targets,
-  });
-  const context = cliFlags.configPath
-    ? upath.dirname(cliFlags.configPath)
-    : upath.join(rootPath, 'tests');
-  const mergedConfig = await Promise.all(
-    (config ?? [config]).map((entry) => mergeConfig(cliFlags, entry, context)),
+  cwd: string,
+  config?: VivliostyleConfigSchema,
+): Promise<ResolvedTaskConfig> => {
+  const inlineConfig = parseFlagsToInlineConfig(
+    ['vivliostyle', ...args],
+    setupBuildParserProgram,
   );
-  return mergedConfig.length > 1 ? mergedConfig : mergedConfig[0];
+  let vivliostyleConfig = config
+    ? v.parse(VivliostyleConfigSchema, config)
+    : setupConfigFromFlags(inlineConfig);
+  vivliostyleConfig = mergeInlineConfig(vivliostyleConfig, {
+    ...inlineConfig,
+    cwd,
+    quick: false,
+  });
+
+  const resolvedConfig = resolveTaskConfig(
+    vivliostyleConfig.tasks[0],
+    vivliostyleConfig.inlineOptions,
+  );
+  return resolvedConfig;
 };
 
 export const maskConfig = (obj: any) => {
@@ -44,17 +48,20 @@ export const maskConfig = (obj: any) => {
       obj[k] = '__EXECUTABLE_CHROMIUM_PATH__';
     } else if (k === 'image') {
       obj[k] = '__IMAGE__';
+    } else if (k === 'temporaryFilePrefix') {
+      obj[k] = '__TEMPORARY_FILE_PREFIX__';
     } else if (typeof v === 'string') {
       const normalized = v.match(/^(https?|file):\/{2}/) ? v : upath.toUnix(v);
       obj[k] = normalized
         .replace(rootPath, '__WORKSPACE__')
+        .replace(/\.vs-\d+\./g, '__TEMPORARY_FILE_PREFIX__')
         .replace(/^(https?|file):\/+/, '$1://');
     }
   });
 };
 
-export const resolveFixture = (p: string) =>
-  upath.resolve(rootPath, 'tests/fixtures', p);
+export const resolveFixture = (p?: string) =>
+  upath.resolve(rootPath, 'tests/fixtures', p || '');
 
 export function assertSingleItem<T = unknown>(
   value: T | T[],
