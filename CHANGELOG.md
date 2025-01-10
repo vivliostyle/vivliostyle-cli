@@ -1,3 +1,9 @@
+## [8.17.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.1...v8.17.2) (2025-01-10)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.30.8: Bug Fixes ([9c25dc0](https://github.com/vivliostyle/vivliostyle-cli/commit/9c25dc0c6fae731c2671a636b1a04b8f78791d3c))
+
 ## [8.17.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.0...v8.17.1) (2024-11-27)
 
 ### Bug Fixes
