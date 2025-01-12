@@ -27,11 +27,8 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.debug('build > inlineConfig %O', inlineConfig);
 
   let vivliostyleConfig =
-    (await loadVivliostyleConfig({
-      configPath: inlineConfig.config,
-      configObject: inlineConfig.configData,
-      cwd: inlineConfig.cwd,
-    })) ?? setupConfigFromFlags(inlineConfig);
+    (await loadVivliostyleConfig(inlineConfig)) ??
+    setupConfigFromFlags(inlineConfig);
   warnDeprecatedConfig(vivliostyleConfig);
   vivliostyleConfig = mergeInlineConfig(vivliostyleConfig, {
     ...inlineConfig,
@@ -65,7 +62,7 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
       server = await createViteServer({
         config,
         viteConfig,
-        inlineOptions,
+        inlineConfig,
         mode: 'build',
       });
 

@@ -1,17 +1,17 @@
 import * as vite from 'vite';
 import { launchPreview } from '../browser.js';
 import { ResolvedTaskConfig } from '../config/resolve.js';
-import { InlineOptions } from '../config/schema.js';
+import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { getViewerFullUrl } from '../server.js';
 import { runExitHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
 export function vsBrowserPlugin({
   config: _config,
-  options,
+  inlineConfig,
 }: {
   config: ResolvedTaskConfig;
-  options: InlineOptions;
+  inlineConfig: ParsedVivliostyleInlineConfig;
 }): vite.Plugin {
   let config = _config;
   let server: vite.ViteDevServer | undefined;
@@ -23,9 +23,6 @@ export function vsBrowserPlugin({
   }
 
   async function openPreviewPage() {
-    if (!server?.resolvedUrls?.local.length) {
-      return;
-    }
     const url = await getViewerFullUrl(config);
     const { page, browser } = await launchPreview({
       mode: 'preview',
@@ -56,14 +53,14 @@ export function vsBrowserPlugin({
 
   return {
     name: 'vivliostyle:browser',
-    apply: () => Boolean(options.openViewer),
+    apply: () => Boolean(inlineConfig.openViewer),
     configureServer(viteServer) {
       server = viteServer;
 
       const _listen = viteServer.listen;
       viteServer.listen = async (...args) => {
         const server = await _listen(...args);
-        config = await reloadConfig(config, options, server.config);
+        config = await reloadConfig(config, inlineConfig, server.config);
         await openPreviewPage();
         return server;
       };

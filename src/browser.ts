@@ -6,7 +6,7 @@ import type { BrowserType } from './config/schema.js';
 import { Logger } from './logger.js';
 import { beforeExitHandlers, isInContainer, pathEquals } from './util.js';
 
-export async function launchBrowser({
+async function launchBrowser({
   browserType,
   proxy,
   executablePath,

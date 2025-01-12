@@ -85,10 +85,10 @@ Object {
       "contentType": "text/markdown",
       "source": Object {
         "contentType": "text/markdown",
-        "pathname": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+        "pathname": "__WORKSPACE__/tests/fixtures/config/frontmatter.md",
         "type": "file",
       },
-      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/frontmatter.html",
       "themes": Array [
         Object {
           "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",
@@ -277,10 +277,10 @@ Object {
       "contentType": "text/markdown",
       "source": Object {
         "contentType": "text/markdown",
-        "pathname": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
+        "pathname": "__WORKSPACE__/tests/fixtures/config/frontmatter.md",
         "type": "file",
       },
-      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/manuscript.html",
+      "target": "__WORKSPACE__/tests/fixtures/config/workspaceDir/frontmatter.html",
       "themes": Array [
         Object {
           "location": "__WORKSPACE__/tests/fixtures/config/workspaceDir/theme.css",

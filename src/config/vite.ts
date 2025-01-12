@@ -1,10 +1,13 @@
 import {
   ConfigEnv,
+  createLogger,
   InlineConfig,
   mergeConfig as mergeViteConfig,
   resolveConfig,
   ResolvedConfig as ResolvedViteConfig,
 } from 'vite';
+import { dim } from 'yoctocolors';
+import { Logger } from '../logger.js';
 import { ResolvedTaskConfig } from './resolve.js';
 
 // Be careful not to confuse the preview/build commands of Vivliostyle CLI with Vite's mode.
@@ -20,18 +23,52 @@ export async function resolveViteConfig({
   server,
   viteConfig,
   viteConfigFile,
+  logLevel,
   mode,
 }: Pick<
   ResolvedTaskConfig,
-  'context' | 'server' | 'viteConfig' | 'viteConfigFile'
+  'context' | 'server' | 'viteConfig' | 'viteConfigFile' | 'logLevel'
 > & {
   mode: 'preview' | 'build';
 }): Promise<ResolvedViteConfig> {
+  const viteLogger = createLogger(
+    (
+      {
+        silent: 'silent',
+        info: 'info',
+        verbose: 'info',
+        debug: 'info',
+      } as const
+    )[logLevel],
+    { allowClearScreen: false },
+  );
+  const warnedMessages = new Set<string>();
+  viteLogger.info = (msg) => {
+    Logger.logInfo(`${dim('[vite]')} ${msg}`);
+  };
+  viteLogger.warn = (msg) => {
+    viteLogger.hasWarned = true;
+    Logger.logWarn(`${dim('[vite]')} ${msg}`);
+  };
+  viteLogger.warnOnce = (msg) => {
+    if (warnedMessages.has(msg)) {
+      return;
+    }
+    viteLogger.hasWarned = true;
+    Logger.logWarn(`${dim('[vite]')} ${msg}`);
+    warnedMessages.add(msg);
+  };
+  viteLogger.error = (msg) => {
+    viteLogger.hasWarned = true;
+    Logger.logError(`${dim('[vite]')} ${msg}`);
+  };
+
   const finalUserConfig = mergeViteConfig(viteConfig || {}, {
     server,
     preview: server,
     configFile: viteConfigFile === true ? undefined : viteConfigFile,
     root: context,
+    customLogger: viteLogger,
   } satisfies InlineConfig);
   return await resolveConfig(
     finalUserConfig,

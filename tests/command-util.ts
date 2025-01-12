@@ -4,6 +4,7 @@ import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import upath from 'upath';
 import * as v from 'valibot';
+import { ViteDevServer } from 'vite';
 import { setupBuildParserProgram } from '../src/commands/build.parser.js';
 import {
   parseFlagsToInlineConfig,
@@ -16,28 +17,56 @@ import { build } from '../src/core/build.js';
 import { init } from '../src/core/init.js';
 import { preview } from '../src/core/preview.js';
 import { ResolvedTaskConfig, resolveTaskConfig } from './../src/config/resolve';
-import { LogLevel, VivliostyleConfigSchema } from './../src/config/schema';
+import {
+  BuildTask,
+  LogLevel,
+  VivliostyleConfigSchema,
+  VivliostyleInlineConfig,
+} from './../src/config/schema';
 
 export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
 
 export const runCommand = async (
-  args: ['init' | 'build' | 'preview', ...string[]],
+  [command, ...args]: ['init' | 'build' | 'preview', ...string[]],
   {
     cwd,
     config,
     logLevel = 'silent',
   }: { cwd: string; config?: VivliostyleConfigSchema; logLevel?: LogLevel },
-) => {
+): Promise<ViteDevServer | void> => {
   let inlineConfig = parseFlagsToInlineConfig(
-    ['vivliostyle', ...args],
+    ['vivliostyle', command, ...args],
     {
       init: setupInitParserProgram,
       build: setupBuildParserProgram,
       preview: setupPreviewParserProgram,
-    }[args[0]],
+    }[command],
   );
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel };
-  await { init, build, preview }[args[0]](inlineConfig);
+  return await { init, build, preview }[command](inlineConfig);
+};
+
+export const createServerMiddleware = async ({
+  cwd,
+  input,
+  config,
+}: {
+  cwd: string;
+  input?: string;
+  config?: BuildTask;
+}) => {
+  const inlineConfig = v.parse(VivliostyleInlineConfig, {
+    cwd,
+    input,
+    configData: config,
+    enableStaticServe: true,
+    vite: {
+      server: { middlewareMode: true },
+    },
+  } satisfies VivliostyleInlineConfig);
+
+  const server = await preview(inlineConfig);
+  return server.middlewares;
 };
 
 export const getTaskConfig = async (

@@ -11,28 +11,25 @@ import { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
 export async function createVitePlugin(
-  inlineConfig: VivliostyleInlineConfig = {},
+  _inlineConfig: VivliostyleInlineConfig = {},
 ): Promise<import('vite').Plugin[]> {
-  const parsed = v.parse(VivliostyleInlineConfig, inlineConfig);
-  Logger.debug('inlineConfig %O', parsed);
+  const inlineConfig = v.parse(VivliostyleInlineConfig, _inlineConfig);
+  Logger.debug('inlineConfig %O', inlineConfig);
   const vivliostyleConfig =
-    (await loadVivliostyleConfig({
-      configPath: parsed.config,
-      configObject: inlineConfig.configData,
-      cwd: parsed.cwd,
-    })) ?? setupConfigFromFlags(parsed);
+    (await loadVivliostyleConfig(inlineConfig)) ??
+    setupConfigFromFlags(inlineConfig);
   warnDeprecatedConfig(vivliostyleConfig);
-  const { tasks, inlineOptions: options } = mergeInlineConfig(
+  const { tasks, inlineOptions } = mergeInlineConfig(
     vivliostyleConfig,
-    parsed,
+    inlineConfig,
   );
-  const config = resolveTaskConfig(tasks[0], options);
+  const config = resolveTaskConfig(tasks[0], inlineOptions);
   Logger.debug('config %O', config);
 
   return [
-    vsDevServerPlugin({ config, options }),
-    vsViewerPlugin({ config, options }),
-    vsBrowserPlugin({ config, options }),
-    vsStaticServePlugin({ config, options }),
+    vsDevServerPlugin({ config, inlineConfig }),
+    vsViewerPlugin({ config, inlineConfig }),
+    vsBrowserPlugin({ config, inlineConfig }),
+    vsStaticServePlugin({ config, inlineConfig }),
   ];
 }

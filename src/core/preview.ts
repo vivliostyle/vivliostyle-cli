@@ -1,8 +1,9 @@
 import terminalLink from 'terminal-link';
+import { ViteDevServer } from 'vite';
 import { blueBright, cyan, dim } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
-import { mergeInlineConfig } from '../config/merge.js';
+import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { resolveTaskConfig } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { resolveViteConfig } from '../config/vite.js';
@@ -15,39 +16,51 @@ export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.debug('preview > inlineConfig %O', inlineConfig);
 
   let vivliostyleConfig =
-    (await loadVivliostyleConfig({
-      configPath: inlineConfig.config,
-      configObject: inlineConfig.configData,
-      cwd: inlineConfig.cwd,
-    })) ?? setupConfigFromFlags(inlineConfig);
+    (await loadVivliostyleConfig(inlineConfig)) ??
+    setupConfigFromFlags(inlineConfig);
   warnDeprecatedConfig(vivliostyleConfig);
   vivliostyleConfig = mergeInlineConfig(vivliostyleConfig, inlineConfig);
   const { tasks, inlineOptions } = vivliostyleConfig;
   Logger.debug('preview > vivliostyleConfig %O', vivliostyleConfig);
 
   // Only show preview of first entry
-  const config = resolveTaskConfig(tasks[0], inlineOptions);
+  let config = resolveTaskConfig(tasks[0], inlineOptions);
   Logger.debug('preview > config %O', config);
 
+  let server: ViteDevServer;
+  let url: string;
   {
     using _ = Logger.startLogging('Start preview');
     const viteConfig = await resolveViteConfig({
       ...config,
       mode: 'preview',
     });
-    const server = await createViteServer({
+    server = await createViteServer({
       config,
       viteConfig,
-      inlineOptions,
+      inlineConfig,
       mode: 'preview',
     });
-    await server.listen();
+    if (server.httpServer) {
+      await server.listen();
+      vivliostyleConfig = mergeConfig(vivliostyleConfig, {
+        temporaryFilePrefix: config.temporaryFilePrefix,
+        server: server.config.server,
+      });
+      config = resolveTaskConfig(
+        vivliostyleConfig.tasks[0],
+        vivliostyleConfig.inlineOptions,
+      );
+    }
+    url = await getViewerFullUrl(config);
   }
 
-  const url = await getViewerFullUrl(config);
-  Logger.log(`
+  if (server.httpServer) {
+    Logger.log(`
 ${cyan(`Vivliostyle CLI v${cliVersion}`)}
 ${blueBright('║')} ${isUnicodeSupported ? `${randomBookSymbol} ` : ''}Up and running (press Ctrl+C to quit)
 ${blueBright('╙─')} ${dim(`Preview URL: ${terminalLink(url, url, { fallback: () => url })}`)}
 `);
+  }
+  return server;
 }

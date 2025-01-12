@@ -15,5 +15,6 @@ export default defineConfig({
     env: {
       NO_COLOR: 'true',
     },
+    clearMocks: true,
   },
 });

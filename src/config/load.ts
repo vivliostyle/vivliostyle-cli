@@ -11,6 +11,7 @@ import {
   prettifySchemaError,
 } from '../util.js';
 import {
+  InlineOptions,
   ParsedVivliostyleConfigSchema,
   VivliostyleConfigSchema,
 } from './schema.js';
@@ -24,31 +25,29 @@ function locateVivliostyleConfig(cwd: string) {
 }
 
 export async function loadVivliostyleConfig({
-  configPath,
-  configObject,
+  config,
+  configData,
   cwd,
-}: {
-  configPath?: string;
-  configObject?: unknown;
-  cwd?: string;
-}): Promise<ParsedVivliostyleConfigSchema | undefined> {
-  if (configObject) {
-    return v.parse(VivliostyleConfigSchema, configObject);
+}: Pick<InlineOptions, 'config' | 'configData' | 'cwd'>): Promise<
+  ParsedVivliostyleConfigSchema | undefined
+> {
+  if (configData) {
+    return v.parse(VivliostyleConfigSchema, configData);
   }
 
-  const absPath = configPath
-    ? upath.resolve(cwd ?? defaultRoot, configPath)
+  const absPath = config
+    ? upath.resolve(cwd ?? defaultRoot, config)
     : locateVivliostyleConfig(cwd ?? defaultRoot);
   if (!absPath) {
     return;
   }
 
-  let config: unknown;
+  let parsedConfig: unknown;
   let jsonRaw: string | undefined;
   try {
     if (upath.extname(absPath) === '.json') {
       jsonRaw = fs.readFileSync(absPath, 'utf8');
-      config = parseJsonc(jsonRaw);
+      parsedConfig = parseJsonc(jsonRaw);
     } else {
       // Clear require cache to reload CJS config files
       delete require.cache[require.resolve(absPath)];
@@ -56,8 +55,8 @@ export async function loadVivliostyleConfig({
       // Invalidate cache for ESM config files
       // https://github.com/nodejs/node/issues/49442
       url.search = `version=${Date.now()}`;
-      config = (await import(/* @vite-ignore */ url.href)).default;
-      jsonRaw = JSON.stringify(config, null, 2);
+      parsedConfig = (await import(/* @vite-ignore */ url.href)).default;
+      jsonRaw = JSON.stringify(parsedConfig, null, 2);
     }
   } catch (error) {
     const thrownError = error as Error;
@@ -67,7 +66,7 @@ export async function loadVivliostyleConfig({
     );
   }
 
-  const result = v.safeParse(VivliostyleConfigSchema, config);
+  const result = v.safeParse(VivliostyleConfigSchema, parsedConfig);
   if (result.success) {
     const { tasks, inlineOptions } = result.output;
     return {
@@ -81,7 +80,7 @@ export async function loadVivliostyleConfig({
   } else {
     const errorString = prettifySchemaError(jsonRaw, result.issues);
     throw new DetailError(
-      `Validation of vivliostyle config failed. Please check the schema: ${configPath}`,
+      `Validation of vivliostyle config failed. Please check the schema: ${config}`,
       errorString,
     );
   }

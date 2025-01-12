@@ -28,6 +28,9 @@ export function mergeConfig(
   };
 }
 
+type HasOnlyInlineOptionsProperties<T> =
+  Exclude<keyof T, keyof InlineOptions> extends never ? T : never;
+
 export function mergeInlineConfig(
   { tasks, inlineOptions }: ParsedVivliostyleConfigSchema,
   inlineConfig: ParsedVivliostyleInlineConfig,
@@ -49,29 +52,9 @@ export function mergeInlineConfig(
     renderMode,
     preflight,
     preflightOption,
-    // InlineOptions
-    cwd,
-    config,
-    input,
-    cropMarks,
-    bleed,
-    cropOffset,
-    css,
-    style,
-    userStyle,
-    singleDoc,
-    quick,
-    sandbox,
-    executableBrowser,
-    proxyServer,
-    proxyBypass,
-    proxyUser,
-    proxyPass,
-    logLevel,
-    ignoreHttpsErrors,
-    openViewer,
-    enableStaticServe,
-    enableViewerStartPage,
+    vite,
+    viteConfigFile,
+    ...overrideInlineOptions
   } = inlineConfig;
 
   return {
@@ -90,6 +73,8 @@ export function mergeInlineConfig(
         viewer,
         viewerParam,
         browser,
+        vite,
+        viteConfigFile,
       }),
       output: (output?.length ? output : task.output)?.map((o) => ({
         ...pruneObject(o),
@@ -102,32 +87,11 @@ export function mergeInlineConfig(
     })),
     inlineOptions: {
       ...pruneObject(inlineOptions),
-      ...pruneObject({
-        cwd,
-        config,
-        input,
-        cropMarks,
-        bleed,
-        cropOffset,
-        css,
-        style,
-        userStyle,
-        singleDoc,
-        quick,
-        sandbox,
-        executableBrowser,
-        proxyServer,
-        proxyBypass,
-        proxyUser,
-        proxyPass,
-        logLevel,
-        ignoreHttpsErrors,
-        openViewer,
-        enableStaticServe,
-        enableViewerStartPage,
-      } satisfies {
-        [K in keyof Required<InlineOptions>]: InlineOptions[K];
-      }),
+      ...pruneObject(
+        overrideInlineOptions satisfies HasOnlyInlineOptionsProperties<
+          typeof overrideInlineOptions
+        >,
+      ),
     },
   };
 }

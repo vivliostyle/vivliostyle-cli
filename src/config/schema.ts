@@ -1127,6 +1127,22 @@ export const VivliostyleInlineConfig = v.pipe(
           Open a start page of the viewer when the input file is not specified.
         `),
       ),
+      vite: v.pipe(
+        v.custom<import('vite').UserConfig>(() => true),
+        v.metadata({
+          typeString: 'import("vite").UserConfig',
+        }),
+        v.description($`
+          Configuration options for the Vite server.
+        `),
+      ),
+      viteConfigFile: v.pipe(
+        v.union([ValidString, v.boolean()]),
+        v.description($`
+          Path to the Vite config file.
+          If a falsy value is provided, Vivliostyle CLI ignores the existing Vite config file.
+        `),
+      ),
     }),
   ),
   v.check(
@@ -1158,6 +1174,7 @@ export type InlineOptions = Pick<
   ParsedVivliostyleInlineConfig,
   | 'cwd'
   | 'config'
+  | 'configData'
   | 'input'
   | 'cropMarks'
   | 'bleed'

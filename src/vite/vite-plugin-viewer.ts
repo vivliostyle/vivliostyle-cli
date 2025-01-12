@@ -4,7 +4,7 @@ import sirv from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
 import { ResolvedTaskConfig } from '../config/resolve.js';
-import { InlineOptions } from '../config/schema.js';
+import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { VIEWER_ROOT_PATH, viewerRoot } from '../const.js';
 import { prependToHead } from './plugin-util.js';
 
@@ -19,7 +19,7 @@ if (import.meta.hot) {
 
 export function vsViewerPlugin(_: {
   config: ResolvedTaskConfig;
-  options: InlineOptions;
+  inlineConfig: ParsedVivliostyleInlineConfig;
 }): vite.Plugin {
   const serveRootDir = upath.join(viewerRoot, 'lib');
   const serve = sirv(serveRootDir, { dev: false, etag: true });

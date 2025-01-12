@@ -620,6 +620,22 @@ export function resolveTaskConfig(
       );
     }
   }
+  const { entries, workspaceDir } = projectConfig;
+  const duplicatedTarget = entries.find(
+    (v1, i) => entries.findLastIndex((v2) => v1.target === v2.target) !== i,
+  )?.target;
+  if (duplicatedTarget) {
+    const sourceFile = entries.find(
+      (entry) =>
+        entry.target === duplicatedTarget && entry.source?.type === 'file',
+    )?.source as FileEntrySource | undefined;
+    throw new Error(
+      `The output path "${upath.relative(workspaceDir, duplicatedTarget)}" will overwrite existing content.` +
+        (sourceFile
+          ? ` Please choose a different name for the source file: ${sourceFile.pathname}`
+          : ''),
+    );
+  }
 
   const resolvedConfig = {
     ...projectConfig,

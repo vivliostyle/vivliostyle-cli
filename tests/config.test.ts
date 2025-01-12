@@ -9,7 +9,7 @@ const validConfigData = {
   entry: [
     'manuscript.md',
     {
-      path: 'manuscript.md',
+      path: 'frontmatter.md',
       title: 'title',
       theme: {
         specifier: 'theme.css',
@@ -160,14 +160,25 @@ it('deny invalid config', () => {
   ).rejects.toThrow();
 });
 
-it('deny config which has no entry', () => {
-  expect(
+it('deny config which has no entry', async () => {
+  await expect(
     getTaskConfig(['build'], resolveFixture('config'), { entry: [] }),
   ).rejects.toThrow();
 });
 
-it('deny if any config file or input file is not set', () => {
-  expect(getTaskConfig(['build'], resolveFixture('config'))).rejects.toThrow();
+it('deny if any config file or input file is not set', async () => {
+  await expect(
+    getTaskConfig(['build'], resolveFixture('config')),
+  ).rejects.toThrow();
+});
+
+it('deny if duplicate entry is set', async () => {
+  await expect(
+    getTaskConfig(['build'], resolveFixture('config'), {
+      entry: ['index.md'],
+      toc: true,
+    }),
+  ).rejects.toThrow();
 });
 
 it('yields a config with single markdown', async () => {
@@ -273,7 +284,7 @@ it('imports a EPUB OPF file', async () => {
 
 it('imports a webbook compliant to W3C Web publication', async () => {
   const config = await getTaskConfig(
-    ['build', 'w3c-webpub/publication.json', '-o', 'w3c-webpub'],
+    ['build', 'w3c-webpub/publication.json', '-o', 'w3c-webpub-out'],
     resolveFixture('webbooks'),
   );
   maskConfig(config);
@@ -289,7 +300,7 @@ it('imports a webbook compliant to W3C Web publication', async () => {
 
 it('imports a webbook compliant to Readium Web publication', async () => {
   const config = await getTaskConfig(
-    ['build', 'readium-webpub/manifest.jsonld', '-o', 'readium-webpub'],
+    ['build', 'readium-webpub/manifest.jsonld', '-o', 'readium-webpub-out'],
     resolveFixture('webbooks'),
   );
   maskConfig(config);

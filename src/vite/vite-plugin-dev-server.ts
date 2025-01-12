@@ -11,7 +11,7 @@ import {
   ResolvedTaskConfig,
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
-import { InlineOptions } from '../config/schema.js';
+import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import {
   generateManifest,
   getAssetMatcher,
@@ -60,6 +60,7 @@ function getWorkspaceMatcher({
   workspaceDir,
   themesDir,
   viewerInput,
+  themeIndexes,
 }: ResolvedTaskConfig) {
   let entryFiles: string[] = [];
   switch (viewerInput.type) {
@@ -88,6 +89,11 @@ function getWorkspaceMatcher({
       ...(pathContains(workspaceDir, themesDir)
         ? [upath.join(upath.relative(workspaceDir, themesDir), '**')]
         : []),
+      ...[...themeIndexes].flatMap((theme) =>
+        theme.type === 'file' && pathContains(workspaceDir, theme.location)
+          ? [upath.relative(workspaceDir, theme.location)]
+          : [],
+      ),
     ],
     { dot: true, ignore: ['node_modules/**'] },
   );
@@ -95,10 +101,10 @@ function getWorkspaceMatcher({
 
 export function vsDevServerPlugin({
   config: _config,
-  options,
+  inlineConfig,
 }: {
   config: ResolvedTaskConfig;
-  options: InlineOptions;
+  inlineConfig: ParsedVivliostyleInlineConfig;
 }): vite.Plugin {
   let config = _config;
   let server: vite.ViteDevServer | undefined;
@@ -123,7 +129,7 @@ export function vsDevServerPlugin({
 
   async function reload(forceUpdate = false) {
     const prevConfig = config;
-    config = await reloadConfig(prevConfig, options, server?.config);
+    config = await reloadConfig(prevConfig, inlineConfig, server?.config);
 
     transformCache.clear();
     const needToUpdateManifest =
@@ -172,9 +178,9 @@ export function vsDevServerPlugin({
       serveAssetsMatcher,
     };
 
-    if (options.config) {
-      projectDeps.add(options.config);
-      server?.watcher.add(options.config);
+    if (inlineConfig.config) {
+      projectDeps.add(inlineConfig.config);
+      server?.watcher.add(inlineConfig.config);
     }
     if (config.viewerInput.type === 'webpub') {
       projectDeps.add(config.viewerInput.manifestPath);

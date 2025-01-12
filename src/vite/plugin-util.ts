@@ -3,7 +3,7 @@ import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { ResolvedTaskConfig, resolveTaskConfig } from '../config/resolve.js';
-import { InlineOptions } from '../config/schema.js';
+import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 
 const headStartTagRe = /<head[^>]*>/i;
 export const prependToHead = (html: string, content: string) =>
@@ -11,15 +11,13 @@ export const prependToHead = (html: string, content: string) =>
 
 export async function reloadConfig(
   prevConfig: ResolvedTaskConfig,
-  options: InlineOptions,
+  inlineConfig: ParsedVivliostyleInlineConfig,
   resolvedViteConfig?: ResolvedViteConfig,
 ) {
   let config =
-    (await loadVivliostyleConfig({
-      configPath: options.config,
-      cwd: options.cwd,
-    })) ?? setupConfigFromFlags(options);
-  config = mergeInlineConfig(config, options);
+    (await loadVivliostyleConfig(inlineConfig)) ??
+    setupConfigFromFlags(inlineConfig);
+  config = mergeInlineConfig(config, inlineConfig);
   config = mergeConfig(config, {
     temporaryFilePrefix: prevConfig.temporaryFilePrefix,
     server: resolvedViteConfig?.server,

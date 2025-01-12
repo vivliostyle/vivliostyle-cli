@@ -10,7 +10,7 @@ import {
   ViteDevServer,
 } from 'vite';
 import { ResolvedTaskConfig } from './config/resolve.js';
-import { InlineOptions } from './config/schema.js';
+import { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
 import { Logger } from './logger.js';
 import { getDefaultEpubOpfPath, isValidUri, openEpub } from './util.js';
@@ -166,51 +166,52 @@ export async function getViewerFullUrl({
       : sourceUrl,
     config,
   );
-  viewerUrl.hash = viewerParams;
-  return viewerUrl.href;
+  viewerUrl.hash = '';
+  return `${viewerUrl.href}#${viewerParams}`;
 }
 
 export async function createViteServer(args: {
   config: ResolvedTaskConfig;
   viteConfig: ResolvedViteConfig;
-  inlineOptions: InlineOptions;
+  inlineConfig: ParsedVivliostyleInlineConfig;
   mode: 'preview';
 }): Promise<ViteDevServer>;
 export async function createViteServer(args: {
   config: ResolvedTaskConfig;
   viteConfig: ResolvedViteConfig;
-  inlineOptions: InlineOptions;
+  inlineConfig: ParsedVivliostyleInlineConfig;
   mode: 'build';
 }): Promise<PreviewServer>;
 export async function createViteServer({
   config,
   viteConfig,
-  inlineOptions: options,
+  inlineConfig,
   mode,
 }: {
   config: ResolvedTaskConfig;
   viteConfig: ResolvedViteConfig;
-  inlineOptions: InlineOptions;
+  inlineConfig: ParsedVivliostyleInlineConfig;
   mode: 'preview' | 'build';
 }) {
-  const inlineConfig = {
+  const viteInlineConfig = {
     clearScreen: false,
     configFile: false,
     appType: 'custom',
     plugins: [
-      vsDevServerPlugin({ config, options }),
-      vsViewerPlugin({ config, options }),
-      vsBrowserPlugin({ config, options }),
-      vsStaticServePlugin({ config, options }),
+      vsDevServerPlugin({ config, inlineConfig }),
+      vsViewerPlugin({ config, inlineConfig }),
+      vsBrowserPlugin({ config, inlineConfig }),
+      vsStaticServePlugin({ config, inlineConfig }),
     ],
     server: viteConfig.server,
     preview: viteConfig.preview,
+    customLogger: viteConfig.customLogger,
   } satisfies InlineConfig;
-  Logger.debug('createViteServer > inlineConfig %O', inlineConfig);
+  Logger.debug('createViteServer > viteInlineConfig %O', viteInlineConfig);
 
   if (mode === 'preview') {
-    return await createServer(inlineConfig);
+    return await createServer(viteInlineConfig);
   } else {
-    return await preview(inlineConfig);
+    return await preview(viteInlineConfig);
   }
 }
