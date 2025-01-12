@@ -85,14 +85,14 @@ describe('vite-plugin-dev-server', () => {
       .get('/vivliostyle/index.html')
       .expect(200);
     const { document } = new JSDOM(tocResponse.text).window;
-    expect(document.querySelector('link[rel="publication"]').href).toBe(
-      'publication.json',
-    );
     expect(
-      document.querySelector('nav li[data-section-level="2"]>a').textContent,
+      document.querySelector<HTMLLinkElement>('link[rel="publication"]')!.href,
+    ).toBe('publication.json');
+    expect(
+      document.querySelector('nav li[data-section-level="2"]>a')!.textContent,
     ).toBe('H2');
     expect(
-      document.querySelector('nav li[data-section-level="3"]>a').textContent,
+      document.querySelector('nav li[data-section-level="3"]>a')!.textContent,
     ).toBe('H3');
   });
 
