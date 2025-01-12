@@ -226,14 +226,14 @@ describe('vite-plugin-static-serve', () => {
 
 describe('vite-plugin-browser', () => {
   it('launches viewer start page', async () => {
-    const ret = (await runCommand(['preview'], {
+    const server = (await runCommand(['preview'], {
       cwd: resolveFixture('server'),
     })) as ViteDevServer;
-    assert(ret.resolvedUrls);
+    assert(server.resolvedUrls);
     expect(launchPreviewSpy).toHaveBeenCalledOnce();
     expect(launchPreviewSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: `${ret.resolvedUrls.local[0]}__vivliostyle-viewer/index.html#&bookMode=true&renderAllPages=true`,
+        url: `${server.resolvedUrls.local[0]}__vivliostyle-viewer/index.html#&bookMode=true&renderAllPages=true`,
       }),
     );
   });
@@ -299,5 +299,48 @@ describe('vite-plugin-browser', () => {
       style:
         'data:,/*<viewer>*/%40page%7Bsize%3A5in%2010in%3Bmarks%3Acrop%20cross%3Bbleed%3A10q%3Bcrop-offset%3A8pt%3B%7D/*</viewer>*/%3Aroot%7B--color%3A%23ABC%7D',
     });
+  });
+
+  it('launches epub-opf input', async () => {
+    const server = (await runCommand(
+      ['preview', '../epubs/adaptive/OPS/content.opf'],
+      { cwd: resolveFixture('server') },
+    )) as ViteDevServer;
+    assert(server.resolvedUrls);
+    expect(launchPreviewSpy).toHaveBeenCalledOnce();
+    const { url } = launchPreviewSpy.mock.calls[0][0];
+    const { src } = parseUrlParams(url);
+    expect(src).toBe(
+      `${server.resolvedUrls.local[0]}vivliostyle/OPS/content.opf`,
+    );
+
+    const contentResponse = await supertest(server.middlewares)
+      .get(new URL(src).pathname)
+      .expect(200);
+    expect(contentResponse.headers['content-type']).toBe(
+      'application/oebps-package+xml',
+    );
+  });
+
+  it('launches zipped epub input', async () => {
+    const server = (await runCommand(['preview', '../epubs/adaptive.epub'], {
+      cwd: resolveFixture('server'),
+    })) as ViteDevServer;
+    assert(server.resolvedUrls);
+    expect(launchPreviewSpy).toHaveBeenCalledOnce();
+    const { url } = launchPreviewSpy.mock.calls[0][0];
+    const { src } = parseUrlParams(url);
+    expect(src).toMatch(
+      new RegExp(
+        `^${server.resolvedUrls.local[0].replace('/', '\\/')}vivliostyle\\/.+adaptive\\.epub\\/OPS\\/content\\.opf$`,
+      ),
+    );
+
+    const contentResponse = await supertest(server.middlewares)
+      .get(new URL(src).pathname)
+      .expect(200);
+    expect(contentResponse.headers['content-type']).toBe(
+      'application/oebps-package+xml',
+    );
   });
 });

@@ -4,12 +4,6 @@ import { glob } from 'tinyglobby';
 import { expect, it } from 'vitest';
 import { resolveFixture, runCommand } from './command-util.js';
 
-// function assertManifestPath(
-//   config: MergedConfig,
-// ): asserts config is MergedConfig & { manifestPath: string } {
-//   assert(!!config.manifestPath);
-// }
-
 it('generate workspace directory', async () => {
   await runCommand(['build', '-c', 'workspace.config.js'], {
     cwd: resolveFixture('builder'),
