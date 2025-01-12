@@ -137,6 +137,9 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
         return rej(err);
       }
       Logger.debug(`Created the temporary directory: ${path}`);
+      if (import.meta.env?.VITEST) {
+        return res([path, () => {}]);
+      }
       const callback = () => {
         // clear function doesn't work well?
         // clear();
