@@ -1,19 +1,22 @@
 import { copy, remove } from 'fs-extra/esm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
 import {
   EpubOutput,
+  isWebbookConfig,
   ResolvedTaskConfig,
+  WebBookEntryConfig,
   WebPublicationOutput,
 } from '../config/resolve.js';
 import { ArticleEntryConfig } from '../config/schema.js';
 import { MANIFEST_FILENAME } from '../const.js';
 import { Logger } from '../logger.js';
 import {
-  getDefaultIgnorePatterns,
   getIgnoreAssetPatterns,
+  getIgnoreThemeExamplePatterns,
   globAssetFiles,
 } from '../processor/compile.js';
 import {
@@ -192,15 +195,18 @@ export function writePublicationManifest(
 }
 
 export async function retrieveWebbookEntry({
-  webbookEntryUrl,
+  viewerInput,
   outputDir,
 }: {
-  webbookEntryUrl: string;
+  viewerInput: WebBookEntryConfig;
   outputDir: string;
 }): Promise<{
   entryHtmlFile: string;
   manifest: PublicationManifest | undefined;
 }> {
+  const webbookEntryUrl = viewerInput.webbookPath
+    ? pathToFileURL(viewerInput.webbookPath).href
+    : viewerInput.webbookEntryUrl;
   if (/^https?:/i.test(webbookEntryUrl)) {
     Logger.logUpdate('Fetching remote contents');
   }
@@ -209,6 +215,10 @@ export async function retrieveWebbookEntry({
     src: webbookEntryUrl,
     resourceLoader,
   });
+  const entryHtml = viewerInput.webbookPath
+    ? upath.basename(viewerInput.webbookPath)
+    : decodeURI(dom.window.location.pathname);
+
   const { manifest, manifestUrl } =
     (await fetchLinkedPublicationManifest({
       dom,
@@ -295,12 +305,7 @@ export async function retrieveWebbookEntry({
   );
 
   return {
-    entryHtmlFile: upath.join(
-      outputDir,
-      upath.extname(webbookEntryUrl)
-        ? upath.basename(webbookEntryUrl)
-        : 'index.html',
-    ),
+    entryHtmlFile: upath.join(outputDir, entryHtml),
     manifest,
   };
 }
@@ -409,10 +414,12 @@ export async function copyWebPublicationAssets({
             outputs,
             entries,
           }),
-          ...getDefaultIgnorePatterns({
+          ...getIgnoreThemeExamplePatterns({
             cwd: input,
             themesDir,
           }),
+          // Ignore node_modules in the root directory
+          'node_modules/**',
           // only include dotfiles starting with `.vs-`
           '**/.!(vs-*)/**',
         ],
@@ -552,9 +559,9 @@ export async function buildWebPublication({
         );
       }
     }
-  } else if (config.viewerInput.type === 'webbook') {
+  } else if (isWebbookConfig(config)) {
     const ret = await retrieveWebbookEntry({
-      webbookEntryUrl: config.viewerInput.webbookEntryUrl,
+      viewerInput: config.viewerInput,
       outputDir,
     });
     entryHtmlFile = ret.entryHtmlFile;

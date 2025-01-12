@@ -1,6 +1,5 @@
 import Arborist from '@npmcli/arborist';
 import fs from 'node:fs';
-import npa from 'npm-package-arg';
 import { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
 
@@ -58,22 +57,5 @@ export async function installThemeDependencies({
       'An error occurred during the installation of the theme',
       thrownError.stack ?? thrownError.message,
     );
-  }
-}
-
-export function parsePackageName(
-  specifier: string,
-  cwd: string,
-): npa.Result | null {
-  try {
-    let result = npa(specifier, cwd);
-    // #373: Relative path specifiers may be assumed as shorthand of hosted git
-    // (ex: foo/bar -> github:foo/bar)
-    if (result.type === 'git' && result.saveSpec?.startsWith('github:')) {
-      result = npa(`file:${specifier}`, cwd);
-    }
-    return result;
-  } catch (error) {
-    return null;
   }
 }

@@ -83,10 +83,16 @@ export async function cleanupWorkspace({
   entryContextDir,
   workspaceDir,
   themesDir,
+  entries,
 }: ResolvedTaskConfig) {
   if (
     pathEquals(workspaceDir, entryContextDir) ||
-    pathContains(workspaceDir, entryContextDir)
+    pathContains(workspaceDir, entryContextDir) ||
+    entries.some(
+      (entry) =>
+        entry.source?.type === 'file' &&
+        pathContains(workspaceDir, entry.source.pathname),
+    )
   ) {
     return;
   }
@@ -383,24 +389,18 @@ export async function compile(
   }
 }
 
-export function getDefaultIgnorePatterns({
+export function getIgnoreThemeExamplePatterns({
   themesDir,
   cwd,
 }: Pick<ResolvedTaskConfig, 'themesDir'> & {
   cwd: string;
 }): string[] {
-  const ignorePatterns = [
-    // ignore node_modules directory
-    '**/node_modules',
-  ];
-  if (pathContains(cwd, themesDir)) {
-    // ignore example files of theme packages
-    ignorePatterns.push(
-      `${upath.relative(cwd, themesDir)}/packages/*/example`,
-      `${upath.relative(cwd, themesDir)}/packages/*/*/example`,
-    );
-  }
-  return ignorePatterns;
+  return pathContains(cwd, themesDir)
+    ? [
+        `${upath.relative(cwd, themesDir)}/node_modules/*/example`,
+        `${upath.relative(cwd, themesDir)}/node_modules/*/*/example`,
+      ]
+    : [];
 }
 
 export function getIgnoreAssetPatterns({
@@ -445,16 +445,18 @@ function getAssetMatcherSettings({
     ...excludes,
     ...getIgnoreAssetPatterns({ outputs, entries, cwd }),
   ];
-  const weakIgnorePatterns = getDefaultIgnorePatterns({ themesDir, cwd });
   Logger.debug('globAssetFiles > ignorePatterns', ignorePatterns);
-  Logger.debug('globAssetFiles > weakIgnorePatterns', weakIgnorePatterns);
 
   return [
     // Step 1: Glob files with an extension in `fileExtension`
     // Ignore files in node_modules directory, theme example files and files matched `excludes`
     {
       patterns: fileExtensions.map((ext) => `**/*.${ext}`),
-      ignore: [...ignorePatterns, ...weakIgnorePatterns],
+      ignore: [
+        '**/node_modules/**',
+        ...ignorePatterns,
+        ...getIgnoreThemeExamplePatterns({ themesDir, cwd }),
+      ],
     },
     // Step 2: Glob files matched with `includes`
     // Ignore only files matched `excludes`

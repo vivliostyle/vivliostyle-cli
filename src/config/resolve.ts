@@ -2,6 +2,7 @@ import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import npa from 'npm-package-arg';
 import { Processor } from 'unified';
 import upath from 'upath';
 import { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
@@ -28,7 +29,6 @@ import {
 import { CONTAINER_IMAGE, CONTAINER_LOCAL_HOSTNAME } from '../container.js';
 import { Logger } from '../logger.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
-import { parsePackageName } from '../processor/theme.js';
 import {
   cwd as defaultCwd,
   getEpubRootDir,
@@ -155,6 +155,7 @@ export interface EpubOpfEntryConfig {
 export interface WebBookEntryConfig {
   type: 'webbook';
   webbookEntryUrl: string;
+  webbookPath: string | undefined;
 }
 
 export type ViewerInputConfig =
@@ -293,6 +294,31 @@ export function isWebPubConfig(
   viewerInput: WebPublicationManifestConfig;
 } {
   return config.viewerInput.type === 'webpub';
+}
+
+export function isWebbookConfig(
+  config: ResolvedTaskConfig,
+): config is ResolvedTaskConfig & {
+  viewerInput: WebBookEntryConfig;
+} {
+  return config.viewerInput.type === 'webbook';
+}
+
+export function parsePackageName(
+  specifier: string,
+  cwd: string,
+): npa.Result | null {
+  try {
+    let result = npa(specifier, cwd);
+    // #373: Relative path specifiers may be assumed as shorthand of hosted git
+    // (ex: foo/bar -> github:foo/bar)
+    if (result.type === 'git' && result.saveSpec?.startsWith('github:')) {
+      result = npa(`file:${specifier}`, cwd);
+    }
+    return result;
+  } catch (error) {
+    return null;
+  }
 }
 
 // parse theme locator
@@ -817,6 +843,7 @@ function resolveSingleInputConfig({
     };
   } else if (inputFormat === 'webbook') {
     let webbookEntryUrl: string;
+    let webbookPath: string | undefined;
     if (isValidUri(sourcePath)) {
       const url = new URL(sourcePath);
       // Ensures trailing slash or explicit HTML extensions
@@ -832,8 +859,9 @@ function resolveSingleInputConfig({
       const rootFileUrl = pathToFileURL(workspaceDir).href;
       const urlPath = pathToFileURL(sourcePath).href.slice(rootFileUrl.length);
       webbookEntryUrl = `${base}${urlPath}`;
+      webbookPath = sourcePath;
     }
-    viewerInput = { type: 'webbook', webbookEntryUrl };
+    viewerInput = { type: 'webbook', webbookEntryUrl, webbookPath };
   } else if (inputFormat === 'pub-manifest') {
     viewerInput = {
       type: 'webpub',
