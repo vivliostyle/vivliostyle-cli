@@ -19,10 +19,10 @@ import type { ArticleEntryConfig } from '../config/schema.js';
 import { Logger } from '../logger.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
-  beforeExitHandlers,
   DetailError,
   pathContains,
   pathEquals,
+  registerExitHandler,
   writeFileIfChanged,
 } from '../util.js';
 import {
@@ -109,11 +109,14 @@ export async function cleanupWorkspace({
       upath.relative(workspaceDir, themesDir),
     );
     fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
-    beforeExitHandlers.push(() => {
-      if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {
-        fs.rmSync(movedWorkspacePath, { recursive: true, force: true });
-      }
-    });
+    registerExitHandler(
+      `Removing the moved workspace directory: ${movedWorkspacePath}`,
+      () => {
+        if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {
+          fs.rmSync(movedWorkspacePath, { recursive: true, force: true });
+        }
+      },
+    );
     await move(themesDir, movedThemePath);
   }
   await remove(workspaceDir);

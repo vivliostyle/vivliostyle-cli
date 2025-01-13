@@ -4,7 +4,7 @@ import { registry } from 'playwright-core/lib/server';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
 import { Logger } from './logger.js';
-import { beforeExitHandlers, isInContainer, pathEquals } from './util.js';
+import { isInContainer, pathEquals, registerExitHandler } from './util.js';
 
 async function launchBrowser({
   browserType,
@@ -54,7 +54,7 @@ async function launchBrowser({
       : // TODO: Investigate appropriate settings on Firefox & Webkit
         { executablePath, headless };
   const browser = await playwright[browserType].launch(options);
-  beforeExitHandlers.push(() => {
+  registerExitHandler('Closing browser', () => {
     browser.close();
   });
   return browser;

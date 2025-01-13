@@ -25,7 +25,17 @@ import type { PublicationManifest } from './schema/publication.schema.js';
 
 export const cwd = upath.normalize(process.cwd());
 
-export let beforeExitHandlers: (() => void)[] = [];
+const beforeExitHandlers: (() => void)[] = [];
+export const registerExitHandler = (
+  debugMessage: string,
+  handler: () => void,
+) => {
+  beforeExitHandlers.push(() => {
+    Logger.debug(debugMessage);
+    handler();
+  });
+};
+
 export function runExitHandlers() {
   while (beforeExitHandlers.length) {
     try {
@@ -36,13 +46,19 @@ export function runExitHandlers() {
   }
 }
 
-const exitSignals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP'];
+const exitSignals = ['exit', 'SIGINT', 'SIGTERM'];
 exitSignals.forEach((sig) => {
-  process.on(sig, () => {
+  // https://github.com/vitest-dev/vitest/issues/7236
+  if (import.meta.env?.VITEST) {
+    return;
+  }
+  process.once(sig, (signal?: string | number, exitCode?: number) => {
     runExitHandlers();
-    if (sig !== 'exit') {
-      process.exit(1);
+    if (process.exitCode === undefined) {
+      process.exitCode =
+        exitCode !== undefined ? 128 + exitCode : Number(signal);
     }
+    process.exit();
   });
 });
 
@@ -56,7 +72,7 @@ if (process.platform === 'win32') {
     runExitHandlers();
     process.exit(1);
   });
-  beforeExitHandlers.push(() => {
+  registerExitHandler('Closing readline interface', () => {
     rl.close();
   });
 }
@@ -144,9 +160,11 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
         // clear function doesn't work well?
         // clear();
         removeSync(path);
-        Logger.debug(`Removed the temporary directory: ${path}`);
       };
-      beforeExitHandlers.push(callback);
+      registerExitHandler(
+        `Removing the temporary directory: ${path}`,
+        callback,
+      );
       res([path, callback]);
     });
   });
@@ -159,9 +177,8 @@ export function touchTmpFile(path: string): () => void {
   Logger.debug(`Created the temporary file: ${path}`);
   const callback = () => {
     removeSync(path);
-    Logger.debug(`Removed the temporary file: ${path}`);
   };
-  beforeExitHandlers.push(callback);
+  registerExitHandler(`Removing the temporary file: ${path}`, callback);
   return callback;
 }
 
@@ -187,9 +204,11 @@ export async function openEpub(epubPath: string, tmpDir: string) {
   Logger.debug(`Created the temporary EPUB directory: ${tmpDir}`);
   const deleteEpub = () => {
     fs.rmSync(tmpDir, { recursive: true });
-    Logger.debug(`Removed the temporary EPUB directory: ${tmpDir}`);
   };
-  beforeExitHandlers.push(deleteEpub);
+  registerExitHandler(
+    `Removing the temporary EPUB directory: ${tmpDir}`,
+    deleteEpub,
+  );
   return deleteEpub;
 }
 

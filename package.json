@@ -84,7 +84,7 @@
     "@types/uuid": "^8.3.1",
     "@types/w3c-xmlserializer": "^2.0.2",
     "@types/whatwg-mimetype": "^3.0.0",
-    "@vitest/coverage-v8": "^2.0.5",
+    "@vitest/coverage-v8": "^2.1.8",
     "adm-zip": "^0.5.10",
     "file-type": "^16.5.3",
     "husky": "^9.1.6",
@@ -99,7 +99,7 @@
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "^4.2.9",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.8"
   },
   "main": "dist/index.js",
   "module": "dist/index.js",
