@@ -8,6 +8,7 @@ import { cwd, runExitHandlers } from '../util.js';
 
 export async function init(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.setLogLevel(inlineConfig.logLevel);
+  Logger.setCustomLogger(inlineConfig.logger);
 
   const vivliostyleConfigPath = upath.join(
     inlineConfig.cwd ?? cwd,

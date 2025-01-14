@@ -13,6 +13,7 @@ import { createViteServer, getViewerFullUrl } from '../server.js';
 
 export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.setLogLevel(inlineConfig.logLevel);
+  Logger.setCustomLogger(inlineConfig.logger);
   Logger.debug('preview > inlineConfig %O', inlineConfig);
 
   let vivliostyleConfig =

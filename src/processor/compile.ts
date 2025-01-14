@@ -212,14 +212,13 @@ export async function transformManuscript(
     }
   } else if (source?.type === 'uri') {
     resourceLoader = new ResourceLoader();
-    const virtualConsole = createVirtualConsole(() => {
-      // TODO: handle console messages
-    });
     try {
       await getJsdomFromUrlOrFile({
         src: source.href,
         resourceLoader,
-        virtualConsole,
+        virtualConsole: createVirtualConsole((error) => {
+          Logger.logError(`Failed to fetch resources: ${error.detail}`);
+        }),
       });
     } catch (error: any) {
       throw new DetailError(

@@ -4,9 +4,7 @@ import {
   blueBright,
   gray,
   greenBright,
-  red,
   redBright,
-  yellow,
   yellowBright,
 } from 'yoctocolors';
 import { isInContainer } from './util.js';
@@ -23,6 +21,12 @@ const successSymbol = greenBright('SUCCESS');
 const warnSymbol = yellowBright('WARN');
 const errorSymbol = redBright('ERROR');
 
+export interface LoggerInterface {
+  info(message: string): void;
+  warn(message: string): void;
+  error(message: string): void;
+}
+
 export class Logger {
   /**
    * 0: silent 1: info 2: verbose 3: debug
@@ -30,6 +34,7 @@ export class Logger {
   static #logLevel: 0 | 1 | 2 | 3 = 0;
   static #loggerInstance: Logger | undefined;
   static #nonBlockingLogPrinted = false;
+  static #customLogger: LoggerInterface | undefined;
 
   static debug = debug('vs-cli');
 
@@ -39,7 +44,8 @@ export class Logger {
 
   static get isInteractive() {
     return Boolean(
-      process.stderr.isTTY &&
+      !this.#customLogger &&
+        process.stderr.isTTY &&
         process.env.TERM !== 'dumb' &&
         !('CI' in process.env) &&
         !import.meta.env?.VITEST &&
@@ -109,15 +115,21 @@ export class Logger {
     this.#nonBlockingLogPrinted = false;
   }
 
+  static getMessage(message: string, symbol?: string) {
+    return !this.#customLogger && symbol ? `${symbol} ${message}` : message;
+  }
+
   static #nonBlockingLog(
-    fallback: (...messages: any[]) => void,
+    logMethod: 'warn' | 'error' | 'info',
     message: string,
   ) {
     if (!this.#spinner || !this.isInteractive) {
       if (isInContainer()) {
         message = `${gray('[Docker]')} ${message}`;
       }
-      this.#logLevel >= 3 ? this.debug(message) : fallback(message);
+      this.#logLevel >= 3
+        ? this.debug(message)
+        : (this.#customLogger || console)[logMethod](message);
       return;
     }
     this.logUpdate(this.#spinner.text);
@@ -130,7 +142,10 @@ export class Logger {
     if (this.#logLevel < 1) {
       return;
     }
-    this.#nonBlockingLog(console.log, `${successSymbol} ${messages.join(' ')}`);
+    this.#nonBlockingLog(
+      'info',
+      this.getMessage(messages.join(' '), successSymbol),
+    );
   }
 
   static logError(...messages: any[]) {
@@ -138,8 +153,8 @@ export class Logger {
       return;
     }
     this.#nonBlockingLog(
-      console.error,
-      `${errorSymbol} ${red(messages.join(' '))}`,
+      'error',
+      this.getMessage(messages.join(' '), errorSymbol),
     );
   }
 
@@ -148,8 +163,8 @@ export class Logger {
       return;
     }
     this.#nonBlockingLog(
-      console.warn,
-      `${warnSymbol} ${yellow(messages.join(' '))}`,
+      'warn',
+      this.getMessage(messages.join(' '), warnSymbol),
     );
   }
 
@@ -157,14 +172,17 @@ export class Logger {
     if (this.#logLevel < 1) {
       return;
     }
-    this.#nonBlockingLog(console.info, `${infoSymbol} ${messages.join(' ')}`);
+    this.#nonBlockingLog(
+      'info',
+      this.getMessage(messages.join(' '), infoSymbol),
+    );
   }
 
   static logVerbose(...messages: any[]) {
     if (this.#logLevel < 2) {
       return;
     }
-    this.#nonBlockingLog(console.log, messages.join(' '));
+    this.#nonBlockingLog('info', this.getMessage(messages.join(' ')));
   }
 
   static setLogLevel(level?: 'silent' | 'info' | 'verbose' | 'debug') {
@@ -182,6 +200,10 @@ export class Logger {
     if (this.#logLevel >= 3) {
       debug.enable('vs-cli');
     }
+  }
+
+  static setCustomLogger(logger: LoggerInterface | undefined) {
+    this.#customLogger = logger;
   }
 
   #_spinner: Spinner;

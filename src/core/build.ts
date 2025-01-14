@@ -24,6 +24,7 @@ import { cwd, isInContainer, runExitHandlers } from '../util.js';
 
 export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.setLogLevel(inlineConfig.logLevel);
+  Logger.setCustomLogger(inlineConfig.logger);
   Logger.debug('build > inlineConfig %O', inlineConfig);
 
   let vivliostyleConfig =

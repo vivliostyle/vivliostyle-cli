@@ -60,6 +60,8 @@ build({
 
 • **options.executableBrowser?**: `string` = `...`
 
+• **options.host?**: `string` \| `boolean` = `...`
+
 • **options.ignoreHttpsErrors?**: `boolean` = `...`
 
 • **options.image?**: `string` = `...`
@@ -68,11 +70,15 @@ build({
 
 • **options.language?**: `string` = `...`
 
-• **options.logLevel?**: `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+• **options.logger?**: `LoggerInterface` = `...`
+
+• **options.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
 • **options.openViewer?**: `boolean` = `...`
 
 • **options.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+• **options.port?**: `number` = `...`
 
 • **options.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
 
@@ -114,6 +120,10 @@ build({
 
 • **options.viewerParam?**: `string` = `...`
 
+• **options.vite?**: `UserConfig` = `...`
+
+• **options.viteConfigFile?**: `string` \| `boolean` = `...`
+
 #### Returns
 
 `Promise`\<`void`\>
@@ -152,6 +162,8 @@ build({
 
 • **inlineConfig.executableBrowser?**: `string` = `...`
 
+• **inlineConfig.host?**: `string` \| `boolean` = `...`
+
 • **inlineConfig.ignoreHttpsErrors?**: `boolean` = `...`
 
 • **inlineConfig.image?**: `string` = `...`
@@ -160,11 +172,15 @@ build({
 
 • **inlineConfig.language?**: `string` = `...`
 
-• **inlineConfig.logLevel?**: `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+• **inlineConfig.logger?**: `LoggerInterface` = `...`
+
+• **inlineConfig.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
 • **inlineConfig.openViewer?**: `boolean` = `...`
 
 • **inlineConfig.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+• **inlineConfig.port?**: `number` = `...`
 
 • **inlineConfig.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
 
@@ -206,6 +222,10 @@ build({
 
 • **inlineConfig.viewerParam?**: `string` = `...`
 
+• **inlineConfig.vite?**: `UserConfig` = `...`
+
+• **inlineConfig.viteConfigFile?**: `string` \| `boolean` = `...`
+
 #### Returns
 
 `Promise`\<`Plugin`[]\>
@@ -246,6 +266,8 @@ Initialize a new vivliostyle.config.js file.
 
 • **options.executableBrowser?**: `string` = `...`
 
+• **options.host?**: `string` \| `boolean` = `...`
+
 • **options.ignoreHttpsErrors?**: `boolean` = `...`
 
 • **options.image?**: `string` = `...`
@@ -254,11 +276,15 @@ Initialize a new vivliostyle.config.js file.
 
 • **options.language?**: `string` = `...`
 
-• **options.logLevel?**: `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+• **options.logger?**: `LoggerInterface` = `...`
+
+• **options.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
 • **options.openViewer?**: `boolean` = `...`
 
 • **options.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+• **options.port?**: `number` = `...`
 
 • **options.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
 
@@ -300,6 +326,10 @@ Initialize a new vivliostyle.config.js file.
 
 • **options.viewerParam?**: `string` = `...`
 
+• **options.vite?**: `UserConfig` = `...`
+
+• **options.viteConfigFile?**: `string` \| `boolean` = `...`
+
 #### Returns
 
 `Promise`\<`void`\>
@@ -308,7 +338,7 @@ Initialize a new vivliostyle.config.js file.
 
 ### preview()
 
-> **preview**(`options`): `Promise`\<`void`\>
+> **preview**(`options`): `Promise`\<`ViteDevServer`\>
 
 Open a browser for previewing the publication.
 
@@ -340,6 +370,8 @@ Open a browser for previewing the publication.
 
 • **options.executableBrowser?**: `string` = `...`
 
+• **options.host?**: `string` \| `boolean` = `...`
+
 • **options.ignoreHttpsErrors?**: `boolean` = `...`
 
 • **options.image?**: `string` = `...`
@@ -348,11 +380,15 @@ Open a browser for previewing the publication.
 
 • **options.language?**: `string` = `...`
 
-• **options.logLevel?**: `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+• **options.logger?**: `LoggerInterface` = `...`
+
+• **options.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
 • **options.openViewer?**: `boolean` = `...`
 
 • **options.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+• **options.port?**: `number` = `...`
 
 • **options.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
 
@@ -394,9 +430,13 @@ Open a browser for previewing the publication.
 
 • **options.viewerParam?**: `string` = `...`
 
+• **options.vite?**: `UserConfig` = `...`
+
+• **options.viteConfigFile?**: `string` \| `boolean` = `...`
+
 #### Returns
 
-`Promise`\<`void`\>
+`Promise`\<`ViteDevServer`\>
 
 ## Type Aliases
 

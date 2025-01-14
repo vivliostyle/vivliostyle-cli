@@ -2,6 +2,7 @@ import { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 import { type Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
+import { LoggerInterface } from '../logger.js';
 
 const $ = (strings: TemplateStringsArray, ...values: any[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
@@ -1159,6 +1160,15 @@ export const VivliostyleInlineConfig = v.pipe(
           Port the server should listen on. (default: \`13000\`)
         `),
       ),
+      logger: v.pipe(
+        v.custom<LoggerInterface>(() => true),
+        v.metadata({
+          typeString: 'LoggerInterface',
+        }),
+        v.description($`
+          Custom logger interface.
+        `),
+      ),
     }),
   ),
   v.check(
@@ -1211,4 +1221,5 @@ export type InlineOptions = Pick<
   | 'openViewer'
   | 'enableStaticServe'
   | 'enableViewerStartPage'
+  | 'logger'
 >;

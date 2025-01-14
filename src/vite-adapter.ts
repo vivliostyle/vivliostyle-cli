@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import * as vite from 'vite';
 import { setupConfigFromFlags } from './commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from './config/load.js';
 import { mergeInlineConfig } from './config/merge.js';
@@ -11,25 +12,38 @@ import { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
 import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
 export async function createVitePlugin(
-  _inlineConfig: VivliostyleInlineConfig = {},
+  inlineConfig: VivliostyleInlineConfig = {},
 ): Promise<import('vite').Plugin[]> {
-  const inlineConfig = v.parse(VivliostyleInlineConfig, _inlineConfig);
-  Logger.debug('inlineConfig %O', inlineConfig);
+  const parsedInlineConfig = v.parse(VivliostyleInlineConfig, inlineConfig);
+  Logger.setLogLevel(parsedInlineConfig.logLevel);
+  if (parsedInlineConfig.logger) {
+    Logger.setCustomLogger(parsedInlineConfig.logger);
+  } else {
+    const { info, warn, error } = vite.createLogger('info', {
+      prefix: '[vivliostyle]',
+    });
+    Logger.setCustomLogger({
+      info: (msg) => info(msg, { timestamp: true }),
+      warn: (msg) => warn(msg, { timestamp: true }),
+      error: (msg) => error(msg, { timestamp: true }),
+    });
+  }
+  Logger.debug('inlineConfig %O', parsedInlineConfig);
   const vivliostyleConfig =
-    (await loadVivliostyleConfig(inlineConfig)) ??
-    setupConfigFromFlags(inlineConfig);
+    (await loadVivliostyleConfig(parsedInlineConfig)) ??
+    setupConfigFromFlags(parsedInlineConfig);
   warnDeprecatedConfig(vivliostyleConfig);
   const { tasks, inlineOptions } = mergeInlineConfig(
     vivliostyleConfig,
-    inlineConfig,
+    parsedInlineConfig,
   );
   const config = resolveTaskConfig(tasks[0], inlineOptions);
   Logger.debug('config %O', config);
 
   return [
-    vsDevServerPlugin({ config, inlineConfig }),
-    vsViewerPlugin({ config, inlineConfig }),
-    vsBrowserPlugin({ config, inlineConfig }),
-    vsStaticServePlugin({ config, inlineConfig }),
+    vsDevServerPlugin({ config, inlineConfig: parsedInlineConfig }),
+    vsViewerPlugin({ config, inlineConfig: parsedInlineConfig }),
+    vsBrowserPlugin({ config, inlineConfig: parsedInlineConfig }),
+    vsStaticServePlugin({ config, inlineConfig: parsedInlineConfig }),
   ];
 }
