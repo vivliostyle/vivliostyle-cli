@@ -102,6 +102,8 @@ Currently, Firefox and Webkit support preview command only!`,
         `true to ignore HTTPS errors when Playwright browser opens a new page`,
       ),
     )
+    .option('--host <host>', 'IP address the server should listen on')
+    .option('--port <port>', 'port the server should listen on', parseInt)
     .option('--no-open-viewer', 'do not open viewer')
     .option('--no-enable-static-serve', 'disable static file serving')
     .option('--no-enable-viewer-start-page', 'disable viewer start page')

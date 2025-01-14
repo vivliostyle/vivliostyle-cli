@@ -1143,6 +1143,22 @@ export const VivliostyleInlineConfig = v.pipe(
           If a falsy value is provided, Vivliostyle CLI ignores the existing Vite config file.
         `),
       ),
+      host: v.pipe(
+        v.union([v.boolean(), ValidString]),
+        v.description($`
+          IP address the server should listen on.
+          Set to \`true\` to listen on all addresses.
+          (default: \`true\` if a PDF build with Docker render mode is required, otherwise \`false\`)
+        `),
+      ),
+      port: v.pipe(
+        v.number(),
+        v.minValue(0),
+        v.maxValue(65535),
+        v.description($`
+          Port the server should listen on. (default: \`13000\`)
+        `),
+      ),
     }),
   ),
   v.check(

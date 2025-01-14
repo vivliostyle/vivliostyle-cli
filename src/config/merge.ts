@@ -54,6 +54,8 @@ export function mergeInlineConfig(
     preflightOption,
     vite,
     viteConfigFile,
+    host,
+    port,
     ...overrideInlineOptions
   } = inlineConfig;
 
@@ -84,6 +86,10 @@ export function mergeInlineConfig(
           preflightOption,
         }),
       })),
+      server: {
+        ...pruneObject(task.server ?? {}),
+        ...pruneObject({ host, port }),
+      },
     })),
     inlineOptions: {
       ...pruneObject(inlineOptions),

@@ -179,6 +179,8 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
         `true to ignore HTTPS errors when Playwright browser opens a new page`,
       ),
     )
+    .option('--host <host>', 'IP address the server should listen on')
+    .option('--port <port>', 'port the server should listen on', parseInt)
     .option('--no-enable-static-serve', 'disable static file serving')
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
