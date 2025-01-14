@@ -1,3 +1,4 @@
+import upath from 'upath';
 import {
   ConfigEnv,
   createLogger,
@@ -24,10 +25,16 @@ export async function resolveViteConfig({
   viteConfig,
   viteConfigFile,
   logLevel,
+  workspaceDir,
   mode,
 }: Pick<
   ResolvedTaskConfig,
-  'context' | 'server' | 'viteConfig' | 'viteConfigFile' | 'logLevel'
+  | 'context'
+  | 'server'
+  | 'viteConfig'
+  | 'viteConfigFile'
+  | 'logLevel'
+  | 'workspaceDir'
 > & {
   mode: 'preview' | 'build';
 }): Promise<ResolvedViteConfig> {
@@ -69,6 +76,7 @@ export async function resolveViteConfig({
     configFile: viteConfigFile === true ? undefined : viteConfigFile,
     root: context,
     customLogger: viteLogger,
+    cacheDir: upath.join(workspaceDir, '.vite'),
   } satisfies InlineConfig);
   return await resolveConfig(
     finalUserConfig,

@@ -13,7 +13,12 @@ import { ResolvedTaskConfig } from './config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
 import { Logger } from './logger.js';
-import { getDefaultEpubOpfPath, isValidUri, openEpub } from './util.js';
+import {
+  getDefaultEpubOpfPath,
+  isValidUri,
+  openEpub,
+  registerExitHandler,
+} from './util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
 import { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
@@ -206,8 +211,18 @@ export async function createViteServer({
     server: viteConfig.server,
     preview: viteConfig.preview,
     customLogger: viteConfig.customLogger,
+    cacheDir: viteConfig.cacheDir,
   } satisfies InlineConfig;
   Logger.debug('createViteServer > viteInlineConfig %O', viteInlineConfig);
+
+  if (config.context === config.workspaceDir) {
+    const { cacheDir } = viteInlineConfig;
+    registerExitHandler('Removing the Vite cacheDir', () => {
+      if (fs.existsSync(cacheDir)) {
+        fs.rmSync(cacheDir, { recursive: true });
+      }
+    });
+  }
 
   if (mode === 'preview') {
     return await createServer(viteInlineConfig);
