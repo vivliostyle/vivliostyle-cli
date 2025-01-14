@@ -32,7 +32,13 @@ export const runCommand = async (
     cwd,
     config,
     logLevel = 'silent',
-  }: { cwd: string; config?: VivliostyleConfigSchema; logLevel?: LogLevel },
+    port,
+  }: {
+    cwd: string;
+    config?: VivliostyleConfigSchema;
+    logLevel?: LogLevel;
+    port?: number;
+  },
 ): Promise<ViteDevServer | void> => {
   let inlineConfig = parseFlagsToInlineConfig(
     ['vivliostyle', command, ...args],
@@ -42,7 +48,7 @@ export const runCommand = async (
       preview: setupPreviewParserProgram,
     }[command],
   );
-  inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel };
+  inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
   return await { init, build, preview }[command](inlineConfig);
 };
 

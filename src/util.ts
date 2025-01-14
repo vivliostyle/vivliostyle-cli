@@ -48,10 +48,6 @@ export function runExitHandlers() {
 
 const exitSignals = ['exit', 'SIGINT', 'SIGTERM'];
 exitSignals.forEach((sig) => {
-  // https://github.com/vitest-dev/vitest/issues/7236
-  if (import.meta.env?.VITEST) {
-    return;
-  }
   process.once(sig, (signal?: string | number, exitCode?: number) => {
     runExitHandlers();
     if (process.exitCode === undefined) {

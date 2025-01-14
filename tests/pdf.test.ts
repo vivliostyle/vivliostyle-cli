@@ -8,6 +8,7 @@ describe('pdf output', () => {
       ['build', '-s', 'A4', '-o', '.vs-pdf/test.pdf', 'index.html'],
       {
         cwd: resolveFixture('wood'),
+        port: 23000,
       },
     );
 

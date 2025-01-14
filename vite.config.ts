@@ -16,5 +16,6 @@ export default defineConfig({
       NO_COLOR: 'true',
     },
     clearMocks: true,
+    pool: 'threads',
   },
 });
