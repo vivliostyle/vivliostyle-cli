@@ -18,7 +18,13 @@ import {
 
 const require = createRequire(import.meta.url);
 
-function locateVivliostyleConfig(cwd: string) {
+export function locateVivliostyleConfig({
+  config,
+  cwd = defaultRoot,
+}: Pick<InlineOptions, 'config' | 'cwd'>) {
+  if (config) {
+    return upath.resolve(cwd, config);
+  }
   return ['.js', '.mjs', '.cjs', '.json']
     .map((ext) => upath.join(cwd, `vivliostyle.config${ext}`))
     .find((p) => fs.existsSync(p));
@@ -35,9 +41,7 @@ export async function loadVivliostyleConfig({
     return v.parse(VivliostyleConfigSchema, configData);
   }
 
-  const absPath = config
-    ? upath.resolve(cwd ?? defaultRoot, config)
-    : locateVivliostyleConfig(cwd ?? defaultRoot);
+  const absPath = locateVivliostyleConfig({ config, cwd });
   if (!absPath) {
     return;
   }

@@ -5,6 +5,7 @@ import picomatch from 'picomatch';
 import sirv, { RequestHandler } from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
+import { locateVivliostyleConfig } from '../config/load.js';
 import {
   isWebPubConfig,
   ParsedEntry,
@@ -178,9 +179,10 @@ export function vsDevServerPlugin({
       serveAssetsMatcher,
     };
 
-    if (inlineConfig.config) {
-      projectDeps.add(inlineConfig.config);
-      server?.watcher.add(inlineConfig.config);
+    const configPath = locateVivliostyleConfig(inlineConfig);
+    if (configPath) {
+      projectDeps.add(configPath);
+      server?.watcher.add(configPath);
     }
     if (config.viewerInput.type === 'webpub') {
       projectDeps.add(config.viewerInput.manifestPath);
