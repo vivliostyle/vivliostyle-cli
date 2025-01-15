@@ -1,3 +1,5 @@
+# [9.0.0-next.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-01-15)
+
 # [9.0.0-next.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-01-13)
 
 # [9.0.0-next.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.0...v9.0.0-next.1) (2025-01-06)
