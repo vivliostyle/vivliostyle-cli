@@ -1,3 +1,9 @@
+# [8.18.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.2...v8.18.0) (2025-01-17)
+
+### Features
+
+- Update Vivliostyle.js to 2.31.0: Extended CSS Page Floats support ([6964349](https://github.com/vivliostyle/vivliostyle-cli/commit/696434918d7bad4bed537ad80646d16bfa21db9b))
+
 ## [8.17.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.1...v8.17.2) (2025-01-10)
 
 ### Bug Fixes
