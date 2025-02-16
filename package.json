@@ -5,8 +5,8 @@
   "author": "spring_raining <harusamex.com@gmail.com>",
   "type": "module",
   "scripts": {
-    "build": "yarn clean && run-s build:*",
-    "build:cli": "tsc && shx chmod +x dist/cli.js",
+    "build": "run-s build:*",
+    "build:cli": "tsup && shx chmod +x dist/cli.js",
     "build:docs": "node --loader ts-node/esm --no-warnings scripts/update-docs.ts",
     "generate:schema": "json2ts -i schemas/pub-manifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pub-manifest",
     "clean": "shx rm -rf dist tmp",
@@ -96,6 +96,7 @@
     "shx": "^0.3.3",
     "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
+    "tsup": "^8.3.6",
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "^4.2.9",
     "typescript": "^5.5.4",
@@ -109,8 +110,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./schemas/*": "./schemas/*",
-    "./dist/*": "./dist/*",
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    },
+    "./vite-adapter": {
+      "types": "./dist/vite-adapter.d.ts",
+      "import": "./dist/vite-adapter.js"
+    },
+    "./schema": {
+      "types": "./dist/config/schema.d.ts",
+      "import": "./dist/config/schema.js"
+    },
     "./package.json": "./package.json"
   },
   "bin": {
@@ -119,7 +130,6 @@
   },
   "files": [
     "dist",
-    "schemas",
     "types"
   ],
   "publishConfig": {
