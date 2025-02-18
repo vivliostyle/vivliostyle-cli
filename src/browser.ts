@@ -1,10 +1,10 @@
 import fs from 'node:fs';
-import * as playwright from 'playwright-core';
-import { registry } from 'playwright-core/lib/server';
+import type { Browser, Page } from 'playwright-core';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
 import { Logger } from './logger.js';
-import { isInContainer, pathEquals, registerExitHandler } from './util.js';
+import { importNodeModule } from './node-modules.js';
+import { isInContainer, registerExitHandler } from './util.js';
 
 async function launchBrowser({
   browserType,
@@ -29,7 +29,9 @@ async function launchBrowser({
   noSandbox?: boolean;
   disableWebSecurity?: boolean;
   disableDevShmUsage?: boolean;
-}): Promise<playwright.Browser> {
+}): Promise<Browser> {
+  const playwright = await importNodeModule('playwright-core');
+  playwright.firefox.executablePath;
   const options =
     browserType === 'chromium'
       ? {
@@ -60,7 +62,10 @@ async function launchBrowser({
   return browser;
 }
 
-export function getExecutableBrowserPath(browserType: BrowserType): string {
+export async function getExecutableBrowserPath(
+  browserType: BrowserType,
+): Promise<string> {
+  const playwright = await importNodeModule('playwright-core');
   return playwright[browserType].executablePath();
 }
 
@@ -76,15 +81,10 @@ export function checkBrowserAvailability(path: string): boolean {
   return fs.existsSync(path);
 }
 
-export function isPlaywrightExecutable(path: string): boolean {
-  return [playwright.chromium, playwright.firefox, playwright.webkit].some(
-    (exe) => pathEquals(exe.executablePath() ?? '', path),
-  );
-}
-
 export async function downloadBrowser(
   browserType: BrowserType,
 ): Promise<string> {
+  const { registry } = await importNodeModule('playwright-core/lib/server');
   const executable = registry.findExecutable(browserType);
   {
     using _ = Logger.suspendLogging(
@@ -100,36 +100,35 @@ export async function launchPreview({
   url,
   onBrowserOpen,
   onPageOpen,
-  config: { browserType, proxy, executableBrowser, sandbox, ignoreHttpsErrors },
+  config: { browser: browserConfig, proxy, sandbox, ignoreHttpsErrors },
 }: {
   mode: 'preview' | 'build';
   url: string;
-  onBrowserOpen?: (browser: playwright.Browser) => void | Promise<void>;
-  onPageOpen?: (page: playwright.Page) => void | Promise<void>;
+  onBrowserOpen?: (browser: Browser) => void | Promise<void>;
+  onPageOpen?: (page: Page) => void | Promise<void>;
   config: Pick<
     ResolvedTaskConfig,
-    | 'browserType'
-    | 'proxy'
-    | 'executableBrowser'
-    | 'sandbox'
-    | 'ignoreHttpsErrors'
+    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors'
   >;
 }) {
-  Logger.debug(`Executing browser path: ${executableBrowser}`);
-  if (!checkBrowserAvailability(executableBrowser)) {
-    if (isPlaywrightExecutable(executableBrowser)) {
-      // The browser isn't downloaded first time starting CLI so try to download it
-      await downloadBrowser(browserType);
-    } else {
-      // executableBrowser seems to be specified explicitly
+  let executableBrowser = browserConfig.executablePath;
+  if (executableBrowser) {
+    if (!checkBrowserAvailability(executableBrowser)) {
       throw new Error(
         `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
       );
     }
+  } else {
+    executableBrowser = await getExecutableBrowserPath(browserConfig.type);
+    if (!checkBrowserAvailability(executableBrowser)) {
+      // The browser isn't downloaded first time starting CLI so try to download it
+      await downloadBrowser(browserConfig.type);
+    }
   }
+  Logger.debug(`Executing browser path: ${executableBrowser}`);
 
   const browser = await launchBrowser({
-    browserType,
+    browserType: browserConfig.type,
     proxy,
     executablePath: executableBrowser,
     headless: mode === 'build',

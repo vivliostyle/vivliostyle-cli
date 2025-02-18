@@ -6,7 +6,6 @@ import npa from 'npm-package-arg';
 import { Processor } from 'unified';
 import upath from 'upath';
 import { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
-import { getExecutableBrowserPath } from '../browser.js';
 import {
   ArticleEntryConfig,
   BrowserType,
@@ -241,8 +240,10 @@ export type ResolvedTaskConfig = {
     | undefined;
   timeout: number;
   sandbox: boolean;
-  executableBrowser: string;
-  browserType: BrowserType;
+  browser: {
+    type: BrowserType;
+    executablePath: string | undefined;
+  };
   proxy:
     | {
         server: string;
@@ -488,7 +489,10 @@ export function resolveTaskConfig(
 
   const timeout = config.timeout ?? 120_000; // 2 minutes
   const sandbox = options.sandbox ?? false;
-  const browserType = config.browser ?? 'chromium';
+  const browser = {
+    type: config.browser ?? 'chromium',
+    executablePath: options.executableBrowser,
+  };
   const proxyServer =
     options.proxyServer ?? process.env.HTTP_PROXY ?? undefined;
   const proxy = proxyServer
@@ -499,8 +503,6 @@ export function resolveTaskConfig(
         password: options.proxyPass,
       }
     : undefined;
-  const executableBrowser =
-    options.executableBrowser ?? getExecutableBrowserPath(browserType);
   const image = config.image ?? CONTAINER_IMAGE;
   const viewer = config.viewer ?? undefined;
   const viewerParam = config.viewerParam ?? undefined;
@@ -687,8 +689,7 @@ export function resolveTaskConfig(
     cover,
     timeout,
     sandbox,
-    executableBrowser,
-    browserType,
+    browser,
     proxy,
     image,
     viewer,

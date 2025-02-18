@@ -3,6 +3,7 @@ import { copy, move, remove } from 'fs-extra/esm';
 import fs from 'node:fs';
 import picomatch from 'picomatch';
 import prettier from 'prettier';
+import parserHtml from 'prettier/parser-html';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
@@ -303,7 +304,10 @@ export async function transformManuscript(
     });
   }
 
-  const html = await prettier.format(content.serialize(), { parser: 'html' });
+  const html = await prettier.format(content.serialize(), {
+    parser: 'html',
+    plugins: [parserHtml],
+  });
   const htmlBuffer = Buffer.from(html, 'utf8');
   if (
     !source ||

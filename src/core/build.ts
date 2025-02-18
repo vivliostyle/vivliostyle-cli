@@ -51,7 +51,7 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
     let server: PreviewServer | undefined;
     if (!isInContainer()) {
       // build dependents first
-      Logger.log('build > viteConfig.configFile %s', viteConfig.configFile);
+      Logger.debug('build > viteConfig.configFile %s', viteConfig.configFile);
       if (viteConfig.configFile) {
         using _ = Logger.suspendLogging('Building Vite project');
         await viteBuild({
@@ -60,19 +60,21 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
         });
       }
 
-      server = await createViteServer({
-        config,
-        viteConfig,
-        inlineConfig,
-        mode: 'build',
-      });
-
       // build artifacts
       if (isWebPubConfig(config)) {
         await cleanupWorkspace(config);
         await prepareThemeDirectory(config);
         await compile(config);
         await copyAssets(config);
+      }
+
+      if (config.outputs.some((o) => o.format === 'pdf')) {
+        server = await createViteServer({
+          config,
+          viteConfig,
+          inlineConfig,
+          mode: 'build',
+        });
       }
     }
 

@@ -1,5 +1,3 @@
-import commandExists from 'command-exists';
-import { execa } from 'execa';
 import { execFile } from 'node:child_process';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -9,6 +7,7 @@ import { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { cliVersion } from './const.js';
 import { Logger } from './logger.js';
+import { importNodeModule } from './node-modules.js';
 import { getSourceUrl } from './server.js';
 import { isValidUri, pathEquals } from './util.js';
 
@@ -74,6 +73,7 @@ export async function runContainer({
   env?: [string, string][];
   workdir?: string;
 }) {
+  const commandExists = await importNodeModule('command-exists');
   if (!(await commandExists('docker'))) {
     throw new Error(
       `Docker isn't be installed. To use this feature, you'll need to install Docker.`,
@@ -109,6 +109,7 @@ export async function runContainer({
       ...commandArgs,
     ];
     Logger.debug(`docker ${args.join(' ')}`);
+    const { execa } = await importNodeModule('execa');
     const proc = execa('docker', args, {
       stdio: 'inherit',
     });

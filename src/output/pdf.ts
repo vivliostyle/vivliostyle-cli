@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
-import { Page } from 'playwright-core';
+import type { Page } from 'playwright-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
@@ -125,7 +125,7 @@ export async function buildPDF({
     },
   });
 
-  const browserName = getFullBrowserName(config.browserType);
+  const browserName = getFullBrowserName(config.browser.type);
   const browserVersion = `${browserName}/${await browser.version()}`;
   Logger.debug(green('success'), `browserVersion=${browserVersion}`);
 

@@ -261,7 +261,7 @@ const getAjvValidatorFunction =
 
 export const assertPubManifestSchema =
   getAjvValidatorFunction<PublicationManifest>(
-    publicationSchema,
+    publicationSchema as unknown as PublicationManifest,
     publicationSchemas,
   );
 

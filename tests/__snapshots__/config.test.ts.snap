@@ -5,7 +5,10 @@ Object {
   "author": "myAuthor",
   "base": "/root/vvv",
   "bleed": undefined,
-  "browserType": "firefox",
+  "browser": Object {
+    "executablePath": "myFirefox",
+    "type": "firefox",
+  },
   "context": "__WORKSPACE__/tests/fixtures/config",
   "copyAsset": Object {
     "excludes": Array [
@@ -101,7 +104,6 @@ Object {
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
-  "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "ignoreHttpsErrors": true,
   "image": "__IMAGE__",
@@ -193,7 +195,10 @@ Object {
   "author": "author",
   "base": "/root/vvv",
   "bleed": undefined,
-  "browserType": "firefox",
+  "browser": Object {
+    "executablePath": undefined,
+    "type": "firefox",
+  },
   "context": "__WORKSPACE__/tests/fixtures/config",
   "copyAsset": Object {
     "excludes": Array [
@@ -293,7 +298,6 @@ Object {
     },
   ],
   "entryContextDir": "__WORKSPACE__/tests/fixtures/config",
-  "executableBrowser": "__EXECUTABLE_CHROMIUM_PATH__",
   "exportAliases": Array [],
   "ignoreHttpsErrors": false,
   "image": "__IMAGE__",
