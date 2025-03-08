@@ -18,6 +18,9 @@
     "test": "vitest run --coverage",
     "prepare": "husky"
   },
+  "peerDependencies": {
+    "vite": ">=6"
+  },
   "dependencies": {
     "@babel/code-frame": "^7.24.7",
     "@humanwhocodes/momoa": "^3.2.1",
@@ -59,7 +62,6 @@
     "uuid": "^8.3.2",
     "valibot": "^0.42.1",
     "vfile": "^4.2.1",
-    "vite": "6.0.3",
     "w3c-xmlserializer": "^4.0.0",
     "whatwg-mimetype": "^3.0.0",
     "yocto-spinner": "^0.1.2",
@@ -102,6 +104,7 @@
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "^4.2.9",
     "typescript": "^5.5.4",
+    "vite": "6.0.3",
     "vitest": "^2.1.8"
   },
   "main": "dist/index.js",

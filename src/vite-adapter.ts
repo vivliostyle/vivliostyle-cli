@@ -13,7 +13,7 @@ import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
 export async function createVitePlugin(
   inlineConfig: VivliostyleInlineConfig = {},
-): Promise<import('vite').Plugin[]> {
+): Promise<vite.Plugin[]> {
   const parsedInlineConfig = v.parse(VivliostyleInlineConfig, inlineConfig);
   Logger.setLogLevel(parsedInlineConfig.logLevel);
   if (parsedInlineConfig.logger) {
