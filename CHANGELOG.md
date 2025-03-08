@@ -1,3 +1,9 @@
+# [9.0.0-next.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-03-08)
+
+### Bug Fixes
+
+- Add config file to deps ([bc0b875](https://github.com/vivliostyle/vivliostyle-cli/commit/bc0b8752bd74cd203716d6ab39180daa86bc88b9))
+
 # [9.0.0-next.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-01-15)
 
 # [9.0.0-next.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-01-13)
