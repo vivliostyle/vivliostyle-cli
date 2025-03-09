@@ -1,3 +1,9 @@
+# [9.0.0-next.6](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.5...v9.0.0-next.6) (2025-03-09)
+
+### Reverts
+
+- Revert "chore: Export internal plugins" ([92900c6](https://github.com/vivliostyle/vivliostyle-cli/commit/92900c6b8ea2ed339c6c54e9f4a4966e8ecab9e7))
+
 # [9.0.0-next.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.4...v9.0.0-next.5) (2025-03-09)
 
 # [9.0.0-next.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-03-08)
