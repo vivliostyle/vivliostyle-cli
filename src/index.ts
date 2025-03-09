@@ -14,6 +14,11 @@ export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */
 export type PublicationManifest = _PublicationManifest;
 
+export { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
+export { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
+export { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
+export { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
+
 /**
  * Build publication file(s) from the given configuration.
  *
