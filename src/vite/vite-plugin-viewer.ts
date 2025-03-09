@@ -17,7 +17,7 @@ if (import.meta.hot) {
   });
 }`;
 
-export function vsViewerPlugin(_?: {
+export function vsViewerPlugin(_: {
   config: ResolvedTaskConfig;
   inlineConfig: ParsedVivliostyleInlineConfig;
 }): vite.Plugin {
@@ -48,7 +48,9 @@ export function vsViewerPlugin(_?: {
     name: 'vivliostyle:viewer',
     config() {
       return {
-        optimizeDeps: { exclude: ['@vivliostyle/viewer'] },
+        optimizeDeps: {
+          exclude: ['@vivliostyle/viewer'],
+        },
       } satisfies vite.UserConfig;
     },
     configureServer(viteServer) {
