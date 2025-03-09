@@ -1,3 +1,5 @@
+# [9.0.0-next.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.4...v9.0.0-next.5) (2025-03-09)
+
 # [9.0.0-next.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-03-08)
 
 ### Bug Fixes
