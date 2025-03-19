@@ -54,7 +54,7 @@ export async function launchBrowser({
             ...(!headless && process.platform === 'darwin'
               ? ['-AppleLanguages', '(en)']
               : []),
-          ],
+          ].filter(Boolean),
           env: { ...process.env, LANG: 'en.UTF-8' },
           proxy: proxy,
         }
