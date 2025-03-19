@@ -4,6 +4,7 @@ import { registry } from 'playwright-core/lib/server';
 import type { BrowserType } from './input/schema.js';
 import {
   beforeExitHandlers,
+  isRunningOnWSL,
   logInfo,
   logSuccess,
   pathEquals,
@@ -46,6 +47,8 @@ export async function launchBrowser({
             disableDevShmUsage ? '--disable-dev-shm-usage' : '',
             // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
             headless ? '--force-device-scale-factor=1' : '',
+            // #565: Add --disable-gpu option when running on WSL
+            isRunningOnWSL() ? '--disable-gpu' : '',
             // set Chromium language to English to avoid locale-dependent issues (e.g. minimum font size)
             '--lang=en',
             ...(!headless && process.platform === 'darwin'

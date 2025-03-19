@@ -328,6 +328,14 @@ export function checkContainerEnvironment(): boolean {
   return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
 }
 
+export function isRunningOnWSL(): boolean {
+  // Detection method based on microsoft/WSL#4071
+  return (
+    fs.existsSync('/proc/version') &&
+    fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')
+  );
+}
+
 export async function openEpubToTmpDirectory(filePath: string): Promise<{
   dest: string;
   epubOpfPath: string;
