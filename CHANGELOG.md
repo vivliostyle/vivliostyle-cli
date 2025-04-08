@@ -2,6 +2,7 @@
 
 ### Bug Fixes
 
+- Add --disable-gpu option when running on WSL ([4fda0c9](https://github.com/vivliostyle/vivliostyle-cli/commit/4fda0c9555c9a0294b6348a82f5392654191dc5a))
 - Update Vivliostyle.js to 2.31.2: Bug Fixes ([cacb9dd](https://github.com/vivliostyle/vivliostyle-cli/commit/cacb9dd999bd4b00ad2139ebbe77502fda36ceda))
 
 ### Features
