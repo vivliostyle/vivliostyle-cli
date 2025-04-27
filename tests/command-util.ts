@@ -1,3 +1,4 @@
+import { toTreeSync } from 'memfs/lib/print/index.js';
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import upath from 'upath';
@@ -129,4 +130,25 @@ export function assertSingleItem<T = unknown>(
 
 export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
   return assert(Array.isArray(value));
+}
+
+/**
+ * Modified version of memfs's `toTreeSync` function that sorts by directory item names
+ * source: https://github.com/streamich/memfs/blob/cd6c25698536aab8845774c4a0036376a0fd599f/src/print/index.ts#L6-L30
+ */
+export function toTree(...[fs, opts]: Parameters<typeof toTreeSync>) {
+  const modFs = new Proxy(fs, {
+    get(target, prop) {
+      if (prop === 'readdirSync') {
+        return (...params) => {
+          const list = Reflect.get(target, prop).call(target, ...params);
+          return list.sort((a, b) => (a.name > b.name ? 1 : -1));
+        };
+      }
+      return Reflect.get(target, prop);
+    },
+  });
+  return toTreeSync(modFs, {
+    ...opts,
+  });
 }

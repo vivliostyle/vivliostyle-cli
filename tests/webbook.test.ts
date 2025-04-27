@@ -2,11 +2,10 @@ import './mocks/fs.js';
 import './mocks/vivliostyle__jsdom.js';
 
 import { vol } from 'memfs';
-import { toTreeSync } from 'memfs/lib/print/index.js';
 import { format } from 'prettier';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { VivliostyleConfigSchema } from '../src/config/schema.js';
-import { runCommand } from './command-util.js';
+import { runCommand, toTree } from './command-util.js';
 
 const mockedThemeModule = vi.hoisted(() => ({
   checkThemeInstallationNecessity: vi.fn(),
@@ -25,7 +24,7 @@ it('generate webpub from single markdown file', async () => {
     cwd: '/work',
   });
 
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   delete manifest.dateModified;
@@ -76,7 +75,7 @@ it('generate webpub from vivliostyle.config.js', async () => {
   vol.fromJSON(themeDir, '/work');
   await runCommand(['build'], { cwd: '/work/input' });
 
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
@@ -108,7 +107,7 @@ it('generate webpub from a plain HTML', async () => {
     cwd: '/work',
   });
 
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
@@ -174,7 +173,7 @@ it('generate webpub from a single-document publication', async () => {
     cwd: '/work',
   });
 
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const entry = file['/work/output/webbook.html']!;
   expect(await format(entry, { parser: 'html' })).toMatchSnapshot();
@@ -220,7 +219,7 @@ it('generate webpub from remote HTML documents with publication manifest', async
     ['build', 'https://example.com/remote/dir', '-o', 'output'],
     { cwd: '/work' },
   );
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   expect(file['/work/output/remote/dir/index.html']).toBe(
     file['/remote/dir/index.html'],
@@ -259,7 +258,7 @@ it('generate webpub from a remote HTML document', async () => {
     ],
     { cwd: '/work' },
   );
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
@@ -296,7 +295,7 @@ it('generate webpub with complex copyAsset settings', async () => {
   });
   await runCommand(['build'], { cwd: '/work/input' });
 
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
 });
 
 it('copy webpub assets properly', async () => {
@@ -329,5 +328,5 @@ it('copy webpub assets properly', async () => {
   });
   await runCommand(['build'], { cwd: '/work/input' });
 
-  expect(toTreeSync(vol)).toMatchSnapshot();
+  expect(toTree(vol)).toMatchSnapshot();
 });
