@@ -1,13 +1,13 @@
 import { codeFrameColumns } from '@babel/code-frame';
 import {
+  JSONValue,
   ValueNode as JsonValueNode,
   evaluate,
   parse,
 } from '@humanwhocodes/momoa';
-import AjvModule, { Schema } from 'ajv';
-import AjvFormatsModule from 'ajv-formats';
+import { Ajv, Plugin as AjvPlugin, Schema } from 'ajv';
+import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
-import { removeSync } from 'fs-extra/esm';
 import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
 import readline from 'node:readline';
@@ -155,7 +155,7 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
       const callback = () => {
         // clear function doesn't work well?
         // clear();
-        removeSync(path);
+        fs.rmSync(path, { force: true, recursive: true });
       };
       registerExitHandler(
         `Removing the temporary directory: ${path}`,
@@ -172,7 +172,7 @@ export function touchTmpFile(path: string): () => void {
   fs.closeSync(fs.openSync(path, 'a'));
   Logger.debug(`Created the temporary file: ${path}`);
   const callback = () => {
-    removeSync(path);
+    fs.rmSync(path, { force: true, recursive: true });
   };
   registerExitHandler(`Removing the temporary file: ${path}`, callback);
   return callback;
@@ -199,7 +199,7 @@ export async function openEpub(epubPath: string, tmpDir: string) {
   await inflateZip(epubPath, tmpDir);
   Logger.debug(`Created the temporary EPUB directory: ${tmpDir}`);
   const deleteEpub = () => {
-    fs.rmSync(tmpDir, { recursive: true });
+    fs.rmSync(tmpDir, { force: true, recursive: true });
   };
   registerExitHandler(
     `Removing the temporary EPUB directory: ${tmpDir}`,
@@ -239,14 +239,12 @@ export function getEpubRootDir(epubOpfPath: string) {
   return traverse(upath.dirname(epubOpfPath));
 }
 
-// FIXME: https://github.com/ajv-validator/ajv/issues/2047
-const Ajv = AjvModule.default;
-const addFormats = AjvFormatsModule.default;
-
 const getAjvValidatorFunction =
   <T extends Schema>(schema: T, refSchemas?: Schema | Schema[]) =>
   (obj: unknown): obj is T => {
     const ajv = new Ajv({ strict: false });
+    // @ts-expect-error: Invalid type
+    const addFormats = formatsPlugin as AjvPlugin<unknown>;
     addFormats(ajv);
     if (refSchemas) {
       ajv.addSchema(refSchemas);
@@ -265,7 +263,7 @@ export const assertPubManifestSchema =
     publicationSchemas,
   );
 
-export function parseJsonc(rawJsonc: string) {
+export function parseJsonc(rawJsonc: string): JSONValue {
   const ast = parse(rawJsonc, {
     mode: 'jsonc',
     ranges: false,

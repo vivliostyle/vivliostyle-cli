@@ -1,4 +1,4 @@
-import { copy, remove } from 'fs-extra/esm';
+import { copy } from 'fs-extra/esm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -57,7 +57,7 @@ export async function prepareWebPublicationDirectory({
 }): Promise<void> {
   if (fs.existsSync(outputDir)) {
     Logger.debug('going to remove existing webpub', outputDir);
-    await remove(outputDir);
+    await fs.promises.rm(outputDir, { force: true, recursive: true });
   }
   fs.mkdirSync(outputDir, { recursive: true });
 }

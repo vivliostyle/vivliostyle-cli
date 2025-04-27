@@ -3,7 +3,7 @@ import jsdom, {
   JSDOM,
   VirtualConsole,
 } from '@vivliostyle/jsdom';
-import DOMPurify from 'dompurify';
+import DOMPurify, { WindowLike } from 'dompurify';
 import { toHtml } from 'hast-util-to-html';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import upath from 'upath';
@@ -60,7 +60,10 @@ export const createVirtualConsole = (onError: (error: DetailError) => void) => {
   return virtualConsole;
 };
 
-export const htmlPurify = DOMPurify(new JSDOM('').window);
+export const htmlPurify = DOMPurify(
+  // @ts-expect-error: jsdom.DOMWindow should have trustedTypes property
+  new JSDOM('').window as WindowLike,
+);
 
 export class ResourceLoader extends BaseResourceLoader {
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();

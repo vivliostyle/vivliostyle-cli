@@ -2,7 +2,7 @@ import type { JSDOM } from '@vivliostyle/jsdom';
 import archiver from 'archiver';
 import { lookup as lookupLanguage } from 'bcp-47-match';
 import { XMLBuilder } from 'fast-xml-parser';
-import { copy, remove } from 'fs-extra/esm';
+import { copy } from 'fs-extra/esm';
 import GithubSlugger from 'github-slugger';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
@@ -335,7 +335,10 @@ export async function exportEpub({
   }
 
   if (relManifestPath) {
-    await remove(upath.join(tmpDir, 'EPUB', relManifestPath));
+    await fs.promises.rm(upath.join(tmpDir, 'EPUB', relManifestPath), {
+      force: true,
+      recursive: true,
+    });
     delete manifestItem[relManifestPath];
   }
 

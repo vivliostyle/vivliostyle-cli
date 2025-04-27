@@ -1,5 +1,5 @@
 import jsdom, { JSDOM } from '@vivliostyle/jsdom';
-import { copy, move, remove } from 'fs-extra/esm';
+import { copy, move } from 'fs-extra/esm';
 import fs from 'node:fs';
 import picomatch from 'picomatch';
 import prettier from 'prettier';
@@ -120,7 +120,7 @@ export async function cleanupWorkspace({
     );
     await move(themesDir, movedThemePath);
   }
-  await remove(workspaceDir);
+  await fs.promises.rm(workspaceDir, { recursive: true, force: true });
   if (movedWorkspacePath) {
     await move(movedWorkspacePath, workspaceDir);
   }

@@ -34,95 +34,183 @@ build({
 
 #### Parameters
 
-• **options**
+##### options
 
-• **options.author?**: `string` = `...`
+###### author?
 
-• **options.bleed?**: `string` = `...`
+`string` = `...`
 
-• **options.browser?**: `"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+###### bleed?
 
-• **options.config?**: `string` = `...`
+`string` = `...`
 
-• **options.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
+###### browser?
 
-• **options.cropMarks?**: `boolean` = `...`
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
 
-• **options.cropOffset?**: `string` = `...`
+###### config?
 
-• **options.css?**: `string` = `...`
+`string` = `...`
 
-• **options.cwd?**: `string` = `...`
+###### configData?
 
-• **options.enableStaticServe?**: `boolean` = `...`
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
 
-• **options.enableViewerStartPage?**: `boolean` = `...`
+###### cropMarks?
 
-• **options.executableBrowser?**: `string` = `...`
+`boolean` = `...`
 
-• **options.host?**: `string` \| `boolean` = `...`
+###### cropOffset?
 
-• **options.ignoreHttpsErrors?**: `boolean` = `...`
+`string` = `...`
 
-• **options.image?**: `string` = `...`
+###### css?
 
-• **options.input?**: `string` = `...`
+`string` = `...`
 
-• **options.language?**: `string` = `...`
+###### cwd?
 
-• **options.logger?**: `LoggerInterface` = `...`
+`string` = `...`
 
-• **options.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+###### enableStaticServe?
 
-• **options.openViewer?**: `boolean` = `...`
+`boolean` = `...`
 
-• **options.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### enableViewerStartPage?
 
-• **options.port?**: `number` = `...`
+`boolean` = `...`
 
-• **options.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
+###### executableBrowser?
 
-• **options.preflightOption?**: `string` \| `string`[] = `...`
+`string` = `...`
 
-• **options.pressReady?**: `boolean` = `...`
+###### host?
 
-• **options.proxyBypass?**: `string` = `...`
+`string` \| `boolean` = `...`
 
-• **options.proxyPass?**: `string` = `...`
+###### ignoreHttpsErrors?
 
-• **options.proxyServer?**: `string` = `...`
+`boolean` = `...`
 
-• **options.proxyUser?**: `string` = `...`
+###### image?
 
-• **options.quick?**: `boolean` = `...`
+`string` = `...`
 
-• **options.readingProgression?**: `"ltr"` \| `"rtl"` = `...`
+###### input?
 
-• **options.renderMode?**: `"local"` \| `"docker"` = `...`
+`string` = `...`
 
-• **options.sandbox?**: `boolean` = `...`
+###### language?
 
-• **options.singleDoc?**: `boolean` = `...`
+`string` = `...`
 
-• **options.size?**: `string` = `...`
+###### logger?
 
-• **options.style?**: `string` = `...`
+`LoggerInterface` = `...`
 
-• **options.theme?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### logLevel?
 
-• **options.timeout?**: `number` = `...`
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
-• **options.title?**: `string` = `...`
+###### openViewer?
 
-• **options.userStyle?**: `string` = `...`
+`boolean` = `...`
 
-• **options.viewer?**: `string` = `...`
+###### output?
 
-• **options.viewerParam?**: `string` = `...`
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
-• **options.vite?**: `UserConfig` = `...`
+###### port?
 
-• **options.viteConfigFile?**: `string` \| `boolean` = `...`
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
 
 #### Returns
 
@@ -132,103 +220,191 @@ build({
 
 ### createVitePlugin()
 
-> **createVitePlugin**(`inlineConfig`): `Promise`\<`Plugin`[]\>
+> **createVitePlugin**(`inlineConfig`): `Promise`\<`Plugin`\<`any`\>[]\>
 
 #### Parameters
 
-• **inlineConfig** = `{}`
+##### inlineConfig
 
-• **inlineConfig.author?**: `string` = `...`
+###### author?
 
-• **inlineConfig.bleed?**: `string` = `...`
+`string` = `...`
 
-• **inlineConfig.browser?**: `"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+###### bleed?
 
-• **inlineConfig.config?**: `string` = `...`
+`string` = `...`
 
-• **inlineConfig.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
+###### browser?
 
-• **inlineConfig.cropMarks?**: `boolean` = `...`
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
 
-• **inlineConfig.cropOffset?**: `string` = `...`
+###### config?
 
-• **inlineConfig.css?**: `string` = `...`
+`string` = `...`
 
-• **inlineConfig.cwd?**: `string` = `...`
+###### configData?
 
-• **inlineConfig.enableStaticServe?**: `boolean` = `...`
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
 
-• **inlineConfig.enableViewerStartPage?**: `boolean` = `...`
+###### cropMarks?
 
-• **inlineConfig.executableBrowser?**: `string` = `...`
+`boolean` = `...`
 
-• **inlineConfig.host?**: `string` \| `boolean` = `...`
+###### cropOffset?
 
-• **inlineConfig.ignoreHttpsErrors?**: `boolean` = `...`
+`string` = `...`
 
-• **inlineConfig.image?**: `string` = `...`
+###### css?
 
-• **inlineConfig.input?**: `string` = `...`
+`string` = `...`
 
-• **inlineConfig.language?**: `string` = `...`
+###### cwd?
 
-• **inlineConfig.logger?**: `LoggerInterface` = `...`
+`string` = `...`
 
-• **inlineConfig.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+###### enableStaticServe?
 
-• **inlineConfig.openViewer?**: `boolean` = `...`
+`boolean` = `...`
 
-• **inlineConfig.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### enableViewerStartPage?
 
-• **inlineConfig.port?**: `number` = `...`
+`boolean` = `...`
 
-• **inlineConfig.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
+###### executableBrowser?
 
-• **inlineConfig.preflightOption?**: `string` \| `string`[] = `...`
+`string` = `...`
 
-• **inlineConfig.pressReady?**: `boolean` = `...`
+###### host?
 
-• **inlineConfig.proxyBypass?**: `string` = `...`
+`string` \| `boolean` = `...`
 
-• **inlineConfig.proxyPass?**: `string` = `...`
+###### ignoreHttpsErrors?
 
-• **inlineConfig.proxyServer?**: `string` = `...`
+`boolean` = `...`
 
-• **inlineConfig.proxyUser?**: `string` = `...`
+###### image?
 
-• **inlineConfig.quick?**: `boolean` = `...`
+`string` = `...`
 
-• **inlineConfig.readingProgression?**: `"ltr"` \| `"rtl"` = `...`
+###### input?
 
-• **inlineConfig.renderMode?**: `"local"` \| `"docker"` = `...`
+`string` = `...`
 
-• **inlineConfig.sandbox?**: `boolean` = `...`
+###### language?
 
-• **inlineConfig.singleDoc?**: `boolean` = `...`
+`string` = `...`
 
-• **inlineConfig.size?**: `string` = `...`
+###### logger?
 
-• **inlineConfig.style?**: `string` = `...`
+`LoggerInterface` = `...`
 
-• **inlineConfig.theme?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### logLevel?
 
-• **inlineConfig.timeout?**: `number` = `...`
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
-• **inlineConfig.title?**: `string` = `...`
+###### openViewer?
 
-• **inlineConfig.userStyle?**: `string` = `...`
+`boolean` = `...`
 
-• **inlineConfig.viewer?**: `string` = `...`
+###### output?
 
-• **inlineConfig.viewerParam?**: `string` = `...`
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
-• **inlineConfig.vite?**: `UserConfig` = `...`
+###### port?
 
-• **inlineConfig.viteConfigFile?**: `string` \| `boolean` = `...`
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
 
 #### Returns
 
-`Promise`\<`Plugin`[]\>
+`Promise`\<`Plugin`\<`any`\>[]\>
 
 ***
 
@@ -240,95 +416,183 @@ Initialize a new vivliostyle.config.js file.
 
 #### Parameters
 
-• **options**
+##### options
 
-• **options.author?**: `string` = `...`
+###### author?
 
-• **options.bleed?**: `string` = `...`
+`string` = `...`
 
-• **options.browser?**: `"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+###### bleed?
 
-• **options.config?**: `string` = `...`
+`string` = `...`
 
-• **options.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
+###### browser?
 
-• **options.cropMarks?**: `boolean` = `...`
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
 
-• **options.cropOffset?**: `string` = `...`
+###### config?
 
-• **options.css?**: `string` = `...`
+`string` = `...`
 
-• **options.cwd?**: `string` = `...`
+###### configData?
 
-• **options.enableStaticServe?**: `boolean` = `...`
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
 
-• **options.enableViewerStartPage?**: `boolean` = `...`
+###### cropMarks?
 
-• **options.executableBrowser?**: `string` = `...`
+`boolean` = `...`
 
-• **options.host?**: `string` \| `boolean` = `...`
+###### cropOffset?
 
-• **options.ignoreHttpsErrors?**: `boolean` = `...`
+`string` = `...`
 
-• **options.image?**: `string` = `...`
+###### css?
 
-• **options.input?**: `string` = `...`
+`string` = `...`
 
-• **options.language?**: `string` = `...`
+###### cwd?
 
-• **options.logger?**: `LoggerInterface` = `...`
+`string` = `...`
 
-• **options.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+###### enableStaticServe?
 
-• **options.openViewer?**: `boolean` = `...`
+`boolean` = `...`
 
-• **options.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### enableViewerStartPage?
 
-• **options.port?**: `number` = `...`
+`boolean` = `...`
 
-• **options.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
+###### executableBrowser?
 
-• **options.preflightOption?**: `string` \| `string`[] = `...`
+`string` = `...`
 
-• **options.pressReady?**: `boolean` = `...`
+###### host?
 
-• **options.proxyBypass?**: `string` = `...`
+`string` \| `boolean` = `...`
 
-• **options.proxyPass?**: `string` = `...`
+###### ignoreHttpsErrors?
 
-• **options.proxyServer?**: `string` = `...`
+`boolean` = `...`
 
-• **options.proxyUser?**: `string` = `...`
+###### image?
 
-• **options.quick?**: `boolean` = `...`
+`string` = `...`
 
-• **options.readingProgression?**: `"ltr"` \| `"rtl"` = `...`
+###### input?
 
-• **options.renderMode?**: `"local"` \| `"docker"` = `...`
+`string` = `...`
 
-• **options.sandbox?**: `boolean` = `...`
+###### language?
 
-• **options.singleDoc?**: `boolean` = `...`
+`string` = `...`
 
-• **options.size?**: `string` = `...`
+###### logger?
 
-• **options.style?**: `string` = `...`
+`LoggerInterface` = `...`
 
-• **options.theme?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### logLevel?
 
-• **options.timeout?**: `number` = `...`
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
-• **options.title?**: `string` = `...`
+###### openViewer?
 
-• **options.userStyle?**: `string` = `...`
+`boolean` = `...`
 
-• **options.viewer?**: `string` = `...`
+###### output?
 
-• **options.viewerParam?**: `string` = `...`
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
-• **options.vite?**: `UserConfig` = `...`
+###### port?
 
-• **options.viteConfigFile?**: `string` \| `boolean` = `...`
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
 
 #### Returns
 
@@ -344,95 +608,183 @@ Open a browser for previewing the publication.
 
 #### Parameters
 
-• **options**
+##### options
 
-• **options.author?**: `string` = `...`
+###### author?
 
-• **options.bleed?**: `string` = `...`
+`string` = `...`
 
-• **options.browser?**: `"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+###### bleed?
 
-• **options.config?**: `string` = `...`
+`string` = `...`
 
-• **options.configData?**: `null` \| `object` & `object` \| `object` & `object`[] = `...`
+###### browser?
 
-• **options.cropMarks?**: `boolean` = `...`
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
 
-• **options.cropOffset?**: `string` = `...`
+###### config?
 
-• **options.css?**: `string` = `...`
+`string` = `...`
 
-• **options.cwd?**: `string` = `...`
+###### configData?
 
-• **options.enableStaticServe?**: `boolean` = `...`
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
 
-• **options.enableViewerStartPage?**: `boolean` = `...`
+###### cropMarks?
 
-• **options.executableBrowser?**: `string` = `...`
+`boolean` = `...`
 
-• **options.host?**: `string` \| `boolean` = `...`
+###### cropOffset?
 
-• **options.ignoreHttpsErrors?**: `boolean` = `...`
+`string` = `...`
 
-• **options.image?**: `string` = `...`
+###### css?
 
-• **options.input?**: `string` = `...`
+`string` = `...`
 
-• **options.language?**: `string` = `...`
+###### cwd?
 
-• **options.logger?**: `LoggerInterface` = `...`
+`string` = `...`
 
-• **options.logLevel?**: `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+###### enableStaticServe?
 
-• **options.openViewer?**: `boolean` = `...`
+`boolean` = `...`
 
-• **options.output?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### enableViewerStartPage?
 
-• **options.port?**: `number` = `...`
+`boolean` = `...`
 
-• **options.preflight?**: `"press-ready"` \| `"press-ready-local"` = `...`
+###### executableBrowser?
 
-• **options.preflightOption?**: `string` \| `string`[] = `...`
+`string` = `...`
 
-• **options.pressReady?**: `boolean` = `...`
+###### host?
 
-• **options.proxyBypass?**: `string` = `...`
+`string` \| `boolean` = `...`
 
-• **options.proxyPass?**: `string` = `...`
+###### ignoreHttpsErrors?
 
-• **options.proxyServer?**: `string` = `...`
+`boolean` = `...`
 
-• **options.proxyUser?**: `string` = `...`
+###### image?
 
-• **options.quick?**: `boolean` = `...`
+`string` = `...`
 
-• **options.readingProgression?**: `"ltr"` \| `"rtl"` = `...`
+###### input?
 
-• **options.renderMode?**: `"local"` \| `"docker"` = `...`
+`string` = `...`
 
-• **options.sandbox?**: `boolean` = `...`
+###### language?
 
-• **options.singleDoc?**: `boolean` = `...`
+`string` = `...`
 
-• **options.size?**: `string` = `...`
+###### logger?
 
-• **options.style?**: `string` = `...`
+`LoggerInterface` = `...`
 
-• **options.theme?**: `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+###### logLevel?
 
-• **options.timeout?**: `number` = `...`
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
 
-• **options.title?**: `string` = `...`
+###### openViewer?
 
-• **options.userStyle?**: `string` = `...`
+`boolean` = `...`
 
-• **options.viewer?**: `string` = `...`
+###### output?
 
-• **options.viewerParam?**: `string` = `...`
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
-• **options.vite?**: `UserConfig` = `...`
+###### port?
 
-• **options.viteConfigFile?**: `string` \| `boolean` = `...`
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
 
 #### Returns
 
@@ -442,47 +794,71 @@ Open a browser for previewing the publication.
 
 ### StructuredDocument
 
-> **StructuredDocument**: `object`
-
-#### Type declaration
-
-| Name | Type |
-| ------ | ------ |
-| `children` | [`StructuredDocument`](api-javascript.md#structureddocument)[] |
-| `href` | `string` |
-| `sections`? | [`StructuredDocumentSection`](api-javascript.md#structureddocumentsection)[] |
-| `title` | `string` |
+> **StructuredDocument** = `object`
 
 #### See
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+
+#### Properties
+
+##### children
+
+> **children**: [`StructuredDocument`](#structureddocument)[]
+
+##### href
+
+> **href**: `string`
+
+##### sections?
+
+> `optional` **sections**: [`StructuredDocumentSection`](#structureddocumentsection)[]
+
+##### title
+
+> **title**: `string`
 
 ***
 
 ### StructuredDocumentSection
 
-> **StructuredDocumentSection**: `object`
-
-#### Type declaration
-
-| Name | Type |
-| ------ | ------ |
-| `children` | [`StructuredDocumentSection`](api-javascript.md#structureddocumentsection)[] |
-| `headingHtml` | `string` |
-| `headingText` | `string` |
-| `href`? | `string` |
-| `id`? | `string` |
-| `level` | `number` |
+> **StructuredDocumentSection** = `object`
 
 #### See
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 
+#### Properties
+
+##### children
+
+> **children**: [`StructuredDocumentSection`](#structureddocumentsection)[]
+
+##### headingHtml
+
+> **headingHtml**: `string`
+
+##### headingText
+
+> **headingText**: `string`
+
+##### href?
+
+> `optional` **href**: `string`
+
+##### id?
+
+> `optional` **id**: `string`
+
+##### level
+
+> **level**: `number`
+
 ***
 
 ### VivliostyleConfigSchema
 
-> **VivliostyleConfigSchema**: `v.InferInput`\<*typeof* [`VivliostyleConfigSchema`](api-javascript.md#vivliostyleconfigschema)\>
+> **VivliostyleConfigSchema** = `v.InferInput`\<*typeof* [`VivliostyleConfigSchema`](#vivliostyleconfigschema)\>
 
 #### See
 

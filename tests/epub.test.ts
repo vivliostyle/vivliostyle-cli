@@ -6,12 +6,13 @@ import './mocks/archiver.js';
 
 import AdmZip from 'adm-zip';
 import { vol } from 'memfs';
+import { toTreeSync } from 'memfs/lib/print/index.js';
 import { format } from 'prettier';
 import { beforeEach, expect, it } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
 import { decodePublicationManifest } from '../src/output/webbook.js';
 import { PublicationManifest } from '../src/schema/publication.schema.js';
-import { runCommand, toTree } from './command-util.js';
+import { runCommand } from './command-util.js';
 
 beforeEach(() => {
   vol.reset();
@@ -107,7 +108,7 @@ it('generate EPUB from single HTML with pub manifest', async () => {
     epubVersion: '3.0',
   });
 
-  expect(toTree(vol)).toMatchSnapshot('tree');
+  expect(toTreeSync(vol)).toMatchSnapshot('tree');
   const file = vol.toJSON();
   expect(file['/tmp/1/META-INF/container.xml']).toMatchSnapshot(
     'container.xml',
@@ -183,7 +184,7 @@ it('generate EPUB from series of HTML files', async () => {
     epubVersion: '3.0',
   });
 
-  expect(toTree(vol)).toMatchSnapshot('tree');
+  expect(toTreeSync(vol)).toMatchSnapshot('tree');
   const file = vol.toJSON();
   expect(
     file['/tmp/1/EPUB/content.opf']
@@ -203,7 +204,7 @@ it('generate EPUB from single Markdown input', async () => {
   await runCommand(['build', 'input/foo bar%.md', '-o', 'output.epub'], {
     cwd: '/work',
   });
-  expect(toTree(vol)).toMatchSnapshot('tree');
+  expect(toTreeSync(vol)).toMatchSnapshot('tree');
 
   const epub = vol.readFileSync('/work/output.epub') as Buffer;
   checkValidEpubZip(epub);
@@ -252,7 +253,7 @@ it('generate EPUB from vivliostyle.config.js', async () => {
   });
   await runCommand(['build'], { cwd: '/work/input' });
 
-  expect(toTree(vol)).toMatchSnapshot('tree');
+  expect(toTreeSync(vol)).toMatchSnapshot('tree');
 
   const epub = vol.readFileSync('/work/input/output.epub') as Buffer;
   checkValidEpubZip(epub);

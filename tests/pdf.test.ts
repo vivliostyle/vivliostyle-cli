@@ -1,4 +1,4 @@
-import fileType from 'file-type';
+import { fileTypeFromFile } from 'file-type';
 import { describe, expect, it } from 'vitest';
 import { resolveFixture, runCommand } from './command-util';
 
@@ -13,7 +13,7 @@ describe('pdf output', () => {
     );
 
     // mimetype test
-    const type = await fileType.fromFile(
+    const type = await fileTypeFromFile(
       resolveFixture('wood/.vs-pdf/test.pdf'),
     );
     expect(type!.mime).toEqual('application/pdf');

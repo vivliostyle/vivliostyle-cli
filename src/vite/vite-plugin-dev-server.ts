@@ -116,9 +116,9 @@ export function vsDevServerPlugin({
         ) => readonly [ParsedEntry, string] | undefined;
         urlMatchRe: RegExp;
         serveWorkspace: RequestHandler;
-        serveWorkspaceMatcher: picomatch.Matcher;
+        serveWorkspaceMatcher: (test: string) => boolean;
         serveAssets: RequestHandler;
-        serveAssetsMatcher: picomatch.Matcher;
+        serveAssetsMatcher: (test: string) => boolean;
       }
     | undefined;
 
