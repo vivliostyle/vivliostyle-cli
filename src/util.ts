@@ -195,6 +195,14 @@ export function isInContainer(): boolean {
   return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
 }
 
+export function isRunningOnWSL(): boolean {
+  // Detection method based on microsoft/WSL#4071
+  return (
+    fs.existsSync('/proc/version') &&
+    fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')
+  );
+}
+
 export async function openEpub(epubPath: string, tmpDir: string) {
   await inflateZip(epubPath, tmpDir);
   Logger.debug(`Created the temporary EPUB directory: ${tmpDir}`);

@@ -20,6 +20,39 @@
 
 # [9.0.0-next.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.1...v9.0.0-next.0) (2025-01-06)
 
+# [8.20.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.19.0...v8.20.0) (2025-04-08)
+
+### Bug Fixes
+
+- Add --disable-gpu option when running on WSL ([4fda0c9](https://github.com/vivliostyle/vivliostyle-cli/commit/4fda0c9555c9a0294b6348a82f5392654191dc5a))
+- Update Vivliostyle.js to 2.31.2: Bug Fixes ([cacb9dd](https://github.com/vivliostyle/vivliostyle-cli/commit/cacb9dd999bd4b00ad2139ebbe77502fda36ceda))
+
+### Features
+
+- Update Playwright to 1.51.1 (Chromium 134.0.6998.35) ([9de4386](https://github.com/vivliostyle/vivliostyle-cli/commit/9de4386b43503058f1133e09374d69c6e43e4178))
+
+# [8.19.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.18.0...v8.19.0) (2025-03-01)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.31.1: Bug Fixes ([c0ffa1e](https://github.com/vivliostyle/vivliostyle-cli/commit/c0ffa1e0e48941de325f60d4adca360dfe594f9e))
+
+### Features
+
+- Update Playwright to 1.50.1 (Chromium 133.0.6943.16) ([ed4f1ea](https://github.com/vivliostyle/vivliostyle-cli/commit/ed4f1eabf2c5bbe710f3e879a4b309c677b5cde0))
+
+# [8.18.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.2...v8.18.0) (2025-01-17)
+
+### Features
+
+- Update Vivliostyle.js to 2.31.0: Extended CSS Page Floats support ([6964349](https://github.com/vivliostyle/vivliostyle-cli/commit/696434918d7bad4bed537ad80646d16bfa21db9b))
+
+## [8.17.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.1...v8.17.2) (2025-01-10)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.30.8: Bug Fixes ([9c25dc0](https://github.com/vivliostyle/vivliostyle-cli/commit/9c25dc0c6fae731c2671a636b1a04b8f78791d3c))
+
 ## [8.17.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.0...v8.17.1) (2024-11-27)
 
 ### Bug Fixes

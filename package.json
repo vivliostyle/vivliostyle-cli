@@ -50,7 +50,7 @@
     "npm-package-arg": "12.0.2",
     "pdf-lib": "1.17.1",
     "picomatch": "4.0.2",
-    "playwright-core": "1.49.0",
+    "playwright-core": "1.51.1",
     "press-ready": "4.0.3",
     "prettier": "3.5.3",
     "resolve-pkg": "2.0.0",

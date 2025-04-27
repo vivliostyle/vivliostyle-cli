@@ -4,7 +4,7 @@ import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
-import { isInContainer, registerExitHandler } from './util.js';
+import { isInContainer, isRunningOnWSL, registerExitHandler } from './util.js';
 
 async function launchBrowser({
   browserType,
@@ -40,16 +40,18 @@ async function launchBrowser({
           headless,
           args: [
             '--allow-file-access-from-files',
-            disableWebSecurity && '--disable-web-security',
-            disableDevShmUsage && '--disable-dev-shm-usage',
+            ...(disableWebSecurity ? ['--disable-web-security'] : []),
+            ...(disableDevShmUsage ? ['--disable-dev-shm-usage'] : []),
             // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
-            headless && '--force-device-scale-factor=1',
-            // set Chromium language to English to avoid locale-dependent issues (e.g. minimum font size)
+            ...(headless ? ['--force-device-scale-factor=1'] : []),
+            // #565: Add --disable-gpu option when running on WSL
+            ...(isRunningOnWSL() ? ['--disable-gpu'] : []),
+            // set Chromium language to English to avoid locale-dependent issues
             '--lang=en',
-            // ...(!headless && process.platform === 'darwin'
-            //   ? ['-AppleLanguages', '(en)']
-            //   : []),
-          ].filter((value): value is string => Boolean(value)),
+            ...(!headless && process.platform === 'darwin'
+              ? ['', '-AppleLanguages', '(en)'] // Fix for issue #570
+              : []),
+          ],
           env: { ...process.env, LANG: 'en.UTF-8' },
           proxy: proxy,
         }
