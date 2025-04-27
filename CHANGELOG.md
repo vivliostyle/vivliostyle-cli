@@ -1,3 +1,5 @@
+# [9.0.0-next.7](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.0-next.7) (2025-04-28)
+
 # [9.0.0-next.6](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.5...v9.0.0-next.6) (2025-03-09)
 
 ### Reverts
