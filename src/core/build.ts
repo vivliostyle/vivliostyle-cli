@@ -60,21 +60,19 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
         });
       }
 
+      server = await createViteServer({
+        config,
+        viteConfig,
+        inlineConfig,
+        mode: 'build',
+      });
+
       // build artifacts
       if (isWebPubConfig(config)) {
         await cleanupWorkspace(config);
         await prepareThemeDirectory(config);
         await compile(config);
         await copyAssets(config);
-      }
-
-      if (config.outputs.some((o) => o.format === 'pdf')) {
-        server = await createViteServer({
-          config,
-          viteConfig,
-          inlineConfig,
-          mode: 'build',
-        });
       }
     }
 
