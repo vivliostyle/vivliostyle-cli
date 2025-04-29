@@ -12,6 +12,7 @@
 - [Creating Table of Contents Page](./toc-page.md)
 - [Creating Cover Page](./cover-page.md)
 - [Special Output Settings](./special-output-settings.md)
+- [Frontend Framework Support](./frotnend-framework-support.md)
 
 </li>
 <li>
