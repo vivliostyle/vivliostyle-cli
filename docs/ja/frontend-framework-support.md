@@ -52,6 +52,7 @@ Vivliostyle Viewerは通常のWebアプリケーションとは異なり、JavaS
 ### 2. Vivliostyle CLIをViteプラグインとして使用する
 
 - [Example: with-astro](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-astro)
+- [Example: with-eleventy](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-eleventy)
 
 一部のフレームワーク（例: [Astro](https://astro.build/)）は外部からViteプラグインを受け取れるものの、Viteプラグインとしては利用できません。この場合、Vivliostyle CLIをViteプラグインとして使用します。
 

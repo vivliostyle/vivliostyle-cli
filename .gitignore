@@ -3,6 +3,7 @@
 *.pdf
 .vscode
 .vs-*
+.vivliostyle
 
 # Created by https://www.gitignore.io/api/node
 # Edit at https://www.gitignore.io/?templates=node
@@ -84,9 +85,6 @@ typings/
 
 # nuxt.js build output
 .nuxt
-
-# react / gatsby
-public/
 
 # vuepress build output
 .vuepress/dist

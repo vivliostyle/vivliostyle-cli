@@ -1,0 +1,22 @@
+---js
+// <script>
+
+const pagination = {
+  data: 'collections.posts',
+  size: 1,
+  alias: 'post',
+  filter: ['all', 'posts'],
+};
+
+const eleventyComputed = {
+  layout: "layouts/raw.njk",
+  permalink: (data) => {
+    return `/raw/${data.post.fileSlug}/`;
+  },
+};
+---
+
+<h1>{{ post.data.title }}</h1>
+<time datetime="{{ post.date | htmlDateString }}">{{ post.date | readableDate }}</time>
+
+{{ post.content | safe }}

@@ -54,6 +54,7 @@ Vivliostyle Viewer differs from typical web applications in that it has restrict
 ### 2. Using Vivliostyle CLI as a Vite Plugin
 
 - [Example: with-astro](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-astro)
+- [Example: with-eleventy](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-eleventy)
 
 Some frameworks (e.g., [Astro](https://astro.build/)) can accept external Vite plugins but cannot be used as Vite plugins themselves. In such cases, Vivliostyle CLI is used as a Vite plugin.
 
