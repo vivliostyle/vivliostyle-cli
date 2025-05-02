@@ -846,11 +846,11 @@ function resolveSingleInputConfig({
     let webbookPath: string | undefined;
     if (isValidUri(sourcePath)) {
       const url = new URL(sourcePath);
-      // Ensures trailing slash or explicit HTML extensions
+      // Ensures trailing slash or explicit extensions
       if (
         /^https?:/i.test(url.protocol) &&
         !url.pathname.endsWith('/') &&
-        !/\.html?$/.test(url.pathname)
+        !/\.\w+$/.test(url.pathname)
       ) {
         url.pathname = `${url.pathname}/`;
       }
@@ -1032,7 +1032,7 @@ function resolveComposedProjectConfig({
         case 'uri': {
           const url = new URL(source.href, 'a://dummy');
           let pathname = url.pathname;
-          if (!/\.html?$/.test(pathname)) {
+          if (!/\.\w+$/.test(pathname)) {
             pathname = `${pathname.replace(/\/$/, '')}/index.html`;
           }
           return upath.join(source.rootDir, pathname);
