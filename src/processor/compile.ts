@@ -167,6 +167,7 @@ export async function transformManuscript(
     language,
     documentProcessorFactory,
     vfmOptions,
+    rootUrl,
   }: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
 ): Promise<string | undefined> {
   const source =
@@ -175,6 +176,7 @@ export async function transformManuscript(
       : (entry as ManuscriptEntry).source;
   let content: JSDOM | undefined;
   let resourceLoader: ResourceLoader | undefined;
+  let resourceUrl: string | undefined;
 
   // calculate style path
   const style = entry.themes.flatMap((theme) =>
@@ -212,10 +214,13 @@ export async function transformManuscript(
       }
     }
   } else if (source?.type === 'uri') {
+    resourceUrl = /^https?:/.test(source.href)
+      ? source.href
+      : `${rootUrl}${source.href}`;
     resourceLoader = new ResourceLoader();
     try {
       await getJsdomFromUrlOrFile({
-        src: source.href,
+        src: resourceUrl,
         resourceLoader,
         virtualConsole: createVirtualConsole((error) => {
           Logger.logError(`Failed to fetch resources: ${error.detail}`);
@@ -223,17 +228,17 @@ export async function transformManuscript(
       });
     } catch (error: any) {
       throw new DetailError(
-        `Failed to fetch the content from ${source.href}`,
+        `Failed to fetch the content from ${resourceUrl}`,
         error.stack ?? error.message,
       );
     }
 
-    const contentFetcher = resourceLoader.fetcherMap.get(source.href);
+    const contentFetcher = resourceLoader.fetcherMap.get(resourceUrl);
     if (contentFetcher) {
       const buffer = await contentFetcher;
       const contentType = contentFetcher.response?.headers['content-type'];
       if (!contentType || new MIMEType(contentType).essence !== 'text/html') {
-        throw new Error(`The content is not an HTML document: ${source.href}`);
+        throw new Error(`The content is not an HTML document: ${resourceUrl}`);
       }
       content = getJsdomFromString({ html: buffer.toString('utf8') });
       content = await processManuscriptHtml(content, {
@@ -316,18 +321,18 @@ export async function transformManuscript(
     writeFileIfChanged(entry.target, htmlBuffer);
   }
 
-  if (source?.type === 'uri' && resourceLoader) {
-    const { response } = resourceLoader.fetcherMap.get(source.href)!;
+  if (source?.type === 'uri' && resourceLoader && resourceUrl) {
+    const { response } = resourceLoader.fetcherMap.get(resourceUrl)!;
     const contentFetcher = Promise.resolve(
       htmlBuffer,
     ) as jsdom.AbortablePromise<Buffer>;
     contentFetcher.abort = () => {};
     contentFetcher.response = response;
-    resourceLoader.fetcherMap.set(source.href, contentFetcher);
+    resourceLoader.fetcherMap.set(resourceUrl, contentFetcher);
 
     await ResourceLoader.saveFetchedResources({
       fetcherMap: resourceLoader.fetcherMap,
-      rootUrl: source.href,
+      rootUrl: resourceUrl,
       outputDir: source.rootDir,
     });
   }

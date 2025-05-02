@@ -193,10 +193,16 @@ export function vsDevServerPlugin({
   async function transform(
     entry: ParsedEntry,
     config: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
+    host: string | undefined,
   ) {
+    // Respect the host header instead of the original rootUrl configuration,
+    // as the dev server may run on a different port through a server other than Vite.
+    const rootUrl = host
+      ? `${server?.config.server.https ? 'https' : 'http'}://${host}`
+      : config.rootUrl;
     const promise = (async () => {
       try {
-        const html = await transformManuscript(entry, config);
+        const html = await transformManuscript(entry, { ...config, rootUrl });
         if (!html) {
           transformCache.delete(entry.target);
           return;
@@ -273,18 +279,19 @@ export function vsDevServerPlugin({
       }
     }
 
+    const { host } = req.headers;
     if (entry.rel === 'contents') {
       // To transpile the table of contents, all dependent content must be transpiled in advance
       const _config = { ...config };
       await Promise.all(
         _config.entries.flatMap((e) =>
           isWebPubConfig(_config) && e.rel !== 'contents' && e.rel !== 'cover'
-            ? transform(e, _config)
+            ? transform(e, _config, host)
             : [],
         ),
       );
     }
-    const result = await transform(entry, config);
+    const result = await transform(entry, config, host);
     if (!result) {
       return next();
     }

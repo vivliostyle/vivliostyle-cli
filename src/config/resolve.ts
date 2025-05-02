@@ -624,7 +624,6 @@ export function resolveTaskConfig(
           outputs,
           temporaryFilePrefix,
           themeIndexes,
-          rootUrl,
           cover,
         });
 
@@ -906,7 +905,6 @@ function resolveComposedProjectConfig({
   outputs,
   temporaryFilePrefix,
   themeIndexes,
-  rootUrl,
   cover,
 }: Pick<
   ResolvedTaskConfig,
@@ -915,7 +913,6 @@ function resolveComposedProjectConfig({
   | 'outputs'
   | 'temporaryFilePrefix'
   | 'themeIndexes'
-  | 'rootUrl'
   | 'cover'
 > & { config: ParsedBuildTask }): ProjectConfig {
   Logger.debug('entering composed project config mode');
@@ -997,7 +994,7 @@ function resolveComposedProjectConfig({
       } else if (entryPath.startsWith('/')) {
         return {
           type: 'uri',
-          href: `${rootUrl}${entryPath}`,
+          href: entryPath,
           rootDir: upath.join(workspaceDir, 'localhost'),
         };
       }
