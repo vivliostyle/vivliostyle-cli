@@ -185,7 +185,7 @@ Object {
   },
   "viewerParam": "allowScripts=false&pixelRatio=16",
   "viteConfig": undefined,
-  "viteConfigFile": true,
+  "viteConfigFile": false,
   "workspaceDir": "__WORKSPACE__/tests/fixtures/config/workspaceDir",
 }
 `;

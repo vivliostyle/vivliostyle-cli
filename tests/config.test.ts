@@ -121,6 +121,7 @@ it('override option by CLI command', async () => {
       'proxy-auth-user',
       '--proxy-pass',
       'proxy-auth-password',
+      '--no-vite-config-file',
     ],
     resolveFixture('config'),
     validConfigData,

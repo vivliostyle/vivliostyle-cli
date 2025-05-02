@@ -182,6 +182,11 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     .option('--host <host>', 'IP address the server should listen on')
     .option('--port <port>', 'port the server should listen on', parseInt)
     .option('--no-enable-static-serve', 'disable static file serving')
+    .option('--vite-config-file <path>', 'Vite config file path')
+    .option(
+      '--no-vite-config-file',
+      'ignore Vite config file even if it exists',
+    )
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp())
