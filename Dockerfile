@@ -59,7 +59,7 @@ WORKDIR /opt/vivliostyle-cli
 # Build stage
 FROM base AS builder
 COPY package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /opt/vivliostyle-cli/
-RUN pnpm install --frozen-lockfile --network-timeout 600000
+RUN pnpm install
 COPY . /opt/vivliostyle-cli
 RUN pnpm build
 
@@ -68,7 +68,7 @@ FROM base AS runtime
 ARG VS_CLI_VERSION
 RUN test $VS_CLI_VERSION
 COPY . /opt/vivliostyle-cli
-RUN pnpm install --prod --frozen-lockfile --network-timeout 600000 \
+RUN pnpm install --prod --ignore-scripts \
   && echo $VS_CLI_VERSION > .vs-cli-version \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm
