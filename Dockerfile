@@ -15,7 +15,7 @@ RUN set -x \
   && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
   && apt-get install -y nodejs \
   && apt-get install -y --no-install-recommends git openssh-client \
-  && npm install -g yarn \
+  && npm install -g pnpm \
   && mkdir /ms-playwright \
   && npx playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium \
   && chmod -R 777 /ms-playwright \
@@ -58,19 +58,18 @@ WORKDIR /opt/vivliostyle-cli
 
 # Build stage
 FROM base AS builder
-COPY package.json yarn.lock /opt/vivliostyle-cli/
-RUN yarn install --frozen-lockfile --network-timeout 600000
+COPY package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /opt/vivliostyle-cli/
+RUN pnpm install
 COPY . /opt/vivliostyle-cli
-RUN yarn build
+RUN pnpm build
 
 # Runtime stage
 FROM base AS runtime
 ARG VS_CLI_VERSION
 RUN test $VS_CLI_VERSION
 COPY . /opt/vivliostyle-cli
-RUN yarn install --frozen-lockfile --production --network-timeout 600000 \
+RUN pnpm install --prod --ignore-scripts \
   && echo $VS_CLI_VERSION > .vs-cli-version \
-  && yarn link \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm
 COPY --from=builder /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/

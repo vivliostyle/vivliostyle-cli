@@ -16,15 +16,19 @@ jobs:
           - windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       # - name: Install external library
       #   run: sudo apt-get update && sudo apt-get install -y ghostscript poppler-utils
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: yarn install
-      - run: yarn playwright-core install chromium --no-shell
-      - run: yarn build
-      - run: yarn test
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm playwright-core install chromium --no-shell
+      - run: pnpm build
+      - run: pnpm test
   build-and-push-image:
     runs-on: ubuntu-latest
     services:
@@ -34,6 +38,9 @@ jobs:
           - 5000:5000
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - name: Output current package version
         id: package
         run: |
@@ -42,7 +49,7 @@ jobs:
       - name: Output current Playwright version
         id: playwright
         run: |
-          yarn install --frozen-lockfile
+          pnpm install
           VERSION=$(node -e 'console.log(require("playwright-core/package.json").version)')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Set up QEMU

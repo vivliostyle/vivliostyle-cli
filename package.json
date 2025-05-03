@@ -11,7 +11,6 @@
     "generate:schema": "json2ts -i schemas/pub-manifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pub-manifest",
     "clean": "shx rm -rf dist tmp",
     "dev": "tsup --watch src",
-    "example": "yarn --cwd example build",
     "pretest": "playwright-core install chromium --no-shell",
     "release": "release-it",
     "release:pre": "release-it --preRelease --npm.tag=next",
@@ -77,6 +76,7 @@
     "@types/debug": "4.1.12",
     "@types/dompurify": "3.2.0",
     "@types/fs-extra": "11.0.4",
+    "@types/hast": "3.0.4",
     "@types/jsdom": "21.1.7",
     "@types/mime-types": "2.1.4",
     "@types/node": "22.15.2",
@@ -95,6 +95,7 @@
     "json-schema-to-typescript": "15.0.4",
     "memfs": "4.17.0",
     "npm-run-all": "4.1.5",
+    "pnpm": "10.9.0",
     "prettier-plugin-astro": "0.14.1",
     "pretty-quick": "4.1.1",
     "release-it": "17.11.0",
@@ -105,6 +106,7 @@
     "typedoc": "^0.28.3",
     "typedoc-plugin-markdown": "4.6.3",
     "typescript": "5.8.3",
+    "unified": "9.2.2",
     "vite": "6.3.3",
     "vitest": "3.1.2"
   },
@@ -154,5 +156,6 @@
   "license": "AGPL-3.0",
   "engines": {
     "node": ">=18"
-  }
+  },
+  "packageManager": "pnpm@10.9.0"
 }
