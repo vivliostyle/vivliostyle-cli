@@ -58,7 +58,7 @@ WORKDIR /opt/vivliostyle-cli
 
 # Build stage
 FROM base AS builder
-COPY package.json yarn.lock /opt/vivliostyle-cli/
+COPY package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /opt/vivliostyle-cli/
 RUN pnpm install --frozen-lockfile --network-timeout 600000
 COPY . /opt/vivliostyle-cli
 RUN pnpm build
