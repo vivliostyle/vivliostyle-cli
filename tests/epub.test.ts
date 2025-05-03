@@ -9,17 +9,9 @@ import { vol } from 'memfs';
 import { format } from 'prettier';
 import { beforeEach, expect, it } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
-import {
-  buildWebPublication,
-  decodePublicationManifest,
-} from '../src/output/webbook.js';
-import {
-  compile,
-  copyAssets,
-  prepareThemeDirectory,
-} from '../src/processor/compile.js';
+import { decodePublicationManifest } from '../src/output/webbook.js';
 import { PublicationManifest } from '../src/schema/publication.schema.js';
-import { getMergedConfig, toTree } from './command-util.js';
+import { runCommand, toTree } from './command-util.js';
 
 beforeEach(() => {
   vol.reset();
@@ -125,8 +117,8 @@ it('generate EPUB from single HTML with pub manifest', async () => {
       ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
       .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
   ).toMatchSnapshot('content.opf');
-  const entry = file['/tmp/1/EPUB/index.xhtml'];
-  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot(
+  const entry = file['/tmp/1/EPUB/index.xhtml']!;
+  expect(await format(entry, { parser: 'html' })).toMatchSnapshot(
     'index.xhtml',
   );
 });
@@ -208,19 +200,10 @@ it('generate EPUB from single Markdown input', async () => {
   vol.fromJSON({
     '/work/input/foo bar%.md': '# 日本語',
   });
-  const config = await getMergedConfig([
-    '/work/input/foo bar%.md',
-    '--output',
-    '/work/output.epub',
-  ]);
-  await compile(config);
-  await copyAssets(config);
-  await buildWebPublication({
-    ...config,
-    target: config.outputs[0],
+  await runCommand(['build', 'input/foo bar%.md', '-o', 'output.epub'], {
+    cwd: '/work',
   });
-
-  expect(toTree(vol).replace(/\.vs-[^.]+/g, '.vs-0')).toMatchSnapshot('tree');
+  expect(toTree(vol)).toMatchSnapshot('tree');
 
   const epub = vol.readFileSync('/work/output.epub') as Buffer;
   checkValidEpubZip(epub);
@@ -267,17 +250,7 @@ it('generate EPUB from vivliostyle.config.js', async () => {
     '/work/input/cover image%.png': '',
     '/work/input/escape check%.css': '/* theme CSS */',
   });
-  const config = await getMergedConfig([
-    '-c',
-    '/work/input/vivliostyle.config.json',
-  ]);
-  await prepareThemeDirectory(config);
-  await compile(config);
-  await copyAssets(config);
-  await buildWebPublication({
-    ...config,
-    target: config.outputs[0],
-  });
+  await runCommand(['build'], { cwd: '/work/input' });
 
   expect(toTree(vol)).toMatchSnapshot('tree');
 
@@ -320,16 +293,8 @@ it('Do not insert nav element to HTML that have nav[epub:type]', async () => {
       </html>
     `,
   });
-  const config = await getMergedConfig([
-    '/work/input/index.html',
-    '--output',
-    '/work/output.epub',
-  ]);
-  await compile(config);
-  await copyAssets(config);
-  await buildWebPublication({
-    ...config,
-    target: config.outputs[0],
+  await runCommand(['build', 'index.html', '-o', 'output.epub'], {
+    cwd: '/work/input',
   });
 
   const file = vol.toJSON();

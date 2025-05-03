@@ -6,14 +6,9 @@
 ### Functions
 
 - [`build`](#build)
+- [`createVitePlugin`](#createviteplugin)
 - [`init`](#init)
 - [`preview`](#preview)
-
-### Interfaces
-
-- [`BuildCliFlags`](#buildcliflags)
-- [`InitCliFlags`](#initcliflags)
-- [`PreviewCliFlags`](#previewcliflags)
 
 ### Type Aliases
 
@@ -25,7 +20,7 @@
 
 ### build()
 
-> **build**(`cliFlags`): `Promise`\<`void`\>
+> **build**(`options`): `Promise`\<`void`\>
 
 Build publication file(s) from the given configuration.
 
@@ -39,7 +34,183 @@ build({
 
 #### Parameters
 
-• **cliFlags**: [`BuildCliFlags`](api-javascript.md#buildcliflags)
+##### options
+
+###### author?
+
+`string` = `...`
+
+###### bleed?
+
+`string` = `...`
+
+###### browser?
+
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+
+###### config?
+
+`string` = `...`
+
+###### configData?
+
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
+
+###### cropMarks?
+
+`boolean` = `...`
+
+###### cropOffset?
+
+`string` = `...`
+
+###### css?
+
+`string` = `...`
+
+###### cwd?
+
+`string` = `...`
+
+###### enableStaticServe?
+
+`boolean` = `...`
+
+###### enableViewerStartPage?
+
+`boolean` = `...`
+
+###### executableBrowser?
+
+`string` = `...`
+
+###### host?
+
+`string` \| `boolean` = `...`
+
+###### ignoreHttpsErrors?
+
+`boolean` = `...`
+
+###### image?
+
+`string` = `...`
+
+###### input?
+
+`string` = `...`
+
+###### language?
+
+`string` = `...`
+
+###### logger?
+
+`LoggerInterface` = `...`
+
+###### logLevel?
+
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+
+###### openViewer?
+
+`boolean` = `...`
+
+###### output?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### port?
+
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
 
 #### Returns
 
@@ -47,15 +218,381 @@ build({
 
 ***
 
+### createVitePlugin()
+
+> **createVitePlugin**(`inlineConfig`): `Promise`\<`Plugin`\<`any`\>[]\>
+
+#### Parameters
+
+##### inlineConfig
+
+###### author?
+
+`string` = `...`
+
+###### bleed?
+
+`string` = `...`
+
+###### browser?
+
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+
+###### config?
+
+`string` = `...`
+
+###### configData?
+
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
+
+###### cropMarks?
+
+`boolean` = `...`
+
+###### cropOffset?
+
+`string` = `...`
+
+###### css?
+
+`string` = `...`
+
+###### cwd?
+
+`string` = `...`
+
+###### enableStaticServe?
+
+`boolean` = `...`
+
+###### enableViewerStartPage?
+
+`boolean` = `...`
+
+###### executableBrowser?
+
+`string` = `...`
+
+###### host?
+
+`string` \| `boolean` = `...`
+
+###### ignoreHttpsErrors?
+
+`boolean` = `...`
+
+###### image?
+
+`string` = `...`
+
+###### input?
+
+`string` = `...`
+
+###### language?
+
+`string` = `...`
+
+###### logger?
+
+`LoggerInterface` = `...`
+
+###### logLevel?
+
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+
+###### openViewer?
+
+`boolean` = `...`
+
+###### output?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### port?
+
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
+
+#### Returns
+
+`Promise`\<`Plugin`\<`any`\>[]\>
+
+***
+
 ### init()
 
-> **init**(`cliFlags`): `Promise`\<`void`\>
+> **init**(`options`): `Promise`\<`void`\>
 
 Initialize a new vivliostyle.config.js file.
 
 #### Parameters
 
-• **cliFlags**: [`InitCliFlags`](api-javascript.md#initcliflags)
+##### options
+
+###### author?
+
+`string` = `...`
+
+###### bleed?
+
+`string` = `...`
+
+###### browser?
+
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+
+###### config?
+
+`string` = `...`
+
+###### configData?
+
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
+
+###### cropMarks?
+
+`boolean` = `...`
+
+###### cropOffset?
+
+`string` = `...`
+
+###### css?
+
+`string` = `...`
+
+###### cwd?
+
+`string` = `...`
+
+###### enableStaticServe?
+
+`boolean` = `...`
+
+###### enableViewerStartPage?
+
+`boolean` = `...`
+
+###### executableBrowser?
+
+`string` = `...`
+
+###### host?
+
+`string` \| `boolean` = `...`
+
+###### ignoreHttpsErrors?
+
+`boolean` = `...`
+
+###### image?
+
+`string` = `...`
+
+###### input?
+
+`string` = `...`
+
+###### language?
+
+`string` = `...`
+
+###### logger?
+
+`LoggerInterface` = `...`
+
+###### logLevel?
+
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+
+###### openViewer?
+
+`boolean` = `...`
+
+###### output?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### port?
+
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
 
 #### Returns
 
@@ -65,179 +602,263 @@ Initialize a new vivliostyle.config.js file.
 
 ### preview()
 
-> **preview**(`cliFlags`): `Promise`\<`void`\>
+> **preview**(`options`): `Promise`\<`ViteDevServer`\>
 
-Open a preview of the publication.
+Open a browser for previewing the publication.
 
 #### Parameters
 
-• **cliFlags**: [`PreviewCliFlags`](api-javascript.md#previewcliflags)
+##### options
+
+###### author?
+
+`string` = `...`
+
+###### bleed?
+
+`string` = `...`
+
+###### browser?
+
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+
+###### config?
+
+`string` = `...`
+
+###### configData?
+
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
+
+###### cropMarks?
+
+`boolean` = `...`
+
+###### cropOffset?
+
+`string` = `...`
+
+###### css?
+
+`string` = `...`
+
+###### cwd?
+
+`string` = `...`
+
+###### enableStaticServe?
+
+`boolean` = `...`
+
+###### enableViewerStartPage?
+
+`boolean` = `...`
+
+###### executableBrowser?
+
+`string` = `...`
+
+###### host?
+
+`string` \| `boolean` = `...`
+
+###### ignoreHttpsErrors?
+
+`boolean` = `...`
+
+###### image?
+
+`string` = `...`
+
+###### input?
+
+`string` = `...`
+
+###### language?
+
+`string` = `...`
+
+###### logger?
+
+`LoggerInterface` = `...`
+
+###### logLevel?
+
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+
+###### openViewer?
+
+`boolean` = `...`
+
+###### output?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### port?
+
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
 
 #### Returns
 
-`Promise`\<`void`\>
-
-## Interfaces
-
-### BuildCliFlags
-
-#### Extends
-
-- `CliFlags`
-
-#### Properties
-
-| Property | Type | Description |
-| ------ | ------ | ------ |
-| `author?` | `string` | - |
-| `bleed?` | `string` | - |
-| `browser?` | `"chromium"` \| `"firefox"` \| `"webkit"` | - |
-| `bypassedPdfBuilderOption?` | `string` | - |
-| `configPath?` | `string` | - |
-| `cropMarks?` | `boolean` | - |
-| `cropOffset?` | `string` | - |
-| `css?` | `string` | - |
-| `executableBrowser?` | `string` | - |
-| ~~`executableChromium?`~~ | `string` | **Deprecated** |
-| `http?` | `boolean` | - |
-| `ignoreHttpsErrors?` | `boolean` | - |
-| `image?` | `string` | - |
-| `input?` | `string` | - |
-| `language?` | `string` | - |
-| `logLevel?` | `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` | - |
-| `preflight?` | `"press-ready"` \| `"press-ready-local"` | - |
-| `preflightOption?` | `string`[] | - |
-| `pressReady?` | `boolean` | - |
-| `proxyBypass?` | `string` | - |
-| `proxyPass?` | `string` | - |
-| `proxyServer?` | `string` | - |
-| `proxyUser?` | `string` | - |
-| `quick?` | `boolean` | - |
-| `readingProgression?` | `"ltr"` \| `"rtl"` | - |
-| `renderMode?` | `"local"` \| `"docker"` | - |
-| `sandbox?` | `boolean` | - |
-| `singleDoc?` | `boolean` | - |
-| `size?` | `string` | - |
-| `style?` | `string` | - |
-| `targets?` | `Pick`\<`OutputFormat`, `"path"` \| `"format"`\>[] | - |
-| `theme?` | `string` | - |
-| `timeout?` | `number` | - |
-| `title?` | `string` | - |
-| `userStyle?` | `string` | - |
-| ~~`verbose?`~~ | `boolean` | **Deprecated** |
-| `viewer?` | `string` | - |
-| `viewerParam?` | `string` | - |
-
-***
-
-### InitCliFlags
-
-#### Properties
-
-| Property | Type |
-| ------ | ------ |
-| `author?` | `string` |
-| `language?` | `string` |
-| `logLevel?` | `"silent"` \| `"info"` \| `"debug"` |
-| `size?` | `string` |
-| `theme?` | `string` |
-| `title?` | `string` |
-
-***
-
-### PreviewCliFlags
-
-#### Extends
-
-- `CliFlags`
-
-#### Properties
-
-| Property | Type | Description |
-| ------ | ------ | ------ |
-| `author?` | `string` | - |
-| `bleed?` | `string` | - |
-| `browser?` | `"chromium"` \| `"firefox"` \| `"webkit"` | - |
-| `configPath?` | `string` | - |
-| `cropMarks?` | `boolean` | - |
-| `cropOffset?` | `string` | - |
-| `css?` | `string` | - |
-| `executableBrowser?` | `string` | - |
-| ~~`executableChromium?`~~ | `string` | **Deprecated** |
-| `http?` | `boolean` | - |
-| `ignoreHttpsErrors?` | `boolean` | - |
-| `image?` | `string` | - |
-| `input?` | `string` | - |
-| `language?` | `string` | - |
-| `logLevel?` | `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` | - |
-| `preflight?` | `"press-ready"` \| `"press-ready-local"` | - |
-| `preflightOption?` | `string`[] | - |
-| `pressReady?` | `boolean` | - |
-| `proxyBypass?` | `string` | - |
-| `proxyPass?` | `string` | - |
-| `proxyServer?` | `string` | - |
-| `proxyUser?` | `string` | - |
-| `quick?` | `boolean` | - |
-| `readingProgression?` | `"ltr"` \| `"rtl"` | - |
-| `renderMode?` | `"local"` \| `"docker"` | - |
-| `sandbox?` | `boolean` | - |
-| `singleDoc?` | `boolean` | - |
-| `size?` | `string` | - |
-| `style?` | `string` | - |
-| `targets?` | `Pick`\<`OutputFormat`, `"path"` \| `"format"`\>[] | - |
-| `theme?` | `string` | - |
-| `timeout?` | `number` | - |
-| `title?` | `string` | - |
-| `userStyle?` | `string` | - |
-| ~~`verbose?`~~ | `boolean` | **Deprecated** |
-| `viewer?` | `string` | - |
-| `viewerParam?` | `string` | - |
+`Promise`\<`ViteDevServer`\>
 
 ## Type Aliases
 
 ### StructuredDocument
 
-> **StructuredDocument**: `object`
-
-#### Type declaration
-
-| Name | Type |
-| ------ | ------ |
-| `children` | [`StructuredDocument`](api-javascript.md#structureddocument)[] |
-| `href` | `string` |
-| `sections`? | [`StructuredDocumentSection`](api-javascript.md#structureddocumentsection)[] |
-| `title` | `string` |
+> **StructuredDocument** = `object`
 
 #### See
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+
+#### Properties
+
+##### children
+
+> **children**: [`StructuredDocument`](#structureddocument)[]
+
+##### href
+
+> **href**: `string`
+
+##### sections?
+
+> `optional` **sections**: [`StructuredDocumentSection`](#structureddocumentsection)[]
+
+##### title
+
+> **title**: `string`
 
 ***
 
 ### StructuredDocumentSection
 
-> **StructuredDocumentSection**: `object`
-
-#### Type declaration
-
-| Name | Type |
-| ------ | ------ |
-| `children` | [`StructuredDocumentSection`](api-javascript.md#structureddocumentsection)[] |
-| `headingHtml` | `string` |
-| `headingText` | `string` |
-| `href`? | `string` |
-| `id`? | `string` |
-| `level` | `number` |
+> **StructuredDocumentSection** = `object`
 
 #### See
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 
+#### Properties
+
+##### children
+
+> **children**: [`StructuredDocumentSection`](#structureddocumentsection)[]
+
+##### headingHtml
+
+> **headingHtml**: `string`
+
+##### headingText
+
+> **headingText**: `string`
+
+##### href?
+
+> `optional` **href**: `string`
+
+##### id?
+
+> `optional` **id**: `string`
+
+##### level
+
+> **level**: `number`
+
 ***
 
 ### VivliostyleConfigSchema
 
-> **VivliostyleConfigSchema**: `v.InferInput`\<*typeof* [`VivliostyleConfigSchema`](api-javascript.md#vivliostyleconfigschema)\>
+> **VivliostyleConfigSchema** = `v.InferInput`\<*typeof* [`VivliostyleConfigSchema`](#vivliostyleconfigschema)\>
 
 #### See
 

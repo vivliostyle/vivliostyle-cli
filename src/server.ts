@@ -1,122 +1,57 @@
-import http from 'node:http';
-import { fileURLToPath, pathToFileURL, URL } from 'node:url';
-import handler from 'serve-handler';
+import fs from 'node:fs';
+import { URL } from 'node:url';
 import upath from 'upath';
-import { viewerRoot } from './const.js';
 import {
-  beforeExitHandlers,
-  debug,
-  findAvailablePort,
-  isUrlString,
+  createServer,
+  InlineConfig,
+  preview,
+  PreviewServer,
+  ResolvedConfig as ResolvedViteConfig,
+  ViteDevServer,
+} from 'vite';
+import { ResolvedTaskConfig } from './config/resolve.js';
+import { ParsedVivliostyleInlineConfig } from './config/schema.js';
+import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
+import { Logger } from './logger.js';
+import {
+  getDefaultEpubOpfPath,
+  isValidUri,
+  openEpub,
+  registerExitHandler,
 } from './util.js';
+import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
+import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
+import { vsStaticServePlugin } from './vite/vite-plugin-static-serve.js';
+import { vsViewerPlugin } from './vite/vite-plugin-viewer.js';
 
-export type PageSize = { format: string } | { width: string; height: string };
+export type ViewerUrlOption = Pick<
+  ResolvedTaskConfig,
+  | 'size'
+  | 'cropMarks'
+  | 'bleed'
+  | 'cropOffset'
+  | 'css'
+  | 'customStyle'
+  | 'customUserStyle'
+  | 'singleDoc'
+  | 'quick'
+  | 'viewerParam'
+>;
 
-export interface Server {
-  server: http.Server;
-  port: number;
-}
-
-export type ViewerUrlOption = {
-  size?: PageSize;
-  cropMarks?: boolean;
-  bleed?: string;
-  cropOffset?: string;
-  css?: string;
-  style?: string;
-  userStyle?: string;
-  singleDoc?: boolean;
-  quick?: boolean;
-  viewerParam?: string | undefined;
-};
-
-export type ServerOption = ViewerUrlOption & {
-  input: string;
-  workspaceDir: string;
-  httpServer: boolean;
-  viewer: string | undefined;
-};
-
-let _viewerServer: Server | undefined;
-let _sourceServer: Server | undefined;
-
-export async function prepareServer(option: ServerOption): Promise<{
-  viewerFullUrl: string;
-}> {
-  const viewerUrl = await (option.viewer && isUrlString(option.viewer)
-    ? new URL(option.viewer)
-    : option.httpServer
-      ? (async () => {
-          _viewerServer = _viewerServer || (await launchServer(viewerRoot));
-
-          const viewerUrl = new URL('http://localhost');
-          viewerUrl.port = `${_viewerServer.port}`;
-          viewerUrl.pathname = '/lib/index.html';
-          return viewerUrl;
-        })()
-      : (() => {
-          const viewerUrl = new URL('file://');
-          viewerUrl.pathname = upath.join(viewerRoot, 'lib/index.html');
-          return viewerUrl;
-        })());
-
-  const inputUrl = isUrlString(option.input)
-    ? new URL(option.input)
-    : pathToFileURL(option.input);
-  const sourceUrl = await (async () => {
-    if (
-      inputUrl.protocol === 'file:' &&
-      (option.httpServer ||
-        // Use http server because http viewer cannot access to file protocol
-        (option.viewer && /^https?:/i.test(option.viewer)))
-    ) {
-      _sourceServer =
-        _sourceServer || (await launchServer(option.workspaceDir));
-
-      const sourceUrl = new URL('http://localhost');
-      sourceUrl.port = `${_sourceServer.port}`;
-      sourceUrl.pathname = upath.relative(
-        option.workspaceDir,
-        fileURLToPath(inputUrl),
-      );
-      return sourceUrl;
-    }
-    return inputUrl;
-  })();
-
-  return {
-    viewerFullUrl: getViewerFullUrl(option, {
-      viewerUrl,
-      sourceUrl,
-    }),
-  };
-}
-
-export function teardownServer() {
-  if (_viewerServer) {
-    _viewerServer.server.close();
-    _viewerServer = undefined;
-  }
-  if (_sourceServer) {
-    _sourceServer.server.close();
-    _sourceServer = undefined;
-  }
-}
-
-export function getViewerFullUrl(
+export function getViewerParams(
+  src: string | undefined,
   {
     size,
     cropMarks,
     bleed,
     cropOffset,
     css,
-    style,
-    userStyle,
+    customStyle,
+    customUserStyle,
     singleDoc,
     quick,
     viewerParam,
   }: ViewerUrlOption,
-  { viewerUrl, sourceUrl }: { viewerUrl: URL; sourceUrl: URL },
 ): string {
   const pageSizeValue =
     size && ('format' in size ? size.format : `${size.width} ${size.height}`);
@@ -125,18 +60,15 @@ export function getViewerFullUrl(
     return url.replace(/&/g, '%26');
   }
 
-  let viewerParams =
-    sourceUrl.href === 'data:,'
-      ? '' // open Viewer start page
-      : `src=${escapeParam(sourceUrl.href)}`;
+  let viewerParams = src ? `src=${escapeParam(src)}` : '';
   viewerParams += `&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
-  if (style) {
-    viewerParams += `&style=${escapeParam(style)}`;
+  if (customStyle) {
+    viewerParams += `&style=${escapeParam(customStyle)}`;
   }
 
-  if (userStyle) {
-    viewerParams += `&userStyle=${escapeParam(userStyle)}`;
+  if (customUserStyle) {
+    viewerParams += `&userStyle=${escapeParam(customUserStyle)}`;
   }
 
   if (pageSizeValue || cropMarks || bleed || cropOffset || css) {
@@ -169,50 +101,132 @@ export function getViewerFullUrl(
     viewerParams += `&${viewerParam}`;
   }
 
+  return viewerParams;
+}
+
+export async function getSourceUrl({
+  viewerInput,
+  base,
+  workspaceDir,
+  rootUrl,
+}: Pick<
+  ResolvedTaskConfig,
+  'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
+>) {
+  let input: string;
+  switch (viewerInput.type) {
+    case 'webpub':
+      input = viewerInput.manifestPath;
+      break;
+    case 'webbook':
+      input = viewerInput.webbookEntryUrl;
+      break;
+    case 'epub-opf':
+      input = viewerInput.epubOpfPath;
+      break;
+    case 'epub': {
+      if (!fs.existsSync(viewerInput.epubTmpOutputDir)) {
+        await openEpub(viewerInput.epubPath, viewerInput.epubTmpOutputDir);
+      }
+      input = getDefaultEpubOpfPath(viewerInput.epubTmpOutputDir);
+      break;
+    }
+    default:
+      input = viewerInput satisfies never;
+  }
+  return (
+    isValidUri(input)
+      ? new URL(input)
+      : new URL(
+          upath.posix.join(base, upath.relative(workspaceDir, input)),
+          rootUrl,
+        )
+  ).href;
+}
+
+export async function getViewerFullUrl({
+  viewerInput,
+  base,
+  workspaceDir,
+  rootUrl,
+  viewer,
+  ...config
+}: ViewerUrlOption &
+  Pick<
+    ResolvedTaskConfig,
+    'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl' | 'viewer'
+  >) {
+  const viewerUrl = viewer
+    ? new URL(viewer)
+    : new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
+  const sourceUrl = await getSourceUrl({
+    viewerInput,
+    base,
+    workspaceDir,
+    rootUrl,
+  });
+  const viewerParams = getViewerParams(
+    sourceUrl === EMPTY_DATA_URI
+      ? undefined // open Viewer start page
+      : sourceUrl,
+    config,
+  );
+  viewerUrl.hash = '';
   return `${viewerUrl.href}#${viewerParams}`;
 }
 
-function startEndpoint(root: string): http.Server {
-  const serve = (req: http.IncomingMessage, res: http.ServerResponse) =>
-    handler(req, res, {
-      public: root,
-      cleanUrls: false,
-      directoryListing: false,
-      headers: [
-        {
-          source: '**',
-          headers: [
-            {
-              key: 'access-control-allow-headers',
-              value: 'Origin, X-Requested-With, Content-Type, Accept, Range',
-            },
-            {
-              key: 'access-control-allow-origin',
-              value: '*',
-            },
-            {
-              key: 'cache-control',
-              value: 'no-cache, no-store, must-revalidate',
-            },
-          ],
-        },
-      ],
+export async function createViteServer(args: {
+  config: ResolvedTaskConfig;
+  viteConfig: ResolvedViteConfig;
+  inlineConfig: ParsedVivliostyleInlineConfig;
+  mode: 'preview';
+}): Promise<ViteDevServer>;
+export async function createViteServer(args: {
+  config: ResolvedTaskConfig;
+  viteConfig: ResolvedViteConfig;
+  inlineConfig: ParsedVivliostyleInlineConfig;
+  mode: 'build';
+}): Promise<PreviewServer>;
+export async function createViteServer({
+  config,
+  viteConfig,
+  inlineConfig,
+  mode,
+}: {
+  config: ResolvedTaskConfig;
+  viteConfig: ResolvedViteConfig;
+  inlineConfig: ParsedVivliostyleInlineConfig;
+  mode: 'preview' | 'build';
+}) {
+  const viteInlineConfig = {
+    clearScreen: false,
+    configFile: false,
+    appType: 'custom',
+    plugins: [
+      vsDevServerPlugin({ config, inlineConfig }),
+      vsViewerPlugin({ config, inlineConfig }),
+      vsBrowserPlugin({ config, inlineConfig }),
+      vsStaticServePlugin({ config, inlineConfig }),
+    ],
+    server: viteConfig.server,
+    preview: viteConfig.preview,
+    customLogger: viteConfig.customLogger,
+    cacheDir: viteConfig.cacheDir,
+  } satisfies InlineConfig;
+  Logger.debug('createViteServer > viteInlineConfig %O', viteInlineConfig);
+
+  if (config.context === config.workspaceDir) {
+    const { cacheDir } = viteInlineConfig;
+    registerExitHandler('Removing the Vite cacheDir', () => {
+      if (fs.existsSync(cacheDir)) {
+        fs.rmSync(cacheDir, { recursive: true });
+      }
     });
-  return http.createServer(serve);
-}
+  }
 
-async function launchServer(root: string): Promise<Server> {
-  const port = await findAvailablePort();
-  debug(`Launching server... root: ${root} port: ${port}`);
-
-  const server = startEndpoint(root);
-
-  return await new Promise((resolve) => {
-    server.listen(port, 'localhost', () => {
-      beforeExitHandlers.push(() => {
-        server.close();
-      });
-      resolve({ server, port });
-    });
-  });
+  if (mode === 'preview') {
+    return await createServer(viteInlineConfig);
+  } else {
+    return await preview(viteInlineConfig);
+  }
 }

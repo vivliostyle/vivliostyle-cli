@@ -1,3 +1,27 @@
+# [9.0.0-next.7](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.0-next.7) (2025-04-28)
+
+# [9.0.0-next.6](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.5...v9.0.0-next.6) (2025-03-09)
+
+### Reverts
+
+- Revert "chore: Export internal plugins" ([92900c6](https://github.com/vivliostyle/vivliostyle-cli/commit/92900c6b8ea2ed339c6c54e9f4a4966e8ecab9e7))
+
+# [9.0.0-next.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.4...v9.0.0-next.5) (2025-03-09)
+
+# [9.0.0-next.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-03-08)
+
+### Bug Fixes
+
+- Add config file to deps ([bc0b875](https://github.com/vivliostyle/vivliostyle-cli/commit/bc0b8752bd74cd203716d6ab39180daa86bc88b9))
+
+# [9.0.0-next.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-01-15)
+
+# [9.0.0-next.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-01-13)
+
+# [9.0.0-next.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.0...v9.0.0-next.1) (2025-01-06)
+
+# [9.0.0-next.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.17.1...v9.0.0-next.0) (2025-01-06)
+
 # [8.20.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v8.19.0...v8.20.0) (2025-04-08)
 
 ### Bug Fixes

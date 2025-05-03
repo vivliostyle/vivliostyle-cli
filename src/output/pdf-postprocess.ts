@@ -1,18 +1,10 @@
 import decamelize from 'decamelize';
 import fs from 'node:fs';
 import os from 'node:os';
-import {
-  PDFDict,
-  PDFDocument,
-  PDFHexString,
-  PDFName,
-  PDFNumber,
-  PDFRef,
-  ReadingDirection,
-} from 'pdf-lib';
-import * as pressReadyModule from 'press-ready';
+import type { PDFDocument, PDFRef } from 'pdf-lib';
 import upath from 'upath';
 import { v1 as uuid } from 'uuid';
+import { PdfOutput, ResolvedTaskConfig } from '../config/resolve.js';
 import { coreVersion } from '../const.js';
 import {
   collectVolumeArgs,
@@ -20,12 +12,12 @@ import {
   toContainerPath,
 } from '../container.js';
 import type { Meta, TOCItem } from '../global-viewer.js';
-import { MergedConfig } from '../input/config.js';
-import { checkContainerEnvironment, suspendLogging } from '../util.js';
-import type { PdfOutput } from './output-types.js';
+import { Logger } from '../logger.js';
+import { importNodeModule } from '../node-modules.js';
+import { isInContainer } from '../util.js';
 
 export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
-  Pick<MergedConfig, 'image'>;
+  Pick<ResolvedTaskConfig, 'image'>;
 
 const prefixes = {
   dcterms: 'http://purl.org/dc/terms/',
@@ -90,6 +82,7 @@ export async function pressReadyWithContainer({
 
 export class PostProcess {
   static async load(pdf: Buffer): Promise<PostProcess> {
+    const { PDFDocument } = await importNodeModule('pdf-lib');
     const document = await PDFDocument.load(pdf, { updateMetadata: false });
     return new PostProcess(document);
   }
@@ -100,7 +93,6 @@ export class PostProcess {
     output: string,
     { preflight, preflightOption, image }: SaveOption,
   ) {
-    const isInContainer = checkContainerEnvironment();
     const input = preflight
       ? upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
       : output;
@@ -110,10 +102,11 @@ export class PostProcess {
 
     if (
       preflight === 'press-ready-local' ||
-      (preflight === 'press-ready' && isInContainer)
+      (preflight === 'press-ready' && isInContainer())
     ) {
-      const restartLogging = suspendLogging('Running press-ready', '🚀');
-      await pressReadyModule.build({
+      using _ = Logger.suspendLogging('Running press-ready');
+      const { build } = await importNodeModule('press-ready');
+      await build({
         ...preflightOption.reduce((acc, opt) => {
           const optName = decamelize(opt, { separator: '-' });
           return optName.startsWith('no-')
@@ -129,16 +122,14 @@ export class PostProcess {
         input,
         output,
       });
-      restartLogging();
     } else if (preflight === 'press-ready') {
-      const restartLogging = suspendLogging('Running press-ready', '🚀');
+      using _ = Logger.suspendLogging('Running press-ready');
       await pressReadyWithContainer({
         input,
         output,
         preflightOption,
         image,
       });
-      restartLogging();
     }
   }
 
@@ -156,6 +147,7 @@ export class PostProcess {
       disableCreatorOption?: boolean;
     } = {},
   ) {
+    const { ReadingDirection } = await importNodeModule('pdf-lib');
     const title = tree[metaTerms.title]?.[0].v;
     if (title) {
       this.document.setTitle(title);
@@ -201,6 +193,8 @@ export class PostProcess {
   }
 
   async toc(items: TOCItem[]) {
+    const { PDFDict, PDFHexString, PDFName, PDFNumber } =
+      await importNodeModule('pdf-lib');
     if (!items || !items.length) {
       return;
     }

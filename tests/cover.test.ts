@@ -1,34 +1,35 @@
+import './mocks/fs.js';
+import './mocks/vivliostyle__jsdom.js';
+
 import { JSDOM } from '@vivliostyle/jsdom';
-import fs from 'node:fs';
-import { glob } from 'tinyglobby';
-import { expect, it } from 'vitest';
-import {
-  compile,
-  copyAssets,
-  prepareThemeDirectory,
-} from '../src/processor/compile.js';
-import {
-  generateDefaultCoverHtml,
-  processCoverHtml,
-} from '../src/processor/html.js';
-import {
-  assertSingleItem,
-  getMergedConfig,
-  resolveFixture,
-} from './command-util';
+import { vol } from 'memfs';
+import { assert, beforeEach, expect, it } from 'vitest';
+import { isWebPubConfig } from '../src/config/resolve.js';
+import { transformManuscript } from '../src/processor/compile.js';
+import { getTaskConfig, runCommand } from './command-util';
+
+beforeEach(() => vol.reset());
 
 it('generateCoverHtml', async () => {
-  let content = generateDefaultCoverHtml({
+  vol.fromJSON({
+    '/work/empty.html': '',
+    '/work/escape check%.jpg': '',
+  });
+  const config = await getTaskConfig(['build'], '/work', {
     title: 'Book title',
     language: 'ja',
+    entry: [
+      {
+        rel: 'cover',
+        imageSrc: './escape check%.jpg',
+        imageAlt: 'Cover image',
+        pageBreakBefore: 'recto',
+      },
+      'empty.html',
+    ],
   });
-  content = await processCoverHtml(content, {
-    imageSrc: './escape check%.jpg',
-    imageAlt: 'Cover image',
-    styleOptions: {
-      pageBreakBefore: 'recto',
-    },
-  });
+  assert(isWebPubConfig(config));
+  const content = await transformManuscript(config.entries[0], config);
   expect(content).toBe(
     `<html lang="ja">
   <head>
@@ -54,7 +55,7 @@ it('generateCoverHtml', async () => {
   </head>
   <body>
     <section role="region" aria-label="Cover">
-      <img role="doc-cover" src="./escape%20check%25.jpg" alt="Cover image" />
+      <img role="doc-cover" src="escape%20check%25.jpg" alt="Cover image" />
     </section>
   </body>
 </html>
@@ -62,19 +63,26 @@ it('generateCoverHtml', async () => {
   );
 });
 
-it('cover config', async () => {
-  const config = await getMergedConfig([
-    '-c',
-    resolveFixture('cover/cover.valid.1.config.cjs'),
-  ]);
-  assertSingleItem(config);
-  await prepareThemeDirectory(config);
-  await compile(config);
-  await copyAssets(config);
-  const fileList = await glob('**', {
-    cwd: resolveFixture('cover/.vs-valid.1'),
+it('supports cover config', async () => {
+  vol.fromJSON({
+    '/work/manuscript/foo.md': '',
+    '/work/arch.jpg': '',
   });
-  expect(new Set(fileList)).toMatchObject(
+  await runCommand(['build'], {
+    cwd: '/work',
+    config: {
+      title: 'cover test',
+      entry: 'manuscript/foo.md',
+      output: [],
+      cover: {
+        src: 'arch.jpg',
+        name: 'alt text',
+        htmlPath: 'cover-page.html',
+      },
+    },
+  });
+  const workDir = vol.toJSON('/work/.vivliostyle', {}, true);
+  expect(new Set(Object.keys(workDir))).toMatchObject(
     new Set([
       'arch.jpg',
       'cover-page.html',
@@ -83,9 +91,7 @@ it('cover config', async () => {
     ]),
   );
 
-  const { default: manifest } = await import(
-    resolveFixture('cover/.vs-valid.1/publication.json')
-  );
+  const manifest = JSON.parse(workDir['publication.json']!);
   expect(manifest.readingOrder[0]).toEqual({
     url: 'cover-page.html',
     name: 'cover test',
@@ -98,12 +104,8 @@ it('cover config', async () => {
     name: 'alt text',
     encodingFormat: 'image/jpeg',
   });
-  const coverHtml = new JSDOM(
-    fs.readFileSync(
-      resolveFixture('cover/.vs-valid.1/cover-page.html'),
-      'utf-8',
-    ),
-  );
+
+  const coverHtml = new JSDOM(workDir['cover-page.html']!);
   const { document } = coverHtml.window;
   expect(document.querySelector('title')!.text).toBe('cover test');
   expect(
@@ -115,18 +117,54 @@ it('cover config', async () => {
 });
 
 it('customize cover page', async () => {
-  const config = await getMergedConfig([
-    '-c',
-    resolveFixture('cover/cover.valid.2.config.cjs'),
-  ]);
-  assertSingleItem(config);
-  await prepareThemeDirectory(config);
-  await compile(config);
-  await copyAssets(config);
-  const fileList = await glob('**', {
-    cwd: resolveFixture('cover/.vs-valid.2'),
+  vol.fromJSON({
+    '/work/manuscript/cover.html': `<html>
+  <head>
+    <title>Customized cover</title>
+  </head>
+  <body>
+    <div class="cover-wrapper">
+      <img role="doc-cover" />
+    </div>
+  </body>
+</html>
+`,
+    '/work/manuscript/foo.md': '',
+    '/work/arch.jpg': '',
+    '/work/sample-theme.css': '',
   });
-  expect(new Set(fileList)).toMatchObject(
+  await runCommand(['build'], {
+    cwd: '/work',
+    config: {
+      title: 'cover test 2',
+      entry: [
+        {
+          rel: 'cover',
+          path: 'manuscript/cover.html',
+          output: 'index.html',
+          imageSrc: 'arch.jpg',
+          imageAlt: 'front cover',
+          theme: './sample-theme.css',
+        },
+        {
+          path: 'manuscript/foo.md',
+          output: 'dir/foo.html',
+        },
+        {
+          rel: 'cover',
+          output: 'dir/back-cover.html',
+          title: 'Back cover',
+          imageSrc: 'arch.jpg',
+          imageAlt: 'back cover',
+          theme: './sample-theme.css',
+          pageBreakBefore: 'right',
+        },
+      ],
+      output: [],
+    },
+  });
+  const workDir = vol.toJSON('/work/.vivliostyle', {}, true);
+  expect(new Set(Object.keys(workDir))).toMatchObject(
     new Set([
       'arch.jpg',
       'dir/back-cover.html',
@@ -137,9 +175,7 @@ it('customize cover page', async () => {
     ]),
   );
 
-  const { default: manifest } = await import(
-    resolveFixture('cover/.vs-valid.2/publication.json')
-  );
+  const manifest = JSON.parse(workDir['publication.json']!);
   expect(manifest.readingOrder).toEqual([
     {
       url: 'index.html',
@@ -159,9 +195,7 @@ it('customize cover page', async () => {
     },
   ]);
 
-  const frontCoverHtml = new JSDOM(
-    fs.readFileSync(resolveFixture('cover/.vs-valid.2/index.html'), 'utf-8'),
-  );
+  const frontCoverHtml = new JSDOM(workDir['index.html']!);
   const { document: frontDocument } = frontCoverHtml.window;
   expect(frontDocument.querySelector('title')!.text).toBe('Customized cover');
   expect(frontDocument.querySelector('style[data-vv-style]')).toBeFalsy();
@@ -179,12 +213,7 @@ it('customize cover page', async () => {
       .getAttribute('alt'),
   ).toBe('front cover');
 
-  const backCoverHtml = new JSDOM(
-    fs.readFileSync(
-      resolveFixture('cover/.vs-valid.2/dir/back-cover.html'),
-      'utf-8',
-    ),
-  );
+  const backCoverHtml = new JSDOM(workDir['dir/back-cover.html']!);
   const { document: backDocument } = backCoverHtml.window;
   expect(backDocument.querySelector('title')!.text).toBe('Back cover');
   expect(
@@ -199,33 +228,4 @@ it('customize cover page', async () => {
   expect(
     backDocument.querySelector('img[role="doc-cover"]')!.getAttribute('alt'),
   ).toBe('back cover');
-});
-
-it('in-place cover page conversion', async () => {
-  const srcCoverContent = fs.readFileSync(
-    resolveFixture('cover/inplace/cover.html'),
-    'utf-8',
-  );
-  const config = await getMergedConfig([
-    '-c',
-    resolveFixture('cover/cover.valid.3.config.cjs'),
-  ]);
-  assertSingleItem(config);
-  await compile(config);
-  await copyAssets(config);
-  expect(
-    fs.readFileSync(resolveFixture('cover/inplace/cover.html'), 'utf-8'),
-  ).toBe(srcCoverContent);
-
-  const fileList = await glob('**', {
-    cwd: resolveFixture('cover/inplace'),
-    dot: true,
-  });
-  const tmpCoverPath = fileList.find((f) => /^\.vs-/.test(f));
-  expect(tmpCoverPath).toBeTruthy();
-  const tmpCoverContent = fs.readFileSync(
-    resolveFixture(`cover/inplace/${tmpCoverPath}`),
-    'utf-8',
-  );
-  expect(tmpCoverContent).toMatch(/<title>in-place cover<\/title>/);
 });

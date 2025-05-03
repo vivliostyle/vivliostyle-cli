@@ -12,5 +12,15 @@ export default defineConfig({
       printBasicPrototype: true,
     },
     globalSetup: ['tests/global-setup/clean.ts'],
+    env: {
+      NO_COLOR: 'true',
+    },
+    clearMocks: true,
+    pool:
+      process.platform === 'linux'
+        ? // In Linux, we need to use forks mode to avoid segfaults
+          // https://vitest.dev/guide/common-errors.html#segfaults-and-native-code-errors
+          'forks'
+        : 'threads',
   },
 });

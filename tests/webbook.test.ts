@@ -4,15 +4,15 @@ import './mocks/vivliostyle__jsdom.js';
 import { vol } from 'memfs';
 import { format } from 'prettier';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { build } from '../src/index.js';
-import { VivliostyleConfigSchema } from '../src/input/schema.js';
-import { toTree } from './command-util.js';
+import { VivliostyleConfigSchema } from '../src/config/schema.js';
+import { runCommand, toTree } from './command-util.js';
 
-vi.mock('../src/processor/theme.ts', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../src/processor/theme.js')>()),
-  checkThemeInstallationNecessity: () => Promise.resolve(false),
-  installThemeDependencies: () => Promise.resolve(),
+const mockedThemeModule = vi.hoisted(() => ({
+  checkThemeInstallationNecessity: vi.fn(),
+  installThemeDependencies: vi.fn(),
 }));
+
+vi.mock('../src/processor/theme', () => mockedThemeModule);
 
 beforeEach(() => vol.reset());
 
@@ -20,9 +20,8 @@ it('generate webpub from single markdown file', async () => {
   vol.fromJSON({
     '/work/input/foo.md': '# Hi',
   });
-  await build({
-    input: '/work/input/foo.md',
-    targets: [{ path: '/work/output', format: 'webpub' }],
+  await runCommand(['build', './input/foo.md', '-o', 'output'], {
+    cwd: '/work',
   });
 
   expect(toTree(vol)).toMatchSnapshot();
@@ -33,6 +32,20 @@ it('generate webpub from single markdown file', async () => {
 });
 
 it('generate webpub from vivliostyle.config.js', async () => {
+  const themeDir = {
+    'mytheme/package.json': JSON.stringify({
+      name: 'mytheme',
+      main: './%style%.css',
+    }),
+    'mytheme/%style%.css': '/* style */',
+  };
+  mockedThemeModule.checkThemeInstallationNecessity.mockImplementationOnce(
+    () => true,
+  );
+  mockedThemeModule.installThemeDependencies.mockImplementationOnce(() => {
+    vol.fromJSON(themeDir, '/work/input/.vivliostyle/themes/node_modules');
+  });
+
   const config: VivliostyleConfigSchema = {
     entry: [
       { rel: 'cover', path: 'tmpl/cover-template.html', output: 'cover.html' },
@@ -58,40 +71,21 @@ it('generate webpub from vivliostyle.config.js', async () => {
       '<html><body><img role="doc-cover" data-test="true" /></body></html>',
     '/work/input/tmpl/toc-template.html':
       '<html><body><nav role="doc-toc" data-test="true"></nav></body></html>',
-    '/work/mytheme/package.json': JSON.stringify({
-      name: 'mytheme',
-      main: './%style%.css',
-    }),
-    '/work/mytheme/%style%.css': '/* style */',
-    '/work/input/themes/packages/mytheme/package.json': JSON.stringify({
-      name: 'mytheme',
-      main: './%style%.css',
-    }),
-    '/work/input/themes/packages/mytheme/%style%.css': '/* style */',
   });
-  await build({
-    configPath: '/work/input/vivliostyle.config.json',
-  });
+  vol.fromJSON(themeDir, '/work');
+  await runCommand(['build'], { cwd: '/work/input' });
 
   expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
-  const manifest = JSON.parse(file['/work/output/publication.json'] as string);
+  const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
-  const toc = file['/work/output/index.html'];
-  expect(await format(toc as string, { parser: 'html' })).toMatchSnapshot();
-  const cover = file['/work/output/cover.html'];
-  expect(await format(cover as string, { parser: 'html' })).toMatchSnapshot(
-    'cover.html',
-  );
 
   const manifest2 = JSON.parse(
     file['/work/input/output/publication.json'] as string,
   );
   delete manifest2.dateModified;
   expect(manifest2).toEqual(manifest);
-  const toc2 = file['/work/input/output/index.html'];
-  expect(toc2).toEqual(toc);
 });
 
 it('generate webpub from a plain HTML', async () => {
@@ -109,18 +103,17 @@ it('generate webpub from a plain HTML', async () => {
     `,
     '/work/input/style.css': '',
   });
-  await build({
-    input: '/work/input/webbook.html',
-    targets: [{ path: '/work/output', format: 'webpub' }],
+  await runCommand(['build', 'input/webbook.html', '-o', 'output'], {
+    cwd: '/work',
   });
 
   expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
-  const manifest = JSON.parse(file['/work/output/publication.json'] as string);
+  const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
-  const entry = file['/work/output/webbook.html'];
-  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  const entry = file['/work/output/webbook.html']!;
+  expect(await format(entry, { parser: 'html' })).toMatchSnapshot();
 });
 
 it('generate webpub from a single-document publication', async () => {
@@ -176,15 +169,14 @@ it('generate webpub from a single-document publication', async () => {
     '/work/input/assets/日本語.svg': '<svg></svg>',
     '/work/input/assets/subdir.css': '',
   });
-  await build({
-    input: '/work/input/webbook.html',
-    targets: [{ path: '/work/output', format: 'webpub' }],
+  await runCommand(['build', 'input/webbook.html', '-o', 'output'], {
+    cwd: '/work',
   });
 
   expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
-  const entry = file['/work/output/webbook.html'];
-  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  const entry = file['/work/output/webbook.html']!;
+  expect(await format(entry, { parser: 'html' })).toMatchSnapshot();
   expect(file['/work/output/escape check%.html']).toBe(
     file['/work/input/escape check%.html'],
   );
@@ -223,10 +215,10 @@ it('generate webpub from remote HTML documents with publication manifest', async
     }),
     '/assets/日本語.png': 'image',
   });
-  await build({
-    input: 'https://example.com/remote/dir',
-    targets: [{ path: '/work/output', format: 'webpub' }],
-  });
+  await runCommand(
+    ['build', 'https://example.com/remote/dir', '-o', 'output'],
+    { cwd: '/work' },
+  );
   expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
   expect(file['/work/output/remote/dir/index.html']).toBe(
@@ -257,17 +249,22 @@ it('generate webpub from a remote HTML document', async () => {
     `,
     '/remote/あ/日本語.css': '/* css */',
   });
-  await build({
-    input: 'https://example.com/remote/foo%20bar%25/escape%20check%25.html',
-    targets: [{ path: '/work/output', format: 'webpub' }],
-  });
+  await runCommand(
+    [
+      'build',
+      'https://example.com/remote/foo%20bar%25/escape%20check%25.html',
+      '-o',
+      'output',
+    ],
+    { cwd: '/work' },
+  );
   expect(toTree(vol)).toMatchSnapshot();
   const file = vol.toJSON();
-  const manifest = JSON.parse(file['/work/output/publication.json'] as string);
+  const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
-  const entry = file['/work/output/remote/foo bar%/escape check%.html'];
-  expect(await format(entry as string, { parser: 'html' })).toMatchSnapshot();
+  const entry = file['/work/output/remote/foo bar%/escape check%.html']!;
+  expect(await format(entry, { parser: 'html' })).toMatchSnapshot();
   expect(file['/work/output/remote/あ/日本語.css']).toBe(
     file['/remote/あ/日本語.css'],
   );
@@ -296,17 +293,30 @@ it('generate webpub with complex copyAsset settings', async () => {
     '/work/input/node_modules/pkgB/a.html': '',
     '/work/input/node_modules/pkgB/bar/b.html': '',
   });
-  await build({
-    configPath: '/work/input/vivliostyle.config.json',
-  });
+  await runCommand(['build'], { cwd: '/work/input' });
 
   expect(toTree(vol)).toMatchSnapshot();
 });
 
 it('copy webpub assets properly', async () => {
+  const themeDir = {
+    'themeA/package.json': '{"main": "theme.css"}',
+    'themeA/theme.css': '',
+    'themeA/example/a.css': '',
+    '@org/themeB/package.json': '{"main": "theme.css"}',
+    '@org/themeB/theme.css': '',
+    '@org/themeB/example/a.css': '',
+  };
+  mockedThemeModule.checkThemeInstallationNecessity.mockImplementationOnce(
+    () => true,
+  );
+  mockedThemeModule.installThemeDependencies.mockImplementationOnce(() => {
+    vol.fromJSON(themeDir, '/work/input/.vivliostyle/themes/node_modules');
+  });
+
   const config: VivliostyleConfigSchema = {
     entry: ['doc.md'],
-    output: ['/work/input/output1', '/work/input/output2'],
+    output: ['/work/input/output'],
     theme: ['themeA', '@org/themeB'],
   };
   vol.fromJSON({
@@ -315,17 +325,8 @@ it('copy webpub assets properly', async () => {
     '/work/input/doc.md': 'yuno',
     '/work/input/node_modules/pkgA/a.html': '',
     '/work/input/node_modules/pkgA/a.css': '',
-    '/work/input/themes/packages/themeA/package.json': '{"main": "theme.css"}',
-    '/work/input/themes/packages/themeA/theme.css': '',
-    '/work/input/themes/packages/themeA/example/a.css': '',
-    '/work/input/themes/packages/@org/themeB/package.json':
-      '{"main": "theme.css"}',
-    '/work/input/themes/packages/@org/themeB/theme.css': '',
-    '/work/input/themes/packages/@org/themeB/example/a.css': '',
   });
-  await build({
-    configPath: '/work/input/vivliostyle.config.json',
-  });
+  await runCommand(['build'], { cwd: '/work/input' });
 
   expect(toTree(vol)).toMatchSnapshot();
 });

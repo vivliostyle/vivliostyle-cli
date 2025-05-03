@@ -4,5 +4,6 @@
   "singleQuote": true,
   "trailingComma": "all",
   "arrowParens": "always",
-  "bracketSpacing": true
+  "bracketSpacing": true,
+  "plugins": ["prettier-plugin-astro"]
 }

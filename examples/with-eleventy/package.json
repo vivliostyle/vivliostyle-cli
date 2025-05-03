@@ -1,0 +1,35 @@
+{
+  "name": "with-eleventy",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "npx @11ty/eleventy && vivliostyle build",
+    "build-nocolor": "cross-env NODE_DISABLE_COLORS=1 npx @11ty/eleventy",
+    "build-ghpages": "npx @11ty/eleventy --pathprefix=/eleventy-base-blog/",
+    "start": "npx @11ty/eleventy --serve --quiet",
+    "start-ghpages": "npx @11ty/eleventy --pathprefix=/eleventy-base-blog/ --serve --quiet",
+    "debug": "cross-env DEBUG=Eleventy* npx @11ty/eleventy",
+    "debugstart": "cross-env DEBUG=Eleventy* npx @11ty/eleventy --serve --quiet",
+    "benchmark": "cross-env DEBUG=Eleventy:Benchmark* npx @11ty/eleventy",
+    "eleventy": "npx @11ty/eleventy",
+    "vivliostyle": "vivliostyle"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0",
+    "@11ty/eleventy-img": "^6.0.1",
+    "@11ty/eleventy-navigation": "^0.3.5",
+    "@11ty/eleventy-plugin-rss": "^2.0.2",
+    "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
+    "@11ty/eleventy-plugin-vite": "^6.0.0",
+    "@vivliostyle/cli": "file:../..",
+    "cross-env": "^7.0.3",
+    "luxon": "^3.5.0",
+    "prismjs": "^1.29.0",
+    "zod": "^3.23.8",
+    "zod-validation-error": "^3.3.1"
+  },
+  "dependencies": {
+    "@zachleat/heading-anchors": "^1.0.1"
+  }
+}

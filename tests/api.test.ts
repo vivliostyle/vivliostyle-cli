@@ -1,42 +1,44 @@
-import fileType from 'file-type';
-import fs from 'node:fs';
-import upath from 'upath';
-import { expect, test } from 'vitest';
-import { build } from '../src/index.js';
-import { rootPath } from './command-util.js';
+import { expect, it, vi } from 'vitest';
+import { build, init, preview } from '../src/index.js';
 
-const fixtureRoot = upath.resolve(rootPath, 'tests/fixtures/wood');
-const fixtureFile = upath.join(fixtureRoot, 'index.html');
-
-const localTmpDir = upath.join(rootPath, 'tmp');
-fs.mkdirSync(localTmpDir, { recursive: true });
-
-function cleanUp(filePath: string) {
-  try {
-    fs.unlinkSync(filePath);
-  } catch (err: any) {
-    if (err.code !== 'ENOENT') {
-      throw err;
-    }
-  }
-}
-
-test('api generates pdf without errors', async () => {
-  const outputPath = upath.join(localTmpDir, 'test-api.pdf');
-  cleanUp(outputPath);
+it('provides build function', async () => {
+  const mockedBuild = vi.hoisted(() => vi.fn());
+  vi.mock('../src/core/build', () => ({ build: mockedBuild }));
 
   await build({
-    targets: [
-      {
-        path: outputPath,
-        format: 'pdf',
-      },
-    ],
-    input: fixtureFile,
-    size: 'A4',
+    config: 'vivliostyle.config.js',
   });
+  expect(mockedBuild).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      config: 'vivliostyle.config.js',
+    }),
+  );
+});
 
-  // mimetype test
-  const type = await fileType.fromFile(outputPath);
-  expect(type!.mime).toEqual('application/pdf');
-}, 120000);
+it('provides init function', async () => {
+  const mockedInit = vi.hoisted(() => vi.fn());
+  vi.mock('../src/core/init', () => ({ init: mockedInit }));
+
+  await init({
+    title: 'Vivliostyle',
+  });
+  expect(mockedInit).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      title: 'Vivliostyle',
+    }),
+  );
+});
+
+it('provides preview function', async () => {
+  const mockedPreview = vi.hoisted(() => vi.fn());
+  vi.mock('../src/core/preview', () => ({ preview: mockedPreview }));
+
+  await preview({
+    input: 'index.html',
+  });
+  expect(mockedPreview).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      input: { entry: 'index.html', format: 'webbook' },
+    }),
+  );
+});

@@ -5,10 +5,11 @@
     "skipLibCheck": true,
     /* Basic Options */
     // "incremental": true,                   /* Enable incremental compilation */
-    "target": "ESNext" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */,
+    "target": "ES2023" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */,
     "module": "NodeNext" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
     "lib": [
-      "ES2019",
+      "ES2023",
+      "ESNext.Disposable",
       "DOM",
       "DOM.Iterable"
     ] /* Specify library files to be included in the compilation. */,
@@ -25,7 +26,7 @@
     // "composite": true,                     /* Enable project compilation */
     // "tsBuildInfoFile": "./",               /* Specify file to store incremental compilation information */
     // "removeComments": true,                /* Do not emit comments to output. */
-    // "noEmit": true,                        /* Do not emit outputs. */
+    "noEmit": true /* Do not emit outputs. */,
     // "importHelpers": true,                 /* Import emit helpers from 'tslib'. */
     // "downlevelIteration": true,            /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
     // "isolatedModules": true,               /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */
@@ -67,10 +68,5 @@
     /* Experimental Options */
     // "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
-  },
-  "ts-node": {
-    "experimentalSpecifierResolution": "node",
-    "transpileOnly": true,
-    "esm": true
   }
 }

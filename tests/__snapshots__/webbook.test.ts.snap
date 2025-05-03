@@ -4,47 +4,38 @@ exports[`copy webpub assets properly 1`] = `
 "/
 └─ work/
    └─ input/
-      ├─ doc.html
+      ├─ .vivliostyle/
+      │  ├─ doc.html
+      │  ├─ publication.json
+      │  └─ themes/
+      │     └─ node_modules/
+      │        ├─ @org/
+      │        │  └─ themeB/
+      │        │     ├─ example/
+      │        │     │  └─ a.css
+      │        │     ├─ package.json
+      │        │     └─ theme.css
+      │        └─ themeA/
+      │           ├─ example/
+      │           │  └─ a.css
+      │           ├─ package.json
+      │           └─ theme.css
       ├─ doc.md
       ├─ node_modules/
       │  └─ pkgA/
       │     ├─ a.css
       │     └─ a.html
-      ├─ output1/
+      ├─ output/
       │  ├─ doc.html
       │  ├─ publication.json
       │  └─ themes/
-      │     └─ packages/
-      │        ├─ @org/
-      │        │  └─ themeB/
-      │        │     └─ theme.css
-      │        └─ themeA/
-      │           └─ theme.css
-      ├─ output2/
-      │  ├─ doc.html
-      │  ├─ publication.json
-      │  └─ themes/
-      │     └─ packages/
+      │     └─ node_modules/
       │        ├─ @org/
       │        │  └─ themeB/
       │        │     └─ theme.css
       │        └─ themeA/
       │           └─ theme.css
       ├─ package.json
-      ├─ publication.json
-      ├─ themes/
-      │  └─ packages/
-      │     ├─ @org/
-      │     │  └─ themeB/
-      │     │     ├─ example/
-      │     │     │  └─ a.css
-      │     │     ├─ package.json
-      │     │     └─ theme.css
-      │     └─ themeA/
-      │        ├─ example/
-      │        │  └─ a.css
-      │        ├─ package.json
-      │        └─ theme.css
       └─ vivliostyle.config.json"
 `;
 
@@ -83,7 +74,7 @@ Object {
 `;
 
 exports[`generate webpub from a plain HTML 3`] = `
-"<!doctype html>
+"<!DOCTYPE html>
 <html lang=\\"ja\\">
   <head>
     <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style.css\\" />
@@ -253,30 +244,30 @@ Object {
 }
 `;
 
-exports[`generate webpub from vivliostyle.config.js > cover.html 1`] = `
-"<html>
-  <head></head>
-  <body>
-    <img role=\\"doc-cover\\" data-test=\\"true\\" src=\\"cover.png\\" alt=\\"Cover image\\" />
-  </body>
-</html>
-"
-`;
-
 exports[`generate webpub from vivliostyle.config.js 1`] = `
 "/
 └─ work/
    ├─ input/
-   │  ├─ cover.html
+   │  ├─ .vivliostyle/
+   │  │  ├─ cover.html
+   │  │  ├─ cover.png
+   │  │  ├─ doc/
+   │  │  │  ├─ escape check%.html
+   │  │  │  ├─ one.html
+   │  │  │  └─ two.html
+   │  │  ├─ index.html
+   │  │  ├─ publication.json
+   │  │  ├─ style sheet.css
+   │  │  └─ themes/
+   │  │     └─ node_modules/
+   │  │        └─ mytheme/
+   │  │           ├─ %style%.css
+   │  │           └─ package.json
    │  ├─ cover.png
    │  ├─ doc/
-   │  │  ├─ escape check%.html
    │  │  ├─ escape check%.md
-   │  │  ├─ one.html
    │  │  ├─ one.md
-   │  │  ├─ two.html
    │  │  └─ two.md
-   │  ├─ index.html
    │  ├─ output/
    │  │  ├─ cover.html
    │  │  ├─ cover.png
@@ -288,16 +279,10 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
    │  │  ├─ publication.json
    │  │  ├─ style sheet.css
    │  │  └─ themes/
-   │  │     └─ packages/
+   │  │     └─ node_modules/
    │  │        └─ mytheme/
    │  │           └─ %style%.css
-   │  ├─ publication.json
    │  ├─ style sheet.css
-   │  ├─ themes/
-   │  │  └─ packages/
-   │  │     └─ mytheme/
-   │  │        ├─ %style%.css
-   │  │        └─ package.json
    │  ├─ tmpl/
    │  │  ├─ cover-template.html
    │  │  └─ toc-template.html
@@ -316,7 +301,7 @@ exports[`generate webpub from vivliostyle.config.js 1`] = `
       ├─ publication.json
       ├─ style sheet.css
       └─ themes/
-         └─ packages/
+         └─ node_modules/
             └─ mytheme/
                └─ %style%.css"
 `;
@@ -361,39 +346,10 @@ Object {
       "url": "cover.png",
     },
     "style%20sheet.css",
-    "themes/packages/mytheme/%25style%25.css",
+    "themes/node_modules/mytheme/%25style%25.css",
   ],
   "type": "Book",
 }
-`;
-
-exports[`generate webpub from vivliostyle.config.js 3`] = `
-"<html>
-  <head>
-    <link
-      rel=\\"stylesheet\\"
-      type=\\"text/css\\"
-      href=\\"themes/packages/mytheme/%25style%25.css\\"
-    />
-    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style%20sheet.css\\" />
-    <link
-      rel=\\"publication\\"
-      type=\\"application/ld+json\\"
-      href=\\"publication.json\\"
-    />
-  </head>
-  <body>
-    <nav role=\\"doc-toc\\" data-test=\\"true\\">
-      <h2>Table of Contents</h2>
-      <ol>
-        <li><a href=\\"doc/one.html\\">one</a></li>
-        <li><a href=\\"doc/two.html\\">two</a></li>
-        <li><a href=\\"doc/escape%20check%25.html\\">escape check%</a></li>
-      </ol>
-    </nav>
-  </body>
-</html>
-"
 `;
 
 exports[`generate webpub with complex copyAsset settings 1`] = `

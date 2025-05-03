@@ -252,8 +252,6 @@ exports[`generate EPUB from single Markdown input > tree 1`] = `
 │        └─ container.xml
 └─ work/
    ├─ input/
-   │  ├─ .vs-0.foo bar%.html
-   │  ├─ .vs-0.publication.json
    │  └─ foo bar%.md
    └─ output.epub"
 `;
@@ -365,14 +363,17 @@ exports[`generate EPUB from vivliostyle.config.js > tree 1`] = `
 │        └─ container.xml
 └─ work/
    └─ input/
+      ├─ .vivliostyle/
+      │  ├─ cover image%.png
+      │  ├─ escape check%.css
+      │  ├─ gen content%/
+      │  │  ├─ cover document%.html
+      │  │  └─ index file%.html
+      │  ├─ publication.json
+      │  └─ 日本語.html
       ├─ cover image%.png
       ├─ escape check%.css
-      ├─ gen content%/
-      │  ├─ cover document%.html
-      │  └─ index file%.html
       ├─ output.epub
-      ├─ publication.json
       ├─ vivliostyle.config.json
-      ├─ 日本語.html
       └─ 日本語.md"
 `;
