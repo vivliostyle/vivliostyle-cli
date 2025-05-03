@@ -167,6 +167,9 @@ importers:
       '@types/fs-extra':
         specifier: 11.0.4
         version: 11.0.4
+      '@types/hast':
+        specifier: 3.0.4
+        version: 3.0.4
       '@types/jsdom':
         specifier: 21.1.7
         version: 21.1.7
@@ -254,6 +257,9 @@ importers:
       typescript:
         specifier: 5.8.3
         version: 5.8.3
+      unified:
+        specifier: 9.2.2
+        version: 9.2.2
       vite:
         specifier: 6.3.3
         version: 6.3.3(@types/node@22.15.2)(tsx@4.19.3)(yaml@2.7.1)
