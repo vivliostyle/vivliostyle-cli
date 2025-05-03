@@ -2,17 +2,14 @@
 
 ## Development Guide
 
+Please ensure pnpm:>=10 is installed in your machine.
+
 ```bash
 git clone https://github.com/vivliostyle/vivliostyle-cli.git && cd vivliostyle-cli
-yarn install
-yarn build
-yarn link
-cd example
-yarn install
-DEBUG=vs-cli vivliostyle build
+pnpm install
 ```
 
-After setup, run `yarn dev` to watch files.
+After setup, run `pnpm dev` to watch files.
 
 ## Release Guide (Maintainers only)
 
@@ -25,7 +22,7 @@ release-it --preRelease=beta --npm.tag=next
 ### Bump pre-release version
 
 ```bash
-yarn release:pre
+pnpm release:pre
 # or
 release-it --preRelease --npm.tag=next
 ```
@@ -33,7 +30,7 @@ release-it --preRelease --npm.tag=next
 ### Graduate
 
 ```bash
-yarn release
+pnpm release
 # or
 release-it
 ```
