@@ -49,7 +49,7 @@ jobs:
       - name: Output current Playwright version
         id: playwright
         run: |
-          pnpm install --prod
+          pnpm install
           VERSION=$(node -e 'console.log(require("playwright-core/package.json").version)')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Set up QEMU
