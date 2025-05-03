@@ -1,3 +1,24 @@
+# Changelog
+
+# [9.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/9.0.0-next.7...9.0.0) (2025-05-03)
+
+### Bug Fixes
+
+- Load document with extensions other than .html correctly ([d9fd342](https://github.com/vivliostyle/vivliostyle-cli/commit/d9fd3425c3de09e117fb0d9788b3b0e36c336fef)), closes [#574](https://github.com/vivliostyle/vivliostyle-cli/issues/574)
+
+### chore
+
+- Update node engine ([3711f8f](https://github.com/vivliostyle/vivliostyle-cli/commit/3711f8fa44dd4d4f573b5eddc6f6a7a127699df0))
+
+### Features
+
+- Rewrite internal system based on Vite ([dd4b41f](https://github.com/vivliostyle/vivliostyle-cli/commit/dd4b41f4ec0a2a858ff9f533b02410992ac2974f))
+
+### BREAKING CHANGES
+
+- Some systems that rely on architecture inside the Vivliostyle CLI may no longer work. See #550 for more information.
+- Node.js v18 is now the minimum supported version.
+
 # [9.0.0-next.7](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.0-next.7) (2025-04-28)
 
 # [9.0.0-next.6](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.5...v9.0.0-next.6) (2025-03-09)
