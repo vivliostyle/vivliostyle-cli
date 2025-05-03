@@ -12,6 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
       - name: Output current package version
         id: package
         run: |
@@ -20,7 +24,7 @@ jobs:
       - name: Output current Playwright version
         id: playwright
         run: |
-          yarn install --frozen-lockfile
+          pnpm install --prod
           VERSION=$(node -e 'console.log(require("playwright-core/package.json").version)')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Docker meta
