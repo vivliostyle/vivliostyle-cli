@@ -107,7 +107,7 @@
     "typedoc-plugin-markdown": "4.6.3",
     "typescript": "5.8.3",
     "unified": "9.2.2",
-    "vite": "6.3.3",
+    "vite": "6.3.4",
     "vitest": "3.1.2"
   },
   "main": "dist/index.js",
