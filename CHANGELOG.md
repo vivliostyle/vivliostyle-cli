@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/9.0.0...9.0.1) (2025-05-05)
+
+### Bug Fixes
+
+- Add Vite as dependencies ([c19fdf3](https://github.com/vivliostyle/vivliostyle-cli/commit/c19fdf302d1d0f54bd71f3460c690260171729c1))
+
 # [9.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/9.0.0-next.7...9.0.0) (2025-05-03)
 
 ### Bug Fixes
