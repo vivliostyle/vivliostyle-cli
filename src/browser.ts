@@ -12,7 +12,6 @@ async function launchBrowser({
   executablePath,
   headless,
   noSandbox,
-  disableWebSecurity,
   disableDevShmUsage,
 }: {
   browserType: BrowserType;
@@ -27,7 +26,6 @@ async function launchBrowser({
   executablePath: string;
   headless: boolean;
   noSandbox?: boolean;
-  disableWebSecurity?: boolean;
   disableDevShmUsage?: boolean;
 }): Promise<Browser> {
   const playwright = await importNodeModule('playwright-core');
@@ -39,8 +37,8 @@ async function launchBrowser({
           chromiumSandbox: !noSandbox,
           headless,
           args: [
-            '--allow-file-access-from-files',
-            ...(disableWebSecurity ? ['--disable-web-security'] : []),
+            // #579: disable web security to allow cross-origin requests
+            '--disable-web-security',
             ...(disableDevShmUsage ? ['--disable-dev-shm-usage'] : []),
             // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
             ...(headless ? ['--force-device-scale-factor=1'] : []),
