@@ -191,8 +191,11 @@ export type DocumentProcessorFactory = (
   metadata: Metadata,
 ) => Processor;
 
+export const UseTemporaryServerRoot = Symbol('UseTemporaryServerRoot');
+export type UseTemporaryServerRoot = typeof UseTemporaryServerRoot;
+
 export type ResolvedTaskConfig = {
-  context: string;
+  serverRootDir: string | UseTemporaryServerRoot;
   entryContextDir: string;
   workspaceDir: string;
   themesDir: string;
@@ -666,7 +669,6 @@ export function resolveTaskConfig(
 
   const resolvedConfig = {
     ...projectConfig,
-    context,
     entryContextDir,
     outputs,
     themeIndexes,
@@ -707,6 +709,7 @@ export function resolveTaskConfig(
 
 type ProjectConfig = Pick<
   ResolvedTaskConfig,
+  | 'serverRootDir'
   | 'workspaceDir'
   | 'themesDir'
   | 'entries'
@@ -724,15 +727,14 @@ function resolveSingleInputConfig({
   temporaryFilePrefix,
   themeIndexes,
   base,
-}: Pick<
-  ResolvedTaskConfig,
-  'context' | 'temporaryFilePrefix' | 'themeIndexes' | 'base'
-> & {
+}: Pick<ResolvedTaskConfig, 'temporaryFilePrefix' | 'themeIndexes' | 'base'> & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
+  context: string;
 }): ProjectConfig {
   Logger.debug('entering single entry config mode');
 
+  let serverRootDir: string | UseTemporaryServerRoot;
   let sourcePath: string;
   let workspaceDir: string;
   const inputFormat = input.format;
@@ -743,6 +745,7 @@ function resolveSingleInputConfig({
 
   if (isValidUri(input.entry)) {
     sourcePath = input.entry;
+    serverRootDir = UseTemporaryServerRoot;
     workspaceDir = context;
   } else {
     sourcePath = upath.resolve(context, input.entry);
@@ -768,6 +771,7 @@ function resolveSingleInputConfig({
       default:
         return input.format satisfies never;
     }
+    serverRootDir = workspaceDir;
   }
   const themesDir = upath.resolve(workspaceDir, 'themes');
 
@@ -884,6 +888,7 @@ function resolveSingleInputConfig({
   }
 
   return {
+    serverRootDir,
     workspaceDir,
     themesDir,
     entries,
@@ -908,13 +913,12 @@ function resolveComposedProjectConfig({
   cover,
 }: Pick<
   ResolvedTaskConfig,
-  | 'context'
   | 'entryContextDir'
   | 'outputs'
   | 'temporaryFilePrefix'
   | 'themeIndexes'
   | 'cover'
-> & { config: ParsedBuildTask }): ProjectConfig {
+> & { config: ParsedBuildTask; context: string }): ProjectConfig {
   Logger.debug('entering composed project config mode');
 
   const workspaceDir = upath.resolve(
@@ -922,7 +926,7 @@ function resolveComposedProjectConfig({
     config.workspaceDir ?? '.vivliostyle',
   );
   const themesDir = upath.resolve(workspaceDir, 'themes');
-  const pkgJsonPath = upath.resolve(entryContextDir, 'package.json');
+  const pkgJsonPath = upath.resolve(context, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
     ? readJSON(pkgJsonPath)
     : undefined;
@@ -1212,6 +1216,7 @@ function resolveComposedProjectConfig({
   }
 
   return {
+    serverRootDir: context,
     workspaceDir,
     themesDir,
     entries,

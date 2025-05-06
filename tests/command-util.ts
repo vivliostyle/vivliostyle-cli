@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import upath from 'upath';
 import * as v from 'valibot';
 import { ViteDevServer } from 'vite';
+import { afterEach } from 'vitest';
 import { setupBuildParserProgram } from '../src/commands/build.parser.js';
 import {
   parseFlagsToInlineConfig,
@@ -24,6 +25,14 @@ import {
 } from './../src/config/schema';
 
 export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
+
+const runningServers = new Set<ViteDevServer>();
+afterEach(async () => {
+  for (const server of runningServers) {
+    await server.close();
+  }
+  runningServers.clear();
+});
 
 export const runCommand = async (
   [command, ...args]: ['init' | 'build' | 'preview', ...string[]],
@@ -48,7 +57,11 @@ export const runCommand = async (
     }[command],
   );
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  return await { init, build, preview }[command](inlineConfig);
+  const server = await { init, build, preview }[command](inlineConfig);
+  if (server) {
+    runningServers.add(server);
+  }
+  return server;
 };
 
 export const createServerMiddleware = async ({
@@ -65,12 +78,14 @@ export const createServerMiddleware = async ({
     input,
     configData: config,
     enableStaticServe: true,
+    enableViewerStartPage: true,
     vite: {
       server: { middlewareMode: true },
     },
   } satisfies VivliostyleInlineConfig);
 
   const server = await preview(inlineConfig);
+  runningServers.add(server);
   return server.middlewares;
 };
 

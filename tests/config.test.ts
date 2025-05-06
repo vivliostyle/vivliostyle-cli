@@ -1,4 +1,5 @@
 import { expect, it, onTestFinished, vi } from 'vitest';
+import { UseTemporaryServerRoot } from '../src/config/resolve.js';
 import { VivliostyleConfigSchema } from '../src/config/schema.js';
 import { getTaskConfig, maskConfig, resolveFixture } from './command-util.js';
 
@@ -145,8 +146,8 @@ it('override option by environment variable', async () => {
   expect(validConfig1.proxy?.bypass).toBe('bypass.example.com');
 });
 
-it('deny invalid config', () => {
-  expect(
+it('deny invalid config', async () => {
+  await expect(
     getTaskConfig(
       ['build'],
       resolveFixture('config'),
@@ -363,5 +364,41 @@ it('allow a loose specifier of a theme direcory', async () => {
         ],
       },
     ],
+  });
+});
+
+it('resolves server root dir for single input file', async () => {
+  const config = await getTaskConfig(
+    ['build', 'nestedDir/01.md'],
+    resolveFixture('config'),
+  );
+  maskConfig(config);
+  expect(config).toMatchObject({
+    serverRootDir: '__WORKSPACE__/tests/fixtures/config/nestedDir',
+    workspaceDir: '__WORKSPACE__/tests/fixtures/config/nestedDir',
+  });
+});
+
+it('locates server root dir for EPUB OPF file', async () => {
+  const config = await getTaskConfig(
+    ['build', 'adaptive/OPS/content.opf'],
+    resolveFixture('epubs'),
+  );
+  maskConfig(config);
+  expect(config).toMatchObject({
+    serverRootDir: '__WORKSPACE__/tests/fixtures/epubs/adaptive',
+    workspaceDir: '__WORKSPACE__/tests/fixtures/epubs/adaptive',
+  });
+});
+
+it('uses temporary dir for server root dir', async () => {
+  const config = await getTaskConfig(
+    ['build', 'https://example.com'],
+    resolveFixture('config'),
+  );
+  maskConfig(config);
+  expect(config).toMatchObject({
+    serverRootDir: UseTemporaryServerRoot,
+    workspaceDir: '__WORKSPACE__/tests/fixtures/config',
   });
 });

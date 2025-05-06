@@ -151,12 +151,17 @@ export async function buildPDFWithContainer({
   await runContainer({
     image: config.image,
     userVolumeArgs: collectVolumeArgs([
-      config.context,
+      ...(typeof config.serverRootDir === 'string'
+        ? [config.serverRootDir]
+        : []),
       upath.dirname(target.path),
     ]),
     env: [['VS_CLI_BUILD_PDF_OPTIONS', JSON.stringify(bypassedOption)]],
     commandArgs: ['build'],
-    workdir: toContainerPath(config.context),
+    workdir:
+      typeof config.serverRootDir === 'string'
+        ? toContainerPath(config.serverRootDir)
+        : undefined,
   });
 
   return target.path;
