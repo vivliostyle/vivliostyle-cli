@@ -5,19 +5,13 @@ import { promisify } from 'node:util';
 import upath from 'upath';
 import { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from './config/schema.js';
-import { cliVersion } from './const.js';
+import { CONTAINER_LOCAL_HOSTNAME, CONTAINER_ROOT_DIR } from './const.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
 import { getSourceUrl } from './server.js';
 import { isValidUri, pathEquals } from './util.js';
 
 const execFileAsync = promisify(execFile);
-
-export const CONTAINER_IMAGE = `ghcr.io/vivliostyle/cli:${cliVersion}`;
-export const CONTAINER_ROOT_DIR = '/data';
-// Special hostname to access host machine from container
-// https://docs.docker.com/desktop/features/networking/#use-cases-and-workarounds
-export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 
 export function toContainerPath(urlOrAbsPath: string): string {
   if (isValidUri(urlOrAbsPath)) {

@@ -26,6 +26,12 @@ export const EPUB_LANDMARKS_COVER_ENTRY = 'Cover Page';
 export const EMPTY_DATA_URI = 'data:,';
 export const VIEWER_ROOT_PATH = '/__vivliostyle-viewer';
 
+export const CONTAINER_URL = 'ghcr.io/vivliostyle/cli';
+export const CONTAINER_ROOT_DIR = '/data';
+// Special hostname to access host machine from container
+// https://docs.docker.com/desktop/features/networking/#use-cases-and-workarounds
+export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
+
 export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
 export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {

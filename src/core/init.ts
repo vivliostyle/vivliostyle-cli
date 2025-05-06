@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import upath from 'upath';
 import { cyan, yellow } from 'yoctocolors';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
-import { CONTAINER_IMAGE } from '../container.js';
+import { cliVersion, CONTAINER_URL } from '../const.js';
 import { Logger } from '../logger.js';
 import { cwd, runExitHandlers } from '../util.js';
 
@@ -32,7 +32,7 @@ const vivliostyleConfig = {
   // readingProgression: 'rtl', // reading progression direction, 'ltr' or 'rtl'.
   ${inlineConfig.size ? '' : '// '}size: '${inlineConfig.size || 'A4'}',
   ${inlineConfig.theme ? '' : '// '}theme: '${inlineConfig.theme?.[0].specifier || ''}', // .css or local dir or npm package. default to undefined
-  image: '${CONTAINER_IMAGE}',
+  image: '${CONTAINER_URL}:${cliVersion}',
   entry: [ // **required field**
     // 'introduction.md', // 'title' is automatically guessed from the file (frontmatter > first heading)
     // {

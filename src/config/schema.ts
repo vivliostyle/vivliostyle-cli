@@ -1,7 +1,9 @@
 import { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
+import { satisfies as semverSatisfies } from 'semver';
 import { type Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
+import { cliVersion, CONTAINER_URL } from '../const.js';
 import { LoggerInterface } from '../logger.js';
 
 const $ = (strings: TemplateStringsArray, ...values: any[]) => {
@@ -723,6 +725,13 @@ export const BuildTask = v.pipe(
         ),
         image: v.pipe(
           ValidString,
+          v.check((value) => {
+            const [url, version] = value.split(':');
+            if (url !== CONTAINER_URL || !/^\d+(\.\d+){0,2}$/.test(version)) {
+              return true;
+            }
+            return semverSatisfies(cliVersion, version);
+          }, `The specified image is not compatible with the CLI version ${cliVersion}. Please check the image version.`),
           v.description($`
             Docker image used for rendering.
           `),

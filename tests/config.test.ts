@@ -402,3 +402,12 @@ it('uses temporary dir for server root dir', async () => {
     workspaceDir: '__WORKSPACE__/tests/fixtures/config',
   });
 });
+
+it('deny config which has incompatible image', async () => {
+  await expect(
+    getTaskConfig(['build'], resolveFixture('config'), {
+      ...validConfigData,
+      image: 'ghcr.io/vivliostyle/cli:0.0.0',
+    }),
+  ).rejects.toThrow();
+});

@@ -104,6 +104,9 @@ importers:
       resolve-pkg:
         specifier: 2.0.0
         version: 2.0.0
+      semver:
+        specifier: 7.7.1
+        version: 7.7.1
       sirv:
         specifier: 3.0.1
         version: 3.0.1
@@ -192,6 +195,9 @@ importers:
       '@types/picomatch':
         specifier: 4.0.0
         version: 4.0.0
+      '@types/semver':
+        specifier: 7.7.0
+        version: 7.7.0
       '@types/supertest':
         specifier: 6.0.3
         version: 6.0.3
@@ -7637,6 +7643,7 @@ snapshots:
       press-ready: 4.0.3
       prettier: 3.5.3
       resolve-pkg: 2.0.0
+      semver: 7.7.1
       sirv: 3.0.1
       terminal-link: 4.0.0
       tinyglobby: 0.2.13
