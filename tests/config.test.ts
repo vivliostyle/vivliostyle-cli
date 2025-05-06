@@ -146,8 +146,8 @@ it('override option by environment variable', async () => {
   expect(validConfig1.proxy?.bypass).toBe('bypass.example.com');
 });
 
-it('deny invalid config', () => {
-  expect(
+it('deny invalid config', async () => {
+  await expect(
     getTaskConfig(
       ['build'],
       resolveFixture('config'),
