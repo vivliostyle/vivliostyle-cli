@@ -30,10 +30,17 @@ export const registerExitHandler = (
   debugMessage: string,
   handler: () => void,
 ) => {
-  beforeExitHandlers.push(() => {
+  const callback = () => {
     Logger.debug(debugMessage);
     handler();
-  });
+  };
+  beforeExitHandlers.push(callback);
+  return () => {
+    const index = beforeExitHandlers.indexOf(callback);
+    if (index !== -1) {
+      beforeExitHandlers.splice(index, 1);
+    }
+  };
 };
 
 export function runExitHandlers() {

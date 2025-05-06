@@ -7,7 +7,7 @@ import {
   redBright,
   yellowBright,
 } from 'yoctocolors';
-import { isInContainer } from './util.js';
+import { isInContainer, registerExitHandler } from './util.js';
 
 export const isUnicodeSupported =
   process.platform !== 'win32' || Boolean(process.env.WT_SESSION);
@@ -68,7 +68,7 @@ export class Logger {
       return this.#loggerInstance;
     }
     this.#loggerInstance = new Logger();
-    this.#loggerInstance.#_spinner.start(text);
+    this.#loggerInstance.#start(text);
     return this.#loggerInstance;
   }
 
@@ -207,6 +207,7 @@ export class Logger {
   }
 
   #_spinner: Spinner;
+  #_disposeSpinnerExitHandler: (() => void) | undefined;
 
   constructor() {
     this.#_spinner = yoctoSpinner({
@@ -221,7 +222,18 @@ export class Logger {
     return this;
   }
 
+  #start(text: string) {
+    this.#_spinner.start(text);
+    this.#_disposeSpinnerExitHandler = registerExitHandler(
+      'Stopping spinner',
+      () => {
+        this.#_spinner.stop();
+      },
+    );
+  }
+
   [Symbol.dispose]() {
+    this.#_disposeSpinnerExitHandler?.();
     this.#_spinner.stop(
       Logger.#nonBlockingLogPrinted
         ? undefined
