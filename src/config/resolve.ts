@@ -18,6 +18,9 @@ import {
   ThemeConfig,
 } from '../config/schema.js';
 import {
+  cliVersion,
+  CONTAINER_LOCAL_HOSTNAME,
+  CONTAINER_URL,
   COVER_HTML_FILENAME,
   COVER_HTML_IMAGE_ALT,
   EPUB_OUTPUT_VERSION,
@@ -25,7 +28,6 @@ import {
   TOC_FILENAME,
   TOC_TITLE,
 } from '../const.js';
-import { CONTAINER_IMAGE, CONTAINER_LOCAL_HOSTNAME } from '../container.js';
 import { Logger } from '../logger.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import {
@@ -506,7 +508,7 @@ export function resolveTaskConfig(
         password: options.proxyPass,
       }
     : undefined;
-  const image = config.image ?? CONTAINER_IMAGE;
+  const image = config.image ?? `${CONTAINER_URL}:${cliVersion}`;
   const viewer = config.viewer ?? undefined;
   const viewerParam = config.viewerParam ?? undefined;
   const logLevel = options.logLevel ?? 'silent';
