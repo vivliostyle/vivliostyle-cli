@@ -9,6 +9,7 @@ import {
 } from 'vite';
 import { dim } from 'yoctocolors';
 import { Logger } from '../logger.js';
+import { useTmpDirectory } from '../util.js';
 import { ResolvedTaskConfig } from './resolve.js';
 
 // Be careful not to confuse the preview/build commands of Vivliostyle CLI with Vite's mode.
@@ -20,7 +21,7 @@ const defaultConfigEnv: Record<'preview' | 'build', ConfigEnv> = {
 };
 
 export async function resolveViteConfig({
-  context,
+  serverRootDir,
   server,
   viteConfig,
   viteConfigFile,
@@ -29,7 +30,7 @@ export async function resolveViteConfig({
   mode,
 }: Pick<
   ResolvedTaskConfig,
-  | 'context'
+  | 'serverRootDir'
   | 'server'
   | 'viteConfig'
   | 'viteConfigFile'
@@ -70,11 +71,16 @@ export async function resolveViteConfig({
     Logger.logError(`${dim('[vite]')} ${msg}`);
   };
 
+  const root =
+    typeof serverRootDir === 'string'
+      ? serverRootDir
+      : (await useTmpDirectory())[0];
+
   const finalUserConfig = mergeViteConfig(viteConfig || {}, {
     server,
     preview: server,
     configFile: viteConfigFile === true ? undefined : viteConfigFile,
-    root: context,
+    root,
     customLogger: viteLogger,
     cacheDir: upath.join(workspaceDir, '.vite'),
   } satisfies InlineConfig);

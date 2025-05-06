@@ -13,19 +13,23 @@ export function vsStaticServePlugin({
 }): vite.Plugin {
   let config = _config;
 
-  const createMiddlewares = () =>
-    Object.entries(config.static).flatMap(([base, dirs]) =>
+  const createMiddlewares = () => {
+    if (typeof config.serverRootDir !== 'string') {
+      return [];
+    }
+    return Object.entries(config.static).flatMap(([base, dirs]) =>
       dirs.map(
         (dir) =>
           [
             base,
-            sirv(upath.resolve(config.context, dir), {
+            sirv(upath.resolve(config.serverRootDir, dir), {
               dev: true,
               etag: false,
             }),
           ] as const,
       ),
     );
+  };
 
   return {
     name: 'vivliostyle:static-serve',

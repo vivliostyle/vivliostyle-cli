@@ -212,10 +212,11 @@ export async function createViteServer({
     preview: viteConfig.preview,
     customLogger: viteConfig.customLogger,
     cacheDir: viteConfig.cacheDir,
+    root: viteConfig.root,
   } satisfies InlineConfig;
   Logger.debug('createViteServer > viteInlineConfig %O', viteInlineConfig);
 
-  if (config.context === config.workspaceDir) {
+  if (config.serverRootDir === config.workspaceDir) {
     const { cacheDir } = viteInlineConfig;
     registerExitHandler('Removing the Vite cacheDir', () => {
       if (fs.existsSync(cacheDir)) {

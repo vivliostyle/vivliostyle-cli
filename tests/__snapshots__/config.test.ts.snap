@@ -9,7 +9,6 @@ Object {
     "executablePath": "myFirefox",
     "type": "firefox",
   },
-  "context": "__WORKSPACE__/tests/fixtures/config",
   "copyAsset": Object {
     "excludes": Array [
       "*a*",
@@ -143,6 +142,7 @@ Object {
       "/api": "http://localhost:6789",
     },
   },
+  "serverRootDir": "__WORKSPACE__/tests/fixtures/config",
   "singleDoc": false,
   "size": Object {
     "format": "JIS-B5",
@@ -199,7 +199,6 @@ Object {
     "executablePath": undefined,
     "type": "firefox",
   },
-  "context": "__WORKSPACE__/tests/fixtures/config",
   "copyAsset": Object {
     "excludes": Array [
       "*a*",
@@ -335,6 +334,7 @@ Object {
       "/api": "http://localhost:6789",
     },
   },
+  "serverRootDir": "__WORKSPACE__/tests/fixtures/config",
   "singleDoc": false,
   "size": Object {
     "format": "size",

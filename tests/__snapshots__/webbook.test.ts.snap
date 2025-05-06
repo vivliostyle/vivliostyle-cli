@@ -1,54 +1,23 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`copy webpub assets properly 1`] = `
-"/
-└─ work/
-   └─ input/
-      ├─ .vivliostyle/
-      │  ├─ doc.html
-      │  ├─ publication.json
-      │  └─ themes/
-      │     └─ node_modules/
-      │        ├─ @org/
-      │        │  └─ themeB/
-      │        │     ├─ example/
-      │        │     │  └─ a.css
-      │        │     ├─ package.json
-      │        │     └─ theme.css
-      │        └─ themeA/
-      │           ├─ example/
-      │           │  └─ a.css
-      │           ├─ package.json
-      │           └─ theme.css
-      ├─ doc.md
-      ├─ node_modules/
-      │  └─ pkgA/
-      │     ├─ a.css
-      │     └─ a.html
-      ├─ output/
-      │  ├─ doc.html
-      │  ├─ publication.json
-      │  └─ themes/
-      │     └─ node_modules/
-      │        ├─ @org/
-      │        │  └─ themeB/
-      │        │     └─ theme.css
-      │        └─ themeA/
-      │           └─ theme.css
-      ├─ package.json
-      └─ vivliostyle.config.json"
+"output/
+├─ doc.html
+├─ publication.json
+└─ themes/
+   └─ node_modules/
+      ├─ @org/
+      │  └─ themeB/
+      │     └─ theme.css
+      └─ themeA/
+         └─ theme.css"
 `;
 
 exports[`generate webpub from a plain HTML 1`] = `
-"/
-└─ work/
-   ├─ input/
-   │  ├─ style.css
-   │  └─ webbook.html
-   └─ output/
-      ├─ publication.json
-      ├─ style.css
-      └─ webbook.html"
+"output/
+├─ publication.json
+├─ style.css
+└─ webbook.html"
 `;
 
 exports[`generate webpub from a plain HTML 2`] = `
@@ -91,20 +60,13 @@ exports[`generate webpub from a plain HTML 3`] = `
 `;
 
 exports[`generate webpub from a remote HTML document 1`] = `
-"/
-├─ remote/
-│  ├─ foo bar%/
-│  │  └─ escape check%.html
-│  └─ あ/
-│     └─ 日本語.css
-└─ work/
-   └─ output/
-      ├─ publication.json
-      └─ remote/
-         ├─ foo bar%/
-         │  └─ escape check%.html
-         └─ あ/
-            └─ 日本語.css"
+"output/
+├─ publication.json
+└─ remote/
+   ├─ foo bar%/
+   │  └─ escape check%.html
+   └─ あ/
+      └─ 日本語.css"
 `;
 
 exports[`generate webpub from a remote HTML document 2`] = `
@@ -150,24 +112,14 @@ exports[`generate webpub from a remote HTML document 3`] = `
 `;
 
 exports[`generate webpub from a single-document publication 1`] = `
-"/
-└─ work/
-   ├─ input/
-   │  ├─ assets/
-   │  │  ├─ subdir.css
-   │  │  └─ 日本語.svg
-   │  ├─ escape check%.html
-   │  ├─ subdir/
-   │  │  └─ index.html
-   │  └─ webbook.html
-   └─ output/
-      ├─ assets/
-      │  ├─ subdir.css
-      │  └─ 日本語.svg
-      ├─ escape check%.html
-      ├─ subdir/
-      │  └─ index.html
-      └─ webbook.html"
+"output/
+├─ assets/
+│  ├─ subdir.css
+│  └─ 日本語.svg
+├─ escape check%.html
+├─ subdir/
+│  └─ index.html
+└─ webbook.html"
 `;
 
 exports[`generate webpub from a single-document publication 2`] = `
@@ -195,33 +147,20 @@ exports[`generate webpub from a single-document publication 2`] = `
 `;
 
 exports[`generate webpub from remote HTML documents with publication manifest 1`] = `
-"/
+"output/
 ├─ assets/
 │  └─ 日本語.png
-├─ remote/
-│  ├─ dir/
-│  │  ├─ escape check%.html
-│  │  └─ index.html
-│  └─ publication.json
-└─ work/
-   └─ output/
-      ├─ assets/
-      │  └─ 日本語.png
-      └─ remote/
-         ├─ dir/
-         │  ├─ escape check%.html
-         │  └─ index.html
-         └─ publication.json"
+└─ remote/
+   ├─ dir/
+   │  ├─ escape check%.html
+   │  └─ index.html
+   └─ publication.json"
 `;
 
 exports[`generate webpub from single markdown file 1`] = `
-"/
-└─ work/
-   ├─ input/
-   │  └─ foo.md
-   └─ output/
-      ├─ foo.html
-      └─ publication.json"
+"output/
+├─ foo.html
+└─ publication.json"
 `;
 
 exports[`generate webpub from single markdown file 2`] = `
@@ -245,65 +184,20 @@ Object {
 `;
 
 exports[`generate webpub from vivliostyle.config.js 1`] = `
-"/
-└─ work/
-   ├─ input/
-   │  ├─ .vivliostyle/
-   │  │  ├─ cover.html
-   │  │  ├─ cover.png
-   │  │  ├─ doc/
-   │  │  │  ├─ escape check%.html
-   │  │  │  ├─ one.html
-   │  │  │  └─ two.html
-   │  │  ├─ index.html
-   │  │  ├─ publication.json
-   │  │  ├─ style sheet.css
-   │  │  └─ themes/
-   │  │     └─ node_modules/
-   │  │        └─ mytheme/
-   │  │           ├─ %style%.css
-   │  │           └─ package.json
-   │  ├─ cover.png
-   │  ├─ doc/
-   │  │  ├─ escape check%.md
-   │  │  ├─ one.md
-   │  │  └─ two.md
-   │  ├─ output/
-   │  │  ├─ cover.html
-   │  │  ├─ cover.png
-   │  │  ├─ doc/
-   │  │  │  ├─ escape check%.html
-   │  │  │  ├─ one.html
-   │  │  │  └─ two.html
-   │  │  ├─ index.html
-   │  │  ├─ publication.json
-   │  │  ├─ style sheet.css
-   │  │  └─ themes/
-   │  │     └─ node_modules/
-   │  │        └─ mytheme/
-   │  │           └─ %style%.css
-   │  ├─ style sheet.css
-   │  ├─ tmpl/
-   │  │  ├─ cover-template.html
-   │  │  └─ toc-template.html
-   │  └─ vivliostyle.config.json
-   ├─ mytheme/
-   │  ├─ %style%.css
-   │  └─ package.json
-   └─ output/
-      ├─ cover.html
-      ├─ cover.png
-      ├─ doc/
-      │  ├─ escape check%.html
-      │  ├─ one.html
-      │  └─ two.html
-      ├─ index.html
-      ├─ publication.json
-      ├─ style sheet.css
-      └─ themes/
-         └─ node_modules/
-            └─ mytheme/
-               └─ %style%.css"
+"output/
+├─ cover.html
+├─ cover.png
+├─ doc/
+│  ├─ escape check%.html
+│  ├─ one.html
+│  └─ two.html
+├─ index.html
+├─ publication.json
+├─ style sheet.css
+└─ themes/
+   └─ node_modules/
+      └─ mytheme/
+         └─ %style%.css"
 `;
 
 exports[`generate webpub from vivliostyle.config.js 2`] = `
@@ -353,38 +247,13 @@ Object {
 `;
 
 exports[`generate webpub with complex copyAsset settings 1`] = `
-"/
-└─ work/
-   ├─ input/
-   │  ├─ .vs/
-   │  │  ├─ assetA.jxl
-   │  │  ├─ doc.html
-   │  │  ├─ node_modules/
-   │  │  │  └─ pkgB/
-   │  │  │     ├─ a.html
-   │  │  │     └─ bar/
-   │  │  │        └─ b.html
-   │  │  └─ publication.json
-   │  ├─ assetA.jxl
-   │  ├─ assetB.svg
-   │  ├─ cover.png
-   │  ├─ doc.md
-   │  ├─ node_modules/
-   │  │  ├─ pkgA/
-   │  │  │  └─ img.png
-   │  │  └─ pkgB/
-   │  │     ├─ a.html
-   │  │     └─ bar/
-   │  │        └─ b.html
-   │  ├─ package.json
-   │  └─ vivliostyle.config.json
-   └─ output/
-      ├─ assetA.jxl
-      ├─ doc.html
-      ├─ node_modules/
-      │  └─ pkgB/
-      │     ├─ a.html
-      │     └─ bar/
-      │        └─ b.html
-      └─ publication.json"
+"output/
+├─ assetA.jxl
+├─ doc.html
+├─ node_modules/
+│  └─ pkgB/
+│     ├─ a.html
+│     └─ bar/
+│        └─ b.html
+└─ publication.json"
 `;

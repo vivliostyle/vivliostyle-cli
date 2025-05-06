@@ -52,11 +52,11 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
     if (!isInContainer()) {
       // build dependents first
       Logger.debug('build > viteConfig.configFile %s', viteConfig.configFile);
-      if (viteConfig.configFile) {
+      if (viteConfig.configFile && typeof config.serverRootDir === 'string') {
         using _ = Logger.suspendLogging('Building Vite project');
         await viteBuild({
           configFile: viteConfig.configFile,
-          root: config.context,
+          root: config.serverRootDir,
         });
       }
 
