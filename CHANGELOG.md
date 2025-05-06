@@ -1,5 +1,95 @@
 # Changelog
 
+## [9.0.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-05-06)
+
+### Bug Fixes
+
+- Always disable web security to allow cross-origin requests ([58e97ef](https://github.com/vivliostyle/vivliostyle-cli/commit/58e97ef44eb906c5ffbce8d84e1af92e70786058)), closes [#579](https://github.com/vivliostyle/vivliostyle-cli/issues/579)
+- Check version compatibility of image config ([6203101](https://github.com/vivliostyle/vivliostyle-cli/commit/6203101ce7eba239773f97d2d76d75bea9a0b88c))
+- Locate appropriate server roots in single entry mode ([71cfdce](https://github.com/vivliostyle/vivliostyle-cli/commit/71cfdce3f36459902c3671f1309a51cd5f79e569)), closes [#584](https://github.com/vivliostyle/vivliostyle-cli/issues/584) [#585](https://github.com/vivliostyle/vivliostyle-cli/issues/585)
+- Show cursor if process is interrupted ([5b51f02](https://github.com/vivliostyle/vivliostyle-cli/commit/5b51f02ce71c4b5aaf0a148a36c8b7b28e5752d7)), closes [#583](https://github.com/vivliostyle/vivliostyle-cli/issues/583)
+
+## [9.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-05-05)
+
+### Bug Fixes
+
+- Add Vite as dependencies ([c19fdf3](https://github.com/vivliostyle/vivliostyle-cli/commit/c19fdf302d1d0f54bd71f3460c690260171729c1))
+
+# [9.0.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-05-03)
+
+### Bug Fixes
+
+- Load document with extensions other than .html correctly ([d9fd342](https://github.com/vivliostyle/vivliostyle-cli/commit/d9fd3425c3de09e117fb0d9788b3b0e36c336fef)), closes [#574](https://github.com/vivliostyle/vivliostyle-cli/issues/574)
+
+### chore
+
+- Update node engine ([3711f8f](https://github.com/vivliostyle/vivliostyle-cli/commit/3711f8fa44dd4d4f573b5eddc6f6a7a127699df0))
+
+### Features
+
+- Rewrite internal system based on Vite ([dd4b41f](https://github.com/vivliostyle/vivliostyle-cli/commit/dd4b41f4ec0a2a858ff9f533b02410992ac2974f))
+
+### BREAKING CHANGES
+
+- Some systems that rely on architecture inside the Vivliostyle CLI may no longer work. See #550 for more information.
+- Node.js v18 is now the minimum supported version.
+
+# [9.0.0-next.7](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-04-27)
+
+# [9.0.0-next.6](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-03-09)
+
+### Reverts
+
+- Revert "chore: Export internal plugins" ([92900c6](https://github.com/vivliostyle/vivliostyle-cli/commit/92900c6b8ea2ed339c6c54e9f4a4966e8ecab9e7))
+
+# [9.0.0-next.5](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-03-09)
+
+# [9.0.0-next.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-03-08)
+
+### Bug Fixes
+
+- Add config file to deps ([bc0b875](https://github.com/vivliostyle/vivliostyle-cli/commit/bc0b8752bd74cd203716d6ab39180daa86bc88b9))
+
+# [9.0.0-next.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-01-15)
+
+# [9.0.0-next.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-01-13)
+
+# [9.0.0-next.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-01-06)
+
+# [9.0.0-next.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-01-06)
+
+# [8.20.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-04-08)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.31.2: Bug Fixes ([cacb9dd](https://github.com/vivliostyle/vivliostyle-cli/commit/cacb9dd999bd4b00ad2139ebbe77502fda36ceda))
+
+### Features
+
+- Update Playwright to 1.51.1 (Chromium 134.0.6998.35) ([9de4386](https://github.com/vivliostyle/vivliostyle-cli/commit/9de4386b43503058f1133e09374d69c6e43e4178))
+
+# [8.19.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-03-01)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.31.1: Bug Fixes ([c0ffa1e](https://github.com/vivliostyle/vivliostyle-cli/commit/c0ffa1e0e48941de325f60d4adca360dfe594f9e))
+
+### Features
+
+- Update Playwright to 1.50.1 (Chromium 133.0.6943.16) ([ed4f1ea](https://github.com/vivliostyle/vivliostyle-cli/commit/ed4f1eabf2c5bbe710f3e879a4b309c677b5cde0))
+
+# [8.18.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-01-17)
+
+### Features
+
+- Update Vivliostyle.js to 2.31.0: Extended CSS Page Floats support ([6964349](https://github.com/vivliostyle/vivliostyle-cli/commit/696434918d7bad4bed537ad80646d16bfa21db9b))
+
+## [8.17.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-01-10)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.30.8: Bug Fixes ([9c25dc0](https://github.com/vivliostyle/vivliostyle-cli/commit/9c25dc0c6fae731c2671a636b1a04b8f78791d3c))
+
 ## [9.0.1](https://github.com/vivliostyle/vivliostyle-cli/compare/9.0.0...9.0.1) (2025-05-05)
 
 ### Bug Fixes
