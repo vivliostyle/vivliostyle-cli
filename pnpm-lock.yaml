@@ -93,8 +93,8 @@ importers:
         specifier: 4.0.2
         version: 4.0.2
       playwright-core:
-        specifier: 1.51.1
-        version: 1.51.1
+        specifier: 1.52.0
+        version: 1.52.0
       press-ready:
         specifier: 4.0.3
         version: 4.0.3
@@ -4548,6 +4548,11 @@ packages:
 
   playwright-core@1.51.1:
     resolution: {integrity: sha512-/crRMj8+j/Nq5s8QcvegseuyeZPxpQCZb6HNk3Sos3BlZyAknRjoyJPFWkpNn8v0+P3WiwqFF8P+zQo4eqiNuw==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright-core@1.52.0:
+    resolution: {integrity: sha512-l2osTgLXSMeuLZOML9qYODUQoPPnUsKsb5/P6LJ2e6uPKXUdPK5WYhN4z03G+YNbWmGDY4YENauNu4ZKczreHg==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -11347,6 +11352,8 @@ snapshots:
   pirates@4.0.6: {}
 
   playwright-core@1.51.1: {}
+
+  playwright-core@1.52.0: {}
 
   please-upgrade-node@3.2.0:
     dependencies:
