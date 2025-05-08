@@ -492,7 +492,7 @@ export function resolveTaskConfig(
     disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
   };
 
-  const timeout = config.timeout ?? 120_000; // 2 minutes
+  const timeout = config.timeout ?? 300_000; // 5 minutes
   const sandbox = options.sandbox ?? false;
   const browser = {
     type: config.browser ?? 'chromium',

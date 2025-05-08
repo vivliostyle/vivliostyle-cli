@@ -84,7 +84,7 @@ This option is equivalent with "--preflight press-ready"`,
     )
     .option(
       '-t, --timeout <seconds>',
-      `timeout limit for waiting Vivliostyle process [120]`,
+      `timeout limit for waiting Vivliostyle process [300]`,
       validateTimeoutFlag,
     )
     .option('-T, --theme <theme...>', 'theme path or package name')
@@ -206,5 +206,5 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
 }
 
 function validateTimeoutFlag(val: string) {
-  return Number.isFinite(+val) && +val > 0 ? +val * 1000 : undefined;
+  return Number.isFinite(+val) ? +val * 1000 : undefined;
 }

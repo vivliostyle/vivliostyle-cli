@@ -701,8 +701,9 @@ export const BuildTask = v.pipe(
         ),
         timeout: v.pipe(
           v.number(),
+          v.minValue(0),
           v.description($`
-            Timeout limit for waiting for the Vivliostyle process (in ms). (default: \`120000\`)
+            Timeout limit for waiting for the Vivliostyle process (in ms). (default: \`300000\`)
           `),
         ),
         documentProcessor: v.pipe(
@@ -1024,6 +1025,7 @@ export const VivliostyleInlineConfig = v.pipe(
       ),
       timeout: v.pipe(
         v.number(),
+        v.minValue(0),
         v.description($`
           Timeout limit for waiting Vivliostyle process (ms).
         `),
