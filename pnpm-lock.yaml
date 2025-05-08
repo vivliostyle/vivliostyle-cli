@@ -1585,10 +1585,6 @@ packages:
     peerDependencies:
       vite: '>=6'
 
-  '@vivliostyle/core@2.31.2':
-    resolution: {integrity: sha512-/wgMBFlLjowQBpO1ihrWYOyrZTXPtPSPp4N7BhVBA826/8WRDv4ZC+pcJhF9/qBFRdUKqPRjF7Ec7HXDVJ+vfA==}
-    engines: {node: '>=14'}
-
   '@vivliostyle/core@2.32.0':
     resolution: {integrity: sha512-P3V/+oFuRT+VFnuJ0G+efslIWlOyaLS2YvY3PJskXAh/JULP9/aFkYCkrqNj1DyH0TIJ60Ty23yK561A4GiyZw==}
     engines: {node: '>=14'}
@@ -1606,10 +1602,6 @@ packages:
     resolution: {integrity: sha512-gxPISVo2kDDxGALKYY7uz7cDnp8RaaY+VSbWz443V7X77ofyfcyRbUM13tEPrje8TEIpuP6pYZ9HU+FVTcrQLw==}
     engines: {node: '>= 12'}
     hasBin: true
-
-  '@vivliostyle/viewer@2.31.2':
-    resolution: {integrity: sha512-KNsTD/rFxfinEI/LQEsfzxMBkJrBzwaE2HSRBlym2fYIXgi5U9AdlGi4QrzlWTMKIzoDUNEpPgPKNKie93E8Sw==}
-    engines: {node: '>=14'}
 
   '@vivliostyle/viewer@2.32.0':
     resolution: {integrity: sha512-ZxQvhzzJNVhCJU+ls3peGsCAoyuwYGUw/RT05Rmy6jHS6KgqM+fmsMj6uDG3X7wiJO+bBqTpXhNZIhAoFoyV2A==}
@@ -4545,11 +4537,6 @@ packages:
   pirates@4.0.6:
     resolution: {integrity: sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==}
     engines: {node: '>= 6'}
-
-  playwright-core@1.51.1:
-    resolution: {integrity: sha512-/crRMj8+j/Nq5s8QcvegseuyeZPxpQCZb6HNk3Sos3BlZyAknRjoyJPFWkpNn8v0+P3WiwqFF8P+zQo4eqiNuw==}
-    engines: {node: '>=18'}
-    hasBin: true
 
   playwright-core@1.52.0:
     resolution: {integrity: sha512-l2osTgLXSMeuLZOML9qYODUQoPPnUsKsb5/P6LJ2e6uPKXUdPK5WYhN4z03G+YNbWmGDY4YENauNu4ZKczreHg==}
@@ -7633,7 +7620,7 @@ snapshots:
       '@npmcli/arborist': 8.0.0
       '@vivliostyle/jsdom': 25.0.1-vivliostyle-cli.1(@napi-rs/canvas@0.1.69)
       '@vivliostyle/vfm': 2.2.1
-      '@vivliostyle/viewer': 2.31.2
+      '@vivliostyle/viewer': 2.32.0
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       archiver: 7.0.1
@@ -7655,7 +7642,7 @@ snapshots:
       npm-package-arg: 12.0.2
       pdf-lib: 1.17.1
       picomatch: 4.0.2
-      playwright-core: 1.51.1
+      playwright-core: 1.52.0
       press-ready: 4.0.3
       prettier: 3.5.3
       resolve-pkg: 2.0.0
@@ -7678,10 +7665,6 @@ snapshots:
       - supports-color
       - typescript
       - utf-8-validate
-
-  '@vivliostyle/core@2.31.2':
-    dependencies:
-      fast-diff: 1.3.0
 
   '@vivliostyle/core@2.32.0':
     dependencies:
@@ -7754,12 +7737,6 @@ snapshots:
       unist-util-visit-parents: 3.1.1
     transitivePeerDependencies:
       - supports-color
-
-  '@vivliostyle/viewer@2.31.2':
-    dependencies:
-      '@vivliostyle/core': 2.31.2
-      i18next-ko: 3.0.1
-      knockout: 3.5.1
 
   '@vivliostyle/viewer@2.32.0':
     dependencies:
@@ -11350,8 +11327,6 @@ snapshots:
   pify@3.0.0: {}
 
   pirates@4.0.6: {}
-
-  playwright-core@1.51.1: {}
 
   playwright-core@1.52.0: {}
 
