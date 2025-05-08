@@ -1,5 +1,17 @@
 # Changelog
 
+# [9.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.2...v9.1.0) (2025-05-08)
+
+### Bug Fixes
+
+- Allow `--timeout 0` argument for build command ([d8c2993](https://github.com/vivliostyle/vivliostyle-cli/commit/d8c2993a82a15a96d112194c57f5d5e2fd8b622e)), closes [#575](https://github.com/vivliostyle/vivliostyle-cli/issues/575)
+
+### Features
+
+- Increase the default build timeout to 300s ([20b8897](https://github.com/vivliostyle/vivliostyle-cli/commit/20b8897b8f7f098dae387d15a55c906f2821180b))
+- Update Playwright to 1.52.0 (Chromium 136.0.7103.25) ([fe7f72d](https://github.com/vivliostyle/vivliostyle-cli/commit/fe7f72dc8064518bfb4a0d97418e57c1872cec31))
+- Update Vivliostyle.js to 2.32.0: Improve `[@font-face](https://github.com/font-face)` support, etc. ([80325cd](https://github.com/vivliostyle/vivliostyle-cli/commit/80325cdfe7ed6b241854b663b3bc3d0fc6a47aa7)), closes [#580](https://github.com/vivliostyle/vivliostyle-cli/issues/580)
+
 ## [9.0.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.0-next.6...v9.0.2) (2025-05-06)
 
 ### Bug Fixes
