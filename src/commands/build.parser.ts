@@ -206,5 +206,5 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
 }
 
 function validateTimeoutFlag(val: string) {
-  return Number.isFinite(+val) && +val > 0 ? +val * 1000 : undefined;
+  return Number.isFinite(+val) ? +val * 1000 : undefined;
 }
