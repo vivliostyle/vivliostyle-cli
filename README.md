@@ -85,7 +85,7 @@ Options:
   -d, --single-doc                   single HTML document input
   -p, --press-ready                  make generated PDF compatible with press ready PDF/X-1a [false]
                                      This option is equivalent with "--preflight press-ready"
-  -t, --timeout <seconds>            timeout limit for waiting Vivliostyle process [120]
+  -t, --timeout <seconds>            timeout limit for waiting Vivliostyle process [300]
   -T, --theme <theme...>             theme path or package name
   --title <title>                    title
   --author <author>                  author
