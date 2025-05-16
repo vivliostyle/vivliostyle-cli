@@ -10,8 +10,8 @@ try {
     process.argv,
     setupBuildParserProgram,
   );
-  if (isInContainer()) {
-    inlineConfig = JSON.parse(process.env.VS_CLI_BUILD_PDF_OPTIONS!);
+  if (isInContainer() && process.env.VS_CLI_BUILD_PDF_OPTIONS) {
+    inlineConfig = JSON.parse(process.env.VS_CLI_BUILD_PDF_OPTIONS);
     Logger.debug('bypassedPdfBuilderOption %O', inlineConfig);
   }
   await build(inlineConfig);
