@@ -136,6 +136,7 @@ Object {
   "rootUrl": "http://0.0.0.0:9876",
   "sandbox": false,
   "server": Object {
+    "allowedHosts": Array [],
     "host": true,
     "port": 9876,
     "proxy": Object {
@@ -328,6 +329,7 @@ Object {
   "rootUrl": "http://0.0.0.0:9876",
   "sandbox": false,
   "server": Object {
+    "allowedHosts": Array [],
     "host": true,
     "port": 9876,
     "proxy": Object {
