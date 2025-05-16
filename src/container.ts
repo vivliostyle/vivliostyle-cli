@@ -140,6 +140,7 @@ export async function buildPDFWithContainer({
         path: toContainerPath(target.path),
       },
     ],
+    host: CONTAINER_LOCAL_HOSTNAME,
   } satisfies ParsedVivliostyleInlineConfig;
 
   await runContainer({

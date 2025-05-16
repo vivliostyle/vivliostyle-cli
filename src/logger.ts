@@ -1,12 +1,6 @@
 import debug from 'debug';
 import yoctoSpinner, { Spinner } from 'yocto-spinner';
-import {
-  blueBright,
-  gray,
-  greenBright,
-  redBright,
-  yellowBright,
-} from 'yoctocolors';
+import { blueBright, greenBright, redBright, yellowBright } from 'yoctocolors';
 import { isInContainer, registerExitHandler } from './util.js';
 
 export const isUnicodeSupported =
@@ -35,6 +29,7 @@ export class Logger {
   static #loggerInstance: Logger | undefined;
   static #nonBlockingLogPrinted = false;
   static #customLogger: LoggerInterface | undefined;
+  static #logPrefix: string | undefined;
 
   static debug = debug('vs-cli');
 
@@ -124,8 +119,8 @@ export class Logger {
     message: string,
   ) {
     if (!this.#spinner || !this.isInteractive) {
-      if (isInContainer()) {
-        message = `${gray('[Docker]')} ${message}`;
+      if (this.#logPrefix) {
+        message = `${this.#logPrefix} ${message}`;
       }
       this.#logLevel >= 3
         ? this.debug(message)
@@ -204,6 +199,10 @@ export class Logger {
 
   static setCustomLogger(logger: LoggerInterface | undefined) {
     this.#customLogger = logger;
+  }
+
+  static setLogPrefix(prefix: string) {
+    this.#logPrefix = prefix;
   }
 
   #_spinner: Spinner;

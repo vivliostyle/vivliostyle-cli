@@ -10,11 +10,13 @@ try {
     process.argv,
     setupBuildParserProgram,
   );
+  let containerForkMode = false;
   if (isInContainer() && process.env.VS_CLI_BUILD_PDF_OPTIONS) {
     inlineConfig = JSON.parse(process.env.VS_CLI_BUILD_PDF_OPTIONS);
+    containerForkMode = true;
     Logger.debug('bypassedPdfBuilderOption %O', inlineConfig);
   }
-  await build(inlineConfig);
+  await build(inlineConfig, { containerForkMode });
 } catch (err) {
   if (err instanceof Error) {
     gracefulError(err);

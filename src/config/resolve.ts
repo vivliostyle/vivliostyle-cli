@@ -575,7 +575,8 @@ export function resolveTaskConfig(
     if (
       outputs.some(
         (target) => target.format === 'pdf' && target.renderMode === 'docker',
-      )
+      ) &&
+      !isInContainer()
     ) {
       // Docker render mode requires wildcard host to allow access from the container
       host = true;
@@ -586,13 +587,7 @@ export function resolveTaskConfig(
         allowedHosts.push(CONTAINER_LOCAL_HOSTNAME);
       }
     }
-    const rootHostname = isInContainer()
-      ? CONTAINER_LOCAL_HOSTNAME
-      : !host
-        ? 'localhost'
-        : host === true
-          ? '0.0.0.0'
-          : host;
+    const rootHostname = !host ? 'localhost' : host === true ? '0.0.0.0' : host;
     return {
       server: {
         host,
