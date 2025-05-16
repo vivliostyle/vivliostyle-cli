@@ -67,7 +67,7 @@ export async function runContainer({
   env?: [string, string][];
   workdir?: string;
 }) {
-  const commandExists = await importNodeModule('command-exists');
+  const { default: commandExists } = await importNodeModule('command-exists');
   if (!(await commandExists('docker'))) {
     throw new Error(
       `Docker isn't be installed. To use this feature, you'll need to install Docker.`,

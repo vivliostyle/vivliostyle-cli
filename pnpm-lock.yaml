@@ -159,9 +159,6 @@ importers:
       '@types/babel__code-frame':
         specifier: 7.0.6
         version: 7.0.6
-      '@types/command-exists':
-        specifier: 1.2.3
-        version: 1.2.3
       '@types/connect':
         specifier: 3.4.38
         version: 3.4.38
@@ -1367,9 +1364,6 @@ packages:
 
   '@types/cli-table@0.3.0':
     resolution: {integrity: sha512-QnZUISJJXyhyD6L1e5QwXDV/A5i2W1/gl6D6YMc8u0ncPepbv/B4w3S+izVvtAg60m6h+JP09+Y/0zF2mojlFQ==}
-
-  '@types/command-exists@1.2.3':
-    resolution: {integrity: sha512-PpbaE2XWLaWYboXD6k70TcXO/OdOyyRFq5TVpmlUELNxdkkmXU9fkImNosmXU1DtsNrqdUgWd/nJQYXgwmtdXQ==}
 
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
@@ -7367,8 +7361,6 @@ snapshots:
       '@types/node': 22.15.2
 
   '@types/cli-table@0.3.0': {}
-
-  '@types/command-exists@1.2.3': {}
 
   '@types/connect@3.4.38':
     dependencies:
