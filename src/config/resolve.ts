@@ -264,7 +264,10 @@ export type ResolvedTaskConfig = {
   ignoreHttpsErrors: boolean;
   base: string;
   server: Required<
-    Pick<ResolvedViteConfig['server'], 'host' | 'port' | 'proxy'>
+    Pick<
+      ResolvedViteConfig['server'],
+      'host' | 'port' | 'proxy' | 'allowedHosts'
+    >
   >;
   static: Record<string, string[]>;
   rootUrl: string;
@@ -567,27 +570,30 @@ export function resolveTaskConfig(
 
   const { server, rootUrl } = (() => {
     let host = config.server?.host ?? false;
+    let allowedHosts = config.server?.allowedHosts || [];
     const port = config.server?.port ?? 13000;
     if (
       outputs.some(
         (target) => target.format === 'pdf' && target.renderMode === 'docker',
-      )
+      ) &&
+      !isInContainer()
     ) {
       // Docker render mode requires wildcard host to allow access from the container
       host = true;
+      if (
+        Array.isArray(allowedHosts) &&
+        !allowedHosts.includes(CONTAINER_LOCAL_HOSTNAME)
+      ) {
+        allowedHosts.push(CONTAINER_LOCAL_HOSTNAME);
+      }
     }
-    const rootHostname = isInContainer()
-      ? CONTAINER_LOCAL_HOSTNAME
-      : !host
-        ? 'localhost'
-        : host === true
-          ? '0.0.0.0'
-          : host;
+    const rootHostname = !host ? 'localhost' : host === true ? '0.0.0.0' : host;
     return {
       server: {
         host,
         port,
         proxy: config.server?.proxy ?? {},
+        allowedHosts,
       } satisfies ResolvedTaskConfig['server'],
       rootUrl: `http://${rootHostname}:${port}`,
     };

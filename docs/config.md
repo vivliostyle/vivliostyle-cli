@@ -595,6 +595,11 @@ type VfmConfig = {
   - `proxy`: {[key: (string)]: import("vite").ProxyOptions | string}  
     Custom proxy rules for the Vivliostyle preview server.
 
+  - `allowedHosts`: (string)[] | boolean  
+    The hostnames that are allowed to respond to.
+    Set to `true` to allow all hostnames.
+    See [`server.allowedHosts` option of Vite](https://vite.dev/config/server-options.html#server-allowedhosts) for more details.
+
 #### Type definition
 
 ```ts
@@ -606,6 +611,7 @@ type ServerConfig = {
       | import("vite").ProxyOptions
       | string;
   };
+  allowedHosts?: string[] | boolean;
 };
 ```
 <!-- END config API -->

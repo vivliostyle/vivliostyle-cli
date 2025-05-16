@@ -70,6 +70,8 @@ RUN test $VS_CLI_VERSION
 COPY . /opt/vivliostyle-cli
 RUN pnpm install --prod --ignore-scripts \
   && echo $VS_CLI_VERSION > .vs-cli-version \
+  && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vivliostyle \
+  && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vs \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
   && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm
 COPY --from=builder /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/

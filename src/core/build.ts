@@ -2,7 +2,7 @@ import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { PreviewServer, build as viteBuild } from 'vite';
-import { cyan } from 'yoctocolors';
+import { cyan, gray } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeInlineConfig } from '../config/merge.js';
@@ -20,11 +20,17 @@ import {
   prepareThemeDirectory,
 } from '../processor/compile.js';
 import { createViteServer } from '../server.js';
-import { cwd, isInContainer, runExitHandlers } from '../util.js';
+import { cwd, runExitHandlers } from '../util.js';
 
-export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
+export async function build(
+  inlineConfig: ParsedVivliostyleInlineConfig,
+  { containerForkMode = false }: { containerForkMode?: boolean } = {},
+) {
   Logger.setLogLevel(inlineConfig.logLevel);
   Logger.setCustomLogger(inlineConfig.logger);
+  if (containerForkMode) {
+    Logger.setLogPrefix(gray('[Docker]'));
+  }
   Logger.debug('build > inlineConfig %O', inlineConfig);
 
   let vivliostyleConfig =
@@ -49,7 +55,7 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
     });
 
     let server: PreviewServer | undefined;
-    if (!isInContainer()) {
+    if (!containerForkMode) {
       // build dependents first
       Logger.debug('build > viteConfig.configFile %s', viteConfig.configFile);
       if (viteConfig.configFile && typeof config.serverRootDir === 'string') {
@@ -81,7 +87,7 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
       let output: string | null = null;
       const { format } = target;
       if (format === 'pdf') {
-        if (!isInContainer() && target.renderMode === 'docker') {
+        if (!containerForkMode && target.renderMode === 'docker') {
           output = await buildPDFWithContainer({
             target,
             config,
@@ -93,7 +99,7 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
       } else if (format === 'webpub' || format === 'epub') {
         output = await buildWebPublication({ target, config });
       }
-      if (output && !isInContainer()) {
+      if (output && !containerForkMode) {
         const formattedOutput = cyan(
           upath.relative(inlineConfig.cwd ?? cwd, output),
         );
@@ -113,7 +119,7 @@ export async function build(inlineConfig: ParsedVivliostyleInlineConfig) {
   }
 
   runExitHandlers();
-  if (!isInContainer()) {
+  if (!containerForkMode) {
     const num = vivliostyleConfig.tasks.flatMap((t) => t.output ?? []).length;
     const symbol = isUnicodeSupported
       ? `${num > 1 ? '📚' : randomBookSymbol} `
