@@ -1,4 +1,5 @@
 import jsdom, {
+  AbortablePromise,
   ResourceLoader as BaseResourceLoader,
   JSDOM,
   VirtualConsole,
@@ -66,6 +67,8 @@ export const htmlPurify = DOMPurify(
 );
 
 export class ResourceLoader extends BaseResourceLoader {
+  static dataUrlOrigin = 'http://localhost/' as const;
+
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();
 
   fetch(url: string, options?: jsdom.FetchOptions) {
@@ -88,9 +91,11 @@ export class ResourceLoader extends BaseResourceLoader {
     outputDir: string;
     onError?: (error: Error) => void;
   }) {
-    const rootHref = /^https?:/i.test(new URL(rootUrl).protocol)
-      ? new URL('/', rootUrl).href
-      : new URL('.', rootUrl).href;
+    const rootHref = rootUrl.startsWith('data:')
+      ? ResourceLoader.dataUrlOrigin
+      : /^https?:/i.test(rootUrl)
+        ? new URL('/', rootUrl).href
+        : new URL('.', rootUrl).href;
 
     const normalizeToLocalPath = (urlString: string, mimeType?: string) => {
       let url = new URL(urlString);
@@ -162,6 +167,32 @@ export async function getJsdomFromUrlOrFile({
       virtualConsole,
       resources: resourceLoader,
       contentType: 'text/html; charset=UTF-8',
+    });
+  } else if (url.protocol === 'data:') {
+    const [head, body] = url.href.split(',', 2);
+    const data = decodeURIComponent(body);
+    const buffer = Buffer.from(
+      data,
+      /;base64$/i.test(head) ? 'base64' : 'utf8',
+    );
+    const dummyUrl = `${ResourceLoader.dataUrlOrigin}index.html`;
+    if (resourceLoader) {
+      let timeoutId: ReturnType<typeof setTimeout>;
+      const promise = new Promise((resolve) => {
+        timeoutId = setTimeout(resolve, 0, buffer);
+      }) as AbortablePromise<Buffer>;
+      promise.abort = () => {
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+        }
+      };
+      resourceLoader.fetcherMap.set(dummyUrl, promise);
+    }
+    dom = new JSDOM(buffer.toString(), {
+      virtualConsole,
+      resources: resourceLoader,
+      contentType: 'text/html; charset=UTF-8',
+      url: dummyUrl,
     });
   } else {
     throw new Error(`Unsupported protocol: ${url.protocol}`);

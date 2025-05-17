@@ -1,7 +1,7 @@
 import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import npa from 'npm-package-arg';
 import { Processor } from 'unified';
 import upath from 'upath';
@@ -752,12 +752,19 @@ function resolveSingleInputConfig({
   const entries: ParsedEntry[] = [];
   const exportAliases: { source: string; target: string }[] = [];
 
+  let isLocalResource = true;
   if (isValidUri(input.entry)) {
-    sourcePath = input.entry;
-    serverRootDir = UseTemporaryServerRoot;
-    workspaceDir = context;
+    const url = new URL(input.entry);
+    if (url.protocol === 'file:') {
+      sourcePath = fileURLToPath(url);
+    } else {
+      isLocalResource = false;
+      sourcePath = input.entry;
+    }
   } else {
     sourcePath = upath.resolve(context, input.entry);
+  }
+  if (isLocalResource) {
     // Check file exists
     statFileSync(sourcePath);
     switch (input.format) {
@@ -781,6 +788,9 @@ function resolveSingleInputConfig({
         return input.format satisfies never;
     }
     serverRootDir = workspaceDir;
+  } else {
+    serverRootDir = UseTemporaryServerRoot;
+    workspaceDir = context;
   }
   const themesDir = upath.resolve(workspaceDir, 'themes');
 
