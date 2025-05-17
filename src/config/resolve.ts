@@ -524,9 +524,10 @@ export function resolveTaskConfig(
   const outputs = ((): OutputConfig[] => {
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
       format: 'pdf',
-      renderMode: 'local',
-      preflight: config.pressReady ? 'press-ready' : undefined,
-      preflightOption: [],
+      renderMode: options.renderMode ?? 'local',
+      preflight:
+        options.preflight ?? (config.pressReady ? 'press-ready' : undefined),
+      preflightOption: options.preflightOption ?? [],
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
