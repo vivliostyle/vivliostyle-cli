@@ -912,7 +912,7 @@ export const VivliostyleInlineConfig = v.pipe(
         ValidString,
         v.transform((input): { format: InputFormat; entry: string } => {
           const ext = upath.extname(input).toLowerCase();
-          if (/^https?:/.test(input)) {
+          if (/^(https?|data):/.test(input)) {
             return { format: 'webbook', entry: input };
           } else if (ext === '.md' || ext === '.markdown') {
             return { format: 'markdown', entry: input };
