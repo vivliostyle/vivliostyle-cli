@@ -225,11 +225,17 @@ export async function retrieveWebbookEntry({
       resourceLoader,
       baseUrl: webbookEntryUrl,
     })) || {};
-  const rootUrl = /^https?:/i.test(webbookEntryUrl)
-    ? new URL('/', webbookEntryUrl).href
-    : new URL('.', webbookEntryUrl).href;
-  const pathContains = (url: string) =>
-    !upath.relative(rootUrl, url).startsWith('..');
+
+  let pathContains: (url: string) => boolean;
+  if (webbookEntryUrl.startsWith('data:')) {
+    pathContains = (url) => false;
+  } else {
+    const rootUrl = /^https?:/i.test(webbookEntryUrl)
+      ? new URL('/', webbookEntryUrl).href
+      : new URL('.', webbookEntryUrl).href;
+    pathContains = (url: string) =>
+      !upath.relative(rootUrl, url).startsWith('..');
+  }
   const retriever = new Map(resourceLoader.fetcherMap);
 
   if (manifest && manifestUrl) {

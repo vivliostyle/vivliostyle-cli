@@ -13,6 +13,31 @@ exports[`copy webpub assets properly 1`] = `
          └─ theme.css"
 `;
 
+exports[`generate webpub from a data URI input 1`] = `
+"output/
+├─ index.html
+└─ publication.json"
+`;
+
+exports[`generate webpub from a data URI input 2`] = `
+"<!DOCTYPE html>
+<html lang=\\"en\\">
+  <head>
+    <meta charset=\\"UTF-8\\" />
+    <title></title>
+    <link
+      rel=\\"publication\\"
+      type=\\"application/ld+json\\"
+      href=\\"publication.json\\"
+    />
+  </head>
+  <body>
+    Hi
+  </body>
+</html>
+"
+`;
+
 exports[`generate webpub from a plain HTML 1`] = `
 "output/
 ├─ publication.json

@@ -334,6 +334,20 @@ it('imports a https URL', async () => {
   });
 });
 
+it('imports a HTML file with file protocol', async () => {
+  const config = await getTaskConfig(
+    ['build', `file://${resolveFixture('config')}/sample.html`],
+    resolveFixture('config'),
+  );
+  maskConfig(config);
+  expect(config).toMatchObject({
+    viewerInput: {
+      type: 'webbook',
+      webbookEntryUrl: '/vivliostyle/sample.html',
+    },
+  });
+});
+
 it('yields a config from frontmatter', async () => {
   const config = await getTaskConfig(
     ['build', 'frontmatter.md'],

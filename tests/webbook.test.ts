@@ -271,6 +271,32 @@ it('generate webpub from a remote HTML document', async () => {
   );
 });
 
+it('generate webpub from a data URI input', async () => {
+  const html = /* html */ `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title></title></head><body>Hi</body></html>`;
+  await runCommand(
+    ['build', `data:text/html;charset=utf-8,${html}`, '-o', 'output'],
+    { cwd: '/work' },
+  );
+  await runCommand(
+    [
+      'build',
+      `data:text/html;base64,${Buffer.from(html).toString('base64')}`,
+      '-o',
+      'output2',
+    ],
+    { cwd: '/work' },
+  );
+
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  const file = vol.toJSON();
+  const entry = file['/work/output/index.html']!;
+  const outHtml = await format(entry, { parser: 'html' });
+  expect(outHtml).toMatchSnapshot();
+  expect(
+    await format(file['/work/output2/index.html']!, { parser: 'html' }),
+  ).toBe(outHtml);
+});
+
 it('generate webpub with complex copyAsset settings', async () => {
   const config: VivliostyleConfigSchema = {
     copyAsset: {
