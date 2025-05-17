@@ -1,5 +1,16 @@
 # Changelog
 
+## [9.1.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.1.0...v9.1.1) (2025-05-17)
+
+### Bug Fixes
+
+- Enable --render-mode/--preflight/--preflight-option parameters ([b8e09ca](https://github.com/vivliostyle/vivliostyle-cli/commit/b8e09cac8e4a89fc20fad356e41b487aa3fe1897))
+- Improve behavior running commands in Docker container ([38056a7](https://github.com/vivliostyle/vivliostyle-cli/commit/38056a7c86f3e8da68343c66faf6c8c100a44783))
+- Resolve Docker build launch failure ([00775a0](https://github.com/vivliostyle/vivliostyle-cli/commit/00775a0797a48ae8d1876baa7cbd40e75ef8a5ba)), closes [#593](https://github.com/vivliostyle/vivliostyle-cli/issues/593)
+- Resolve host connection via Docker image ([8193da3](https://github.com/vivliostyle/vivliostyle-cli/commit/8193da3193b15893cba2c0f610e0a6f6119b55cf))
+- Resolve PATH in docker image ([a311f65](https://github.com/vivliostyle/vivliostyle-cli/commit/a311f65a33c69fae358c8eec5c2b66f9639b8341)), closes [#594](https://github.com/vivliostyle/vivliostyle-cli/issues/594)
+- Restore support for file and data URL input ([5dd7be3](https://github.com/vivliostyle/vivliostyle-cli/commit/5dd7be38bd6e33597f01205d2fdd6251e43435f5)), closes [#589](https://github.com/vivliostyle/vivliostyle-cli/issues/589)
+
 # [9.1.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.0.2...v9.1.0) (2025-05-08)
 
 ### Bug Fixes
