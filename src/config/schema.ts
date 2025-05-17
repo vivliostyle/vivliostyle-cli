@@ -1241,4 +1241,7 @@ export type InlineOptions = Pick<
   | 'enableStaticServe'
   | 'enableViewerStartPage'
   | 'logger'
+  | 'renderMode'
+  | 'preflight'
+  | 'preflightOption'
 >;

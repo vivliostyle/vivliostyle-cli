@@ -89,7 +89,7 @@ export function setupConfigFromFlags(
   }
   return {
     tasks: [{ entry: [] }],
-    inlineOptions: {},
+    inlineOptions: { ...flags },
   };
 }
 
