@@ -21,10 +21,11 @@ For example, consider a case where HTML files are built in the `dist` directory.
 };
 ```
 
-> ![IMPORTANT]
+
+> [!IMPORTANT]
 > Entries hosted with `static` must be referenced using absolute paths (paths starting with `/`). Otherwise, the HTML files will be loaded relative to `vivliostyle.config.js` instead of the directory specified in `static`.
 
-> ![NOTE]
+> [!NOTE]
 > While it is also possible to specify HTML files directly in `entry` using relative paths, using the `static` option is more convenient. For example, directly specifying files does not allow external files (such as images) referenced by the HTML to be loaded, but using the `static` option ensures that all files under the directory are referenced and displayed correctly.
 
 ## Using Frameworks Based on Vite
