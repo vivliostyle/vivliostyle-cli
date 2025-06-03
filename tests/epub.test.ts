@@ -7,7 +7,7 @@ import './mocks/archiver.js';
 import AdmZip from 'adm-zip';
 import { vol } from 'memfs';
 import { format } from 'prettier';
-import { beforeEach, expect, it } from 'vitest';
+import { assert, beforeEach, expect, it } from 'vitest';
 import { exportEpub } from '../src/output/epub.js';
 import { decodePublicationManifest } from '../src/output/webbook.js';
 import { PublicationManifest } from '../src/schema/publication.schema.js';
@@ -117,10 +117,14 @@ it('generate EPUB from single HTML with pub manifest', async () => {
       ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
       .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
   ).toMatchSnapshot('content.opf');
-  const entry = file['/tmp/1/EPUB/index.xhtml']!;
-  expect(await format(entry, { parser: 'html' })).toMatchSnapshot(
-    'index.xhtml',
-  );
+  const entry = file['/tmp/1/EPUB/index.xhtml'];
+  assert(entry);
+  expect(
+    await format(entry, {
+      parser: 'html',
+      htmlWhitespaceSensitivity: 'strict',
+    }),
+  ).toMatchSnapshot('index.xhtml');
 });
 
 it('generate EPUB from series of HTML files', async () => {
@@ -191,9 +195,13 @@ it('generate EPUB from series of HTML files', async () => {
       .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
   ).toMatchSnapshot('content.opf');
   const first = file['/tmp/1/EPUB/src/index.xhtml'];
-  expect(await format(first as string, { parser: 'html' })).toMatchSnapshot(
-    'src/index.xhtml',
-  );
+  assert(first);
+  expect(
+    await format(first, {
+      parser: 'html',
+      htmlWhitespaceSensitivity: 'strict',
+    }),
+  ).toMatchSnapshot('src/index.xhtml');
 });
 
 it('generate EPUB from single Markdown input', async () => {
@@ -272,12 +280,22 @@ it('generate EPUB from vivliostyle.config.js', async () => {
       ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
       .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
   ).toMatchSnapshot('content.opf');
+  const coverDocument = file['/tmp/2/EPUB/gen content%/cover document%.xhtml'];
+  assert(coverDocument);
   expect(
-    file['/tmp/2/EPUB/gen content%/cover document%.xhtml'],
+    await format(coverDocument, {
+      parser: 'html',
+      htmlWhitespaceSensitivity: 'strict',
+    }),
   ).toMatchSnapshot('cover document%.xhtml');
-  expect(file['/tmp/2/EPUB/gen content%/index file%.xhtml']).toMatchSnapshot(
-    'index file%.xhtml',
-  );
+  const indexFile = file['/tmp/2/EPUB/gen content%/index file%.xhtml'];
+  assert(indexFile);
+  expect(
+    await format(indexFile, {
+      parser: 'html',
+      htmlWhitespaceSensitivity: 'strict',
+    }),
+  ).toMatchSnapshot('index file%.xhtml');
 });
 
 it('Do not insert nav element to HTML that have nav[epub:type]', async () => {

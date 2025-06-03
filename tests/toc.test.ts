@@ -3,6 +3,7 @@ import './mocks/vivliostyle__jsdom.js';
 
 import { JSDOM } from '@vivliostyle/jsdom';
 import { vol } from 'memfs';
+import { format } from 'prettier';
 import { assert, beforeEach, describe, expect, it } from 'vitest';
 import { isWebPubConfig } from '../src/config/resolve.js';
 import { transformManuscript } from '../src/processor/compile.js';
@@ -29,37 +30,13 @@ it('generates ToC html', async () => {
   });
   assert(isWebPubConfig(config));
   const content = await transformManuscript(config.entries[0], config);
-  expect(content).toBe(
-    `<html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <title>Book title</title>
-    <style data-vv-style="">
-      :root {
-        break-before: recto;
-      }
-      @page :nth(1) {
-        counter-reset: page 0;
-      }
-    </style>
-    <link
-      rel="publication"
-      type="application/ld+json"
-      href="publication.json"
-    />
-  </head>
-  <body>
-    <h1>Book title</h1>
-    <nav id="toc" role="doc-toc">
-      <h2>Table of Contents</h2>
-      <ol>
-        <li><a href="empty.html">Title</a></li>
-      </ol>
-    </nav>
-  </body>
-</html>
-`,
-  );
+  assert(content);
+  expect(
+    await format(content, {
+      parser: 'html',
+      htmlWhitespaceSensitivity: 'strict',
+    }),
+  ).toMatchSnapshot('toc.html');
 });
 
 it('supports boolean toc config', async () => {

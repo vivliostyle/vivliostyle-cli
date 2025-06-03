@@ -2,10 +2,9 @@ import jsdom, { JSDOM } from '@vivliostyle/jsdom';
 import { copy, move } from 'fs-extra/esm';
 import fs from 'node:fs';
 import picomatch from 'picomatch';
-import prettier from 'prettier';
-import parserHtml from 'prettier/parser-html';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
+import serializeToXml from 'w3c-xmlserializer';
 import MIMEType from 'whatwg-mimetype';
 import {
   ContentsEntry,
@@ -17,6 +16,7 @@ import {
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import type { ArticleEntryConfig } from '../config/schema.js';
+import { XML_DECLARATION } from '../const.js';
 import { Logger } from '../logger.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
@@ -309,10 +309,12 @@ export async function transformManuscript(
     });
   }
 
-  const html = await prettier.format(content.serialize(), {
-    parser: 'html',
-    plugins: [parserHtml],
-  });
+  let html;
+  if (content.window.document.contentType === 'application/xhtml+xml') {
+    html = `${XML_DECLARATION}\n${serializeToXml(content.window.document)}`;
+  } else {
+    html = content.serialize();
+  }
   const htmlBuffer = Buffer.from(html, 'utf8');
   if (
     !source ||

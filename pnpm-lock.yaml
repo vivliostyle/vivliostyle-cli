@@ -98,9 +98,6 @@ importers:
       press-ready:
         specifier: 4.0.3
         version: 4.0.3
-      prettier:
-        specifier: 3.5.3
-        version: 3.5.3
       resolve-pkg:
         specifier: 2.0.0
         version: 2.0.0
@@ -234,6 +231,9 @@ importers:
       pnpm:
         specifier: 10.9.0
         version: 10.9.0
+      prettier:
+        specifier: 3.5.3
+        version: 3.5.3
       prettier-plugin-astro:
         specifier: 0.14.1
         version: 0.14.1
@@ -7636,7 +7636,6 @@ snapshots:
       picomatch: 4.0.2
       playwright-core: 1.52.0
       press-ready: 4.0.3
-      prettier: 3.5.3
       resolve-pkg: 2.0.0
       semver: 7.7.1
       sirv: 3.0.1

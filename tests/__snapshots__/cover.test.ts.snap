@@ -1,0 +1,32 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateCoverHtml > cover.html 1`] = `
+"<html lang=\\"ja\\"
+  ><head
+    ><meta charset=\\"utf-8\\" /><title>Book title</title
+    ><style data-vv-style=\\"\\">
+      :root {
+        break-before: recto;
+      }
+      body {
+        margin: 0;
+      }
+      [role=\\"doc-cover\\"] {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+      }
+      @page {
+        margin: 0;
+      }
+    </style></head
+  ><body
+    ><section role=\\"region\\" aria-label=\\"Cover\\"
+      ><img
+        role=\\"doc-cover\\"
+        src=\\"escape%20check%25.jpg\\"
+        alt=\\"Cover image\\" /></section></body
+></html>
+"
+`;
