@@ -9,6 +9,7 @@ import { locateVivliostyleConfig } from '../config/load.js';
 import {
   isWebPubConfig,
   ParsedEntry,
+  ParsedTheme,
   ResolvedTaskConfig,
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
@@ -19,7 +20,7 @@ import {
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';
-import { getFormattedError, pathContains } from '../util.js';
+import { getFormattedError, pathContains, pathEquals } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
 // Ref: https://github.com/lukeed/sirv
@@ -126,7 +127,7 @@ export function vsDevServerPlugin({
     string,
     Promise<{ content: string; etag: string } | undefined>
   > = new Map();
-  const projectDeps = new Set<string>();
+  let matchProjectDep: (pathname: string) => boolean;
 
   async function reload(forceUpdate = false) {
     const prevConfig = config;
@@ -180,14 +181,37 @@ export function vsDevServerPlugin({
     };
 
     const configPath = locateVivliostyleConfig(inlineConfig);
+    const projectDeps: string[] = [];
     if (configPath) {
-      projectDeps.add(configPath);
+      projectDeps.push(configPath);
       server?.watcher.add(configPath);
     }
     if (config.viewerInput.type === 'webpub') {
-      projectDeps.add(config.viewerInput.manifestPath);
+      projectDeps.push(config.viewerInput.manifestPath);
       server?.watcher.add(config.viewerInput.manifestPath);
     }
+
+    const flattenWatchTarget = (themes: Set<ParsedTheme>) =>
+      [...themes].flatMap((theme) => {
+        if (theme.type === 'file') {
+          return [theme.source];
+        }
+        if (theme.type === 'package' && !theme.registry) {
+          return [theme.specifier];
+        }
+        return [];
+      });
+    const prevThemeFiles = flattenWatchTarget(prevConfig.themeIndexes);
+    const themeFiles = flattenWatchTarget(config.themeIndexes);
+    server?.watcher.unwatch(
+      prevThemeFiles.filter((target) => !themeFiles.includes(target)),
+    );
+    server?.watcher.add(themeFiles);
+    projectDeps.push(...themeFiles);
+    matchProjectDep = (pathname: string) =>
+      projectDeps.some(
+        (dep) => pathEquals(dep, pathname) || pathContains(dep, pathname),
+      );
   }
 
   async function transform(
@@ -335,7 +359,7 @@ export function vsDevServerPlugin({
       server = viteServer;
 
       const handleUpdate = async (pathname: string) => {
-        if (!projectDeps.has(pathname)) {
+        if (!matchProjectDep?.(pathname)) {
           return;
         }
         await reload();
