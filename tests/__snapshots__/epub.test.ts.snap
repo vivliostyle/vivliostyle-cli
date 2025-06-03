@@ -31,8 +31,7 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
   xmlns=\\"http://www.w3.org/1999/xhtml\\"
   lang=\\"en\\"
   xmlns:epub=\\"http://www.idpf.org/2007/ops\\"
->
-  <head>
+  ><head>
     <title>My book</title>
   </head>
   <body>
@@ -41,23 +40,24 @@ exports[`generate EPUB from series of HTML files > src/index.xhtml 1`] = `
     <a href=\\"b/c/d\\">3</a>
     <a href=\\"escape%20check%25.xhtml\\">3</a>
 
-    <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\" hidden=\\"\\">
-      <h2>Table of Contents</h2>
-      <ol>
-        <li><a href=\\"index.xhtml\\">My book</a></li>
-        <li><a href=\\"a/index.xhtml\\">yuno</a></li>
-        <li><a href=\\"b/c/d.xhtml\\">yunocchi</a></li>
-        <li><a href=\\"escape%20check%25.xhtml\\">日本語</a></li>
-      </ol>
-    </nav>
-    <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
-      <h2>Landmarks</h2>
-      <ol>
-        <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
-      </ol>
-    </nav>
-  </body>
-</html>
+    <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\" hidden=\\"\\"
+      ><h2>Table of Contents</h2
+      ><ol
+        ><li><a href=\\"index.xhtml\\">My book</a></li
+        ><li><a href=\\"a/index.xhtml\\">yuno</a></li
+        ><li><a href=\\"b/c/d.xhtml\\">yunocchi</a></li
+        ><li><a href=\\"escape%20check%25.xhtml\\">日本語</a></li></ol
+      ></nav
+    ><nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\"
+      ><h2>Landmarks</h2
+      ><ol
+        ><li
+          ><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li
+        ></ol
+      ></nav
+    ></body
+  ></html
+>
 "
 `;
 
@@ -143,8 +143,7 @@ exports[`generate EPUB from single HTML with pub manifest > index.xhtml 1`] = `
   xmlns=\\"http://www.w3.org/1999/xhtml\\"
   lang=\\"ja-JP\\"
   xmlns:epub=\\"http://www.idpf.org/2007/ops\\"
->
-  <head>
+  ><head>
     <title>Document</title>
     <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"assets/style.css\\" />
   </head>
@@ -174,14 +173,16 @@ exports[`generate EPUB from single HTML with pub manifest > index.xhtml 1`] = `
     <svg xmlns=\\"http://www.w3.org/2000/svg\\" />
     <script src=\\"https://example.com/remote-script.js\\"></script>
 
-    <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\">
-      <h2>Landmarks</h2>
-      <ol>
-        <li><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li>
-      </ol>
-    </nav>
-  </body>
-</html>
+    <nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\"
+      ><h2>Landmarks</h2
+      ><ol
+        ><li
+          ><a epub:type=\\"toc\\" href=\\"index.xhtml#toc\\">Table of Contents</a></li
+        ></ol
+      ></nav
+    ></body
+  ></html
+>
 "
 `;
 
@@ -284,10 +285,12 @@ exports[`generate EPUB from vivliostyle.config.js > content.opf 1`] = `
 
 exports[`generate EPUB from vivliostyle.config.js > cover document%.xhtml 1`] = `
 "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" xmlns:epub=\\"http://www.idpf.org/2007/ops\\"><head>
-    <meta charset=\\"utf-8\\" />
-    <title></title>
-    <style data-vv-style=\\"\\">
+<html
+  xmlns=\\"http://www.w3.org/1999/xhtml\\"
+  xmlns:epub=\\"http://www.idpf.org/2007/ops\\"
+  ><head
+    ><meta charset=\\"utf-8\\" /><title></title
+    ><style data-vv-style=\\"\\">
       body {
         margin: 0;
       }
@@ -300,43 +303,63 @@ exports[`generate EPUB from vivliostyle.config.js > cover document%.xhtml 1`] = 
       @page {
         margin: 0;
       }
-    </style>
-  </head>
-  <body>
-    <section role=\\"region\\" aria-label=\\"Cover\\">
-      <img role=\\"doc-cover\\" src=\\"../cover%20image%25.png\\" alt=\\"Cover image\\" />
-    </section>
-  
-
-</body></html>"
+    </style></head
+  ><body
+    ><section role=\\"region\\" aria-label=\\"Cover\\"
+      ><img
+        role=\\"doc-cover\\"
+        src=\\"../cover%20image%25.png\\"
+        alt=\\"Cover image\\" /></section></body
+></html>
+"
 `;
 
 exports[`generate EPUB from vivliostyle.config.js > index file%.xhtml 1`] = `
 "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" xmlns:epub=\\"http://www.idpf.org/2007/ops\\"><head>
-    <meta charset=\\"utf-8\\" />
-    <title>日本語</title>
-    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"../escape%20check%25.css\\" />
-    
-  </head>
-  <body>
-    <h1>日本語</h1>
-    <nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\">
-      <h2>もくじ</h2>
-      <ol>
-        <li data-section-level=\\"1\\">
-          <a href=\\"../%E6%97%A5%E6%9C%AC%E8%AA%9E.xhtml#%E6%97%A5%E6%9C%AC%E8%AA%9E\\">日本語</a>
-          <ol>
-            <li data-section-level=\\"2\\">
-              <a href=\\"../%E6%97%A5%E6%9C%AC%E8%AA%9E.xhtml#sec-11\\">Sec. 1.1</a>
-            </li>
-          </ol>
-        </li>
-      </ol>
-    </nav>
-  
-
-<nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\"><h2>Landmarks</h2><ol><li><a epub:type=\\"toc\\" href=\\"index%20file%25.xhtml#toc\\">Table of Contents</a></li><li><a epub:type=\\"cover\\" href=\\"cover%20document%25.xhtml\\">Cover Page</a></li></ol></nav></body></html>"
+<html
+  xmlns=\\"http://www.w3.org/1999/xhtml\\"
+  xmlns:epub=\\"http://www.idpf.org/2007/ops\\"
+  ><head
+    ><meta charset=\\"utf-8\\" /><title>日本語</title
+    ><link
+      rel=\\"stylesheet\\"
+      type=\\"text/css\\"
+      href=\\"../escape%20check%25.css\\" /></head
+  ><body
+    ><h1>日本語</h1
+    ><nav id=\\"toc\\" role=\\"doc-toc\\" epub:type=\\"toc\\"
+      ><h2>もくじ</h2
+      ><ol
+        ><li data-section-level=\\"1\\"
+          ><a
+            href=\\"../%E6%97%A5%E6%9C%AC%E8%AA%9E.xhtml#%E6%97%A5%E6%9C%AC%E8%AA%9E\\"
+            >日本語</a
+          ><ol
+            ><li data-section-level=\\"2\\"
+              ><a href=\\"../%E6%97%A5%E6%9C%AC%E8%AA%9E.xhtml#sec-11\\"
+                >Sec. 1.1</a
+              ></li
+            ></ol
+          ></li
+        ></ol
+      ></nav
+    ><nav epub:type=\\"landmarks\\" id=\\"landmarks\\" hidden=\\"\\"
+      ><h2>Landmarks</h2
+      ><ol
+        ><li
+          ><a epub:type=\\"toc\\" href=\\"index%20file%25.xhtml#toc\\"
+            >Table of Contents</a
+          ></li
+        ><li
+          ><a epub:type=\\"cover\\" href=\\"cover%20document%25.xhtml\\"
+            >Cover Page</a
+          ></li
+        ></ol
+      ></nav
+    ></body
+  ></html
+>
+"
 `;
 
 exports[`generate EPUB from vivliostyle.config.js > tree 1`] = `

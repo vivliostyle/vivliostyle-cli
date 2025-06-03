@@ -3,6 +3,7 @@ import './mocks/vivliostyle__jsdom.js';
 
 import { JSDOM } from '@vivliostyle/jsdom';
 import { vol } from 'memfs';
+import { format } from 'prettier';
 import { assert, beforeEach, expect, it } from 'vitest';
 import { isWebPubConfig } from '../src/config/resolve.js';
 import { transformManuscript } from '../src/processor/compile.js';
@@ -30,37 +31,13 @@ it('generateCoverHtml', async () => {
   });
   assert(isWebPubConfig(config));
   const content = await transformManuscript(config.entries[0], config);
-  expect(content).toBe(
-    `<html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <title>Book title</title>
-    <style data-vv-style="">
-      :root {
-        break-before: recto;
-      }
-      body {
-        margin: 0;
-      }
-      [role="doc-cover"] {
-        display: block;
-        width: 100vw;
-        height: 100vh;
-        object-fit: contain;
-      }
-      @page {
-        margin: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <section role="region" aria-label="Cover">
-      <img role="doc-cover" src="escape%20check%25.jpg" alt="Cover image" />
-    </section>
-  </body>
-</html>
-`,
-  );
+  assert(content);
+  expect(
+    await format(content, {
+      parser: 'html',
+      htmlWhitespaceSensitivity: 'strict',
+    }),
+  ).toMatchSnapshot('cover.html');
 });
 
 it('supports cover config', async () => {

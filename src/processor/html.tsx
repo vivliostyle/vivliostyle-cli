@@ -166,7 +166,10 @@ export async function getJsdomFromUrlOrFile({
     dom = await JSDOM.fromFile(fileURLToPath(url), {
       virtualConsole,
       resources: resourceLoader,
-      contentType: 'text/html; charset=UTF-8',
+      contentType:
+        src.endsWith('.xhtml') || src.endsWith('.xml')
+          ? 'application/xhtml+xml; charset=UTF-8'
+          : 'text/html; charset=UTF-8',
     });
   } else if (url.protocol === 'data:') {
     const [head, body] = url.href.split(',', 2);

@@ -2,31 +2,31 @@
 
 exports[`generate files with multiple cover pages 1`] = `
 "
-      :root {
-        break-before: recto;
-      }
-      @page :nth(1) {
-        counter-reset: page 0;
-      }
-    "
+:root {
+  break-before: recto;
+}
+@page :nth(1) {
+  counter-reset: page 0;
+}
+"
 `;
 
 exports[`generate files with multiple cover pages 2`] = `
 "
-      :root {
-        break-before: left;
-      }
-      body {
-        margin: 0;
-      }
-      [role=\\"doc-cover\\"] {
-        display: block;
-        width: 100vw;
-        height: 100vh;
-        object-fit: contain;
-      }
-      @page {
-        margin: 0;
-      }
-    "
+:root {
+  break-before: left;
+}
+body {
+  margin: 0;
+}
+[role=\\"doc-cover\\"] {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+}
+@page {
+  margin: 0;
+}
+"
 `;

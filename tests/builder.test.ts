@@ -258,7 +258,7 @@ it('generate with VFM options', async () => {
     resolveFixture('builder/.vs-workspace/manuscript/soda.html'),
     'utf8',
   );
-  expect(output1).toMatch('hardLineBreaks option test foo');
+  expect(output1).toMatch(/hardLineBreaks option test\s+foo/g);
 
   await runCommand(['build', '-c', 'vfm.config.js'], {
     cwd: resolveFixture('builder'),
@@ -286,7 +286,7 @@ it('generate with VFM options', async () => {
     resolveFixture('builder/.vs-vfm/manuscript/soda.html'),
     'utf8',
   );
-  expect(output2).toMatch(/hardLineBreaks option test<br \/>\s*foo/g);
+  expect(output2).toMatch(/hardLineBreaks option test<br>\s*foo/g);
   const doc1 = new JSDOM(
     fs.readFileSync(
       resolveFixture('builder/.vs-vfm/manuscript/frontmatter.html'),
