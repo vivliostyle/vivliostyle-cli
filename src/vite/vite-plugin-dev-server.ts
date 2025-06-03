@@ -237,7 +237,7 @@ export function vsDevServerPlugin({
         }
         return { content: html, etag };
       } catch (error: any) {
-        console.error(getFormattedError(error));
+        server?.config.logger.error(getFormattedError(error));
         transformCache.delete(entry.target);
         return;
       }
