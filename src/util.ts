@@ -10,6 +10,7 @@ import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
 import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
+import os from 'node:os';
 import readline from 'node:readline';
 import util from 'node:util';
 import tmp from 'tmp';
@@ -388,4 +389,20 @@ export function debounce<T extends (...args: any[]) => unknown>(
       invoke(...args);
     }
   };
+}
+
+export function getCacheDir(): string {
+  let osCacheDir: string;
+  if (process.platform === 'linux') {
+    osCacheDir =
+      process.env.XDG_CACHE_HOME || upath.join(os.homedir(), '.cache');
+  } else if (process.platform === 'darwin') {
+    osCacheDir = upath.join(os.homedir(), 'Library', 'Caches');
+  } else if (process.platform === 'win32') {
+    osCacheDir =
+      process.env.LOCALAPPDATA || upath.join(os.homedir(), 'AppData', 'Local');
+  } else {
+    throw new Error(`Unsupported platform: ${process.platform}`);
+  }
+  return upath.join(osCacheDir, 'vivliostyle');
 }

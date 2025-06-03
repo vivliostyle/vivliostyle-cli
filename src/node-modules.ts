@@ -4,22 +4,22 @@
 // when trying to import unnecessary modules in a standalone environment.
 export const nodeExternalModules = [
   '@napi-rs/canvas',
+  '@puppeteer/browsers',
   'command-exists',
   'execa',
   'press-ready',
   'pdf-lib',
-  'playwright-core',
-  'playwright-core/lib/server',
+  'puppeteer-core',
 ] as const;
 
 type NodeExternalModules = {
   '@napi-rs/canvas': typeof import('@napi-rs/canvas');
+  '@puppeteer/browsers': typeof import('@puppeteer/browsers');
   'command-exists': typeof import('command-exists');
   execa: typeof import('execa');
   'press-ready': typeof import('press-ready');
   'pdf-lib': typeof import('pdf-lib');
-  'playwright-core': typeof import('playwright-core');
-  'playwright-core/lib/server': typeof import('playwright-core/lib/server');
+  'puppeteer-core': typeof import('puppeteer-core');
 };
 
 export const importNodeModule = <
