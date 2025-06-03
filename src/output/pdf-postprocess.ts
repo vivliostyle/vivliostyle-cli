@@ -81,7 +81,7 @@ export async function pressReadyWithContainer({
 }
 
 export class PostProcess {
-  static async load(pdf: Buffer): Promise<PostProcess> {
+  static async load(pdf: Uint8Array): Promise<PostProcess> {
     const { PDFDocument } = await importNodeModule('pdf-lib');
     const document = await PDFDocument.load(pdf, { updateMetadata: false });
     return new PostProcess(document);
