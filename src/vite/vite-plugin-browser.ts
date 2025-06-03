@@ -34,16 +34,17 @@ export function vsBrowserPlugin({
 
         // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
         const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-        await page.addInitScript(
-          `window.localStorage.setItem('i18nextLng', '${locale}');`,
-        );
+        // await page.evaluate(() =>
+        //   /* v8 ignore next */
+        //   window.localStorage.setItem('i18nextLng', locale),
+        // );
       },
     });
 
     // Move focus from the address bar to the page
     await page.bringToFront();
     // Focus to the URL input box if available
-    await page.locator('#vivliostyle-input-url').focus({ timeout: 0 });
+    // await page.focus('#vivliostyle-input-url');
 
     closeBrowser = () => {
       page.off('close', handlePageClose);

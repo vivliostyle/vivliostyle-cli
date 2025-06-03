@@ -273,7 +273,7 @@ export type VfmReplaceRule = v.InferInput<typeof VfmReplaceRule>;
 export const BrowserType = v.union([
   v.literal('chromium'),
   v.literal('firefox'),
-  v.literal('webkit'),
+  // v.literal('webkit'),
 ]);
 export type BrowserType = v.InferInput<typeof BrowserType>;
 
