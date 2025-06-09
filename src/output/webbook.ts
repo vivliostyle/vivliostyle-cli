@@ -311,7 +311,11 @@ export async function retrieveWebbookEntry({
   );
 
   return {
-    entryHtmlFile: upath.join(outputDir, entryHtml),
+    entryHtmlFile: upath.join(
+      outputDir,
+      entryHtml,
+      ...(upath.extname(entryHtml) ? [] : ['index.html']),
+    ),
     manifest,
   };
 }
