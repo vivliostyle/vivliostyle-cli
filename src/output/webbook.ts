@@ -385,9 +385,17 @@ export async function copyWebPublicationAssets({
   input,
   outputDir,
   entries,
+  customStyle,
+  customUserStyle,
 }: Pick<
   ResolvedTaskConfig,
-  'exportAliases' | 'outputs' | 'copyAsset' | 'themesDir' | 'entries'
+  | 'exportAliases'
+  | 'outputs'
+  | 'copyAsset'
+  | 'themesDir'
+  | 'entries'
+  | 'customStyle'
+  | 'customUserStyle'
 > & {
   input: string;
   outputDir: string;
@@ -406,6 +414,8 @@ export async function copyWebPublicationAssets({
       outputs,
       themesDir,
       entries,
+      customStyle,
+      customUserStyle,
     })),
     ...(await glob(
       [

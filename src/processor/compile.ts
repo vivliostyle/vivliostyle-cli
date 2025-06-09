@@ -444,11 +444,18 @@ function getAssetMatcherSettings({
   outputs,
   themesDir,
   entries,
+  customStyle,
+  customUserStyle,
   cwd,
   ignore = [],
 }: Pick<
   ResolvedTaskConfig,
-  'copyAsset' | 'outputs' | 'themesDir' | 'entries'
+  | 'copyAsset'
+  | 'outputs'
+  | 'themesDir'
+  | 'entries'
+  | 'customStyle'
+  | 'customUserStyle'
 > & {
   cwd: string;
   ignore?: string[];
@@ -474,14 +481,20 @@ function getAssetMatcherSettings({
     // Step 2: Glob files matched with `includes`
     // Ignore only files matched `excludes`
     {
-      patterns: includes,
+      patterns: [
+        ...includes,
+        // Copy custom (user) style if specified
+        customStyle,
+        customUserStyle,
+      ].filter((s): s is string => Boolean(s)),
       ignore: ignorePatterns,
     },
   ];
 }
 
 export function getAssetMatcher(
-  arg: Parameters<typeof getAssetMatcherSettings>[0],
+  arg: Parameters<typeof getAssetMatcherSettings>[0] &
+    Pick<ResolvedTaskConfig, 'customStyle' | 'customUserStyle'>,
 ) {
   const matchers = getAssetMatcherSettings(arg).map(({ patterns, ignore }) =>
     picomatch(patterns, { ignore }),
@@ -515,6 +528,8 @@ export async function copyAssets({
   outputs,
   themesDir,
   entries,
+  customStyle,
+  customUserStyle,
 }: ResolvedTaskConfig): Promise<void> {
   if (pathEquals(entryContextDir, workspaceDir)) {
     return;
@@ -526,6 +541,8 @@ export async function copyAssets({
     outputs,
     themesDir,
     entries,
+    customStyle,
+    customUserStyle,
     ignore: [
       // don't copy workspace itself
       ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
