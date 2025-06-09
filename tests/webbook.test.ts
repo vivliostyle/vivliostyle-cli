@@ -217,7 +217,7 @@ it('generate webpub from remote HTML documents with publication manifest', async
     '/assets/日本語.png': 'image',
   });
   await runCommand(
-    ['build', 'https://example.com/remote/dir', '-o', 'output'],
+    ['build', 'https://example.com/remote/dir/', '-o', 'output'],
     { cwd: '/work' },
   );
   expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
