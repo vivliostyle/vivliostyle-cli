@@ -869,14 +869,6 @@ function resolveSingleInputConfig({
     let webbookPath: string | undefined;
     if (isValidUri(sourcePath)) {
       const url = new URL(sourcePath);
-      // Ensures trailing slash or explicit extensions
-      if (
-        /^https?:/i.test(url.protocol) &&
-        !url.pathname.endsWith('/') &&
-        !/\.\w+$/.test(url.pathname)
-      ) {
-        url.pathname = `${url.pathname}/`;
-      }
       webbookEntryUrl = url.href;
     } else {
       const rootFileUrl = pathToFileURL(workspaceDir).href;
