@@ -455,6 +455,30 @@ function parseFileMetadata({
   return { title, themes };
 }
 
+export function parseCustomStyle({
+  customStyle,
+  entryContextDir,
+}: {
+  customStyle: string;
+  entryContextDir: string;
+}): string {
+  if (isValidUri(customStyle)) {
+    return customStyle;
+  }
+  const stylePath = upath.resolve(entryContextDir, customStyle);
+  if (!pathContains(entryContextDir, stylePath)) {
+    throw Error(
+      `Custom style file ${customStyle} is not in ${entryContextDir}. Make sure the file is located in the context directory or a subdirectory.`,
+    );
+  }
+  if (!fs.existsSync(stylePath)) {
+    throw new Error(`Custom style file not found: ${customStyle}`);
+  }
+  return pathToFileURL(stylePath).href.slice(
+    pathToFileURL(entryContextDir).href.replace(/\/$/, '').length + 1,
+  );
+}
+
 export function resolveTaskConfig(
   config: ParsedBuildTask,
   options: InlineOptions,
@@ -472,16 +496,6 @@ export function resolveTaskConfig(
   const bleed = options.bleed;
   const cropOffset = options.cropOffset;
   const css = options.css;
-  const customStyle =
-    options.style &&
-    (isValidUri(options.style)
-      ? options.style
-      : pathToFileURL(options.style).href);
-  const customUserStyle =
-    options.userStyle &&
-    (isValidUri(options.userStyle)
-      ? options.userStyle
-      : pathToFileURL(options.userStyle).href);
   const singleDoc = options.singleDoc ?? false;
   const quick = options.quick ?? false;
   const temporaryFilePrefix =
@@ -520,6 +534,15 @@ export function resolveTaskConfig(
   const staticRoutes = config.static ?? {};
   const viteConfig = config.vite;
   const viteConfigFile = config.viteConfigFile ?? true;
+
+  const customStyle =
+    (options.style &&
+      parseCustomStyle({ customStyle: options.style, entryContextDir })) ||
+    undefined;
+  const customUserStyle =
+    (options.userStyle &&
+      parseCustomStyle({ customStyle: options.userStyle, entryContextDir })) ||
+    undefined;
 
   const outputs = ((): OutputConfig[] => {
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {

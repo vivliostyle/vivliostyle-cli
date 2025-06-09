@@ -36,6 +36,7 @@ export type ViewerUrlOption = Pick<
   | 'singleDoc'
   | 'quick'
   | 'viewerParam'
+  | 'base'
 >;
 
 export function getViewerParams(
@@ -51,6 +52,7 @@ export function getViewerParams(
     singleDoc,
     quick,
     viewerParam,
+    base,
   }: ViewerUrlOption,
 ): string {
   const pageSizeValue =
@@ -64,11 +66,17 @@ export function getViewerParams(
   viewerParams += `&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
   if (customStyle) {
-    viewerParams += `&style=${escapeParam(customStyle)}`;
+    const param = isValidUri(customStyle)
+      ? customStyle
+      : upath.posix.join(base, customStyle);
+    viewerParams += `&style=${escapeParam(param)}`;
   }
 
   if (customUserStyle) {
-    viewerParams += `&userStyle=${escapeParam(customUserStyle)}`;
+    const param = isValidUri(customUserStyle)
+      ? customUserStyle
+      : upath.posix.join(base, customUserStyle);
+    viewerParams += `&userStyle=${escapeParam(param)}`;
   }
 
   if (pageSizeValue || cropMarks || bleed || cropOffset || css) {
@@ -169,7 +177,7 @@ export async function getViewerFullUrl({
     sourceUrl === EMPTY_DATA_URI
       ? undefined // open Viewer start page
       : sourceUrl,
-    config,
+    { base, ...config },
   );
   viewerUrl.hash = '';
   return `${viewerUrl.href}#${viewerParams}`;

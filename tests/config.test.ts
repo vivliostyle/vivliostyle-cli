@@ -108,7 +108,7 @@ it('override option by CLI command', async () => {
       '--style',
       'https://vivlostyle.org',
       '--user-style',
-      './user/style/dummy.css',
+      './theme.css',
       '--http',
       '--viewer',
       'https://vivliostyle.org/viewer/',

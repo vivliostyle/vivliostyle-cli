@@ -38,7 +38,7 @@ Object {
   "cropOffset": undefined,
   "css": undefined,
   "customStyle": "https://vivlostyle.org",
-  "customUserStyle": "file://__WORKSPACE__/user/style/dummy.css",
+  "customUserStyle": "theme.css",
   "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
