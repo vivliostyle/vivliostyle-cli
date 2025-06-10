@@ -63,6 +63,7 @@ export interface PackageTheme {
   name: string;
   specifier: string;
   location: string;
+  registry: boolean;
   importPath?: string | string[];
 }
 
@@ -395,6 +396,7 @@ export function parseTheme({
     name,
     specifier: resolvedSpecifier,
     location: upath.join(themesDir, 'node_modules', name),
+    registry: Boolean(parsed.registry),
     importPath,
   };
 }
