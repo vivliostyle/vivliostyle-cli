@@ -1,5 +1,27 @@
 # Changelog
 
+# [9.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.1.1...v9.2.0) (2025-06-10)
+
+### Bug Fixes
+
+- Add imported theme files to watch target ([bae7996](https://github.com/vivliostyle/vivliostyle-cli/commit/bae7996539df67221174f49380f2f38f3eba641c))
+- Fix failure case of saving remote webbook files ([3122ab6](https://github.com/vivliostyle/vivliostyle-cli/commit/3122ab6e4875c546813184c2966d01bd5197c70d))
+- Fix to work `--style`/`--user-style` option ([c1864bb](https://github.com/vivliostyle/vivliostyle-cli/commit/c1864bb396d81e13b75f3442a8470ca4ad7e5cde)), closes [#604](https://github.com/vivliostyle/vivliostyle-cli/issues/604)
+- Quit formatting html outputs ([d9cbeaf](https://github.com/vivliostyle/vivliostyle-cli/commit/d9cbeaf2a092df1654e7876ed4f2d817b9a0b61a)), closes [#599](https://github.com/vivliostyle/vivliostyle-cli/issues/599)
+- Update Vivliostyle.js to 2.32.1: Bug Fixes ([80702c0](https://github.com/vivliostyle/vivliostyle-cli/commit/80702c090af825594745958e80c010aa41262e6f))
+
+### Features
+
+- Do not add a trailing slash to webbook URL ([c00bc95](https://github.com/vivliostyle/vivliostyle-cli/commit/c00bc950148645be82a6dcf3fbc511466cc1d365)), closes [#603](https://github.com/vivliostyle/vivliostyle-cli/issues/603)
+
+The webbook URL no longer automatically adds a trailing slash. If the remote server requires one, you may need to update your input accordingly.
+
+```
+vivliostyle build https://example.com/subpath
+↓
+vivliostyle build https://example.com/subpath/
+```
+
 ## [9.1.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.1.0...v9.1.1) (2025-05-17)
 
 ### Bug Fixes
