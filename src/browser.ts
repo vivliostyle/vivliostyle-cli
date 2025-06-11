@@ -1,10 +1,17 @@
+import type { InstalledBrowser } from '@puppeteer/browsers';
 import fs from 'node:fs';
-import type { Browser, Page } from 'playwright-core';
+import type { Browser, LaunchOptions, Page } from 'puppeteer-core';
+import upath from 'upath';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
-import { isInContainer, isRunningOnWSL, registerExitHandler } from './util.js';
+import {
+  getCacheDir,
+  isInContainer,
+  isRunningOnWSL,
+  registerExitHandler,
+} from './util.js';
 
 async function launchBrowser({
   browserType,
@@ -13,6 +20,7 @@ async function launchBrowser({
   headless,
   noSandbox,
   disableDevShmUsage,
+  ignoreHttpsErrors,
 }: {
   browserType: BrowserType;
   proxy:
@@ -25,18 +33,24 @@ async function launchBrowser({
     | undefined;
   executablePath: string;
   headless: boolean;
-  noSandbox?: boolean;
-  disableDevShmUsage?: boolean;
+  noSandbox: boolean;
+  disableDevShmUsage: boolean;
+  ignoreHttpsErrors: boolean;
 }): Promise<Browser> {
-  const playwright = await importNodeModule('playwright-core');
-  playwright.firefox.executablePath;
-  const options =
+  const puppeteer = await importNodeModule('puppeteer-core');
+  const commonOptions = {
+    executablePath,
+    headless: headless && 'shell',
+    acceptInsecureCerts: ignoreHttpsErrors,
+    env: { ...process.env, LANG: 'en.UTF-8' },
+    //  proxy, // FIXME
+  } satisfies LaunchOptions;
+  const browser = await puppeteer.launch(
     browserType === 'chromium'
       ? {
-          executablePath,
-          chromiumSandbox: !noSandbox,
-          headless,
+          ...commonOptions,
           args: [
+            ...(noSandbox ? ['--no-sandbox'] : []),
             // #579: disable web security to allow cross-origin requests
             '--disable-web-security',
             ...(disableDevShmUsage ? ['--disable-dev-shm-usage'] : []),
@@ -46,16 +60,15 @@ async function launchBrowser({
             ...(isRunningOnWSL() ? ['--disable-gpu'] : []),
             // set Chromium language to English to avoid locale-dependent issues
             '--lang=en',
-            ...(!headless && process.platform === 'darwin'
-              ? ['', '-AppleLanguages', '(en)'] // Fix for issue #570
+            ...(process.platform === 'darwin'
+              ? ['-AppleLanguages', '(en)'] // Fix for issue #570
               : []),
           ],
-          env: { ...process.env, LANG: 'en.UTF-8' },
-          proxy: proxy,
         }
-      : // TODO: Investigate appropriate settings on Firefox & Webkit
-        { executablePath, headless };
-  const browser = await playwright[browserType].launch(options);
+      : // TODO: Investigate appropriate settings on Firefox
+        commonOptions,
+  );
+  // const browser = await playwright[browserType].launch(options);
   registerExitHandler('Closing browser', () => {
     browser.close();
   });
@@ -65,8 +78,23 @@ async function launchBrowser({
 export async function getExecutableBrowserPath(
   browserType: BrowserType,
 ): Promise<string> {
-  const playwright = await importNodeModule('playwright-core');
-  return playwright[browserType].executablePath();
+  const browsers = await importNodeModule('@puppeteer/browsers');
+  const browser = (
+    {
+      chromium: browsers.Browser.CHROMIUM,
+      firefox: browsers.Browser.FIREFOX,
+    } as const
+  )[browserType];
+  const platform = browsers.detectBrowserPlatform();
+  if (!platform) {
+    throw new Error('The current platform is not supported.');
+  }
+  const buildId = await browsers.resolveBuildId(browser, platform, '1440670');
+  return browsers.computeExecutablePath({
+    browser,
+    cacheDir: upath.join(getCacheDir(), 'browsers'),
+    buildId,
+  });
 }
 
 export function getFullBrowserName(browserType: BrowserType): string {
@@ -84,15 +112,36 @@ export function checkBrowserAvailability(path: string): boolean {
 export async function downloadBrowser(
   browserType: BrowserType,
 ): Promise<string> {
-  const { registry } = await importNodeModule('playwright-core/lib/server');
-  const executable = registry.findExecutable(browserType);
+  const browsers = await importNodeModule('@puppeteer/browsers');
+  const browser = (
+    {
+      chromium: browsers.Browser.CHROMIUM,
+      firefox: browsers.Browser.FIREFOX,
+    } as const
+  )[browserType];
+  const platform = browsers.detectBrowserPlatform();
+  if (!platform) {
+    throw new Error('The current platform is not supported.');
+  }
+  const buildId = await browsers.resolveBuildId(browser, platform, '1440670');
+  let installedBrowser: InstalledBrowser | undefined;
   {
     using _ = Logger.suspendLogging(
       'Rendering browser is not installed yet. Downloading now.',
     );
-    await registry.install([executable], false);
+    installedBrowser = await browsers.install({
+      browser: (
+        {
+          chromium: browsers.Browser.CHROMIUM,
+          firefox: browsers.Browser.FIREFOX,
+        } as const
+      )[browserType],
+      cacheDir: upath.join(getCacheDir(), 'browsers'),
+      buildId,
+      downloadProgressCallback: 'default',
+    });
   }
-  return executable.executablePath()!;
+  return installedBrowser.executablePath;
 }
 
 export async function launchPreview({
@@ -112,6 +161,7 @@ export async function launchPreview({
   >;
 }) {
   let executableBrowser = browserConfig.executablePath;
+  Logger.debug(`Specified browser path: ${executableBrowser}`);
   if (executableBrowser) {
     if (!checkBrowserAvailability(executableBrowser)) {
       throw new Error(
@@ -120,12 +170,12 @@ export async function launchPreview({
     }
   } else {
     executableBrowser = await getExecutableBrowserPath(browserConfig.type);
+    Logger.debug(`Using default browser: ${executableBrowser}`);
     if (!checkBrowserAvailability(executableBrowser)) {
       // The browser isn't downloaded first time starting CLI so try to download it
       await downloadBrowser(browserConfig.type);
     }
   }
-  Logger.debug(`Executing browser path: ${executableBrowser}`);
 
   const browser = await launchBrowser({
     browserType: browserConfig.type,
@@ -134,21 +184,18 @@ export async function launchPreview({
     headless: mode === 'build',
     noSandbox: !sandbox,
     disableDevShmUsage: isInContainer(),
+    ignoreHttpsErrors,
   });
   await onBrowserOpen?.(browser);
 
-  const page = await browser.newPage({
-    viewport:
-      mode === 'build'
-        ? // This viewport size important to detect headless environment in Vivliostyle viewer
-          // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
-          {
-            width: 800,
-            height: 600,
-          }
-        : null,
-    ignoreHTTPSErrors: ignoreHttpsErrors,
-  });
+  const page = (await browser.pages())[0] ?? (await browser.newPage());
+  await page.setViewport(
+    mode === 'build'
+      ? // This viewport size is important to detect headless environment in Vivliostyle viewer
+        // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
+        { width: 800, height: 600 }
+      : null,
+  );
   await onPageOpen?.(page);
 
   // Prevent confirm dialog from being auto-dismissed
