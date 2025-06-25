@@ -27,8 +27,8 @@ importers:
         specifier: 2.2.1
         version: 2.2.1
       '@vivliostyle/viewer':
-        specifier: 2.32.1
-        version: 2.32.1
+        specifier: 2.33.0
+        version: 2.33.0
       ajv:
         specifier: 8.17.1
         version: 8.17.1
@@ -353,7 +353,7 @@ importers:
     dependencies:
       '@astrojs/mdx':
         specifier: ^4.2.5
-        version: 4.3.0(astro@5.9.2(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1))
+        version: 4.3.0(astro@5.10.1(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1))
       '@astrojs/rss':
         specifier: ^4.0.11
         version: 4.0.12
@@ -365,7 +365,7 @@ importers:
         version: file:(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.0)(tsx@4.19.3)(yaml@2.7.1))
       astro:
         specifier: ^5.7.8
-        version: 5.9.2(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1)
+        version: 5.10.1(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1)
     devDependencies:
       cross-env:
         specifier: ^7.0.3
@@ -379,7 +379,7 @@ importers:
     devDependencies:
       '@11ty/eleventy':
         specifier: ^3.0.0
-        version: 3.1.1
+        version: 3.1.2
       '@11ty/eleventy-img':
         specifier: ^6.0.1
         version: 6.0.4
@@ -409,10 +409,10 @@ importers:
         version: 1.30.0
       zod:
         specifier: ^3.23.8
-        version: 3.25.57
+        version: 3.25.67
       zod-validation-error:
         specifier: ^3.3.1
-        version: 3.4.1(zod@3.25.57)
+        version: 3.5.2(zod@3.25.67)
 
   examples/workspace-directory:
     dependencies:
@@ -466,8 +466,8 @@ packages:
     resolution: {integrity: sha512-6QE+duqSQ0GY9rENXYb4iPR4AYGdrFpqnmi59tFp9VrleOl0QSh8VlBr2yd6dlhkdtj7904poZW5PvGr9cMiJQ==}
     engines: {node: '>=18'}
 
-  '@11ty/eleventy@3.1.1':
-    resolution: {integrity: sha512-nsMCW44WSYzpi6JSQ1ar/wlotj/2cxuP4AABX5Dxqwol3IQ3SkEMgcAugP1t1mthv5I0kIB9lql1Jv/lhUHIkg==}
+  '@11ty/eleventy@3.1.2':
+    resolution: {integrity: sha512-IcsDlbXnBf8cHzbM1YBv3JcTyLB35EK88QexmVyFdVJVgUU6bh9g687rpxryJirHzo06PuwnYaEEdVZQfIgRGg==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -479,8 +479,8 @@ packages:
     resolution: {integrity: sha512-6EFN/yYSxC/OzYXpq4gXDyDMlX/W+2MgCvvoxf11X1z76bqkqFJ8eep5RiBWfGT5j0323a1pwpelcJJdR46MCw==}
     engines: {node: '>= 6'}
 
-  '@11ty/recursive-copy@4.0.1':
-    resolution: {integrity: sha512-Zsg1xgfdVTMKNPj9o4FZeYa73dFZRX856CL4LsmqPMvDr0TuIK4cH9CVWJyf0OkNmM8GmlibGX18fF0B75Rn1w==}
+  '@11ty/recursive-copy@4.0.2':
+    resolution: {integrity: sha512-174nFXxL/6KcYbLYpra+q3nDbfKxLxRTNVY1atq2M1pYYiPfHse++3IFNl8mjPFsd7y2qQjxLORzIjHMjL3NDQ==}
     engines: {node: '>=18'}
 
   '@ampproject/remapping@2.3.0':
@@ -1614,6 +1614,10 @@ packages:
     resolution: {integrity: sha512-SZWskPCcJksTMw2u1W0dzxp/gq0Itb41+i5LyTtW8cNTZ4b2KryUpCmXdeFQot+1JJ/sFWu03/z22HC9o/y+0w==}
     engines: {node: '>=14'}
 
+  '@vivliostyle/core@2.33.0':
+    resolution: {integrity: sha512-iA7B7Lhf4c9RwecXI9Qk/qzTmeECokX9/egYat2LbeyWOQ6eMCp+v9LWCHta/ZEcPULeOWusPdIeOrULM4j3XQ==}
+    engines: {node: '>=14'}
+
   '@vivliostyle/jsdom@25.0.1-vivliostyle-cli.1':
     resolution: {integrity: sha512-5cJwVT5LfFQJhvGTmqstqN4hSDBM/NAFso7AHG9yLCY0XW+86IYHpOp36q+c2Ov78jPiHA/HI886eIyWMOSxrA==}
     engines: {node: '>=18'}
@@ -1630,6 +1634,10 @@ packages:
 
   '@vivliostyle/viewer@2.32.1':
     resolution: {integrity: sha512-4Ml59hTJtwKmvN9jptcC9JI/NqpbWHxZPrMu/gcF7GMaxS9TGY+lhbsIpsHXA9xsph97Bdh+92vAepJQ/0Ma1w==}
+    engines: {node: '>=14'}
+
+  '@vivliostyle/viewer@2.33.0':
+    resolution: {integrity: sha512-dHPzWsf3/mPeedoPK4+gkoLRhaVMQRDk9eXmg49Bb9qmNM40z2eKlUTcv+WHNWMNEzChIlMsY/QJBIBBRvcbbw==}
     engines: {node: '>=14'}
 
   '@zachleat/heading-anchors@1.0.3':
@@ -1791,8 +1799,8 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
-  astro@5.9.2:
-    resolution: {integrity: sha512-K/zZlQOWMpamfLDOls5jvG7lrsjH1gkk3ESRZyZDCkVBtKHMF4LbjwCicm/iBb3mX3V/PerqRYzLbOy3/4JLCQ==}
+  astro@5.10.1:
+    resolution: {integrity: sha512-DJVmt+51jU1xmgmAHCDwuUgcG/5aVFSU+tcX694acAZqPVt8EMUAmUZcJDX36Z7/EztnPph9HR3pm72jS2EgHQ==}
     engines: {node: 18.20.8 || ^20.3.0 || >=22.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0'}
     hasBin: true
 
@@ -6308,17 +6316,17 @@ packages:
       typescript: ^4.9.4 || ^5.0.2
       zod: ^3
 
-  zod-validation-error@3.4.1:
-    resolution: {integrity: sha512-1KP64yqDPQ3rupxNv7oXhf7KdhHHgaqbKuspVoiN93TT0xrBjql+Svjkdjq/Qh/7GSMmgQs3AfvBT0heE35thw==}
+  zod-validation-error@3.5.2:
+    resolution: {integrity: sha512-mdi7YOLtram5dzJ5aDtm1AG9+mxRma1iaMrZdYIpFO7epdKBUwLHIxTF8CPDeCQ828zAXYtizrKlEJAtzgfgrw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      zod: ^3.24.4
+      zod: ^3.25.0
 
   zod@3.24.3:
     resolution: {integrity: sha512-HhY1oqzWCQWuUqvBFnsyrtZRhyPeR7SUGv+C4+MsisMuVfSPx8HpwWqH8tRahSlt6M3PiFAcoeFhZAqIXTxoSg==}
 
-  zod@3.25.57:
-    resolution: {integrity: sha512-6tgzLuwVST5oLUxXTmBqoinKMd3JeesgbgseXeFasKKj8Q1FCZrHnbqJOyiEvr4cVAlbug+CgIsmJ8cl/pU5FA==}
+  zod@3.25.67:
+    resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
 
   zwitch@1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
@@ -6428,7 +6436,7 @@ snapshots:
 
   '@11ty/eleventy-utils@2.0.7': {}
 
-  '@11ty/eleventy@3.1.1':
+  '@11ty/eleventy@3.1.2':
     dependencies:
       '@11ty/dependency-tree': 4.0.0
       '@11ty/dependency-tree-esm': 2.0.0
@@ -6437,7 +6445,7 @@ snapshots:
       '@11ty/eleventy-utils': 2.0.7
       '@11ty/lodash-custom': 4.17.21
       '@11ty/posthtml-urls': 1.0.1
-      '@11ty/recursive-copy': 4.0.1
+      '@11ty/recursive-copy': 4.0.2
       '@sindresorhus/slugify': 2.2.1
       bcp-47-normalize: 2.3.0
       chokidar: 3.6.0
@@ -6477,7 +6485,7 @@ snapshots:
       list-to-array: 1.1.0
       parse-srcset: 1.0.2
 
-  '@11ty/recursive-copy@4.0.1':
+  '@11ty/recursive-copy@4.0.2':
     dependencies:
       errno: 1.0.0
       junk: 3.1.0
@@ -6527,12 +6535,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/mdx@4.3.0(astro@5.9.2(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1))':
+  '@astrojs/mdx@4.3.0(astro@5.10.1(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1))':
     dependencies:
       '@astrojs/markdown-remark': 6.3.2
       '@mdx-js/mdx': 3.1.0(acorn@8.14.1)
       acorn: 8.14.1
-      astro: 5.9.2(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1)
+      astro: 5.10.1(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1)
       es-module-lexer: 1.7.0
       estree-util-visit: 2.0.0
       hast-util-to-html: 9.0.5
@@ -7737,6 +7745,10 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
+  '@vivliostyle/core@2.33.0':
+    dependencies:
+      fast-diff: 1.3.0
+
   '@vivliostyle/jsdom@25.0.1-vivliostyle-cli.1(@napi-rs/canvas@0.1.69)':
     dependencies:
       cssstyle: 4.1.0
@@ -7808,6 +7820,12 @@ snapshots:
   '@vivliostyle/viewer@2.32.1':
     dependencies:
       '@vivliostyle/core': 2.32.1
+      i18next-ko: 3.0.1
+      knockout: 3.5.1
+
+  '@vivliostyle/viewer@2.33.0':
+    dependencies:
+      '@vivliostyle/core': 2.33.0
       i18next-ko: 3.0.1
       knockout: 3.5.1
 
@@ -7953,7 +7971,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@5.9.2(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1):
+  astro@5.10.1(@types/node@24.0.0)(encoding@0.1.13)(rollup@4.40.0)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.1):
     dependencies:
       '@astrojs/compiler': 2.12.2
       '@astrojs/internal-helpers': 0.6.1
@@ -13380,13 +13398,13 @@ snapshots:
       typescript: 5.8.3
       zod: 3.24.3
 
-  zod-validation-error@3.4.1(zod@3.25.57):
+  zod-validation-error@3.5.2(zod@3.25.67):
     dependencies:
-      zod: 3.25.57
+      zod: 3.25.67
 
   zod@3.24.3: {}
 
-  zod@3.25.57: {}
+  zod@3.25.67: {}
 
   zwitch@1.0.5: {}
 
