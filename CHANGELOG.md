@@ -1,5 +1,12 @@
 # Changelog
 
+# [9.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.2.0...v9.3.0) (2025-06-25)
+
+### Features
+
+- Update Playwright to 1.53.1 (Chromium 138.0.7204.23) ([8ad5b80](https://github.com/vivliostyle/vivliostyle-cli/commit/8ad5b80e2a733369b0397f35429fe47e6b1e8b5d))
+- Update Vivliostyle.js to 2.33.0: Spread inside/outside properties ([e265395](https://github.com/vivliostyle/vivliostyle-cli/commit/e265395dadb5c8b456586970ad0805f53771121a))
+
 # [9.2.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.1.1...v9.2.0) (2025-06-10)
 
 ### Bug Fixes
