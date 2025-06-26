@@ -14,9 +14,9 @@ import {
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { getAssetMatcher } from '../processor/asset.js';
 import {
   generateManifest,
-  getAssetMatcher,
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';

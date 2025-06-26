@@ -13,10 +13,10 @@ import { buildPDFWithContainer } from '../container.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { buildPDF } from '../output/pdf.js';
 import { buildWebPublication } from '../output/webbook.js';
+import { copyAssets } from '../processor/asset.js';
 import {
   cleanupWorkspace,
   compile,
-  copyAssets,
   prepareThemeDirectory,
 } from '../processor/compile.js';
 import { createViteServer } from '../server.js';
