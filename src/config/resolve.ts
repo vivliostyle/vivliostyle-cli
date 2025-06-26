@@ -277,6 +277,8 @@ export type ResolvedTaskConfig = {
 };
 
 const DEFAULT_ASSET_EXTENSIONS = [
+  'css',
+  'css.map',
   'png',
   'jpg',
   'jpeg',

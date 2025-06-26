@@ -1,13 +1,46 @@
 import { copy } from 'fs-extra/esm';
 import fs from 'node:fs';
-import picomatch from 'picomatch';
-import { glob } from 'tinyglobby';
+import picomatch, { PicomatchOptions } from 'picomatch';
+import { glob, GlobOptions } from 'tinyglobby';
 import upath from 'upath';
 import { ResolvedTaskConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { pathContains, pathEquals } from '../util.js';
 
-export function getIgnoreThemeExamplePatterns({
+export class GlobMatcher {
+  #_matchers: picomatch.Matcher[];
+
+  constructor(
+    public matcherConfig: (Pick<PicomatchOptions, 'dot' | 'ignore'> & {
+      patterns: string[];
+      cwd: string;
+    })[],
+  ) {
+    this.#_matchers = matcherConfig.map(({ patterns, ...options }) =>
+      picomatch(patterns, options),
+    );
+  }
+
+  match(test: string): boolean {
+    return this.#_matchers.some((matcher) => matcher(test));
+  }
+
+  async glob(
+    globOptions: Pick<GlobOptions, 'followSymbolicLinks'> = {},
+  ): Promise<Set<string>> {
+    return new Set(
+      (
+        await Promise.all(
+          this.matcherConfig.map((config) =>
+            glob({ ...config, ...globOptions }),
+          ),
+        )
+      ).flat(),
+    );
+  }
+}
+
+function getIgnoreThemeDirectoryPatterns({
   themesDir,
   cwd,
 }: Pick<ResolvedTaskConfig, 'themesDir'> & {
@@ -21,7 +54,7 @@ export function getIgnoreThemeExamplePatterns({
     : [];
 }
 
-export function getIgnoreAssetPatterns({
+function getIgnoreAssetPatterns({
   outputs,
   entries,
   cwd,
@@ -44,35 +77,63 @@ export function getIgnoreAssetPatterns({
   ];
 }
 
-function getAssetMatcherSettings({
+export function getWebPubResourceMatcher({
+  outputs,
+  themesDir,
+  entries,
+  cwd,
+  manifestPath,
+}: Pick<ResolvedTaskConfig, 'outputs' | 'themesDir' | 'entries'> & {
+  cwd: string;
+  manifestPath: string;
+}) {
+  return new GlobMatcher([
+    {
+      patterns: [
+        `**/${upath.relative(cwd, manifestPath)}`,
+        '**/*.{html,htm,xhtml,xht,css}',
+      ],
+      ignore: [
+        ...getIgnoreAssetPatterns({
+          cwd,
+          outputs,
+          entries,
+        }),
+        ...getIgnoreThemeDirectoryPatterns({
+          cwd,
+          themesDir,
+        }),
+        // Ignore node_modules in the root directory
+        'node_modules/**',
+        // only include dotfiles starting with `.vs-`
+        '**/.!(vs-*)/**',
+      ],
+      dot: true,
+      cwd,
+    },
+  ]);
+}
+
+export function getAssetMatcher({
   copyAsset: { fileExtensions, includes, excludes },
   outputs,
   themesDir,
   entries,
-  customStyle,
-  customUserStyle,
   cwd,
   ignore = [],
 }: Pick<
   ResolvedTaskConfig,
-  | 'copyAsset'
-  | 'outputs'
-  | 'themesDir'
-  | 'entries'
-  | 'customStyle'
-  | 'customUserStyle'
+  'copyAsset' | 'outputs' | 'themesDir' | 'entries'
 > & {
   cwd: string;
   ignore?: string[];
-}): { patterns: string[]; ignore: string[] }[] {
+}) {
   const ignorePatterns = [
     ...ignore,
     ...excludes,
     ...getIgnoreAssetPatterns({ outputs, entries, cwd }),
   ];
-  Logger.debug('globAssetFiles > ignorePatterns', ignorePatterns);
-
-  return [
+  return new GlobMatcher([
     // Step 1: Glob files with an extension in `fileExtension`
     // Ignore files in node_modules directory, theme example files and files matched `excludes`
     {
@@ -80,50 +141,18 @@ function getAssetMatcherSettings({
       ignore: [
         '**/node_modules/**',
         ...ignorePatterns,
-        ...getIgnoreThemeExamplePatterns({ themesDir, cwd }),
+        ...getIgnoreThemeDirectoryPatterns({ themesDir, cwd }),
       ],
+      cwd,
     },
     // Step 2: Glob files matched with `includes`
     // Ignore only files matched `excludes`
     {
-      patterns: [
-        ...includes,
-        // Copy custom (user) style if specified
-        customStyle,
-        customUserStyle,
-      ].filter((s): s is string => Boolean(s)),
+      patterns: includes,
       ignore: ignorePatterns,
+      cwd,
     },
-  ];
-}
-
-export function getAssetMatcher(
-  arg: Parameters<typeof getAssetMatcherSettings>[0] &
-    Pick<ResolvedTaskConfig, 'customStyle' | 'customUserStyle'>,
-) {
-  const matchers = getAssetMatcherSettings(arg).map(({ patterns, ignore }) =>
-    picomatch(patterns, { ignore }),
-  );
-  return (test: string) => matchers.some((matcher) => matcher(test));
-}
-
-export async function globAssetFiles(
-  arg: Parameters<typeof getAssetMatcherSettings>[0],
-): Promise<Set<string>> {
-  const settings = getAssetMatcherSettings(arg);
-  return new Set(
-    (
-      await Promise.all(
-        settings.map(({ patterns, ignore }) =>
-          glob(patterns, {
-            cwd: arg.cwd,
-            ignore,
-            followSymbolicLinks: true,
-          }),
-        ),
-      )
-    ).flat(),
-  );
+  ]);
 }
 
 export async function copyAssets({
@@ -133,26 +162,22 @@ export async function copyAssets({
   outputs,
   themesDir,
   entries,
-  customStyle,
-  customUserStyle,
 }: ResolvedTaskConfig): Promise<void> {
   if (pathEquals(entryContextDir, workspaceDir)) {
     return;
   }
   const relWorkspaceDir = upath.relative(entryContextDir, workspaceDir);
-  const assets = await globAssetFiles({
+  const assets = await getAssetMatcher({
     copyAsset,
     cwd: entryContextDir,
     outputs,
     themesDir,
     entries,
-    customStyle,
-    customUserStyle,
     ignore: [
       // don't copy workspace itself
       ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
     ],
-  });
+  }).glob({ followSymbolicLinks: true });
   Logger.debug('assets', assets);
   for (const asset of assets) {
     const target = upath.join(workspaceDir, asset);
