@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.3.0...v9.3.1) (2025-06-26)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.33.1: Bug Fixes ([3c8665f](https://github.com/vivliostyle/vivliostyle-cli/commit/3c8665f4573bf4582b20eb7a65013236ae744b12))
+
 # [9.3.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.2.0...v9.3.0) (2025-06-25)
 
 ### Features
