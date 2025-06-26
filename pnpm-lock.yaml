@@ -4569,11 +4569,6 @@ packages:
     resolution: {integrity: sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==}
     engines: {node: '>= 6'}
 
-  playwright-core@1.52.0:
-    resolution: {integrity: sha512-l2osTgLXSMeuLZOML9qYODUQoPPnUsKsb5/P6LJ2e6uPKXUdPK5WYhN4z03G+YNbWmGDY4YENauNu4ZKczreHg==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright-core@1.53.1:
     resolution: {integrity: sha512-Z46Oq7tLAyT0lGoFx4DOuB1IA9D1TPj0QkYxpPVUnGDqHHvDpCftu1J2hM2PiWsNMoZh8+LQaarAWcDfPBc6zg==}
     engines: {node: '>=18'}
@@ -7715,7 +7710,7 @@ snapshots:
       npm-package-arg: 12.0.2
       pdf-lib: 1.17.1
       picomatch: 4.0.2
-      playwright-core: 1.52.0
+      playwright-core: 1.53.1
       press-ready: 4.0.3
       resolve-pkg: 2.0.0
       semver: 7.7.1
@@ -11395,8 +11390,6 @@ snapshots:
   pify@3.0.0: {}
 
   pirates@4.0.6: {}
-
-  playwright-core@1.52.0: {}
 
   playwright-core@1.53.1: {}
 
