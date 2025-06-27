@@ -325,7 +325,7 @@ export const CopyAssetConfig = v.pipe(
         v.array(ValidString),
         validateAssetExtensionSettings('includeFileExtensions'),
         v.description($`
-          File extensions to include as asset files. (default: \`[png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2]\`)
+          File extensions to include as asset files. (default: \`[css, css.map, png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2]\`)
         `),
       ),
       excludeFileExtensions: v.pipe(

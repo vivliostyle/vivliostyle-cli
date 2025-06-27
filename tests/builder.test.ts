@@ -102,6 +102,7 @@ it('generate files with entryContext', async () => {
       'covercover.html',
       'manuscript/sample-theme.css',
       'publication.json',
+      'sample-theme.css',
       'soda.html',
       't-o-c.html',
     ]),
@@ -165,6 +166,7 @@ it('generate from various manuscript formats', async () => {
       'manuscript/cover.png',
       'manuscript/cover2.png',
       'manuscript/sample-html.html',
+      'manuscript/sample-theme.css',
       'manuscript/sample-xhtml.xhtml',
       'manuscript/soda.html',
       'publication.json',
@@ -451,6 +453,7 @@ it('install local themes', async () => {
     new Set([
       'manuscript/cover.png',
       'manuscript/cover2.png',
+      'manuscript/sample-theme.css',
       'manuscript/soda.html',
       'manuscript/theme-reference.html',
       'publication.json',

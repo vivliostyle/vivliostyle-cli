@@ -1,7 +1,6 @@
 import { NextHandleFunction } from 'connect';
 import escapeRe from 'escape-string-regexp';
 import { pathToFileURL } from 'node:url';
-import picomatch from 'picomatch';
 import sirv, { RequestHandler } from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
@@ -14,9 +13,14 @@ import {
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { Logger } from '../logger.js';
+import {
+  getAssetMatcher,
+  getWebPubResourceMatcher,
+  GlobMatcher,
+} from '../processor/asset.js';
 import {
   generateManifest,
-  getAssetMatcher,
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';
@@ -63,12 +67,21 @@ function getWorkspaceMatcher({
   themesDir,
   viewerInput,
   themeIndexes,
+  entries,
+  outputs,
 }: ResolvedTaskConfig) {
+  if (viewerInput.type === 'webpub') {
+    return getWebPubResourceMatcher({
+      outputs,
+      themesDir,
+      entries,
+      cwd: workspaceDir,
+      manifestPath: viewerInput.manifestPath,
+    });
+  }
+
   let entryFiles: string[] = [];
   switch (viewerInput.type) {
-    case 'webpub':
-      entryFiles = [upath.relative(workspaceDir, viewerInput.manifestPath)];
-      break;
     case 'epub':
       entryFiles = [
         upath.join(
@@ -85,20 +98,14 @@ function getWorkspaceMatcher({
       entryFiles = viewerInput satisfies never;
   }
 
-  return picomatch(
-    [
-      ...entryFiles,
-      ...(pathContains(workspaceDir, themesDir)
-        ? [upath.join(upath.relative(workspaceDir, themesDir), '**')]
-        : []),
-      ...[...themeIndexes].flatMap((theme) =>
-        theme.type === 'file' && pathContains(workspaceDir, theme.location)
-          ? [upath.relative(workspaceDir, theme.location)]
-          : [],
-      ),
-    ],
-    { dot: true, ignore: ['node_modules/**'] },
-  );
+  return new GlobMatcher([
+    {
+      patterns: entryFiles,
+      ignore: ['node_modules/**'],
+      dot: true,
+      cwd: workspaceDir,
+    },
+  ]);
 }
 
 export function vsDevServerPlugin({
@@ -117,9 +124,9 @@ export function vsDevServerPlugin({
         ) => readonly [ParsedEntry, string] | undefined;
         urlMatchRe: RegExp;
         serveWorkspace: RequestHandler;
-        serveWorkspaceMatcher: (test: string) => boolean;
+        serveWorkspaceMatcher: GlobMatcher;
         serveAssets: RequestHandler;
-        serveAssetsMatcher: (test: string) => boolean;
+        serveAssetsMatcher: GlobMatcher;
       }
     | undefined;
 
@@ -179,6 +186,16 @@ export function vsDevServerPlugin({
       serveAssets,
       serveAssetsMatcher,
     };
+    if (needToUpdateManifest) {
+      Logger.debug(
+        'dev-server > serveWorkspaceMatcher %O',
+        serveWorkspaceMatcher.matcherConfig,
+      );
+      Logger.debug(
+        'dev-server > serveAssetsMatcher %O',
+        serveAssetsMatcher.matcherConfig,
+      );
+    }
 
     const configPath = locateVivliostyleConfig(inlineConfig);
     const projectDeps: string[] = [];
@@ -285,6 +302,8 @@ export function vsDevServerPlugin({
       res.setHeader('Location', `${expected}${qs || ''}`);
       return res.end();
     }
+
+    Logger.debug('dev-server > request %s', pathname);
     const cachePromise = transformCache.get(entry.target);
     if (cachePromise) {
       const cached = await cachePromise;
@@ -340,15 +359,37 @@ export function vsDevServerPlugin({
         serveAssetsMatcher,
       } = program;
       const [_, pathname] = decodeURI(req.url!).match(urlMatchRe) ?? [];
-      if (pathname && serveWorkspaceMatcher(pathname.slice(1))) {
-        req.url = req.url!.slice(config.base.length);
-        return serveWorkspace(req, res, next);
+      if (!pathname) {
+        return next();
       }
-      if (pathname && serveAssetsMatcher(pathname.slice(1))) {
+
+      const handleWorkspace = (next: () => void) => {
+        if (!serveWorkspaceMatcher.match(pathname.slice(1))) {
+          return next();
+        }
+        Logger.debug('dev-server > serveWorkspace %s', pathname);
+        const url = req.url!;
         req.url = req.url!.slice(config.base.length);
-        return serveAssets(req, res, next);
-      }
-      next();
+        return serveWorkspace(req, res, () => {
+          req.url = url;
+          next();
+        });
+      };
+
+      const handleAssets = (next: () => void) => {
+        if (!serveAssetsMatcher.match(pathname.slice(1))) {
+          return next();
+        }
+        Logger.debug('dev-server > serveAssets %s', pathname);
+        const url = req.url!;
+        req.url = url!.slice(config.base.length);
+        return serveAssets(req, res, () => {
+          req.url = url;
+          next();
+        });
+      };
+
+      handleWorkspace(() => handleAssets(next));
     } satisfies NextHandleFunction;
 
   return {

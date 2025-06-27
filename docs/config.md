@@ -388,7 +388,7 @@ type OutputConfig = {
     Directories and files to exclude from asset files. Supports wildcard characters for glob patterns.
 
   - `includeFileExtensions`: (string)[]  
-    File extensions to include as asset files. (default: `[png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2]`)
+    File extensions to include as asset files. (default: `[css, css.map, png, jpg, jpeg, svg, gif, webp, apng, ttf, otf, woff, woff2]`)
 
   - `excludeFileExtensions`: (string)[]  
     File extensions to exclude from asset files.

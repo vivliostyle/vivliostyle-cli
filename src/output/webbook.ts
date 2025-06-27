@@ -15,10 +15,9 @@ import { ArticleEntryConfig } from '../config/schema.js';
 import { MANIFEST_FILENAME } from '../const.js';
 import { Logger } from '../logger.js';
 import {
-  getIgnoreAssetPatterns,
-  getIgnoreThemeExamplePatterns,
-  globAssetFiles,
-} from '../processor/compile.js';
+  getAssetMatcher,
+  getWebPubResourceMatcher,
+} from '../processor/asset.js';
 import {
   createVirtualConsole,
   fetchLinkedPublicationManifest,
@@ -389,65 +388,41 @@ export async function copyWebPublicationAssets({
   input,
   outputDir,
   entries,
-  customStyle,
-  customUserStyle,
 }: Pick<
   ResolvedTaskConfig,
-  | 'exportAliases'
-  | 'outputs'
-  | 'copyAsset'
-  | 'themesDir'
-  | 'entries'
-  | 'customStyle'
-  | 'customUserStyle'
+  'exportAliases' | 'outputs' | 'copyAsset' | 'themesDir' | 'entries'
 > & {
   input: string;
   outputDir: string;
   manifestPath: string;
 }): Promise<{ manifest: PublicationManifest; actualManifestPath: string }> {
+  debugger;
   const relExportAliases = exportAliases
     .map(({ source, target }) => ({
       source: upath.relative(input, source),
       target: upath.relative(input, target),
     }))
     .filter(({ source }) => !source.startsWith('..'));
+  const assetMatcher = getAssetMatcher({
+    copyAsset,
+    cwd: input,
+    outputs,
+    themesDir,
+    entries,
+  });
+  const webResourceMatcher = getWebPubResourceMatcher({
+    cwd: input,
+    outputs,
+    themesDir,
+    entries,
+    manifestPath,
+  });
   const allFiles = new Set([
-    ...(await globAssetFiles({
-      copyAsset,
-      cwd: input,
-      outputs,
-      themesDir,
-      entries,
-      customStyle,
-      customUserStyle,
+    ...(await assetMatcher.glob()),
+    ...(await webResourceMatcher.glob({
+      // follow symbolic links to copy local theme packages
+      followSymbolicLinks: true,
     })),
-    ...(await glob(
-      [
-        `**/${upath.relative(input, manifestPath)}`,
-        '**/*.{html,htm,xhtml,xht,css}',
-      ],
-      {
-        cwd: input,
-        ignore: [
-          ...getIgnoreAssetPatterns({
-            cwd: input,
-            outputs,
-            entries,
-          }),
-          ...getIgnoreThemeExamplePatterns({
-            cwd: input,
-            themesDir,
-          }),
-          // Ignore node_modules in the root directory
-          'node_modules/**',
-          // only include dotfiles starting with `.vs-`
-          '**/.!(vs-*)/**',
-        ],
-        // follow symbolic links to copy local theme packages
-        followSymbolicLinks: true,
-        dot: true,
-      },
-    )),
   ]);
   // Exclude files that will overwrite alias targets
   for (const alias of relExportAliases) {

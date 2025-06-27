@@ -130,6 +130,17 @@ describe('vite-plugin-dev-server', () => {
     }
   });
 
+  it('serves CSS files in entryContext', async () => {
+    const middleware = await createServerMiddleware({
+      cwd: resolveFixture('server'),
+      config: {
+        entry: 'main.md',
+        workspaceDir: '.vs-dev-server-css',
+      },
+    });
+    await supertest(middleware).get('/vivliostyle/theme.css').expect(200);
+  });
+
   it('serves assets', async () => {
     const middleware = await createServerMiddleware({
       cwd: resolveFixture('server'),
