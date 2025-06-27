@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.3.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.3.1...v9.3.2) (2025-06-27)
+
+### Bug Fixes
+
+- Serve CSS files in current directory ([22e6bf6](https://github.com/vivliostyle/vivliostyle-cli/commit/22e6bf695d1e0134960ff00e0cd8a486b88eade7)), closes [#611](https://github.com/vivliostyle/vivliostyle-cli/issues/611) [#612](https://github.com/vivliostyle/vivliostyle-cli/issues/612)
+
 ## [9.3.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.3.0...v9.3.1) (2025-06-26)
 
 ### Bug Fixes
