@@ -1188,6 +1188,12 @@ export const VivliostyleInlineConfig = v.pipe(
           Custom logger interface.
         `),
       ),
+      disableServerStartup: v.pipe(
+        v.boolean(),
+        v.description($`
+          Disable the startup of the preview server during the build process.
+        `),
+      ),
     }),
   ),
   v.check(
@@ -1244,4 +1250,5 @@ export type InlineOptions = Pick<
   | 'renderMode'
   | 'preflight'
   | 'preflightOption'
+  | 'disableServerStartup'
 >;

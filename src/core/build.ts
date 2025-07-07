@@ -66,12 +66,14 @@ export async function build(
         });
       }
 
-      server = await createViteServer({
-        config,
-        viteConfig,
-        inlineConfig,
-        mode: 'build',
-      });
+      if (!inlineConfig.disableServerStartup) {
+        server = await createViteServer({
+          config,
+          viteConfig,
+          inlineConfig,
+          mode: 'build',
+        });
+      }
 
       // build artifacts
       if (isWebPubConfig(config)) {

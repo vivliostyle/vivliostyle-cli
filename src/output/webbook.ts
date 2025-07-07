@@ -396,7 +396,6 @@ export async function copyWebPublicationAssets({
   outputDir: string;
   manifestPath: string;
 }): Promise<{ manifest: PublicationManifest; actualManifestPath: string }> {
-  debugger;
   const relExportAliases = exportAliases
     .map(({ source, target }) => ({
       source: upath.relative(input, source),
