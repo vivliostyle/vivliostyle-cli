@@ -72,6 +72,10 @@ build({
 
 `string` = `...`
 
+###### disableServerStartup?
+
+`boolean` = `...`
+
 ###### enableStaticServe?
 
 `boolean` = `...`
@@ -261,6 +265,10 @@ build({
 ###### cwd?
 
 `string` = `...`
+
+###### disableServerStartup?
+
+`boolean` = `...`
 
 ###### enableStaticServe?
 
@@ -454,6 +462,10 @@ Initialize a new vivliostyle.config.js file.
 
 `string` = `...`
 
+###### disableServerStartup?
+
+`boolean` = `...`
+
 ###### enableStaticServe?
 
 `boolean` = `...`
@@ -645,6 +657,10 @@ Open a browser for previewing the publication.
 ###### cwd?
 
 `string` = `...`
+
+###### disableServerStartup?
+
+`boolean` = `...`
 
 ###### enableStaticServe?
 
