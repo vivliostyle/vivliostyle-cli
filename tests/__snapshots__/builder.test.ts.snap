@@ -6,7 +6,8 @@ exports[`generate files with multiple cover pages 1`] = `
   break-before: recto;
 }
 @page :nth(1) {
-  counter-reset: page 0;
+  --vs-document-first-page-counter-reset: page 0;
+  counter-reset: var(--vs-document-first-page-counter-reset);
 }
 "
 `;
