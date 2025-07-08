@@ -276,15 +276,17 @@ const getTocHtmlStyle = ({
   return /* css */ `
 ${
   pageBreakBefore
-    ? `:root {
+    ? /* css */ `:root {
   break-before: ${pageBreakBefore};
 }`
     : ''
 }
 ${
+  // Note: `--vs-document-first-page-counter-reset` is reserved variable name in Vivliostyle base themes
   typeof pageCounterReset === 'number'
-    ? `@page :nth(1) {
-  counter-reset: page ${Math.floor(pageCounterReset - 1)};
+    ? /* css */ `@page :nth(1) {
+  --vs-document-first-page-counter-reset: page ${Math.floor(pageCounterReset - 1)};
+  counter-reset: var(--vs-document-first-page-counter-reset);
 }`
     : ''
 }
