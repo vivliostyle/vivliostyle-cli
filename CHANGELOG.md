@@ -1,5 +1,16 @@
 # Changelog
 
+# [9.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.3.3...v9.4.0) (2025-07-13)
+
+### Bug Fixes
+
+- Remove unnecessary debugger statement ([a9cdceb](https://github.com/vivliostyle/vivliostyle-cli/commit/a9cdceb1970abca096bf3d41b49be2d222eba760))
+- Work pageCounterReset option with Vivliostyle Themes ([#622](https://github.com/vivliostyle/vivliostyle-cli/issues/622)) ([e36d663](https://github.com/vivliostyle/vivliostyle-cli/commit/e36d663371bc4e3f79c632882addedaefb87ce27))
+
+### Features
+
+- Add disableServerStartup option ([2ee04d8](https://github.com/vivliostyle/vivliostyle-cli/commit/2ee04d86e9cb758a6d82314ea04e5f5f28aacd91))
+
 ## [9.3.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.3.2...v9.3.3) (2025-06-30)
 
 ### Bug Fixes
