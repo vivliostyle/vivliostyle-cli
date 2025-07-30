@@ -1,0 +1,8 @@
+@page {
+  size: A5;
+  background-image: url('stripe.svg');
+}
+
+h1 {
+  color: red;
+}
