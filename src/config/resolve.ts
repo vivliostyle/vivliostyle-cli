@@ -276,7 +276,7 @@ export type ResolvedTaskConfig = {
   viteConfigFile: string | boolean;
 };
 
-const DEFAULT_ASSET_EXTENSIONS = [
+export const DEFAULT_ASSET_EXTENSIONS = [
   'css',
   'css.map',
   'png',

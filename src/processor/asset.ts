@@ -3,7 +3,10 @@ import fs from 'node:fs';
 import picomatch, { PicomatchOptions } from 'picomatch';
 import { glob, GlobOptions } from 'tinyglobby';
 import upath from 'upath';
-import { ResolvedTaskConfig } from '../config/resolve.js';
+import {
+  ResolvedTaskConfig,
+  DEFAULT_ASSET_EXTENSIONS,
+} from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { pathContains, pathEquals } from '../util.js';
 
@@ -92,6 +95,7 @@ export function getWebPubResourceMatcher({
       patterns: [
         `**/${upath.relative(cwd, manifestPath)}`,
         '**/*.{html,htm,xhtml,xht,css}',
+        `**/*.{${DEFAULT_ASSET_EXTENSIONS.join(',')}}`,
       ],
       ignore: [
         ...getIgnoreAssetPatterns({
