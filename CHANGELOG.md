@@ -1,5 +1,12 @@
 # Changelog
 
+# [9.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.4.0...v9.5.0) (2025-08-02)
+
+### Features
+
+- Update Playwright to 1.54.2 (Chromium 139.0.7258.5) ([605abea](https://github.com/vivliostyle/vivliostyle-cli/commit/605abea960d0c155282fa37da54b8bb19d26c7d0))
+- Update Vivliostyle.js to 2.34.0: Improve CSS page-margin boxes support ([b4e31c8](https://github.com/vivliostyle/vivliostyle-cli/commit/b4e31c8d5db44e48cc3690c068ef4470e86b582e))
+
 # [9.4.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.3.3...v9.4.0) (2025-07-13)
 
 ### Bug Fixes
