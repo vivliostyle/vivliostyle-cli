@@ -1,6 +1,8 @@
 import { Command, Option } from 'commander';
+import upath from 'upath';
+import { createParserProgram } from './cli-flags.js';
 
-export function setupPreviewParserProgram(): Command {
+function setupPreviewParserProgram(): Command {
   const program = new Command();
   program
     .name('vivliostyle preview')
@@ -118,3 +120,18 @@ Currently, Firefox and Webkit support preview command only!`,
     .addOption(new Option('--http').hideHelp());
   return program;
 }
+
+export const parsePreviewCommand = createParserProgram({
+  setupProgram: setupPreviewParserProgram,
+  parseArgs: (options, [input]) => {
+    if (
+      input &&
+      !options.config &&
+      upath.basename(input).startsWith('vivliostyle.config')
+    ) {
+      // Load an input argument as a Vivliostyle config
+      return { ...options, config: input };
+    }
+    return { ...options, input };
+  },
+});

@@ -1,8 +1,8 @@
 import { codeFrameColumns } from '@babel/code-frame';
 import {
+  evaluate,
   JSONValue,
   ValueNode as JsonValueNode,
-  evaluate,
   parse,
 } from '@humanwhocodes/momoa';
 import { Ajv, Plugin as AjvPlugin, Schema } from 'ajv';
@@ -12,6 +12,7 @@ import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
 import readline from 'node:readline';
 import util from 'node:util';
+import { titleCase } from 'title-case';
 import tmp from 'tmp';
 import upath from 'upath';
 import { BaseIssue } from 'valibot';
@@ -348,6 +349,15 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
     fs.mkdirSync(upath.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content);
   }
+}
+
+export function toTitleCase<T = unknown>(input: T): T {
+  if (typeof input !== 'string') {
+    return input;
+  }
+  return titleCase(
+    input.replace(/[\W_]/g, ' ').replace(/\s+/g, ' ').trim(),
+  ) as T;
 }
 
 export function debounce<T extends (...args: any[]) => unknown>(
