@@ -1,5 +1,15 @@
 # Changelog
 
+# [9.6.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.5.0...v9.6.0) (2025-08-11)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.34.1: Fix PDF internal link bug ([4d5736c](https://github.com/vivliostyle/vivliostyle-cli/commit/4d5736c89c9e0e78e43aed1618e2b4f62ec0ae98))
+
+### Features
+
+- Add local theme example ([#626](https://github.com/vivliostyle/vivliostyle-cli/issues/626)) ([a1fd474](https://github.com/vivliostyle/vivliostyle-cli/commit/a1fd474f45b7f199145a2792bdd587a66fc25da2))
+
 # [9.5.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.4.0...v9.5.0) (2025-08-02)
 
 ### Features
