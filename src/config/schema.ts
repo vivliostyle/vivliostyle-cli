@@ -3,7 +3,7 @@ import { satisfies as semverSatisfies } from 'semver';
 import { type Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
-import { cliVersion, CONTAINER_URL } from '../const.js';
+import { CONTAINER_URL, cliVersion } from '../const.js';
 import { LoggerInterface } from '../logger.js';
 
 const $ = (strings: TemplateStringsArray, ...values: any[]) => {
@@ -884,318 +884,329 @@ export type InputFormat =
   | 'epub'
   | 'epub-opf';
 
+export const VivliostyleInlineConfigWithoutChecks = v.partial(
+  v.object({
+    cwd: v.pipe(
+      ValidString,
+      v.description($`
+        Set a working directory.
+      `),
+    ),
+    config: v.pipe(
+      ValidString,
+      v.description($`
+        Path to vivliostyle.config.js.
+      `),
+    ),
+    configData: v.pipe(
+      v.custom<VivliostyleConfigSchema | null | undefined>(() => true),
+      v.metadata({
+        typeString: 'VivliostyleConfigSchema',
+      }),
+      v.description($`
+        Vivliostyle config object.
+      `),
+    ),
+    input: v.pipe(
+      ValidString,
+      v.transform((input): { format: InputFormat; entry: string } => {
+        const ext = upath.extname(input).toLowerCase();
+        if (/^(https?|data):/.test(input)) {
+          return { format: 'webbook', entry: input };
+        } else if (ext === '.md' || ext === '.markdown') {
+          return { format: 'markdown', entry: input };
+        } else if (ext === '.json' || ext === '.jsonld') {
+          return { format: 'pub-manifest', entry: input };
+        } else if (ext === '.epub') {
+          return { format: 'epub', entry: input };
+        } else if (ext === '.opf') {
+          return { format: 'epub-opf', entry: input };
+        } else if (['.html', '.htm', '.xhtml', '.xht'].includes(ext)) {
+          return { format: 'webbook', entry: input };
+        }
+        throw new Error(`Cannot detect an input format: ${input}`);
+      }),
+      v.description($`
+        Input file of document.
+      `),
+    ),
+    output: v.pipe(
+      v.union([
+        v.array(v.union([OutputConfig, ValidString])),
+        OutputConfig,
+        ValidString,
+      ]),
+      v.transform((input): (OutputConfig & { format: OutputFormat })[] =>
+        [input].flat().map((item) => {
+          const obj = typeof item === 'string' ? { path: item } : item;
+          const ext = upath.extname(obj.path).toLowerCase();
+          return {
+            ...obj,
+            format:
+              obj.format ||
+              (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub'),
+          };
+        }),
+      ),
+      v.description($`
+        Output file name or directory.
+      `),
+    ),
+    theme: v.pipe(
+      ThemeSpecifier,
+      v.description($`
+        Theme path or package name.
+      `),
+    ),
+    size: v.pipe(
+      ValidString,
+      v.description($`
+        Output pdf size.
+        preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
+        custom(comma separated): 182mm,257mm or 8.5in,11in
+      `),
+    ),
+    cropMarks: v.pipe(
+      v.boolean(),
+      v.description($`
+        Print crop marks.
+      `),
+    ),
+    bleed: v.pipe(
+      ValidString,
+      v.description($`
+        Extent of the bleed area for printing with crop marks. [3mm]
+      `),
+    ),
+    cropOffset: v.pipe(
+      ValidString,
+      v.description($`
+        Distance between the edge of the trim size and the edge of the media size. [auto (13mm + bleed)]
+      `),
+    ),
+    css: v.pipe(
+      ValidString,
+      v.description($`
+        Custom style CSS code. (ex: ":root {--my-color: lime;}")
+      `),
+    ),
+    style: v.pipe(
+      ValidString,
+      v.description($`
+        Additional stylesheet URL or path.
+      `),
+    ),
+    userStyle: v.pipe(
+      ValidString,
+      v.description($`
+        User stylesheet URL or path.
+      `),
+    ),
+    singleDoc: v.pipe(
+      v.boolean(),
+      v.description($`
+        Single HTML document input.
+      `),
+    ),
+    quick: v.pipe(
+      v.boolean(),
+      v.description($`
+        Quick loading with rough page count.
+      `),
+    ),
+    pressReady: v.pipe(
+      v.boolean(),
+      v.description($`
+        Make generated PDF compatible with press ready PDF/X-1a.
+        This option is equivalent with "preflight": "press-ready"
+      `),
+    ),
+    title: v.pipe(ValidString, v.description($`Title`)),
+    author: v.pipe(ValidString, v.description($`Author`)),
+    language: v.pipe(ValidString, v.description($`Language`)),
+    readingProgression: v.pipe(
+      ReadingProgression,
+      v.description($`
+        Direction of reading progression.
+      `),
+    ),
+    timeout: v.pipe(
+      v.number(),
+      v.minValue(0),
+      v.description($`
+        Timeout limit for waiting Vivliostyle process (ms).
+      `),
+    ),
+    renderMode: v.pipe(
+      RenderMode,
+      v.description($`
+        If docker is set, Vivliostyle try to render PDF on Docker container. [local]
+      `),
+    ),
+    preflight: v.pipe(
+      v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
+      v.description($`
+        Apply the process to generate PDF for printing.
+      `),
+    ),
+    preflightOption: v.pipe(
+      v.union([v.array(ValidString), ValidString]),
+      v.transform((input) => [input].flat()),
+      v.description($`
+        Options for preflight process (ex: gray-scale, enforce-outline).
+        Please refer the document of press-ready for further information.
+      `),
+    ),
+    sandbox: v.pipe(v.boolean(), v.description($`Launch chrome with sandbox.`)),
+    executableBrowser: v.pipe(
+      ValidString,
+      v.description($`
+        Specify a path of executable browser you installed.
+      `),
+    ),
+    image: v.pipe(
+      ValidString,
+      v.description($`
+        Specify a docker image to render.
+      `),
+    ),
+    viewer: v.pipe(
+      ValidString,
+      v.description($`
+        Specify a URL of displaying viewer instead of vivliostyle-cli's one.
+        It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
+      `),
+    ),
+    viewerParam: v.pipe(
+      ValidString,
+      v.description($`
+        Specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
+      `),
+    ),
+    browser: v.pipe(
+      BrowserType,
+      v.description($`
+        Specify a browser type to launch Vivliostyle viewer [chromium].
+      `),
+    ),
+    proxyServer: v.pipe(
+      ValidString,
+      v.description($`
+        HTTP/SOCK proxy server url for underlying Playwright.
+      `),
+    ),
+    proxyBypass: v.pipe(
+      ValidString,
+      v.description($`
+        Optional comma-separated domains to bypass proxy.
+      `),
+    ),
+    proxyUser: v.pipe(
+      ValidString,
+      v.description($`
+        Optional username for HTTP proxy authentication.
+      `),
+    ),
+    proxyPass: v.pipe(
+      ValidString,
+      v.description($`
+        Optional password for HTTP proxy authentication.
+      `),
+    ),
+    logLevel: v.pipe(
+      LogLevel,
+      v.description($`
+        Specify a log level of console outputs.
+      `),
+    ),
+    ignoreHttpsErrors: v.pipe(
+      v.boolean(),
+      v.description($`
+        true to ignore HTTPS errors when Playwright browser opens a new page.
+      `),
+    ),
+    openViewer: v.pipe(
+      v.boolean(),
+      v.description($`
+        Open a browser to display the document preview.
+      `),
+    ),
+    enableStaticServe: v.pipe(
+      v.boolean(),
+      v.description($`
+        Enable static file serving as configured in the Vivliostyle config file.
+      `),
+    ),
+    enableViewerStartPage: v.pipe(
+      v.boolean(),
+      v.description($`
+        Open a start page of the viewer when the input file is not specified.
+      `),
+    ),
+    vite: v.pipe(
+      v.custom<import('vite').UserConfig>(() => true),
+      v.metadata({
+        typeString: 'import("vite").UserConfig',
+      }),
+      v.description($`
+        Configuration options for the Vite server.
+      `),
+    ),
+    viteConfigFile: v.pipe(
+      v.union([ValidString, v.boolean()]),
+      v.description($`
+        Path to the Vite config file.
+        If a falsy value is provided, Vivliostyle CLI ignores the existing Vite config file.
+      `),
+    ),
+    host: v.pipe(
+      v.union([v.boolean(), ValidString]),
+      v.description($`
+        IP address the server should listen on.
+        Set to \`true\` to listen on all addresses.
+        (default: \`true\` if a PDF build with Docker render mode is required, otherwise \`false\`)
+      `),
+    ),
+    port: v.pipe(
+      v.number(),
+      v.minValue(0),
+      v.maxValue(65535),
+      v.description($`
+        Port the server should listen on. (default: \`13000\`)
+      `),
+    ),
+    logger: v.pipe(
+      v.custom<LoggerInterface>(() => true),
+      v.metadata({
+        typeString: 'LoggerInterface',
+      }),
+      v.description($`
+        Custom logger interface.
+      `),
+    ),
+    disableServerStartup: v.pipe(
+      v.boolean(),
+      v.description($`
+        Disable the startup of the preview server during the build process.
+      `),
+    ),
+    name: v.pipe(
+      ValidString,
+      v.description($`
+        Name of the Vivliostyle project.
+      `),
+    ),
+    template: v.pipe(
+      ValidString,
+      v.description($`
+        Template source in format of \`[provider]:repo[/subpath][#ref]\`.
+      `),
+    ),
+  }),
+);
+
 export const VivliostyleInlineConfig = v.pipe(
-  v.partial(
-    v.object({
-      cwd: v.pipe(
-        ValidString,
-        v.description($`
-          Set a working directory.
-        `),
-      ),
-      config: v.pipe(
-        ValidString,
-        v.description($`
-          Path to vivliostyle.config.js.
-        `),
-      ),
-      configData: v.pipe(
-        v.custom<VivliostyleConfigSchema | null | undefined>(() => true),
-        v.metadata({
-          typeString: 'VivliostyleConfigSchema',
-        }),
-        v.description($`
-          Vivliostyle config object.
-        `),
-      ),
-      input: v.pipe(
-        ValidString,
-        v.transform((input): { format: InputFormat; entry: string } => {
-          const ext = upath.extname(input).toLowerCase();
-          if (/^(https?|data):/.test(input)) {
-            return { format: 'webbook', entry: input };
-          } else if (ext === '.md' || ext === '.markdown') {
-            return { format: 'markdown', entry: input };
-          } else if (ext === '.json' || ext === '.jsonld') {
-            return { format: 'pub-manifest', entry: input };
-          } else if (ext === '.epub') {
-            return { format: 'epub', entry: input };
-          } else if (ext === '.opf') {
-            return { format: 'epub-opf', entry: input };
-          } else if (['.html', '.htm', '.xhtml', '.xht'].includes(ext)) {
-            return { format: 'webbook', entry: input };
-          }
-          throw new Error(`Cannot detect an input format: ${input}`);
-        }),
-        v.description($`
-          Input file of document.
-        `),
-      ),
-      output: v.pipe(
-        v.union([
-          v.array(v.union([OutputConfig, ValidString])),
-          OutputConfig,
-          ValidString,
-        ]),
-        v.transform((input): (OutputConfig & { format: OutputFormat })[] =>
-          [input].flat().map((item) => {
-            const obj = typeof item === 'string' ? { path: item } : item;
-            const ext = upath.extname(obj.path).toLowerCase();
-            return {
-              ...obj,
-              format:
-                obj.format ||
-                (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub'),
-            };
-          }),
-        ),
-        v.description($`
-          Output file name or directory.
-        `),
-      ),
-      theme: v.pipe(
-        ThemeSpecifier,
-        v.description($`
-          Theme path or package name.
-        `),
-      ),
-      size: v.pipe(
-        ValidString,
-        v.description($`
-          Output pdf size.
-          preset: A5, A4, A3, B5, B4, JIS-B5, JIS-B4, letter, legal, ledger
-          custom(comma separated): 182mm,257mm or 8.5in,11in
-        `),
-      ),
-      cropMarks: v.pipe(
-        v.boolean(),
-        v.description($`
-          Print crop marks.
-        `),
-      ),
-      bleed: v.pipe(
-        ValidString,
-        v.description($`
-          Extent of the bleed area for printing with crop marks. [3mm]
-        `),
-      ),
-      cropOffset: v.pipe(
-        ValidString,
-        v.description($`
-          Distance between the edge of the trim size and the edge of the media size. [auto (13mm + bleed)]
-        `),
-      ),
-      css: v.pipe(
-        ValidString,
-        v.description($`
-          Custom style CSS code. (ex: ":root {--my-color: lime;}")
-        `),
-      ),
-      style: v.pipe(
-        ValidString,
-        v.description($`
-          Additional stylesheet URL or path.
-        `),
-      ),
-      userStyle: v.pipe(
-        ValidString,
-        v.description($`
-          User stylesheet URL or path.
-        `),
-      ),
-      singleDoc: v.pipe(
-        v.boolean(),
-        v.description($`
-          Single HTML document input.
-        `),
-      ),
-      quick: v.pipe(
-        v.boolean(),
-        v.description($`
-          Quick loading with rough page count.
-        `),
-      ),
-      pressReady: v.pipe(
-        v.boolean(),
-        v.description($`
-          Make generated PDF compatible with press ready PDF/X-1a.
-          This option is equivalent with "preflight": "press-ready"
-        `),
-      ),
-      title: v.pipe(ValidString, v.description($`Title`)),
-      author: v.pipe(ValidString, v.description($`Author`)),
-      language: v.pipe(ValidString, v.description($`Language`)),
-      readingProgression: v.pipe(
-        ReadingProgression,
-        v.description($`
-          Direction of reading progression.
-        `),
-      ),
-      timeout: v.pipe(
-        v.number(),
-        v.minValue(0),
-        v.description($`
-          Timeout limit for waiting Vivliostyle process (ms).
-        `),
-      ),
-      renderMode: v.pipe(
-        RenderMode,
-        v.description($`
-          If docker is set, Vivliostyle try to render PDF on Docker container. [local]
-        `),
-      ),
-      preflight: v.pipe(
-        v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
-        v.description($`
-          Apply the process to generate PDF for printing.
-        `),
-      ),
-      preflightOption: v.pipe(
-        v.union([v.array(ValidString), ValidString]),
-        v.transform((input) => [input].flat()),
-        v.description($`
-          Options for preflight process (ex: gray-scale, enforce-outline).
-          Please refer the document of press-ready for further information.
-        `),
-      ),
-      sandbox: v.pipe(
-        v.boolean(),
-        v.description($`Launch chrome with sandbox.`),
-      ),
-      executableBrowser: v.pipe(
-        ValidString,
-        v.description($`
-          Specify a path of executable browser you installed.
-        `),
-      ),
-      image: v.pipe(
-        ValidString,
-        v.description($`
-          Specify a docker image to render.
-        `),
-      ),
-      viewer: v.pipe(
-        ValidString,
-        v.description($`
-          Specify a URL of displaying viewer instead of vivliostyle-cli's one.
-          It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
-        `),
-      ),
-      viewerParam: v.pipe(
-        ValidString,
-        v.description($`
-          Specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
-        `),
-      ),
-      browser: v.pipe(
-        BrowserType,
-        v.description($`
-          Specify a browser type to launch Vivliostyle viewer [chromium].
-        `),
-      ),
-      proxyServer: v.pipe(
-        ValidString,
-        v.description($`
-          HTTP/SOCK proxy server url for underlying Playwright.
-        `),
-      ),
-      proxyBypass: v.pipe(
-        ValidString,
-        v.description($`
-          Optional comma-separated domains to bypass proxy.
-        `),
-      ),
-      proxyUser: v.pipe(
-        ValidString,
-        v.description($`
-          Optional username for HTTP proxy authentication.
-        `),
-      ),
-      proxyPass: v.pipe(
-        ValidString,
-        v.description($`
-          Optional password for HTTP proxy authentication.
-        `),
-      ),
-      logLevel: v.pipe(
-        LogLevel,
-        v.description($`
-          Specify a log level of console outputs.
-        `),
-      ),
-      ignoreHttpsErrors: v.pipe(
-        v.boolean(),
-        v.description($`
-          true to ignore HTTPS errors when Playwright browser opens a new page.
-        `),
-      ),
-      openViewer: v.pipe(
-        v.boolean(),
-        v.description($`
-          Open a browser to display the document preview.
-        `),
-      ),
-      enableStaticServe: v.pipe(
-        v.boolean(),
-        v.description($`
-          Enable static file serving as configured in the Vivliostyle config file.
-        `),
-      ),
-      enableViewerStartPage: v.pipe(
-        v.boolean(),
-        v.description($`
-          Open a start page of the viewer when the input file is not specified.
-        `),
-      ),
-      vite: v.pipe(
-        v.custom<import('vite').UserConfig>(() => true),
-        v.metadata({
-          typeString: 'import("vite").UserConfig',
-        }),
-        v.description($`
-          Configuration options for the Vite server.
-        `),
-      ),
-      viteConfigFile: v.pipe(
-        v.union([ValidString, v.boolean()]),
-        v.description($`
-          Path to the Vite config file.
-          If a falsy value is provided, Vivliostyle CLI ignores the existing Vite config file.
-        `),
-      ),
-      host: v.pipe(
-        v.union([v.boolean(), ValidString]),
-        v.description($`
-          IP address the server should listen on.
-          Set to \`true\` to listen on all addresses.
-          (default: \`true\` if a PDF build with Docker render mode is required, otherwise \`false\`)
-        `),
-      ),
-      port: v.pipe(
-        v.number(),
-        v.minValue(0),
-        v.maxValue(65535),
-        v.description($`
-          Port the server should listen on. (default: \`13000\`)
-        `),
-      ),
-      logger: v.pipe(
-        v.custom<LoggerInterface>(() => true),
-        v.metadata({
-          typeString: 'LoggerInterface',
-        }),
-        v.description($`
-          Custom logger interface.
-        `),
-      ),
-      disableServerStartup: v.pipe(
-        v.boolean(),
-        v.description($`
-          Disable the startup of the preview server during the build process.
-        `),
-      ),
-    }),
-  ),
+  VivliostyleInlineConfigWithoutChecks,
   v.check(
     (options) =>
       !options.input ||
@@ -1251,4 +1262,140 @@ export type InlineOptions = Pick<
   | 'preflight'
   | 'preflightOption'
   | 'disableServerStartup'
+  | 'name'
+  | 'template'
+>;
+
+export const VivliostyleThemeMetadata = v.pipe(
+  v.object({
+    name: v.pipe(
+      v.optional(ValidString),
+      v.description($`
+        Name of the theme.
+      `),
+    ),
+    author: v.pipe(
+      v.optional(ValidString),
+      v.description($`
+        Author of the theme.
+      `),
+    ),
+    style: v.pipe(
+      v.optional(ValidString),
+      v.description($`
+        This property specifies the main CSS file in the theme.
+      `),
+    ),
+    category: v.pipe(
+      v.optional(ValidString),
+      v.description($`
+        This property provides a hint to users about the primary use of your theme when they use it for the first time.
+        Choose the category that best fits your theme from the following list:
+
+        - \`"novel"\`
+        - \`"magazine"\`
+        - \`"journal"\`
+        - \`"report"\`
+        - \`"misc"\`
+      `),
+    ),
+    topics: v.pipe(
+      v.optional(v.array(ValidString)),
+      v.description($`
+        If you want more specific descriptions of the theme's use than the category property,
+        you can list and describe them here.
+      `),
+    ),
+  }),
+  v.title('VivliostyleThemeMetadata'),
+);
+
+const BasePromptOption = v.object({
+  type: v.string(),
+  name: v.string(),
+  message: v.string(),
+  hint: v.optional(v.string()),
+});
+
+const ArrayPromptOptions = v.intersect([
+  BasePromptOption,
+  v.object({
+    type: v.union([v.literal('autocomplete'), v.literal('select')]),
+    choices: v.array(
+      v.union([
+        v.string(),
+        v.object({
+          name: v.string(),
+          message: v.optional(v.string()),
+          value: v.optional(v.unknown()),
+          hint: v.optional(v.string()),
+          role: v.optional(v.string()),
+          enabled: v.optional(v.boolean()),
+          disabled: v.optional(v.union([v.boolean(), v.string()])),
+        }),
+      ]),
+    ),
+    limit: v.optional(v.number()),
+  }),
+]);
+
+const StringPromptOption = v.intersect([
+  BasePromptOption,
+  v.object({
+    type: v.literal('input'),
+    name: v.string(),
+    initial: v.optional(v.string()),
+  }),
+]);
+
+export const PromptOption = v.union([ArrayPromptOptions, StringPromptOption]);
+export type PromptOption = v.InferInput<typeof PromptOption>;
+
+export const VivliostyleTemplateMetadata = v.pipe(
+  v.record(
+    v.string(),
+    v.object({
+      name: v.pipe(
+        v.optional(ValidString),
+        v.description($`
+          Name of the template.
+        `),
+      ),
+      description: v.pipe(
+        v.optional(ValidString),
+        v.description($`
+          Description of the template.
+        `),
+      ),
+      source: v.pipe(
+        ValidString,
+        v.description($`
+          Template source in format of \`[provider]:repo[/subpath][#ref]\`.
+          See the [giget](https://github.com/unjs/giget) documentation for more details.
+        `),
+      ),
+      prompt: v.pipe(
+        v.optional(v.array(PromptOption)),
+        v.description($`
+          Extra prompt options for the template.
+          This is used to prompt users for additional information when applying the template.
+          See the [enquirer](https://github.com/enquirer/enquirer) documentation for more details on the prompt options.
+        `),
+      ),
+    }),
+  ),
+  v.title('VivliostyleTemplateMetadata'),
+);
+
+export const VivliostylePackageMetadata = v.pipe(
+  v.partial(
+    v.object({
+      theme: VivliostyleThemeMetadata,
+      template: VivliostyleTemplateMetadata,
+    }),
+  ),
+  v.title('VivliostylePackageMetadata'),
+);
+export type VivliostylePackageMetadata = v.InferInput<
+  typeof VivliostylePackageMetadata
 >;
