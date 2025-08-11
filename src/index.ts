@@ -9,6 +9,7 @@ export type {
   StructuredDocument,
   StructuredDocumentSection,
   VivliostyleConfigSchema,
+  VivliostylePackageMetadata,
 } from './config/schema.js';
 export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */
