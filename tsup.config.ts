@@ -8,6 +8,7 @@ export default defineConfig({
     'src/vite-adapter.ts',
     'src/config/schema.ts',
     'src/commands/build.ts',
+    'src/commands/create.ts',
     'src/commands/init.ts',
     'src/commands/preview.ts',
   ],

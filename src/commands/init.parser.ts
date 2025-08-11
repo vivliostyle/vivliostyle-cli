@@ -1,6 +1,7 @@
 import { Command, Option } from 'commander';
+import { createParserProgram } from './cli-flags.js';
 
-export function setupInitParserProgram(): Command {
+function setupInitParserProgram(): Command {
   const program = new Command();
   program
     .name('vivliostyle init')
@@ -20,3 +21,7 @@ export function setupInitParserProgram(): Command {
     );
   return program;
 }
+
+export const parseInitCommand = createParserProgram({
+  setupProgram: setupInitParserProgram,
+});

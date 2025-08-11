@@ -13,6 +13,9 @@ program
   .command('init', 'create vivliostyle config', {
     executableFile: 'commands/init',
   })
+  .command('create', 'scaffold a new Vivliostyle project', {
+    executableFile: 'commands/create',
+  })
   .command('build', 'build and create PDF file', {
     executableFile: 'commands/build',
   })
