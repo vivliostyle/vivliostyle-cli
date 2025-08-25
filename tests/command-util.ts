@@ -12,6 +12,7 @@ import { parseInitCommand } from '../src/commands/init.parser.js';
 import { parsePreviewCommand } from '../src/commands/preview.parser.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
 import { build } from '../src/core/build.js';
+import { create } from '../src/core/create.js';
 import { init } from '../src/core/init.js';
 import { preview } from '../src/core/preview.js';
 import { ResolvedTaskConfig, resolveTaskConfig } from './../src/config/resolve';
@@ -53,7 +54,7 @@ export const runCommand = async (
     create: parseCreateCommand,
   }[command](['vivliostyle', command, ...args]);
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  const server = await { init, build, preview }[command](inlineConfig);
+  const server = await { init, build, preview, create }[command](inlineConfig);
   if (server) {
     runningServers.add(server);
   }
