@@ -1311,10 +1311,10 @@ export const VivliostyleThemeMetadata = v.pipe(
 );
 
 const BasePromptOption = v.object({
-  type: v.string(),
-  name: v.string(),
-  message: v.string(),
-  hint: v.optional(v.string()),
+  type: ValidString,
+  name: ValidString,
+  message: ValidString,
+  hint: v.optional(ValidString),
 });
 
 const ArrayPromptOptions = v.intersect([
@@ -1323,15 +1323,15 @@ const ArrayPromptOptions = v.intersect([
     type: v.union([v.literal('autocomplete'), v.literal('select')]),
     choices: v.array(
       v.union([
-        v.string(),
+        ValidString,
         v.object({
-          name: v.string(),
-          message: v.optional(v.string()),
+          name: ValidString,
+          message: v.optional(ValidString),
           value: v.optional(v.unknown()),
-          hint: v.optional(v.string()),
-          role: v.optional(v.string()),
+          hint: v.optional(ValidString),
+          role: v.optional(ValidString),
           enabled: v.optional(v.boolean()),
-          disabled: v.optional(v.union([v.boolean(), v.string()])),
+          disabled: v.optional(v.union([v.boolean(), ValidString])),
         }),
       ]),
     ),
@@ -1343,8 +1343,8 @@ const StringPromptOption = v.intersect([
   BasePromptOption,
   v.object({
     type: v.literal('input'),
-    name: v.string(),
-    initial: v.optional(v.string()),
+    name: ValidString,
+    initial: v.optional(ValidString),
   }),
 ]);
 
@@ -1353,7 +1353,7 @@ export type PromptOption = v.InferInput<typeof PromptOption>;
 
 export const VivliostyleTemplateMetadata = v.pipe(
   v.record(
-    v.string(),
+    ValidString,
     v.object({
       name: v.pipe(
         v.optional(ValidString),
