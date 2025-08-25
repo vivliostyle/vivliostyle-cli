@@ -1,0 +1,79 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`create command > create empty project 1`] = `
+Object {
+  "/work/project-name/.gitignore": "node_modules/
+.vivliostyle/
+",
+  "/work/project-name/README.md": "# Booook Titleeee
+
+## References
+
+- VFM <https://vivliostyle.github.io/vfm/#/vfm>
+- Vivliostyle CLI <https://github.com/vivliostyle/vivliostyle-cli#readme>
+- Vivliostyle Themes <https://github.com/vivliostyle/themes#readme>
+- Awesome Vivliostyle <https://github.com/vivliostyle/awesome-vivliostyle#readme>
+- Vivliostyle (GitHub) <https://github.com/vivliostyle>
+- Vivliostyle <https://vivliostyle.org>
+",
+  "/work/project-name/package.json": "{
+  \\"name\\": \\"booook-titleeee\\",
+  \\"description\\": \\"Booook Titleeee\\",
+  \\"author\\": \\"Authoooor\\",
+  \\"version\\": \\"0.0.0\\",
+  \\"type\\": \\"module\\",
+  \\"private\\": true,
+  \\"scripts\\": {
+    \\"build\\": \\"vivliostyle build\\",
+    \\"preview\\": \\"vivliostyle preview\\"
+  },
+  \\"dependencies\\": {
+    \\"@vivliostyle/cli\\": \\"latest\\"
+  },
+}
+",
+  "/work/project-name/vivliostyle.config.js": "/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
+export default {
+  title: 'Booook Titleeee',
+  author: 'Authoooor',
+  entry: ['manuscript.md'],
+};
+",
+}
+`;
+
+exports[`create command > create project with a custom-prompt template 1`] = `
+Object {
+  "/work/project-name/manuscript.md": "# Custom Prompt Custom String
+
+You chosen option1
+",
+  "/work/project-name/vivliostyle.config.js": "/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
+export default {
+  title: 'Booook titleeee',
+  entry: 'manuscript.md',
+};
+",
+}
+`;
+
+exports[`create command > create project with a default template 1`] = `
+Object {
+  "/work/project-name/default.md": "# Booook of the titleeee
+
+BOOOOK OF THE TITLEEEE
+booook of the titleeee
+Booook Of The Titleeee
+booookOfTheTitleeee
+booook_of_the_titleeee
+booook-of-the-titleeee
+Booook of the Titleeee
+",
+  "/work/project-name/vivliostyle.config.js": "/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
+export default {
+  title: 'project-name',
+  entry: 'default.md',
+};
+",
+}
+`;
