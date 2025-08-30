@@ -10,11 +10,17 @@
 - [`init`](#init)
 - [`preview`](#preview)
 
+### Interfaces
+
+- [`TemplateVariable`](#templatevariable)
+
 ### Type Aliases
 
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
 - [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
+- [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
+- [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
 
 ## Functions
 
@@ -140,6 +146,10 @@ build({
 
 `boolean` = `...`
 
+###### projectPath?
+
+`string` = `...`
+
 ###### proxyBypass?
 
 `string` = `...`
@@ -181,6 +191,10 @@ build({
 `string` = `...`
 
 ###### style?
+
+`string` = `...`
+
+###### template?
 
 `string` = `...`
 
@@ -334,6 +348,10 @@ build({
 
 `boolean` = `...`
 
+###### projectPath?
+
+`string` = `...`
+
 ###### proxyBypass?
 
 `string` = `...`
@@ -375,6 +393,10 @@ build({
 `string` = `...`
 
 ###### style?
+
+`string` = `...`
+
+###### template?
 
 `string` = `...`
 
@@ -530,6 +552,10 @@ Initialize a new vivliostyle.config.js file.
 
 `boolean` = `...`
 
+###### projectPath?
+
+`string` = `...`
+
 ###### proxyBypass?
 
 `string` = `...`
@@ -571,6 +597,10 @@ Initialize a new vivliostyle.config.js file.
 `string` = `...`
 
 ###### style?
+
+`string` = `...`
+
+###### template?
 
 `string` = `...`
 
@@ -726,6 +756,10 @@ Open a browser for previewing the publication.
 
 `boolean` = `...`
 
+###### projectPath?
+
+`string` = `...`
+
 ###### proxyBypass?
 
 `string` = `...`
@@ -770,6 +804,10 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### template?
+
+`string` = `...`
+
 ###### theme?
 
 `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
@@ -805,6 +843,71 @@ Open a browser for previewing the publication.
 #### Returns
 
 `Promise`\<`ViteDevServer`\>
+
+## Interfaces
+
+### TemplateVariable
+
+#### Extends
+
+- `ParsedVivliostyleInlineConfig`
+
+#### Properties
+
+| Property | Type |
+| ------ | ------ |
+| <a id="author"></a> `author` | `string` |
+| <a id="bleed"></a> `bleed?` | `string` |
+| <a id="browser"></a> `browser?` | `"chromium"` \| `"firefox"` \| `"webkit"` |
+| <a id="cliversion"></a> `cliVersion` | `string` |
+| <a id="config"></a> `config?` | `string` |
+| <a id="configdata"></a> `configData?` | `null` \| `object` & `object` \| `object` & `object`[] |
+| <a id="coreversion"></a> `coreVersion` | `string` |
+| <a id="cropmarks"></a> `cropMarks?` | `boolean` |
+| <a id="cropoffset"></a> `cropOffset?` | `string` |
+| <a id="css"></a> `css?` | `string` |
+| <a id="cwd"></a> `cwd?` | `string` |
+| <a id="disableserverstartup"></a> `disableServerStartup?` | `boolean` |
+| <a id="enablestaticserve"></a> `enableStaticServe?` | `boolean` |
+| <a id="enableviewerstartpage"></a> `enableViewerStartPage?` | `boolean` |
+| <a id="executablebrowser"></a> `executableBrowser?` | `string` |
+| <a id="host"></a> `host?` | `string` \| `boolean` |
+| <a id="ignorehttpserrors"></a> `ignoreHttpsErrors?` | `boolean` |
+| <a id="image"></a> `image?` | `string` |
+| <a id="input"></a> `input?` | `object` |
+| `input.entry` | `string` |
+| `input.format` | `InputFormat` |
+| <a id="language"></a> `language?` | `string` |
+| <a id="logger"></a> `logger?` | `LoggerInterface` |
+| <a id="loglevel"></a> `logLevel?` | `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` |
+| <a id="openviewer"></a> `openViewer?` | `boolean` |
+| <a id="output"></a> `output?` | `object` & `object` & `object`[] |
+| <a id="port"></a> `port?` | `number` |
+| <a id="preflight"></a> `preflight?` | `"press-ready"` \| `"press-ready-local"` |
+| <a id="preflightoption"></a> `preflightOption?` | `string`[] |
+| <a id="pressready"></a> `pressReady?` | `boolean` |
+| <a id="projectpath"></a> `projectPath` | `string` |
+| <a id="proxybypass"></a> `proxyBypass?` | `string` |
+| <a id="proxypass"></a> `proxyPass?` | `string` |
+| <a id="proxyserver"></a> `proxyServer?` | `string` |
+| <a id="proxyuser"></a> `proxyUser?` | `string` |
+| <a id="quick"></a> `quick?` | `boolean` |
+| <a id="readingprogression"></a> `readingProgression?` | `"ltr"` \| `"rtl"` |
+| <a id="rendermode"></a> `renderMode?` | `"local"` \| `"docker"` |
+| <a id="sandbox"></a> `sandbox?` | `boolean` |
+| <a id="singledoc"></a> `singleDoc?` | `boolean` |
+| <a id="size"></a> `size?` | `string` |
+| <a id="style"></a> `style?` | `string` |
+| <a id="template"></a> `template?` | `string` |
+| <a id="theme"></a> `theme?` | `object` & `object`[] |
+| <a id="themepackage"></a> `themePackage?` | `VivliostylePackageJson` |
+| <a id="timeout"></a> `timeout?` | `number` |
+| <a id="title"></a> `title` | `string` |
+| <a id="userstyle"></a> `userStyle?` | `string` |
+| <a id="viewer"></a> `viewer?` | `string` |
+| <a id="viewerparam"></a> `viewerParam?` | `string` |
+| <a id="vite"></a> `vite?` | `UserConfig` |
+| <a id="viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
 
@@ -879,5 +982,17 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 #### See
 
 https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+
+***
+
+### VivliostylePackageMetadata
+
+> **VivliostylePackageMetadata** = `SchemaWithPipe`\<readonly \[`Omit`\<`ObjectSchema`\<\{ `template`: `SchemaWithPipe`\<readonly \[`RecordSchema`\<`SchemaWithPipe`\<readonly \[..., ..., ...\]\>, `ObjectSchema`\<\{ `description`: ...; `name`: ...; `prompt`: ...; `source`: ...; \}, `undefined`\>, `undefined`\>, `TitleAction`\<\{[`key`: `string`]: `object`; \}, `"VivliostyleTemplateMetadata"`\>\]\>; `theme`: `SchemaWithPipe`\<readonly \[`ObjectSchema`\<\{ `author`: `SchemaWithPipe`\<...\>; `category`: `SchemaWithPipe`\<...\>; `name`: `SchemaWithPipe`\<...\>; `style`: `SchemaWithPipe`\<...\>; `topics`: `SchemaWithPipe`\<...\>; \}, `undefined`\>, `TitleAction`\<\{ `author?`: ... \| ...; `category?`: ... \| ...; `name?`: ... \| ...; `style?`: ... \| ...; `topics?`: ... \| ...; \}, `"VivliostyleThemeMetadata"`\>\]\>; \}, `undefined`\>, `"entries"` \| `"~types"` \| `"~run"` \| `"~standard"`\> & `object`, `TitleAction`\<\{ `template?`: \{[`key`: `string`]: `object`; \}; `theme?`: \{ `author?`: `string`; `category?`: `string`; `name?`: `string`; `style?`: `string`; `topics?`: `string`[]; \}; \}, `"VivliostylePackageMetadata"`\>\]\>
+
+***
+
+### VivliostylePackageMetadata
+
+> **VivliostylePackageMetadata** = `v.InferInput`\<*typeof* [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)\>
 
 <!-- END JavaScript API -->
