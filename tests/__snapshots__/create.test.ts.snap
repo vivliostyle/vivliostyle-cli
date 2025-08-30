@@ -28,8 +28,8 @@ Object {
     \\"preview\\": \\"vivliostyle preview\\"
   },
   \\"dependencies\\": {
-    \\"@vivliostyle/cli\\": \\"latest\\"
-  },
+    \\"@vivliostyle/cli\\": \\"0.0.1\\"
+  }
 }
 ",
   "/work/project-name/vivliostyle.config.js": "/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
