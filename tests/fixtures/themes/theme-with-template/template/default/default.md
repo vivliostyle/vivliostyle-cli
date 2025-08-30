@@ -8,7 +8,7 @@
 {{kebab title}}
 {{proper title}}
 
-name: {{name}}
+projectPath: {{projectPath}}
 title: {{title}}
 author: {{author}}
 themePackage: {{themePackage.name}}@{{themePackage.version}}

@@ -97,7 +97,7 @@ beforeEach(() => {
 describe('create command', () => {
   it('create empty project', async () => {
     mockedEnquirerModule.answers.mockReturnValue({
-      name: 'project-name',
+      projectPath: 'project-name',
       title: 'Booook titleeee',
       author: 'Authoooor',
       theme: THEME_ANSWER_NOT_USE,
@@ -111,7 +111,7 @@ describe('create command', () => {
 
   it('create project with a default template', async () => {
     mockedEnquirerModule.answers.mockReturnValue({
-      name: 'project-name',
+      projectPath: 'project-name',
       title: 'Booook of the titleeee',
       author: 'Authoooor',
       theme: 'theme-with-template',
@@ -125,7 +125,7 @@ describe('create command', () => {
 
   it('create project with a custom-prompt template', async () => {
     mockedEnquirerModule.answers.mockReturnValue({
-      name: 'project-name',
+      projectPath: 'project-name',
       title: 'Booook titleeee',
       author: 'Authoooor',
       theme: 'theme-with-template',
@@ -141,7 +141,7 @@ describe('create command', () => {
 
   it('create project with a custom theme', async () => {
     mockedEnquirerModule.answers.mockReturnValue({
-      name: 'project-name',
+      projectPath: 'project-name',
       title: 'Booook titleeee',
       author: 'Authoooor',
       theme: THEME_ANSWER_MANUAL,
@@ -161,7 +161,7 @@ describe('create command', () => {
       '/work/out/touch': '',
     });
     mockedEnquirerModule.answers.mockReturnValue({
-      name: 'out',
+      projectPath: 'out',
     });
 
     await expect(runCommand(['create'], { cwd: '/work' })).rejects.toThrow(

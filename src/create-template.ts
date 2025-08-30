@@ -12,7 +12,7 @@ export type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
 };
 
 export interface TemplateVariable extends ParsedVivliostyleInlineConfig {
-  name: string;
+  projectPath: string;
   title: string;
   author: string;
   themePackage?: VivliostylePackageJson;
