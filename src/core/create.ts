@@ -13,7 +13,7 @@ import {
   VivliostylePackageMetadata,
 } from '../config/schema.js';
 import { cliVersion, coreVersion, defaultProjectFiles } from '../const.js';
-import { format } from '../create-template.js';
+import { format, TemplateVariable } from '../create-template.js';
 import { askQuestion } from '../interactive.js';
 import { Logger } from '../logger.js';
 import {
@@ -34,16 +34,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.debug('create > inlineConfig %O', inlineConfig);
 
   const fetch = createFetch(inlineConfig);
-  let response = { ...inlineConfig, cwd: inlineConfig.cwd ?? defaultCwd };
-  let templateVariables: Record<string, unknown> = {};
-  let packageJson: VivliostylePackageJson | undefined;
-  if (!response.name) {
-    response = { ...response, ...(await askProjectName()) };
-  }
-  const { name, cwd } = response;
-  /* v8 ignore next 3 */
-  if (!name || !cwd) {
-    return;
+  let { name, cwd = defaultCwd, title, author, theme, template } = inlineConfig;
+  let extraTemplateVariables: Record<string, unknown> = {};
+  let themePackage: VivliostylePackageJson | undefined;
+  if (!name) {
+    ({ name } = await askProjectName());
   }
   const dist = upath.join(cwd, name);
   if (
@@ -54,53 +49,62 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     throw new Error(`Destination ${dist} is not empty.`);
   }
 
-  if (!response.title) {
-    response = { ...response, ...(await askTitle(response)) };
+  if (!title) {
+    ({ title } = await askTitle({ name }));
   }
-  if (!response.author) {
-    response = { ...response, ...(await askAuthor()) };
+  if (!author) {
+    ({ author } = await askAuthor());
   }
-  if (!response.theme) {
-    const ret = await askTheme({ fetch });
-    response = { ...response, theme: ret.theme };
-    packageJson = ret.packageJson;
+  if (!theme) {
+    ({ theme, themePackage } = await askTheme({ fetch }));
   }
-
-  if (packageJson?.vivliostyle?.template && !response.template) {
-    const ret = await askTemplateSetting(packageJson.vivliostyle);
-    response = { ...response, template: ret.template };
-    templateVariables = { ...ret.extraAnswers };
+  if (themePackage?.vivliostyle?.template && !template) {
+    ({ template, extraTemplateVariables } = await askTemplateSetting(
+      themePackage.vivliostyle,
+    ));
   }
 
-  templateVariables = {
-    ...templateVariables,
-    ...response,
-    theme: packageJson
-      ? `${packageJson.name}@^${packageJson.version}`
-      : undefined,
+  const explicitTemplateVariables = {
+    ...extraTemplateVariables,
+    name,
+    title,
+    author,
+    theme,
+    themePackage,
+    template,
     cliVersion,
     coreVersion,
-  };
-  Logger.debug('create > response %O', response);
-  Logger.debug('create > templateVariables %O', templateVariables);
-  if (response.template) {
+  } satisfies TemplateVariable;
+  Logger.debug(
+    'create > explicitTemplateVariables %O',
+    explicitTemplateVariables,
+  );
+  if (template) {
     using _logger = Logger.startLogging('Downloading a template');
     await setupTemplate({
       name,
       cwd,
-      template: response.template,
-      templateVariables,
+      template,
+      templateVariables: {
+        ...inlineConfig,
+        ...explicitTemplateVariables,
+      },
     });
   } else {
-    setupEmptyProject({ name, cwd, templateVariables });
+    setupEmptyProject({
+      name,
+      cwd,
+      templateVariables: {
+        ...inlineConfig,
+        ...explicitTemplateVariables,
+      },
+    });
   }
-  const formattedOutput = cyan(
-    upath.relative(response.cwd, response.name!) || '.',
-  );
+  const formattedOutput = cyan(upath.relative(cwd, name) || '.');
   Logger.logSuccess(
     `Successfully created the Vivliostyle project to ${terminalLink(
       formattedOutput,
-      pathToFileURL(upath.join(response.cwd, response.name!)).href,
+      pathToFileURL(upath.join(cwd, name)).href,
       {
         fallback: () => formattedOutput,
       },
@@ -116,11 +120,11 @@ async function askProjectName() {
       message: 'Project directory name:',
       hint: 'Specify "." to create files in the current directory.',
     },
-    schema: v.pick(VivliostyleInlineConfigWithoutChecks, ['name']),
+    schema: v.required(v.pick(VivliostyleInlineConfigWithoutChecks, ['name'])),
   });
 }
 
-async function askTitle({ name }: { name?: string }) {
+async function askTitle({ name }: { name: string }) {
   return await askQuestion({
     question: {
       type: 'input',
@@ -128,7 +132,7 @@ async function askTitle({ name }: { name?: string }) {
       message: 'Title:',
       initial: toTitleCase(name) || 'My Book Title',
     },
-    schema: v.pick(VivliostyleInlineConfigWithoutChecks, ['title']),
+    schema: v.required(v.pick(VivliostyleInlineConfigWithoutChecks, ['title'])),
   });
 }
 
@@ -140,7 +144,9 @@ async function askAuthor() {
       message: 'Author:',
       initial: 'John Doe',
     },
-    schema: v.pick(VivliostyleInlineConfigWithoutChecks, ['author']),
+    schema: v.required(
+      v.pick(VivliostyleInlineConfigWithoutChecks, ['author']),
+    ),
   });
 }
 
@@ -153,7 +159,7 @@ async function askTheme({
   fetch: ReturnType<typeof createFetch>;
 }): Promise<
   Pick<ParsedVivliostyleInlineConfig, 'theme'> & {
-    packageJson: VivliostylePackageJson | undefined;
+    themePackage: VivliostylePackageJson | undefined;
   }
 > {
   const themePackages = await (async () => {
@@ -169,7 +175,7 @@ async function askTheme({
     return themes.map((theme) => theme.package);
   })();
 
-  let packageJson: VivliostylePackageJson | undefined;
+  let themePackage: VivliostylePackageJson | undefined;
   const fetchedPackages: Record<string, PackageJson> = {};
   const validateThemeMetadataSchema = v.customAsync<string>(async (value) => {
     if (value === THEME_ANSWER_NOT_USE || value === THEME_ANSWER_MANUAL) {
@@ -193,7 +199,7 @@ async function askTheme({
       pkg,
     );
     if (ret.success) {
-      packageJson = ret.output;
+      themePackage = ret.output;
     }
     return ret.success;
   }, 'Invalid theme package. Please check the schema of the `vivliostyle` field.');
@@ -220,7 +226,7 @@ async function askTheme({
   });
 
   if (theme === THEME_ANSWER_NOT_USE) {
-    return { theme: undefined, packageJson: undefined };
+    return { theme: undefined, themePackage: undefined };
   }
 
   if (theme === THEME_ANSWER_MANUAL) {
@@ -254,7 +260,7 @@ async function askTheme({
     }).then((ret) => ret.themeManualInput);
   }
 
-  return { theme: [{ specifier: theme }], packageJson };
+  return { theme: [{ specifier: theme }], themePackage };
 }
 
 export const TEMPLATE_ANSWER_NOT_USE = 'Not use a template';
@@ -263,7 +269,7 @@ async function askTemplateSetting({
   template,
 }: Pick<VivliostylePackageMetadata, 'template'>): Promise<
   Pick<ParsedVivliostyleInlineConfig, 'template'> & {
-    extraAnswers: Record<string, unknown>;
+    extraTemplateVariables: Record<string, unknown>;
   }
 > {
   const { usingTemplate } = await askQuestion({
@@ -293,13 +299,13 @@ async function askTemplateSetting({
     }),
   });
 
-  let extraAnswers: Record<string, unknown> = {};
+  let extraTemplateVariables: Record<string, unknown> = {};
   if (usingTemplate?.prompt?.length) {
-    extraAnswers = await askQuestion({
+    extraTemplateVariables = await askQuestion({
       question: usingTemplate.prompt,
     });
   }
-  return { template: usingTemplate?.source, extraAnswers };
+  return { template: usingTemplate?.source, extraTemplateVariables };
 }
 
 async function setupTemplate({
