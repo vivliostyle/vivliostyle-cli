@@ -1190,10 +1190,10 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         Disable the startup of the preview server during the build process.
       `),
     ),
-    name: v.pipe(
+    projectPath: v.pipe(
       ValidString,
       v.description($`
-        Name of the Vivliostyle project.
+        Path of the Vivliostyle project to create.
       `),
     ),
     template: v.pipe(
@@ -1262,7 +1262,7 @@ export type InlineOptions = Pick<
   | 'preflight'
   | 'preflightOption'
   | 'disableServerStartup'
-  | 'name'
+  | 'projectPath'
   | 'template'
 >;
 
