@@ -45,7 +45,7 @@ export interface CliFlags {
   proxyPass?: string;
   logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
   ignoreHttpsErrors?: boolean;
-  name?: string;
+  projectPath?: string;
   template?: string;
 }
 

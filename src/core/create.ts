@@ -34,23 +34,30 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.debug('create > inlineConfig %O', inlineConfig);
 
   const fetch = createFetch(inlineConfig);
-  let { name, cwd = defaultCwd, title, author, theme, template } = inlineConfig;
+  let {
+    projectPath,
+    cwd = defaultCwd,
+    title,
+    author,
+    theme,
+    template,
+  } = inlineConfig;
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
-  if (!name) {
-    ({ name } = await askProjectName());
+  if (!projectPath) {
+    ({ projectPath } = await askProjectPath());
   }
-  const dist = upath.join(cwd, name);
+  const dist = upath.join(cwd, projectPath);
   if (
-    (name === '.' &&
+    (projectPath === '.' &&
       fs.readdirSync(dist).filter((n) => !n.startsWith('.')).length > 0) ||
-    (name !== '.' && fs.existsSync(dist))
+    (projectPath !== '.' && fs.existsSync(dist))
   ) {
     throw new Error(`Destination ${dist} is not empty.`);
   }
 
   if (!title) {
-    ({ title } = await askTitle({ name }));
+    ({ title } = await askTitle({ projectPath }));
   }
   if (!author) {
     ({ author } = await askAuthor());
@@ -66,7 +73,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
 
   const explicitTemplateVariables = {
     ...extraTemplateVariables,
-    name,
+    projectPath,
     title,
     author,
     theme,
@@ -82,7 +89,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   if (template) {
     using _logger = Logger.startLogging('Downloading a template');
     await setupTemplate({
-      name,
+      projectPath,
       cwd,
       template,
       templateVariables: {
@@ -92,7 +99,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     });
   } else {
     setupEmptyProject({
-      name,
+      projectPath,
       cwd,
       templateVariables: {
         ...inlineConfig,
@@ -100,11 +107,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       },
     });
   }
-  const formattedOutput = cyan(upath.relative(cwd, name) || '.');
+  const formattedOutput = cyan(upath.relative(cwd, projectPath) || '.');
   Logger.logSuccess(
     `Successfully created the Vivliostyle project to ${terminalLink(
       formattedOutput,
-      pathToFileURL(upath.join(cwd, name)).href,
+      pathToFileURL(upath.join(cwd, projectPath)).href,
       {
         fallback: () => formattedOutput,
       },
@@ -112,25 +119,27 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   );
 }
 
-async function askProjectName() {
+async function askProjectPath() {
   return await askQuestion({
     question: {
       type: 'input',
-      name: 'name',
+      name: 'projectPath',
       message: 'Project directory name:',
       hint: 'Specify "." to create files in the current directory.',
     },
-    schema: v.required(v.pick(VivliostyleInlineConfigWithoutChecks, ['name'])),
+    schema: v.required(
+      v.pick(VivliostyleInlineConfigWithoutChecks, ['projectPath']),
+    ),
   });
 }
 
-async function askTitle({ name }: { name: string }) {
+async function askTitle({ projectPath }: { projectPath: string }) {
   return await askQuestion({
     question: {
       type: 'input',
       name: 'title',
       message: 'Title:',
-      initial: toTitleCase(name) || 'My Book Title',
+      initial: toTitleCase(projectPath) || 'My Book Title',
     },
     schema: v.required(v.pick(VivliostyleInlineConfigWithoutChecks, ['title'])),
   });
@@ -310,26 +319,26 @@ async function askTemplateSetting({
 
 async function setupTemplate({
   cwd,
-  name,
+  projectPath,
   template,
   templateVariables,
 }: Required<
-  Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'name' | 'template'>
+  Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath' | 'template'>
 > & {
   templateVariables: Record<string, unknown>;
 }) {
-  await downloadTemplate(template, { dir: name, cwd });
-  replaceTemplateVariable(upath.join(cwd, name), templateVariables);
+  await downloadTemplate(template, { dir: projectPath, cwd });
+  replaceTemplateVariable(upath.join(cwd, projectPath), templateVariables);
 }
 
 function setupEmptyProject({
   cwd,
-  name,
+  projectPath,
   templateVariables,
-}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'name'>> & {
+}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>> & {
   templateVariables: Record<string, unknown>;
 }) {
-  const dist = upath.join(cwd, name);
+  const dist = upath.join(cwd, projectPath);
   for (const [file, content] of Object.entries(defaultProjectFiles)) {
     const targetPath = upath.join(dist, file);
     fs.mkdirSync(upath.dirname(targetPath), { recursive: true });

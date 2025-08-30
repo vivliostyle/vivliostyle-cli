@@ -6,7 +6,7 @@ function setupCreateParserProgram(): Command {
   program
     .name('vivliostyle create')
     .description('scaffold a new Vivliostyle project')
-    .arguments('[name]')
+    .arguments('[projectPath]')
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
     .option('-T, --theme <theme>', 'theme')
@@ -48,5 +48,5 @@ function setupCreateParserProgram(): Command {
 
 export const parseCreateCommand = createParserProgram({
   setupProgram: setupCreateParserProgram,
-  parseArgs: (options, [name]) => ({ ...options, name }),
+  parseArgs: (options, [projectPath]) => ({ ...options, projectPath }),
 });

@@ -69,7 +69,7 @@ booook_of_the_titleeee
 booook-of-the-titleeee
 Booook of the Titleeee
 
-name: project-name
+projectPath: project-name
 title: Booook of the titleeee
 author: Authoooor
 themePackage: theme-with-template@1.0.0
