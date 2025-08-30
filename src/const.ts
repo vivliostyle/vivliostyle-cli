@@ -67,8 +67,8 @@ export const defaultProjectFiles = {
 export default {
   title: '{{proper title}}',
   author: '{{author}}',
-  {{#if theme}}
-  theme: '{{theme}}',
+  {{#if themePackage}}
+  theme: '{{themePackage.name}}@^{{themePackage.version}}',
   {{/if}}
   entry: ['manuscript.md'],
 };
