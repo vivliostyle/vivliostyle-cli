@@ -12,7 +12,7 @@ import {
   VivliostyleInlineConfigWithoutChecks,
   VivliostylePackageMetadata,
 } from '../config/schema.js';
-import { defaultProjectFiles } from '../const.js';
+import { cliVersion, coreVersion, defaultProjectFiles } from '../const.js';
 import { format } from '../create-template.js';
 import { askQuestion } from '../interactive.js';
 import { Logger } from '../logger.js';
@@ -78,6 +78,8 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     theme: packageJson
       ? `${packageJson.name}@^${packageJson.version}`
       : undefined,
+    cliVersion,
+    coreVersion,
   };
   Logger.debug('create > response %O', response);
   Logger.debug('create > templateVariables %O', templateVariables);

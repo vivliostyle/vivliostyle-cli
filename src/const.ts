@@ -45,8 +45,8 @@ export const defaultProjectFiles = {
     "preview": "vivliostyle preview"
   },
   "dependencies": {
-    "@vivliostyle/cli": "latest"
-  },
+    "@vivliostyle/cli": "{{cliVersion}}"
+  }
 }
 `,
   'README.md': /* markdown */ `# {{proper title}}
