@@ -14,7 +14,7 @@ const mocked = await vi.hoisted(async () => {
       input: string,
       { dir, cwd }: { dir?: string; cwd?: string } = {},
     ) {
-      const source = path.posix.resolve(
+      const source = path.resolve(
         fileURLToPath(import.meta.url),
         '../../fixtures/themes',
         input
