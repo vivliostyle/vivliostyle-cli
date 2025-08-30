@@ -4,17 +4,33 @@ import { PromptOption } from './config/schema.js';
 
 export async function askQuestion<
   T extends object,
-  S extends
-    | v.ObjectSchema<any, any>
-    | v.ObjectSchemaAsync<any, any>
-    | undefined = undefined,
+  S extends v.ObjectSchema<any, any> | v.ObjectSchemaAsync<any, any>,
 >({
   question,
   schema,
 }: {
   question: PromptOption | PromptOption[];
   schema?: S;
-}): Promise<typeof schema extends undefined ? T : v.InferOutput<S>> {
+}): Promise<S extends undefined ? T : v.InferOutput<NonNullable<S>>>;
+
+export async function askQuestion<T extends object>({
+  question,
+  schema,
+}: {
+  question: PromptOption | PromptOption[];
+  schema?: undefined;
+}): Promise<T>;
+
+export async function askQuestion<
+  T extends object,
+  S extends v.ObjectSchema<any, any> | v.ObjectSchemaAsync<any, any>,
+>({
+  question,
+  schema,
+}: {
+  question: PromptOption | PromptOption[];
+  schema?: S;
+}): Promise<any> {
   const response = await enquirer.prompt<T>(
     [question].flat().map((q) => ({
       ...q,
@@ -30,9 +46,11 @@ export async function askQuestion<
         }),
     })),
   );
-  return schema
-    ? schema.async
-      ? v.parseAsync(schema, response)
-      : v.parse(schema, response)
-    : response;
+  if (!schema) {
+    return response as any;
+  }
+
+  return schema.async
+    ? await v.parseAsync(schema, response)
+    : v.parse(schema, response);
 }
