@@ -1,6 +1,24 @@
 import { camelCase, capitalCase, kebabCase, snakeCase } from 'change-case';
 import Handlebars from 'handlebars';
 import { titleCase } from 'title-case';
+import {
+  ParsedVivliostyleInlineConfig,
+  VivliostylePackageMetadata,
+} from './config/schema.js';
+import { PackageJson } from './npm.js';
+
+export type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
+  vivliostyle?: VivliostylePackageMetadata;
+};
+
+export interface TemplateVariable extends ParsedVivliostyleInlineConfig {
+  name: string;
+  title: string;
+  author: string;
+  themePackage?: VivliostylePackageJson;
+  cliVersion: string;
+  coreVersion: string;
+}
 
 function upper(text: string) {
   return text && text.toUpperCase();

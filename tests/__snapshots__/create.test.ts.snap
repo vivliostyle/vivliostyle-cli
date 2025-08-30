@@ -68,6 +68,13 @@ booookOfTheTitleeee
 booook_of_the_titleeee
 booook-of-the-titleeee
 Booook of the Titleeee
+
+name: project-name
+title: Booook of the titleeee
+author: Authoooor
+themePackage: theme-with-template@1.0.0
+cliVersion: 0.0.1
+coreVersion: 0.0.1
 ",
   "/work/project-name/vivliostyle.config.js": "/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
 export default {
