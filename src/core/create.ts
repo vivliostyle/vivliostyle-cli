@@ -8,11 +8,19 @@ import * as v from 'valibot';
 import { cyan } from 'yoctocolors';
 import {
   ParsedVivliostyleInlineConfig,
+  ThemeSpecifier,
   ValidString,
   VivliostyleInlineConfigWithoutChecks,
   VivliostylePackageMetadata,
 } from '../config/schema.js';
-import { cliVersion, coreVersion, defaultProjectFiles } from '../const.js';
+import {
+  cliVersion,
+  coreVersion,
+  DEFAULT_CONFIG_FILENAME,
+  DEFAULT_PROJECT_AUTHOR,
+  DEFAULT_PROJECT_TITLE,
+  defaultProjectFiles,
+} from '../const.js';
 import { format, TemplateVariable } from '../create-template.js';
 import { askQuestion } from '../interactive.js';
 import { Logger } from '../logger.js';
@@ -41,6 +49,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     author,
     theme,
     template,
+    createConfigFileOnly = false,
   } = inlineConfig;
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
@@ -48,7 +57,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     ({ projectPath } = await askProjectPath());
   }
   const dist = upath.join(cwd, projectPath);
-  if (
+  if (createConfigFileOnly) {
+    if (fs.existsSync(upath.join(dist, DEFAULT_CONFIG_FILENAME))) {
+      throw new Error(`${DEFAULT_CONFIG_FILENAME} already exists. Aborting.`);
+    }
+  } else if (
     (projectPath === '.' &&
       fs.readdirSync(dist).filter((n) => !n.startsWith('.')).length > 0) ||
     (projectPath !== '.' && fs.existsSync(dist))
@@ -62,10 +75,14 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   if (!author) {
     ({ author } = await askAuthor());
   }
-  if (!theme) {
+  if (!createConfigFileOnly && !theme) {
     ({ theme, themePackage } = await askTheme({ fetch }));
   }
-  if (themePackage?.vivliostyle?.template && !template) {
+  if (
+    !createConfigFileOnly &&
+    themePackage?.vivliostyle?.template &&
+    !template
+  ) {
     ({ template, extraTemplateVariables } = await askTemplateSetting(
       themePackage.vivliostyle,
     ));
@@ -76,7 +93,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     projectPath,
     title,
     author,
-    theme,
+    theme: theme && flattenThemeField({ theme }),
     themePackage,
     template,
     cliVersion,
@@ -101,17 +118,22 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     setupEmptyProject({
       projectPath,
       cwd,
+      createConfigFileOnly,
       templateVariables: {
         ...inlineConfig,
         ...explicitTemplateVariables,
       },
     });
   }
-  const formattedOutput = cyan(upath.relative(cwd, projectPath) || '.');
+
+  const output = createConfigFileOnly
+    ? upath.join(dist, DEFAULT_CONFIG_FILENAME)
+    : dist;
+  const formattedOutput = cyan(upath.relative(cwd, output) || '.');
   Logger.logSuccess(
-    `Successfully created the Vivliostyle project to ${terminalLink(
+    `Successfully created ${terminalLink(
       formattedOutput,
-      pathToFileURL(upath.join(cwd, projectPath)).href,
+      pathToFileURL(output).href,
       {
         fallback: () => formattedOutput,
       },
@@ -139,7 +161,7 @@ async function askTitle({ projectPath }: { projectPath: string }) {
       type: 'input',
       name: 'title',
       message: 'Title:',
-      initial: toTitleCase(projectPath) || 'My Book Title',
+      initial: toTitleCase(projectPath) || DEFAULT_PROJECT_TITLE,
     },
     schema: v.required(v.pick(VivliostyleInlineConfigWithoutChecks, ['title'])),
   });
@@ -151,7 +173,7 @@ async function askAuthor() {
       type: 'input',
       name: 'author',
       message: 'Author:',
-      initial: 'John Doe',
+      initial: DEFAULT_PROJECT_AUTHOR,
     },
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['author']),
@@ -269,7 +291,12 @@ async function askTheme({
     }).then((ret) => ret.themeManualInput);
   }
 
-  return { theme: [{ specifier: theme }], themePackage };
+  return {
+    theme: [
+      { specifier: themePackage ? `${theme}@^${themePackage.version}` : theme },
+    ],
+    themePackage,
+  };
 }
 
 export const TEMPLATE_ANSWER_NOT_USE = 'Not use a template';
@@ -334,12 +361,21 @@ async function setupTemplate({
 function setupEmptyProject({
   cwd,
   projectPath,
+  createConfigFileOnly,
   templateVariables,
-}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>> & {
+}: Required<
+  Pick<
+    ParsedVivliostyleInlineConfig,
+    'cwd' | 'projectPath' | 'createConfigFileOnly'
+  >
+> & {
   templateVariables: Record<string, unknown>;
 }) {
   const dist = upath.join(cwd, projectPath);
   for (const [file, content] of Object.entries(defaultProjectFiles)) {
+    if (createConfigFileOnly && file !== DEFAULT_CONFIG_FILENAME) {
+      continue;
+    }
     const targetPath = upath.join(dist, file);
     fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
     fs.writeFileSync(targetPath, content, 'utf8');
@@ -369,4 +405,11 @@ function replaceTemplateVariable(
     }
   };
   walk(destDir);
+}
+
+function flattenThemeField({
+  theme,
+}: Required<Pick<ParsedVivliostyleInlineConfig, 'theme'>>): ThemeSpecifier {
+  const arr = theme.map((t) => (t.import ? t : t.specifier));
+  return arr.length === 1 ? arr[0] : arr;
 }
