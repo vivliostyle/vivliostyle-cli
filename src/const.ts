@@ -32,6 +32,10 @@ export const CONTAINER_ROOT_DIR = '/data';
 // https://docs.docker.com/desktop/features/networking/#use-cases-and-workarounds
 export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 
+export const DEFAULT_CONFIG_FILENAME = 'vivliostyle.config.js';
+export const DEFAULT_PROJECT_TITLE = 'My Book Title';
+export const DEFAULT_PROJECT_AUTHOR = 'John Doe';
+
 export const defaultProjectFiles = {
   'package.json': /* json */ `{
   "name": "{{kebab title}}",
@@ -63,14 +67,21 @@ export const defaultProjectFiles = {
   '.gitignore': `node_modules/
 .vivliostyle/
 `,
-  'vivliostyle.config.js': /* js */ `/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-export default {
-  title: '{{proper title}}',
-  author: '{{author}}',
-  {{#if themePackage}}
-  theme: '{{themePackage.name}}@^{{themePackage.version}}',
+  [DEFAULT_CONFIG_FILENAME]: /* js */ `/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
+module.exports = {
+  title: "{{proper title}}",
+  author: "{{author}}",
+  {{#if language}}
+  language: "{{language}}",
   {{/if}}
-  entry: ['manuscript.md'],
+  {{#if size}}
+  size: "{{size}}",
+  {{/if}}
+  {{#if theme}}
+  theme: {{json theme}},
+  {{/if}}
+  image: "${CONTAINER_URL}:{{cliVersion}}",
+  entry: ["manuscript.md"],
 };
 `,
   'manuscript.md': /* markdown */ `{{lorem}}

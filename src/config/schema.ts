@@ -1202,6 +1202,12 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         Template source in format of \`[provider]:repo[/subpath][#ref]\`.
       `),
     ),
+    createConfigFileOnly: v.pipe(
+      v.boolean(),
+      v.description($`
+        Create a Vivliostyle config file without generating project template files.
+      `),
+    ),
   }),
 );
 
@@ -1264,6 +1270,7 @@ export type InlineOptions = Pick<
   | 'disableServerStartup'
   | 'projectPath'
   | 'template'
+  | 'createConfigFileOnly'
 >;
 
 export const VivliostyleThemeMetadata = v.pipe(

@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { VivliostyleInlineConfig } from './config/schema.js';
 import { build as _build } from './core/build.js';
-import { init as _init } from './core/init.js';
+import { create as _create } from './core/create.js';
 import { preview as _preview } from './core/preview.js';
 import type { PublicationManifest as _PublicationManifest } from './schema/publication.schema.js';
 
@@ -36,17 +36,6 @@ export async function build(options: VivliostyleInlineConfig) {
 }
 
 /**
- * Initialize a new vivliostyle.config.js file.
- *
- * @param options
- * @returns
- */
-export async function init(options: VivliostyleInlineConfig) {
-  const parsed = v.parse(VivliostyleInlineConfig, options);
-  return await _init(parsed);
-}
-
-/**
  * Open a browser for previewing the publication.
  *
  * @param options
@@ -55,4 +44,15 @@ export async function init(options: VivliostyleInlineConfig) {
 export async function preview(options: VivliostyleInlineConfig) {
   const parsed = v.parse(VivliostyleInlineConfig, options);
   return await _preview(parsed);
+}
+
+/**
+ * Scaffold a new Vivliostyle project.
+ *
+ * @param options
+ * @returns
+ */
+export async function create(options: VivliostyleInlineConfig) {
+  const parsed = v.parse(VivliostyleInlineConfig, options);
+  return await _create(parsed);
 }
