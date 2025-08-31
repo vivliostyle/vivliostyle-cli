@@ -8,13 +8,12 @@ import { afterEach } from 'vitest';
 import { parseBuildCommand } from '../src/commands/build.parser.js';
 import { setupConfigFromFlags } from '../src/commands/cli-flags.js';
 import { parseCreateCommand } from '../src/commands/create.parser.js';
-import { parseInitCommand } from '../src/commands/init.parser.js';
 import { parsePreviewCommand } from '../src/commands/preview.parser.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
 import { build } from '../src/core/build.js';
 import { create } from '../src/core/create.js';
-import { init } from '../src/core/init.js';
 import { preview } from '../src/core/preview.js';
+import { parseInitCommand } from './../src/commands/init.parser';
 import { ResolvedTaskConfig, resolveTaskConfig } from './../src/config/resolve';
 import {
   BuildTask,
@@ -34,7 +33,7 @@ afterEach(async () => {
 });
 
 export const runCommand = async (
-  [command, ...args]: ['init' | 'build' | 'preview' | 'create', ...string[]],
+  [command, ...args]: ['build' | 'preview' | 'create' | 'init', ...string[]],
   {
     cwd,
     config,
@@ -48,13 +47,15 @@ export const runCommand = async (
   },
 ): Promise<ViteDevServer | void> => {
   let inlineConfig = {
-    init: parseInitCommand,
     build: parseBuildCommand,
     preview: parsePreviewCommand,
     create: parseCreateCommand,
+    init: parseInitCommand,
   }[command](['vivliostyle', command, ...args]);
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  const server = await { init, build, preview, create }[command](inlineConfig);
+  const server = await { build, preview, create, init: create }[command](
+    inlineConfig,
+  );
   if (server) {
     runningServers.add(server);
   }

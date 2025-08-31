@@ -152,7 +152,7 @@ describe('create command', () => {
     await runCommand(['create'], { cwd: '/work' });
     const files = vol.toJSON();
     expect(files['/work/project-name/vivliostyle.config.js']).toMatch(
-      "theme: '@vivliostyle/custom-theme@^9.9.9'",
+      'theme: "@vivliostyle/custom-theme@^9.9.9"',
     );
   });
 
@@ -167,5 +167,55 @@ describe('create command', () => {
     await expect(runCommand(['create'], { cwd: '/work' })).rejects.toThrow(
       'Destination /work/out is not empty.',
     );
+  });
+});
+
+describe('init command', () => {
+  it('test the init command', async () => {
+    await runCommand(['init'], { cwd: '/work' });
+    const files = vol.toJSON();
+    expect(files['/work/vivliostyle.config.js']).toMatchSnapshot();
+  });
+
+  it('test the init command with long options', async () => {
+    await runCommand(
+      [
+        'init',
+        '--title',
+        'Sample Document',
+        '--author',
+        'Author Name <author@example.com>',
+        '--language',
+        'en',
+        '--size',
+        'A5',
+        '--theme',
+        'style.css',
+      ],
+      { cwd: '/work' },
+    );
+    const files = vol.toJSON();
+    expect(files['/work/vivliostyle.config.js']).toMatchSnapshot();
+  });
+
+  it('test the init command with short options', async () => {
+    await runCommand(
+      [
+        'init',
+        '--title',
+        'Sample Document2',
+        '--author',
+        'Author Name2 <author@example.com>',
+        '-l',
+        'jp',
+        '-s',
+        'A3',
+        '-T',
+        'theme.css',
+      ],
+      { cwd: '/work' },
+    );
+    const files = vol.toJSON();
+    expect(files['/work/vivliostyle.config.js']).toMatchSnapshot();
   });
 });

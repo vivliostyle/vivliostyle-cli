@@ -9,10 +9,16 @@ function setupCreateParserProgram(): Command {
     .arguments('[projectPath]')
     .option('--title <title>', 'title')
     .option('--author <author>', 'author')
+    .option('-l, --language <language>', 'language')
+    .option('-s, --size <size>', 'paper size')
     .option('-T, --theme <theme>', 'theme')
     .option(
       '--template <template>',
       `Template source in format of \`[provider]:repo[/subpath][#ref]\``,
+    )
+    .option(
+      '--create-config-file-only',
+      `Create a Vivliostyle config file without generating project template files.`,
     )
     .addOption(
       new Option('--proxy-server <proxyServer>', `HTTP/SOCK proxy server url`),

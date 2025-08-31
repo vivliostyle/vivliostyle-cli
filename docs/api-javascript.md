@@ -6,8 +6,8 @@
 ### Functions
 
 - [`build`](#build)
+- [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
-- [`init`](#init)
 - [`preview`](#preview)
 
 ### Interfaces
@@ -61,6 +61,218 @@ build({
 ###### configData?
 
 `object` & `object` \| `object` & `object`[] \| `null` = `...`
+
+###### createConfigFileOnly?
+
+`boolean` = `...`
+
+###### cropMarks?
+
+`boolean` = `...`
+
+###### cropOffset?
+
+`string` = `...`
+
+###### css?
+
+`string` = `...`
+
+###### cwd?
+
+`string` = `...`
+
+###### disableServerStartup?
+
+`boolean` = `...`
+
+###### enableStaticServe?
+
+`boolean` = `...`
+
+###### enableViewerStartPage?
+
+`boolean` = `...`
+
+###### executableBrowser?
+
+`string` = `...`
+
+###### host?
+
+`string` \| `boolean` = `...`
+
+###### ignoreHttpsErrors?
+
+`boolean` = `...`
+
+###### image?
+
+`string` = `...`
+
+###### input?
+
+`string` = `...`
+
+###### language?
+
+`string` = `...`
+
+###### logger?
+
+`LoggerInterface` = `...`
+
+###### logLevel?
+
+`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+
+###### openViewer?
+
+`boolean` = `...`
+
+###### output?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### port?
+
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### projectPath?
+
+`string` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### template?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### create()
+
+> **create**(`options`): `Promise`\<`void`\>
+
+Scaffold a new Vivliostyle project.
+
+#### Parameters
+
+##### options
+
+###### author?
+
+`string` = `...`
+
+###### bleed?
+
+`string` = `...`
+
+###### browser?
+
+`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+
+###### config?
+
+`string` = `...`
+
+###### configData?
+
+`null` \| `object` & `object` \| `object` & `object`[] = `...`
+
+###### createConfigFileOnly?
+
+`boolean` = `...`
 
 ###### cropMarks?
 
@@ -264,6 +476,10 @@ build({
 
 `object` & `object` \| `object` & `object`[] \| `null` = `...`
 
+###### createConfigFileOnly?
+
+`boolean` = `...`
+
 ###### cropMarks?
 
 `boolean` = `...`
@@ -438,210 +654,6 @@ build({
 
 ***
 
-### init()
-
-> **init**(`options`): `Promise`\<`void`\>
-
-Initialize a new vivliostyle.config.js file.
-
-#### Parameters
-
-##### options
-
-###### author?
-
-`string` = `...`
-
-###### bleed?
-
-`string` = `...`
-
-###### browser?
-
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
-
-###### config?
-
-`string` = `...`
-
-###### configData?
-
-`object` & `object` \| `object` & `object`[] \| `null` = `...`
-
-###### cropMarks?
-
-`boolean` = `...`
-
-###### cropOffset?
-
-`string` = `...`
-
-###### css?
-
-`string` = `...`
-
-###### cwd?
-
-`string` = `...`
-
-###### disableServerStartup?
-
-`boolean` = `...`
-
-###### enableStaticServe?
-
-`boolean` = `...`
-
-###### enableViewerStartPage?
-
-`boolean` = `...`
-
-###### executableBrowser?
-
-`string` = `...`
-
-###### host?
-
-`string` \| `boolean` = `...`
-
-###### ignoreHttpsErrors?
-
-`boolean` = `...`
-
-###### image?
-
-`string` = `...`
-
-###### input?
-
-`string` = `...`
-
-###### language?
-
-`string` = `...`
-
-###### logger?
-
-`LoggerInterface` = `...`
-
-###### logLevel?
-
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
-
-###### openViewer?
-
-`boolean` = `...`
-
-###### output?
-
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
-
-###### port?
-
-`number` = `...`
-
-###### preflight?
-
-`"press-ready"` \| `"press-ready-local"` = `...`
-
-###### preflightOption?
-
-`string` \| `string`[] = `...`
-
-###### pressReady?
-
-`boolean` = `...`
-
-###### projectPath?
-
-`string` = `...`
-
-###### proxyBypass?
-
-`string` = `...`
-
-###### proxyPass?
-
-`string` = `...`
-
-###### proxyServer?
-
-`string` = `...`
-
-###### proxyUser?
-
-`string` = `...`
-
-###### quick?
-
-`boolean` = `...`
-
-###### readingProgression?
-
-`"ltr"` \| `"rtl"` = `...`
-
-###### renderMode?
-
-`"local"` \| `"docker"` = `...`
-
-###### sandbox?
-
-`boolean` = `...`
-
-###### singleDoc?
-
-`boolean` = `...`
-
-###### size?
-
-`string` = `...`
-
-###### style?
-
-`string` = `...`
-
-###### template?
-
-`string` = `...`
-
-###### theme?
-
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
-
-###### timeout?
-
-`number` = `...`
-
-###### title?
-
-`string` = `...`
-
-###### userStyle?
-
-`string` = `...`
-
-###### viewer?
-
-`string` = `...`
-
-###### viewerParam?
-
-`string` = `...`
-
-###### vite?
-
-`UserConfig` = `...`
-
-###### viteConfigFile?
-
-`string` \| `boolean` = `...`
-
-#### Returns
-
-`Promise`\<`void`\>
-
-***
-
 ### preview()
 
 > **preview**(`options`): `Promise`\<`ViteDevServer`\>
@@ -671,6 +683,10 @@ Open a browser for previewing the publication.
 ###### configData?
 
 `object` & `object` \| `object` & `object`[] \| `null` = `...`
+
+###### createConfigFileOnly?
+
+`boolean` = `...`
 
 ###### cropMarks?
 
@@ -850,7 +866,7 @@ Open a browser for previewing the publication.
 
 #### Extends
 
-- `ParsedVivliostyleInlineConfig`
+- `Omit`\<`ParsedVivliostyleInlineConfig`, `"theme"`\>
 
 #### Properties
 
@@ -863,6 +879,7 @@ Open a browser for previewing the publication.
 | <a id="config"></a> `config?` | `string` |
 | <a id="configdata"></a> `configData?` | `null` \| `object` & `object` \| `object` & `object`[] |
 | <a id="coreversion"></a> `coreVersion` | `string` |
+| <a id="createconfigfileonly"></a> `createConfigFileOnly?` | `boolean` |
 | <a id="cropmarks"></a> `cropMarks?` | `boolean` |
 | <a id="cropoffset"></a> `cropOffset?` | `string` |
 | <a id="css"></a> `css?` | `string` |
@@ -899,7 +916,7 @@ Open a browser for previewing the publication.
 | <a id="size"></a> `size?` | `string` |
 | <a id="style"></a> `style?` | `string` |
 | <a id="template"></a> `template?` | `string` |
-| <a id="theme"></a> `theme?` | `object` & `object`[] |
+| <a id="theme"></a> `theme?` | `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] |
 | <a id="themepackage"></a> `themePackage?` | `VivliostylePackageJson` |
 | <a id="timeout"></a> `timeout?` | `number` |
 | <a id="title"></a> `title` | `string` |
