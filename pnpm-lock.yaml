@@ -89,6 +89,9 @@ importers:
       hastscript:
         specifier: 9.0.1
         version: 9.0.1
+      lcid:
+        specifier: 5.0.0
+        version: 5.0.0
       mime-types:
         specifier: 3.0.1
         version: 3.0.1
@@ -101,6 +104,9 @@ importers:
       npm-package-arg:
         specifier: 12.0.2
         version: 12.0.2
+      os-locale:
+        specifier: 6.0.2
+        version: 6.0.2
       pdf-lib:
         specifier: 1.17.1
         version: 1.17.1
@@ -3652,6 +3658,14 @@ packages:
     resolution: {integrity: sha512-agE4QfB2Lkp9uICn7BAqoscw4SZP9kTE2hxiFI3jBPmXJfdqiahTbUuKGsMoN2GtqL9AxhYioAcVvgsb1HvRbA==}
     engines: {node: '>= 0.10'}
 
+  invert-kv@3.0.1:
+    resolution: {integrity: sha512-CYdFeFexxhv/Bcny+Q0BfOV+ltRlJcd4BBZBYFX/O0u4npJrgZtIcjokegtiSMAvlMTJ+Koq0GBCc//3bueQxw==}
+    engines: {node: '>=8'}
+
+  invert-kv@4.2.0:
+    resolution: {integrity: sha512-6veZJCvIUzuPAeYmmeAUTvlE1mOpvl33ZQoSBVvuWHJ1Ou5oMgAf95YDmK57+oLcSJrFWXfh/nQFYJl2uLOmrQ==}
+    engines: {node: '>=12'}
+
   ip-address@9.0.5:
     resolution: {integrity: sha512-zHtQzGojZXTwZTHQqra+ETKd4Sn3vgi7uBmlPoXVWZqYvuKmtI0l/VZTjqGmJY9x88GGOaZ9+G9ES8hC4T4X8g==}
     engines: {node: '>= 12'}
@@ -3990,6 +4004,14 @@ packages:
   lazystream@1.0.1:
     resolution: {integrity: sha512-b94GiNHQNy6JNTrt5w6zNyffMrNkXZb3KTkCZJb2V1xaEGCk093vkZ2jk3tpaeP33/OiXC+WvK9AxUebnf5nbw==}
     engines: {node: '>= 0.6.3'}
+
+  lcid@3.1.1:
+    resolution: {integrity: sha512-M6T051+5QCGLBQb8id3hdvIW8+zeFV2FyBGFS9IEK5H9Wt4MueD4bW1eWikpHgZp+5xR3l5c8pZUkQsIA0BFZg==}
+    engines: {node: '>=8'}
+
+  lcid@5.0.0:
+    resolution: {integrity: sha512-i0bOkKz5k41apRs5rzFHp5ukmUtGm+owHXj2LwtEir6xxww96mRH1l5Q1denx44LFm5LVKIjXu8ZseqZv7Oa9g==}
+    engines: {node: '>=18.20'}
 
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
@@ -4681,6 +4703,10 @@ packages:
   ora@8.1.1:
     resolution: {integrity: sha512-YWielGi1XzG1UTvOaCFaNgEnuhZVMSHYkW/FQ7UX8O26PtlpdM84c0f7wLPlkvx2RfiQmnzd61d/MGxmpQeJPw==}
     engines: {node: '>=18'}
+
+  os-locale@6.0.2:
+    resolution: {integrity: sha512-qIb8bzRqaN/vVqEYZ7lTAg6PonskO7xOmM7OClD28F6eFa4s5XGe4bGpHUHMoCHbNNuR0pDYFeSLiW5bnjWXIA==}
+    engines: {node: '>=12.20'}
 
   os-name@5.1.0:
     resolution: {integrity: sha512-YEIoAnM6zFmzw3PQ201gCVCIWbXNyKObGlVvpAVvraAeOHnlYVKFssbA/riRX5R40WA6kKrZ7Dr7dWzO3nKSeQ==}
@@ -8198,12 +8224,15 @@ snapshots:
       fast-xml-parser: 5.2.1
       fs-extra: 11.2.0
       github-slugger: 2.0.0
+      handlebars: 4.7.8
       hast-util-to-html: 9.0.5
       hastscript: 9.0.1
+      lcid: 5.0.0
       mime-types: 3.0.1
       node-fetch-native: 1.6.7
       node-stream-zip: 1.15.0
       npm-package-arg: 12.0.2
+      os-locale: 6.0.2
       pdf-lib: 1.17.1
       picomatch: 4.0.2
       playwright-core: 1.56.1
@@ -10375,6 +10404,10 @@ snapshots:
 
   interpret@1.4.0: {}
 
+  invert-kv@3.0.1: {}
+
+  invert-kv@4.2.0: {}
+
   ip-address@9.0.5:
     dependencies:
       jsbn: 1.1.0
@@ -10653,6 +10686,14 @@ snapshots:
   lazystream@1.0.1:
     dependencies:
       readable-stream: 2.3.8
+
+  lcid@3.1.1:
+    dependencies:
+      invert-kv: 3.0.1
+
+  lcid@5.0.0:
+    dependencies:
+      invert-kv: 4.2.0
 
   lilconfig@3.1.3: {}
 
@@ -11670,6 +11711,10 @@ snapshots:
       stdin-discarder: 0.2.2
       string-width: 7.2.0
       strip-ansi: 7.1.0
+
+  os-locale@6.0.2:
+    dependencies:
+      lcid: 3.1.1
 
   os-name@5.1.0:
     dependencies:

@@ -1,7 +1,5 @@
-import { execFile } from 'node:child_process';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { promisify } from 'node:util';
 import upath from 'upath';
 import { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from './config/schema.js';
@@ -9,9 +7,7 @@ import { CONTAINER_LOCAL_HOSTNAME, CONTAINER_ROOT_DIR } from './const.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
 import { getSourceUrl } from './server.js';
-import { isValidUri, pathEquals } from './util.js';
-
-const execFileAsync = promisify(execFile);
+import { exec, isValidUri, pathEquals } from './util.js';
 
 export function toContainerPath(urlOrAbsPath: string): string {
   if (isValidUri(urlOrAbsPath)) {
@@ -73,12 +69,9 @@ export async function runContainer({
       `Docker isn't be installed. To use this feature, you'll need to install Docker.`,
     );
   }
-  const versionCmd = await execFileAsync('docker', [
-    'version',
-    '--format',
-    '{{.Server.Version}}',
-  ]);
-  const version = versionCmd.stdout.trim();
+  const version = (
+    await exec('docker', ['version', '--format', '{{.Server.Version}}'])
+  ).stdout;
   const [major, minor] = version.split('.').map(Number);
   if (major < 20 || (major === 20 && minor < 10)) {
     throw new Error(
