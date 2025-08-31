@@ -20,6 +20,7 @@ import {
   DEFAULT_PROJECT_AUTHOR,
   DEFAULT_PROJECT_TITLE,
   defaultProjectFiles,
+  languages,
 } from '../const.js';
 import { format, TemplateVariable } from '../create-template.js';
 import { askQuestion } from '../interactive.js';
@@ -47,6 +48,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     cwd = defaultCwd,
     title,
     author,
+    language,
     theme,
     template,
     createConfigFileOnly = false,
@@ -75,6 +77,9 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   if (!author) {
     ({ author } = await askAuthor());
   }
+  if (!language) {
+    ({ language } = await askLanguage());
+  }
   if (!createConfigFileOnly && !theme) {
     ({ theme, themePackage } = await askTheme({ fetch }));
   }
@@ -93,6 +98,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     projectPath,
     title,
     author,
+    language,
     theme: theme && flattenThemeField({ theme }),
     themePackage,
     template,
@@ -177,6 +183,26 @@ async function askAuthor() {
     },
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['author']),
+    ),
+  });
+}
+
+async function askLanguage() {
+  return await askQuestion({
+    question: {
+      type: 'autocomplete',
+      name: 'language',
+      message: 'Language:',
+      choices: Object.entries(languages).map(([value, displayName]) => ({
+        value,
+        name: displayName,
+        hint: value,
+      })),
+      limit: 10,
+      // initial: await getOsLocale(),
+    },
+    schema: v.required(
+      v.pick(VivliostyleInlineConfigWithoutChecks, ['language']),
     ),
   });
 }

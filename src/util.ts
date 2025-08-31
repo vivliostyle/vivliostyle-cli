@@ -8,10 +8,13 @@ import {
 import { Ajv, Plugin as AjvPlugin, Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
+import lcid from 'lcid';
 import StreamZip from 'node-stream-zip';
+import childProcess from 'node:child_process';
 import fs from 'node:fs';
 import readline from 'node:readline';
 import util from 'node:util';
+import { osLocale } from 'os-locale';
 import { titleCase } from 'title-case';
 import tmp from 'tmp';
 import upath from 'upath';
@@ -25,6 +28,13 @@ import {
 import type { PublicationManifest } from './schema/publication.schema.js';
 
 export const cwd = upath.normalize(process.cwd());
+
+const execFile = util.promisify(childProcess.execFile);
+export async function exec(command: string, args: string[] = []) {
+  const subprocess = await execFile(command, args);
+  subprocess.stdout = subprocess.stdout.trim();
+  return subprocess;
+}
 
 const beforeExitHandlers: (() => void)[] = [];
 export const registerExitHandler = (
@@ -349,6 +359,39 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
     fs.mkdirSync(upath.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content);
   }
+}
+
+let cachedLocale: string | undefined;
+export async function getOsLocale(): Promise<string> {
+  if (import.meta.env?.VITEST) {
+    return 'en-US';
+  }
+  // It uses the same implementation as os-locale, but prioritizes the OS language settings on Windows and macOS.
+  if (cachedLocale) {
+    return cachedLocale;
+  }
+  let locale: string | undefined;
+  if (process.platform === 'win32') {
+    const { stdout } = await exec('wmic', ['os', 'get', 'locale']);
+    const lcidCode = Number.parseInt(stdout.replace('Locale', ''), 16);
+    locale = lcid.from(lcidCode);
+  }
+  if (process.platform === 'darwin') {
+    const results = await Promise.all([
+      exec('defaults', ['read', '-globalDomain', 'AppleLocale']).then(
+        ({ stdout }) => stdout,
+      ),
+      exec('locale', ['-a']).then(({ stdout }) => stdout),
+    ]);
+    if (results[1].includes(results[0])) {
+      locale = results[0];
+    }
+  }
+  if (locale) {
+    cachedLocale = locale.replace(/_/, '-');
+    return cachedLocale;
+  }
+  return await osLocale();
 }
 
 export function toTitleCase<T = unknown>(input: T): T {

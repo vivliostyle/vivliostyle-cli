@@ -17,6 +17,7 @@ export interface TemplateVariable
   projectPath: string;
   title: string;
   author: string;
+  language: string;
   theme?: ThemeSpecifier;
   themePackage?: VivliostylePackageJson;
   cliVersion: string;
