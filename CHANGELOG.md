@@ -1,5 +1,13 @@
 # Changelog
 
+# [9.7.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.6.0...v9.7.0) (2025-09-18)
+
+### Features
+
+- Update Playwright to 1.55.0 (Chromium 140.0.7339.16) ([d943ca5](https://github.com/vivliostyle/vivliostyle-cli/commit/d943ca5e08dfcfa849e3c691f759254f23d51673))
+- Update VFM to 2.3.0: ESM support ([b0f23d4](https://github.com/vivliostyle/vivliostyle-cli/commit/b0f23d42a6c48bf09d539260eda4b7c5781a1371))
+- Update Vivliostyle.js to 2.35.0: Support clear:page/column etc. ([f8c10de](https://github.com/vivliostyle/vivliostyle-cli/commit/f8c10de785358e7e72fd07c65b4f575518180778))
+
 # [9.6.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.5.0...v9.6.0) (2025-08-11)
 
 ### Bug Fixes
