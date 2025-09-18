@@ -32,6 +32,62 @@ export const CONTAINER_ROOT_DIR = '/data';
 // https://docs.docker.com/desktop/features/networking/#use-cases-and-workarounds
 export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 
+export const DEFAULT_CONFIG_FILENAME = 'vivliostyle.config.js';
+export const DEFAULT_PROJECT_TITLE = 'My Book Title';
+export const DEFAULT_PROJECT_AUTHOR = 'John Doe';
+
+export const defaultProjectFiles = {
+  'package.json': /* json */ `{
+  "name": "{{kebab title}}",
+  "description": "{{proper title}}",
+  "author": "{{author}}",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "vivliostyle build",
+    "preview": "vivliostyle preview"
+  },
+  "dependencies": {
+    "@vivliostyle/cli": "{{cliVersion}}"
+  }
+}
+`,
+  'README.md': /* markdown */ `# {{proper title}}
+
+## References
+
+- VFM <https://vivliostyle.github.io/vfm/#/vfm>
+- Vivliostyle CLI <https://github.com/vivliostyle/vivliostyle-cli#readme>
+- Vivliostyle Themes <https://github.com/vivliostyle/themes#readme>
+- Awesome Vivliostyle <https://github.com/vivliostyle/awesome-vivliostyle#readme>
+- Vivliostyle (GitHub) <https://github.com/vivliostyle>
+- Vivliostyle <https://vivliostyle.org>
+`,
+  '.gitignore': `node_modules/
+.vivliostyle/
+`,
+  [DEFAULT_CONFIG_FILENAME]: /* js */ `/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
+module.exports = {
+  title: "{{proper title}}",
+  author: "{{author}}",
+  {{#if language}}
+  language: "{{language}}",
+  {{/if}}
+  {{#if size}}
+  size: "{{size}}",
+  {{/if}}
+  {{#if theme}}
+  theme: {{json theme}},
+  {{/if}}
+  image: "${CONTAINER_URL}:{{cliVersion}}",
+  entry: ["manuscript.md"],
+};
+`,
+  'manuscript.md': /* markdown */ `{{lorem}}
+`,
+};
+
 export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
 export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {

@@ -1,6 +1,8 @@
 import { Command, Option } from 'commander';
+import upath from 'upath';
+import { createParserProgram } from './cli-flags.js';
 
-export function setupBuildParserProgram(): Command {
+function setupBuildParserProgram(): Command {
   // Provide an order-sensitive command parser
   // ex: "-o foo -o bar -f baz"
   //    → [{path: "foo"}, {path:"bar", format: "baz"}]
@@ -208,3 +210,18 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
 function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) ? +val * 1000 : undefined;
 }
+
+export const parseBuildCommand = createParserProgram({
+  setupProgram: setupBuildParserProgram,
+  parseArgs: (options, [input]) => {
+    if (
+      input &&
+      !options.config &&
+      upath.basename(input).startsWith('vivliostyle.config')
+    ) {
+      // Load an input argument as a Vivliostyle config
+      return { ...options, config: input };
+    }
+    return { ...options, input };
+  },
+});
