@@ -24,7 +24,12 @@ import {
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';
-import { getFormattedError, pathContains, pathEquals } from '../util.js';
+import {
+  debounce,
+  getFormattedError,
+  pathContains,
+  pathEquals,
+} from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
 // Ref: https://github.com/lukeed/sirv
@@ -398,16 +403,18 @@ export function vsDevServerPlugin({
 
     configureServer(viteServer) {
       server = viteServer;
-
-      const handleUpdate = async (pathname: string) => {
-        if (!matchProjectDep?.(pathname)) {
-          return;
-        }
+      const requestReload = debounce(async () => {
         await reload();
         viteServer.ws.send({
           type: 'full-reload',
           path: '*',
         });
+      }, 200);
+      const handleUpdate = (pathname: string) => {
+        if (!matchProjectDep?.(pathname)) {
+          return;
+        }
+        requestReload();
       };
       viteServer.watcher.on('add', handleUpdate);
       viteServer.watcher.on('change', handleUpdate);
