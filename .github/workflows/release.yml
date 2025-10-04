@@ -42,8 +42,12 @@ jobs:
           run_install: false
       - uses: actions/setup-node@v4
         with:
+          registry-url: 'https://registry.npmjs.org/'
           node-version: 22
           cache: 'pnpm'
+      # Ensure npm 11.5.1 or later is installed
+      - name: Update npm
+        run: npm install -g npm@latest
       - run: pnpm install
       - name: Set GitHub Actions user
         run: |
