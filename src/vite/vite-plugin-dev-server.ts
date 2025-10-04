@@ -10,7 +10,6 @@ import {
   ParsedEntry,
   ParsedTheme,
   ResolvedTaskConfig,
-  WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { Logger } from '../logger.js';
@@ -24,7 +23,12 @@ import {
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';
-import { getFormattedError, pathContains, pathEquals } from '../util.js';
+import {
+  debounce,
+  getFormattedError,
+  pathContains,
+  pathEquals,
+} from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
 // Ref: https://github.com/lukeed/sirv
@@ -231,11 +235,10 @@ export function vsDevServerPlugin({
       );
   }
 
-  async function transform(
-    entry: ParsedEntry,
-    config: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
-    host: string | undefined,
-  ) {
+  async function transform(entry: ParsedEntry, host: string | undefined) {
+    if (!isWebPubConfig(config)) {
+      return;
+    }
     // Respect the host header instead of the original rootUrl configuration,
     // as the dev server may run on a different port through a server other than Vite.
     const rootUrl = host
@@ -263,7 +266,22 @@ export function vsDevServerPlugin({
     return await promise;
   }
 
-  async function invalidate(entry: ParsedEntry, config: ResolvedTaskConfig) {
+  async function transformAll(host: string | undefined) {
+    const tocEntries: ParsedEntry[] = [];
+    for (const entry of config.entries) {
+      if (entry.rel === 'contents') {
+        // To transpile the table of contents, all dependent content must be transpiled in advance
+        tocEntries.push(entry);
+        continue;
+      }
+      await transform(entry, host);
+    }
+    for (const entry of tocEntries) {
+      await transform(entry, host);
+    }
+  }
+
+  async function invalidate(entry: ParsedEntry) {
     const cwd = pathToFileURL(config.workspaceDir);
     const target = pathToFileURL(entry.target);
     if (target.href.indexOf(cwd.href) !== 0) {
@@ -286,7 +304,7 @@ export function vsDevServerPlugin({
     res,
     next,
   ) {
-    if (!isWebPubConfig(config) || !program) {
+    if (!program) {
       return next();
     }
     const { entriesLookup, urlMatchRe } = program;
@@ -324,17 +342,9 @@ export function vsDevServerPlugin({
 
     const { host } = req.headers;
     if (entry.rel === 'contents') {
-      // To transpile the table of contents, all dependent content must be transpiled in advance
-      const _config = { ...config };
-      await Promise.all(
-        _config.entries.flatMap((e) =>
-          isWebPubConfig(_config) && e.rel !== 'contents' && e.rel !== 'cover'
-            ? transform(e, _config, host)
-            : [],
-        ),
-      );
+      await transformAll(host);
     }
-    const result = await transform(entry, config, host);
+    const result = await transform(entry, host);
     if (!result) {
       return next();
     }
@@ -398,16 +408,18 @@ export function vsDevServerPlugin({
 
     configureServer(viteServer) {
       server = viteServer;
-
-      const handleUpdate = async (pathname: string) => {
-        if (!matchProjectDep?.(pathname)) {
-          return;
-        }
+      const requestReload = debounce(async () => {
         await reload();
         viteServer.ws.send({
           type: 'full-reload',
           path: '*',
         });
+      }, 200);
+      const handleUpdate = (pathname: string) => {
+        if (!matchProjectDep?.(pathname)) {
+          return;
+        }
+        requestReload();
       };
       viteServer.watcher.on('add', handleUpdate);
       viteServer.watcher.on('change', handleUpdate);
@@ -428,6 +440,7 @@ export function vsDevServerPlugin({
     },
     async buildStart() {
       await reload(true);
+      await transformAll(undefined);
     },
     async handleHotUpdate(ctx) {
       const entry = config?.entries.find(
@@ -436,7 +449,7 @@ export function vsDevServerPlugin({
           (!e.source && e.target === ctx.file),
       );
       if (config && entry) {
-        await invalidate(entry, config);
+        await invalidate(entry);
       }
     },
   };

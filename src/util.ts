@@ -349,3 +349,43 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
     fs.writeFileSync(filePath, content);
   }
 }
+
+export function debounce<T extends (...args: any[]) => unknown>(
+  func: T,
+  wait: number,
+  options: { leading?: boolean; trailing?: boolean } = {},
+): (...args: Parameters<T>) => void {
+  const leading = options.leading ?? false;
+  const trailing = options.trailing ?? !leading;
+  let timer: NodeJS.Timeout | null = null;
+  let pending = false;
+
+  const invoke = (...args: Parameters<T>) => {
+    pending = false;
+    func(...args);
+  };
+
+  return (...args: Parameters<T>) => {
+    pending = true;
+
+    if (timer) {
+      clearTimeout(timer);
+    }
+
+    const callNow = leading && !timer;
+
+    timer = setTimeout(() => {
+      const shouldCall = trailing && pending && !(leading && callNow);
+      timer = null;
+      if (shouldCall) {
+        invoke(...args);
+      } else {
+        pending = false;
+      }
+    }, wait);
+
+    if (callNow) {
+      invoke(...args);
+    }
+  };
+}
