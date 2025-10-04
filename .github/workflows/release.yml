@@ -1,0 +1,55 @@
+name: release
+
+on:
+  - workflow_dispatch
+
+permissions:
+  id-token: write # Required for OIDC
+  contents: write # For git operations
+
+jobs:
+  release-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm build
+      - name: Release dry run
+        run: npx release-it --ci -VV --dry-run
+      - uses: actions/upload-artifact@v4
+        with:
+          path: dist/**
+
+  release:
+    needs: release-dry-run
+    runs-on: ubuntu-latest
+    environment: Production deployment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Set GitHub Actions user
+        run: |
+          git config --global user.name vivliostyle
+          git config --global user.email mail@vivliostyle.org
+      - name: Release
+        run: npx release-it --ci -VV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
