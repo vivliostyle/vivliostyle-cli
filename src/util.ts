@@ -350,22 +350,22 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
   }
 }
 
-export function debounce(
-  func: () => void,
+export function debounce<T extends (...args: any[]) => unknown>(
+  func: T,
   wait: number,
   options: { leading?: boolean; trailing?: boolean } = {},
-) {
+): (...args: Parameters<T>) => void {
   const leading = options.leading ?? false;
   const trailing = options.trailing ?? !leading;
   let timer: NodeJS.Timeout | null = null;
   let pending = false;
 
-  const invoke = () => {
+  const invoke = (...args: Parameters<T>) => {
     pending = false;
-    func();
+    func(...args);
   };
 
-  return () => {
+  return (...args: Parameters<T>) => {
     pending = true;
 
     if (timer) {
@@ -378,14 +378,14 @@ export function debounce(
       const shouldCall = trailing && pending && !(leading && callNow);
       timer = null;
       if (shouldCall) {
-        invoke();
+        invoke(...args);
       } else {
         pending = false;
       }
     }, wait);
 
     if (callNow) {
-      invoke();
+      invoke(...args);
     }
   };
 }
