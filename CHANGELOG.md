@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.0.1 (2025-10-04)
+## [9.7.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.0...v9.7.1) (2025-10-04)
+
+### Bug Fixes
+
+- Throttle dev server reloading ([#642](https://github.com/vivliostyle/vivliostyle-cli/issues/626)) ([c9f9d3b](https://github.com/vivliostyle/vivliostyle-cli/commit/c9f9d3b540d60a7f4e69598e1b21657b34213d55))
 
 # [9.7.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.6.0...v9.7.0) (2025-09-18)
 
