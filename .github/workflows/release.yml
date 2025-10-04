@@ -54,6 +54,6 @@ jobs:
           git config --global user.name vivliostyle
           git config --global user.email mail@vivliostyle.org
       - name: Release
-        run: npx release-it --ci -VV
+        run: npx release-it --ci -VV --no-npm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
