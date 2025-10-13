@@ -268,7 +268,7 @@ Scaffold a new Vivliostyle project.
 
 ###### configData?
 
-`null` \| `object` & `object` \| `object` & `object`[] = `...`
+`object` & `object` \| `object` & `object`[] \| `null` = `...`
 
 ###### createConfigFileOnly?
 
@@ -877,7 +877,7 @@ Open a browser for previewing the publication.
 | <a id="browser"></a> `browser?` | `"chromium"` \| `"firefox"` \| `"webkit"` |
 | <a id="cliversion"></a> `cliVersion` | `string` |
 | <a id="config"></a> `config?` | `string` |
-| <a id="configdata"></a> `configData?` | `null` \| `object` & `object` \| `object` & `object`[] |
+| <a id="configdata"></a> `configData?` | `object` & `object` \| `object` & `object`[] \| `null` |
 | <a id="coreversion"></a> `coreVersion` | `string` |
 | <a id="createconfigfileonly"></a> `createConfigFileOnly?` | `boolean` |
 | <a id="cropmarks"></a> `cropMarks?` | `boolean` |
@@ -894,7 +894,7 @@ Open a browser for previewing the publication.
 | <a id="input"></a> `input?` | `object` |
 | `input.entry` | `string` |
 | `input.format` | `InputFormat` |
-| <a id="language"></a> `language?` | `string` |
+| <a id="language"></a> `language` | `string` |
 | <a id="logger"></a> `logger?` | `LoggerInterface` |
 | <a id="loglevel"></a> `logLevel?` | `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` |
 | <a id="openviewer"></a> `openViewer?` | `boolean` |
