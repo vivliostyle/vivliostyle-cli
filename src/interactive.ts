@@ -4,12 +4,15 @@ import {
   cancel,
   isCancel,
   multiselect,
+  outro,
   log as promptLog,
   spinner as promptSpinner,
   select,
   text,
 } from '@clack/prompts';
+import terminalLink from 'terminal-link';
 import * as v from 'valibot';
+import { cyan, gray, green, yellow } from 'yoctocolors';
 import {
   PromptOption,
   SelectPromptOption,
@@ -154,4 +157,31 @@ export async function askQuestion<
     }
     promptLog.warn(issues[0].message);
   }
+}
+
+export function caveat(
+  message: string,
+  { relativeOutput }: { relativeOutput: string },
+): void {
+  const steps = [];
+  if (relativeOutput !== '.') {
+    steps.push(`Navigate to ${green(relativeOutput)}`);
+  }
+  steps.push('Create and edit Markdown files');
+  steps.push(
+    `Modify the ${cyan('entry')} field in ${green('vivliostyle.config.js')}`,
+  );
+  steps.push(`${cyan('npm run preview')} to open a preview browser window`);
+  steps.push(`${cyan('npm run build')} to generate the output file`);
+
+  outro(
+    `${message}
+
+Next steps:
+${steps.map((s, i) => gray(`${i + 1}. `) + s).join('\n')}
+
+For more information, visit ${terminalLink(yellow('https://docs.vivliostyle.org'), 'https://docs.vivliostyle.org', { fallback: (text) => text })}.
+
+🖋 Happy writing!`,
+  );
 }

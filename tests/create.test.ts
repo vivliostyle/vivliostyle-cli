@@ -32,6 +32,7 @@ const mockedClackModule = vi.hoisted(() => {
     autocomplete: prompt,
     autocompleteMultiselect: prompt,
     isCancel: vi.fn().mockReturnValue(false),
+    outro: vi.fn(),
     log: {
       warn: vi.fn().mockImplementation((message: string) => {
         throw new Error(`Unexpected call to log.warn: ${message}`);
