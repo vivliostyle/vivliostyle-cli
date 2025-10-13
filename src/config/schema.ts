@@ -1317,45 +1317,73 @@ export const VivliostyleThemeMetadata = v.pipe(
   v.title('VivliostyleThemeMetadata'),
 );
 
-const BasePromptOption = v.object({
-  type: ValidString,
+const basePromptOptions = {
   name: ValidString,
+  required: v.optional(v.boolean()),
+};
+
+const TextPrompt = v.object({
+  ...basePromptOptions,
+  type: v.literal('text'),
   message: ValidString,
-  hint: v.optional(ValidString),
+  placeholder: v.optional(ValidString),
+  defaultValue: v.optional(ValidString),
+  initialValue: v.optional(ValidString),
 });
 
-const ArrayPromptOptions = v.intersect([
-  BasePromptOption,
+export const SelectPromptOption = v.union([
+  ValidString,
   v.object({
-    type: v.union([v.literal('autocomplete'), v.literal('select')]),
-    choices: v.array(
-      v.union([
-        ValidString,
-        v.object({
-          name: ValidString,
-          message: v.optional(ValidString),
-          value: v.optional(v.unknown()),
-          hint: v.optional(ValidString),
-          role: v.optional(ValidString),
-          enabled: v.optional(v.boolean()),
-          disabled: v.optional(v.union([v.boolean(), ValidString])),
-        }),
-      ]),
-    ),
-    limit: v.optional(v.number()),
+    value: v.string(), // Allow empty string
+    label: v.optional(ValidString),
+    hint: v.optional(ValidString),
   }),
 ]);
+export type SelectPromptOption = v.InferInput<typeof SelectPromptOption>;
 
-const StringPromptOption = v.intersect([
-  BasePromptOption,
-  v.object({
-    type: v.literal('input'),
-    name: ValidString,
-    initial: v.optional(ValidString),
-  }),
+const SelectPrompt = v.object({
+  ...basePromptOptions,
+  type: v.literal('select'),
+  message: ValidString,
+  options: v.array(SelectPromptOption),
+  initialValue: v.optional(v.string()),
+});
+
+const MultiSelectPrompt = v.object({
+  ...basePromptOptions,
+  type: v.literal('multiSelect'),
+  message: ValidString,
+  options: v.array(SelectPromptOption),
+  initialValues: v.optional(v.array(v.string())),
+  cursorAt: v.optional(v.string()),
+});
+
+const AutocompletePrompt = v.object({
+  ...basePromptOptions,
+  type: v.literal('autocomplete'),
+  message: ValidString,
+  options: v.array(SelectPromptOption),
+  placeholder: v.optional(ValidString),
+  initialValue: v.optional(v.string()),
+  initialUserInput: v.optional(ValidString),
+});
+
+const AutocompleteMultiSelectOptions = v.object({
+  ...basePromptOptions,
+  type: v.literal('autocompleteMultiSelect'),
+  message: ValidString,
+  options: v.array(SelectPromptOption),
+  placeholder: v.optional(ValidString),
+  initialValues: v.optional(v.array(v.string())),
+});
+
+export const PromptOption = v.variant('type', [
+  TextPrompt,
+  SelectPrompt,
+  MultiSelectPrompt,
+  AutocompletePrompt,
+  AutocompleteMultiSelectOptions,
 ]);
-
-export const PromptOption = v.union([ArrayPromptOptions, StringPromptOption]);
 export type PromptOption = v.InferInput<typeof PromptOption>;
 
 export const VivliostyleTemplateMetadata = v.pipe(
@@ -1386,7 +1414,9 @@ export const VivliostyleTemplateMetadata = v.pipe(
         v.description($`
           Extra prompt options for the template.
           This is used to prompt users for additional information when applying the template.
-          See the [enquirer](https://github.com/enquirer/enquirer) documentation for more details on the prompt options.
+          See the [@clack/prompts](https://github.com/bombshell-dev/clack) documentation for more details on the prompt options.
+
+          Available prompt types: \`text\`, \`select\`, \`multiSelect\`, \`autocomplete\`, \`autocompleteMultiSelect\`.
         `),
       ),
     }),

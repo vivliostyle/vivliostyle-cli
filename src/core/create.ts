@@ -9,7 +9,6 @@ import { cyan } from 'yoctocolors';
 import {
   ParsedVivliostyleInlineConfig,
   ThemeSpecifier,
-  ValidString,
   VivliostyleInlineConfigWithoutChecks,
   VivliostylePackageMetadata,
 } from '../config/schema.js';
@@ -23,7 +22,7 @@ import {
   languages,
 } from '../const.js';
 import { format, TemplateVariable } from '../create-template.js';
-import { askQuestion } from '../interactive.js';
+import { askQuestion, lazyPrompt } from '../interactive.js';
 import { Logger } from '../logger.js';
 import {
   createFetch,
@@ -31,7 +30,7 @@ import {
   listVivliostyleThemes,
   PackageJson,
 } from '../npm.js';
-import { cwd as defaultCwd, toTitleCase } from '../util.js';
+import { cwd as defaultCwd, getOsLocale, toTitleCase } from '../util.js';
 
 type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
   vivliostyle?: VivliostylePackageMetadata;
@@ -72,13 +71,19 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   }
 
   if (!title) {
-    ({ title } = await askTitle({ projectPath }));
+    ({ title } = createConfigFileOnly
+      ? { title: DEFAULT_PROJECT_TITLE }
+      : await askTitle({ projectPath }));
   }
   if (!author) {
-    ({ author } = await askAuthor());
+    ({ author } = createConfigFileOnly
+      ? { author: DEFAULT_PROJECT_AUTHOR }
+      : await askAuthor());
   }
   if (!language) {
-    ({ language } = await askLanguage());
+    ({ language } = createConfigFileOnly
+      ? { language: await getOsLocale() }
+      : await askLanguage());
   }
   if (!createConfigFileOnly && !theme) {
     ({ theme, themePackage } = await askTheme({ fetch }));
@@ -150,10 +155,12 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
 async function askProjectPath() {
   return await askQuestion({
     question: {
-      type: 'input',
-      name: 'projectPath',
-      message: 'Project directory name:',
-      hint: 'Specify "." to create files in the current directory.',
+      projectPath: {
+        type: 'text',
+        message: 'Project directory name:',
+        placeholder: 'Specify "." to create files in the current directory.',
+        required: true,
+      },
     },
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['projectPath']),
@@ -164,10 +171,12 @@ async function askProjectPath() {
 async function askTitle({ projectPath }: { projectPath: string }) {
   return await askQuestion({
     question: {
-      type: 'input',
-      name: 'title',
-      message: 'Title:',
-      initial: toTitleCase(projectPath) || DEFAULT_PROJECT_TITLE,
+      title: {
+        type: 'text',
+        message: 'Title:',
+        defaultValue: toTitleCase(projectPath) || DEFAULT_PROJECT_TITLE,
+        placeholder: toTitleCase(projectPath) || DEFAULT_PROJECT_TITLE,
+      },
     },
     schema: v.required(v.pick(VivliostyleInlineConfigWithoutChecks, ['title'])),
   });
@@ -176,10 +185,12 @@ async function askTitle({ projectPath }: { projectPath: string }) {
 async function askAuthor() {
   return await askQuestion({
     question: {
-      type: 'input',
-      name: 'author',
-      message: 'Author:',
-      initial: DEFAULT_PROJECT_AUTHOR,
+      author: {
+        type: 'text',
+        message: 'Author:',
+        defaultValue: DEFAULT_PROJECT_AUTHOR,
+        placeholder: DEFAULT_PROJECT_AUTHOR,
+      },
     },
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['author']),
@@ -188,18 +199,19 @@ async function askAuthor() {
 }
 
 async function askLanguage() {
+  const initialValue = await getOsLocale();
   return await askQuestion({
     question: {
-      type: 'autocomplete',
-      name: 'language',
-      message: 'Language:',
-      choices: Object.entries(languages).map(([value, displayName]) => ({
-        value,
-        name: displayName,
-        hint: value,
-      })),
-      limit: 10,
-      // initial: await getOsLocale(),
+      language: {
+        type: 'autocomplete',
+        message: 'Language:',
+        options: Object.entries(languages).map(([value, displayName]) => ({
+          value,
+          label: displayName,
+          hint: value,
+        })),
+        initialValue,
+      },
     },
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['language']),
@@ -219,7 +231,7 @@ async function askTheme({
     themePackage: VivliostylePackageJson | undefined;
   }
 > {
-  const themePackages = await (async () => {
+  const themePackages = await lazyPrompt(async () => {
     const themes = (await listVivliostyleThemes({ fetch })).objects;
     themes.sort((a, b) => {
       // Prioritize packages in the @vivliostyle namespace
@@ -230,7 +242,7 @@ async function askTheme({
         : b.downloads.monthly - a.downloads.monthly;
     });
     return themes.map((theme) => theme.package);
-  })();
+  }, 'Fetching a list of Vivliostyle themes');
 
   let themePackage: VivliostylePackageJson | undefined;
   const fetchedPackages: Record<string, PackageJson> = {};
@@ -263,23 +275,22 @@ async function askTheme({
 
   let { theme } = await askQuestion({
     question: {
-      type: 'autocomplete',
-      name: 'theme',
-      message: 'Select theme:',
-      choices: [
-        { name: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE },
-        { name: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
-        ...themePackages.map((pkg) => ({
-          name: pkg.name,
-          value: pkg.name,
-          hint: pkg.description?.replace(/\s+/g, ' ').slice(0, 20),
-        })),
-      ],
-      limit: 10,
+      theme: {
+        type: 'autocomplete',
+        message: 'Select theme:',
+        options: [
+          { label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE },
+          { label: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
+          ...themePackages.map((pkg) => ({
+            label: pkg.name,
+            value: pkg.name,
+            hint: pkg.description?.replace(/\s+/g, ' ').slice(0, 20),
+          })),
+        ],
+      },
     },
-    schema: v.objectAsync({
-      theme: v.pipeAsync(ValidString, validateThemeMetadataSchema),
-    }),
+    schema: v.objectAsync({ theme: validateThemeMetadataSchema }),
+    validateProgressMessage: 'Fetching package metadata...',
   });
 
   if (theme === THEME_ANSWER_NOT_USE) {
@@ -289,13 +300,15 @@ async function askTheme({
   if (theme === THEME_ANSWER_MANUAL) {
     theme = await askQuestion({
       question: {
-        type: 'input',
-        name: 'themeManualInput',
-        message: 'Input npm package name:',
+        themeManualInput: {
+          type: 'text',
+          message: 'Input npm package name:',
+          required: true,
+        },
       },
       schema: v.objectAsync({
         themeManualInput: v.pipeAsync(
-          ValidString,
+          v.string(),
           v.customAsync(async (packageName) => {
             if (typeof packageName !== 'string') {
               return false;
@@ -314,6 +327,7 @@ async function askTheme({
           validateThemeMetadataSchema,
         ),
       }),
+      validateProgressMessage: 'Fetching package metadata',
     }).then((ret) => ret.themeManualInput);
   }
 
@@ -336,20 +350,20 @@ async function askTemplateSetting({
 > {
   const { usingTemplate } = await askQuestion({
     question: {
-      type: 'autocomplete',
-      name: 'usingTemplate',
-      message: 'Select template:',
-      choices: [
-        { name: TEMPLATE_ANSWER_NOT_USE, value: TEMPLATE_ANSWER_NOT_USE },
-        ...Object.entries(template || {}).map(([value, tmpl]) => ({
-          name: tmpl.name || value,
-          value,
-          hint: tmpl.description?.replace(/\s+/g, ' ').slice(0, 20),
-        })),
-      ],
-      limit: 10,
+      usingTemplate: {
+        type: 'autocomplete',
+        message: 'Select template:',
+        options: [
+          { label: TEMPLATE_ANSWER_NOT_USE, value: TEMPLATE_ANSWER_NOT_USE },
+          ...Object.entries(template || {}).map(([value, tmpl]) => ({
+            label: tmpl.name || value,
+            value,
+            hint: tmpl.description?.replace(/\s+/g, ' ').slice(0, 20),
+          })),
+        ],
+      },
     },
-    schema: v.objectAsync({
+    schema: v.object({
       usingTemplate: v.pipe(
         v.string(),
         v.transform((input) => {
@@ -364,7 +378,9 @@ async function askTemplateSetting({
   let extraTemplateVariables: Record<string, unknown> = {};
   if (usingTemplate?.prompt?.length) {
     extraTemplateVariables = await askQuestion({
-      question: usingTemplate.prompt,
+      question: Object.fromEntries(
+        usingTemplate.prompt.map((q) => [q.name, q]),
+      ),
     });
   }
   return { template: usingTemplate?.source, extraTemplateVariables };

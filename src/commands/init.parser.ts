@@ -1,5 +1,4 @@
 import { Command, Option } from 'commander';
-import { DEFAULT_PROJECT_AUTHOR, DEFAULT_PROJECT_TITLE } from '../const.js';
 import { createParserProgram } from './cli-flags.js';
 
 function setupInitParserProgram(): Command {
@@ -29,8 +28,6 @@ export const parseInitCommand = createParserProgram({
   parseArgs: (options) => ({
     ...options,
     projectPath: '.',
-    title: options.title || DEFAULT_PROJECT_TITLE,
-    author: options.author || DEFAULT_PROJECT_AUTHOR,
     createConfigFileOnly: true,
     template: undefined,
   }),
