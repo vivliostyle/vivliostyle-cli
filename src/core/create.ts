@@ -22,7 +22,7 @@ import {
   languages,
 } from '../const.js';
 import { format, TemplateVariable } from '../create-template.js';
-import { askQuestion, lazyPrompt } from '../interactive.js';
+import { askQuestion, caveat, lazyPrompt } from '../interactive.js';
 import { Logger } from '../logger.js';
 import {
   createFetch,
@@ -54,6 +54,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   } = inlineConfig;
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
+
   if (!projectPath) {
     ({ projectPath } = await askProjectPath());
   }
@@ -140,16 +141,21 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   const output = createConfigFileOnly
     ? upath.join(dist, DEFAULT_CONFIG_FILENAME)
     : dist;
-  const formattedOutput = cyan(upath.relative(cwd, output) || '.');
-  Logger.logSuccess(
-    `Successfully created ${terminalLink(
-      formattedOutput,
-      pathToFileURL(output).href,
-      {
-        fallback: () => formattedOutput,
-      },
-    )}`,
+  const relativeOutput = upath.relative(cwd, output) || '.';
+  const formattedOutput = terminalLink(
+    cyan(relativeOutput),
+    pathToFileURL(output).href,
+    { fallback: (text) => text },
   );
+  if (createConfigFileOnly) {
+    Logger.logSuccess(
+      `Successfully created a config file at ${formattedOutput}`,
+    );
+  } else {
+    caveat(`Successfully created a project at ${formattedOutput}`, {
+      relativeOutput,
+    });
+  }
 }
 
 async function askProjectPath() {
