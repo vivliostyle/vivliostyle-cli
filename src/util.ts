@@ -20,6 +20,7 @@ import tmp from 'tmp';
 import upath from 'upath';
 import { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
+import { languages } from './const.js';
 import { Logger } from './logger.js';
 import {
   publicationSchema,
@@ -364,7 +365,7 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
 let cachedLocale: string | undefined;
 export async function getOsLocale(): Promise<string> {
   if (import.meta.env?.VITEST) {
-    return 'en-US';
+    return 'en';
   }
   // It uses the same implementation as os-locale, but prioritizes the OS language settings on Windows and macOS.
   if (cachedLocale) {
@@ -388,10 +389,18 @@ export async function getOsLocale(): Promise<string> {
     }
   }
   if (locale) {
-    cachedLocale = locale.replace(/_/, '-');
-    return cachedLocale;
+    locale = locale.replace(/_/, '-');
+  } else {
+    locale = await osLocale();
   }
-  return await osLocale();
+
+  const langs = Object.keys(languages);
+  locale = langs.includes(locale)
+    ? locale
+    : langs.includes(locale.split('-')[0])
+      ? locale.split('-')[0]
+      : 'en';
+  return (cachedLocale = locale.replace(/_/, '-'));
 }
 
 export function toTitleCase<T = unknown>(input: T): T {

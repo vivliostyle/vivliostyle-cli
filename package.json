@@ -24,6 +24,7 @@
   "dependencies": {
     "@babel/code-frame": "7.26.2",
     "@bluwy/giget-core": "0.1.3",
+    "@clack/prompts": "1.0.0-alpha.6",
     "@humanwhocodes/momoa": "3.3.8",
     "@napi-rs/canvas": "0.1.69",
     "@npmcli/arborist": "8.0.0",
@@ -40,7 +41,6 @@
     "debug": "4.4.0",
     "decamelize": "6.0.0",
     "dompurify": "3.2.5",
-    "enquirer": "2.4.1",
     "escape-string-regexp": "5.0.0",
     "execa": "9.5.2",
     "fast-xml-parser": "5.2.1",

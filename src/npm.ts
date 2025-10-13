@@ -68,7 +68,14 @@ export function createFetch(options: {
     }
   }
   return (url, fetchOptions) =>
-    _fetch(url, { ...(proxy ?? {}), ...fetchOptions });
+    _fetch(url, { ...(proxy ?? {}), ...fetchOptions }).then((response) => {
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
+        );
+      }
+      return response;
+    });
 }
 
 export async function listVivliostyleThemes({

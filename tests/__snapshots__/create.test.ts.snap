@@ -36,6 +36,7 @@ Object {
 module.exports = {
   title: \\"Booook Titleeee\\",
   author: \\"Authoooor\\",
+  language: \\"en\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
 };
@@ -91,6 +92,7 @@ exports[`init command > test the init command 1`] = `
 module.exports = {
   title: \\"My Book Title\\",
   author: \\"John Doe\\",
+  language: \\"en\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
 };
@@ -102,7 +104,7 @@ exports[`init command > test the init command with long options 1`] = `
 module.exports = {
   title: \\"Sample Document\\",
   author: \\"Author Name <author@example.com>\\",
-  language: \\"en\\",
+  language: \\"ja\\",
   size: \\"A5\\",
   theme: \\"style.css\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
@@ -116,7 +118,7 @@ exports[`init command > test the init command with short options 1`] = `
 module.exports = {
   title: \\"Sample Document2\\",
   author: \\"Author Name2 <author@example.com>\\",
-  language: \\"jp\\",
+  language: \\"pt-BR\\",
   size: \\"A3\\",
   theme: \\"theme.css\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",

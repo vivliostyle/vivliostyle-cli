@@ -10,6 +10,12 @@ export const randomBookSymbol = ['📕', '📗', '📘', '📙'][
   Math.floor(Math.random() * 4)
 ];
 
+export const spinnerFrames = isUnicodeSupported
+  ? ['▁▁╱ ', '▁║▁ ', '╲▁▁ ', '▁▁▁ ', '▁▁▁ ', '▁▁▁ ']
+  : ['-   ', '\\   ', '|   ', '/   '];
+
+export const spinnerInterval = 80;
+
 const infoSymbol = blueBright('INFO');
 const successSymbol = greenBright('SUCCESS');
 const warnSymbol = yellowBright('WARN');
@@ -211,10 +217,8 @@ export class Logger {
   constructor() {
     this.#_spinner = yoctoSpinner({
       spinner: {
-        frames: isUnicodeSupported
-          ? ['▁▁╱ ', '▁║▁ ', '╲▁▁ ', '▁▁▁ ', '▁▁▁ ', '▁▁▁ ']
-          : ['-   ', '\\   ', '|   ', '/   '],
-        interval: 80,
+        frames: spinnerFrames,
+        interval: spinnerInterval,
       },
       color: 'gray',
     });

@@ -17,15 +17,16 @@
         "source": "theme-with-template/template/custom-prompt",
         "prompt": [
           {
-            "type": "input",
+            "type": "text",
             "name": "stringPromptA",
-            "message": "Enter stringPromptA:"
+            "message": "Enter stringPromptA:",
+            "required": true
           },
           {
             "type": "select",
             "name": "selectPromptA",
             "message": "Enter selectPromptA:",
-            "choices": [
+            "options": [
               "option1",
               "option2",
               "option3"
