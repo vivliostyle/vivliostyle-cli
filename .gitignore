@@ -1,5 +1,5 @@
-/dist
-/tmp
+dist/
+tmp/
 *.pdf
 .vscode
 .vs-*

@@ -1,0 +1,33 @@
+{
+  "name": "create-book",
+  "description": "The fastest way to start writing book with Vivliostyle ecosystem.",
+  "version": "9.7.0",
+  "author": "Vivliostyle Foundation",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": "lib/cli.js",
+  "keywords": [
+    "book",
+    "vivliostyle"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vivliostyle/vivliostyle-cli.git"
+  },
+  "homepage": "https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/packages/create-book",
+  "bugs": {
+    "url": "https://github.com/vivliostyle/vivliostyle-cli/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@vivliostyle/cli": "workspace:*"
+  }
+}

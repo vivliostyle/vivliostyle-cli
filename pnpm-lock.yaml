@@ -450,6 +450,12 @@ importers:
         specifier: file:../../
         version: file:(typescript@5.8.3)(vite@6.4.1(@types/node@24.7.1)(tsx@4.19.3)(yaml@2.8.1))
 
+  packages/create-book:
+    dependencies:
+      '@vivliostyle/cli':
+        specifier: workspace:*
+        version: link:../..
+
 packages:
 
   '@11ty/dependency-tree-esm@2.0.0':
