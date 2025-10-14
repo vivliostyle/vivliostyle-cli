@@ -5,7 +5,7 @@ import './mocks/tmp.js';
 import { vol } from 'memfs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  TEMPLATE_ANSWER_NOT_USE,
+  PRESET_TEMPLATE_NOT_USE,
   THEME_ANSWER_MANUAL,
   THEME_ANSWER_NOT_USE,
 } from '../src/core/create.js';
@@ -99,6 +99,7 @@ describe('create command', () => {
       title: 'Booook titleeee',
       author: 'Authoooor',
       language: 'en',
+      presetTemplate: 'minimal',
       theme: THEME_ANSWER_NOT_USE,
     });
 
@@ -114,6 +115,7 @@ describe('create command', () => {
       title: 'Booook of the titleeee',
       author: 'Authoooor',
       language: 'en',
+      presetTemplate: PRESET_TEMPLATE_NOT_USE,
       theme: 'theme-with-template',
       usingTemplate: 'default',
     });
@@ -129,6 +131,7 @@ describe('create command', () => {
       title: 'Booook titleeee',
       author: 'Authoooor',
       language: 'en',
+      presetTemplate: PRESET_TEMPLATE_NOT_USE,
       theme: 'theme-with-template',
       usingTemplate: 'custom-prompt',
       stringPromptA: 'custom string',
@@ -146,9 +149,9 @@ describe('create command', () => {
       title: 'Booook titleeee',
       author: 'Authoooor',
       language: 'en',
+      presetTemplate: 'minimal',
       theme: THEME_ANSWER_MANUAL,
       themeManualInput: '@vivliostyle/custom-theme',
-      usingTemplate: TEMPLATE_ANSWER_NOT_USE,
     });
 
     await runCommand(['create'], { cwd: '/work' });
