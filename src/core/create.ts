@@ -1,4 +1,6 @@
 import { downloadTemplate } from '@bluwy/giget-core';
+import { log as promptLog } from '@clack/prompts';
+import assert from 'node:assert';
 import { isUtf8 } from 'node:buffer';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -18,8 +20,10 @@ import {
   DEFAULT_CONFIG_FILENAME,
   DEFAULT_PROJECT_AUTHOR,
   DEFAULT_PROJECT_TITLE,
-  defaultProjectFiles,
   languages,
+  TEMPLATE_DEFAULT_FILES,
+  TEMPLATE_SETTINGS,
+  VIVLIOSTYLE_THEME_CATEGORY_RECORD,
 } from '../const.js';
 import { format, TemplateVariable } from '../create-template.js';
 import { askQuestion, caveat, lazyPrompt } from '../interactive.js';
@@ -86,17 +90,24 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       ? { language: await getOsLocale() }
       : await askLanguage());
   }
-  if (!createConfigFileOnly && !theme) {
-    ({ theme, themePackage } = await askTheme({ fetch }));
-  }
-  if (
-    !createConfigFileOnly &&
-    themePackage?.vivliostyle?.template &&
-    !template
-  ) {
-    ({ template, extraTemplateVariables } = await askTemplateSetting(
-      themePackage.vivliostyle,
-    ));
+
+  if (!createConfigFileOnly) {
+    let presetTemplate: (typeof TEMPLATE_SETTINGS)[number] | undefined;
+    if (!template) {
+      ({ presetTemplate } = await askPresetTemplate());
+      if (presetTemplate) {
+        template = presetTemplate.template;
+      }
+    }
+    if (!theme) {
+      ({ theme, themePackage } = await askTheme({ presetTemplate, fetch }));
+    }
+    if (!template) {
+      ({ template, extraTemplateVariables } = await askThemeTemplate(
+        themePackage?.vivliostyle,
+      ));
+    }
+    assert(template);
   }
 
   const explicitTemplateVariables = {
@@ -115,27 +126,29 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     'create > explicitTemplateVariables %O',
     explicitTemplateVariables,
   );
-  if (template) {
-    using _logger = Logger.startLogging('Downloading a template');
-    await setupTemplate({
+  if (createConfigFileOnly) {
+    setupConfigFile({
       projectPath,
       cwd,
-      template,
       templateVariables: {
         ...inlineConfig,
         ...explicitTemplateVariables,
       },
     });
   } else {
-    setupEmptyProject({
-      projectPath,
-      cwd,
-      createConfigFileOnly,
-      templateVariables: {
-        ...inlineConfig,
-        ...explicitTemplateVariables,
-      },
-    });
+    await lazyPrompt(
+      () =>
+        setupTemplate({
+          projectPath,
+          cwd,
+          template: template!,
+          templateVariables: {
+            ...inlineConfig,
+            ...explicitTemplateVariables,
+          },
+        }),
+      'Downloading a template',
+    );
   }
 
   const output = createConfigFileOnly
@@ -225,21 +238,81 @@ async function askLanguage() {
   });
 }
 
+export const PRESET_TEMPLATE_NOT_USE = 'Use templates from the community theme';
+
+async function askPresetTemplate(): Promise<{
+  presetTemplate: (typeof TEMPLATE_SETTINGS)[number] | undefined;
+}> {
+  const { presetTemplate } = await askQuestion({
+    question: {
+      presetTemplate: {
+        type: 'select',
+        message: 'Select template:',
+        options: [
+          ...TEMPLATE_SETTINGS,
+          {
+            value: PRESET_TEMPLATE_NOT_USE,
+            label: PRESET_TEMPLATE_NOT_USE,
+            hint: 'If a theme includes a template, you can choose it in the next step.',
+          },
+        ],
+      },
+    },
+    schema: v.object({
+      presetTemplate: v.pipe(
+        v.string(),
+        v.transform((value) =>
+          value === PRESET_TEMPLATE_NOT_USE
+            ? undefined
+            : TEMPLATE_SETTINGS.find((t) => t.value === value),
+        ),
+      ),
+    }),
+  });
+  return { presetTemplate };
+}
+
+const truncateString = (str: string) => {
+  const trimmed = str.replace(/\s+/g, ' ');
+  return trimmed.length > 60 ? trimmed.slice(0, 60) + '…' : trimmed;
+};
+
 export const THEME_ANSWER_NOT_USE = 'Not use Vivliostyle theme';
 export const THEME_ANSWER_MANUAL = 'Install other themes from npm';
 
 async function askTheme({
+  template,
+  presetTemplate,
   fetch,
-}: {
+}: Pick<ParsedVivliostyleInlineConfig, 'template'> & {
+  presetTemplate: (typeof TEMPLATE_SETTINGS)[number] | undefined;
   fetch: ReturnType<typeof createFetch>;
 }): Promise<
   Pick<ParsedVivliostyleInlineConfig, 'theme'> & {
     themePackage: VivliostylePackageJson | undefined;
   }
 > {
+  const recommendedThemes = (
+    presetTemplate?.category
+      ? VIVLIOSTYLE_THEME_CATEGORY_RECORD[presetTemplate.category]
+      : []
+  ) as string[];
+  const useCommunityThemes = !presetTemplate && !template;
   const themePackages = await lazyPrompt(async () => {
-    const themes = (await listVivliostyleThemes({ fetch })).objects;
+    let themes = (await listVivliostyleThemes({ fetch })).objects;
+    if (useCommunityThemes) {
+      // Show only community themes
+      themes = themes.filter(
+        (theme) => !theme.package.name.startsWith('@vivliostyle/'),
+      );
+    }
     themes.sort((a, b) => {
+      // Prioritize recommended themes for the selected template
+      const aIsRecommended = recommendedThemes.includes(a.package.name) ? 1 : 0;
+      const bIsRecommended = recommendedThemes.includes(b.package.name) ? 1 : 0;
+      if (aIsRecommended ^ bIsRecommended) {
+        return bIsRecommended - aIsRecommended;
+      }
       // Prioritize packages in the @vivliostyle namespace
       const aIsOfficial = a.package.name.startsWith('@vivliostyle/') ? 1 : 0;
       const bIsOfficial = b.package.name.startsWith('@vivliostyle/') ? 1 : 0;
@@ -285,14 +358,17 @@ async function askTheme({
         type: 'autocomplete',
         message: 'Select theme:',
         options: [
-          { label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE },
+          ...(!useCommunityThemes
+            ? [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]
+            : []),
           { label: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
           ...themePackages.map((pkg) => ({
-            label: pkg.name,
+            label: `${pkg.name}${recommendedThemes.includes(pkg.name) ? ' (Recommended)' : ''}`,
             value: pkg.name,
-            hint: pkg.description?.replace(/\s+/g, ' ').slice(0, 20),
+            hint: truncateString(pkg.description || ''),
           })),
         ],
+        initialValue: themePackages[0].name,
       },
     },
     schema: v.objectAsync({ theme: validateThemeMetadataSchema }),
@@ -345,51 +421,54 @@ async function askTheme({
   };
 }
 
-export const TEMPLATE_ANSWER_NOT_USE = 'Not use a template';
-
-async function askTemplateSetting({
-  template,
-}: Pick<VivliostylePackageMetadata, 'template'>): Promise<
-  Pick<ParsedVivliostyleInlineConfig, 'template'> & {
+async function askThemeTemplate(
+  themeMetadata?: VivliostylePackageMetadata,
+): Promise<
+  Required<Pick<ParsedVivliostyleInlineConfig, 'template'>> & {
     extraTemplateVariables: Record<string, unknown>;
   }
 > {
+  const themeTemplate = themeMetadata?.template;
+  const options = Object.entries(themeTemplate || {}).map(([value, tmpl]) => ({
+    label: tmpl.name || value,
+    value,
+    hint: truncateString(tmpl.description || ''),
+  }));
+  if (!themeTemplate || options.length === 0) {
+    promptLog.info(
+      'The chosen theme does not set template settings. Applying the minimal template.',
+    );
+    return {
+      template: TEMPLATE_SETTINGS.find((t) => t.value === 'minimal')!.template,
+      extraTemplateVariables: {},
+    };
+  }
+
   const { usingTemplate } = await askQuestion({
     question: {
       usingTemplate: {
         type: 'autocomplete',
         message: 'Select template:',
-        options: [
-          { label: TEMPLATE_ANSWER_NOT_USE, value: TEMPLATE_ANSWER_NOT_USE },
-          ...Object.entries(template || {}).map(([value, tmpl]) => ({
-            label: tmpl.name || value,
-            value,
-            hint: tmpl.description?.replace(/\s+/g, ' ').slice(0, 20),
-          })),
-        ],
+        options,
       },
     },
     schema: v.object({
       usingTemplate: v.pipe(
         v.string(),
-        v.transform((input) => {
-          return input === TEMPLATE_ANSWER_NOT_USE
-            ? undefined
-            : template?.[input];
-        }),
+        v.transform((input) => themeTemplate[input]),
       ),
     }),
   });
 
   let extraTemplateVariables: Record<string, unknown> = {};
-  if (usingTemplate?.prompt?.length) {
+  if (usingTemplate.prompt?.length) {
     extraTemplateVariables = await askQuestion({
       question: Object.fromEntries(
         usingTemplate.prompt.map((q) => [q.name, q]),
       ),
     });
   }
-  return { template: usingTemplate?.source, extraTemplateVariables };
+  return { template: usingTemplate.source, extraTemplateVariables };
 }
 
 async function setupTemplate({
@@ -403,32 +482,28 @@ async function setupTemplate({
   templateVariables: Record<string, unknown>;
 }) {
   await downloadTemplate(template, { dir: projectPath, cwd });
-  replaceTemplateVariable(upath.join(cwd, projectPath), templateVariables);
-}
-
-function setupEmptyProject({
-  cwd,
-  projectPath,
-  createConfigFileOnly,
-  templateVariables,
-}: Required<
-  Pick<
-    ParsedVivliostyleInlineConfig,
-    'cwd' | 'projectPath' | 'createConfigFileOnly'
-  >
-> & {
-  templateVariables: Record<string, unknown>;
-}) {
-  const dist = upath.join(cwd, projectPath);
-  for (const [file, content] of Object.entries(defaultProjectFiles)) {
-    if (createConfigFileOnly && file !== DEFAULT_CONFIG_FILENAME) {
+  for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
+    const targetPath = upath.join(cwd, projectPath, file);
+    if (fs.existsSync(targetPath)) {
       continue;
     }
-    const targetPath = upath.join(dist, file);
     fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
     fs.writeFileSync(targetPath, content, 'utf8');
   }
-  replaceTemplateVariable(dist, templateVariables);
+  replaceTemplateVariable(upath.join(cwd, projectPath), templateVariables);
+}
+
+function setupConfigFile({
+  cwd,
+  projectPath,
+  templateVariables,
+}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>> & {
+  templateVariables: Record<string, unknown>;
+}) {
+  const targetPath = upath.join(cwd, projectPath, DEFAULT_CONFIG_FILENAME);
+  const content = TEMPLATE_DEFAULT_FILES[DEFAULT_CONFIG_FILENAME];
+  fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
+  fs.writeFileSync(targetPath, format(content, templateVariables), 'utf8');
 }
 
 function replaceTemplateVariable(

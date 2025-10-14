@@ -14,15 +14,18 @@ const mocked = await vi.hoisted(async () => {
       input: string,
       { dir, cwd }: { dir?: string; cwd?: string } = {},
     ) {
+      const repo = 'vivliostyle/vivliostyle-cli/';
+      const loc = input
+        .replace(/^.+:/, '')
+        .replace(/#.+$/, '')
+        .split('/')
+        .filter(Boolean)
+        .join('/');
       const source = path.resolve(
         fileURLToPath(import.meta.url),
-        '../../fixtures/themes',
-        input
-          .replace(/^.+:/, '')
-          .replace(/#.+$/, '')
-          .split('/')
-          .filter(Boolean)
-          .join('/'),
+        ...(loc.startsWith(repo)
+          ? ['../../..', loc.slice(repo.length)]
+          : ['../../fixtures/themes', loc]),
       );
       const dest = path.join(cwd || '', dir || '');
       const walk = (dir: string) => {
