@@ -25,23 +25,39 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
   : never;
 
 export async function lazyPrompt<T>(
-  fn: () => Promise<T>,
+  fn: (spinner: Promise<ReturnType<typeof promptSpinner>>) => Promise<T>,
   message?: string,
+  deferredTimeMs = 300,
 ): Promise<T> {
-  const deferredTimeMs = 300;
   let spinner: ReturnType<typeof promptSpinner> | undefined;
-  const timer = setTimeout(() => {
-    spinner = promptSpinner({ frames: spinnerFrames, delay: spinnerInterval });
-    spinner.start(message);
-  }, deferredTimeMs);
-  const result = await fn().then((r) => {
-    if (!spinner) {
-      return r;
-    }
-    return new Promise<T>((resolve) =>
-      setTimeout(() => resolve(r), deferredTimeMs),
-    );
-  });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const spinnerPromise = new Promise<ReturnType<typeof promptSpinner>>(
+    (resolve) => {
+      timer = setTimeout(() => {
+        spinner = promptSpinner({
+          frames: spinnerFrames,
+          delay: spinnerInterval,
+        });
+        spinner.start(message);
+        resolve(spinner);
+      }, deferredTimeMs);
+    },
+  );
+  const result = await fn(spinnerPromise)
+    .then((r) => {
+      if (!spinner) {
+        return r;
+      }
+      return new Promise<T>((resolve) =>
+        setTimeout(() => resolve(r), deferredTimeMs),
+      );
+    })
+    .catch(async (e) => {
+      await spinnerPromise;
+      spinner?.stop(message);
+      outro(gray(String(e)));
+      throw e;
+    });
   clearTimeout(timer);
   spinner?.stop(message);
   return result;
@@ -84,7 +100,7 @@ export async function askQuestion<
   // Repeat until the input passes the validation
   while (true) {
     for (const [name, question] of Object.entries(questions)) {
-      let result: string | string[] | symbol;
+      let result: unknown;
 
       // Maximum number of items to display at once.
       const maxItems = 10;
@@ -105,13 +121,13 @@ export async function askQuestion<
       if (question.type === 'text') {
         result = await text({ ...question, validate });
       } else if (question.type === 'select') {
-        result = await select<string>({
+        result = await select({
           ...question,
           options: normalizeOptions(question.options),
           maxItems,
         });
       } else if (question.type === 'multiSelect') {
-        result = await multiselect<string>({
+        result = await multiselect({
           ...question,
           options: normalizeOptions(question.options),
           maxItems,
@@ -161,11 +177,17 @@ export async function askQuestion<
 
 export function caveat(
   message: string,
-  { relativeOutput }: { relativeOutput: string },
+  {
+    relativeOutput,
+    installDependencies,
+  }: { relativeOutput: string; installDependencies: boolean },
 ): void {
   const steps = [];
   if (relativeOutput !== '.') {
     steps.push(`Navigate to ${green(relativeOutput)}`);
+  }
+  if (!installDependencies) {
+    steps.push(`${cyan('npm install')} to install dependencies`);
   }
   steps.push('Create and edit Markdown files');
   steps.push(
