@@ -1,9 +1,9 @@
 import { create } from '../core/create.js';
 import { gracefulError } from '../util.js';
-import { parseInitCommand } from './init.parser.js';
+import { parseCreateCommand } from './create.parser.js';
 
 try {
-  const inlineConfig = parseInitCommand(process.argv);
+  const inlineConfig = parseCreateCommand(process.argv);
   await create(inlineConfig);
 } catch (err) {
   if (err instanceof Error) {
