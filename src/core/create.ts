@@ -10,7 +10,6 @@ import * as v from 'valibot';
 import { cyan } from 'yoctocolors';
 import {
   ParsedVivliostyleInlineConfig,
-  ThemeSpecifier,
   VivliostyleInlineConfigWithoutChecks,
   VivliostylePackageMetadata,
 } from '../config/schema.js';
@@ -116,7 +115,13 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     title,
     author,
     language,
-    theme: theme && flattenThemeField({ theme }),
+    theme: (() => {
+      if (!theme) {
+        return;
+      }
+      const arr = theme.map((t) => (t.import ? t : t.specifier));
+      return arr.length === 1 ? arr[0] : arr;
+    })(),
     themePackage,
     template,
     cliVersion,
@@ -490,7 +495,26 @@ async function setupTemplate({
     fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
     fs.writeFileSync(targetPath, content, 'utf8');
   }
-  replaceTemplateVariable(upath.join(cwd, projectPath), templateVariables);
+
+  const replaceTemplateVariable = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entryPath = upath.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        replaceTemplateVariable(entryPath);
+      } else {
+        const buf = fs.readFileSync(entryPath);
+        if (!isUtf8(buf)) {
+          continue;
+        }
+        fs.writeFileSync(
+          entryPath,
+          format(buf.toString(), templateVariables),
+          'utf8',
+        );
+      }
+    }
+  };
+  replaceTemplateVariable(upath.join(cwd, projectPath));
 }
 
 function setupConfigFile({
@@ -504,35 +528,4 @@ function setupConfigFile({
   const content = TEMPLATE_DEFAULT_FILES[DEFAULT_CONFIG_FILENAME];
   fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
   fs.writeFileSync(targetPath, format(content, templateVariables), 'utf8');
-}
-
-function replaceTemplateVariable(
-  destDir: string,
-  templateVariables: Record<string, unknown>,
-) {
-  const replace = (file: string) => {
-    const buf = fs.readFileSync(file);
-    if (!isUtf8(buf)) {
-      return;
-    }
-    fs.writeFileSync(file, format(buf.toString(), templateVariables), 'utf8');
-  };
-  const walk = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const entryPath = upath.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(entryPath);
-      } else {
-        replace(entryPath);
-      }
-    }
-  };
-  walk(destDir);
-}
-
-function flattenThemeField({
-  theme,
-}: Required<Pick<ParsedVivliostyleInlineConfig, 'theme'>>): ThemeSpecifier {
-  const arr = theme.map((t) => (t.import ? t : t.specifier));
-  return arr.length === 1 ? arr[0] : arr;
 }
