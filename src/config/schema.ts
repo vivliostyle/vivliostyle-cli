@@ -1334,7 +1334,11 @@ const TextPrompt = v.object({
 export const SelectPromptOption = v.union([
   ValidString,
   v.object({
-    value: v.string(), // Allow empty string
+    value: v.union([
+      v.string(), // Allow empty string
+      v.number(),
+      v.boolean(),
+    ]),
     label: v.optional(ValidString),
     hint: v.optional(ValidString),
   }),

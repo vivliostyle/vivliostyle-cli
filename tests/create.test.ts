@@ -101,6 +101,8 @@ describe('create command', () => {
       language: 'en',
       presetTemplate: 'minimal',
       theme: THEME_ANSWER_NOT_USE,
+      installDependencies: false,
+      gitInit: false,
     });
 
     await runCommand(['create'], { cwd: '/work' });
@@ -118,6 +120,8 @@ describe('create command', () => {
       presetTemplate: PRESET_TEMPLATE_NOT_USE,
       theme: 'theme-with-template',
       usingTemplate: 'default',
+      installDependencies: false,
+      gitInit: false,
     });
 
     await runCommand(['create'], { cwd: '/work' });
@@ -136,6 +140,8 @@ describe('create command', () => {
       usingTemplate: 'custom-prompt',
       stringPromptA: 'custom string',
       selectPromptA: 'option1',
+      installDependencies: false,
+      gitInit: false,
     });
 
     await runCommand(['create'], { cwd: '/work' });
@@ -152,6 +158,8 @@ describe('create command', () => {
       presetTemplate: 'minimal',
       theme: THEME_ANSWER_MANUAL,
       themeManualInput: '@vivliostyle/custom-theme',
+      installDependencies: false,
+      gitInit: false,
     });
 
     await runCommand(['create'], { cwd: '/work' });

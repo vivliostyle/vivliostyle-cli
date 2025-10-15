@@ -10,7 +10,7 @@ import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
 import lcid from 'lcid';
 import StreamZip from 'node-stream-zip';
-import childProcess from 'node:child_process';
+import childProcess, { ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import readline from 'node:readline';
 import util from 'node:util';
@@ -31,8 +31,15 @@ import type { PublicationManifest } from './schema/publication.schema.js';
 export const cwd = upath.normalize(process.cwd());
 
 const execFile = util.promisify(childProcess.execFile);
-export async function exec(command: string, args: string[] = []) {
-  const subprocess = await execFile(command, args);
+export async function exec(
+  command: string,
+  args: string[] = [],
+  options: ExecFileOptions = {},
+) {
+  const subprocess = await execFile(command, args, {
+    ...options,
+    encoding: 'utf8',
+  });
   subprocess.stdout = subprocess.stdout.trim();
   return subprocess;
 }
@@ -450,4 +457,22 @@ export function debounce<T extends (...args: any[]) => unknown>(
       invoke(...args);
     }
   };
+}
+
+export type PackageManager = 'npm' | 'yarn' | 'pnpm';
+
+// License for `whichPm`
+// The MIT License (MIT)
+// Copyright (c) 2017-2022 Zoltan Kochan <z@kochan.io>
+// https://github.com/zkochan/packages/tree/main/which-pm-runs
+export function whichPm(): PackageManager {
+  if (!process.env.npm_config_user_agent) {
+    return 'npm';
+  }
+
+  const pmSpec = process.env.npm_config_user_agent.split(' ')[0];
+  const separatorPos = pmSpec.lastIndexOf('/');
+  const name = pmSpec.substring(0, separatorPos);
+
+  return name as PackageManager;
 }

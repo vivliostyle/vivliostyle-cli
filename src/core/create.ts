@@ -1,6 +1,5 @@
 import { downloadTemplate } from '@bluwy/giget-core';
 import { log as promptLog } from '@clack/prompts';
-import assert from 'node:assert';
 import { isUtf8 } from 'node:buffer';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -33,7 +32,13 @@ import {
   listVivliostyleThemes,
   PackageJson,
 } from '../npm.js';
-import { cwd as defaultCwd, getOsLocale, toTitleCase } from '../util.js';
+import {
+  cwd as defaultCwd,
+  exec,
+  getOsLocale,
+  toTitleCase,
+  whichPm,
+} from '../util.js';
 
 type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
   vivliostyle?: VivliostylePackageMetadata;
@@ -57,6 +62,8 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   } = inlineConfig;
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
+  let installDependencies: boolean | undefined;
+  let gitInit: boolean | undefined;
 
   if (!projectPath) {
     ({ projectPath } = await askProjectPath());
@@ -106,7 +113,8 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
         themePackage?.vivliostyle,
       ));
     }
-    assert(template);
+    ({ installDependencies } = await askInstallDependencies());
+    ({ gitInit } = await askGitInit());
   }
 
   const explicitTemplateVariables = {
@@ -141,19 +149,21 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       },
     });
   } else {
-    await lazyPrompt(
-      () =>
-        setupTemplate({
-          projectPath,
-          cwd,
-          template: template!,
-          templateVariables: {
-            ...inlineConfig,
-            ...explicitTemplateVariables,
-          },
-        }),
-      'Downloading a template',
-    );
+    await setupTemplate({
+      projectPath,
+      cwd,
+      template: template!,
+      templateVariables: {
+        ...inlineConfig,
+        ...explicitTemplateVariables,
+      },
+    });
+    if (installDependencies) {
+      await performInstallDependencies({ projectPath, cwd });
+    }
+    if (gitInit) {
+      await performGitInit({ projectPath, cwd });
+    }
   }
 
   const output = createConfigFileOnly
@@ -172,6 +182,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   } else {
     caveat(`Successfully created a project at ${formattedOutput}`, {
       relativeOutput,
+      installDependencies: Boolean(installDependencies),
     });
   }
 }
@@ -181,7 +192,7 @@ async function askProjectPath() {
     question: {
       projectPath: {
         type: 'text',
-        message: 'Project directory name:',
+        message: 'Where should we create your project?',
         placeholder: 'Specify "." to create files in the current directory.',
         required: true,
       },
@@ -197,7 +208,7 @@ async function askTitle({ projectPath }: { projectPath: string }) {
     question: {
       title: {
         type: 'text',
-        message: 'Title:',
+        message: "What's the title of your publication?",
         defaultValue: toTitleCase(projectPath) || DEFAULT_PROJECT_TITLE,
         placeholder: toTitleCase(projectPath) || DEFAULT_PROJECT_TITLE,
       },
@@ -211,7 +222,7 @@ async function askAuthor() {
     question: {
       author: {
         type: 'text',
-        message: 'Author:',
+        message: "What's the author name?",
         defaultValue: DEFAULT_PROJECT_AUTHOR,
         placeholder: DEFAULT_PROJECT_AUTHOR,
       },
@@ -228,7 +239,7 @@ async function askLanguage() {
     question: {
       language: {
         type: 'autocomplete',
-        message: 'Language:',
+        message: "What's the language?",
         options: Object.entries(languages).map(([value, displayName]) => ({
           value,
           label: displayName,
@@ -252,7 +263,7 @@ async function askPresetTemplate(): Promise<{
     question: {
       presetTemplate: {
         type: 'select',
-        message: 'Select template:',
+        message: "What's the project template?",
         options: [
           ...TEMPLATE_SETTINGS,
           {
@@ -361,7 +372,7 @@ async function askTheme({
     question: {
       theme: {
         type: 'autocomplete',
-        message: 'Select theme:',
+        message: "What's the project theme?",
         options: [
           ...(!useCommunityThemes
             ? [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]
@@ -453,7 +464,7 @@ async function askThemeTemplate(
     question: {
       usingTemplate: {
         type: 'autocomplete',
-        message: 'Select template:',
+        message: 'Which template do you want to use?',
         options,
       },
     },
@@ -476,6 +487,44 @@ async function askThemeTemplate(
   return { template: usingTemplate.source, extraTemplateVariables };
 }
 
+async function askInstallDependencies() {
+  return await askQuestion({
+    question: {
+      installDependencies: {
+        type: 'select',
+        message:
+          'Should we install dependencies? (You can install them later.)',
+        options: [
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
+        ],
+      },
+    },
+    schema: v.object({
+      installDependencies: v.boolean(),
+    }),
+  });
+}
+
+async function askGitInit() {
+  return await askQuestion({
+    question: {
+      gitInit: {
+        type: 'select',
+        message:
+          'Should we initialize a git repository? (You can initialize it later.)',
+        options: [
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
+        ],
+      },
+    },
+    schema: v.object({
+      gitInit: v.boolean(),
+    }),
+  });
+}
+
 async function setupTemplate({
   cwd,
   projectPath,
@@ -486,35 +535,41 @@ async function setupTemplate({
 > & {
   templateVariables: Record<string, unknown>;
 }) {
-  await downloadTemplate(template, { dir: projectPath, cwd });
-  for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
-    const targetPath = upath.join(cwd, projectPath, file);
-    if (fs.existsSync(targetPath)) {
-      continue;
-    }
-    fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, content, 'utf8');
-  }
-
-  const replaceTemplateVariable = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const entryPath = upath.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        replaceTemplateVariable(entryPath);
-      } else {
-        const buf = fs.readFileSync(entryPath);
-        if (!isUtf8(buf)) {
+  await lazyPrompt(
+    async () => {
+      await downloadTemplate(template, { dir: projectPath, cwd });
+      for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
+        const targetPath = upath.join(cwd, projectPath, file);
+        if (fs.existsSync(targetPath)) {
           continue;
         }
-        fs.writeFileSync(
-          entryPath,
-          format(buf.toString(), templateVariables),
-          'utf8',
-        );
+        fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
+        fs.writeFileSync(targetPath, content, 'utf8');
       }
-    }
-  };
-  replaceTemplateVariable(upath.join(cwd, projectPath));
+
+      const replaceTemplateVariable = (dir: string) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          const entryPath = upath.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            replaceTemplateVariable(entryPath);
+          } else {
+            const buf = fs.readFileSync(entryPath);
+            if (!isUtf8(buf)) {
+              continue;
+            }
+            fs.writeFileSync(
+              entryPath,
+              format(buf.toString(), templateVariables),
+              'utf8',
+            );
+          }
+        }
+      };
+      replaceTemplateVariable(upath.join(cwd, projectPath));
+    },
+    'Downloading a template',
+    0,
+  );
 }
 
 function setupConfigFile({
@@ -528,4 +583,32 @@ function setupConfigFile({
   const content = TEMPLATE_DEFAULT_FILES[DEFAULT_CONFIG_FILENAME];
   fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
   fs.writeFileSync(targetPath, format(content, templateVariables), 'utf8');
+}
+
+async function performInstallDependencies({
+  cwd,
+  projectPath,
+}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>>) {
+  const pm = whichPm();
+  await lazyPrompt(
+    async () => {
+      await exec(pm, ['install'], { cwd: upath.join(cwd, projectPath) });
+    },
+    `Installing dependencies with ${pm}`,
+    0,
+  );
+}
+
+async function performGitInit({
+  cwd,
+  projectPath,
+}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>>) {
+  const targetPath = upath.join(cwd, projectPath);
+  await lazyPrompt(
+    async () => {
+      await exec('git', ['init'], { cwd: targetPath });
+    },
+    'Initializing a git repository',
+    0,
+  );
 }
