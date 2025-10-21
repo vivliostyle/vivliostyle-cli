@@ -12,7 +12,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN set -x \
   && apt-get update \
   && apt-get install -y curl wget \
-  && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
+  && curl -sL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get install -y nodejs \
   && apt-get install -y --no-install-recommends git openssh-client \
   && npm install -g pnpm \

@@ -1907,7 +1907,7 @@ packages:
 
   '@vivliostyle/cli@file:':
     resolution: {directory: '', type: directory}
-    engines: {node: '>=18'}
+    engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
       vite: '>=6'
