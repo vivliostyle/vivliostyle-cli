@@ -54,7 +54,7 @@ build({
 
 ###### configData?
 
-`null` \| `object` & `object` \| `object` & `object`[] = `...`
+`object` & `object` \| `object` & `object`[] \| `null` = `...`
 
 ###### cropMarks?
 
@@ -248,7 +248,7 @@ build({
 
 ###### configData?
 
-`null` \| `object` & `object` \| `object` & `object`[] = `...`
+`object` & `object` \| `object` & `object`[] \| `null` = `...`
 
 ###### cropMarks?
 
@@ -444,7 +444,7 @@ Initialize a new vivliostyle.config.js file.
 
 ###### configData?
 
-`null` \| `object` & `object` \| `object` & `object`[] = `...`
+`object` & `object` \| `object` & `object`[] \| `null` = `...`
 
 ###### cropMarks?
 
@@ -640,7 +640,7 @@ Open a browser for previewing the publication.
 
 ###### configData?
 
-`null` \| `object` & `object` \| `object` & `object`[] = `...`
+`object` & `object` \| `object` & `object`[] \| `null` = `...`
 
 ###### cropMarks?
 
