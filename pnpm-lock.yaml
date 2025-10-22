@@ -24,8 +24,8 @@ importers:
         specifier: 25.0.1-vivliostyle-cli.1
         version: 25.0.1-vivliostyle-cli.1(@napi-rs/canvas@0.1.69)
       '@vivliostyle/vfm':
-        specifier: 2.3.0
-        version: 2.3.0
+        specifier: 2.4.0
+        version: 2.4.0
       '@vivliostyle/viewer':
         specifier: 2.35.0
         version: 2.35.0
@@ -1925,9 +1925,9 @@ packages:
       '@napi-rs/canvas':
         optional: true
 
-  '@vivliostyle/vfm@2.3.0':
-    resolution: {integrity: sha512-RSyH3Hez7Oz5SNtl2aFBvse4Rf+hEIaZQfuDZ5FvnJu4+QrsuKcolcC59Ag7U71k4g9uxQOB8GJCShcboXOAcg==}
-    engines: {node: '>= 22'}
+  '@vivliostyle/vfm@2.4.0':
+    resolution: {integrity: sha512-tC1uxezW86d/EjCji1wZIxgKcHV1qUrmHR7632d+l1A3ci8u/n4gW/xEeUYVHBzinRyz4Lw4AdJcruaDv+Dj4A==}
+    engines: {node: '>= 20'}
     hasBin: true
 
   '@vivliostyle/viewer@2.35.0':
@@ -8139,7 +8139,7 @@ snapshots:
       '@napi-rs/canvas': 0.1.69
       '@npmcli/arborist': 8.0.0
       '@vivliostyle/jsdom': 25.0.1-vivliostyle-cli.1(@napi-rs/canvas@0.1.69)
-      '@vivliostyle/vfm': 2.3.0
+      '@vivliostyle/vfm': 2.4.0
       '@vivliostyle/viewer': 2.35.0
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
@@ -8219,7 +8219,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@vivliostyle/vfm@2.3.0':
+  '@vivliostyle/vfm@2.4.0':
     dependencies:
       debug: 4.4.3
       doctype: 3.0.1
@@ -10899,7 +10899,7 @@ snapshots:
 
   mdast-util-to-hast@10.2.0:
     dependencies:
-      '@types/mdast': 3.0.10
+      '@types/mdast': 3.0.15
       '@types/unist': 2.0.11
       mdast-util-definitions: 4.0.0
       mdurl: 1.0.1
