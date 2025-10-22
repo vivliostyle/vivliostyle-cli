@@ -1,5 +1,7 @@
 # Changelog
 
+## 9.7.2 (2025-10-22)
+
 ## [9.7.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.0...v9.7.1) (2025-10-04)
 
 ### Bug Fixes
