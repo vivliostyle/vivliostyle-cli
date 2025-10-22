@@ -1,6 +1,11 @@
 # Changelog
 
-## 9.7.2 (2025-10-22)
+## [9.7.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.1...v9.7.2) (2025-10-22)
+
+### Features
+
+- Update Playwright to 1.56.1 (Chromium 141.0.7390.37) ([cb0ef4e](https://github.com/vivliostyle/vivliostyle-cli/commit/cb0ef4e55d6362b83f5c68b21b576d20dcd58eb9)), closes [#646](https://github.com/vivliostyle/vivliostyle-cli/issues/646)
+- Update VFM to 2.4.0 ([#650](https://github.com/vivliostyle/vivliostyle-cli/issues/650)) ([2438e69](https://github.com/vivliostyle/vivliostyle-cli/commit/2438e69a719eba9877083baedeaac84987cb45eb))
 
 ## [9.7.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.0...v9.7.1) (2025-10-04)
 
