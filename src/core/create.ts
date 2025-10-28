@@ -63,7 +63,6 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
   let installDependencies: boolean | undefined;
-  let gitInit: boolean | undefined;
 
   if (!projectPath) {
     ({ projectPath } = await askProjectPath());
@@ -114,7 +113,6 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       ));
     }
     ({ installDependencies } = await askInstallDependencies());
-    ({ gitInit } = await askGitInit());
   }
 
   const explicitTemplateVariables = {
@@ -160,9 +158,6 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     });
     if (installDependencies) {
       await performInstallDependencies({ projectPath, cwd });
-    }
-    if (gitInit) {
-      await performGitInit({ projectPath, cwd });
     }
   }
 
@@ -506,25 +501,6 @@ async function askInstallDependencies() {
   });
 }
 
-async function askGitInit() {
-  return await askQuestion({
-    question: {
-      gitInit: {
-        type: 'select',
-        message:
-          'Should we initialize a git repository? (You can initialize it later.)',
-        options: [
-          { label: 'Yes', value: true },
-          { label: 'No', value: false },
-        ],
-      },
-    },
-    schema: v.object({
-      gitInit: v.boolean(),
-    }),
-  });
-}
-
 async function setupTemplate({
   cwd,
   projectPath,
@@ -595,20 +571,6 @@ async function performInstallDependencies({
       await exec(pm, ['install'], { cwd: upath.join(cwd, projectPath) });
     },
     `Installing dependencies with ${pm}`,
-    0,
-  );
-}
-
-async function performGitInit({
-  cwd,
-  projectPath,
-}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>>) {
-  const targetPath = upath.join(cwd, projectPath);
-  await lazyPrompt(
-    async () => {
-      await exec('git', ['init'], { cwd: targetPath });
-    },
-    'Initializing a git repository',
     0,
   );
 }
