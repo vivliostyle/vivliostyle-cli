@@ -1208,6 +1208,39 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         Create a Vivliostyle config file without generating project template files.
       `),
     ),
+    stdin: v.pipe(
+      v.custom<import('node:stream').Readable>(() => true),
+      v.metadata({
+        typeString: 'import("node:stream").Readable',
+      }),
+      v.description($`
+        Readable stream for stdin input.
+          `),
+    ),
+    stdout: v.pipe(
+      v.custom<import('node:stream').Writable>(() => true),
+      v.metadata({
+        typeString: 'import("node:stream").Writable',
+      }),
+      v.description($`
+        Writable stream for stdout output.
+      `),
+    ),
+    stderr: v.pipe(
+      v.custom<import('node:stream').Writable>(() => true),
+      v.metadata({
+        typeString: 'import("node:stream").Writable',
+      }),
+      v.description($`
+        Writable stream for stderr output.
+      `),
+    ),
+    signal: v.pipe(
+      v.custom<AbortSignal>(() => true),
+      v.description($`
+        AbortSignal to cancel the operation.
+      `),
+    ),
   }),
 );
 
@@ -1271,6 +1304,10 @@ export type InlineOptions = Pick<
   | 'projectPath'
   | 'template'
   | 'createConfigFileOnly'
+  | 'stdin'
+  | 'stdout'
+  | 'stderr'
+  | 'signal'
 >;
 
 export const VivliostyleThemeMetadata = v.pipe(

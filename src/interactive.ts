@@ -1,67 +1,45 @@
 import {
-  autocomplete,
-  autocompleteMultiselect,
-  cancel,
+  AutocompletePrompt,
+  getColumns,
   isCancel,
-  multiselect,
-  outro,
-  log as promptLog,
-  spinner as promptSpinner,
-  select,
-  text,
+  MultiSelectPrompt,
+  SelectPrompt,
+  State,
+  TextPrompt,
+} from '@clack/core';
+import type {
+  AutocompleteOptions,
+  MultiSelectOptions,
+  Option,
+  SelectOptions,
+  TextOptions,
 } from '@clack/prompts';
-import terminalLink from 'terminal-link';
+import { limitOptions } from '@clack/prompts';
+import { wrapAnsi } from 'fast-wrap-ansi';
+import { cursor, erase } from 'sisteransi';
 import * as v from 'valibot';
-import { cyan, gray, green, yellow } from 'yoctocolors';
+import {
+  blueBright,
+  dim,
+  gray,
+  green,
+  hidden,
+  inverse,
+  redBright,
+  strikethrough,
+  yellow,
+  yellowBright,
+} from 'yoctocolors';
 import {
   PromptOption,
   SelectPromptOption,
   ValidString,
 } from './config/schema.js';
-import { spinnerFrames, spinnerInterval } from './logger.js';
+import { isUnicodeSupported, Logger } from './logger.js';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
   : never;
-
-export async function lazyPrompt<T>(
-  fn: (spinner: Promise<ReturnType<typeof promptSpinner>>) => Promise<T>,
-  message?: string,
-  deferredTimeMs = 300,
-): Promise<T> {
-  let spinner: ReturnType<typeof promptSpinner> | undefined;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const spinnerPromise = new Promise<ReturnType<typeof promptSpinner>>(
-    (resolve) => {
-      timer = setTimeout(() => {
-        spinner = promptSpinner({
-          frames: spinnerFrames,
-          delay: spinnerInterval,
-        });
-        spinner.start(message);
-        resolve(spinner);
-      }, deferredTimeMs);
-    },
-  );
-  const result = await fn(spinnerPromise)
-    .then((r) => {
-      if (!spinner) {
-        return r;
-      }
-      return new Promise<T>((resolve) =>
-        setTimeout(() => resolve(r), deferredTimeMs),
-      );
-    })
-    .catch(async (e) => {
-      await spinnerPromise;
-      spinner?.stop(message);
-      outro(gray(String(e)));
-      throw e;
-    });
-  clearTimeout(timer);
-  spinner?.stop(message);
-  return result;
-}
 
 export async function askQuestion<
   T extends object,
@@ -119,28 +97,28 @@ export async function askQuestion<
         question.name = name;
       }
       if (question.type === 'text') {
-        result = await text({ ...question, validate });
+        result = await textPrompt({ ...question, validate });
       } else if (question.type === 'select') {
-        result = await select({
+        result = await selectPrompt({
           ...question,
           options: normalizeOptions(question.options),
           maxItems,
         });
       } else if (question.type === 'multiSelect') {
-        result = await multiselect({
+        result = await multiSelectPrompt({
           ...question,
           options: normalizeOptions(question.options),
           maxItems,
         });
       } else if (question.type === 'autocomplete') {
-        result = await autocomplete({
+        result = await autocompletePrompt({
           ...question,
           options: normalizeOptions(question.options),
           maxItems,
           validate,
         });
       } else if (question.type === 'autocompleteMultiSelect') {
-        result = await autocompleteMultiselect({
+        result = await autocompleteMultiSelectPrompt({
           ...question,
           options: normalizeOptions(question.options),
           maxItems,
@@ -149,7 +127,6 @@ export async function askQuestion<
         result = question satisfies never;
       }
       if (isCancel(result)) {
-        cancel('Operation cancelled.');
         process.exit(0);
       }
       response[name] = result;
@@ -157,9 +134,8 @@ export async function askQuestion<
 
     let result: v.SafeParseResult<any>;
     if (schema && schema.async) {
-      result = await lazyPrompt(
-        () => v.safeParseAsync(schema, response),
-        validateProgressMessage,
+      result = await interactiveLogLoading(validateProgressMessage ?? '', () =>
+        v.safeParseAsync(schema, response),
       );
     } else if (schema) {
       result = v.safeParse(schema, response);
@@ -171,39 +147,304 @@ export async function askQuestion<
     if (success) {
       return output;
     }
-    promptLog.warn(issues[0].message);
+    interactiveLogWarn(issues[0].message);
   }
 }
 
-export function caveat(
+const promptStateSymbol = {
+  initial: isUnicodeSupported ? '◆' : '*',
+  active: isUnicodeSupported ? '◆' : '*',
+  cancel: isUnicodeSupported ? '■' : 'x',
+  submit: isUnicodeSupported ? '◇' : 'o',
+  error: isUnicodeSupported ? '▲' : 'x',
+} as const satisfies { [key in State]: string };
+const radioActiveSymbol = isUnicodeSupported ? '◉' : '>';
+const radioInactiveSymbol = isUnicodeSupported ? '◯' : ' ';
+const checkboxActiveSymbol = isUnicodeSupported ? '◼' : '[+]';
+const checkboxInactiveSymbol = isUnicodeSupported ? '◻' : '[ ]';
+
+const labelToString = <Value>(option: Option<Value>) =>
+  option.label ?? String(option.value ?? '');
+const renderListOption =
+  <Value>(multiSelect: boolean, selectedValues?: Value[]) =>
+  (option: Option<Value>, active: boolean) => {
+    const Y = multiSelect ? checkboxActiveSymbol : radioActiveSymbol;
+    const N = multiSelect ? checkboxInactiveSymbol : radioInactiveSymbol;
+    if (option.disabled) {
+      return `${gray(N)} ${gray(labelToString(option))} ${gray('(disabled)')}`;
+    }
+    return `${
+      (multiSelect && selectedValues?.includes(option.value)) ||
+      (!multiSelect && active)
+        ? green(Y)
+        : dim(N)
+    } ${
+      active
+        ? `${labelToString(option)}${option.hint ? ` ${dim(`(${option.hint})`)}` : ''}`
+        : dim(labelToString(option))
+    }`;
+  };
+
+function textPrompt(opts: TextOptions) {
+  return new TextPrompt({
+    validate: opts.validate,
+    placeholder: opts.placeholder,
+    defaultValue: opts.defaultValue,
+    initialValue: opts.initialValue,
+    input: Logger.stdin,
+    output: Logger.stdout,
+    signal: Logger.signal,
+    render() {
+      const symbol = promptStateSymbol[this.state];
+      const placeholder = opts.placeholder
+        ? inverse(opts.placeholder[0]) + dim(opts.placeholder.slice(1))
+        : inverse(hidden('_'));
+      const userInput = !this.userInput
+        ? placeholder
+        : this.userInputWithCursor;
+      const value = this.value ?? '';
+
+      switch (this.state) {
+        case 'error': {
+          const errorText = this.error ? `   ${yellow(this.error)}` : '';
+          return `${yellow('║')}\n${yellow(`${symbol}─`)} ${opts.message}\n   ${userInput}\n${errorText}`;
+        }
+        case 'submit': {
+          const valueText = value ? `  ${dim(value)}` : '';
+          return `${blueBright('║')}\n${blueBright(`${symbol}─`)} ${opts.message}\n${blueBright('║')}${valueText}`;
+        }
+        case 'cancel': {
+          const valueText = value ? `   ${strikethrough(dim(value))}` : '';
+          return `${gray('║')}\n${gray(`${symbol}─`)} ${opts.message}\n${valueText}`;
+        }
+        default:
+          return `${blueBright('║')}\n${blueBright(`${symbol}─`)} ${opts.message}\n   ${userInput}\n`;
+      }
+    },
+  }).prompt() as Promise<string | symbol>;
+}
+
+function selectPrompt<Value>(opts: SelectOptions<Value>, multiple = false) {
+  return new (multiple ? MultiSelectPrompt : SelectPrompt)({
+    options: opts.options,
+    input: Logger.stdin,
+    output: Logger.stdout,
+    signal: Logger.signal,
+    ...(multiple
+      ? {
+          initialValues: (opts as MultiSelectOptions<Value>).initialValues,
+          required: (opts as MultiSelectOptions<Value>).required,
+          cursorAt: (opts as MultiSelectOptions<Value>).cursorAt,
+        }
+      : {
+          initialValue: opts.initialValue,
+        }),
+    render() {
+      const symbol = promptStateSymbol[this.state];
+      const values = [this.value].flat() as Value[];
+      const selected = this.options.filter((o) => values.includes(o.value));
+      const label =
+        selected.length > 0 ? selected.map(labelToString).join(', ') : 'none';
+
+      switch (this.state) {
+        case 'submit': {
+          return `${blueBright('║')}\n${blueBright(`${symbol}─`)} ${opts.message}\n${blueBright('║')}  ${dim(label)}`;
+        }
+        case 'cancel': {
+          return `${gray('║')}\n${gray(`${symbol}─`)} ${opts.message}\n   ${strikethrough(dim(label))}`;
+        }
+        default: {
+          const indents = '   ';
+          const displayingOptions = limitOptions({
+            output: opts.output,
+            cursor: this.cursor,
+            options: this.options,
+            maxItems: opts.maxItems,
+            columnPadding: indents.length,
+            style: renderListOption(
+              multiple,
+              Array.isArray(this.value) ? this.value : [],
+            ),
+          });
+          return `${blueBright('║')}\n${blueBright(`${symbol}─`)} ${opts.message}\n   ${displayingOptions.join(`\n${indents}`)}\n`;
+        }
+      }
+    },
+  }).prompt() as Promise<Value | symbol>;
+}
+
+function multiSelectPrompt<Value>(opts: MultiSelectOptions<Value>) {
+  return selectPrompt<Value>(opts, true) as Promise<Value[] | symbol>;
+}
+
+function autocompletePrompt<Value>(
+  opts: AutocompleteOptions<Value>,
+  multiple = false,
+) {
+  return new AutocompletePrompt({
+    options: opts.options,
+    multiple,
+    initialValue: opts.initialValue ? [opts.initialValue] : undefined,
+    initialUserInput: opts.initialUserInput,
+    filter: (searchText, option) => {
+      if (!searchText) {
+        return true;
+      }
+      const label = (option.label ?? String(option.value ?? '')).toLowerCase();
+      const hint = (option.hint ?? '').toLowerCase();
+      const value = String(option.value).toLowerCase();
+      const term = searchText.toLowerCase();
+      return (
+        label.includes(term) || hint.includes(term) || value.includes(term)
+      );
+    },
+    validate: opts.validate,
+    input: Logger.stdin,
+    output: Logger.stdout,
+    signal: Logger.signal,
+    render() {
+      const symbol = promptStateSymbol[this.state];
+      const selected = this.options.filter((o) =>
+        this.selectedValues.includes(o.value),
+      );
+      const label =
+        selected.length > 0 ? selected.map(labelToString).join(', ') : 'none';
+
+      switch (this.state) {
+        case 'submit': {
+          return `${blueBright('║')}\n${blueBright(`${symbol}─`)} ${opts.message}\n${blueBright('║')}  ${dim(label)}`;
+        }
+        case 'cancel': {
+          const userInputText = this.userInput
+            ? `  ${strikethrough(dim(this.userInput))}`
+            : '';
+          return `${gray('║')}\n${gray(`${symbol}─`)} ${opts.message}\n${userInputText}`;
+        }
+        default: {
+          const indents = '   ';
+          let searchText = '';
+          if (this.isNavigating || (opts.placeholder && !this.userInput)) {
+            const searchTextValue = opts.placeholder ?? this.userInput;
+            searchText = searchTextValue ? ` ${dim(searchTextValue)}` : '';
+          } else {
+            searchText = ` ${this.userInputWithCursor}`;
+          }
+          const matches =
+            this.filteredOptions.length !== this.options.length
+              ? dim(
+                  ` (${this.filteredOptions.length} match${this.filteredOptions.length === 1 ? '' : 'es'})`,
+                )
+              : '';
+          const headings = [
+            blueBright('║'),
+            `${blueBright(`${symbol}─`)} ${opts.message}`,
+            `${indents}${dim('Search:')}${searchText}${matches}`,
+          ];
+          if (this.filteredOptions.length === 0 && this.userInput) {
+            headings.push(`${indents}${yellow('No matches found')}`);
+          }
+          if (this.state === 'error') {
+            headings.push(`${indents}${yellow(`Error: ${this.error ?? ''}`)}`);
+          }
+          const footers = [
+            multiple
+              ? `${indents}${dim('↑/↓ to navigate • Space/Tab: select • Enter: confirm • Type: to search')}`
+              : `${indents}${dim('↑/↓ to select • Enter: confirm • Type: to search')}`,
+          ];
+          const displayingOptions = limitOptions({
+            output: opts.output,
+            cursor: this.cursor,
+            options: this.filteredOptions,
+            maxItems: opts.maxItems,
+            columnPadding: indents.length,
+            rowPadding: headings.length + footers.length,
+            style: renderListOption(multiple, this.selectedValues),
+          });
+          return [
+            ...headings,
+            ...displayingOptions.map((s) => `${indents}${s}`),
+            ...footers,
+          ].join('\n');
+        }
+      }
+    },
+  }).prompt() as Promise<Value | symbol>;
+}
+
+function autocompleteMultiSelectPrompt<Value>(
+  opts: AutocompleteOptions<Value>,
+) {
+  return autocompletePrompt<Value>(opts, true) as Promise<Value[] | symbol>;
+}
+
+export async function interactiveLogLoading<T>(
   message: string,
-  {
-    relativeOutput,
-    installDependencies,
-  }: { relativeOutput: string; installDependencies: boolean },
-): void {
-  const steps = [];
-  if (relativeOutput !== '.') {
-    steps.push(`Navigate to ${green(relativeOutput)}`);
+  fn: () => Promise<T>,
+  deferredTimeMs = 300,
+): Promise<T> {
+  if (!Logger.isInteractive) {
+    return await fn();
   }
-  if (!installDependencies) {
-    steps.push(`${cyan('npm install')} to install dependencies`);
+
+  const output = Logger.stdout;
+  const columns = getColumns(output);
+  const showMessage = (msg: string) => {
+    const wrapped = wrapAnsi(msg, columns, { hard: true, trim: false });
+    output.write(wrapped);
+    return () => {
+      const prevLines = wrapped.split('\n');
+      if (prevLines.length > 1) {
+        output.write(cursor.up(prevLines.length - 1));
+      }
+      output.write(cursor.to(0));
+      output.write(erase.down());
+    };
+  };
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let clearMessage: (() => void) | undefined;
+  const promise = new Promise<void>((resolve) => {
+    timer = setTimeout(() => {
+      output.write(`${blueBright('║')}\n`);
+      clearMessage = showMessage(
+        `${blueBright(`${promptStateSymbol.active}─`)} ${dim(message)}\n`,
+      );
+      resolve();
+    }, deferredTimeMs);
+  });
+  const result = await fn()
+    .then((r) => {
+      if (!clearMessage) {
+        return r;
+      }
+      return new Promise<T>((resolve) =>
+        setTimeout(() => resolve(r), deferredTimeMs),
+      );
+    })
+    .catch(async (e) => {
+      await promise;
+      clearMessage?.();
+      showMessage(
+        `${redBright(`${promptStateSymbol.error}─`)} ${dim(message)}\n\n`,
+      );
+      throw e;
+    });
+  clearTimeout(timer);
+  if (clearMessage) {
+    clearMessage();
+    showMessage(
+      `${blueBright(`${promptStateSymbol.submit}─`)} ${dim(message)}\n`,
+    );
   }
-  steps.push('Create and edit Markdown files');
-  steps.push(
-    `Modify the ${cyan('entry')} field in ${green('vivliostyle.config.js')}`,
+  return result;
+}
+
+export function interactiveLogWarn(message: string) {
+  Logger.stdout.write(
+    `${yellowBright(promptStateSymbol.error)}  ${yellowBright(message)}\n`,
   );
-  steps.push(`${cyan('npm run preview')} to open a preview browser window`);
-  steps.push(`${cyan('npm run build')} to generate the output file`);
+}
 
-  outro(
-    `${message}
-
-Next steps:
-${steps.map((s, i) => gray(`${i + 1}. `) + s).join('\n')}
-
-For more information, visit ${terminalLink(yellow('https://docs.vivliostyle.org'), 'https://docs.vivliostyle.org', { fallback: (text) => text })}.
-
-🖋 Happy writing!`,
-  );
+export function interactiveLogOutro(message: string) {
+  Logger.stdout.write(`${blueBright('║')}\n${blueBright('╙─')} ${message}\n\n`);
 }

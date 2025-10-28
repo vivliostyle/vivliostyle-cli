@@ -1,12 +1,11 @@
 import { downloadTemplate } from '@bluwy/giget-core';
-import { log as promptLog } from '@clack/prompts';
 import { isUtf8 } from 'node:buffer';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import * as v from 'valibot';
-import { cyan } from 'yoctocolors';
+import { cyan, gray, green, yellow } from 'yoctocolors';
 import {
   ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfigWithoutChecks,
@@ -24,8 +23,14 @@ import {
   VIVLIOSTYLE_THEME_CATEGORY_RECORD,
 } from '../const.js';
 import { format, TemplateVariable } from '../create-template.js';
-import { askQuestion, caveat, lazyPrompt } from '../interactive.js';
+import {
+  askQuestion,
+  interactiveLogLoading,
+  interactiveLogOutro,
+  interactiveLogWarn,
+} from '../interactive.js';
 import { Logger } from '../logger.js';
+import { importNodeModule } from '../node-modules.js';
 import {
   createFetch,
   fetchPackageMetadata,
@@ -34,8 +39,8 @@ import {
 } from '../npm.js';
 import {
   cwd as defaultCwd,
-  exec,
   getOsLocale,
+  PackageManager,
   toTitleCase,
   whichPm,
 } from '../util.js';
@@ -45,8 +50,7 @@ type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
 };
 
 export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
-  Logger.setLogLevel(inlineConfig.logLevel);
-  Logger.setCustomLogger(inlineConfig.logger);
+  Logger.setLogOptions(inlineConfig);
   Logger.debug('create > inlineConfig %O', inlineConfig);
 
   const fetch = createFetch(inlineConfig);
@@ -147,6 +151,8 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       },
     });
   } else {
+    interactiveLogOutro('All configurations are set! Creating your project...');
+    using _ = Logger.startLogging('Downloading a template');
     await setupTemplate({
       projectPath,
       cwd,
@@ -157,7 +163,9 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       },
     });
     if (installDependencies) {
-      await performInstallDependencies({ projectPath, cwd });
+      const pm = whichPm();
+      using _ = Logger.suspendLogging(`Installing dependencies with ${pm}`);
+      await performInstallDependencies({ projectPath, cwd, pm });
     }
   }
 
@@ -309,30 +317,37 @@ async function askTheme({
       : []
   ) as string[];
   const useCommunityThemes = !presetTemplate && !template;
-  const themePackages = await lazyPrompt(async () => {
-    let themes = (await listVivliostyleThemes({ fetch })).objects;
-    if (useCommunityThemes) {
-      // Show only community themes
-      themes = themes.filter(
-        (theme) => !theme.package.name.startsWith('@vivliostyle/'),
-      );
-    }
-    themes.sort((a, b) => {
-      // Prioritize recommended themes for the selected template
-      const aIsRecommended = recommendedThemes.includes(a.package.name) ? 1 : 0;
-      const bIsRecommended = recommendedThemes.includes(b.package.name) ? 1 : 0;
-      if (aIsRecommended ^ bIsRecommended) {
-        return bIsRecommended - aIsRecommended;
+  const themePackages = await interactiveLogLoading(
+    'Fetching a list of Vivliostyle themes...',
+    async () => {
+      let themes = (await listVivliostyleThemes({ fetch })).objects;
+      if (useCommunityThemes) {
+        // Show only community themes
+        themes = themes.filter(
+          (theme) => !theme.package.name.startsWith('@vivliostyle/'),
+        );
       }
-      // Prioritize packages in the @vivliostyle namespace
-      const aIsOfficial = a.package.name.startsWith('@vivliostyle/') ? 1 : 0;
-      const bIsOfficial = b.package.name.startsWith('@vivliostyle/') ? 1 : 0;
-      return aIsOfficial ^ bIsOfficial
-        ? bIsOfficial - aIsOfficial
-        : b.downloads.monthly - a.downloads.monthly;
-    });
-    return themes.map((theme) => theme.package);
-  }, 'Fetching a list of Vivliostyle themes');
+      themes.sort((a, b) => {
+        // Prioritize recommended themes for the selected template
+        const aIsRecommended = recommendedThemes.includes(a.package.name)
+          ? 1
+          : 0;
+        const bIsRecommended = recommendedThemes.includes(b.package.name)
+          ? 1
+          : 0;
+        if (aIsRecommended ^ bIsRecommended) {
+          return bIsRecommended - aIsRecommended;
+        }
+        // Prioritize packages in the @vivliostyle namespace
+        const aIsOfficial = a.package.name.startsWith('@vivliostyle/') ? 1 : 0;
+        const bIsOfficial = b.package.name.startsWith('@vivliostyle/') ? 1 : 0;
+        return aIsOfficial ^ bIsOfficial
+          ? bIsOfficial - aIsOfficial
+          : b.downloads.monthly - a.downloads.monthly;
+      });
+      return themes.map((theme) => theme.package);
+    },
+  );
 
   let themePackage: VivliostylePackageJson | undefined;
   const fetchedPackages: Record<string, PackageJson> = {};
@@ -420,7 +435,7 @@ async function askTheme({
           validateThemeMetadataSchema,
         ),
       }),
-      validateProgressMessage: 'Fetching package metadata',
+      validateProgressMessage: 'Fetching package metadata...',
     }).then((ret) => ret.themeManualInput);
   }
 
@@ -446,7 +461,7 @@ async function askThemeTemplate(
     hint: truncateString(tmpl.description || ''),
   }));
   if (!themeTemplate || options.length === 0) {
-    promptLog.info(
+    interactiveLogWarn(
       'The chosen theme does not set template settings. Applying the minimal template.',
     );
     return {
@@ -511,41 +526,35 @@ async function setupTemplate({
 > & {
   templateVariables: Record<string, unknown>;
 }) {
-  await lazyPrompt(
-    async () => {
-      await downloadTemplate(template, { dir: projectPath, cwd });
-      for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
-        const targetPath = upath.join(cwd, projectPath, file);
-        if (fs.existsSync(targetPath)) {
+  await downloadTemplate(template, { dir: projectPath, cwd });
+  for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
+    const targetPath = upath.join(cwd, projectPath, file);
+    if (fs.existsSync(targetPath)) {
+      continue;
+    }
+    fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, content, 'utf8');
+  }
+
+  const replaceTemplateVariable = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entryPath = upath.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        replaceTemplateVariable(entryPath);
+      } else {
+        const buf = fs.readFileSync(entryPath);
+        if (!isUtf8(buf)) {
           continue;
         }
-        fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
-        fs.writeFileSync(targetPath, content, 'utf8');
+        fs.writeFileSync(
+          entryPath,
+          format(buf.toString(), templateVariables),
+          'utf8',
+        );
       }
-
-      const replaceTemplateVariable = (dir: string) => {
-        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-          const entryPath = upath.join(dir, entry.name);
-          if (entry.isDirectory()) {
-            replaceTemplateVariable(entryPath);
-          } else {
-            const buf = fs.readFileSync(entryPath);
-            if (!isUtf8(buf)) {
-              continue;
-            }
-            fs.writeFileSync(
-              entryPath,
-              format(buf.toString(), templateVariables),
-              'utf8',
-            );
-          }
-        }
-      };
-      replaceTemplateVariable(upath.join(cwd, projectPath));
-    },
-    'Downloading a template',
-    0,
-  );
+    }
+  };
+  replaceTemplateVariable(upath.join(cwd, projectPath));
 }
 
 function setupConfigFile({
@@ -562,15 +571,48 @@ function setupConfigFile({
 }
 
 async function performInstallDependencies({
+  pm,
   cwd,
   projectPath,
-}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>>) {
-  const pm = whichPm();
-  await lazyPrompt(
-    async () => {
-      await exec(pm, ['install'], { cwd: upath.join(cwd, projectPath) });
-    },
-    `Installing dependencies with ${pm}`,
-    0,
+}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>> & {
+  pm: PackageManager;
+}) {
+  const { execa } = await importNodeModule('execa');
+  await execa(pm, ['install'], {
+    cwd: upath.join(cwd, projectPath),
+    stdio: 'inherit',
+  });
+}
+
+function caveat(
+  message: string,
+  {
+    relativeOutput,
+    installDependencies,
+  }: { relativeOutput: string; installDependencies: boolean },
+): void {
+  const steps = [];
+  if (relativeOutput !== '.') {
+    steps.push(`Navigate to ${green(relativeOutput)}`);
+  }
+  if (!installDependencies) {
+    steps.push(`${cyan('npm install')} to install dependencies`);
+  }
+  steps.push('Create and edit Markdown files');
+  steps.push(
+    `Modify the ${cyan('entry')} field in ${green('vivliostyle.config.js')}`,
+  );
+  steps.push(`${cyan('npm run preview')} to open a preview browser window`);
+  steps.push(`${cyan('npm run build')} to generate the output file`);
+
+  Logger.logSuccess(message);
+  Logger.log(
+    `
+Next steps:
+${steps.map((s, i) => gray(`${i + 1}. `) + s).join('\n')}
+
+For more information, visit ${terminalLink(yellow('https://docs.vivliostyle.org'), 'https://docs.vivliostyle.org', { fallback: (text) => text })}.
+
+🖋 Happy writing!`,
   );
 }

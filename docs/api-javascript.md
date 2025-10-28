@@ -186,6 +186,10 @@ build({
 
 `boolean` = `...`
 
+###### signal?
+
+`AbortSignal` = `...`
+
 ###### singleDoc?
 
 `boolean` = `...`
@@ -193,6 +197,18 @@ build({
 ###### size?
 
 `string` = `...`
+
+###### stderr?
+
+`Writable` = `...`
+
+###### stdin?
+
+`Readable` = `...`
+
+###### stdout?
+
+`Writable` = `...`
 
 ###### style?
 
@@ -394,6 +410,10 @@ Scaffold a new Vivliostyle project.
 
 `boolean` = `...`
 
+###### signal?
+
+`AbortSignal` = `...`
+
 ###### singleDoc?
 
 `boolean` = `...`
@@ -401,6 +421,18 @@ Scaffold a new Vivliostyle project.
 ###### size?
 
 `string` = `...`
+
+###### stderr?
+
+`Writable` = `...`
+
+###### stdin?
+
+`Readable` = `...`
+
+###### stdout?
+
+`Writable` = `...`
 
 ###### style?
 
@@ -600,6 +632,10 @@ Scaffold a new Vivliostyle project.
 
 `boolean` = `...`
 
+###### signal?
+
+`AbortSignal` = `...`
+
 ###### singleDoc?
 
 `boolean` = `...`
@@ -607,6 +643,18 @@ Scaffold a new Vivliostyle project.
 ###### size?
 
 `string` = `...`
+
+###### stderr?
+
+`Writable` = `...`
+
+###### stdin?
+
+`Readable` = `...`
+
+###### stdout?
+
+`Writable` = `...`
 
 ###### style?
 
@@ -808,6 +856,10 @@ Open a browser for previewing the publication.
 
 `boolean` = `...`
 
+###### signal?
+
+`AbortSignal` = `...`
+
 ###### singleDoc?
 
 `boolean` = `...`
@@ -815,6 +867,18 @@ Open a browser for previewing the publication.
 ###### size?
 
 `string` = `...`
+
+###### stderr?
+
+`Writable` = `...`
+
+###### stdin?
+
+`Readable` = `...`
+
+###### stdout?
+
+`Writable` = `...`
 
 ###### style?
 
@@ -912,8 +976,12 @@ Open a browser for previewing the publication.
 | <a id="readingprogression"></a> `readingProgression?` | `"ltr"` \| `"rtl"` |
 | <a id="rendermode"></a> `renderMode?` | `"local"` \| `"docker"` |
 | <a id="sandbox"></a> `sandbox?` | `boolean` |
+| <a id="signal"></a> `signal?` | `AbortSignal` |
 | <a id="singledoc"></a> `singleDoc?` | `boolean` |
 | <a id="size"></a> `size?` | `string` |
+| <a id="stderr"></a> `stderr?` | `Writable` |
+| <a id="stdin"></a> `stdin?` | `Readable` |
+| <a id="stdout"></a> `stdout?` | `Writable` |
 | <a id="style"></a> `style?` | `string` |
 | <a id="template"></a> `template?` | `string` |
 | <a id="theme"></a> `theme?` | `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] |

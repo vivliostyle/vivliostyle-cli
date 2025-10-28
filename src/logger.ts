@@ -1,4 +1,7 @@
 import debug from 'debug';
+import { Console } from 'node:console';
+import type { Readable, Writable } from 'node:stream';
+import type { WriteStream } from 'node:tty';
 import yoctoSpinner, { Spinner } from 'yocto-spinner';
 import { blueBright, greenBright, redBright, yellowBright } from 'yoctocolors';
 import { isInContainer, registerExitHandler } from './util.js';
@@ -36,17 +39,52 @@ export class Logger {
   static #nonBlockingLogPrinted = false;
   static #customLogger: LoggerInterface | undefined;
   static #logPrefix: string | undefined;
+  static #stdin: Readable = process.stdin;
+  static #stdout: Writable = process.stdout;
+  static #stderr: Writable = process.stderr;
+  static #signal: AbortSignal | undefined;
 
   static debug = debug('vs-cli');
+
+  static get #console() {
+    if (this.#customLogger) {
+      return {
+        ...this.#customLogger,
+        log: () => {
+          /* NOOP */
+        },
+      };
+    }
+    return new Console({
+      stdout: this.#stdout,
+      stderr: this.#stderr,
+    });
+  }
 
   static get #spinner() {
     return this.#loggerInstance && this.#loggerInstance.#_spinner;
   }
 
+  static get stdin() {
+    return this.#stdin;
+  }
+
+  static get stdout() {
+    return this.#stdout;
+  }
+
+  static get stderr() {
+    return this.#stderr;
+  }
+
+  static get signal() {
+    return this.#signal;
+  }
+
   static get isInteractive() {
     return Boolean(
       !this.#customLogger &&
-        process.stderr.isTTY &&
+        (this.#stderr as WriteStream).isTTY &&
         process.env.TERM !== 'dumb' &&
         !('CI' in process.env) &&
         !import.meta.env?.VITEST &&
@@ -68,7 +106,7 @@ export class Logger {
       this.#loggerInstance.#_spinner.text = text;
       return this.#loggerInstance;
     }
-    this.#loggerInstance = new Logger();
+    this.#loggerInstance = new Logger(this.#stderr);
     this.#loggerInstance.#start(text);
     return this.#loggerInstance;
   }
@@ -87,7 +125,7 @@ export class Logger {
     return {
       [Symbol.dispose]() {
         if (Logger.isInteractive) {
-          console.log('');
+          Logger.#console.log('');
           Logger.#spinner?.start(currentMsg);
           Logger.#nonBlockingLogPrinted = true;
         }
@@ -99,7 +137,7 @@ export class Logger {
     if (this.#logLevel < 1) {
       return;
     }
-    console.log(...messages);
+    Logger.#console.log(...messages);
   }
 
   static logUpdate(...messages: any[]) {
@@ -130,7 +168,7 @@ export class Logger {
       }
       this.#logLevel >= 3
         ? this.debug(message)
-        : (this.#customLogger || console)[logMethod](message);
+        : this.#console[logMethod](message);
       return;
     }
     this.logUpdate(this.#spinner.text);
@@ -186,25 +224,49 @@ export class Logger {
     this.#nonBlockingLog('info', this.getMessage(messages.join(' ')));
   }
 
-  static setLogLevel(level?: 'silent' | 'info' | 'verbose' | 'debug') {
-    if (!level) {
-      return;
+  static setLogOptions({
+    logLevel,
+    logger,
+    stdin,
+    stdout,
+    stderr,
+    signal,
+  }: {
+    logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
+    logger?: LoggerInterface;
+    stdin?: Readable;
+    stdout?: Writable;
+    stderr?: Writable;
+    signal?: AbortSignal;
+  }) {
+    if (logLevel) {
+      this.#logLevel = (
+        {
+          silent: 0,
+          info: 1,
+          verbose: 2,
+          debug: 3,
+        } as const
+      )[logLevel];
+      if (this.#logLevel >= 3) {
+        debug.enable('vs-cli');
+      }
     }
-    this.#logLevel = (
-      {
-        silent: 0,
-        info: 1,
-        verbose: 2,
-        debug: 3,
-      } as const
-    )[level];
-    if (this.#logLevel >= 3) {
-      debug.enable('vs-cli');
+    if (logger) {
+      this.#customLogger = logger;
     }
-  }
-
-  static setCustomLogger(logger: LoggerInterface | undefined) {
-    this.#customLogger = logger;
+    if (stdin) {
+      this.#stdin = stdin;
+    }
+    if (stdout) {
+      this.#stdout = stdout;
+    }
+    if (stderr) {
+      this.#stderr = stderr;
+    }
+    if (signal) {
+      this.#signal = signal;
+    }
   }
 
   static setLogPrefix(prefix: string) {
@@ -214,13 +276,14 @@ export class Logger {
   #_spinner: Spinner;
   #_disposeSpinnerExitHandler: (() => void) | undefined;
 
-  constructor() {
+  constructor(stream: Writable) {
     this.#_spinner = yoctoSpinner({
       spinner: {
         frames: spinnerFrames,
         interval: spinnerInterval,
       },
       color: 'gray',
+      stream,
     });
     return this;
   }

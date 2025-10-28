@@ -12,8 +12,7 @@ import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { createViteServer, getViewerFullUrl } from '../server.js';
 
 export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
-  Logger.setLogLevel(inlineConfig.logLevel);
-  Logger.setCustomLogger(inlineConfig.logger);
+  Logger.setLogOptions(inlineConfig);
   Logger.debug('preview > inlineConfig %O', inlineConfig);
 
   let vivliostyleConfig =
