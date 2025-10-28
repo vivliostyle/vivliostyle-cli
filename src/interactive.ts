@@ -4,7 +4,7 @@ import {
   isCancel,
   MultiSelectPrompt,
   SelectPrompt,
-  State,
+  type State,
   TextPrompt,
 } from '@clack/core';
 import type {
@@ -187,10 +187,7 @@ const renderListOption =
 
 function textPrompt(opts: TextOptions) {
   return new TextPrompt({
-    validate: opts.validate,
-    placeholder: opts.placeholder,
-    defaultValue: opts.defaultValue,
-    initialValue: opts.initialValue,
+    ...opts,
     input: Logger.stdin,
     output: Logger.stdout,
     signal: Logger.signal,
@@ -226,19 +223,10 @@ function textPrompt(opts: TextOptions) {
 
 function selectPrompt<Value>(opts: SelectOptions<Value>, multiple = false) {
   return new (multiple ? MultiSelectPrompt : SelectPrompt)({
-    options: opts.options,
+    ...opts,
     input: Logger.stdin,
     output: Logger.stdout,
     signal: Logger.signal,
-    ...(multiple
-      ? {
-          initialValues: (opts as MultiSelectOptions<Value>).initialValues,
-          required: (opts as MultiSelectOptions<Value>).required,
-          cursorAt: (opts as MultiSelectOptions<Value>).cursorAt,
-        }
-      : {
-          initialValue: opts.initialValue,
-        }),
     render() {
       const symbol = promptStateSymbol[this.state];
       const values = [this.value].flat() as Value[];
@@ -282,10 +270,9 @@ function autocompletePrompt<Value>(
   multiple = false,
 ) {
   return new AutocompletePrompt({
-    options: opts.options,
+    ...opts,
     multiple,
     initialValue: opts.initialValue ? [opts.initialValue] : undefined,
-    initialUserInput: opts.initialUserInput,
     filter: (searchText, option) => {
       if (!searchText) {
         return true;
@@ -298,7 +285,6 @@ function autocompletePrompt<Value>(
         label.includes(term) || hint.includes(term) || value.includes(term)
       );
     },
-    validate: opts.validate,
     input: Logger.stdin,
     output: Logger.stdout,
     signal: Logger.signal,
@@ -440,11 +426,17 @@ export async function interactiveLogLoading<T>(
 }
 
 export function interactiveLogWarn(message: string) {
+  if (import.meta.env?.VITEST) {
+    return;
+  }
   Logger.stdout.write(
     `${yellowBright(promptStateSymbol.error)}  ${yellowBright(message)}\n`,
   );
 }
 
 export function interactiveLogOutro(message: string) {
+  if (import.meta.env?.VITEST) {
+    return;
+  }
   Logger.stdout.write(`${blueBright('║')}\n${blueBright('╙─')} ${message}\n\n`);
 }

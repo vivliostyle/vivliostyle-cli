@@ -14,34 +14,31 @@ import { runCommand } from './command-util';
 
 const mockedClackModule = vi.hoisted(() => {
   const mockedAnswers = vi.fn().mockReturnValue({});
-  const prompt = vi
-    .fn()
-    .mockImplementation(async ({ name }: { name: string }) => {
+  const PromptClass = vi.fn(function ({ name }: { name: string }) {
+    // @ts-ignore
+    this.prompt = vi.fn().mockImplementation(async () => {
       const answers = mockedAnswers();
+      debugger;
       if (!(name in answers)) {
         throw new Error(`Unexpected question: ${name}`);
       }
       return answers[name];
     });
+  });
 
   return {
     answers: mockedAnswers,
-    text: prompt,
-    select: prompt,
-    multiSelect: prompt,
-    autocomplete: prompt,
-    autocompleteMultiselect: prompt,
+    TextPrompt: PromptClass,
+    SelectPrompt: PromptClass,
+    MultiSelectPrompt: PromptClass,
+    AutocompletePrompt: PromptClass,
+    AutocompleteMultiselectPrompt: PromptClass,
     isCancel: vi.fn().mockReturnValue(false),
-    outro: vi.fn(),
-    log: {
-      warn: vi.fn().mockImplementation((message: string) => {
-        throw new Error(`Unexpected call to log.warn: ${message}`);
-      }),
-    },
+    getColumns: vi.fn().mockReturnValue(80),
   };
 });
 
-vi.mock('@clack/prompts', () => mockedClackModule);
+vi.mock('@clack/core', () => mockedClackModule);
 
 const mockedNpmModule = vi.hoisted(async () => {
   const fs = await import('node:fs');
