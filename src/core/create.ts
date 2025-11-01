@@ -291,9 +291,10 @@ async function askPresetTemplate(): Promise<{
   return { presetTemplate };
 }
 
+const TRUNCATE_LENGTH = 60;
 const truncateString = (str: string) => {
   const trimmed = str.replace(/\s+/g, ' ');
-  return trimmed.length > 60 ? trimmed.slice(0, 60) + '…' : trimmed;
+  return trimmed.length > TRUNCATE_LENGTH ? trimmed.slice(0, TRUNCATE_LENGTH) + '…' : trimmed;
 };
 
 export const THEME_ANSWER_NOT_USE = 'Not use Vivliostyle theme';

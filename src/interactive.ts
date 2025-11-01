@@ -93,8 +93,8 @@ export async function askQuestion<
       };
 
       if (import.meta.env?.VITEST) {
-        // @ts-expect-error: Set the name to return the mocked answer
-        question.name = name;
+        // For testing, safely assign the name property using a type assertion
+        (question as any).name = name;
       }
       if (question.type === 'text') {
         result = await textPrompt({ ...question, validate });

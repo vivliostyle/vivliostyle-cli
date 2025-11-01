@@ -372,7 +372,7 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
 let cachedLocale: string | undefined;
 export async function getOsLocale(): Promise<string> {
   if (import.meta.env?.VITEST) {
-    return 'en';
+    return process.env.TEST_LOCALE || 'en';
   }
   // It uses the same implementation as os-locale, but prioritizes the OS language settings on Windows and macOS.
   if (cachedLocale) {
