@@ -12,7 +12,6 @@
     "generate:schema": "json2ts -i schemas/pub-manifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pub-manifest",
     "clean": "shx rm -rf dist tmp",
     "dev": "tsup --watch src",
-    "pretest": "playwright-core install chromium --no-shell",
     "release": "release-it",
     "release:pre": "release-it --preRelease --npm.tag=next",
     "test": "vitest run --coverage",

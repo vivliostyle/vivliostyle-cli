@@ -20,12 +20,6 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq -r '.version')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      - name: Output current Playwright version
-        id: playwright
-        run: |
-          pnpm install
-          VERSION=$(node -e 'console.log(require("playwright-core/package.json").version)')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Docker meta
         id: docker_meta
         uses: docker/metadata-action@v5
@@ -59,6 +53,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
-            PLAYWRIGHT_VERSION=${{ steps.playwright.outputs.version }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
