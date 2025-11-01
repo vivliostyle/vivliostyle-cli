@@ -7,16 +7,16 @@ const program = new Command();
 program
   .name('vivliostyle')
   .version(versionForDisplay, '-v, --version')
-  .command('init', 'create vivliostyle config', {
-    executableFile: 'commands/init',
-  })
-  .command('create', 'scaffold a new Vivliostyle project', {
+  .command('create', 'Scaffold a new Vivliostyle project', {
     executableFile: 'commands/create',
   })
-  .command('build', 'build and create PDF file', {
+  .command('init', 'Create a Vivliostyle configuration file', {
+    executableFile: 'commands/init',
+  })
+  .command('build', 'Create PDF, EPUB, and other publication files', {
     executableFile: 'commands/build',
   })
-  .command('preview', 'launch preview server', {
+  .command('preview', 'Open the preview page and interactively save PDFs', {
     executableFile: 'commands/preview',
   })
   .parse(process.argv);

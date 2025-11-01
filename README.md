@@ -13,6 +13,10 @@ Supercharge your command-line publication workflow.
 npm install -g @vivliostyle/cli
 ```
 
+## User Guide
+
+See [User Guide](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/docs#readme)
+
 ## Use
 
 ```
@@ -23,22 +27,51 @@ Options:
   -h, --help      display help for command
 
 Commands:
-  init            create vivliostyle config
-  build           build and create PDF file
-  preview         launch preview server
+  create          Scaffold a new Vivliostyle project
+  init            Create a Vivliostyle configuration file
+  build           Create PDF, EPUB, and other publication files
+  preview         Open the preview page and interactively save PDFs
   help [command]  display help for command
+```
+
+### `create`
+
+> Scaffold a new Vivliostyle project
+
+```bash
+vivliostyle create
+```
+
+You are new to Vivliostyle? Check out our [Create Book](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/packages/create-book#readme) project.
+With Create Book, you can easily bootstrap your book project and start writing without any extra effort.
+
+#### CLI Options
+
+```
+Options:
+  --title <title>               title
+  --author <author>             author
+  -l, --language <language>     language
+  -s, --size <size>             paper size
+  -T, --theme <theme>           theme
+  --template <template>         Template source in format of `[provider]:repo[/subpath][#ref]`
+  --create-config-file-only     Create a Vivliostyle config file without generating project template files.
+  --proxy-server <proxyServer>  HTTP/SOCK proxy server url
+  --proxy-bypass <proxyBypass>  optional comma-separated domains to bypass proxy
+  --proxy-user <proxyUser>      optional username for HTTP proxy authentication
+  --proxy-pass <proxyPass>      optional password for HTTP proxy authentication
+  --log-level <level>           specify a log level of console outputs (choices: "silent", "info", "verbose", "debug", default: "info")
+  -v, --version                 output the version number
+  -h, --help                    display help for command
 ```
 
 ### `init`
 
-> create vivliostyle config file.
+> Create a Vivliostyle configuration file
 
 ```bash
 vivliostyle init
 ```
-
-You are new to Vivliostyle? Check out our latest project [Create Book](https://github.com/vivliostyle/create-book#readme).
-With Create Book, you can easily bootstrap your book project and start writing without any extra effort.
 
 #### CLI Options
 
@@ -47,17 +80,16 @@ Options:
   --title <title>            title
   --author <author>          author
   -l, --language <language>  language
-  -s, --size  <size>         paper size
+  -s, --size <size>          paper size
   -T, --theme <theme>        theme
   --log-level <level>        specify a log level of console outputs (choices: "silent", "info", "verbose", "debug", default: "info")
+  -v, --version              output the version number
   -h, --help                 display help for command
 ```
 
 ### `build`
 
-> build and create PDF file.
-
-Put [vivliostyle.config.js](https://github.com/vivliostyle/create-book/blob/master/templates/default/vivliostyle.config.js) in the root directory, then:
+> Create PDF, EPUB, and other publication files
 
 ```bash
 vivliostyle build
@@ -112,12 +144,13 @@ Options:
   --no-enable-static-serve           disable static file serving
   --vite-config-file <path>          Vite config file path
   --no-vite-config-file              ignore Vite config file even if it exists
+  -v, --version                      output the version number
   -h, --help                         display help for command
 ```
 
 ### `preview`
 
-> open preview page and save PDF interactively.
+> Open the preview page and interactively save PDFs
 
 ```bash
 vivliostyle preview
@@ -163,18 +196,13 @@ Options:
   --no-enable-viewer-start-page      disable viewer start page
   --vite-config-file <path>          Vite config file path
   --no-vite-config-file              ignore Vite config file even if it exists
+  -v, --version                      output the version number
   -h, --help                         display help for command
 ```
-
-## User Guide
-
-See [User Guide](https://docs.vivliostyle.org/#/vivliostyle-cli)
 
 ## Contribute
 
 See [Contribution Guide](CONTRIBUTING.md).
-
-[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/0)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/0)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/1)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/1)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/2)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/2)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/3)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/3)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/4)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/4)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/5)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/5)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/6)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/6)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/7)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/7)
 
 ## License
 

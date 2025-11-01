@@ -14,17 +14,15 @@ This will generate a `vivliostyle.config.js` file in the current directory. The 
 
 ```js
 // @ts-check
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const vivliostyleConfig = {
-  title: 'Principia',
-  author: 'Isaac Newton',
-  language: 'la',
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  title: 'My Book Title',
+  author: 'John Doe',
+  language: 'en',
   image: 'ghcr.io/vivliostyle/cli:latest',
-  entry: [
-    ...
-  ],
-};
-module.exports = vivliostyleConfig;
+  entry: ['manuscript.md'],
+});
 ```
 
 ## Configuration File Settings
@@ -53,8 +51,8 @@ The settings in the configuration file are explained in the comments within the 
   ```
   You can specify the input as a string or in object format. In the case of object format, you can add the following properties:
   - `path`: Specify the path of the entry. This property is required, but not needed when specifying `rel: 'contents'` or `rel: 'cover'`. Refer to the following items for these specifications:
-      - [To output the table of contents in a location other than the beginning of the publication](./toc-page.md#to-output-the-table-of-contents-in-a-location-other-than-the-beginning-of-the-publication)
-      - [To output the cover page to a location other than the beginning of the publication](./cover-page.md#to-output-the-cover-page-to-a-location-other-than-the-beginning-of-the-publication)
+    - [To output the table of contents in a location other than the beginning of the publication](./toc-page.md#to-output-the-table-of-contents-in-a-location-other-than-the-beginning-of-the-publication)
+    - [To output the cover page to a location other than the beginning of the publication](./cover-page.md#to-output-the-cover-page-to-a-location-other-than-the-beginning-of-the-publication)
   - `title`: Specify the title of the entry. If this property is not set, the title will be obtained from the content of the entry.
   - `theme`: Specify the package name of the Vivliostyle Themes to apply to the entry, or the path to a CSS file.
 - **output**: Specify the output destination. Example: `output: 'output.pdf'`. The default is `{title}.pdf`. You can also specify multiple outputs in an array format as follows:
