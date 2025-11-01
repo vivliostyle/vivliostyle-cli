@@ -248,6 +248,7 @@ export type ResolvedTaskConfig = {
   sandbox: boolean;
   browser: {
     type: BrowserType;
+    tag: string;
     executablePath: string | undefined;
   };
   proxy:
@@ -516,7 +517,10 @@ export function resolveTaskConfig(
   const timeout = config.timeout ?? 300_000; // 5 minutes
   const sandbox = options.sandbox ?? false;
   const browser = {
-    type: config.browser ?? 'chromium',
+    type: config.browser?.type ?? 'chrome',
+    tag:
+      config.browser?.tag ??
+      (config.browser?.type === 'chromium' ? 'latest' : 'stable'),
     executablePath: options.executableBrowser,
   };
   const proxyServer =

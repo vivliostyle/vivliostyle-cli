@@ -40,7 +40,7 @@ export interface CliFlags {
   /** @deprecated */ http?: boolean;
   viewer?: string;
   viewerParam?: string;
-  browser?: 'chromium' | 'firefox' | 'webkit';
+  browser?: string;
   proxyServer?: string;
   proxyBypass?: string;
   proxyUser?: string;

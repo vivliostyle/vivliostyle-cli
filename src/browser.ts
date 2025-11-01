@@ -13,6 +13,14 @@ import {
   registerExitHandler,
 } from './util.js';
 
+const browserEnumMap = {
+  chrome: 'chrome' as typeof import('@puppeteer/browsers').Browser.CHROME,
+  chromium: 'chromium' as typeof import('@puppeteer/browsers').Browser.CHROMIUM,
+  firefox: 'firefox' as typeof import('@puppeteer/browsers').Browser.FIREFOX,
+} as const satisfies {
+  [key in BrowserType]: import('@puppeteer/browsers').Browser;
+};
+
 async function launchBrowser({
   browserType,
   proxy,
@@ -46,7 +54,7 @@ async function launchBrowser({
     //  proxy, // FIXME
   } satisfies LaunchOptions;
   const browser = await puppeteer.launch(
-    browserType === 'chromium'
+    browserType === 'chrome' || browserType === 'chromium'
       ? {
           ...commonOptions,
           args: [
@@ -75,68 +83,106 @@ async function launchBrowser({
   return browser;
 }
 
-export async function getExecutableBrowserPath(
-  browserType: BrowserType,
-): Promise<string> {
-  const browsers = await importNodeModule('@puppeteer/browsers');
-  const browser = (
-    {
-      chromium: browsers.Browser.CHROMIUM,
-      firefox: browsers.Browser.FIREFOX,
-    } as const
-  )[browserType];
+interface BuildIdsCache {
+  createdAt: number;
+  buildIds: Record<string, Record<string, string>>;
+}
+
+async function resolveBuildId({
+  type,
+  tag,
+  browsers,
+}: Pick<ResolvedTaskConfig['browser'], 'type' | 'tag'> & {
+  browsers: typeof import('@puppeteer/browsers');
+}): Promise<string> {
+  // Return cached data to reduce network requests to browser registry
+  // Cache is valid for 24 hours
+  const cacheDataFilename = upath.join(
+    getCacheDir(),
+    'browsers',
+    'build-ids.json',
+  );
+  let cacheData: BuildIdsCache;
+  try {
+    cacheData = JSON.parse(fs.readFileSync(cacheDataFilename, 'utf-8'));
+    if (Date.now() - cacheData.createdAt > 24 * 60 * 60 * 1000) {
+      cacheData = { createdAt: Date.now(), buildIds: {} };
+    }
+  } catch (_) {
+    cacheData = { createdAt: Date.now(), buildIds: {} };
+  }
+  if (cacheData.buildIds[type]?.[tag]) {
+    return cacheData.buildIds[type][tag];
+  }
+
   const platform = browsers.detectBrowserPlatform();
   if (!platform) {
     throw new Error('The current platform is not supported.');
   }
-  const buildId = await browsers.resolveBuildId(browser, platform, '1440670');
-  return browsers.computeExecutablePath({
-    browser,
-    cacheDir: upath.join(getCacheDir(), 'browsers'),
-    buildId,
-  });
+  const buildId = await browsers.resolveBuildId(
+    browserEnumMap[type],
+    platform,
+    tag,
+  );
+  (cacheData.buildIds[type] ??= {})[tag] = buildId;
+  fs.writeFileSync(cacheDataFilename, JSON.stringify(cacheData));
+  return buildId;
 }
 
-export function getFullBrowserName(browserType: BrowserType): string {
-  return {
-    chromium: 'Chromium',
-    firefox: 'Firefox',
-    webkit: 'Webkit',
-  }[browserType];
+async function cleanupOutdatedBrowsers() {
+  for (const browser of Object.values(browserEnumMap)) {
+    const browsersDir = upath.join(getCacheDir(), 'browsers', browser);
+    if (!fs.existsSync(browsersDir)) {
+      continue;
+    }
+    const entries = fs.readdirSync(browsersDir);
+    for (const entry of entries) {
+      const entryPath = upath.join(browsersDir, entry);
+      const stat = fs.statSync(entryPath);
+      // Files that are not directories are temporary files created
+      // during downloads and should be deleted.
+      if (
+        !stat.isDirectory() ||
+        Date.now() - stat.mtimeMs > 7 * 24 * 60 * 60 * 1000
+      ) {
+        Logger.debug(`Removing outdated browser at ${entryPath}`);
+        await fs.promises.rm(entryPath, { recursive: true, force: true });
+      }
+    }
+  }
+}
+
+export async function getExecutableBrowserPath({
+  type,
+  tag,
+}: ResolvedTaskConfig['browser']): Promise<string> {
+  const browsers = await importNodeModule('@puppeteer/browsers');
+  const buildId = await resolveBuildId({ type, tag, browsers });
+  return browsers.computeExecutablePath({
+    cacheDir: upath.join(getCacheDir(), 'browsers'),
+    browser: browserEnumMap[type],
+    buildId,
+  });
 }
 
 export function checkBrowserAvailability(path: string): boolean {
   return fs.existsSync(path);
 }
 
-export async function downloadBrowser(
-  browserType: BrowserType,
-): Promise<string> {
+export async function downloadBrowser({
+  type,
+  tag,
+}: ResolvedTaskConfig['browser']): Promise<string> {
   const browsers = await importNodeModule('@puppeteer/browsers');
-  const browser = (
-    {
-      chromium: browsers.Browser.CHROMIUM,
-      firefox: browsers.Browser.FIREFOX,
-    } as const
-  )[browserType];
-  const platform = browsers.detectBrowserPlatform();
-  if (!platform) {
-    throw new Error('The current platform is not supported.');
-  }
-  const buildId = await browsers.resolveBuildId(browser, platform, '1440670');
+  const buildId = await resolveBuildId({ type, tag, browsers });
   let installedBrowser: InstalledBrowser | undefined;
   {
     using _ = Logger.suspendLogging(
       'Rendering browser is not installed yet. Downloading now.',
     );
     installedBrowser = await browsers.install({
-      browser: (
-        {
-          chromium: browsers.Browser.CHROMIUM,
-          firefox: browsers.Browser.FIREFOX,
-        } as const
-      )[browserType],
       cacheDir: upath.join(getCacheDir(), 'browsers'),
+      browser: browserEnumMap[type],
       buildId,
       downloadProgressCallback: 'default',
     });
@@ -169,11 +215,12 @@ export async function launchPreview({
       );
     }
   } else {
-    executableBrowser = await getExecutableBrowserPath(browserConfig.type);
+    executableBrowser = await getExecutableBrowserPath(browserConfig);
     Logger.debug(`Using default browser: ${executableBrowser}`);
     if (!checkBrowserAvailability(executableBrowser)) {
       // The browser isn't downloaded first time starting CLI so try to download it
-      await downloadBrowser(browserConfig.type);
+      await cleanupOutdatedBrowsers();
+      await downloadBrowser(browserConfig);
     }
   }
 

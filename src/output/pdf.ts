@@ -4,7 +4,7 @@ import type { Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
-import { getFullBrowserName, launchPreview } from '../browser.js';
+import { launchPreview } from '../browser.js';
 import {
   ManuscriptEntry,
   PdfOutput,
@@ -125,8 +125,7 @@ export async function buildPDF({
     },
   });
 
-  const browserName = getFullBrowserName(config.browser.type);
-  const browserVersion = `${browserName}/${await browser.version()}`;
+  const browserVersion = await browser.version();
   Logger.debug(green('success'), `browserVersion=${browserVersion}`);
 
   let remainTime = config.timeout;

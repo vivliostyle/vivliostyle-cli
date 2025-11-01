@@ -32,14 +32,6 @@ export const CONTAINER_ROOT_DIR = '/data';
 // https://docs.docker.com/desktop/features/networking/#use-cases-and-workarounds
 export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 
-// To update the Puppeteer revisions, see:
-// https://github.com/puppeteer/puppeteer/blob/main/packages/puppeteer-core/src/revisions.ts
-export const PUPPETEER_REVISIONS = Object.freeze({
-  chrome: '137.0.7151.68',
-  'chrome-headless-shell': '137.0.7151.68',
-  firefox: 'stable_139.0.1',
-});
-
 export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
 export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {
