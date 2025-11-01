@@ -125,6 +125,7 @@ async function resolveBuildId({
     tag,
   );
   (cacheData.buildIds[type] ??= {})[tag] = buildId;
+  fs.mkdirSync(upath.dirname(cacheDataFilename), { recursive: true });
   fs.writeFileSync(cacheDataFilename, JSON.stringify(cacheData));
   return buildId;
 }
