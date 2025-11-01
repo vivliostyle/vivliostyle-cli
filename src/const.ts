@@ -113,8 +113,10 @@ export const TEMPLATE_DEFAULT_FILES = {
   }
 }
 `,
-  [DEFAULT_CONFIG_FILENAME]: /* js */ `/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+  [DEFAULT_CONFIG_FILENAME]: /* js */ `// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: "{{proper title}}",
   author: "{{author}}",
   {{#if language}}
@@ -128,7 +130,7 @@ module.exports = {
   {{/if}}
   image: "${CONTAINER_URL}:{{cliVersion}}",
   entry: ["manuscript.md"],
-};
+});
 `,
 } as const;
 

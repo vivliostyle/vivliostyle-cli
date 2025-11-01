@@ -8,6 +8,7 @@
 - [`build`](#build)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
+- [`defineConfig`](#defineconfig)
 - [`preview`](#preview)
 
 ### Interfaces
@@ -699,6 +700,26 @@ Scaffold a new Vivliostyle project.
 #### Returns
 
 `Promise`\<`Plugin`\<`any`\>[]\>
+
+***
+
+### defineConfig()
+
+> **defineConfig**(`config`): `object` & `object` \| `object` & `object`[]
+
+Define the configuration for Vivliostyle CLI.
+
+#### Parameters
+
+##### config
+
+`object` & `object` | `object` & `object`[]
+
+#### Returns
+
+`object` & `object`
+
+`object` & `object`[]
 
 ***
 

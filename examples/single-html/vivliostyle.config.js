@@ -1,5 +1,7 @@
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Single HTML publication',
   author: 'spring-raining',
   language: 'en',
@@ -9,4 +11,4 @@ module.exports = {
     'draft.pdf',
     'draft', // Exports Web Publication
   ],
-};
+});

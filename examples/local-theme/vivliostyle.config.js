@@ -1,10 +1,9 @@
 // @ts-check
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const vivliostyleConfig = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'example',
   author: 'example',
   theme: './theme',
   entry: ['manuscript.md'],
-};
-
-module.exports = vivliostyleConfig;
+});

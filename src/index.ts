@@ -5,6 +5,7 @@ import { create as _create } from './core/create.js';
 import { preview as _preview } from './core/preview.js';
 import type { PublicationManifest as _PublicationManifest } from './schema/publication.schema.js';
 
+export { defineConfig } from './config/define.js';
 export type {
   StructuredDocument,
   StructuredDocumentSection,

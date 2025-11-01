@@ -9,13 +9,15 @@ If you're exploring the available themes, please check the themes repository! ðŸ
 #### vivliostyle.config.js
 
 ```js
-module.exports = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Draft with the preset theme',
   author: 'spring-raining',
   language: 'ja',
-  size: 'JIS-B6',
+  size: 'A5',
   theme: '@vivliostyle/theme-bunko',
   entry: 'bunko.md',
   output: 'bunko.pdf',
-};
+});
 ```
