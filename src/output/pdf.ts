@@ -81,7 +81,7 @@ export async function buildPDF({
     },
     onPageOpen: async (page) => {
       page.on('pageerror', (error) => {
-        Logger.logError(red(error.message));
+        Logger.logError(red((error as Error).message));
       });
 
       page.on('console', (msg) => {
