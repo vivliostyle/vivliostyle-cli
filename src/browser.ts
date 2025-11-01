@@ -62,11 +62,24 @@ async function launchBrowser({
     headless: headless && 'shell',
     acceptInsecureCerts: ignoreHttpsErrors,
     env: { ...process.env, LANG: 'en.UTF-8' },
+    waitForInitialPage: false,
   } satisfies LaunchOptions;
 
   const args: string[] = [];
   // https://github.com/microsoft/playwright/blob/35709546cd4210b7744943ceb22b92c1b126d48d/packages/playwright-core/src/server/chromium/chromium.ts
   if (browserType === 'chrome' || browserType === 'chromium') {
+    args.push(
+      '--disable-field-trial-config',
+      '--disable-back-forward-cache',
+      '--disable-component-update',
+      '--no-default-browser-check',
+      '--disable-features=AcceptCHFrame,AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument',
+      '--enable-features=CDPScreenshotNewSurface',
+      '--no-service-autorun',
+      '--unsafely-disable-devtools-self-xss-warnings',
+      '--edge-skip-compat-layer-relaunch',
+    );
+
     if (process.platform === 'darwin') {
       args.push('--enable-unsafe-swiftshader');
     }
@@ -116,9 +129,10 @@ async function launchBrowser({
     }
     // set Chromium language to English to avoid locale-dependent issues
     args.push('--lang=en');
-    if (process.platform === 'darwin') {
-      args.push('-AppleLanguages', '(en)'); // Fix for issue #570
+    if (!headless && process.platform === 'darwin') {
+      args.push('-AppleLanguages', '(en)');
     }
+    args.push('--no-startup-window');
   }
   // TODO: Investigate appropriate settings on Firefox
 
