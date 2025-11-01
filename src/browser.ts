@@ -3,12 +3,7 @@ import type {
   Browser as SupportedBrowser,
 } from '@puppeteer/browsers';
 import fs from 'node:fs';
-import type {
-  Browser,
-  BrowserContext,
-  LaunchOptions,
-  Page,
-} from 'puppeteer-core';
+import type { Browser, BrowserContext, Page } from 'puppeteer-core';
 import upath from 'upath';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
@@ -57,13 +52,6 @@ async function launchBrowser({
   browserContext: BrowserContext;
 }> {
   const puppeteer = await importNodeModule('puppeteer-core');
-  const commonOptions = {
-    executablePath,
-    headless: headless && 'shell',
-    acceptInsecureCerts: ignoreHttpsErrors,
-    env: { ...process.env, LANG: 'en.UTF-8' },
-    waitForInitialPage: false,
-  } satisfies LaunchOptions;
 
   const args: string[] = [];
   // https://github.com/microsoft/playwright/blob/35709546cd4210b7744943ceb22b92c1b126d48d/packages/playwright-core/src/server/chromium/chromium.ts
@@ -136,7 +124,14 @@ async function launchBrowser({
   }
   // TODO: Investigate appropriate settings on Firefox
 
-  const browser = await puppeteer.launch({ ...commonOptions, args });
+  const browser = await puppeteer.launch({
+    executablePath,
+    browser: browserType === 'chromium' ? 'chrome' : browserType,
+    headless: headless && (browserType === 'firefox' ? true : 'shell'),
+    acceptInsecureCerts: ignoreHttpsErrors,
+    env: { ...process.env, LANG: 'en.UTF-8' },
+    waitForInitialPage: false,
+  });
   registerExitHandler('Closing browser', () => {
     browser.close();
   });
