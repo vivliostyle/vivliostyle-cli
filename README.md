@@ -5,7 +5,11 @@
 
 [npm-url]: https://npmjs.org/package/@vivliostyle/cli
 
-Supercharge your command-line publication workflow.
+<div align="center">
+  <b>Supercharge your command-line publication workflow.</b>
+</div>
+
+# Vivliostyle CLI
 
 ## Install
 
