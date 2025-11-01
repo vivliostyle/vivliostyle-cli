@@ -1,4 +1,5 @@
 import { Command, Option } from 'commander';
+import { versionForDisplay } from '../const.js';
 import { createParserProgram } from './cli-flags.js';
 
 function setupInitParserProgram(): Command {
@@ -18,7 +19,8 @@ function setupInitParserProgram(): Command {
       )
         .choices(['silent', 'info', 'verbose', 'debug'])
         .default('info'),
-    );
+    )
+    .version(versionForDisplay, '-v, --version');
   return program;
 }
 

@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { cliVersion, coreVersion } from './const.js';
-
-const version = `cli: ${cliVersion}
-core: ${coreVersion}`;
+import { versionForDisplay } from './const.js';
 
 const program = new Command();
 program
   .name('vivliostyle')
-  .version(version, '-v, --version')
+  .version(versionForDisplay, '-v, --version')
   .command('init', 'create vivliostyle config', {
     executableFile: 'commands/init',
   })

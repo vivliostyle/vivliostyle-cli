@@ -1,5 +1,6 @@
 import { Command, Option } from 'commander';
 import upath from 'upath';
+import { versionForDisplay } from '../const.js';
 import { createParserProgram } from './cli-flags.js';
 
 function setupPreviewParserProgram(): Command {
@@ -114,6 +115,7 @@ Currently, Firefox and Webkit support preview command only!`,
       '--no-vite-config-file',
       'ignore Vite config file even if it exists',
     )
+    .version(versionForDisplay, '-v, --version')
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp())

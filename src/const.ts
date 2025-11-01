@@ -340,3 +340,6 @@ export const coreVersion = (() => {
   );
   return pkg.version;
 })();
+
+export const versionForDisplay = `cli: ${cliVersion}
+core: ${coreVersion}`;
