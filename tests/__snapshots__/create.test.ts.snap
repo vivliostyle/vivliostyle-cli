@@ -32,14 +32,16 @@ Object {
   }
 }
 ",
-  "/work/project-name/vivliostyle.config.js": "/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+  "/work/project-name/vivliostyle.config.js": "// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: \\"Booook Titleeee\\",
   author: \\"Authoooor\\",
   language: \\"en\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
-};
+});
 ",
 }
 `;
@@ -120,20 +122,24 @@ export default {
 `;
 
 exports[`init command > test the init command 1`] = `
-"/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+"// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: \\"My Book Title\\",
   author: \\"John Doe\\",
   language: \\"en\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
-};
+});
 "
 `;
 
 exports[`init command > test the init command with long options 1`] = `
-"/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+"// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: \\"Sample Document\\",
   author: \\"Author Name <author@example.com>\\",
   language: \\"ja\\",
@@ -141,13 +147,15 @@ module.exports = {
   theme: \\"style.css\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
-};
+});
 "
 `;
 
 exports[`init command > test the init command with short options 1`] = `
-"/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+"// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: \\"Sample Document2\\",
   author: \\"Author Name2 <author@example.com>\\",
   language: \\"pt-BR\\",
@@ -155,6 +163,6 @@ module.exports = {
   theme: \\"theme.css\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
-};
+});
 "
 `;
