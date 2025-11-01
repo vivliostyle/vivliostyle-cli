@@ -1,6 +1,14 @@
-import type { InstalledBrowser } from '@puppeteer/browsers';
+import type {
+  InstalledBrowser,
+  Browser as SupportedBrowser,
+} from '@puppeteer/browsers';
 import fs from 'node:fs';
-import type { Browser, LaunchOptions, Page } from 'puppeteer-core';
+import type {
+  Browser,
+  BrowserContext,
+  LaunchOptions,
+  Page,
+} from 'puppeteer-core';
 import upath from 'upath';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
@@ -14,9 +22,9 @@ import {
 } from './util.js';
 
 const browserEnumMap = {
-  chrome: 'chrome' as typeof import('@puppeteer/browsers').Browser.CHROME,
-  chromium: 'chromium' as typeof import('@puppeteer/browsers').Browser.CHROMIUM,
-  firefox: 'firefox' as typeof import('@puppeteer/browsers').Browser.FIREFOX,
+  chrome: 'chrome' as SupportedBrowser.CHROME,
+  chromium: 'chromium' as SupportedBrowser.CHROMIUM,
+  firefox: 'firefox' as SupportedBrowser.FIREFOX,
 } as const satisfies {
   [key in BrowserType]: import('@puppeteer/browsers').Browser;
 };
@@ -44,43 +52,82 @@ async function launchBrowser({
   noSandbox: boolean;
   disableDevShmUsage: boolean;
   ignoreHttpsErrors: boolean;
-}): Promise<Browser> {
+}): Promise<{
+  browser: Browser;
+  browserContext: BrowserContext;
+}> {
   const puppeteer = await importNodeModule('puppeteer-core');
   const commonOptions = {
     executablePath,
     headless: headless && 'shell',
     acceptInsecureCerts: ignoreHttpsErrors,
     env: { ...process.env, LANG: 'en.UTF-8' },
-    //  proxy, // FIXME
   } satisfies LaunchOptions;
-  const browser = await puppeteer.launch(
-    browserType === 'chrome' || browserType === 'chromium'
-      ? {
-          ...commonOptions,
-          args: [
-            ...(noSandbox ? ['--no-sandbox'] : []),
-            // #579: disable web security to allow cross-origin requests
-            '--disable-web-security',
-            ...(disableDevShmUsage ? ['--disable-dev-shm-usage'] : []),
-            // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
-            ...(headless ? ['--force-device-scale-factor=1'] : []),
-            // #565: Add --disable-gpu option when running on WSL
-            ...(isRunningOnWSL() ? ['--disable-gpu'] : []),
-            // set Chromium language to English to avoid locale-dependent issues
-            '--lang=en',
-            ...(process.platform === 'darwin'
-              ? ['-AppleLanguages', '(en)'] // Fix for issue #570
-              : []),
-          ],
-        }
-      : // TODO: Investigate appropriate settings on Firefox
-        commonOptions,
-  );
-  // const browser = await playwright[browserType].launch(options);
+
+  const args: string[] = [];
+  // https://github.com/microsoft/playwright/blob/35709546cd4210b7744943ceb22b92c1b126d48d/packages/playwright-core/src/server/chromium/chromium.ts
+  if (browserType === 'chrome' || browserType === 'chromium') {
+    if (process.platform === 'darwin') {
+      args.push('--enable-unsafe-swiftshader');
+    }
+    if (noSandbox) {
+      args.push('--no-sandbox');
+    }
+    if (headless) {
+      args.push(
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
+      );
+    }
+    if (proxy?.server) {
+      const proxyURL = new URL(proxy.server);
+      const isSocks = proxyURL.protocol === 'socks5:';
+      if (isSocks) {
+        args.push(
+          `--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`,
+        );
+      }
+      args.push(`--proxy-server=${proxy.server}`);
+      const proxyBypassRules = [];
+      if (proxy.bypass) {
+        proxyBypassRules.push(
+          ...proxy.bypass
+            .split(',')
+            .map((t) => t.trim())
+            .map((t) => (t.startsWith('.') ? '*' + t : t)),
+        );
+      }
+      proxyBypassRules.push('<-loopback>');
+      args.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
+    }
+    // #579: disable web security to allow cross-origin requests
+    args.push('--disable-web-security');
+    if (disableDevShmUsage) {
+      args.push('--disable-dev-shm-usage');
+    }
+    // #357: Set devicePixelRatio=1 otherwise it causes layout issues in HiDPI displays
+    if (headless) {
+      args.push('--force-device-scale-factor=1');
+    }
+    // #565: Add --disable-gpu option when running on WSL
+    if (isRunningOnWSL()) {
+      args.push('--disable-gpu');
+    }
+    // set Chromium language to English to avoid locale-dependent issues
+    args.push('--lang=en');
+    if (process.platform === 'darwin') {
+      args.push('-AppleLanguages', '(en)'); // Fix for issue #570
+    }
+  }
+  // TODO: Investigate appropriate settings on Firefox
+
+  const browser = await puppeteer.launch({ ...commonOptions, args });
   registerExitHandler('Closing browser', () => {
     browser.close();
   });
-  return browser;
+  const [browserContext] = browser.browserContexts();
+  return { browser, browserContext };
 }
 
 interface BuildIdsCache {
@@ -225,7 +272,7 @@ export async function launchPreview({
     }
   }
 
-  const browser = await launchBrowser({
+  const { browser, browserContext } = await launchBrowser({
     browserType: browserConfig.type,
     proxy,
     executablePath: executableBrowser,
@@ -236,7 +283,8 @@ export async function launchPreview({
   });
   await onBrowserOpen?.(browser);
 
-  const page = (await browser.pages())[0] ?? (await browser.newPage());
+  const page =
+    (await browserContext.pages())[0] ?? (await browserContext.newPage());
   await page.setViewport(
     mode === 'build'
       ? // This viewport size is important to detect headless environment in Vivliostyle viewer
@@ -249,6 +297,12 @@ export async function launchPreview({
   // Prevent confirm dialog from being auto-dismissed
   page.on('dialog', () => {});
 
+  if (proxy?.username && proxy?.password) {
+    await page.authenticate({
+      username: proxy.username,
+      password: proxy.password,
+    });
+  }
   await page.goto(url);
 
   return { browser, page };
