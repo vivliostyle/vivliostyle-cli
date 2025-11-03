@@ -45,6 +45,11 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq -r '.version')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Output browser version
+        id: browser
+        run: |
+          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/const.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
+          echo "browser=chrome@$BROWSER_VERSION" >> $GITHUB_OUTPUT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -58,6 +63,7 @@ jobs:
           push: true
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
+            BROWSER=${{ steps.browser.outputs.browser }}
           tags: localhost:5000/vivliostyle/cli:latest
       - name: Inspect
         run: |

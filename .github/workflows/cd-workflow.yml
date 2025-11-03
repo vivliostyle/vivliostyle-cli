@@ -20,6 +20,11 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq -r '.version')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Output browser version
+        id: browser
+        run: |
+          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/const.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
+          echo "browser=chrome@$BROWSER_VERSION" >> $GITHUB_OUTPUT
       - name: Docker meta
         id: docker_meta
         uses: docker/metadata-action@v5
@@ -53,5 +58,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
+            BROWSER=${{ steps.browser.outputs.browser }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}

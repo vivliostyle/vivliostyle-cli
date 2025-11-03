@@ -135,13 +135,15 @@ async function launchBrowser({
     executablePath,
     args,
     browser: browserType === 'chromium' ? 'chrome' : browserType,
-    headless: headless && (browserType === 'firefox' ? true : 'shell'),
+    headless,
     acceptInsecureCerts: ignoreHttpsErrors,
-    env: { ...process.env, LANG: 'en.UTF-8' },
     waitForInitialPage: false,
   } satisfies LaunchOptions;
   Logger.debug('launchOptions %O', launchOptions);
-  const browser = await puppeteer.launch(launchOptions);
+  const browser = await puppeteer.launch({
+    ...launchOptions,
+    env: { ...process.env, LANG: 'en.UTF-8' },
+  });
   registerExitHandler('Closing browser', () => {
     browser.close();
   });
@@ -238,11 +240,11 @@ export async function getExecutableBrowserPath({
   });
 }
 
-export function checkBrowserAvailability(path: string): boolean {
+function checkBrowserAvailability(path: string): boolean {
   return fs.existsSync(path);
 }
 
-export async function downloadBrowser({
+async function downloadBrowser({
   type,
   tag,
 }: ResolvedTaskConfig['browser']): Promise<string> {
@@ -295,6 +297,15 @@ export async function launchPreview({
         `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
       );
     }
+  } else if (
+    detectBrowserPlatform() === 'linux_arm' &&
+    (browserConfig.type === 'chrome' || browserConfig.type === 'chromium')
+  ) {
+    // https://github.com/puppeteer/puppeteer/issues/7740
+    Logger.logInfo(
+      'The official Chrome/Chromium binaries are not available for ARM64 Linux. Using the system-installed Chromium browser instead.',
+    );
+    executableBrowser = '/usr/bin/chromium';
   } else {
     executableBrowser = await getExecutableBrowserPath(browserConfig);
     Logger.debug(`Using default browser: ${executableBrowser}`);
