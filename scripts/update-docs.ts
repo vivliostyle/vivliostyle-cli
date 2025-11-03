@@ -1,8 +1,7 @@
+import { execa } from 'execa';
 import { slug } from 'github-slugger';
-import { exec } from 'node:child_process';
 import * as fs from 'node:fs';
 import path from 'node:path';
-import { promisify } from 'node:util';
 import prettier from 'prettier';
 import { JSONOutput } from 'typedoc';
 import * as v from 'valibot';
@@ -237,12 +236,21 @@ async function buildConfigDocs(): Promise<string> {
 
 async function buildApiDocs() {
   const [tmp, removeTmpDir] = await useTmpDirectory();
-  const execAsync = promisify(exec);
-  const { stderr } = await execAsync(
-    `npx typedoc --logLevel Error --out ${tmp} --json ${path.join(tmp, 'api.json')}`,
+  const proc = await execa(
+    'npx',
+    [
+      'typedoc',
+      '--logLevel',
+      'Error',
+      '--out',
+      tmp,
+      '--json',
+      path.join(tmp, 'api.json'),
+    ],
+    { stdio: 'inherit' },
   );
-  if (stderr) {
-    throw new Error(stderr);
+  if (proc.exitCode !== 0) {
+    throw new Error(`typedoc process exited with code ${proc.exitCode}`);
   }
 
   const json = JSON.parse(

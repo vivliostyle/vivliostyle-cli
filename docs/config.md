@@ -100,9 +100,8 @@ type VivliostyleConfigSchema =
   - `viewerParam`: string  
     Parameters for the Vivliostyle viewer (e.g., `allowScripts=false&pixelRatio=16`).
 
-  - `browser`: "chromium" | "firefox" | "webkit"  
-    EXPERIMENTAL SUPPORT: Specifies the browser type for launching the Vivliostyle viewer.
-    Currently, Firefox and Webkit support only the preview command.
+  - `browser`: string  
+    Specify a browser type and version to launch the Vivliostyle viewer.
 
   - `base`: string  
     Base path of the served documents. (default: `/vivliostyle`)
@@ -175,10 +174,7 @@ type BuildTask = {
   http?: boolean;
   viewer?: string;
   viewerParam?: string;
-  browser?:
-    | "chromium"
-    | "firefox"
-    | "webkit";
+  browser?: string;
   base?: string;
   server?: ServerConfig;
   static?: {
