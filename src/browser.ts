@@ -3,13 +3,20 @@ import type {
   Browser as SupportedBrowser,
 } from '@puppeteer/browsers';
 import fs from 'node:fs';
-import type { Browser, BrowserContext, Page } from 'puppeteer-core';
+import type {
+  Browser,
+  BrowserContext,
+  LaunchOptions,
+  Page,
+} from 'puppeteer-core';
 import upath from 'upath';
 import { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
+import { DEFAULT_BROWSER_VERSIONS } from './const.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
 import {
+  detectBrowserPlatform,
   getCacheDir,
   isInContainer,
   isRunningOnWSL,
@@ -21,7 +28,7 @@ const browserEnumMap = {
   chromium: 'chromium' as SupportedBrowser.CHROMIUM,
   firefox: 'firefox' as SupportedBrowser.FIREFOX,
 } as const satisfies {
-  [key in BrowserType]: import('@puppeteer/browsers').Browser;
+  [key in BrowserType]: SupportedBrowser;
 };
 
 async function launchBrowser({
@@ -124,19 +131,28 @@ async function launchBrowser({
   }
   // TODO: Investigate appropriate settings on Firefox
 
-  const browser = await puppeteer.launch({
+  const launchOptions = {
     executablePath,
     browser: browserType === 'chromium' ? 'chrome' : browserType,
     headless: headless && (browserType === 'firefox' ? true : 'shell'),
     acceptInsecureCerts: ignoreHttpsErrors,
     env: { ...process.env, LANG: 'en.UTF-8' },
     waitForInitialPage: false,
-  });
+  } satisfies LaunchOptions;
+  Logger.debug('launchOptions %O', launchOptions);
+  const browser = await puppeteer.launch(launchOptions);
   registerExitHandler('Closing browser', () => {
     browser.close();
   });
   const [browserContext] = browser.browserContexts();
   return { browser, browserContext };
+}
+
+function getPuppeteerCacheDir() {
+  if (isInContainer()) {
+    return '/opt/puppeteer';
+  }
+  return upath.join(getCacheDir(), 'browsers');
 }
 
 interface BuildIdsCache {
@@ -154,8 +170,7 @@ async function resolveBuildId({
   // Return cached data to reduce network requests to browser registry
   // Cache is valid for 24 hours
   const cacheDataFilename = upath.join(
-    getCacheDir(),
-    'browsers',
+    getPuppeteerCacheDir(),
     'build-ids.json',
   );
   let cacheData: BuildIdsCache;
@@ -171,7 +186,7 @@ async function resolveBuildId({
     return cacheData.buildIds[type][tag];
   }
 
-  const platform = browsers.detectBrowserPlatform();
+  const platform = detectBrowserPlatform();
   if (!platform) {
     throw new Error('The current platform is not supported.');
   }
@@ -188,7 +203,7 @@ async function resolveBuildId({
 
 async function cleanupOutdatedBrowsers() {
   for (const browser of Object.values(browserEnumMap)) {
-    const browsersDir = upath.join(getCacheDir(), 'browsers', browser);
+    const browsersDir = upath.join(getPuppeteerCacheDir(), browser);
     if (!fs.existsSync(browsersDir)) {
       continue;
     }
@@ -216,7 +231,7 @@ export async function getExecutableBrowserPath({
   const browsers = await importNodeModule('@puppeteer/browsers');
   const buildId = await resolveBuildId({ type, tag, browsers });
   return browsers.computeExecutablePath({
-    cacheDir: upath.join(getCacheDir(), 'browsers'),
+    cacheDir: getPuppeteerCacheDir(),
     browser: browserEnumMap[type],
     buildId,
   });
@@ -233,12 +248,20 @@ export async function downloadBrowser({
   const browsers = await importNodeModule('@puppeteer/browsers');
   const buildId = await resolveBuildId({ type, tag, browsers });
   let installedBrowser: InstalledBrowser | undefined;
+
+  if (isInContainer()) {
+    const defaultBrowserVersion =
+      DEFAULT_BROWSER_VERSIONS['chrome'][detectBrowserPlatform()!];
+    Logger.logWarn(
+      `The container you are using already includes a browser (chrome@${defaultBrowserVersion}); however, the specified browser ${type}@${tag} was not found. Downloading the browser inside the container may take a long time. Consider using a container image that includes the required browser version.`,
+    );
+  }
   {
     using _ = Logger.suspendLogging(
       'Rendering browser is not installed yet. Downloading now.',
     );
     installedBrowser = await browsers.install({
-      cacheDir: upath.join(getCacheDir(), 'browsers'),
+      cacheDir: getPuppeteerCacheDir(),
       browser: browserEnumMap[type],
       buildId,
       downloadProgressCallback: 'default',

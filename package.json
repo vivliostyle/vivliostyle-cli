@@ -10,6 +10,7 @@
     "build:typecheck": "tsc --noEmit",
     "build:docs": "tsx scripts/update-docs.ts",
     "generate:schema": "json2ts -i schemas/pub-manifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pub-manifest",
+    "generate:browser-versions": "tsx scripts/update-default-browser-versions.ts",
     "clean": "shx rm -rf dist tmp",
     "dev": "tsup --watch src",
     "release": "release-it",

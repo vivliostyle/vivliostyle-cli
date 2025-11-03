@@ -32,6 +32,16 @@ export const CONTAINER_ROOT_DIR = '/data';
 // https://docs.docker.com/desktop/features/networking/#use-cases-and-workarounds
 export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 
+// Don't write by hand! Instead, run `npm run generate:browser-versions` to update.
+// START DEFAULT_BROWSER_VERSIONS
+// prettier-ignore
+export const DEFAULT_BROWSER_VERSIONS = {
+  chrome: {"linux":"142.0.7444.59","linux_arm":"142.0.7444.59","mac":"142.0.7444.59","mac_arm":"142.0.7444.59","win32":"142.0.7444.59","win64":"142.0.7444.59"},
+  chromium: {"linux":"1539173","linux_arm":"1539171","mac":"1539171","mac_arm":"1539171","win32":"1539171","win64":"1539168"},
+  firefox: {"linux":"stable_144.0.2","linux_arm":"stable_144.0.2","mac":"stable_144.0.2","mac_arm":"stable_144.0.2","win32":"stable_144.0.2","win64":"stable_144.0.2"},
+} as const;
+// END DEFAULT_BROWSER_VERSIONS
+
 export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
 export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {
