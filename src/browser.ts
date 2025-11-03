@@ -133,6 +133,7 @@ async function launchBrowser({
 
   const launchOptions = {
     executablePath,
+    args,
     browser: browserType === 'chromium' ? 'chrome' : browserType,
     headless: headless && (browserType === 'firefox' ? true : 'shell'),
     acceptInsecureCerts: ignoreHttpsErrors,
