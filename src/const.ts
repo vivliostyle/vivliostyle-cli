@@ -33,8 +33,8 @@ export const CONTAINER_ROOT_DIR = '/data';
 export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 
 export const DEFAULT_CONFIG_FILENAME = 'vivliostyle.config.js';
-export const DEFAULT_PROJECT_TITLE = 'My Book Title';
-export const DEFAULT_PROJECT_AUTHOR = 'John Doe';
+export const DEFAULT_PROJECT_TITLE = 'My Title';
+export const DEFAULT_PROJECT_AUTHOR = 'My Name';
 
 // TODO: Remove `#feat/create-command` after confirmation
 export const TEMPLATE_SETTINGS = [
