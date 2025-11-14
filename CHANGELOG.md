@@ -1,5 +1,11 @@
 # Changelog
 
+# [9.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.2...v9.8.0) (2025-11-14)
+
+### Features
+
+- Update Vivliostyle.js to 2.36.0: target-text(), Improve page/column breaking ([7d00e71](https://github.com/vivliostyle/vivliostyle-cli/commit/7d00e71bceb25c505818d34d9378a546f0095572))
+
 ## [9.7.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.1...v9.7.2) (2025-10-22)
 
 ### Features
