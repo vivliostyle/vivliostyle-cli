@@ -43,6 +43,7 @@ import {
   cwd as defaultCwd,
   getOsLocale,
   PackageManager,
+  registerExitHandler,
   toTitleCase,
   whichPm,
 } from '../util.js';
@@ -560,7 +561,33 @@ async function setupTemplate({
       await copy(upath.join(template, file), targetPath);
     }
   } else {
-    await downloadTemplate(template, { dir: projectPath, cwd });
+    // `downloadTemplate` deletes the destination directory for rollback purposes
+    // when template download fails. To prevent this behavior from deleting
+    // the current directory, create a temporary directory and copy the template
+    // to its final location.
+    // https://github.com/bluwy/giget-core/blob/2247658f4cc3240e8dc3819c782355fe4b535214/src/utils.js#L195
+    const tmpDownloadDir = upath.join(
+      cwd,
+      projectPath,
+      `.vs-template-${Date.now()}`,
+    );
+    Logger.debug('setupTemplate > tmpDownloadDir %s', tmpDownloadDir);
+    const cleanupExitHandler = registerExitHandler(
+      `Removing the temporary directory: ${tmpDownloadDir}`,
+      () => {
+        fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
+      },
+    );
+
+    await downloadTemplate(template, { dir: tmpDownloadDir });
+    for (const entry of fs.readdirSync(tmpDownloadDir)) {
+      fs.renameSync(
+        upath.join(tmpDownloadDir, entry),
+        upath.join(cwd, projectPath, entry),
+      );
+    }
+    fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
+    cleanupExitHandler();
   }
   for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
     const targetPath = upath.join(cwd, projectPath, file);
