@@ -1,11 +1,12 @@
 import { downloadTemplate } from '@bluwy/giget-core';
+import { copy } from 'fs-extra/esm';
 import { isUtf8 } from 'node:buffer';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import * as v from 'valibot';
-import { cyan, gray, green, yellow } from 'yoctocolors';
+import { cyan, dim, gray, green, yellow } from 'yoctocolors';
 import {
   ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfigWithoutChecks,
@@ -24,6 +25,7 @@ import {
 import { format, TemplateVariable } from '../create-template.js';
 import {
   askQuestion,
+  interactiveLogInfo,
   interactiveLogLoading,
   interactiveLogOutro,
   interactiveLogWarn,
@@ -36,6 +38,7 @@ import {
   listVivliostyleThemes,
   PackageJson,
 } from '../npm.js';
+import { GlobMatcher } from '../processor/asset.js';
 import {
   cwd as defaultCwd,
   getOsLocale,
@@ -66,6 +69,24 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
   let installDependencies: boolean | undefined;
+  let useLocalTemplate = false;
+
+  if (template && !/^([\w-.]+):/.test(template)) {
+    const absTemplatePath = upath.resolve(cwd, template);
+    useLocalTemplate =
+      fs.existsSync(upath.resolve(cwd, template)) &&
+      fs.statSync(upath.resolve(cwd, template)).isDirectory();
+    if (useLocalTemplate) {
+      template = absTemplatePath;
+      interactiveLogInfo(
+        `Using the specified local template directory\n${dim(upath.relative(cwd, absTemplatePath) || '.')}`,
+      );
+    } else {
+      interactiveLogWarn(
+        `The specified theme ${green(template)} was not found as a local directory. Proceeding to fetch it from GitHub repository.`,
+      );
+    }
+  }
 
   if (!projectPath) {
     ({ projectPath } = await askProjectPath());
@@ -108,7 +129,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       }
     }
     if (!theme) {
-      ({ theme, themePackage } = await askTheme({ presetTemplate, fetch }));
+      ({ theme, themePackage } = await askTheme({
+        presetTemplate,
+        template,
+        fetch,
+      }));
     }
     if (!template) {
       ({ template, extraTemplateVariables } = await askThemeTemplate(
@@ -151,7 +176,9 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     });
   } else {
     interactiveLogOutro('All configurations are set! Creating your project...');
-    using _ = Logger.startLogging('Downloading a template');
+    using _ = Logger.startLogging(
+      useLocalTemplate ? 'Copying a local template' : 'Downloading a template',
+    );
     await setupTemplate({
       projectPath,
       cwd,
@@ -160,6 +187,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
         ...inlineConfig,
         ...explicitTemplateVariables,
       },
+      useLocalTemplate,
     });
     if (installDependencies) {
       const pm = whichPm();
@@ -508,12 +536,32 @@ async function setupTemplate({
   projectPath,
   template,
   templateVariables,
+  useLocalTemplate,
 }: Required<
   Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath' | 'template'>
 > & {
   templateVariables: Record<string, unknown>;
+  useLocalTemplate?: boolean;
 }) {
-  await downloadTemplate(template, { dir: projectPath, cwd });
+  if (useLocalTemplate) {
+    const matcher = new GlobMatcher([
+      {
+        patterns: ['**'],
+        ignore: ['**/node_modules/**', '**/.git/**'],
+        dot: true,
+        cwd: template,
+      },
+    ]);
+    const files = await matcher.glob({ followSymbolicLinks: true });
+    Logger.debug('setupTemplate > files from local template %O', files);
+    for (const file of files) {
+      const targetPath = upath.join(cwd, projectPath, file);
+      fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
+      await copy(upath.join(template, file), targetPath);
+    }
+  } else {
+    await downloadTemplate(template, { dir: projectPath, cwd });
+  }
   for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
     const targetPath = upath.join(cwd, projectPath, file);
     if (fs.existsSync(targetPath)) {

@@ -425,12 +425,21 @@ export async function interactiveLogLoading<T>(
   return result;
 }
 
+export function interactiveLogInfo(message: string) {
+  if (import.meta.env?.VITEST) {
+    return;
+  }
+  Logger.stdout.write(
+    `${blueBright(`${promptStateSymbol.submit}─`)} ${message.split('\n').join(`\n${blueBright('║')}  `)}\n`,
+  );
+}
+
 export function interactiveLogWarn(message: string) {
   if (import.meta.env?.VITEST) {
     return;
   }
   Logger.stdout.write(
-    `${yellowBright(promptStateSymbol.error)}  ${yellowBright(message)}\n`,
+    `${yellowBright(`${promptStateSymbol.error}─`)} ${yellowBright(message.split('\n').join(`\n${yellowBright('║')}  `))}\n`,
   );
 }
 

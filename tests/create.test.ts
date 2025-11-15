@@ -162,6 +162,27 @@ describe('create command', () => {
     );
   });
 
+  it('crate project from a local template', async () => {
+    mockedClackModule.answers.mockReturnValue({
+      projectPath: 'project-name',
+      title: 'Booook titleeee',
+      author: 'Authoooor',
+      language: 'en',
+      presetTemplate: 'minimal',
+      theme: THEME_ANSWER_NOT_USE,
+      installDependencies: false,
+    });
+    vol.fromJSON({
+      '/work/local-template/file.md': '# {{proper title}}',
+    });
+
+    await runCommand(['create', '--template', 'local-template'], {
+      cwd: '/work',
+    });
+    const files = vol.toJSON();
+    expect(files['/work/project-name/file.md']).toMatch('# Booook Titleeee');
+  });
+
   it('avoid overwrite', async () => {
     vol.fromJSON({
       '/work/out/touch': '',
