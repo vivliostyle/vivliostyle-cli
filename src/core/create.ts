@@ -586,8 +586,7 @@ async function setupTemplate({
         upath.join(cwd, projectPath, entry),
       );
     }
-    fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
-    cleanupExitHandler();
+    cleanupExitHandler()?.();
   }
   for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
     const targetPath = upath.join(cwd, projectPath, file);

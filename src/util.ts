@@ -57,7 +57,7 @@ export const registerExitHandler = (
   return () => {
     const index = beforeExitHandlers.indexOf(callback);
     if (index !== -1) {
-      beforeExitHandlers.splice(index, 1);
+      return beforeExitHandlers.splice(index, 1)[0];
     }
   };
 };
