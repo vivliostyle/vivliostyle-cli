@@ -20,7 +20,6 @@ import {
   languages,
   TEMPLATE_DEFAULT_FILES,
   TEMPLATE_SETTINGS,
-  VIVLIOSTYLE_THEME_CATEGORY_RECORD,
 } from '../const.js';
 import { format, TemplateVariable } from '../create-template.js';
 import {
@@ -294,7 +293,9 @@ async function askPresetTemplate(): Promise<{
 const TRUNCATE_LENGTH = 60;
 const truncateString = (str: string) => {
   const trimmed = str.replace(/\s+/g, ' ');
-  return trimmed.length > TRUNCATE_LENGTH ? trimmed.slice(0, TRUNCATE_LENGTH) + '…' : trimmed;
+  return trimmed.length > TRUNCATE_LENGTH
+    ? trimmed.slice(0, TRUNCATE_LENGTH) + '…'
+    : trimmed;
 };
 
 export const THEME_ANSWER_NOT_USE = 'Not use Vivliostyle theme';
@@ -312,11 +313,6 @@ async function askTheme({
     themePackage: VivliostylePackageJson | undefined;
   }
 > {
-  const recommendedThemes = (
-    presetTemplate?.category
-      ? VIVLIOSTYLE_THEME_CATEGORY_RECORD[presetTemplate.category]
-      : []
-  ) as string[];
   const useCommunityThemes = !presetTemplate && !template;
   const themePackages = await interactiveLogLoading(
     'Fetching a list of Vivliostyle themes...',
@@ -329,16 +325,6 @@ async function askTheme({
         );
       }
       themes.sort((a, b) => {
-        // Prioritize recommended themes for the selected template
-        const aIsRecommended = recommendedThemes.includes(a.package.name)
-          ? 1
-          : 0;
-        const bIsRecommended = recommendedThemes.includes(b.package.name)
-          ? 1
-          : 0;
-        if (aIsRecommended ^ bIsRecommended) {
-          return bIsRecommended - aIsRecommended;
-        }
         // Prioritize packages in the @vivliostyle namespace
         const aIsOfficial = a.package.name.startsWith('@vivliostyle/') ? 1 : 0;
         const bIsOfficial = b.package.name.startsWith('@vivliostyle/') ? 1 : 0;
@@ -390,7 +376,7 @@ async function askTheme({
             : []),
           { label: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
           ...themePackages.map((pkg) => ({
-            label: `${pkg.name}${recommendedThemes.includes(pkg.name) ? ' (Recommended)' : ''}`,
+            label: pkg.name,
             value: pkg.name,
             hint: truncateString(pkg.description || ''),
           })),

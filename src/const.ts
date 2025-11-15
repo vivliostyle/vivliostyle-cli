@@ -44,7 +44,6 @@ export const TEMPLATE_SETTINGS = [
     hint: 'Use a minimal template with empty content',
     template:
       'gh:vivliostyle/vivliostyle-cli/templates/minimal#feat/create-command',
-    category: undefined,
   },
   {
     value: 'basic',
@@ -52,49 +51,8 @@ export const TEMPLATE_SETTINGS = [
     hint: 'Use a basic template with starter content',
     template:
       'gh:vivliostyle/vivliostyle-cli/templates/basic#feat/create-command',
-    category: 'misc',
-  },
-  {
-    value: 'documentation',
-    label: 'Documentation',
-    hint: 'Sample content for technical documentation, manual, etc.',
-    template:
-      'gh:vivliostyle/vivliostyle-cli/templates/documentation#feat/create-command',
-    category: 'documentation',
-  },
-  {
-    value: 'novel',
-    label: 'Novel',
-    hint: 'Sample content for novel, essay, etc.',
-    template:
-      'gh:vivliostyle/vivliostyle-cli/templates/novel#feat/create-command',
-    category: 'novel',
-  },
-  {
-    value: 'academic',
-    label: 'Academic',
-    hint: 'Sample content for academic paper, thesis, etc.',
-    template:
-      'gh:vivliostyle/vivliostyle-cli/templates/academic#feat/create-command',
-    category: 'academic',
-  },
-  {
-    value: 'magazine',
-    label: 'Magazine',
-    hint: 'Sample content for magazine, booklet, etc.',
-    template:
-      'gh:vivliostyle/vivliostyle-cli/templates/magazine#feat/create-command',
-    category: 'magazine',
   },
 ] as const;
-
-export const VIVLIOSTYLE_THEME_CATEGORY_RECORD = {
-  misc: ['@vivliostyle/theme-base'],
-  documentation: ['@vivliostyle/theme-techbook'],
-  novel: ['@vivliostyle/theme-gutenberg', '@vivliostyle/theme-bunko'],
-  academic: ['@vivliostyle/theme-academic'],
-  magazine: [],
-} as const;
 
 export const TEMPLATE_DEFAULT_FILES = {
   'package.json': /* json */ `{
