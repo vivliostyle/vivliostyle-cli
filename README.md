@@ -58,7 +58,7 @@ Options:
   -l, --language <language>     language
   -s, --size <size>             paper size
   -T, --theme <theme>           theme
-  --template <template>         Template source in format of `[provider]:repo[/subpath][#ref]`
+  --template <template>         Template source in the format of `[provider]:repo[/subpath][#ref]` or as a local directory to copy from.
   --create-config-file-only     Create a Vivliostyle config file without generating project template files.
   --proxy-server <proxyServer>  HTTP/SOCK proxy server url
   --proxy-bypass <proxyBypass>  optional comma-separated domains to bypass proxy

@@ -15,7 +15,7 @@ function setupCreateParserProgram(): Command {
     .option('-T, --theme <theme>', 'theme')
     .option(
       '--template <template>',
-      `Template source in format of \`[provider]:repo[/subpath][#ref]\``,
+      `Template source in the format of \`[provider]:repo[/subpath][#ref]\` or as a local directory to copy from.`,
     )
     .option(
       '--create-config-file-only',

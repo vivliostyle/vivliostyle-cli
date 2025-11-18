@@ -1446,8 +1446,8 @@ export const VivliostyleTemplateMetadata = v.pipe(
       source: v.pipe(
         ValidString,
         v.description($`
-          Template source in format of \`[provider]:repo[/subpath][#ref]\`.
-          See the [giget](https://github.com/unjs/giget) documentation for more details.
+          Template source in the format of \`[provider]:repo[/subpath][#ref]\` or as a local directory to copy from.
+          See the [giget](https://github.com/unjs/giget) documentation for more details of the source format.
         `),
       ),
       prompt: v.pipe(
