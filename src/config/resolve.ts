@@ -23,6 +23,7 @@ import {
   CONTAINER_URL,
   COVER_HTML_FILENAME,
   COVER_HTML_IMAGE_ALT,
+  DEFAULT_BROWSER_VERSIONS,
   EPUB_OUTPUT_VERSION,
   MANIFEST_FILENAME,
   TOC_FILENAME,
@@ -32,6 +33,7 @@ import { Logger } from '../logger.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import {
   cwd as defaultCwd,
+  detectBrowserPlatform,
   getEpubRootDir,
   isInContainer,
   isValidUri,
@@ -248,6 +250,7 @@ export type ResolvedTaskConfig = {
   sandbox: boolean;
   browser: {
     type: BrowserType;
+    tag: string;
     executablePath: string | undefined;
   };
   proxy:
@@ -515,10 +518,17 @@ export function resolveTaskConfig(
 
   const timeout = config.timeout ?? 300_000; // 5 minutes
   const sandbox = options.sandbox ?? false;
-  const browser = {
-    type: config.browser ?? 'chromium',
-    executablePath: options.executableBrowser,
-  };
+  const browser = (() => {
+    const type = config.browser?.type ?? 'chrome';
+    const platform = detectBrowserPlatform();
+    return {
+      type,
+      tag:
+        config.browser?.tag ??
+        (platform ? DEFAULT_BROWSER_VERSIONS[type][platform] : 'latest'),
+      executablePath: options.executableBrowser,
+    };
+  })();
   const proxyServer =
     options.proxyServer ?? process.env.HTTP_PROXY ?? undefined;
   const proxy = proxyServer

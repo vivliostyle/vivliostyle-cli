@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
-import type { Page } from 'playwright-core';
+import type { Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
-import { getFullBrowserName, launchPreview } from '../browser.js';
+import { launchPreview } from '../browser.js';
 import {
   ManuscriptEntry,
   PdfOutput,
@@ -81,7 +81,7 @@ export async function buildPDF({
     },
     onPageOpen: async (page) => {
       page.on('pageerror', (error) => {
-        Logger.logError(red(error.message));
+        Logger.logError(red((error as Error).message));
       });
 
       page.on('console', (msg) => {
@@ -125,21 +125,19 @@ export async function buildPDF({
     },
   });
 
-  const browserName = getFullBrowserName(config.browser.type);
-  const browserVersion = `${browserName}/${await browser.version()}`;
+  const browserVersion = await browser.version();
   Logger.debug(green('success'), `browserVersion=${browserVersion}`);
 
   let remainTime = config.timeout;
   const startTime = Date.now();
 
-  await page.waitForLoadState('networkidle');
+  await page.waitForNetworkIdle();
   await page.waitForFunction(() => !!window.coreViewer);
 
-  await page.emulateMedia({ media: 'print' });
+  await page.emulateMediaType('print');
   await page.waitForFunction(
     /* v8 ignore next */
     () => window.coreViewer.readyState === 'complete',
-    undefined,
     { polling: 1000 },
   );
 
