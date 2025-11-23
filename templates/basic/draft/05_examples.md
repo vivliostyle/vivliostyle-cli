@@ -79,13 +79,9 @@ Present experimental results in clear tables:
 
 ### Citations and References
 
-Use footnotes for citations and references[^citation1]. This keeps the main text readable while providing detailed source information.
+Use footnotes for citations and references<span class="footnote">Smith, J. (2023). _Modern Publishing Methods_. Academic Press, pp. 123-145.</span>. This keeps the main text readable while providing detailed source information.
 
-Academic writing often requires extensive annotations[^citation2] and cross-references to other sections of the document.
-
-[^citation1]: Smith, J. (2023). _Modern Publishing Methods_. Academic Press, pp. 123-145.
-
-[^citation2]: Johnson, M., & Lee, K. (2024). "Digital Typography in Academic Publishing." _Journal of Scholarly Communication_, 15(2), 67-89.
+Academic writing often requires extensive annotations<span class="footnote">Johnson, M., & Lee, K. (2024). "Digital Typography in Academic Publishing." _Journal of Scholarly Communication_, 15(2), 67-89.</span> and cross-references to other sections of the document.
 
 ## Example 3: Multilingual Content
 
@@ -105,55 +101,9 @@ Vivliostyle supports multiple languages and writing systems.
 
 Documents can seamlessly mix multiple languages:
 
-The term "typography" (活字組版, _かつじそはん_) refers to the art and technique of arranging type. In French, this is called _typographie_, and in German, _Typografie_.
+The term "typography" (活字組版, _かつじくみはん_) refers to the art and technique of arranging type.
 
-### Right-to-Left Text
-
-Vivliostyle handles right-to-left scripts correctly when properly configured.
-
-## Example 4: Data Visualization
-
-While Vivliostyle focuses on typography, you can include data visualizations.
-
-### ASCII Art Diagrams
-
-```
-┌─────────────┐
-│   Browser   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Server    │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Database   │
-└─────────────┘
-```
-
-### Flowcharts with Text
-
-```
-Start
-  │
-  ├─→ Input Data
-  │      │
-  │      ▼
-  │   Process
-  │      │
-  │      ▼
-  │   Validate
-  │      │
-  ├──────┤
-  │      ▼
-  │   Output
-  │      │
-  └─────→ End
-```
-
-## Example 5: Creative Writing
+## Example 4: Creative Writing
 
 Vivliostyle works well for creative content like novels and essays.
 
@@ -191,7 +141,7 @@ Our protagonist stood at the crossroads, uncertain which path to take.
 
 ---
 
-## Example 6: Complex Documents
+## Example 5: Complex Documents
 
 Combine multiple features for sophisticated layouts.
 
@@ -219,9 +169,9 @@ Combine multiple features for sophisticated layouts.
 
 ### Cross-References
 
-When writing longer documents, you can reference other sections. For example, see the VFM syntax guide (Chapter 3) for details on mathematical expressions, or refer to the features chapter (Chapter 4) for theme configuration.
+When writing longer documents, you can reference other sections. For example, see the VFM syntax guide (<a href="./03_vfm-guide.html" data-ref="sec"></a>) for details on mathematical expressions, or refer to the features chapter (Chapter 4) for theme configuration.
 
-## Example 7: Mixed Media
+## Example 6: Mixed Media
 
 ### Code with Explanation
 
@@ -255,11 +205,9 @@ You can combine various elements in a single document:
 - **Tables** for structured data
 - **Code blocks** for technical examples
 - **Math** for equations: $f(x) = ax^2 + bx + c$
-- **Footnotes** for additional context[^example]
+- **Footnotes** for additional context<span class="footnote">This footnote provides supplementary information without interrupting the main text flow.</span>
 - **Images** for visual content
 - **Blockquotes** for emphasis
-
-[^example]: This footnote provides supplementary information without interrupting the main text flow.
 
 This flexibility makes Vivliostyle suitable for virtually any type of publication.
 

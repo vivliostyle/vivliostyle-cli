@@ -460,6 +460,6 @@ Choose the format(s) that best serve your content and audience. Many publishers 
 
 For more information:
 
-- [Vivliostyle CLI Documentation](https://github.com/vivliostyle/vivliostyle-cli)
+- [Vivliostyle CLI Documentation](https://github.com/vivliostyle/vivliostyle-cli#readme)
 - [EPUB Specifications](https://www.w3.org/publishing/epub3/)
 - [W3C Publication Manifest](https://www.w3.org/TR/pub-manifest/)

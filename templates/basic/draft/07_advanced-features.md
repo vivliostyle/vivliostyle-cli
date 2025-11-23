@@ -40,30 +40,25 @@ export default {
   language: 'en',
   size: 'A5',
   theme: '@vivliostyle/theme-techbook',
-
   entry: [
     // Front matter
     { path: 'front-matter/cover.md', theme: 'cover.css' },
     'front-matter/preface.md',
     'front-matter/acknowledgments.md',
-
     // Main content
     { rel: 'contents' }, // Auto-generated TOC
     'chapters/01-introduction.md',
     'chapters/02-getting-started.md',
     'chapters/03-advanced-topics.md',
     'chapters/04-conclusion.md',
-
     // Back matter
     'back-matter/appendix.md',
     'back-matter/glossary.md',
     'back-matter/references.md',
   ],
-
   toc: {
     title: 'Table of Contents',
   },
-
   output: [
     'book.pdf',
     {
@@ -97,24 +92,21 @@ Customize the appearance in `custom.css`:
 ```css
 /* Style the TOC container */
 nav[role='doc-toc'] {
-  font-size: 0.95em;
   line-height: 1.8;
 }
 
-/* Style TOC entries by level */
-nav[role='doc-toc'] ul {
-  list-style: none;
+nav[role='doc-toc'] > ol {
   padding-left: 0;
 }
 
-nav[role='doc-toc'] ul ul {
-  padding-left: 1.5em;
+nav[role='doc-toc'] li[data-section-level='1'] {
+  font-weight: 600;
+  font-size: 1.1em;
 }
 
-/* Add dots between title and page number */
-nav[role='doc-toc'] a::after {
-  content: leader('.') target-counter(attr(href), page);
-  float: right;
+nav[role='doc-toc'] li[data-section-level='2'] {
+  font-weight: initial;
+  font-size: 0.8em;
 }
 ```
 
@@ -194,11 +186,9 @@ Style it in `custom.css`:
 Reference figures automatically:
 
 ```md
-See Figure [](#chart-sales) for details.
+See [](#chart-sales){data-ref="fig"} for details.
 
-![Sales Growth Chart](./images/sales-chart.png){#chart-sales}
-
-<figcaption>Figure: Annual sales growth 2020-2024</figcaption>
+![Annual sales growth 2020-2024](./images/sales-chart.png){#chart-sales}
 ```
 
 ### Table References
@@ -206,9 +196,9 @@ See Figure [](#chart-sales) for details.
 Similarly, reference tables:
 
 ```md
-The data in Table [](#results-summary) shows...
+The data in [](#results-summary){data-ref="tbl"} shows...
 
-<div id="results-summary">
+<figure id="results-summary">
 
 | Year | Revenue | Growth |
 | ---- | ------- | ------ |
@@ -216,7 +206,7 @@ The data in Table [](#results-summary) shows...
 | 2023 | $1.5M   | 25%    |
 | 2024 | $2.1M   | 40%    |
 
-</div>
+</figure>
 ```
 
 ### Section Cross-References
@@ -224,7 +214,7 @@ The data in Table [](#results-summary) shows...
 Reference other sections:
 
 ```md
-For more information, see Section [](#advanced-techniques).
+For more information, see Section [](#advanced-techniques){data-ref="sec"}.
 
 ## Advanced Techniques {#advanced-techniques}
 ```
@@ -252,12 +242,8 @@ Use inline styles or classes:
 ### Figure with Caption
 
 ```md
-![Complex System Architecture](./architecture.png)
-
-<figcaption>
-Figure 1: The microservices architecture showing communication
-between services and data flow patterns.
-</figcaption>
+![The microservices architecture showing communication
+between services and data flow patterns.](./architecture.png)
 ```
 
 ## Advanced Typography
@@ -320,22 +306,6 @@ Change the syntax highlighting theme in `custom.css`:
 ```css
 /* Use Okaidia theme for code blocks */
 @import url('./node_modules/@vivliostyle/theme-base/css/prism/theme-okaidia.css');
-```
-
-### Line Highlighting
-
-Highlight important lines:
-
-```js{4-6}:important-function.js
-function processData(input) {
-  const validated = validate(input);
-
-  // This is the critical section
-  const result = transform(validated);
-  return optimize(result);
-
-  return result;
-}
 ```
 
 ## Mathematical Typesetting
@@ -477,5 +447,5 @@ These advanced features enable you to create professional publications that riva
 
 For more examples and community contributions, visit:
 
-- [Vivliostyle Samples](https://vivliostyle.github.io/vivliostyle_doc/samples/)
+- [Vivliostyle Samples](https://vivliostyle.org/samples/)
 - [Awesome Vivliostyle](https://github.com/vivliostyle/awesome-vivliostyle)

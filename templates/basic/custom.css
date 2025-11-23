@@ -6,8 +6,11 @@
  *
  * Learn more:
  * - https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base
- * - https://vivliostyle.org/ja/blog/2023/04/23/intro-new-themes/
  */
+
+/* Import partial CSS modules as needed */
+/* This example includes footnote external link styling */
+/* @import url(themes/node_modules/@vivliostyle/theme-base/css/partial/footnote-external-link.css); */
 
 /* Import Prism.js CSS module for code syntax highlighting */
 /* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/base.css); */

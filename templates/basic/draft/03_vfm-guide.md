@@ -46,7 +46,7 @@ Create [links to websites](https://vivliostyle.org) or reference other documents
 
 Images can be embedded with captions:
 
-![Sample diagram caption](https://via.placeholder.com/400x200)
+![Sample diagram caption](image-with-caption.webp)
 
 ### Blockquotes
 
@@ -108,20 +108,6 @@ $$
 f(x) = \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x-a)^n
 $$
 
-### Footnotes
-
-VFM supports several footnote styles.
-
-Reference-style footnotes[^1] are created with a reference marker and a separate definition.
-
-You can also use named footnotes[^note-name] for better readability in the source.
-
-Inline footnotes^[This is an inline footnote that appears directly in the text.] are convenient for shorter annotations.
-
-[^1]: This is the content of the first footnote.
-
-[^note-name]: Named footnotes make your Markdown source more maintainable.
-
 ### Ruby Annotations
 
 Ruby text is useful for showing pronunciation or providing glosses, especially for East Asian languages:
@@ -137,8 +123,7 @@ VFM files can include YAML frontmatter to specify metadata:
 ```yaml
 ---
 title: 'Document Title'
-author: 'Author Name'
-lang: 'en'
+class: document-page
 ---
 ```
 
