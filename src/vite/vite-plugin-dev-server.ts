@@ -73,6 +73,7 @@ function getWorkspaceMatcher({
   themeIndexes,
   entries,
   outputs,
+  copyAsset,
 }: ResolvedTaskConfig) {
   if (viewerInput.type === 'webpub') {
     return getWebPubResourceMatcher({
@@ -81,6 +82,7 @@ function getWorkspaceMatcher({
       entries,
       cwd: workspaceDir,
       manifestPath: viewerInput.manifestPath,
+      copyAsset,
     });
   }
 
