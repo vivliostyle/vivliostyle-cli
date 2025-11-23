@@ -1,0 +1,250 @@
+/**
+ * Custom Styles for Vivliostyle
+ *
+ * This file demonstrates how to customize Vivliostyle themes using CSS custom properties.
+ * You can override theme variables to adjust typography, colors, spacing, and layout.
+ *
+ * Learn more:
+ * - https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base
+ */
+
+/* Import partial CSS modules as needed */
+/* This example includes footnote external link styling */
+/* @import url(themes/node_modules/@vivliostyle/theme-base/css/partial/footnote-external-link.css); */
+
+/* Import Prism.js CSS module for code syntax highlighting */
+/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/base.css); */
+/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/theme-okaidia.css); */
+
+:root {
+  /* ===================================
+   * Typography
+   * =================================== */
+
+  /* Base font family */
+  --vs-font-family:
+    system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+
+  /* Base font size (default: 10pt for print, 16px for screen) */
+  /* --vs-font-size: 11pt; */
+
+  /* Line height */
+  /* --vs-line-height: 1.8; */
+
+  /* ===================================
+   * Headings
+   * =================================== */
+
+  /* Control all heading styles at once */
+  /* --vs--heading-font-family: "Georgia", serif; */
+  /* --vs--heading-line-height: 1.4; */
+  /* --vs--heading-font-weight: 700; */
+
+  /* Individual heading sizes */
+  /* --vs--h1-font-size: 2.5rem; */
+  /* --vs--h2-font-size: 2rem; */
+  /* --vs--h3-font-size: 1.75rem; */
+  /* --vs--h4-font-size: 1.5rem; */
+  /* --vs--h5-font-size: 1.25rem; */
+  /* --vs--h6-font-size: 1rem; */
+
+  /* ===================================
+   * Colors
+   * =================================== */
+
+  /* Text colors */
+  /* --vs-color-body: #5b4030; */
+  /* --vs--anchor-color: #0066cc; */
+
+  /* Background colors */
+  /* --vs-color-bg: rgb(232, 220, 207); */
+
+  /* ===================================
+   * Spacing
+   * =================================== */
+
+  /* Root line height for spacing calculations */
+  /* --vs-spacing-rlh: 0.5rem; */
+
+  /* Paragraph spacing */
+  /* --vs--heading-margin-block: 2rem 0; */
+  /* --vs--p-margin-block: 0.5rem; */
+  /* --vs--lists-margin-block: 0.5rem; */
+  /* --vs--pre-margin-block: 0.5rem; */
+
+  /* ===================================
+   * Page Layout (for PDF output)
+   * =================================== */
+
+  /* Page margins */
+  /* --vs-page--margin-top: 20mm; */
+  /* --vs-page--margin-bottom: 20mm; */
+  /* --vs-page--margin-inner: 25mm; */
+  /* --vs-page--margin-outer: 25mm; */
+
+  /* Headers and footers */
+  /* Page numbers in bottom center */
+  /* --vs-page--mbox-content-bottom-center: counter(page); */
+
+  /* Document title in top left */
+  /* --vs-page--mbox-content-top-left: env(pub-title); */
+
+  /* Chapter title in top right */
+  /* --vs-page--mbox-content-top-right: env(doc-title); */
+
+  /* ===================================
+   * Code Blocks (Prism.js)
+   * Note: You need to include the Prism.js CSS module additionally
+   * or use the theme that includes it. (e.g., @vivliostyle/theme-techbook)
+   * =================================== */
+
+  /* Code block styling */
+  /* --vs-prism--background: #101842; */
+  /* --vs-prism--color: #eff4b8; */
+  /* --vs-prism--color-comment: #869db7; */
+  /* --vs-prism--block-code-padding: 0.5em 1.5em; */
+
+  /* ===================================
+   * Footnotes
+   * =================================== */
+
+  /* Footnote reference marker */
+  /* --vs-footnote--call-content: "[" counter(footnote) "]"; */
+
+  /* Footnote text size */
+  /* --vs-footnote--call-font-size: 0.8em; */
+
+  /* Footnote area spacing */
+  /* --vs-footnote--area-before-margin-inline: 2em; */
+
+  /* ===================================
+   * Table of Contents
+   * =================================== */
+
+  /* TOC indentation */
+  /* --vs-toc--indent-level-1: 0; */
+  /* --vs-toc--indent-level-2: 1em; */
+  /* --vs-toc--indent-level-3: 2em; */
+
+  /* TOC page content style */
+  /* --vs-toc--page-counter-style: roman; */
+  /* --vs-toc--page-leader-content: leader(' ✻ ') ' '; */
+
+  /* ===================================
+   * Section Numbering
+   * =================================== */
+
+  /* Show section numbers in headings */
+  /* --vs-section--marker-display: inline; */
+
+  /* Show section numbers in h2 headings */
+  /* --vs-section--h2-marker-display: inline; */
+  /* --vs-section--h2-marker-content: counter(vs-counter-sec-h2) ". "; */
+
+  /* Section reference format */
+  /* --vs-section--call-content: '†' target-counters(attr(href), vs-counter-sections,'.', decimal); */
+
+  /* ===================================
+   * Cross-References
+   * =================================== */
+
+  /* Figure and table reference format */
+  /* --vs-crossref--counter-style: decimal; */
+  /* --vs-crossref--marker-cite-content: "[" target-counter(attr(href), citation) "]"; */
+
+  /* ===================================
+   * Tables
+   * =================================== */
+
+  /* Table borders */
+  /* --vs--table-border-width-column: 2px; */
+  /* --vs--table-border-color: #cccccc; */
+
+  /* Table cell padding */
+  /* --vs--table-cell-padding-block: 1em; */
+
+  /* ===================================
+   * Blockquotes
+   * =================================== */
+
+  /* --vs--blockquote-font-size: 0.95em; */
+  /* --vs--blockquote-margin-inline: 2em 0; */
+
+  /* ===================================
+   * Lists
+   * =================================== */
+
+  /* --vs--ul-list-style-type: "▶︎"; */
+  /* --vs--ul-minimum-inline-indent-size: 3rem; */
+  /* --vs--ol-list-style-type: lower-roman; */
+  /* --vs--ol-padding-inline-start: 2.5em; */
+
+  /* ===================================
+   * Multi-Column Layout
+   * =================================== */
+  /* column-count: 2; */
+  /* column-gap: 2em; */
+  /* column-rule: 1px solid var(--vs-border-color); */
+}
+
+/* ===================================
+ * Custom Page Layouts
+ * =================================== */
+
+/* First page without header */
+
+/* @page :first {
+  @top-left { content: none; }
+  @top-right { content: none; }
+} */
+
+/* Left and right pages with different layouts */
+
+/* @page :left {
+  --vs-page--mbox-content-bottom-left: counter(page);
+}
+
+@page :right {
+  --vs-page--mbox-content-bottom-right: counter(page);
+} */
+
+/* ===================================
+ * Custom Element Styles
+ * =================================== */
+
+/* Example: Add emphasis to first paragraph */
+
+/* p:first-of-type {
+  font-style: italic;
+  font-size: 1.1em;
+  font-weight: 500;
+} */
+
+/* Example: Style cover page */
+/*
+.cover {
+  text-align: center;
+  page-break-after: always;
+}
+
+.cover h1 {
+  font-size: 3rem;
+  margin-top: 5em;
+}
+*/
+
+/* Example: Custom container styles */
+
+/* .note {
+  padding: 1em;
+  margin-block: var(--vs-spacing-rlh);
+  border-left: 4px solid #4a90e2;
+  background-color: #f0f8ff;
+}
+
+.warning {
+  padding: 1em;
+  margin-block: var(--vs-spacing-rlh);
+  border-left: 4px solid #e24a4a;
+  background-color: #fff0f0;
+} */

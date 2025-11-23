@@ -1,5 +1,7 @@
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Preflight',
   language: 'en',
   size: 'letter',
@@ -22,6 +24,6 @@ module.exports = {
         'gray-scale',
         'enforce-outline',
       ],
-    }
+    },
   ],
-};
+});

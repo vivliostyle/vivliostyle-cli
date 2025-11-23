@@ -1,5 +1,7 @@
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Example of Table of Contents',
   author: 'spring-raining',
   language: 'en',
@@ -15,4 +17,4 @@ module.exports = {
     htmlPath: 'index.html',
     sectionDepth: 4,
   },
-};
+});

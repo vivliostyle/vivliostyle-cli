@@ -1,6 +1,7 @@
 // @ts-check
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const vivliostyleConfig = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Vivliostyle with Eleventy',
   author: 'John Doe',
   entry: [
@@ -14,6 +15,4 @@ const vivliostyleConfig = {
   static: {
     '/': '_site',
   },
-};
-
-export default vivliostyleConfig;
+});

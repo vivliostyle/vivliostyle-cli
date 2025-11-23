@@ -1,23 +1,25 @@
-import unified from "unified"
-import remarkParse from "remark-parse";
-import remark2rehype from "remark-rehype";
-import rehypeExpressiveCode from "rehype-expressive-code";
-import rehypeStringify from "rehype-stringify";
-import remarkRuby from "remark-ruby"
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+import rehypeExpressiveCode from 'rehype-expressive-code';
+import rehypeStringify from 'rehype-stringify';
+import remarkParse from 'remark-parse';
+import remark2rehype from 'remark-rehype';
+import remarkRuby from 'remark-ruby';
+import unified from 'unified';
 
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const config = {
+const config = defineConfig({
   title: 'Markdown processor customization example',
-  entry: [
-    'manuscript.md',
-  ],
-  documentProcessor: (config, metadata) => unified()
+  entry: ['manuscript.md'],
+  documentProcessor: (config, metadata) =>
+    unified()
       .use(remarkParse)
       .use(remarkRuby)
       .use(remark2rehype)
-      .use(rehypeExpressiveCode, {frames: {showCopyToClipboardButton: false}})
+      .use(rehypeExpressiveCode, {
+        frames: { showCopyToClipboardButton: false },
+      })
       .use(rehypeStringify),
-  output: "draft.pdf"
-}
+  output: 'draft.pdf',
+});
 
 export default config;
