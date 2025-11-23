@@ -36,21 +36,18 @@ export const DEFAULT_CONFIG_FILENAME = 'vivliostyle.config.js';
 export const DEFAULT_PROJECT_TITLE = 'My Title';
 export const DEFAULT_PROJECT_AUTHOR = 'My Name';
 
-// TODO: Remove `#feat/create-command` after confirmation
 export const TEMPLATE_SETTINGS = [
   {
     value: 'minimal',
     label: 'Minimal',
     hint: 'Use a minimal template with empty content',
-    template:
-      'gh:vivliostyle/vivliostyle-cli/templates/minimal#feat/create-command',
+    template: 'gh:vivliostyle/vivliostyle-cli/templates/minimal',
   },
   {
     value: 'basic',
     label: 'Basic',
     hint: 'Use a basic template with starter content',
-    template:
-      'gh:vivliostyle/vivliostyle-cli/templates/basic#feat/create-command',
+    template: 'gh:vivliostyle/vivliostyle-cli/templates/basic',
   },
 ] as const;
 
