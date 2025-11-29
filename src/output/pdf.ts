@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
-import type { Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
@@ -134,7 +134,13 @@ export async function buildPDF({
   await page.waitForNetworkIdle();
   await page.waitForFunction(() => !!window.coreViewer);
 
-  await page.emulateMediaType('print');
+  const { protocol } = browser as Browser & {
+    protocol: 'cdp' | 'webDriverBiDi';
+  };
+  // Only CDP supports emulateMediaType
+  if (protocol === 'cdp') {
+    await page.emulateMediaType('print');
+  }
   await page.waitForFunction(
     /* v8 ignore next */
     () => window.coreViewer.readyState === 'complete',
@@ -171,6 +177,11 @@ export async function buildPDF({
 
   Logger.logUpdate('Building PDF');
 
+  // For Firefox WebDriver BiDi, explicitly set width and height
+  // because page.pdf() doesn't support for the preferCSSPageSize option.
+  // Use a sufficiently large value to accommodate user-defined page sizes.
+  const dimensionSizeForWebDriverBiDi =
+    parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) || 3780; // 1000mm
   const pdf = await page.pdf({
     margin: {
       top: 0,
@@ -179,9 +190,16 @@ export async function buildPDF({
       left: 0,
     },
     printBackground: true,
-    preferCSSPageSize: true,
     tagged: true,
     // timeout: remainTime,
+    ...(protocol === 'webDriverBiDi'
+      ? {
+          width: dimensionSizeForWebDriverBiDi,
+          height: dimensionSizeForWebDriverBiDi,
+        }
+      : {
+          preferCSSPageSize: true,
+        }),
   });
 
   await browser.close();
