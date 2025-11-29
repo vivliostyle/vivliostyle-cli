@@ -91,19 +91,19 @@ WORKDIR /opt/vivliostyle-cli
 
 # Build stage
 FROM base AS builder
-COPY package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /opt/vivliostyle-cli/
+COPY --chown=vivliostyle:vivliostyle package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /opt/vivliostyle-cli/
 RUN pnpm install
-COPY . /opt/vivliostyle-cli
+COPY --chown=vivliostyle:vivliostyle . /opt/vivliostyle-cli
 RUN pnpm build
 
 # Runtime stage
 FROM base AS runtime
 ARG VS_CLI_VERSION
 RUN test $VS_CLI_VERSION
-COPY . /opt/vivliostyle-cli
+COPY --chown=vivliostyle:vivliostyle . /opt/vivliostyle-cli
 RUN pnpm install --prod --ignore-scripts \
   && echo $VS_CLI_VERSION > .vs-cli-version
-COPY --from=builder /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/
+COPY --from=builder --chown=vivliostyle:vivliostyle /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/
 
 USER root
 RUN ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vivliostyle \
