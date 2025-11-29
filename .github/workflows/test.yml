@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [18, 20, 22]
+        node: [20, 22, 24]
         os:
           - ubuntu-latest
           - macos-latest
@@ -26,7 +26,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install
-      - run: pnpm build
+      - run: pnpm build:cli
       - run: pnpm test
   build-and-push-image:
     runs-on: ubuntu-latest

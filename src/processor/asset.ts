@@ -1,21 +1,21 @@
 import { copy } from 'fs-extra/esm';
 import fs from 'node:fs';
-import picomatch, { PicomatchOptions } from 'picomatch';
-import { glob, GlobOptions } from 'tinyglobby';
+import picomatch, { type PicomatchOptions } from 'picomatch';
+import { glob, type GlobOptions } from 'tinyglobby';
 import upath from 'upath';
-import { ResolvedTaskConfig } from '../config/resolve.js';
+import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { pathContains, pathEquals } from '../util.js';
 
 export class GlobMatcher {
+  readonly matcherConfig: (Pick<PicomatchOptions, 'dot' | 'ignore' | 'cwd'> & {
+    patterns: string[];
+  })[];
+
   #_matchers: picomatch.Matcher[];
 
-  constructor(
-    public matcherConfig: (Pick<PicomatchOptions, 'dot' | 'ignore'> & {
-      patterns: string[];
-      cwd: string;
-    })[],
-  ) {
+  constructor(matcherConfig: typeof GlobMatcher.prototype.matcherConfig) {
+    this.matcherConfig = matcherConfig;
     this.#_matchers = matcherConfig.map(({ patterns, ...options }) =>
       picomatch(patterns, options),
     );

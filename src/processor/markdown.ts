@@ -1,11 +1,11 @@
 import {
-  Metadata,
+  type Metadata,
   readMetadata,
-  StringifyMarkdownOptions,
+  type StringifyMarkdownOptions,
 } from '@vivliostyle/vfm';
 import fs from 'node:fs';
-import vfile, { VFile } from 'vfile';
-import { DocumentProcessorFactory } from '../config/resolve.js';
+import vfile, { type VFile } from 'vfile';
+import type { DocumentProcessorFactory } from '../config/resolve.js';
 
 export interface VSFile extends VFile {
   data: {

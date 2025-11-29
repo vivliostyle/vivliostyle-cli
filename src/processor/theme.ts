@@ -1,6 +1,6 @@
 import Arborist from '@npmcli/arborist';
 import fs from 'node:fs';
-import { ResolvedTaskConfig } from '../config/resolve.js';
+import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
 
 export async function checkThemeInstallationNecessity({

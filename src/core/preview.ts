@@ -1,11 +1,11 @@
 import terminalLink from 'terminal-link';
-import { ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
 import { blueBright, cyan, dim } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { resolveTaskConfig } from '../config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { resolveViteConfig } from '../config/vite.js';
 import { cliVersion } from '../const.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';

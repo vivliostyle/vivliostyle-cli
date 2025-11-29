@@ -5,11 +5,11 @@ import { pathToFileURL } from 'node:url';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
 import {
-  EpubOutput,
+  type EpubOutput,
   isWebbookConfig,
-  ResolvedTaskConfig,
-  WebBookEntryConfig,
-  WebPublicationOutput,
+  type ResolvedTaskConfig,
+  type WebBookEntryConfig,
+  type WebPublicationOutput,
 } from '../config/resolve.js';
 import { ArticleEntryConfig } from '../config/schema.js';
 import { MANIFEST_FILENAME } from '../const.js';

@@ -1,7 +1,7 @@
 import * as vite from 'vite';
 import { launchPreview } from '../browser.js';
-import { ResolvedTaskConfig } from '../config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import type { ResolvedTaskConfig } from '../config/resolve.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { getViewerFullUrl } from '../server.js';
 import { runExitHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';

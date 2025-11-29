@@ -5,16 +5,16 @@ import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
 import { launchPreview } from '../browser.js';
-import {
+import type {
   ManuscriptEntry,
   PdfOutput,
   ResolvedTaskConfig,
 } from '../config/resolve.js';
-import { Meta, Payload, TOCItem } from '../global-viewer.js';
+import type { Meta, Payload, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { pathEquals } from '../util.js';
-import { PageSizeData, PostProcess } from './pdf-postprocess.js';
+import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
 
 export async function buildPDF({
   target,

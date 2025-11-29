@@ -10,7 +10,7 @@ import type {
   Page,
 } from 'puppeteer-core';
 import upath from 'upath';
-import { ResolvedTaskConfig } from './config/resolve.js';
+import type { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
 import { DEFAULT_BROWSER_VERSIONS } from './const.js';
 import { Logger } from './logger.js';

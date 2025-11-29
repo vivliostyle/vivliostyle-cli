@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import upath from 'upath';
 import { cyan, yellow } from 'yoctocolors';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { cliVersion, CONTAINER_URL } from '../const.js';
 import { Logger } from '../logger.js';
 import { cwd, runExitHandlers } from '../util.js';

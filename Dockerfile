@@ -45,7 +45,7 @@ RUN set -x \
 RUN set -x \
   && apt-get update -qq \
   && apt-get upgrade -yqq \
-  && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
   && apt-get install -y nodejs \
   && node -v \
   && npm -v \

@@ -1,12 +1,12 @@
 import { codeFrameColumns } from '@babel/code-frame';
 import {
-  JSONValue,
-  ValueNode as JsonValueNode,
+  type JSONValue,
+  type ValueNode as JsonValueNode,
   evaluate,
   parse,
 } from '@humanwhocodes/momoa';
 import type { BrowserPlatform } from '@puppeteer/browsers';
-import { Ajv, Plugin as AjvPlugin, Schema } from 'ajv';
+import { Ajv, type Plugin as AjvPlugin, type Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
 import StreamZip from 'node-stream-zip';
@@ -16,7 +16,7 @@ import readline from 'node:readline';
 import util from 'node:util';
 import tmp from 'tmp';
 import upath from 'upath';
-import { BaseIssue } from 'valibot';
+import type { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
 import { Logger } from './logger.js';
 import {
@@ -83,11 +83,11 @@ if (process.platform === 'win32') {
 }
 
 export class DetailError extends Error {
-  constructor(
-    message: string | undefined,
-    public detail: string | undefined,
-  ) {
+  detail: string | undefined;
+
+  constructor(message: string | undefined, detail: string | undefined) {
     super(message);
+    this.detail = detail;
   }
 }
 

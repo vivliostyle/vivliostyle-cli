@@ -1,11 +1,11 @@
-import { Command, OptionValues } from 'commander';
+import { Command, type OptionValues } from 'commander';
 import upath from 'upath';
 import * as v from 'valibot';
 import {
-  InlineOptions,
+  type InlineOptions,
   OutputConfig,
-  ParsedVivliostyleConfigSchema,
-  ParsedVivliostyleInlineConfig,
+  type ParsedVivliostyleConfigSchema,
+  type ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfig,
 } from '../config/schema.js';
 import { EMPTY_DATA_URI } from '../const.js';

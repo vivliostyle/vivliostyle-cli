@@ -1,10 +1,10 @@
-import { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
+import type { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 import { satisfies as semverSatisfies } from 'semver';
-import { type Processor } from 'unified';
+import type { Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
 import { cliVersion, CONTAINER_URL } from '../const.js';
-import { LoggerInterface } from '../logger.js';
+import type { LoggerInterface } from '../logger.js';
 
 const $ = (strings: TemplateStringsArray, ...values: any[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');

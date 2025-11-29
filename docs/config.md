@@ -202,7 +202,7 @@ type BuildTask = {
 
   - `theme`: ([ThemeConfig](#themeconfig) | string)[] | [ThemeConfig](#themeconfig) | string
 
-  - `pageBreakBefore`: ("left" | "right" | "recto" | "verso")  
+  - `pageBreakBefore`: "left" | "right" | "recto" | "verso"  
     Specifies the page break position before this document.
     Useful for determining which side the first page of the document should be placed on in a two-page spread.
 
@@ -275,7 +275,7 @@ type ThemeConfig = {
 
   - `imageAlt`: string
 
-  - `pageBreakBefore`: ("left" | "right" | "recto" | "verso")  
+  - `pageBreakBefore`: "left" | "right" | "recto" | "verso"  
     Specifies the page break position before this document.
     Useful for determining which side the first page of the document should be placed on in a two-page spread.
 

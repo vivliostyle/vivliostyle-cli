@@ -1,18 +1,22 @@
-import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
+import {
+  type Metadata,
+  type StringifyMarkdownOptions,
+  VFM,
+} from '@vivliostyle/vfm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import npa from 'npm-package-arg';
-import { Processor } from 'unified';
+import type { Processor } from 'unified';
 import upath from 'upath';
-import { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
+import type { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
 import {
   ArticleEntryConfig,
   BrowserType,
   ContentsEntryConfig,
   CoverEntryConfig,
   EntryConfig,
-  InputFormat,
+  type InputFormat,
   StructuredDocument,
   StructuredDocumentSection,
   ThemeConfig,
@@ -43,7 +47,7 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
-import { InlineOptions, ParsedBuildTask } from './schema.js';
+import type { InlineOptions, ParsedBuildTask } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 

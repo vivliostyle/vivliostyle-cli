@@ -1,13 +1,13 @@
 import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
-import { PreviewServer, build as viteBuild } from 'vite';
+import { type PreviewServer, build as viteBuild } from 'vite';
 import { cyan, gray } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeInlineConfig } from '../config/merge.js';
 import { isWebPubConfig, resolveTaskConfig } from '../config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { resolveViteConfig } from '../config/vite.js';
 import { buildPDFWithContainer } from '../container.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
