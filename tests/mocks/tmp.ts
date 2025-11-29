@@ -5,7 +5,7 @@ const mocked = await vi.hoisted(async () => {
   const { mockRequire } = await import('./index.js');
 
   const tmpDefault = {
-    dir: (_, cb) => {
+    dir: (_: unknown, cb: (err: Error | null, path?: string) => void) => {
       if (!memfs.existsSync('/tmp')) {
         memfs.mkdirSync('/tmp', { recursive: true });
       }

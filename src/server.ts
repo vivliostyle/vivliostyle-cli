@@ -3,14 +3,14 @@ import { URL } from 'node:url';
 import upath from 'upath';
 import {
   createServer,
-  InlineConfig,
+  type InlineConfig,
   preview,
-  PreviewServer,
-  ResolvedConfig as ResolvedViteConfig,
-  ViteDevServer,
+  type PreviewServer,
+  type ResolvedConfig as ResolvedViteConfig,
+  type ViteDevServer,
 } from 'vite';
-import { ResolvedTaskConfig } from './config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from './config/schema.js';
+import type { ResolvedTaskConfig } from './config/resolve.js';
+import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
 import { Logger } from './logger.js';
 import {

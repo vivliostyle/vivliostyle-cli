@@ -76,7 +76,7 @@ const mocked = await vi.hoisted(async () => {
   }
 
   class ResourceLoader extends ResourceLoaderBase {
-    _readFile(filePath) {
+    _readFile(filePath: string) {
       return memfs.promises.readFile(filePath) as AbortablePromise<Buffer>;
     }
     fetch(urlString: string, options: FetchOptions = {}) {

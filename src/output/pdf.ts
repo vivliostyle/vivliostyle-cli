@@ -1,20 +1,20 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
-import type { Page } from 'playwright-core';
+import type { Browser, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
-import { getFullBrowserName, launchPreview } from '../browser.js';
-import {
+import { launchPreview } from '../browser.js';
+import type {
   ManuscriptEntry,
   PdfOutput,
   ResolvedTaskConfig,
 } from '../config/resolve.js';
-import { Meta, Payload, TOCItem } from '../global-viewer.js';
+import type { Meta, Payload, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { pathEquals } from '../util.js';
-import { PageSizeData, PostProcess } from './pdf-postprocess.js';
+import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
 
 export async function buildPDF({
   target,
@@ -81,7 +81,7 @@ export async function buildPDF({
     },
     onPageOpen: async (page) => {
       page.on('pageerror', (error) => {
-        Logger.logError(red(error.message));
+        Logger.logError(red((error as Error).message));
       });
 
       page.on('console', (msg) => {
@@ -125,21 +125,25 @@ export async function buildPDF({
     },
   });
 
-  const browserName = getFullBrowserName(config.browser.type);
-  const browserVersion = `${browserName}/${await browser.version()}`;
+  const browserVersion = await browser.version();
   Logger.debug(green('success'), `browserVersion=${browserVersion}`);
 
   let remainTime = config.timeout;
   const startTime = Date.now();
 
-  await page.waitForLoadState('networkidle');
+  await page.waitForNetworkIdle();
   await page.waitForFunction(() => !!window.coreViewer);
 
-  await page.emulateMedia({ media: 'print' });
+  const { protocol } = browser as Browser & {
+    protocol: 'cdp' | 'webDriverBiDi';
+  };
+  // Only CDP supports emulateMediaType
+  if (protocol === 'cdp') {
+    await page.emulateMediaType('print');
+  }
   await page.waitForFunction(
     /* v8 ignore next */
     () => window.coreViewer.readyState === 'complete',
-    undefined,
     { polling: 1000 },
   );
 
@@ -173,6 +177,11 @@ export async function buildPDF({
 
   Logger.logUpdate('Building PDF');
 
+  // For Firefox WebDriver BiDi, explicitly set width and height
+  // because page.pdf() doesn't support for the preferCSSPageSize option.
+  // Use a sufficiently large value to accommodate user-defined page sizes.
+  const dimensionSizeForWebDriverBiDi =
+    parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) || 3780; // 1000mm
   const pdf = await page.pdf({
     margin: {
       top: 0,
@@ -181,9 +190,16 @@ export async function buildPDF({
       left: 0,
     },
     printBackground: true,
-    preferCSSPageSize: true,
     tagged: true,
     // timeout: remainTime,
+    ...(protocol === 'webDriverBiDi'
+      ? {
+          width: dimensionSizeForWebDriverBiDi,
+          height: dimensionSizeForWebDriverBiDi,
+        }
+      : {
+          preferCSSPageSize: true,
+        }),
   });
 
   await browser.close();
