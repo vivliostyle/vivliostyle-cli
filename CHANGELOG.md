@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.8.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.2...v9.8.3) (2025-12-01)
+
+### Bug Fixes
+
+- Allow asset extensions defined in copyAsset ([#658](https://github.com/vivliostyle/vivliostyle-cli/issues/658)) ([423e0be](https://github.com/vivliostyle/vivliostyle-cli/commit/423e0be755880b6f472aa4b0789275bae46bf545))
+- Update config to use another port for build ([#659](https://github.com/vivliostyle/vivliostyle-cli/issues/659)) ([54f80f1](https://github.com/vivliostyle/vivliostyle-cli/commit/54f80f14b197cd5c04b64eca57593398cc8125cd))
+- Update Vivliostyle.js to 2.36.3: Bug Fixes ([482ec58](https://github.com/vivliostyle/vivliostyle-cli/commit/482ec58ea147482d16bcdfb343ddea8ee445cb94))
+
 ## [9.8.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.1...v9.8.2) (2025-11-19)
 
 ### Bug Fixes
