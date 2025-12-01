@@ -123,8 +123,8 @@ importers:
         specifier: 11.1.0
         version: 11.1.0
       valibot:
-        specifier: 1.0.0
-        version: 1.0.0(typescript@5.8.3)
+        specifier: 1.2.0
+        version: 1.2.0(typescript@5.8.3)
       vfile:
         specifier: 4.2.1
         version: 4.2.1
@@ -6325,8 +6325,8 @@ packages:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
 
-  valibot@1.0.0:
-    resolution: {integrity: sha512-1Hc0ihzWxBar6NGeZv7fPLY0QuxFMyxwYR2sF1Blu7Wq7EnremwY2W02tit2ij2VJT8HcSkHAQqmFfl77f73Yw==}
+  valibot@1.2.0:
+    resolution: {integrity: sha512-mm1rxUsmOxzrwnX5arGS+U4T25RdvpPjPN4yR0u9pUBov9+zGVtO84tif1eY4r6zWxVxu3KzIyknJy3rxfRZZg==}
     peerDependencies:
       typescript: '>=5'
     peerDependenciesMeta:
@@ -8257,7 +8257,7 @@ snapshots:
       tmp: 0.2.4
       upath: 2.0.1
       uuid: 11.1.0
-      valibot: 1.0.0(typescript@5.8.3)
+      valibot: 1.2.0(typescript@5.8.3)
       vfile: 4.2.1
       vite: 6.4.1(@types/node@24.7.1)(tsx@4.19.3)(yaml@2.8.1)
       w3c-xmlserializer: 5.0.0
@@ -13685,7 +13685,7 @@ snapshots:
 
   uuid@8.3.2: {}
 
-  valibot@1.0.0(typescript@5.8.3):
+  valibot@1.2.0(typescript@5.8.3):
     optionalDependencies:
       typescript: 5.8.3
 
