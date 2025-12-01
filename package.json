@@ -5,7 +5,7 @@
   "author": "spring_raining <harusamex.com@gmail.com>",
   "type": "module",
   "scripts": {
-    "build": "pnpm run --sequential '/^build:.*/'",
+    "build": "pnpm run --sequential \"/^build:.*/\"",
     "build:cli": "tsup",
     "build:typecheck": "tsc --noEmit",
     "build:docs": "node scripts/update-docs.ts",
