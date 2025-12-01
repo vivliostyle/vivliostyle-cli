@@ -60,7 +60,7 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     .addOption(
       new Option(
         '--browser <browser>',
-        `Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@beta, firefox) [chrome]`,
+        `Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]`,
       ),
     )
     .addOption(
