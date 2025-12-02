@@ -27,8 +27,8 @@ importers:
         specifier: 2.4.0
         version: 2.4.0
       '@vivliostyle/viewer':
-        specifier: 2.36.3
-        version: 2.36.3
+        specifier: 2.36.4
+        version: 2.36.4
       ajv:
         specifier: 8.17.1
         version: 8.17.1
@@ -1925,8 +1925,8 @@ packages:
     peerDependencies:
       vite: '>=6'
 
-  '@vivliostyle/core@2.36.3':
-    resolution: {integrity: sha512-4X9jAi/wKkz5+8DJZzk4ezb5ZP3kyaR5m8uD0e+oqVCQmQXrmmYJC9KsJomu4Dg0RV+DtnUBMUEN97ixA7Tf7Q==}
+  '@vivliostyle/core@2.36.4':
+    resolution: {integrity: sha512-I91gXqPaADy8+m/ZKCb7/0FrFjSJeYmfK5xPtFx+sbdfXQ8OHkykrlnnJCOn4Ilv6GAOovKkTcsay/dLJutorw==}
     engines: {node: '>=14'}
 
   '@vivliostyle/jsdom@25.0.1-vivliostyle-cli.1':
@@ -1943,8 +1943,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  '@vivliostyle/viewer@2.36.3':
-    resolution: {integrity: sha512-jVYxzQcX3/nwE/phSgaU/hFFt+js8mb17YUZRAs38EcFgMIYQa8dMOCtv6+3OGz99j796CpT2K1dxBQOtgc/CA==}
+  '@vivliostyle/viewer@2.36.4':
+    resolution: {integrity: sha512-hC9dc3dOo9ulCQkQYkeHDCdRZ8njhb55UUqRYCUsMCPJR5bTDhMF6R58RwWaEO1jV0b6htCn9G/vODuG/6LXyQ==}
     engines: {node: '>=14'}
 
   '@zachleat/heading-anchors@1.0.5':
@@ -8225,7 +8225,7 @@ snapshots:
       '@npmcli/arborist': 8.0.0
       '@vivliostyle/jsdom': 25.0.1-vivliostyle-cli.1(@napi-rs/canvas@0.1.69)
       '@vivliostyle/vfm': 2.4.0
-      '@vivliostyle/viewer': 2.36.3
+      '@vivliostyle/viewer': 2.36.4
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       archiver: 7.0.1
@@ -8270,7 +8270,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@vivliostyle/core@2.36.3':
+  '@vivliostyle/core@2.36.4':
     dependencies:
       fast-diff: 1.3.0
 
@@ -8342,9 +8342,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vivliostyle/viewer@2.36.3':
+  '@vivliostyle/viewer@2.36.4':
     dependencies:
-      '@vivliostyle/core': 2.36.3
+      '@vivliostyle/core': 2.36.4
       i18next-ko: 3.0.1
       knockout: 3.5.1
 
