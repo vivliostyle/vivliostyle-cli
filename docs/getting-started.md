@@ -2,14 +2,45 @@
 
 Vivliostyle CLI is a command-line interface for typesetting HTML and Markdown documents. It includes the [Vivliostyle Viewer](https://docs.vivliostyle.org/#/vivliostyle-viewer) and generates high-quality PDFs suitable for publications.
 
-## Installation
+## Creating a Vivliostyle Project
 
-Ensure you have [Node.js](https://nodejs.org/) (v16 or later) installed.
+Run one of the following commands. Answer the prompts, and your project will be created automatically.
 
-Install Vivliostyle CLI with the following command:
-
+```sh
+npm create book
+yarn create book # For yarn users
+pnpm create book # For pnpm users
 ```
+
+> [!NOTE]
+> You need to have [Node.js](https://nodejs.org/) (v20 or later) installed beforehand. If you use a runtime other than Node.js, such as Bun or Deno, follow the instructions for your chosen runtime.
+
+When you create a project, a configuration file named `vivliostyle.config.js` will be generated automatically. For details on usage, please see [Using Config File](./using-config-file.md).
+
+## Community Templates
+
+Vivliostyle CLI provides several default templates: Minimal, Basic, Documentation, Novel, Academic, and Magazine. If the Vivliostyle Theme you want to use offers its own template, you can select `Use templates from the community theme` during project creation to start your project from that template.
+
+You can also use your own template. Specify the template with the `--template` option when creating a project.
+
+```sh
+npm create book --template gh:org/repo/templates/awesome-template
+```
+
+For details on referencing templates, see the [giget](https://github.com/unjs/giget#readme) documentation.
+
+## Manual Installation
+
+You can install Vivliostyle CLI with the following command:
+
+```sh
 npm install -g @vivliostyle/cli
+```
+
+This command makes Vivliostyle available system-wide. If you want to use Vivliostyle CLI only in the current directory, use the following command instead:
+
+```sh
+npm install @vivliostyle/cli
 ```
 
 ## Generating PDFs
@@ -81,12 +112,12 @@ Vivliostyle CLI supports output in EPUB format and Web publications (WebPub) in 
 
 The matrix of supported output formats is as follows:
 
-| Input \ Output | `pdf` | `webpub` | `epub` |
-|---|:---:|:---:|:---:|
-| `pub-manifest` | 🔵 | 🔵 | 🔵 |
-| `markdown` | 🔵 | 🔵 | 🔵 |
-| `html` `webbook` (including external HTML) | 🔵 | 🔵 | 🔵 |
-| `epub` `epub-opf` | 🔵 | 🙅 | 🙅 |
+| Input \ Output                             | `pdf` | `webpub` | `epub` |
+| ------------------------------------------ | :---: | :------: | :----: |
+| `pub-manifest`                             |  🔵   |    🔵    |   🔵   |
+| `markdown`                                 |  🔵   |    🔵    |   🔵   |
+| `html` `webbook` (including external HTML) |  🔵   |    🔵    |   🔵   |
+| `epub` `epub-opf`                          |  🔵   |    🙅    |   🙅   |
 
 ## Other options
 
@@ -102,5 +133,5 @@ vivliostyle help preview
 Secret feature: Instead of the `vivliostyle` command, you can also use the command name `vs` to reduce the number of keystrokes slightly.
 
 See also:
-- [Vivliostyle CLI (README)](https://github.com/vivliostyle/vivliostyle-cli/blob/main/README.md)
 
+- [Vivliostyle CLI (README)](https://github.com/vivliostyle/vivliostyle-cli/blob/main/README.md)

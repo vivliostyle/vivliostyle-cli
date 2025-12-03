@@ -1,9 +1,17 @@
 # Config Reference
 
-The configuration files `vivliostyle.config.js` and `vivliostyle.config.json` accept the [`VivliostyleConfigSchema`](#vivliostyleconfigschema) for configuring the Vivliostyle CLI. You can also refer to the type schema of the configuration from TypeScript files.
+The configuration files `vivliostyle.config.js` and `vivliostyle.config.json` accept the [`VivliostyleConfigSchema`](#vivliostyleconfigschema) for configuring the Vivliostyle CLI. You can reference the configuration's type scheme from TypeScript files.
 
 ```ts
 import { VivliostyleConfigSchema } from '@vivliostyle/cli';
+```
+
+Alternatively, you can use the `defineConfig` helper function to define the configuration.
+
+```ts
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({ ... });
 ```
 
 ## Config API

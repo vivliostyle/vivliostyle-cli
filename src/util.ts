@@ -1,21 +1,26 @@
 import { codeFrameColumns } from '@babel/code-frame';
 import {
+  evaluate,
   JSONValue,
   ValueNode as JsonValueNode,
-  evaluate,
   parse,
 } from '@humanwhocodes/momoa';
 import { Ajv, Plugin as AjvPlugin, Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
+import lcid from 'lcid';
 import StreamZip from 'node-stream-zip';
+import childProcess, { ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import readline from 'node:readline';
 import util from 'node:util';
+import { osLocale } from 'os-locale';
+import { titleCase } from 'title-case';
 import tmp from 'tmp';
 import upath from 'upath';
 import { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
+import { languages } from './const.js';
 import { Logger } from './logger.js';
 import {
   publicationSchema,
@@ -24,6 +29,20 @@ import {
 import type { PublicationManifest } from './schema/publication.schema.js';
 
 export const cwd = upath.normalize(process.cwd());
+
+const execFile = util.promisify(childProcess.execFile);
+export async function exec(
+  command: string,
+  args: string[] = [],
+  options: ExecFileOptions = {},
+) {
+  const subprocess = await execFile(command, args, {
+    ...options,
+    encoding: 'utf8',
+  });
+  subprocess.stdout = subprocess.stdout.trim();
+  return subprocess;
+}
 
 const beforeExitHandlers: (() => void)[] = [];
 export const registerExitHandler = (
@@ -38,7 +57,7 @@ export const registerExitHandler = (
   return () => {
     const index = beforeExitHandlers.indexOf(callback);
     if (index !== -1) {
-      beforeExitHandlers.splice(index, 1);
+      return beforeExitHandlers.splice(index, 1)[0];
     }
   };
 };
@@ -350,6 +369,56 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
   }
 }
 
+let cachedLocale: string | undefined;
+export async function getOsLocale(): Promise<string> {
+  if (import.meta.env?.VITEST) {
+    return process.env.TEST_LOCALE || 'en';
+  }
+  // It uses the same implementation as os-locale, but prioritizes the OS language settings on Windows and macOS.
+  if (cachedLocale) {
+    return cachedLocale;
+  }
+  let locale: string | undefined;
+  if (process.platform === 'win32') {
+    const { stdout } = await exec('wmic', ['os', 'get', 'locale']);
+    const lcidCode = Number.parseInt(stdout.replace('Locale', ''), 16);
+    locale = lcid.from(lcidCode);
+  }
+  if (process.platform === 'darwin') {
+    const results = await Promise.all([
+      exec('defaults', ['read', '-globalDomain', 'AppleLocale']).then(
+        ({ stdout }) => stdout,
+      ),
+      exec('locale', ['-a']).then(({ stdout }) => stdout),
+    ]);
+    if (results[1].includes(results[0])) {
+      locale = results[0];
+    }
+  }
+  if (locale) {
+    locale = locale.replace(/_/, '-');
+  } else {
+    locale = await osLocale();
+  }
+
+  const langs = Object.keys(languages);
+  locale = langs.includes(locale)
+    ? locale
+    : langs.includes(locale.split('-')[0])
+      ? locale.split('-')[0]
+      : 'en';
+  return (cachedLocale = locale.replace(/_/, '-'));
+}
+
+export function toTitleCase<T = unknown>(input: T): T {
+  if (typeof input !== 'string') {
+    return input;
+  }
+  return titleCase(
+    input.replace(/[\W_]/g, ' ').replace(/\s+/g, ' ').trim(),
+  ) as T;
+}
+
 export function debounce<T extends (...args: any[]) => unknown>(
   func: T,
   wait: number,
@@ -388,4 +457,22 @@ export function debounce<T extends (...args: any[]) => unknown>(
       invoke(...args);
     }
   };
+}
+
+export type PackageManager = 'npm' | 'yarn' | 'pnpm';
+
+// License for `whichPm`
+// The MIT License (MIT)
+// Copyright (c) 2017-2022 Zoltan Kochan <z@kochan.io>
+// https://github.com/zkochan/packages/tree/main/which-pm-runs
+export function whichPm(): PackageManager {
+  if (!process.env.npm_config_user_agent) {
+    return 'npm';
+  }
+
+  const pmSpec = process.env.npm_config_user_agent.split(' ')[0];
+  const separatorPos = pmSpec.lastIndexOf('/');
+  const name = pmSpec.substring(0, separatorPos);
+
+  return name as PackageManager;
 }

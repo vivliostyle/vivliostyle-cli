@@ -1,5 +1,7 @@
 # Vivliostyle CLI Documentation
 
+- [日本語ドキュメント](./ja/index.md)
+
 <nav role="doc-toc">
 <ul>
 <li>
