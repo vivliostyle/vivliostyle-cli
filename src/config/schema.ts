@@ -726,6 +726,16 @@ export const BuildTask = v.pipe(
             Custom function to provide a unified Processor for converting markdown to HTML.
           `),
         ),
+        metadataReader: v.pipe(
+          v.function() as v.GenericSchema<(content: string) => Metadata>,
+          v.metadata({
+            typeString:
+              '(content: string) => import("@vivliostyle/vfm").Metadata',
+          }),
+          v.description($`
+            Custom function to extract metadata from markdown content.
+          `),
+        ),
         vfm: v.pipe(
           v.union([VfmConfig]),
           v.description($`

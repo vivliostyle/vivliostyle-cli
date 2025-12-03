@@ -164,6 +164,7 @@ export async function transformManuscript(
     entries,
     language,
     documentProcessorFactory,
+    metadataReader,
     vfmOptions,
     rootUrl,
   }: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
@@ -186,6 +187,7 @@ export async function transformManuscript(
       // compile markdown
       const vfile = await processMarkdown(
         documentProcessorFactory,
+        metadataReader,
         source.pathname,
         {
           ...vfmOptions,

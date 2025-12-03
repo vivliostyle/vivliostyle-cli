@@ -114,6 +114,7 @@ Object {
   },
   "language": "myLanguage",
   "logLevel": "info",
+  "metadataReader": [Function],
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -313,6 +314,7 @@ Object {
   },
   "language": "language",
   "logLevel": "info",
+  "metadataReader": [Function],
   "outputs": Array [
     Object {
       "format": "pdf",
