@@ -1,4 +1,9 @@
-import { Metadata, StringifyMarkdownOptions, VFM } from '@vivliostyle/vfm';
+import {
+  Metadata,
+  readMetadata,
+  StringifyMarkdownOptions,
+  VFM,
+} from '@vivliostyle/vfm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -72,7 +77,7 @@ export type EntrySource = FileEntrySource | UriEntrySource;
 export interface FileEntrySource {
   type: 'file';
   pathname: string;
-  contentType: ManuscriptMediaType;
+  contentType: ManuscriptMediaType | 'text/plain';
 }
 
 export interface UriEntrySource {
@@ -89,13 +94,15 @@ export const manuscriptMediaTypes = [
 export type ManuscriptMediaType = (typeof manuscriptMediaTypes)[number];
 
 export interface ManuscriptEntry {
-  contentType: ManuscriptMediaType;
+  contentType: ManuscriptMediaType | 'text/plain';
   title?: string;
   themes: ParsedTheme[];
   source: EntrySource;
   template?: undefined;
   target: string;
   rel?: string | string[];
+  documentProcessorFactory?: DocumentProcessorFactory;
+  documentMetadataReader?: DocumentMetadataReader;
 }
 
 export interface ContentsEntry {
@@ -194,6 +201,8 @@ export type DocumentProcessorFactory = (
   metadata: Metadata,
 ) => Processor;
 
+export type DocumentMetadataReader = (content: string) => Metadata;
+
 export const UseTemporaryServerRoot = Symbol('UseTemporaryServerRoot');
 export type UseTemporaryServerRoot = typeof UseTemporaryServerRoot;
 
@@ -234,6 +243,7 @@ export type ResolvedTaskConfig = {
   language: string | undefined;
   readingProgression: 'ltr' | 'rtl' | undefined;
   documentProcessorFactory: DocumentProcessorFactory;
+  documentMetadataReader: DocumentMetadataReader;
   vfmOptions: {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
@@ -298,6 +308,25 @@ function isManuscriptMediaType(
   return !!(
     mediaType && manuscriptMediaTypes.includes(mediaType as ManuscriptMediaType)
   );
+}
+
+const htmlExtensions = ['.html', '.htm', '.xhtml', '.xht'] as const;
+
+/**
+ * Convert non-HTML file extensions to .html
+ * HTML/XHTML extensions are preserved as-is
+ */
+function toHtmlExtension(filename: string): string {
+  const ext = upath.extname(filename).toLowerCase();
+  if (
+    htmlExtensions.includes(
+      // @ts-expect-error check membership
+      ext,
+    )
+  ) {
+    return filename;
+  }
+  return filename.replace(/\.[^.]+$/, '.html');
 }
 
 export function isWebPubConfig(
@@ -424,17 +453,24 @@ function parseFileMetadata({
   sourcePath,
   workspaceDir,
   themesDir,
+  documentMetadataReader,
 }: {
-  contentType: ManuscriptMediaType;
+  contentType: ManuscriptMediaType | 'text/plain';
   sourcePath: string;
   workspaceDir: string;
   themesDir?: string;
+  documentMetadataReader: DocumentMetadataReader;
 }): { title?: string; themes?: ParsedTheme[] } {
   const sourceDir = upath.dirname(sourcePath);
   let title: string | undefined;
   let themes: ParsedTheme[] | undefined;
-  if (contentType === 'text/markdown') {
-    const metadata = readMarkdownMetadata(sourcePath);
+  // For HTML/XHTML, extract title from the document directly
+  if (contentType === 'text/html' || contentType === 'application/xhtml+xml') {
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    title = content.match(/<title>([^<]*)<\/title>/)?.[1] || undefined;
+  } else {
+    // For non-HTML content (Markdown, AsciiDoc, etc.), use documentMetadataReader
+    const metadata = readMarkdownMetadata(sourcePath, documentMetadataReader);
     title = metadata.title;
     if (metadata.vfm?.theme && themesDir) {
       themes = [metadata.vfm.theme]
@@ -452,9 +488,6 @@ function parseFileMetadata({
           }),
         );
     }
-  } else {
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    title = content.match(/<title>([^<]*)<\/title>/)?.[1] || undefined;
   }
   return { title, themes };
 }
@@ -506,6 +539,7 @@ export function resolveTaskConfig(
     config.temporaryFilePrefix ?? `.vs-${Date.now()}.`;
 
   const documentProcessorFactory = config?.documentProcessor ?? VFM;
+  const documentMetadataReader = config?.documentMetadataReader ?? readMetadata;
 
   const vfmOptions = {
     ...config?.vfm,
@@ -655,6 +689,7 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           base,
+          documentMetadataReader,
         })
       : resolveComposedProjectConfig({
           config,
@@ -664,6 +699,8 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           cover,
+          documentProcessorFactory,
+          documentMetadataReader,
         });
 
   // Check overwrites
@@ -722,6 +759,7 @@ export function resolveTaskConfig(
     language,
     readingProgression,
     documentProcessorFactory,
+    documentMetadataReader,
     vfmOptions,
     cover,
     timeout,
@@ -763,7 +801,11 @@ function resolveSingleInputConfig({
   temporaryFilePrefix,
   themeIndexes,
   base,
-}: Pick<ResolvedTaskConfig, 'temporaryFilePrefix' | 'themeIndexes' | 'base'> & {
+  documentMetadataReader,
+}: Pick<
+  ResolvedTaskConfig,
+  'temporaryFilePrefix' | 'themeIndexes' | 'base' | 'documentMetadataReader'
+> & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
   context: string;
@@ -828,13 +870,14 @@ function resolveSingleInputConfig({
       contentType,
       sourcePath,
       workspaceDir,
+      documentMetadataReader,
     });
-    const target = upath
-      .resolve(
+    const target = toHtmlExtension(
+      upath.resolve(
         workspaceDir,
         `${temporaryFilePrefix}${upath.basename(sourcePath)}`,
-      )
-      .replace(/\.md$/, '.html');
+      ),
+    );
     touchTmpFile(target);
     const themes =
       metadata.themes ??
@@ -863,7 +906,7 @@ function resolveSingleInputConfig({
       source: target,
       target: upath.resolve(
         upath.dirname(target),
-        upath.basename(sourcePath).replace(/\.md$/, '.html'),
+        toHtmlExtension(upath.basename(sourcePath)),
       ),
     });
   }
@@ -949,6 +992,8 @@ function resolveComposedProjectConfig({
   temporaryFilePrefix,
   themeIndexes,
   cover,
+  documentProcessorFactory,
+  documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
   | 'entryContextDir'
@@ -956,6 +1001,8 @@ function resolveComposedProjectConfig({
   | 'temporaryFilePrefix'
   | 'themeIndexes'
   | 'cover'
+  | 'documentProcessorFactory'
+  | 'documentMetadataReader'
 > & { config: ParsedBuildTask; context: string }): ProjectConfig {
   Logger.debug('entering composed project config mode');
 
@@ -1024,8 +1071,14 @@ function resolveComposedProjectConfig({
   function parseEntry(entry: EntryConfig): ParsedEntry {
     const getInputInfo = (
       entryPath: string,
+      options?: {
+        entryDocumentProcessor?: DocumentProcessorFactory;
+        entryDocumentMetadataReader?: DocumentMetadataReader;
+      },
     ):
-      | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
+      | (FileEntrySource & {
+          metadata: ReturnType<typeof parseFileMetadata>;
+        })
       | (UriEntrySource & { metadata?: undefined }) => {
       if (/^https?:/.test(entryPath)) {
         return {
@@ -1042,12 +1095,24 @@ function resolveComposedProjectConfig({
       }
       const pathname = upath.resolve(entryContextDir, entryPath);
       statFileSync(pathname);
-      const contentType = mime(pathname);
-      if (!isManuscriptMediaType(contentType)) {
+      const rawContentType = mime(pathname);
+
+      // If custom documentProcessor is provided, allow any text-based content type
+      const hasCustomProcessor = !!(
+        options?.entryDocumentProcessor || documentProcessorFactory !== VFM
+      );
+      if (!hasCustomProcessor && !isManuscriptMediaType(rawContentType)) {
         throw new Error(
-          `Invalid manuscript type ${contentType} detected: ${entry}`,
+          `Invalid manuscript type ${rawContentType} detected: ${entry}`,
         );
       }
+
+      // Fall back to 'text/plain' for unknown content types when custom processor is used
+      const contentType: ManuscriptMediaType | 'text/plain' =
+        isManuscriptMediaType(rawContentType) ? rawContentType : 'text/plain';
+
+      const effectiveMetadataReader =
+        options?.entryDocumentMetadataReader ?? documentMetadataReader;
 
       return {
         type: 'file',
@@ -1058,6 +1123,7 @@ function resolveComposedProjectConfig({
           sourcePath: pathname,
           workspaceDir,
           themesDir,
+          documentMetadataReader: effectiveMetadataReader,
         }),
       };
     };
@@ -1067,9 +1133,7 @@ function resolveComposedProjectConfig({
         case 'file':
           return upath.resolve(
             workspaceDir,
-            upath
-              .relative(entryContextDir, source.pathname)
-              .replace(/\.md$/, '.html'),
+            toHtmlExtension(upath.relative(entryContextDir, source.pathname)),
           );
         case 'uri': {
           const url = new URL(source.href, 'a://dummy');
@@ -1195,7 +1259,10 @@ function resolveComposedProjectConfig({
     }
 
     if (isArticleEntry(entry)) {
-      const inputInfo = getInputInfo(entry.path);
+      const inputInfo = getInputInfo(entry.path, {
+        entryDocumentProcessor: entry.documentProcessor,
+        entryDocumentMetadataReader: entry.documentMetadataReader,
+      });
       const { metadata, ...source } = inputInfo;
       const target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
@@ -1217,6 +1284,13 @@ function resolveComposedProjectConfig({
         title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         ...(entry.rel && { rel: entry.rel }),
+        // Include per-entry processor settings if specified
+        ...(entry.documentProcessor && {
+          documentProcessorFactory: entry.documentProcessor,
+        }),
+        ...(entry.documentMetadataReader && {
+          documentMetadataReader: entry.documentMetadataReader,
+        }),
       };
       return parsedEntry;
     }

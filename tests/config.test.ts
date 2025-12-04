@@ -425,3 +425,98 @@ it('deny config which has incompatible image', async () => {
     }),
   ).rejects.toThrow();
 });
+
+it('allows per-entry documentProcessor and documentMetadataReader', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called in config parsing');
+  };
+  const customMetadataReader = () => ({ title: 'Custom Title' });
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: [
+      'manuscript.md',
+      {
+        path: 'frontmatter.md',
+        documentProcessor: customProcessor,
+        documentMetadataReader: customMetadataReader,
+      },
+    ],
+  });
+
+  // frontmatter.md should have per-entry settings
+  const frontmatterEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('frontmatter.md'),
+  );
+  expect(frontmatterEntry).toBeDefined();
+  expect((frontmatterEntry as any).documentProcessorFactory).toBe(
+    customProcessor,
+  );
+  expect((frontmatterEntry as any).documentMetadataReader).toBe(
+    customMetadataReader,
+  );
+  // Title should be extracted using custom metadata reader
+  expect(frontmatterEntry?.title).toBe('Custom Title');
+
+  // manuscript.md should NOT have per-entry settings (uses global)
+  const manuscriptEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('manuscript.md'),
+  );
+  expect(manuscriptEntry).toBeDefined();
+  expect((manuscriptEntry as any).documentProcessorFactory).toBeUndefined();
+  expect((manuscriptEntry as any).documentMetadataReader).toBeUndefined();
+});
+
+it('allows non-markdown extensions when documentProcessor is provided', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called in config parsing');
+  };
+  const customMetadataReader = () => ({ title: 'Custom Format Title' });
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: [
+      {
+        path: 'sample.xyz',
+        documentProcessor: customProcessor,
+        documentMetadataReader: customMetadataReader,
+      },
+    ],
+  });
+
+  // sample.xyz should be accepted with custom processor
+  const xyzEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('sample.xyz'),
+  );
+  expect(xyzEntry).toBeDefined();
+  // contentType should be 'text/plain' for unknown extensions
+  expect((xyzEntry as any).contentType).toBe('text/plain');
+  // Target should have .html extension
+  expect((xyzEntry as any).target).toMatch(/sample\.html$/);
+  // Title should be extracted using custom metadata reader
+  expect(xyzEntry?.title).toBe('Custom Format Title');
+});
+
+it('rejects text/plain files without documentProcessor', async () => {
+  // .txt files are recognized as text/plain, which requires documentProcessor
+  await expect(
+    getTaskConfig(['build'], resolveFixture('config'), {
+      entry: ['sample.txt'],
+    }),
+  ).rejects.toThrow(/Invalid manuscript type/);
+});
+
+it('rejects unknown extensions without documentProcessor', async () => {
+  await expect(
+    getTaskConfig(['build'], resolveFixture('config'), {
+      entry: ['sample.xyz'],
+    }),
+  ).rejects.toThrow(/Invalid manuscript type/);
+});

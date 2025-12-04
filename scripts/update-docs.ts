@@ -241,8 +241,12 @@ async function buildApiDocs() {
   const { stderr } = await execAsync(
     `npx typedoc --logLevel Error --out ${tmp} --json ${path.join(tmp, 'api.json')}`,
   );
-  if (stderr) {
-    throw new Error(stderr);
+  // Filter out npm warnings about unknown config (caused by pnpm environment variables)
+  const filteredStderr = stderr
+    .replace(/^npm warn Unknown (env|project) config.*$/gm, '')
+    .trim();
+  if (filteredStderr) {
+    throw new Error(filteredStderr);
   }
 
   const json = JSON.parse(
