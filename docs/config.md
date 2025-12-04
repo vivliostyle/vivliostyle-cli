@@ -329,6 +329,14 @@ type CoverEntryConfig = {
 
   - `rel`: (string)[] | string
 
+  - `documentProcessor`: (option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor  
+    Custom function to provide a unified Processor for converting the source document to HTML.
+    If not specified, the top-level `documentProcessor` setting is used.
+
+  - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
+    Custom function to extract metadata from the source document content.
+    If not specified, the top-level `documentMetadataReader` setting is used.
+
 #### Type definition
 
 ```ts
@@ -342,6 +350,13 @@ type ArticleEntryConfig = {
     | string;
   encodingFormat?: string;
   rel?: string[] | string;
+  documentProcessor?: (
+    option: import("@vivliostyle/vfm").StringifyMarkdownOptions,
+    metadata: import("@vivliostyle/vfm").Metadata,
+  ) => import("unified").Processor;
+  documentMetadataReader?: (
+    content: string,
+  ) => import("@vivliostyle/vfm").Metadata;
 };
 ```
 

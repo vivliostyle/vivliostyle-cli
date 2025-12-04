@@ -184,10 +184,17 @@ export async function transformManuscript(
 
   if (source?.type === 'file') {
     if (source.contentType === 'text/markdown') {
-      // compile markdown
+      // Compile markdown
+      // Use per-entry settings if available, otherwise fall back to global settings
+      const manuscriptEntry = entry as ManuscriptEntry;
+      const effectiveProcessorFactory =
+        manuscriptEntry.documentProcessorFactory ?? documentProcessorFactory;
+      const effectiveMetadataReader =
+        manuscriptEntry.documentMetadataReader ?? documentMetadataReader;
+
       const vfile = await processMarkdown(
-        documentProcessorFactory,
-        documentMetadataReader,
+        effectiveProcessorFactory,
+        effectiveMetadataReader,
         source.pathname,
         {
           ...vfmOptions,

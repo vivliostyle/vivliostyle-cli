@@ -129,6 +129,37 @@ export const ArticleEntryConfig = v.pipe(
           v.transform((input) => [input].flat()),
         ),
       ),
+      documentProcessor: v.optional(
+        v.pipe(
+          v.function() as v.GenericSchema<
+            (
+              option: StringifyMarkdownOptions,
+              metadata: Metadata,
+            ) => import('unified').Processor
+          >,
+          v.metadata({
+            typeString:
+              '(option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor',
+          }),
+          v.description($`
+            Custom function to provide a unified Processor for converting the source document to HTML.
+            If not specified, the top-level \`documentProcessor\` setting is used.
+          `),
+        ),
+      ),
+      documentMetadataReader: v.optional(
+        v.pipe(
+          v.function() as v.GenericSchema<(content: string) => Metadata>,
+          v.metadata({
+            typeString:
+              '(content: string) => import("@vivliostyle/vfm").Metadata',
+          }),
+          v.description($`
+            Custom function to extract metadata from the source document content.
+            If not specified, the top-level \`documentMetadataReader\` setting is used.
+          `),
+        ),
+      ),
     }),
     ['path'],
     'Missing required field: path',

@@ -425,3 +425,49 @@ it('deny config which has incompatible image', async () => {
     }),
   ).rejects.toThrow();
 });
+
+it('allows per-entry documentProcessor and documentMetadataReader', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called in config parsing');
+  };
+  const customMetadataReader = () => ({ title: 'Custom Title' });
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: [
+      'manuscript.md',
+      {
+        path: 'frontmatter.md',
+        documentProcessor: customProcessor,
+        documentMetadataReader: customMetadataReader,
+      },
+    ],
+  });
+
+  // frontmatter.md should have per-entry settings
+  const frontmatterEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('frontmatter.md'),
+  );
+  expect(frontmatterEntry).toBeDefined();
+  expect((frontmatterEntry as any).documentProcessorFactory).toBe(
+    customProcessor,
+  );
+  expect((frontmatterEntry as any).documentMetadataReader).toBe(
+    customMetadataReader,
+  );
+  // Title should be extracted using custom metadata reader
+  expect(frontmatterEntry?.title).toBe('Custom Title');
+
+  // manuscript.md should NOT have per-entry settings (uses global)
+  const manuscriptEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('manuscript.md'),
+  );
+  expect(manuscriptEntry).toBeDefined();
+  expect((manuscriptEntry as any).documentProcessorFactory).toBeUndefined();
+  expect((manuscriptEntry as any).documentMetadataReader).toBeUndefined();
+});

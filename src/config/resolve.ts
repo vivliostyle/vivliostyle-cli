@@ -101,6 +101,8 @@ export interface ManuscriptEntry {
   template?: undefined;
   target: string;
   rel?: string | string[];
+  documentProcessorFactory?: DocumentProcessorFactory;
+  documentMetadataReader?: DocumentMetadataReader;
 }
 
 export interface ContentsEntry {
@@ -1045,6 +1047,9 @@ function resolveComposedProjectConfig({
   function parseEntry(entry: EntryConfig): ParsedEntry {
     const getInputInfo = (
       entryPath: string,
+      options?: {
+        entryDocumentMetadataReader?: DocumentMetadataReader;
+      },
     ):
       | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
       | (UriEntrySource & { metadata?: undefined }) => {
@@ -1070,6 +1075,9 @@ function resolveComposedProjectConfig({
         );
       }
 
+      const effectiveMetadataReader =
+        options?.entryDocumentMetadataReader ?? documentMetadataReader;
+
       return {
         type: 'file',
         pathname,
@@ -1079,7 +1087,7 @@ function resolveComposedProjectConfig({
           sourcePath: pathname,
           workspaceDir,
           themesDir,
-          documentMetadataReader,
+          documentMetadataReader: effectiveMetadataReader,
         }),
       };
     };
@@ -1217,7 +1225,10 @@ function resolveComposedProjectConfig({
     }
 
     if (isArticleEntry(entry)) {
-      const inputInfo = getInputInfo(entry.path);
+      // Pass per-entry documentMetadataReader to getInputInfo
+      const inputInfo = getInputInfo(entry.path, {
+        entryDocumentMetadataReader: entry.documentMetadataReader,
+      });
       const { metadata, ...source } = inputInfo;
       const target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
@@ -1239,6 +1250,13 @@ function resolveComposedProjectConfig({
         title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         ...(entry.rel && { rel: entry.rel }),
+        // Include per-entry processor settings if specified
+        ...(entry.documentProcessor && {
+          documentProcessorFactory: entry.documentProcessor,
+        }),
+        ...(entry.documentMetadataReader && {
+          documentMetadataReader: entry.documentMetadataReader,
+        }),
       };
       return parsedEntry;
     }
