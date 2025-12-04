@@ -199,7 +199,7 @@ export type DocumentProcessorFactory = (
   metadata: Metadata,
 ) => Processor;
 
-export type MetadataReader = (content: string) => Metadata;
+export type DocumentMetadataReader = (content: string) => Metadata;
 
 export const UseTemporaryServerRoot = Symbol('UseTemporaryServerRoot');
 export type UseTemporaryServerRoot = typeof UseTemporaryServerRoot;
@@ -241,7 +241,7 @@ export type ResolvedTaskConfig = {
   language: string | undefined;
   readingProgression: 'ltr' | 'rtl' | undefined;
   documentProcessorFactory: DocumentProcessorFactory;
-  metadataReader: MetadataReader;
+  documentMetadataReader: DocumentMetadataReader;
   vfmOptions: {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
@@ -432,19 +432,19 @@ function parseFileMetadata({
   sourcePath,
   workspaceDir,
   themesDir,
-  metadataReader,
+  documentMetadataReader,
 }: {
   contentType: ManuscriptMediaType;
   sourcePath: string;
   workspaceDir: string;
   themesDir?: string;
-  metadataReader: MetadataReader;
+  documentMetadataReader: DocumentMetadataReader;
 }): { title?: string; themes?: ParsedTheme[] } {
   const sourceDir = upath.dirname(sourcePath);
   let title: string | undefined;
   let themes: ParsedTheme[] | undefined;
   if (contentType === 'text/markdown') {
-    const metadata = readMarkdownMetadata(sourcePath, metadataReader);
+    const metadata = readMarkdownMetadata(sourcePath, documentMetadataReader);
     title = metadata.title;
     if (metadata.vfm?.theme && themesDir) {
       themes = [metadata.vfm.theme]
@@ -516,7 +516,7 @@ export function resolveTaskConfig(
     config.temporaryFilePrefix ?? `.vs-${Date.now()}.`;
 
   const documentProcessorFactory = config?.documentProcessor ?? VFM;
-  const metadataReader = config?.metadataReader ?? readMetadata;
+  const documentMetadataReader = config?.documentMetadataReader ?? readMetadata;
 
   const vfmOptions = {
     ...config?.vfm,
@@ -666,7 +666,7 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           base,
-          metadataReader,
+          documentMetadataReader,
         })
       : resolveComposedProjectConfig({
           config,
@@ -676,7 +676,7 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           cover,
-          metadataReader,
+          documentMetadataReader,
         });
 
   // Check overwrites
@@ -735,7 +735,7 @@ export function resolveTaskConfig(
     language,
     readingProgression,
     documentProcessorFactory,
-    metadataReader,
+    documentMetadataReader,
     vfmOptions,
     cover,
     timeout,
@@ -777,10 +777,10 @@ function resolveSingleInputConfig({
   temporaryFilePrefix,
   themeIndexes,
   base,
-  metadataReader,
+  documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
-  'temporaryFilePrefix' | 'themeIndexes' | 'base' | 'metadataReader'
+  'temporaryFilePrefix' | 'themeIndexes' | 'base' | 'documentMetadataReader'
 > & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
@@ -846,7 +846,7 @@ function resolveSingleInputConfig({
       contentType,
       sourcePath,
       workspaceDir,
-      metadataReader,
+      documentMetadataReader,
     });
     const target = upath
       .resolve(
@@ -968,7 +968,7 @@ function resolveComposedProjectConfig({
   temporaryFilePrefix,
   themeIndexes,
   cover,
-  metadataReader,
+  documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
   | 'entryContextDir'
@@ -976,7 +976,7 @@ function resolveComposedProjectConfig({
   | 'temporaryFilePrefix'
   | 'themeIndexes'
   | 'cover'
-  | 'metadataReader'
+  | 'documentMetadataReader'
 > & { config: ParsedBuildTask; context: string }): ProjectConfig {
   Logger.debug('entering composed project config mode');
 
@@ -1079,7 +1079,7 @@ function resolveComposedProjectConfig({
           sourcePath: pathname,
           workspaceDir,
           themesDir,
-          metadataReader,
+          documentMetadataReader,
         }),
       };
     };

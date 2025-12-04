@@ -1,7 +1,10 @@
 import { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 import fs from 'node:fs';
 import vfile, { VFile } from 'vfile';
-import { DocumentProcessorFactory, MetadataReader } from '../config/resolve.js';
+import {
+  DocumentProcessorFactory,
+  DocumentMetadataReader,
+} from '../config/resolve.js';
 
 export interface VSFile extends VFile {
   data: {
@@ -12,14 +15,14 @@ export interface VSFile extends VFile {
 
 export async function processMarkdown(
   documentProcessorFactory: DocumentProcessorFactory,
-  metadataReader: MetadataReader,
+  documentMetadataReader: DocumentMetadataReader,
   filepath: string,
   options: StringifyMarkdownOptions = {},
 ): Promise<VSFile> {
   const markdownString = fs.readFileSync(filepath, 'utf8');
   const processor = documentProcessorFactory(
     options,
-    metadataReader(markdownString),
+    documentMetadataReader(markdownString),
   );
   const processed = (await processor.process(
     vfile({ path: filepath, contents: markdownString }),
@@ -29,7 +32,7 @@ export async function processMarkdown(
 
 export function readMarkdownMetadata(
   filepath: string,
-  metadataReader: MetadataReader,
+  documentMetadataReader: DocumentMetadataReader,
 ): Metadata {
-  return metadataReader(fs.readFileSync(filepath, 'utf8'));
+  return documentMetadataReader(fs.readFileSync(filepath, 'utf8'));
 }

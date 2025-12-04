@@ -41,6 +41,7 @@ Object {
   "css": undefined,
   "customStyle": "https://vivlostyle.org",
   "customUserStyle": "theme.css",
+  "documentMetadataReader": [Function],
   "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
@@ -114,7 +115,6 @@ Object {
   },
   "language": "myLanguage",
   "logLevel": "info",
-  "metadataReader": [Function],
   "outputs": Array [
     Object {
       "format": "pdf",
@@ -235,6 +235,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentMetadataReader": [Function],
   "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
@@ -314,7 +315,6 @@ Object {
   },
   "language": "language",
   "logLevel": "info",
-  "metadataReader": [Function],
   "outputs": Array [
     Object {
       "format": "pdf",

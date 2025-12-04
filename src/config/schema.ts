@@ -726,7 +726,7 @@ export const BuildTask = v.pipe(
             Custom function to provide a unified Processor for converting markdown to HTML.
           `),
         ),
-        metadataReader: v.pipe(
+        documentMetadataReader: v.pipe(
           v.function() as v.GenericSchema<(content: string) => Metadata>,
           v.metadata({
             typeString:
