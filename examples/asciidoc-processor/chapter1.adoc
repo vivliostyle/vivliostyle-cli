@@ -1,0 +1,24 @@
+= Chapter 1: AsciiDoc
+
+This chapter is written in *AsciiDoc* and processed with a custom `documentProcessor`.
+
+== Features
+
+AsciiDoc supports many features:
+
+* *Bold* and _italic_ text
+* `Monospace` for code
+* Links: https://vivliostyle.org[Vivliostyle]
+
+== Code Example
+
+[source,javascript]
+----
+function hello() {
+  console.log("Hello from AsciiDoc!");
+}
+----
+
+== Summary
+
+AsciiDoc files require a custom processor wrapping Asciidoctor.js.
