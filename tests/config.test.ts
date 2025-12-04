@@ -472,3 +472,52 @@ it('allows per-entry documentProcessor and documentMetadataReader', async () => 
   expect((manuscriptEntry as any).documentProcessorFactory).toBe(VFM);
   expect((manuscriptEntry as any).documentMetadataReader).toBe(readMetadata);
 });
+
+it('allows non-markdown extensions when documentProcessor is provided', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called in config parsing');
+  };
+  const customMetadataReader = () => ({ title: 'Custom Format Title' });
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: [
+      {
+        path: 'sample.xyz',
+        documentProcessor: customProcessor,
+        documentMetadataReader: customMetadataReader,
+      },
+    ],
+  });
+
+  // sample.xyz should be accepted with custom processor
+  const xyzEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('sample.xyz'),
+  );
+  expect(xyzEntry).toBeDefined();
+  // contentType should be 'text/plain' for unknown extensions
+  expect((xyzEntry as any).contentType).toBe('text/plain');
+  // Target should have .html extension
+  expect((xyzEntry as any).target).toMatch(/sample\.html$/);
+  // Title should be extracted using custom metadata reader
+  expect(xyzEntry?.title).toBe('Custom Format Title');
+});
+
+it('rejects text/plain files without documentProcessor', async () => {
+  // .txt files are recognized as text/plain, which requires documentProcessor
+  await expect(
+    getTaskConfig(['build'], resolveFixture('config'), {
+      entry: ['sample.txt'],
+    }),
+  ).rejects.toThrow(/Invalid manuscript type/);
+});
+
+it('rejects unknown extensions without documentProcessor', async () => {
+  await expect(
+    getTaskConfig(['build'], resolveFixture('config'), {
+      entry: ['sample.xyz'],
+    }),
+  ).rejects.toThrow(/Invalid manuscript type/);
+});

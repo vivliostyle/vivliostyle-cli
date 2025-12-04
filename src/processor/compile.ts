@@ -181,8 +181,20 @@ export async function transformManuscript(
   );
 
   if (source?.type === 'file') {
-    if (source.contentType === 'text/markdown') {
-      // Compile markdown
+    if (
+      source.contentType === 'text/html' ||
+      source.contentType === 'application/xhtml+xml'
+    ) {
+      // Process HTML/XHTML files directly
+      content = await getJsdomFromUrlOrFile({ src: source.pathname });
+      content = await processManuscriptHtml(content, {
+        style,
+        title: entry.title,
+        contentType: source.contentType,
+        language,
+      });
+    } else {
+      // Process non-HTML files with documentProcessor
       const manuscriptEntry = entry as ManuscriptEntry;
       const vfile = await processMarkdown(
         manuscriptEntry.documentProcessorFactory,
@@ -196,21 +208,6 @@ export async function transformManuscript(
         },
       );
       content = getJsdomFromString({ html: String(vfile) });
-    } else if (
-      source.contentType === 'text/html' ||
-      source.contentType === 'application/xhtml+xml'
-    ) {
-      content = await getJsdomFromUrlOrFile({ src: source.pathname });
-      content = await processManuscriptHtml(content, {
-        style,
-        title: entry.title,
-        contentType: source.contentType,
-        language,
-      });
-    } else {
-      if (!pathEquals(source.pathname, entry.target)) {
-        await copy(source.pathname, entry.target);
-      }
     }
   } else if (source?.type === 'uri') {
     resourceUrl = /^https?:/.test(source.href)
