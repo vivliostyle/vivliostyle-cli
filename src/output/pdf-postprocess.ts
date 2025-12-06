@@ -49,9 +49,6 @@ export interface PageSizeData {
   bleedSize: number;
 }
 
-const CONTAINER_PRESS_READY_PATH =
-  '/opt/vivliostyle-cli/node_modules/.bin/press-ready';
-
 export async function pressReadyWithContainer({
   input,
   output,
@@ -65,7 +62,7 @@ export async function pressReadyWithContainer({
 }) {
   await runContainer({
     image,
-    entrypoint: CONTAINER_PRESS_READY_PATH,
+    entrypoint: 'press-ready',
     userVolumeArgs: collectVolumeArgs([
       upath.dirname(input),
       upath.dirname(output),
