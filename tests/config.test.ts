@@ -1,3 +1,4 @@
+import { VFM, readMetadata } from '@vivliostyle/vfm';
 import { expect, it, onTestFinished, vi } from 'vitest';
 import { UseTemporaryServerRoot } from '../src/config/resolve.js';
 import { VivliostyleConfigSchema } from '../src/config/schema.js';
@@ -460,7 +461,7 @@ it('allows per-entry documentProcessor and documentMetadataReader', async () => 
   // Title should be extracted using custom metadata reader
   expect(frontmatterEntry?.title).toBe('Custom Title');
 
-  // manuscript.md should NOT have per-entry settings (uses global)
+  // manuscript.md should have global settings (VFM and readMetadata)
   const manuscriptEntry = config.entries.find(
     (e) =>
       'source' in e &&
@@ -468,6 +469,6 @@ it('allows per-entry documentProcessor and documentMetadataReader', async () => 
       e.source.pathname.endsWith('manuscript.md'),
   );
   expect(manuscriptEntry).toBeDefined();
-  expect((manuscriptEntry as any).documentProcessorFactory).toBeUndefined();
-  expect((manuscriptEntry as any).documentMetadataReader).toBeUndefined();
+  expect((manuscriptEntry as any).documentProcessorFactory).toBe(VFM);
+  expect((manuscriptEntry as any).documentMetadataReader).toBe(readMetadata);
 });

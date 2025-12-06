@@ -101,8 +101,8 @@ export interface ManuscriptEntry {
   template?: undefined;
   target: string;
   rel?: string | string[];
-  documentProcessorFactory?: DocumentProcessorFactory;
-  documentMetadataReader?: DocumentMetadataReader;
+  documentProcessorFactory: DocumentProcessorFactory;
+  documentMetadataReader: DocumentMetadataReader;
 }
 
 export interface ContentsEntry {
@@ -668,6 +668,7 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           base,
+          documentProcessorFactory,
           documentMetadataReader,
         })
       : resolveComposedProjectConfig({
@@ -678,6 +679,7 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           cover,
+          documentProcessorFactory,
           documentMetadataReader,
         });
 
@@ -779,10 +781,15 @@ function resolveSingleInputConfig({
   temporaryFilePrefix,
   themeIndexes,
   base,
+  documentProcessorFactory,
   documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
-  'temporaryFilePrefix' | 'themeIndexes' | 'base' | 'documentMetadataReader'
+  | 'temporaryFilePrefix'
+  | 'themeIndexes'
+  | 'base'
+  | 'documentProcessorFactory'
+  | 'documentMetadataReader'
 > & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
@@ -879,6 +886,8 @@ function resolveSingleInputConfig({
       target,
       title: metadata.title,
       themes,
+      documentProcessorFactory,
+      documentMetadataReader,
     });
     exportAliases.push({
       source: target,
@@ -970,6 +979,7 @@ function resolveComposedProjectConfig({
   temporaryFilePrefix,
   themeIndexes,
   cover,
+  documentProcessorFactory,
   documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
@@ -978,6 +988,7 @@ function resolveComposedProjectConfig({
   | 'temporaryFilePrefix'
   | 'themeIndexes'
   | 'cover'
+  | 'documentProcessorFactory'
   | 'documentMetadataReader'
 > & { config: ParsedBuildTask; context: string }): ProjectConfig {
   Logger.debug('entering composed project config mode');
@@ -1250,13 +1261,11 @@ function resolveComposedProjectConfig({
         title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         ...(entry.rel && { rel: entry.rel }),
-        // Include per-entry processor settings if specified
-        ...(entry.documentProcessor && {
-          documentProcessorFactory: entry.documentProcessor,
-        }),
-        ...(entry.documentMetadataReader && {
-          documentMetadataReader: entry.documentMetadataReader,
-        }),
+        // Use per-entry settings if specified, otherwise fall back to global settings
+        documentProcessorFactory:
+          entry.documentProcessor ?? documentProcessorFactory,
+        documentMetadataReader:
+          entry.documentMetadataReader ?? documentMetadataReader,
       };
       return parsedEntry;
     }
