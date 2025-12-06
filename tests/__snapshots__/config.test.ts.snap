@@ -41,6 +41,7 @@ Object {
   "css": undefined,
   "customStyle": "https://vivlostyle.org",
   "customUserStyle": "theme.css",
+  "documentMetadataReader": [Function],
   "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
@@ -234,6 +235,7 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
+  "documentMetadataReader": [Function],
   "documentProcessorFactory": [Function],
   "entries": Array [
     Object {

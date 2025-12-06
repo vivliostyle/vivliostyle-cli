@@ -84,6 +84,9 @@ type VivliostyleConfigSchema =
   - `documentProcessor`: (option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor  
     Custom function to provide a unified Processor for converting markdown to HTML.
 
+  - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
+    Custom function to extract metadata from markdown content.
+
   - `vfm`: [VfmConfig](#vfmconfig)  
     Options for converting Markdown into a stringified format (HTML).
 
@@ -170,6 +173,9 @@ type BuildTask = {
     option: import("@vivliostyle/vfm").StringifyMarkdownOptions,
     metadata: import("@vivliostyle/vfm").Metadata,
   ) => import("unified").Processor;
+  documentMetadataReader?: (
+    content: string,
+  ) => import("@vivliostyle/vfm").Metadata;
   vfm?: VfmConfig;
   image?: string;
   http?: boolean;
