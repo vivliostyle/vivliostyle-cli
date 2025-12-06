@@ -82,10 +82,10 @@ type VivliostyleConfigSchema =
     Timeout limit for waiting for the Vivliostyle process (in ms). (default: `300000`)
 
   - `documentProcessor`: (option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor  
-    Custom function to provide a unified Processor for converting markdown to HTML.
+    Custom function to provide a unified Processor for converting the source document to HTML.
 
   - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
-    Custom function to extract metadata from markdown content.
+    Custom function to extract metadata from the source document content.
 
   - `vfm`: [VfmConfig](#vfmconfig)  
     Options for converting Markdown into a stringified format (HTML).
@@ -331,11 +331,9 @@ type CoverEntryConfig = {
 
   - `documentProcessor`: (option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor  
     Custom function to provide a unified Processor for converting the source document to HTML.
-    If not specified, the top-level `documentProcessor` setting is used.
 
   - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
     Custom function to extract metadata from the source document content.
-    If not specified, the top-level `documentMetadataReader` setting is used.
 
 #### Type definition
 
