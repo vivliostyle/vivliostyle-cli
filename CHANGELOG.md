@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 9.8.5
+
+### Patch Changes
+
+- Debug release ([#671](https://github.com/vivliostyle/vivliostyle-cli/pull/671))
+
 ## [9.8.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.3...v9.8.4) (2025-12-02)
 
 ### Bug Fixes
