@@ -1,5 +1,8 @@
+import './mocks/fs.js';
+import './mocks/tmp.js';
+
 import { expect, it, vi } from 'vitest';
-import { build, init, preview } from '../src/index.js';
+import { build, create, preview } from '../src/index.js';
 
 it('provides build function', async () => {
   const mockedBuild = vi.hoisted(() => vi.fn());
@@ -15,16 +18,22 @@ it('provides build function', async () => {
   );
 });
 
-it('provides init function', async () => {
-  const mockedInit = vi.hoisted(() => vi.fn());
-  vi.mock('../src/core/init', () => ({ init: mockedInit }));
+it('provides create function', async () => {
+  const mockedCreate = vi.hoisted(() => vi.fn());
+  vi.mock('../src/core/create', () => ({ create: mockedCreate }));
 
-  await init({
+  await create({
     title: 'Vivliostyle',
+    author: 'John Doe',
+    projectPath: 'my-project',
+    createConfigFileOnly: true,
   });
-  expect(mockedInit).toHaveBeenLastCalledWith(
+  expect(mockedCreate).toHaveBeenLastCalledWith(
     expect.objectContaining({
       title: 'Vivliostyle',
+      author: 'John Doe',
+      projectPath: 'my-project',
+      createConfigFileOnly: true,
     }),
   );
 });

@@ -1,13 +1,14 @@
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
 import { VFM } from '@vivliostyle/vfm';
-import unified from 'unified';
-import remarkParse from 'remark-parse';
-import remark2rehype from 'remark-rehype';
 import rehypeExpressiveCode from 'rehype-expressive-code';
 import rehypeStringify from 'rehype-stringify';
+import remarkParse from 'remark-parse';
+import remark2rehype from 'remark-rehype';
 import remarkRuby from 'remark-ruby';
+import unified from 'unified';
 
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const config = {
+const config = defineConfig({
   title: 'Markdown processor customization example',
   entry: [
     'manuscript.md',
@@ -29,6 +30,6 @@ const config = {
       })
       .use(rehypeStringify),
   output: 'draft.pdf',
-};
+});
 
 export default config;

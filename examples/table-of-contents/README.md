@@ -12,7 +12,9 @@ With the `toc` option, we can generate a file with a table of contents. The `toc
 #### vivliostyle.config.js
 
 ```js
-module.exports = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Example of Table of Contents',
   author: 'spring-raining',
   language: 'en',
@@ -28,5 +30,5 @@ module.exports = {
     htmlPath: 'index.html',
     sectionDepth: 4,
   },
-};
+});
 ```

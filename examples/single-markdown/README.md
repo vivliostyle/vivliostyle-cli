@@ -7,7 +7,9 @@ Please refer the VFM repository for more details of VFM syntax.
 ### vivliostyle.config.js
 
 ```js
-module.exports = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Single Markdown publication',
   author: 'spring-raining',
   language: 'en',
@@ -23,5 +25,5 @@ module.exports = {
       format: 'webpub',
     },
   ],
-};
+});
 ```

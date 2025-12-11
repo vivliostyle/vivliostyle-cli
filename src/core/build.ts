@@ -26,8 +26,7 @@ export async function build(
   inlineConfig: ParsedVivliostyleInlineConfig,
   { containerForkMode = false }: { containerForkMode?: boolean } = {},
 ) {
-  Logger.setLogLevel(inlineConfig.logLevel);
-  Logger.setCustomLogger(inlineConfig.logger);
+  Logger.setLogOptions(inlineConfig);
   if (containerForkMode) {
     Logger.setLogPrefix(gray('[Docker]'));
   }

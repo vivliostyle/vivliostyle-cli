@@ -1,5 +1,7 @@
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Demonstration of Render mode',
   language: 'en',
   size: '100mm,100mm',
@@ -16,6 +18,6 @@ module.exports = {
       // If renderMode is not set, Vivliostyle will render it on host OS
       // renderMode: 'local',
       path: 'draft_local.pdf',
-    }
+    },
   ],
-};
+});

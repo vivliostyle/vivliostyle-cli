@@ -2,14 +2,45 @@
 
 Vivliostyle CLI は、HTML やマークダウン文書を組版するためのコマンドラインインターフェイスです。[Vivliostyle Viewer](https://docs.vivliostyle.org/#/ja/vivliostyle-viewer) を内蔵し、出版物に適した高品質な PDF を生成します。
 
-## インストール
+## Vivliostyle プロジェクトを作成する
 
-事前に [Node.js](https://nodejs.org/ja/) (v16 以上) のインストールが必要です。
+次のいずれかのコマンドを実行してください。質問される内容に答えると、プロジェクトが自動的に作成されます。
 
-次のコマンドで Vivliostyle CLI をインストールできます:
-
+```sh
+npm create book
+yarn create book # For yarn users
+pnpm create book # For pnpm users
 ```
+
+> [!NOTE]
+> 事前に [Node.js](https://nodejs.org/) （v20以上）のインストールが必要です。BunやDenoなどNode.js以外のランタイムを使用する場合は、それぞれのランタイムの使用手順にしたがってください。
+
+プロジェクトを作成すると、自動的に `vivliostyle.config.js` という名前の構成ファイルが作成されます。詳しい使用方法は [構成ファイル](./using-config-file.md) を参照してください。
+
+## コミュニティーテンプレート
+
+Vivliostyle CLIはデフォルトでMinimal、Basic、Documentation、Novel、Academic、Magazineのテンプレートを用意しています。もし使いたいVivliostyle Themeが独自のテンプレートを提供している場合、プロジェクト作成ステップで `Use templates from the community theme` を選ぶことでそのテンプレートからプロジェクトを作り始めることができます。
+
+また、自分で用意したテンプレートを使用することもできます。`--template` オプションで指定したテンプレートをもとにプロジェクトを作成します。
+
+```sh
+npm create book --template gh:org/repo/templates/awesome-template
+```
+
+テンプレートの参照方法は [giget](https://github.com/unjs/giget#readme) のドキュメントを参照してください。
+
+## マニュアルインストール
+
+次のコマンドで Vivliostyle CLI をインストールできます。
+
+```sh
 npm install -g @vivliostyle/cli
+```
+
+上記のコマンドは、システム全体でVivliostyleを利用できるようにするものです。そうではなく、現在のディレクトリのみで Vivliostyle CLI を利用する場合、以下のようにします。
+
+```sh
+npm install @vivliostyle/cli
 ```
 
 ## PDF の生成
@@ -81,13 +112,12 @@ Vivliostyle CLI は PDF形式以外にも、EPUB 形式と Web 出版物（WebPu
 
 サポートする出力形式のマトリックスは以下の通りです。
 
-| 入力 \ 出力 | `pdf` | `webpub` | `epub` |
-|---|:---:|:---:|:---:|
-| `pub-manifest` | 🔵 | 🔵 | 🔵 |
-| `markdown` | 🔵 | 🔵 | 🔵 |
-| `html` `webbook` (外部 HTML を含む) | 🔵 | 🔵 | 🔵 |
-| `epub` `epub-opf` | 🔵 | 🙅 | 🙅 |
-
+| 入力 \ 出力                         | `pdf` | `webpub` | `epub` |
+| ----------------------------------- | :---: | :------: | :----: |
+| `pub-manifest`                      |  🔵   |    🔵    |   🔵   |
+| `markdown`                          |  🔵   |    🔵    |   🔵   |
+| `html` `webbook` (外部 HTML を含む) |  🔵   |    🔵    |   🔵   |
+| `epub` `epub-opf`                   |  🔵   |    🙅    |   🙅   |
 
 ## その他のオプション
 
@@ -103,4 +133,5 @@ vivliostyle help preview
 秘密の機能: `vivliostyle` というコマンドの代わりに `vs` というコマンド名でも使用できるので、タイプ数を少し減らせます。
 
 以下もご覧ください:
+
 - [Vivliostyle CLI (README)](https://github.com/vivliostyle/vivliostyle-cli/blob/main/README.md)

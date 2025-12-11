@@ -1,7 +1,7 @@
 // @ts-check
+import { defineConfig } from '@vivliostyle/cli';
 
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const config = {
+export default defineConfig({
   title: 'Title',
   author: 'John Doe',
   language: 'en',
@@ -18,6 +18,4 @@ const config = {
   static: {
     '/': 'dist',
   },
-};
-
-export default config;
+});
