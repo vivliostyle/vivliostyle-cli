@@ -1,0 +1,21 @@
+name: add-label
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+        with:
+          configuration-path: .github/labeler.yml
+          sync-labels: true

@@ -1,39 +1,84 @@
 name: release
 
 on:
-  - workflow_dispatch
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   id-token: write # Required for OIDC
   contents: write # For git operations
+  pull-requests: write # For creating version PRs
+
+env:
+  HUSKY: 0
 
 jobs:
-  release-dry-run:
+  publish-dry-run:
     runs-on: ubuntu-latest
+    outputs:
+      publish-summary: ${{ steps.publish-summary.outputs.json }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: 'pnpm'
       - run: pnpm install
       - run: pnpm build
       - name: Release dry run
-        run: npx release-it --ci -VV --dry-run
+        run: pnpm publish -r --dry-run --report-summary --publish-branch ${{ github.ref_name }}
+      - name: Output publish summary
+        id: publish-summary
+        run: |
+          echo "json=$(cat pnpm-publish-summary.json | jq -c)" >> $GITHUB_OUTPUT
       - uses: actions/upload-artifact@v4
         with:
-          path: dist/**
+          path: |
+            dist/**
+            packages/create-book/dist/**
 
-  release:
-    needs: release-dry-run
+  create-version-pr:
+    runs-on: ubuntu-latest
+    outputs:
+      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Set up git
+        # Note: These settings may be revoked if a GitHub App token is updated.
+        run: |
+          git config --global user.name 'vivliostyle-bot[bot]'
+          git config --global user.email '236058695+vivliostyle-bot[bot]@users.noreply.github.com'
+      - name: Create Version PR
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.4
+        id: changesets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          setupGitUser: false
+
+  publish:
+    needs:
+      - publish-dry-run
+      - create-version-pr
+    if: ${{ fromJson(needs.publish-dry-run.outputs.publish-summary).publishedPackages[0] && !fromJson(needs.create-version-pr.outputs.has-changesets) }}
     runs-on: ubuntu-latest
     environment: Production deployment
+    outputs:
+      git-user-name: ${{ steps.app-token.outputs.app-slug }}[bot]
+      git-user-email: ${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com
     steps:
       - uses: actions/create-github-app-token@v2
         id: app-token
@@ -47,8 +92,6 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          fetch-tags: true
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
       - name: Set up git
@@ -58,7 +101,7 @@ jobs:
           git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
       - uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: .
           merge-multiple: true
       - uses: pnpm/action-setup@v4
         with:
@@ -66,13 +109,72 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           registry-url: 'https://registry.npmjs.org/'
-          node-version: 22
+          node-version-file: .nvmrc
           cache: 'pnpm'
       # Ensure npm 11.5.1 or later is installed
       - name: Update npm
         run: npm install -g npm@latest
       - run: pnpm install
-      - name: Release
-        run: npx release-it --ci -VV
+      # - name: Release
+      #   run: pnpm publish -r --access public --publish-branch ${{ github.ref_name }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+  release:
+    needs:
+      - publish-dry-run
+      - publish
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.publish-dry-run.outputs.publish-summary).publishedPackages }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'pnpm'
+      - name: Set up git
+        run: |
+          git config --global user.name '${{ needs.publish.outputs.git-user-name }}'
+          git config --global user.email '${{ needs.publish.outputs.git-user-email }}'
+      - name: Output current package info
+        id: package
+        run: |
+          list=$(pnpm ls --filter ${{ matrix.package.name }} --json | jq -c '.[0]')
+          echo "path=$(echo $list | jq -r '.path')" >> $GITHUB_OUTPUT
+      - name: Output release notes
+        run: |
+          version=$(echo "${{ matrix.package.version }}" | sed 's/\./\\./g')
+          changelog_file="${{ steps.package.outputs.path }}/CHANGELOG.md"
+          if [ -f "$changelog_file" ]; then
+            section=$(awk "/^## $version/ {flag=1; next} /^##? / {flag=0} flag {print}" "$changelog_file")
+            echo "$section" > release_notes.txt
+          else
+            touch release_notes.txt
+          fi
+          cat release_notes.txt
+      - name: Create tag
+        id: create-tag
+        run: |
+          root_package_name=$(cat package.json | jq -r '.name')
+          if [ "${{ matrix.package.name }}" = "$root_package_name" ]; then
+            name="v${{ matrix.package.version }}"
+          else
+            name="${{ matrix.package.name }}@${{ matrix.package.version }}"
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          git tag -a $name -m "Release ${{ matrix.package.name }}@${{ matrix.package.version }}"
+          git push origin $name
+      - name: Release to GitHub
+        if: ${{ matrix.package.name != 'create-book' }}
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          tag_name: ${{ steps.create-tag.outputs.name }}
+          body_path: release_notes.txt
+          generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
