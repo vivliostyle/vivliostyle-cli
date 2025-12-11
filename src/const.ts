@@ -36,9 +36,9 @@ export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 // START DEFAULT_BROWSER_VERSIONS
 // prettier-ignore
 export const DEFAULT_BROWSER_VERSIONS = {
-  chrome: {"linux":"142.0.7444.59","linux_arm":"142.0.7444.59","mac":"142.0.7444.59","mac_arm":"142.0.7444.59","win32":"142.0.7444.59","win64":"142.0.7444.59"},
-  chromium: {"linux":"1539173","linux_arm":"1539171","mac":"1539171","mac_arm":"1539171","win32":"1539171","win64":"1539168"},
-  firefox: {"linux":"stable_144.0.2","linux_arm":"stable_144.0.2","mac":"stable_144.0.2","mac_arm":"stable_144.0.2","win32":"stable_144.0.2","win64":"stable_144.0.2"},
+  chrome: {"linux":"143.0.7499.42","linux_arm":"143.0.7499.42","mac":"143.0.7499.42","mac_arm":"143.0.7499.42","win32":"143.0.7499.42","win64":"143.0.7499.42"},
+  chromium: {"linux":"1557241","linux_arm":"1557267","mac":"1557267","mac_arm":"1557281","win32":"1557270","win64":"1557225"},
+  firefox: {"linux":"stable_146.0","linux_arm":"stable_146.0","mac":"stable_146.0","mac_arm":"stable_146.0","win32":"stable_146.0","win64":"stable_146.0"},
 } as const;
 // END DEFAULT_BROWSER_VERSIONS
 
