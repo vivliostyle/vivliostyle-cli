@@ -235,8 +235,8 @@ importers:
         specifier: 4.1.5
         version: 4.1.5
       pnpm:
-        specifier: 10.9.0
-        version: 10.9.0
+        specifier: 10.25.0
+        version: 10.25.0
       prettier:
         specifier: 3.5.3
         version: 3.5.3
@@ -5130,8 +5130,8 @@ packages:
   please-upgrade-node@3.2.0:
     resolution: {integrity: sha512-gQR3WpIgNIKwBMVLkpMUeR3e1/E1y42bqDQZfql+kDeXd8COYfM8PQA4X6y7a8u9Ua9FHmsrrmirW2vHs45hWg==}
 
-  pnpm@10.9.0:
-    resolution: {integrity: sha512-BIbjlGQNPB+zydQ9Sc+Sh5/3T4UWlZwjUwj1qPYuLhlSimXNwqMFj1h83nHro9W1YyfIwzqX5MQFHKSKEMotXw==}
+  pnpm@10.25.0:
+    resolution: {integrity: sha512-XoJjkCevN8+DIGG8xtY5whljRIjg8rrr54UCink957Ul/80/f/V09emGBlTgmP6FK6isXdXO/hdn0joCCpL1AQ==}
     engines: {node: '>=18.12'}
     hasBin: true
 
@@ -12475,7 +12475,7 @@ snapshots:
     dependencies:
       semver-compare: 1.0.0
 
-  pnpm@10.9.0: {}
+  pnpm@10.25.0: {}
 
   possible-typed-array-names@1.0.0: {}
 
