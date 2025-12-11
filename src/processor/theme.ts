@@ -14,6 +14,7 @@ export async function checkThemeInstallationNecessity({
   const commonOpt = {
     path: themesDir,
     lockfileVersion: 3,
+    installLinks: true,
   };
   const arb = new Arborist(commonOpt);
   const tree = await arb.loadActual();
@@ -33,6 +34,7 @@ export async function installThemeDependencies({
     const commonOpt = {
       path: themesDir,
       lockfileVersion: 3,
+      installLinks: true,
     };
     const tree = await new Arborist(commonOpt).buildIdealTree();
     const existing = Array.from(tree.children.keys());
