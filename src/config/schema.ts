@@ -1,10 +1,10 @@
-import { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
+import type { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 import { satisfies as semverSatisfies } from 'semver';
-import { type Processor } from 'unified';
+import type { Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
 import { cliVersion, CONTAINER_URL } from '../const.js';
-import { LoggerInterface } from '../logger.js';
+import type { LoggerInterface } from '../logger.js';
 
 const $ = (strings: TemplateStringsArray, ...values: any[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
@@ -296,9 +296,9 @@ export const VfmReplaceRule = v.looseObject({
 export type VfmReplaceRule = v.InferInput<typeof VfmReplaceRule>;
 
 export const BrowserType = v.union([
+  v.literal('chrome'),
   v.literal('chromium'),
   v.literal('firefox'),
-  v.literal('webkit'),
 ]);
 export type BrowserType = v.InferInput<typeof BrowserType>;
 
@@ -328,6 +328,18 @@ const validateAssetExtensionSettings = (propName: string) =>
     (input) => input.every((pattern) => !notAllowedExtensionRe.test(pattern)),
     `Invalid pattern was found in copyAsset.${propName} option`,
   );
+
+const validateBrowserTagFormat = v.check<string, string>((input) => {
+  const [type] = input.split('@');
+  return v.is(BrowserType, type);
+}, 'Unknown browser type');
+const parseBrowserTagFormat = v.transform<
+  string,
+  { type: BrowserType; tag?: string }
+>((input) => {
+  const [type, tag] = input.split('@');
+  return { type: v.parse(BrowserType, type), tag };
+});
 
 export const CopyAssetConfig = v.pipe(
   v.partial(
@@ -782,10 +794,11 @@ export const BuildTask = v.pipe(
           `),
         ),
         browser: v.pipe(
-          BrowserType,
+          ValidString,
+          validateBrowserTagFormat,
+          parseBrowserTagFormat,
           v.description($`
-            EXPERIMENTAL SUPPORT: Specifies the browser type for launching the Vivliostyle viewer.
-            Currently, Firefox and Webkit support only the preview command.
+            Specify a browser type and version to launch the Vivliostyle viewer.
           `),
         ),
         base: v.pipe(
@@ -1103,9 +1116,11 @@ export const VivliostyleInlineConfig = v.pipe(
         `),
       ),
       browser: v.pipe(
-        BrowserType,
+        ValidString,
+        validateBrowserTagFormat,
+        parseBrowserTagFormat,
         v.description($`
-          Specify a browser type to launch Vivliostyle viewer [chromium].
+          Specify a browser type and version to launch the Vivliostyle viewer. [chrome]
         `),
       ),
       proxyServer: v.pipe(

@@ -1,9 +1,12 @@
-import { ResolvedConfig as ResolvedViteConfig } from 'vite';
+import type { ResolvedConfig as ResolvedViteConfig } from 'vite';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
-import { ResolvedTaskConfig, resolveTaskConfig } from '../config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import {
+  type ResolvedTaskConfig,
+  resolveTaskConfig,
+} from '../config/resolve.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 
 const headStartTagRe = /<head[^>]*>/i;
 export const prependToHead = (html: string, content: string) =>

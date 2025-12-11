@@ -6,8 +6,9 @@ Object {
   "base": "/root/vvv",
   "bleed": undefined,
   "browser": Object {
-    "executablePath": "myFirefox",
-    "type": "firefox",
+    "executablePath": "/usr/bin/browser",
+    "tag": "canary",
+    "type": "chrome",
   },
   "copyAsset": Object {
     "excludes": Array [
@@ -199,6 +200,7 @@ Object {
   "bleed": undefined,
   "browser": Object {
     "executablePath": undefined,
+    "tag": "beta",
     "type": "firefox",
   },
   "copyAsset": Object {

@@ -60,9 +60,8 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     .addOption(
       new Option(
         '--browser <browser>',
-        `EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer [chromium]
-Currently, Firefox and Webkit support preview command only!`,
-      ).choices(['chromium', 'firefox', 'webkit']),
+        `Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]`,
+      ),
     )
     .addOption(
       new Option(

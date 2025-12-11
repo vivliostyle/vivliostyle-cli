@@ -1,13 +1,12 @@
+import { execa } from 'execa';
 import { slug } from 'github-slugger';
-import { exec } from 'node:child_process';
 import * as fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { promisify } from 'node:util';
 import prettier from 'prettier';
 import { JSONOutput } from 'typedoc';
 import * as v from 'valibot';
-import { VivliostyleConfigSchema } from '../src/config/schema.js';
-import { useTmpDirectory } from '../src/util.js';
+import { VivliostyleConfigSchema } from '../dist/config/schema.js';
 
 function insertDocs(
   input: string,
@@ -30,7 +29,7 @@ async function buildConfigDocs(): Promise<string> {
 
   const getSchema = (
     s: v.BaseSchema<any, any, any>,
-  ):
+  ): (
     | v.BaseSchema<any, any, any>
     | v.ArraySchema<any, any>
     | v.ObjectSchema<v.ObjectEntries, any>
@@ -46,7 +45,11 @@ async function buildConfigDocs(): Promise<string> {
     | v.StringSchema<any>
     | v.NumberSchema<any>
     | v.BooleanSchema<any>
-    | v.LiteralSchema<any, any> => {
+    | v.LiteralSchema<any, any>
+  ) & {
+    [visited]?: boolean;
+    [definition]?: string;
+  } => {
     let schema = s;
     while ('pipe' in schema) {
       schema = (schema as v.SchemaWithPipe<any>).pipe[0];
@@ -55,21 +58,20 @@ async function buildConfigDocs(): Promise<string> {
   };
 
   const getMeta = (s: v.BaseSchema<any, any, any>) => {
-    return ('pipe' in s ? (s as v.SchemaWithPipe<any>).pipe : []).reduce(
-      (acc, item) => {
-        if (item.kind === 'metadata') {
-          if (item.type === 'title') {
-            acc.title = item.title;
-          } else if (item.type === 'description') {
-            acc.description = item.description;
-          } else if (item.type === 'metadata') {
-            acc = { ...acc, ...item.metadata };
-          }
+    return (
+      'pipe' in s ? ((s as v.SchemaWithPipe<any>).pipe as any[]) : []
+    ).reduce((acc, item) => {
+      if (item.kind === 'metadata') {
+        if (item.type === 'title') {
+          acc.title = item.title;
+        } else if (item.type === 'description') {
+          acc.description = item.description;
+        } else if (item.type === 'metadata') {
+          acc = { ...acc, ...item.metadata };
         }
-        return acc;
-      },
-      {},
-    );
+      }
+      return acc;
+    }, {});
   };
 
   async function traverse(
@@ -120,13 +122,13 @@ async function buildConfigDocs(): Promise<string> {
       if (
         schema.type === 'intersect' &&
         schema.options.every((option) =>
-          /^{.+}$/g.test(getSchema(option)[definition]),
+          /^{.+}$/g.test(getSchema(option)[definition] ?? ''),
         )
       ) {
         // Merge plain object intersections
         schema[definition] = `{${schema.options
           .map((option) =>
-            getSchema(option)[definition].replace(/^{(.+)}$/, '$1'),
+            (getSchema(option)[definition] ?? '').replace(/^{(.+)}$/, '$1'),
           )
           .join(';')}}`;
         properties = [...schema.options].reduce(
@@ -161,8 +163,9 @@ async function buildConfigDocs(): Promise<string> {
       schema[definition] =
         `{[key: (${getSchema(schema.key)[definition]})]: ${getSchema(schema.value)[definition]}}`;
     } else if (v.isOfType('function', schema)) {
-      const out = await (meta.typeReferences || []).reduce(
-        (acc, type) => acc.then(async (acc) => [...acc, await traverse(type)]),
+      const out = await ((meta.typeReferences as any[]) || []).reduce(
+        (acc, type) =>
+          acc.then(async (acc: any[]) => [...acc, await traverse(type)]),
         Promise.resolve([] as string[]),
       );
       docs += out.filter(Boolean).join('\n\n');
@@ -210,8 +213,9 @@ async function buildConfigDocs(): Promise<string> {
             value.type === 'optional' || value.type === 'non_optional'
               ? (value as v.OptionalSchema<any, any>).wrapped
               : value;
-          const typeString = value[definition]
-            ? value[definition].replace(
+          const schema = getSchema(value);
+          const typeString = schema[definition]
+            ? schema[definition].replace(
                 new RegExp(`(${[...namedDefinitionSet].join('|')})`, 'g'),
                 (v) => `[${v}](#${slug(v)})`,
               )
@@ -236,17 +240,22 @@ async function buildConfigDocs(): Promise<string> {
 }
 
 async function buildApiDocs() {
-  const [tmp, removeTmpDir] = await useTmpDirectory();
-  const execAsync = promisify(exec);
-  const { stderr } = await execAsync(
-    `npx typedoc --logLevel Error --out ${tmp} --json ${path.join(tmp, 'api.json')}`,
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vs-cli-docs-'));
+  const proc = await execa(
+    'npx',
+    [
+      'typedoc',
+      '--logLevel',
+      'Error',
+      '--out',
+      tmp,
+      '--json',
+      path.join(tmp, 'api.json'),
+    ],
+    { stdio: 'inherit' },
   );
-  // Filter out npm warnings about unknown config (caused by pnpm environment variables)
-  const filteredStderr = stderr
-    .replace(/^npm warn Unknown (env|project) config.*$/gm, '')
-    .trim();
-  if (filteredStderr) {
-    throw new Error(filteredStderr);
+  if (proc.exitCode !== 0) {
+    throw new Error(`typedoc process exited with code ${proc.exitCode}`);
   }
 
   const json = JSON.parse(
@@ -266,7 +275,7 @@ async function buildApiDocs() {
   }
 
   docs += fs.readFileSync(path.join(tmp, 'api-javascript.md'), 'utf-8');
-  removeTmpDir();
+  fs.rmSync(tmp, { recursive: true, force: true });
   return docs;
 }
 

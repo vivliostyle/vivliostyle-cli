@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [18, 20, 22]
+        node: [20, 22, 24]
         os:
           - ubuntu-latest
           - macos-latest
@@ -26,8 +26,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install
-      - run: pnpm playwright-core install chromium --no-shell
-      - run: pnpm build
+      - run: pnpm build:cli
       - run: pnpm test
   build-and-push-image:
     runs-on: ubuntu-latest
@@ -46,12 +45,11 @@ jobs:
         run: |
           VERSION=$(cat package.json | jq -r '.version')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      - name: Output current Playwright version
-        id: playwright
+      - name: Output browser version
+        id: browser
         run: |
-          pnpm install
-          VERSION=$(node -e 'console.log(require("playwright-core/package.json").version)')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/const.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
+          echo "browser=chrome@$BROWSER_VERSION" >> $GITHUB_OUTPUT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -65,7 +63,7 @@ jobs:
           push: true
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
-            PLAYWRIGHT_VERSION=${{ steps.playwright.outputs.version }}
+            BROWSER=${{ steps.browser.outputs.browser }}
           tags: localhost:5000/vivliostyle/cli:latest
       - name: Inspect
         run: |

@@ -1,5 +1,5 @@
 import debug from 'debug';
-import yoctoSpinner, { Spinner } from 'yocto-spinner';
+import yoctoSpinner, { type Spinner } from 'yocto-spinner';
 import { blueBright, greenBright, redBright, yellowBright } from 'yoctocolors';
 import { isInContainer, registerExitHandler } from './util.js';
 

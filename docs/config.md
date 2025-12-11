@@ -103,9 +103,8 @@ type VivliostyleConfigSchema =
   - `viewerParam`: string  
     Parameters for the Vivliostyle viewer (e.g., `allowScripts=false&pixelRatio=16`).
 
-  - `browser`: "chromium" | "firefox" | "webkit"  
-    EXPERIMENTAL SUPPORT: Specifies the browser type for launching the Vivliostyle viewer.
-    Currently, Firefox and Webkit support only the preview command.
+  - `browser`: string  
+    Specify a browser type and version to launch the Vivliostyle viewer.
 
   - `base`: string  
     Base path of the served documents. (default: `/vivliostyle`)
@@ -181,10 +180,7 @@ type BuildTask = {
   http?: boolean;
   viewer?: string;
   viewerParam?: string;
-  browser?:
-    | "chromium"
-    | "firefox"
-    | "webkit";
+  browser?: string;
   base?: string;
   server?: ServerConfig;
   static?: {
@@ -212,7 +208,7 @@ type BuildTask = {
 
   - `theme`: ([ThemeConfig](#themeconfig) | string)[] | [ThemeConfig](#themeconfig) | string
 
-  - `pageBreakBefore`: ("left" | "right" | "recto" | "verso")  
+  - `pageBreakBefore`: "left" | "right" | "recto" | "verso"  
     Specifies the page break position before this document.
     Useful for determining which side the first page of the document should be placed on in a two-page spread.
 
@@ -285,7 +281,7 @@ type ThemeConfig = {
 
   - `imageAlt`: string
 
-  - `pageBreakBefore`: ("left" | "right" | "recto" | "verso")  
+  - `pageBreakBefore`: "left" | "right" | "recto" | "verso"  
     Specifies the page break position before this document.
     Useful for determining which side the first page of the document should be placed on in a two-page spread.
 
