@@ -104,12 +104,11 @@ COPY --chown=vivliostyle:vivliostyle . /opt/vivliostyle-cli
 RUN pnpm install --prod --ignore-scripts \
   && echo $VS_CLI_VERSION > .vs-cli-version
 COPY --from=builder --chown=vivliostyle:vivliostyle /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/
+ENV PATH="/opt/vivliostyle-cli/node_modules/.bin:${PATH}"
 
 USER root
 RUN ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vivliostyle \
-  && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vs \
-  && ln -s /opt/vivliostyle-cli/node_modules/.bin/press-ready /usr/local/bin/press-ready \
-  && ln -s /opt/vivliostyle-cli/node_modules/.bin/vfm /usr/local/bin/vfm
+  && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vs
 
 USER vivliostyle
 WORKDIR /data
