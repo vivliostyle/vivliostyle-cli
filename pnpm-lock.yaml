@@ -271,6 +271,16 @@ importers:
         specifier: 3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.15.2)(tsx@4.19.3)(yaml@2.8.1)
 
+  examples/asciidoc-processor:
+    dependencies:
+      '@asciidoctor/core':
+        specifier: ^3.0.4
+        version: 3.0.4
+    devDependencies:
+      '@vivliostyle/cli':
+        specifier: file:../../
+        version: file:(typescript@5.8.3)(vite@6.4.1(@types/node@24.7.1)(tsx@4.19.3)(yaml@2.8.1))
+
   examples/customize-generated-content:
     dependencies:
       '@vivliostyle/cli':
@@ -496,6 +506,14 @@ packages:
   '@apidevtools/json-schema-ref-parser@11.7.0':
     resolution: {integrity: sha512-pRrmXMCwnmrkS3MLgAIW5dXRzeTv6GLjkjb4HmxNnvAKXN1Nfzp4KmGADBQvlVUcqi+a5D+hfGDLLnd5NnYxog==}
     engines: {node: '>= 16'}
+
+  '@asciidoctor/core@3.0.4':
+    resolution: {integrity: sha512-41SDMi7iRRBViPe0L6VWFTe55bv6HEOJeRqMj5+E5wB1YPdUPuTucL4UAESPZM6OWmn4t/5qM5LusXomFUVwVQ==}
+    engines: {node: '>=16', npm: '>=8'}
+
+  '@asciidoctor/opal-runtime@3.0.1':
+    resolution: {integrity: sha512-iW7ACahOG0zZft4A/4CqDcc7JX+fWRNjV5tFAVkNCzwZD+EnFolPaUOPYt8jzadc0+Bgd80cQTtRMQnaaV1kkg==}
+    engines: {node: '>=16'}
 
   '@astrojs/compiler@2.12.0':
     resolution: {integrity: sha512-7bCjW6tVDpUurQLeKBUN9tZ5kSv5qYrGmcn0sG0IwacL7isR2ZbyyA3AdZ4uxsuUFOS2SlgReTH7wkxO6zpqWA==}
@@ -3314,6 +3332,11 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
+
+  glob@8.1.0:
+    resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
+    engines: {node: '>=12'}
     deprecated: Glob versions prior to v9 are no longer supported
 
   global-directory@4.0.1:
@@ -6295,6 +6318,10 @@ packages:
       uploadthing:
         optional: true
 
+  unxhr@1.2.0:
+    resolution: {integrity: sha512-6cGpm8NFXPD9QbSNx0cD2giy7teZ6xOkCUH3U89WKVkL9N9rBrWjlCwhR94Re18ZlAop4MOc3WU1M3Hv/bgpIw==}
+    engines: {node: '>=8.11'}
+
   upath@1.2.0:
     resolution: {integrity: sha512-aZwGpamFO61g3OlfT7OQCHqhGnW43ieH9WZeP7QxN/G/jS4jfqUkZxoryvJgVPEcrl5NL/ggHsSmLMHuH64Lhg==}
     engines: {node: '>=4'}
@@ -6851,6 +6878,16 @@ snapshots:
       '@jsdevtools/ono': 7.1.3
       '@types/json-schema': 7.0.15
       js-yaml: 4.1.0
+
+  '@asciidoctor/core@3.0.4':
+    dependencies:
+      '@asciidoctor/opal-runtime': 3.0.1
+      unxhr: 1.2.0
+
+  '@asciidoctor/opal-runtime@3.0.1':
+    dependencies:
+      glob: 8.1.0
+      unxhr: 1.2.0
 
   '@astrojs/compiler@2.12.0': {}
 
@@ -9925,6 +9962,14 @@ snapshots:
       minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
+
+  glob@8.1.0:
+    dependencies:
+      fs.realpath: 1.0.0
+      inflight: 1.0.6
+      inherits: 2.0.4
+      minimatch: 5.1.0
+      once: 1.4.0
 
   global-directory@4.0.1:
     dependencies:
@@ -13657,6 +13702,8 @@ snapshots:
       node-fetch-native: 1.6.7
       ofetch: 1.5.1
       ufo: 1.6.1
+
+  unxhr@1.2.0: {}
 
   upath@1.2.0: {}
 
