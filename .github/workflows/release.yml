@@ -1,37 +1,70 @@
 name: release
 
 on:
-  - workflow_dispatch
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   id-token: write # Required for OIDC
   contents: write # For git operations
+  pull-requests: write # For creating version PRs
 
 jobs:
   release-dry-run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: 'pnpm'
       - run: pnpm install
       - run: pnpm build
       - name: Release dry run
-        run: npx release-it --ci -VV --dry-run
+        run: pnpm publish -r --dry-run
       - uses: actions/upload-artifact@v4
         with:
-          path: dist/**
+          path: |
+            dist/**
+            packages/create-book/dist/**
+
+  create-version-pr:
+    runs-on: ubuntu-latest
+    outputs:
+      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Set up git
+        # Note: These settings may be revoked if a GitHub App token is updated.
+        run: |
+          git config --global user.name 'vivliostyle-bot[bot]'
+          git config --global user.email '236058695+vivliostyle-bot[bot]@users.noreply.github.com'
+      - name: Create Version PR
+        uses: changesets/action@v1
+        id: changesets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          setupGitUser: false
 
   release:
-    needs: release-dry-run
+    needs:
+      - release-dry-run
+      - create-version-pr
+    if: ${{ github.event_name == 'workflow_dispatch' && !fromJson(needs.create-version-pr.outputs.has-changesets) }}
     runs-on: ubuntu-latest
     environment: Production deployment
     steps:
@@ -47,8 +80,6 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          fetch-tags: true
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
       - name: Set up git
@@ -58,7 +89,7 @@ jobs:
           git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
       - uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: .
           merge-multiple: true
       - uses: pnpm/action-setup@v4
         with:
@@ -66,13 +97,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           registry-url: 'https://registry.npmjs.org/'
-          node-version: 22
+          node-version-file: .nvmrc
           cache: 'pnpm'
       # Ensure npm 11.5.1 or later is installed
       - name: Update npm
         run: npm install -g npm@latest
       - run: pnpm install
-      - name: Release
-        run: npx release-it --ci -VV
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+      # - name: Release
+      #   run: pnpm publish -r --access public
+      #   env:
+      #     GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
