@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from '@vivliostyle/cli';
+import { VFM } from '@vivliostyle/vfm';
 import rehypeExpressiveCode from 'rehype-expressive-code';
 import rehypeStringify from 'rehype-stringify';
 import remarkParse from 'remark-parse';
@@ -9,7 +10,16 @@ import unified from 'unified';
 
 const config = defineConfig({
   title: 'Markdown processor customization example',
-  entry: ['manuscript.md'],
+  entry: [
+    'manuscript.md',
+    {
+      path: 'manuscript2.md',
+      documentProcessor: VFM,
+      documentMetadataReader: (content) => {
+        return { title: 'Custom title' };
+      },
+    },
+  ],
   documentProcessor: (config, metadata) =>
     unified()
       .use(remarkParse)

@@ -415,6 +415,7 @@ export async function copyWebPublicationAssets({
     themesDir,
     entries,
     manifestPath,
+    copyAsset,
   });
   const allFiles = new Set([
     ...(await assetMatcher.glob()),

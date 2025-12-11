@@ -119,6 +119,12 @@ export const maskConfig = (obj: any) => {
       obj[k] = '__IMAGE__';
     } else if (k === 'temporaryFilePrefix') {
       obj[k] = '__TEMPORARY_FILE_PREFIX__';
+    } else if (
+      k === 'documentProcessorFactory' ||
+      k === 'documentMetadataReader'
+    ) {
+      // These are function references that cannot be meaningfully compared in snapshots
+      delete obj[k];
     } else if (typeof v === 'string') {
       const normalized = v.match(/^(https?|file):\/{2}/) ? v : upath.toUnix(v);
       obj[k] = normalized
