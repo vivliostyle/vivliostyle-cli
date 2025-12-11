@@ -101,6 +101,8 @@ export interface ManuscriptEntry {
   template?: undefined;
   target: string;
   rel?: string | string[];
+  documentProcessorFactory: DocumentProcessorFactory;
+  documentMetadataReader: DocumentMetadataReader;
 }
 
 export interface ContentsEntry {
@@ -666,6 +668,7 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           base,
+          documentProcessorFactory,
           documentMetadataReader,
         })
       : resolveComposedProjectConfig({
@@ -676,6 +679,7 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           cover,
+          documentProcessorFactory,
           documentMetadataReader,
         });
 
@@ -777,10 +781,15 @@ function resolveSingleInputConfig({
   temporaryFilePrefix,
   themeIndexes,
   base,
+  documentProcessorFactory,
   documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
-  'temporaryFilePrefix' | 'themeIndexes' | 'base' | 'documentMetadataReader'
+  | 'temporaryFilePrefix'
+  | 'themeIndexes'
+  | 'base'
+  | 'documentProcessorFactory'
+  | 'documentMetadataReader'
 > & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
@@ -877,6 +886,8 @@ function resolveSingleInputConfig({
       target,
       title: metadata.title,
       themes,
+      documentProcessorFactory,
+      documentMetadataReader,
     });
     exportAliases.push({
       source: target,
@@ -968,6 +979,7 @@ function resolveComposedProjectConfig({
   temporaryFilePrefix,
   themeIndexes,
   cover,
+  documentProcessorFactory,
   documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
@@ -976,6 +988,7 @@ function resolveComposedProjectConfig({
   | 'temporaryFilePrefix'
   | 'themeIndexes'
   | 'cover'
+  | 'documentProcessorFactory'
   | 'documentMetadataReader'
 > & { config: ParsedBuildTask; context: string }): ProjectConfig {
   Logger.debug('entering composed project config mode');
@@ -1045,6 +1058,9 @@ function resolveComposedProjectConfig({
   function parseEntry(entry: EntryConfig): ParsedEntry {
     const getInputInfo = (
       entryPath: string,
+      options?: {
+        entryDocumentMetadataReader?: DocumentMetadataReader;
+      },
     ):
       | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
       | (UriEntrySource & { metadata?: undefined }) => {
@@ -1070,6 +1086,9 @@ function resolveComposedProjectConfig({
         );
       }
 
+      const effectiveMetadataReader =
+        options?.entryDocumentMetadataReader ?? documentMetadataReader;
+
       return {
         type: 'file',
         pathname,
@@ -1079,7 +1098,7 @@ function resolveComposedProjectConfig({
           sourcePath: pathname,
           workspaceDir,
           themesDir,
-          documentMetadataReader,
+          documentMetadataReader: effectiveMetadataReader,
         }),
       };
     };
@@ -1217,7 +1236,10 @@ function resolveComposedProjectConfig({
     }
 
     if (isArticleEntry(entry)) {
-      const inputInfo = getInputInfo(entry.path);
+      // Pass per-entry documentMetadataReader to getInputInfo
+      const inputInfo = getInputInfo(entry.path, {
+        entryDocumentMetadataReader: entry.documentMetadataReader,
+      });
       const { metadata, ...source } = inputInfo;
       const target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
@@ -1239,6 +1261,11 @@ function resolveComposedProjectConfig({
         title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         ...(entry.rel && { rel: entry.rel }),
+        // Use per-entry settings if specified, otherwise fall back to global settings
+        documentProcessorFactory:
+          entry.documentProcessor ?? documentProcessorFactory,
+        documentMetadataReader:
+          entry.documentMetadataReader ?? documentMetadataReader,
       };
       return parsedEntry;
     }
