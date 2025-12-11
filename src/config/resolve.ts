@@ -1,5 +1,6 @@
 import {
   type Metadata,
+  readMetadata,
   type StringifyMarkdownOptions,
   VFM,
 } from '@vivliostyle/vfm';
@@ -102,6 +103,8 @@ export interface ManuscriptEntry {
   template?: undefined;
   target: string;
   rel?: string | string[];
+  documentProcessorFactory: DocumentProcessorFactory;
+  documentMetadataReader: DocumentMetadataReader;
 }
 
 export interface ContentsEntry {
@@ -200,6 +203,8 @@ export type DocumentProcessorFactory = (
   metadata: Metadata,
 ) => Processor;
 
+export type DocumentMetadataReader = (content: string) => Metadata;
+
 export const UseTemporaryServerRoot = Symbol('UseTemporaryServerRoot');
 export type UseTemporaryServerRoot = typeof UseTemporaryServerRoot;
 
@@ -240,6 +245,7 @@ export type ResolvedTaskConfig = {
   language: string | undefined;
   readingProgression: 'ltr' | 'rtl' | undefined;
   documentProcessorFactory: DocumentProcessorFactory;
+  documentMetadataReader: DocumentMetadataReader;
   vfmOptions: {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
@@ -431,17 +437,19 @@ function parseFileMetadata({
   sourcePath,
   workspaceDir,
   themesDir,
+  documentMetadataReader,
 }: {
   contentType: ManuscriptMediaType;
   sourcePath: string;
   workspaceDir: string;
   themesDir?: string;
+  documentMetadataReader: DocumentMetadataReader;
 }): { title?: string; themes?: ParsedTheme[] } {
   const sourceDir = upath.dirname(sourcePath);
   let title: string | undefined;
   let themes: ParsedTheme[] | undefined;
   if (contentType === 'text/markdown') {
-    const metadata = readMarkdownMetadata(sourcePath);
+    const metadata = readMarkdownMetadata(sourcePath, documentMetadataReader);
     title = metadata.title;
     if (metadata.vfm?.theme && themesDir) {
       themes = [metadata.vfm.theme]
@@ -513,6 +521,7 @@ export function resolveTaskConfig(
     config.temporaryFilePrefix ?? `.vs-${Date.now()}.`;
 
   const documentProcessorFactory = config?.documentProcessor ?? VFM;
+  const documentMetadataReader = config?.documentMetadataReader ?? readMetadata;
 
   const vfmOptions = {
     ...config?.vfm,
@@ -669,6 +678,8 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           base,
+          documentProcessorFactory,
+          documentMetadataReader,
         })
       : resolveComposedProjectConfig({
           config,
@@ -678,6 +689,8 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           cover,
+          documentProcessorFactory,
+          documentMetadataReader,
         });
 
   // Check overwrites
@@ -736,6 +749,7 @@ export function resolveTaskConfig(
     language,
     readingProgression,
     documentProcessorFactory,
+    documentMetadataReader,
     vfmOptions,
     cover,
     timeout,
@@ -777,7 +791,16 @@ function resolveSingleInputConfig({
   temporaryFilePrefix,
   themeIndexes,
   base,
-}: Pick<ResolvedTaskConfig, 'temporaryFilePrefix' | 'themeIndexes' | 'base'> & {
+  documentProcessorFactory,
+  documentMetadataReader,
+}: Pick<
+  ResolvedTaskConfig,
+  | 'temporaryFilePrefix'
+  | 'themeIndexes'
+  | 'base'
+  | 'documentProcessorFactory'
+  | 'documentMetadataReader'
+> & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
   context: string;
@@ -842,6 +865,7 @@ function resolveSingleInputConfig({
       contentType,
       sourcePath,
       workspaceDir,
+      documentMetadataReader,
     });
     const target = upath
       .resolve(
@@ -872,6 +896,8 @@ function resolveSingleInputConfig({
       target,
       title: metadata.title,
       themes,
+      documentProcessorFactory,
+      documentMetadataReader,
     });
     exportAliases.push({
       source: target,
@@ -963,6 +989,8 @@ function resolveComposedProjectConfig({
   temporaryFilePrefix,
   themeIndexes,
   cover,
+  documentProcessorFactory,
+  documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
   | 'entryContextDir'
@@ -970,6 +998,8 @@ function resolveComposedProjectConfig({
   | 'temporaryFilePrefix'
   | 'themeIndexes'
   | 'cover'
+  | 'documentProcessorFactory'
+  | 'documentMetadataReader'
 > & { config: ParsedBuildTask; context: string }): ProjectConfig {
   Logger.debug('entering composed project config mode');
 
@@ -1038,6 +1068,9 @@ function resolveComposedProjectConfig({
   function parseEntry(entry: EntryConfig): ParsedEntry {
     const getInputInfo = (
       entryPath: string,
+      options?: {
+        entryDocumentMetadataReader?: DocumentMetadataReader;
+      },
     ):
       | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
       | (UriEntrySource & { metadata?: undefined }) => {
@@ -1063,6 +1096,9 @@ function resolveComposedProjectConfig({
         );
       }
 
+      const effectiveMetadataReader =
+        options?.entryDocumentMetadataReader ?? documentMetadataReader;
+
       return {
         type: 'file',
         pathname,
@@ -1072,6 +1108,7 @@ function resolveComposedProjectConfig({
           sourcePath: pathname,
           workspaceDir,
           themesDir,
+          documentMetadataReader: effectiveMetadataReader,
         }),
       };
     };
@@ -1209,7 +1246,10 @@ function resolveComposedProjectConfig({
     }
 
     if (isArticleEntry(entry)) {
-      const inputInfo = getInputInfo(entry.path);
+      // Pass per-entry documentMetadataReader to getInputInfo
+      const inputInfo = getInputInfo(entry.path, {
+        entryDocumentMetadataReader: entry.documentMetadataReader,
+      });
       const { metadata, ...source } = inputInfo;
       const target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
@@ -1231,6 +1271,11 @@ function resolveComposedProjectConfig({
         title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         ...(entry.rel && { rel: entry.rel }),
+        // Use per-entry settings if specified, otherwise fall back to global settings
+        documentProcessorFactory:
+          entry.documentProcessor ?? documentProcessorFactory,
+        documentMetadataReader:
+          entry.documentMetadataReader ?? documentMetadataReader,
       };
       return parsedEntry;
     }

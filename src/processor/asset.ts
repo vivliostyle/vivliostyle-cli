@@ -83,7 +83,11 @@ export function getWebPubResourceMatcher({
   entries,
   cwd,
   manifestPath,
-}: Pick<ResolvedTaskConfig, 'outputs' | 'themesDir' | 'entries'> & {
+  copyAsset: { fileExtensions },
+}: Pick<
+  ResolvedTaskConfig,
+  'outputs' | 'themesDir' | 'entries' | 'copyAsset'
+> & {
   cwd: string;
   manifestPath: string;
 }) {
@@ -91,7 +95,8 @@ export function getWebPubResourceMatcher({
     {
       patterns: [
         `**/${upath.relative(cwd, manifestPath)}`,
-        '**/*.{html,htm,xhtml,xht,css}',
+        '**/*.{html,htm,xhtml,xht}',
+        `**/*.{${fileExtensions.join(',')}}`,
       ],
       ignore: [
         ...getIgnoreAssetPatterns({

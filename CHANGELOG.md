@@ -1,5 +1,37 @@
 # Changelog
 
+## [9.8.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.3...v9.8.4) (2025-12-02)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.36.4: Bug Fix ([6ff8424](https://github.com/vivliostyle/vivliostyle-cli/commit/6ff8424cd18d0272e81cb3a86b412df03a23928f))
+
+## [9.8.3](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.2...v9.8.3) (2025-12-01)
+
+### Bug Fixes
+
+- Allow asset extensions defined in copyAsset ([#658](https://github.com/vivliostyle/vivliostyle-cli/issues/658)) ([423e0be](https://github.com/vivliostyle/vivliostyle-cli/commit/423e0be755880b6f472aa4b0789275bae46bf545))
+- Update config to use another port for build ([#659](https://github.com/vivliostyle/vivliostyle-cli/issues/659)) ([54f80f1](https://github.com/vivliostyle/vivliostyle-cli/commit/54f80f14b197cd5c04b64eca57593398cc8125cd))
+- Update Vivliostyle.js to 2.36.3: Bug Fixes ([482ec58](https://github.com/vivliostyle/vivliostyle-cli/commit/482ec58ea147482d16bcdfb343ddea8ee445cb94))
+
+## [9.8.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.1...v9.8.2) (2025-11-19)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.36.2: Bug Fix ([3f093f9](https://github.com/vivliostyle/vivliostyle-cli/commit/3f093f942478f03fce5a563733d5605ef056c20d))
+
+## [9.8.1](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.0...v9.8.1) (2025-11-18)
+
+### Bug Fixes
+
+- Update Vivliostyle.js to 2.36.1: Bug Fixes ([5d18937](https://github.com/vivliostyle/vivliostyle-cli/commit/5d189374f530f878f6fce5cdbcbc5ff81d328d86))
+
+# [9.8.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.2...v9.8.0) (2025-11-14)
+
+### Features
+
+- Update Vivliostyle.js to 2.36.0: target-text(), Improve page/column breaking ([7d00e71](https://github.com/vivliostyle/vivliostyle-cli/commit/7d00e71bceb25c505818d34d9378a546f0095572))
+
 ## [9.7.2](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.7.1...v9.7.2) (2025-10-22)
 
 ### Features

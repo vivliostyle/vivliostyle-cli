@@ -69,6 +69,29 @@ export const ValidString = v.pipe(
   v.minLength(1, 'At least one character is required'),
 );
 
+export const DocumentProcessorSchema = v.pipe(
+  v.function() as v.GenericSchema<
+    (option: StringifyMarkdownOptions, metadata: Metadata) => Processor
+  >,
+  v.metadata({
+    typeString:
+      '(option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor',
+  }),
+  v.description($`
+    Custom function to provide a unified Processor for converting the source document to HTML.
+  `),
+);
+
+export const DocumentMetadataReaderSchema = v.pipe(
+  v.function() as v.GenericSchema<(content: string) => Metadata>,
+  v.metadata({
+    typeString: '(content: string) => import("@vivliostyle/vfm").Metadata',
+  }),
+  v.description($`
+    Custom function to extract metadata from the source document content.
+  `),
+);
+
 export const ThemeConfig = v.pipe(
   v.intersect([
     v.required(
@@ -129,6 +152,8 @@ export const ArticleEntryConfig = v.pipe(
           v.transform((input) => [input].flat()),
         ),
       ),
+      documentProcessor: v.optional(DocumentProcessorSchema),
+      documentMetadataReader: v.optional(DocumentMetadataReaderSchema),
     }),
     ['path'],
     'Missing required field: path',
@@ -726,18 +751,8 @@ export const BuildTask = v.pipe(
             Timeout limit for waiting for the Vivliostyle process (in ms). (default: \`300000\`)
           `),
         ),
-        documentProcessor: v.pipe(
-          v.function() as v.GenericSchema<
-            (option: StringifyMarkdownOptions, metadata: Metadata) => Processor
-          >,
-          v.metadata({
-            typeString:
-              '(option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor',
-          }),
-          v.description($`
-            Custom function to provide a unified Processor for converting markdown to HTML.
-          `),
-        ),
+        documentProcessor: DocumentProcessorSchema,
+        documentMetadataReader: DocumentMetadataReaderSchema,
         vfm: v.pipe(
           v.union([VfmConfig]),
           v.description($`

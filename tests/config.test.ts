@@ -1,3 +1,4 @@
+import { VFM, readMetadata } from '@vivliostyle/vfm';
 import { expect, it, onTestFinished, vi } from 'vitest';
 import { UseTemporaryServerRoot } from '../src/config/resolve.js';
 import { VivliostyleConfigSchema } from '../src/config/schema.js';
@@ -424,4 +425,50 @@ it('deny config which has incompatible image', async () => {
       image: 'ghcr.io/vivliostyle/cli:0.0.0',
     }),
   ).rejects.toThrow();
+});
+
+it('allows per-entry documentProcessor and documentMetadataReader', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called in config parsing');
+  };
+  const customMetadataReader = () => ({ title: 'Custom Title' });
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: [
+      'manuscript.md',
+      {
+        path: 'frontmatter.md',
+        documentProcessor: customProcessor,
+        documentMetadataReader: customMetadataReader,
+      },
+    ],
+  });
+
+  // frontmatter.md should have per-entry settings
+  const frontmatterEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('frontmatter.md'),
+  );
+  expect(frontmatterEntry).toBeDefined();
+  expect((frontmatterEntry as any).documentProcessorFactory).toBe(
+    customProcessor,
+  );
+  expect((frontmatterEntry as any).documentMetadataReader).toBe(
+    customMetadataReader,
+  );
+  // Title should be extracted using custom metadata reader
+  expect(frontmatterEntry?.title).toBe('Custom Title');
+
+  // manuscript.md should have global settings (VFM and readMetadata)
+  const manuscriptEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('manuscript.md'),
+  );
+  expect(manuscriptEntry).toBeDefined();
+  expect((manuscriptEntry as any).documentProcessorFactory).toBe(VFM);
+  expect((manuscriptEntry as any).documentMetadataReader).toBe(readMetadata);
 });

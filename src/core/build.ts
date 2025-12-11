@@ -5,7 +5,7 @@ import { type PreviewServer, build as viteBuild } from 'vite';
 import { cyan, gray } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
-import { mergeInlineConfig } from '../config/merge.js';
+import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { isWebPubConfig, resolveTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { resolveViteConfig } from '../config/vite.js';
@@ -47,7 +47,7 @@ export async function build(
   for (let [i, task] of vivliostyleConfig.tasks.entries()) {
     using _ = Logger.startLogging('Start building');
 
-    const config = resolveTaskConfig(task, inlineOptions);
+    let config = resolveTaskConfig(task, inlineOptions);
     Logger.debug('build > config %O', config);
     const viteConfig = await resolveViteConfig({
       ...config,
@@ -73,6 +73,24 @@ export async function build(
           inlineConfig,
           mode: 'build',
         });
+
+        if (server.httpServer) {
+          const addressInfo = server.httpServer.address();
+          if (addressInfo && typeof addressInfo !== 'string') {
+            const actualPort = addressInfo.port;
+            vivliostyleConfig = mergeConfig(vivliostyleConfig, {
+              temporaryFilePrefix: config.temporaryFilePrefix,
+              server: {
+                ...server.config.preview,
+                port: actualPort,
+              },
+            });
+            config = resolveTaskConfig(
+              vivliostyleConfig.tasks[i],
+              vivliostyleConfig.inlineOptions,
+            );
+          }
+        }
       }
 
       // build artifacts
