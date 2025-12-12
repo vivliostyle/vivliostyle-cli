@@ -10,27 +10,3 @@ pnpm install
 ```
 
 After setup, run `pnpm dev` to watch files.
-
-## Release Guide (Maintainers only)
-
-### Enter pre-release
-
-```bash
-release-it --preRelease=beta --npm.tag=next
-```
-
-### Bump pre-release version
-
-```bash
-pnpm release:pre
-# or
-release-it --preRelease --npm.tag=next
-```
-
-### Graduate
-
-```bash
-pnpm release
-# or
-release-it
-```

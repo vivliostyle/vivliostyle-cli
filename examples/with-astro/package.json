@@ -1,7 +1,6 @@
 {
   "name": "with-astro",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "cross-env OPEN_VIVLIOSTYLE_VIEWER=1 astro dev",
@@ -13,7 +12,7 @@
     "@astrojs/mdx": "^4.2.5",
     "@astrojs/rss": "^4.0.11",
     "@astrojs/sitemap": "^3.3.1",
-    "@vivliostyle/cli": "file:../../",
+    "@vivliostyle/cli": "workspace:*",
     "astro": "^5.7.8"
   },
   "devDependencies": {

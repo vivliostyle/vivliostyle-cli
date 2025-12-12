@@ -8,13 +8,12 @@
     "build": "run-s build:*",
     "build:cli": "tsup && shx chmod +x dist/cli.js",
     "build:typecheck": "tsc --noEmit",
+    "build:create-book": "pnpm run --filter create-book build",
     "build:docs": "tsx scripts/update-docs.ts",
     "generate:schema": "json2ts -i schemas/pub-manifest/publication.schema.json -o src/schema/publication.schema.ts --cwd schemas/pub-manifest",
     "clean": "shx rm -rf dist tmp",
     "dev": "tsup --watch src",
     "pretest": "playwright-core install chromium --no-shell",
-    "release": "release-it",
-    "release:pre": "release-it --preRelease --npm.tag=next",
     "test": "vitest run --coverage",
     "prepare": "husky"
   },
@@ -69,7 +68,8 @@
     "yoctocolors": "2.1.1"
   },
   "devDependencies": {
-    "@release-it/conventional-changelog": "9.0.4",
+    "@changesets/cli": "2.29.8",
+    "@svitejs/changesets-changelog-github-compact": "1.2.0",
     "@types/adm-zip": "0.5.7",
     "@types/archiver": "6.0.3",
     "@types/babel__code-frame": "7.0.6",
@@ -97,11 +97,10 @@
     "json-schema-to-typescript": "15.0.4",
     "memfs": "4.17.0",
     "npm-run-all": "4.1.5",
-    "pnpm": "10.9.0",
+    "pnpm": "10.25.0",
     "prettier": "3.5.3",
     "prettier-plugin-astro": "0.14.1",
     "pretty-quick": "4.1.1",
-    "release-it": "17.11.0",
     "shx": "0.4.0",
     "supertest": "7.1.0",
     "tsup": "8.4.0",
@@ -160,5 +159,5 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@10.9.0"
+  "packageManager": "pnpm@10.25.0"
 }

@@ -1,7 +1,6 @@
 {
   "name": "with-eleventy",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "build": "npx @11ty/eleventy && vivliostyle build",
@@ -22,7 +21,7 @@
     "@11ty/eleventy-plugin-rss": "^2.0.2",
     "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
     "@11ty/eleventy-plugin-vite": "^6.0.0",
-    "@vivliostyle/cli": "file:../..",
+    "@vivliostyle/cli": "workspace:*",
     "cross-env": "^7.0.3",
     "luxon": "^3.5.0",
     "prismjs": "^1.29.0",

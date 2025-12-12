@@ -1,0 +1,3 @@
+ignore-for-release:
+  - any:
+      - head-branch: ['^changeset-release/']

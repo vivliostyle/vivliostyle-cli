@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
+  "changelog": [
+    "@svitejs/changesets-changelog-github-compact",
+    { "repo": "vivliostyle/vivliostyle-cli" }
+  ],
+  "commit": false,
+  "fixed": [["@vivliostyle/cli", "create-book"]],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}
