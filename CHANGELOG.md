@@ -1,5 +1,17 @@
 # Changelog
 
+# [9.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.4...v9.9.0) (2025-12-14)
+
+### Bug Fixes
+
+- Pass renderMode, preflight, preflightOption to inlineOptions in mergeInlineConfig ([#668](https://github.com/vivliostyle/vivliostyle-cli/issues/668)) ([7698934](https://github.com/vivliostyle/vivliostyle-cli/commit/7698934cd278fa2aa0da031330ffa715cad1fee2))
+
+### Features
+
+- Add metadataReader option to customize markdown metadata extraction ([#665](https://github.com/vivliostyle/vivliostyle-cli/issues/665)) ([3296e0a](https://github.com/vivliostyle/vivliostyle-cli/commit/3296e0a67d7499b2069a74d9ecaf7a4a110e65b0))
+- Add per-entry documentProcessor and documentMetadataReader options ([#666](https://github.com/vivliostyle/vivliostyle-cli/issues/666)) ([f6c3027](https://github.com/vivliostyle/vivliostyle-cli/commit/f6c3027ec5e427498e097658786fc9262f4d2b59))
+- Update Vivliostyle.js to 2.37.0: counter-style and marker support ([#676](https://github.com/vivliostyle/vivliostyle-cli/issues/676)) ([5a8267f](https://github.com/vivliostyle/vivliostyle-cli/commit/5a8267fed71ee2778251e1751b60064a61b666b6))
+
 ## [9.8.4](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.3...v9.8.4) (2025-12-02)
 
 ### Bug Fixes
