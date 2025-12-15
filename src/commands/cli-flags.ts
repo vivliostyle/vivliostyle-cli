@@ -1,9 +1,9 @@
-import { Command, OptionValues } from 'commander';
+import { Command, type OptionValues } from 'commander';
 import * as v from 'valibot';
 import {
-  InlineOptions,
-  OutputConfig,
-  ParsedVivliostyleConfigSchema,
+  type InlineOptions,
+  type OutputConfig,
+  type ParsedVivliostyleConfigSchema,
   VivliostyleInlineConfig,
 } from '../config/schema.js';
 import { EMPTY_DATA_URI } from '../const.js';
@@ -38,7 +38,7 @@ export interface CliFlags {
   /** @deprecated */ http?: boolean;
   viewer?: string;
   viewerParam?: string;
-  browser?: 'chromium' | 'firefox' | 'webkit';
+  browser?: string;
   proxyServer?: string;
   proxyBypass?: string;
   proxyUser?: string;
@@ -65,23 +65,6 @@ export function createParserProgram({
     return v.parse(VivliostyleInlineConfig, options);
   };
 }
-
-// export function parseFlagsToInlineConfig({
-//   argv,
-//   setupProgram,
-//   parseArgs,
-// }: {
-//   argv: string[];
-//   setupProgram: () => Command;
-//   parseArgs?: (options: CliFlags, args: string[]) => CliFlags;
-// }): ParsedVivliostyleInlineConfig {
-//   const program = setupProgram();
-//   program.parse(argv);
-//   let options = program.opts<CliFlags>();
-//   options = parseArgs?.(options, program.args ?? []) || options;
-//   options = warnDeprecatedFlags(options);
-//   return v.parse(VivliostyleInlineConfig, options);
-// }
 
 export function setupConfigFromFlags(
   flags: InlineOptions,

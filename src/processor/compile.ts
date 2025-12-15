@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import upath from 'upath';
 import serializeToXml from 'w3c-xmlserializer';
 import MIMEType from 'whatwg-mimetype';
-import {
+import type {
   ContentsEntry,
   CoverEntry,
   ManuscriptEntry,

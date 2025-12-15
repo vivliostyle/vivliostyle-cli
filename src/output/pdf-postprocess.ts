@@ -4,7 +4,7 @@ import os from 'node:os';
 import type { PDFDocument, PDFRef } from 'pdf-lib';
 import upath from 'upath';
 import { v1 as uuid } from 'uuid';
-import { PdfOutput, ResolvedTaskConfig } from '../config/resolve.js';
+import type { PdfOutput, ResolvedTaskConfig } from '../config/resolve.js';
 import { coreVersion } from '../const.js';
 import {
   collectVolumeArgs,
@@ -81,13 +81,17 @@ export async function pressReadyWithContainer({
 }
 
 export class PostProcess {
-  static async load(pdf: Buffer): Promise<PostProcess> {
+  protected readonly document: PDFDocument;
+
+  static async load(pdf: Uint8Array): Promise<PostProcess> {
     const { PDFDocument } = await importNodeModule('pdf-lib');
     const document = await PDFDocument.load(pdf, { updateMetadata: false });
     return new PostProcess(document);
   }
 
-  private constructor(private document: PDFDocument) {}
+  protected constructor(document: PDFDocument) {
+    this.document = document;
+  }
 
   async save(
     output: string,

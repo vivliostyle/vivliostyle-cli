@@ -53,7 +53,7 @@ build({
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
@@ -277,7 +277,7 @@ Scaffold a new Vivliostyle project.
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
@@ -499,7 +499,7 @@ Scaffold a new Vivliostyle project.
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
@@ -743,7 +743,7 @@ Open a browser for previewing the publication.
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
@@ -959,7 +959,9 @@ Open a browser for previewing the publication.
 | ------ | ------ |
 | <a id="author"></a> `author` | `string` |
 | <a id="bleed"></a> `bleed?` | `string` |
-| <a id="browser"></a> `browser?` | `"chromium"` \| `"firefox"` \| `"webkit"` |
+| <a id="browser"></a> `browser?` | `object` |
+| `browser.tag?` | `string` |
+| `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="cliversion"></a> `cliVersion` | `string` |
 | <a id="config"></a> `config?` | `string` |
 | <a id="configdata"></a> `configData?` | `object` & `object` \| `object` & `object`[] \| `null` |

@@ -1,15 +1,15 @@
 import jsdom, {
-  AbortablePromise,
+  type AbortablePromise,
   ResourceLoader as BaseResourceLoader,
   JSDOM,
   VirtualConsole,
 } from '@vivliostyle/jsdom';
-import DOMPurify, { WindowLike } from 'dompurify';
+import DOMPurify, { type WindowLike } from 'dompurify';
 import { toHtml } from 'hast-util-to-html';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
-import { ManuscriptEntry } from '../config/resolve.js';
+import type { ManuscriptEntry } from '../config/resolve.js';
 import type {
   StructuredDocument,
   StructuredDocumentSection,

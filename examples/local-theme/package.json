@@ -1,10 +1,12 @@
 {
+  "name": "local-theme",
+  "private": true,
   "type": "module",
   "scripts": {
     "build": "vivliostyle build",
     "preview": "vivliostyle preview"
   },
   "dependencies": {
-    "@vivliostyle/cli": "file:../../"
+    "@vivliostyle/cli": "workspace:*"
   }
 }

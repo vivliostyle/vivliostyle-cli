@@ -8,7 +8,7 @@ import upath from 'upath';
 import * as v from 'valibot';
 import { cyan, dim, gray, green, yellow } from 'yoctocolors';
 import {
-  ParsedVivliostyleInlineConfig,
+  type ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfigWithoutChecks,
   VivliostylePackageMetadata,
 } from '../config/schema.js';
@@ -22,7 +22,7 @@ import {
   TEMPLATE_DEFAULT_FILES,
   TEMPLATE_SETTINGS,
 } from '../const.js';
-import { format, TemplateVariable } from '../create-template.js';
+import { format, type TemplateVariable } from '../create-template.js';
 import {
   askQuestion,
   interactiveLogInfo,
@@ -36,13 +36,13 @@ import {
   createFetch,
   fetchPackageMetadata,
   listVivliostyleThemes,
-  PackageJson,
+  type PackageJson,
 } from '../npm.js';
 import { GlobMatcher } from '../processor/asset.js';
 import {
   cwd as defaultCwd,
   getOsLocale,
-  PackageManager,
+  type PackageManager,
   registerExitHandler,
   toTitleCase,
   whichPm,

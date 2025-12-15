@@ -1,6 +1,6 @@
 import Arborist from '@npmcli/arborist';
 import fs from 'node:fs';
-import { ResolvedTaskConfig } from '../config/resolve.js';
+import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
 
 export async function checkThemeInstallationNecessity({
@@ -14,6 +14,7 @@ export async function checkThemeInstallationNecessity({
   const commonOpt = {
     path: themesDir,
     lockfileVersion: 3,
+    installLinks: true,
   };
   const arb = new Arborist(commonOpt);
   const tree = await arb.loadActual();
@@ -33,6 +34,7 @@ export async function installThemeDependencies({
     const commonOpt = {
       path: themesDir,
       lockfileVersion: 3,
+      installLinks: true,
     };
     const tree = await new Arborist(commonOpt).buildIdealTree();
     const existing = Array.from(tree.children.keys());

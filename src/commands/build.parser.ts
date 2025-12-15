@@ -136,14 +136,12 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
       '--viewer-param <parameters>',
       `specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")`,
     )
-    // Hide --browser option for now. There's no choice other than Chromium.
-    //     .addOption(
-    //       new commander.Option(
-    //         '--browser <browser>',
-    //         `Specify a browser type to launch Vivliostyle viewer [chromium]
-    // Currently, Firefox and Webkit support preview command only!`,
-    //       ).choices(['chromium', 'firefox', 'webkit']),
-    //     )
+    .addOption(
+      new Option(
+        '--browser <browser>',
+        `Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]`,
+      ),
+    )
     .addOption(
       new Option(
         '--proxy-server <proxyServer>',

@@ -2,7 +2,7 @@ import debug from 'debug';
 import { Console } from 'node:console';
 import type { Readable, Writable } from 'node:stream';
 import type { WriteStream } from 'node:tty';
-import yoctoSpinner, { Spinner } from 'yocto-spinner';
+import yoctoSpinner, { type Spinner } from 'yocto-spinner';
 import { blueBright, greenBright, redBright, yellowBright } from 'yoctocolors';
 import { isInContainer, registerExitHandler } from './util.js';
 

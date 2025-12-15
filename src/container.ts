@@ -1,8 +1,8 @@
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import upath from 'upath';
-import { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from './config/schema.js';
+import type { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
+import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { CONTAINER_LOCAL_HOSTNAME, CONTAINER_ROOT_DIR } from './const.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';

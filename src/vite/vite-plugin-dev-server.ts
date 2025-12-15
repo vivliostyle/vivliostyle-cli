@@ -1,17 +1,17 @@
-import { NextHandleFunction } from 'connect';
+import type { NextHandleFunction } from 'connect';
 import escapeRe from 'escape-string-regexp';
 import { pathToFileURL } from 'node:url';
-import sirv, { RequestHandler } from 'sirv';
+import sirv, { type RequestHandler } from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
 import { locateVivliostyleConfig } from '../config/load.js';
 import {
   isWebPubConfig,
-  ParsedEntry,
-  ParsedTheme,
-  ResolvedTaskConfig,
+  type ParsedEntry,
+  type ParsedTheme,
+  type ResolvedTaskConfig,
 } from '../config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { Logger } from '../logger.js';
 import {
   getAssetMatcher,
