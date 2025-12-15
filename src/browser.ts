@@ -12,12 +12,12 @@ import type {
 import upath from 'upath';
 import type { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
-import { DEFAULT_BROWSER_VERSIONS } from './const.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
 import {
   detectBrowserPlatform,
   getCacheDir,
+  getDefaultBrowserTag,
   isInContainer,
   isRunningOnWSL,
   registerExitHandler,
@@ -253,8 +253,7 @@ async function downloadBrowser({
   let installedBrowser: InstalledBrowser | undefined;
 
   if (isInContainer()) {
-    const defaultBrowserVersion =
-      DEFAULT_BROWSER_VERSIONS['chrome'][detectBrowserPlatform()!];
+    const defaultBrowserVersion = getDefaultBrowserTag('chrome');
     Logger.logWarn(
       `The container you are using already includes a browser (chrome@${defaultBrowserVersion}); however, the specified browser ${type}@${tag} was not found. Downloading the browser inside the container may take a long time. Consider using a container image that includes the required browser version.`,
     );

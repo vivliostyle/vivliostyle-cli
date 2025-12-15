@@ -16,6 +16,9 @@ export default defineConfig({
     {{/if}}
     "./custom.css",
   ],
+  {{#if browser}}
+  browser: "{{browser.type}}{{#if browser.tag}}@{{browser.tag}}{{/if}}",
+  {{/if}}
   image: "ghcr.io/vivliostyle/cli:{{cliVersion}}",
   entryContext: "draft",
   entry: [

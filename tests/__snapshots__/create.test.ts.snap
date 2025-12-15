@@ -39,6 +39,7 @@ export default defineConfig({
   title: \\"Booook Titleeee\\",
   author: \\"Authoooor\\",
   language: \\"en\\",
+  browser: \\"chrome@100.0\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
 });
@@ -129,6 +130,7 @@ export default defineConfig({
   title: \\"My Title\\",
   author: \\"My Name\\",
   language: \\"en\\",
+  browser: \\"chrome@100.0\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
 });
@@ -145,6 +147,7 @@ export default defineConfig({
   language: \\"ja\\",
   size: \\"A5\\",
   theme: \\"style.css\\",
+  browser: \\"chrome@100.0\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
 });
@@ -161,6 +164,7 @@ export default defineConfig({
   language: \\"pt-BR\\",
   size: \\"A3\\",
   theme: \\"theme.css\\",
+  browser: \\"chrome@100.0\\",
   image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
   entry: [\\"manuscript.md\\"],
 });

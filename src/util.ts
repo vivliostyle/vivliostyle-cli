@@ -22,7 +22,8 @@ import tmp from 'tmp';
 import upath from 'upath';
 import type { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
-import { languages } from './const.js';
+import type { BrowserType } from './config/schema.js';
+import { DEFAULT_BROWSER_VERSIONS, languages } from './const.js';
 import { Logger } from './logger.js';
 import {
   publicationSchema,
@@ -523,6 +524,14 @@ function isWindows11(version: string): boolean {
   }
   return false;
 }
+
+export const getDefaultBrowserTag = (browserType: BrowserType) => {
+  if (import.meta.env?.VITEST) {
+    return '100.0';
+  }
+  const platform = detectBrowserPlatform();
+  return platform && DEFAULT_BROWSER_VERSIONS[browserType][platform];
+};
 
 export type PackageManager = 'npm' | 'yarn' | 'pnpm';
 

@@ -41,6 +41,7 @@ import {
 import { GlobMatcher } from '../processor/asset.js';
 import {
   cwd as defaultCwd,
+  getDefaultBrowserTag,
   getOsLocale,
   type PackageManager,
   registerExitHandler,
@@ -144,6 +145,8 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     ({ installDependencies } = await askInstallDependencies());
   }
 
+  const browserType = 'chrome' as const;
+  const browserTag = getDefaultBrowserTag(browserType);
   const explicitTemplateVariables = {
     ...extraTemplateVariables,
     projectPath,
@@ -161,6 +164,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     template,
     cliVersion,
     coreVersion,
+    browser: { type: browserType, tag: browserTag },
   } satisfies TemplateVariable;
   Logger.debug(
     'create > explicitTemplateVariables %O',

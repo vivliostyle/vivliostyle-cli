@@ -93,6 +93,9 @@ export default defineConfig({
   {{#if theme}}
   theme: {{json theme}},
   {{/if}}
+  {{#if browser}}
+  browser: "{{browser.type}}{{#if browser.tag}}@{{browser.tag}}{{/if}}",
+  {{/if}}
   image: "${CONTAINER_URL}:{{cliVersion}}",
   entry: ["manuscript.md"],
 });
