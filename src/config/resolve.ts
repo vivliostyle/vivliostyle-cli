@@ -76,10 +76,16 @@ export interface PackageTheme {
 
 export type EntrySource = FileEntrySource | UriEntrySource;
 
+export interface DocumentProcessor {
+  processorFactory: DocumentProcessorFactory;
+  metadataReader: DocumentMetadataReader;
+}
+
 export interface FileEntrySource {
   type: 'file';
   pathname: string;
-  contentType: ManuscriptMediaType | 'text/plain';
+  contentType: ManuscriptMediaType;
+  documentProcessor?: DocumentProcessor;
 }
 
 export interface UriEntrySource {
@@ -91,20 +97,21 @@ export interface UriEntrySource {
 export const manuscriptMediaTypes = [
   'text/markdown',
   'text/html',
+  'text/plain',
   'application/xhtml+xml',
+  // a special MIME type indicates that a custom processor is used
+  'text/x-vivliostyle-unknown',
 ] as const;
 export type ManuscriptMediaType = (typeof manuscriptMediaTypes)[number];
 
 export interface ManuscriptEntry {
-  contentType: ManuscriptMediaType | 'text/plain';
+  contentType: ManuscriptMediaType;
   title?: string;
   themes: ParsedTheme[];
   source: EntrySource;
   template?: undefined;
   target: string;
   rel?: string | string[];
-  documentProcessorFactory: DocumentProcessorFactory;
-  documentMetadataReader: DocumentMetadataReader;
 }
 
 export interface ContentsEntry {
@@ -244,8 +251,6 @@ export type ResolvedTaskConfig = {
   author: string | undefined;
   language: string | undefined;
   readingProgression: 'ltr' | 'rtl' | undefined;
-  documentProcessorFactory: DocumentProcessorFactory;
-  documentMetadataReader: DocumentMetadataReader;
   vfmOptions: {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
@@ -329,7 +334,7 @@ function toHtmlExtension(filename: string): string {
   ) {
     return filename;
   }
-  return filename.replace(/\.[^.]+$/, '.html');
+  return `${filename.slice(0, -ext.length)}.html`;
 }
 
 export function isWebPubConfig(
@@ -458,21 +463,16 @@ function parseFileMetadata({
   themesDir,
   documentMetadataReader,
 }: {
-  contentType: ManuscriptMediaType | 'text/plain';
+  contentType: ManuscriptMediaType;
   sourcePath: string;
   workspaceDir: string;
   themesDir?: string;
-  documentMetadataReader: DocumentMetadataReader;
+  documentMetadataReader?: DocumentMetadataReader;
 }): { title?: string; themes?: ParsedTheme[] } {
   const sourceDir = upath.dirname(sourcePath);
   let title: string | undefined;
   let themes: ParsedTheme[] | undefined;
-  // For HTML/XHTML, extract title from the document directly
-  if (contentType === 'text/html' || contentType === 'application/xhtml+xml') {
-    const content = fs.readFileSync(sourcePath, 'utf8');
-    title = content.match(/<title>([^<]*)<\/title>/)?.[1] || undefined;
-  } else {
-    // For non-HTML content (Markdown, AsciiDoc, etc.), use documentMetadataReader
+  if (documentMetadataReader) {
     const metadata = readMarkdownMetadata(sourcePath, documentMetadataReader);
     title = metadata.title;
     if (metadata.vfm?.theme && themesDir) {
@@ -491,6 +491,12 @@ function parseFileMetadata({
           }),
         );
     }
+  } else if (
+    contentType === 'text/html' ||
+    contentType === 'application/xhtml+xml'
+  ) {
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    title = content.match(/<title>([^<]*)<\/title>/)?.[1] || undefined;
   }
   return { title, themes };
 }
@@ -540,9 +546,6 @@ export function resolveTaskConfig(
   const quick = options.quick ?? false;
   const temporaryFilePrefix =
     config.temporaryFilePrefix ?? `.vs-${Date.now()}.`;
-
-  const documentProcessorFactory = config?.documentProcessor ?? VFM;
-  const documentMetadataReader = config?.documentMetadataReader ?? readMetadata;
 
   const vfmOptions = {
     ...config?.vfm,
@@ -699,8 +702,6 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           base,
-          documentProcessorFactory,
-          documentMetadataReader,
         })
       : resolveComposedProjectConfig({
           config,
@@ -710,8 +711,6 @@ export function resolveTaskConfig(
           temporaryFilePrefix,
           themeIndexes,
           cover,
-          documentProcessorFactory,
-          documentMetadataReader,
         });
 
   // Check overwrites
@@ -769,8 +768,6 @@ export function resolveTaskConfig(
     quick,
     language,
     readingProgression,
-    documentProcessorFactory,
-    documentMetadataReader,
     vfmOptions,
     cover,
     timeout,
@@ -812,16 +809,7 @@ function resolveSingleInputConfig({
   temporaryFilePrefix,
   themeIndexes,
   base,
-  documentProcessorFactory,
-  documentMetadataReader,
-}: Pick<
-  ResolvedTaskConfig,
-  | 'temporaryFilePrefix'
-  | 'themeIndexes'
-  | 'base'
-  | 'documentProcessorFactory'
-  | 'documentMetadataReader'
-> & {
+}: Pick<ResolvedTaskConfig, 'temporaryFilePrefix' | 'themeIndexes' | 'base'> & {
   config: ParsedBuildTask;
   input: NonNullable<InlineOptions['input']>;
   context: string;
@@ -882,11 +870,15 @@ function resolveSingleInputConfig({
   if (input.format === 'markdown') {
     // Single input file; create temporary file
     const contentType = 'text/markdown';
+    const documentProcessor = {
+      processorFactory: config.documentProcessor ?? VFM,
+      metadataReader: config.documentMetadataReader ?? readMetadata,
+    } satisfies DocumentProcessor;
     const metadata = parseFileMetadata({
       contentType,
       sourcePath,
       workspaceDir,
-      documentMetadataReader,
+      documentMetadataReader: documentProcessor.metadataReader,
     });
     const target = toHtmlExtension(
       upath.resolve(
@@ -913,12 +905,11 @@ function resolveSingleInputConfig({
         type: 'file',
         pathname: sourcePath,
         contentType,
+        documentProcessor,
       },
       target,
       title: metadata.title,
       themes,
-      documentProcessorFactory,
-      documentMetadataReader,
     });
     exportAliases.push({
       source: target,
@@ -1010,8 +1001,6 @@ function resolveComposedProjectConfig({
   temporaryFilePrefix,
   themeIndexes,
   cover,
-  documentProcessorFactory,
-  documentMetadataReader,
 }: Pick<
   ResolvedTaskConfig,
   | 'entryContextDir'
@@ -1019,8 +1008,6 @@ function resolveComposedProjectConfig({
   | 'temporaryFilePrefix'
   | 'themeIndexes'
   | 'cover'
-  | 'documentProcessorFactory'
-  | 'documentMetadataReader'
 > & { config: ParsedBuildTask; context: string }): ProjectConfig {
   Logger.debug('entering composed project config mode');
 
@@ -1079,6 +1066,11 @@ function resolveComposedProjectConfig({
   const projectTitle: string | undefined = config?.title ?? pkgJson?.name;
   const projectAuthor: string | undefined = config?.author ?? pkgJson?.author;
 
+  const rootDocumentProcessor = {
+    processorFactory: config.documentProcessor ?? VFM,
+    metadataReader: config.documentMetadataReader ?? readMetadata,
+  } satisfies DocumentProcessor;
+
   const isContentsEntry = (entry: EntryConfig): entry is ContentsEntryConfig =>
     entry.rel === 'contents';
   const isCoverEntry = (entry: EntryConfig): entry is CoverEntryConfig =>
@@ -1089,14 +1081,8 @@ function resolveComposedProjectConfig({
   function parseEntry(entry: EntryConfig): ParsedEntry {
     const getInputInfo = (
       entryPath: string,
-      options?: {
-        entryDocumentProcessor?: DocumentProcessorFactory;
-        entryDocumentMetadataReader?: DocumentMetadataReader;
-      },
     ):
-      | (FileEntrySource & {
-          metadata: ReturnType<typeof parseFileMetadata>;
-        })
+      | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
       | (UriEntrySource & { metadata?: undefined }) => {
       if (/^https?:/.test(entryPath)) {
         return {
@@ -1115,23 +1101,35 @@ function resolveComposedProjectConfig({
       statFileSync(pathname);
       const rawContentType = mime(pathname);
 
+      const documentProcessor = {
+        processorFactory:
+          ('documentProcessor' in entry && entry.documentProcessor) ||
+          rootDocumentProcessor.processorFactory,
+        metadataReader:
+          ('documentMetadataReader' in entry && entry.documentMetadataReader) ||
+          rootDocumentProcessor.metadataReader,
+      } satisfies DocumentProcessor;
       // If custom documentProcessor is provided, allow any text-based content type
       const hasCustomProcessor = !!(
-        options?.entryDocumentProcessor || documentProcessorFactory !== VFM
+        documentProcessor.processorFactory !== VFM ||
+        documentProcessor.metadataReader !== readMetadata
       );
-      if (!hasCustomProcessor && !isManuscriptMediaType(rawContentType)) {
+      const contentType =
+        hasCustomProcessor && rawContentType !== 'text/markdown'
+          ? 'text/x-vivliostyle-unknown'
+          : rawContentType;
+      if (
+        !isManuscriptMediaType(contentType) ||
+        contentType === 'text/plain' // disallow text/plain (for now)
+      ) {
         throw new Error(
           `Invalid manuscript type ${rawContentType} detected: ${entry}`,
         );
       }
 
-      // Fall back to 'text/plain' for unknown content types when custom processor is used
-      const contentType: ManuscriptMediaType | 'text/plain' =
-        isManuscriptMediaType(rawContentType) ? rawContentType : 'text/plain';
-
-      const effectiveMetadataReader =
-        options?.entryDocumentMetadataReader ?? documentMetadataReader;
-
+      const useDocumentProcessor =
+        contentType === 'text/markdown' ||
+        contentType === 'text/x-vivliostyle-unknown';
       return {
         type: 'file',
         pathname,
@@ -1141,8 +1139,11 @@ function resolveComposedProjectConfig({
           sourcePath: pathname,
           workspaceDir,
           themesDir,
-          documentMetadataReader: effectiveMetadataReader,
+          documentMetadataReader: useDocumentProcessor
+            ? documentProcessor.metadataReader
+            : undefined,
         }),
+        ...(useDocumentProcessor && { documentProcessor }),
       };
     };
 
@@ -1277,10 +1278,7 @@ function resolveComposedProjectConfig({
     }
 
     if (isArticleEntry(entry)) {
-      const inputInfo = getInputInfo(entry.path, {
-        entryDocumentProcessor: entry.documentProcessor,
-        entryDocumentMetadataReader: entry.documentMetadataReader,
-      });
+      const inputInfo = getInputInfo(entry.path);
       const { metadata, ...source } = inputInfo;
       const target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
@@ -1302,11 +1300,6 @@ function resolveComposedProjectConfig({
         title: entry.title ?? metadata?.title ?? projectTitle,
         themes,
         ...(entry.rel && { rel: entry.rel }),
-        // Use per-entry settings if specified, otherwise fall back to global settings
-        documentProcessorFactory:
-          entry.documentProcessor ?? documentProcessorFactory,
-        documentMetadataReader:
-          entry.documentMetadataReader ?? documentMetadataReader,
       };
       return parsedEntry;
     }

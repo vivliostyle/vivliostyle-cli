@@ -181,24 +181,11 @@ export async function transformManuscript(
   );
 
   if (source?.type === 'file') {
-    if (
-      source.contentType === 'text/html' ||
-      source.contentType === 'application/xhtml+xml'
-    ) {
-      // Process HTML/XHTML files directly
-      content = await getJsdomFromUrlOrFile({ src: source.pathname });
-      content = await processManuscriptHtml(content, {
-        style,
-        title: entry.title,
-        contentType: source.contentType,
-        language,
-      });
-    } else {
-      // Process non-HTML files with documentProcessor
-      const manuscriptEntry = entry as ManuscriptEntry;
+    if (source.documentProcessor) {
+      // Process with a configured document processor
       const vfile = await processMarkdown(
-        manuscriptEntry.documentProcessorFactory,
-        manuscriptEntry.documentMetadataReader,
+        source.documentProcessor.processorFactory,
+        source.documentProcessor.metadataReader,
         source.pathname,
         {
           ...vfmOptions,
@@ -208,6 +195,21 @@ export async function transformManuscript(
         },
       );
       content = getJsdomFromString({ html: String(vfile) });
+    } else if (
+      source.contentType === 'text/html' ||
+      source.contentType === 'application/xhtml+xml'
+    ) {
+      content = await getJsdomFromUrlOrFile({ src: source.pathname });
+      content = await processManuscriptHtml(content, {
+        style,
+        title: entry.title,
+        contentType: source.contentType,
+        language,
+      });
+    } else {
+      if (!pathEquals(source.pathname, entry.target)) {
+        await copy(source.pathname, entry.target);
+      }
     }
   } else if (source?.type === 'uri') {
     resourceUrl = /^https?:/.test(source.href)
@@ -357,6 +359,7 @@ export async function generateManifest({
     encodingFormat:
       !('contentType' in entry) ||
       entry.contentType === 'text/markdown' ||
+      entry.contentType === 'text/x-vivliostyle-unknown' ||
       entry.contentType === 'text/html'
         ? undefined
         : entry.contentType,

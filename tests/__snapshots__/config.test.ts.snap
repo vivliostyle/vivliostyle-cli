@@ -72,6 +72,10 @@ Object {
       "contentType": "text/markdown",
       "source": Object {
         "contentType": "text/markdown",
+        "documentProcessor": Object {
+          "metadataReader": [Function],
+          "processorFactory": [Function],
+        },
         "pathname": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
         "type": "file",
       },
@@ -89,6 +93,10 @@ Object {
       "contentType": "text/markdown",
       "source": Object {
         "contentType": "text/markdown",
+        "documentProcessor": Object {
+          "metadataReader": [Function],
+          "processorFactory": [Function],
+        },
         "pathname": "__WORKSPACE__/tests/fixtures/config/frontmatter.md",
         "type": "file",
       },
@@ -268,6 +276,10 @@ Object {
       "contentType": "text/markdown",
       "source": Object {
         "contentType": "text/markdown",
+        "documentProcessor": Object {
+          "metadataReader": [Function],
+          "processorFactory": [Function],
+        },
         "pathname": "__WORKSPACE__/tests/fixtures/config/manuscript.md",
         "type": "file",
       },
@@ -288,6 +300,10 @@ Object {
       "contentType": "text/markdown",
       "source": Object {
         "contentType": "text/markdown",
+        "documentProcessor": Object {
+          "metadataReader": [Function],
+          "processorFactory": [Function],
+        },
         "pathname": "__WORKSPACE__/tests/fixtures/config/frontmatter.md",
         "type": "file",
       },
