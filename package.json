@@ -24,7 +24,7 @@
     "@babel/code-frame": "7.26.2",
     "@humanwhocodes/momoa": "3.3.8",
     "@napi-rs/canvas": "0.1.69",
-    "@npmcli/arborist": "8.0.0",
+    "@npmcli/arborist": "9.1.7",
     "@vivliostyle/jsdom": "25.0.1-vivliostyle-cli.1",
     "@vivliostyle/vfm": "2.4.0",
     "@vivliostyle/viewer": "2.37.0",
