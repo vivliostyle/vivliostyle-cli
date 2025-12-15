@@ -91,10 +91,8 @@ WORKDIR /opt/vivliostyle-cli
 
 # Build stage
 FROM base AS builder
-COPY --chown=vivliostyle:vivliostyle package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /opt/vivliostyle-cli/
-RUN pnpm install
 COPY --chown=vivliostyle:vivliostyle . /opt/vivliostyle-cli
-RUN pnpm build
+RUN pnpm install && pnpm build
 
 # Runtime stage
 FROM base AS runtime
