@@ -1,4 +1,4 @@
-# Changelog
+# @vivliostyle/cli
 
 # [9.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.4...v9.9.0) (2025-12-14)
 
