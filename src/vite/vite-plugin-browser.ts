@@ -1,7 +1,7 @@
 import * as vite from 'vite';
 import { launchPreview } from '../browser.js';
-import { ResolvedTaskConfig } from '../config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import type { ResolvedTaskConfig } from '../config/resolve.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { getViewerFullUrl } from '../server.js';
 import { runExitHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
@@ -28,22 +28,32 @@ export function vsBrowserPlugin({
       mode: 'preview',
       url,
       config,
+      /* v8 ignore next 4 */
       onPageOpen: async (page) => {
         // Terminate preview when the previewing page is closed
         page.on('close', handlePageClose);
-
-        // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
-        const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-        await page.addInitScript(
-          `window.localStorage.setItem('i18nextLng', '${locale}');`,
-        );
       },
     });
 
+    // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    if (!import.meta.env?.VITEST) {
+      /* v8 ignore next 4 */
+      await page.evaluate((locale) => {
+        window.localStorage.setItem('i18nextLng', locale);
+      }, locale);
+    }
     // Move focus from the address bar to the page
     await page.bringToFront();
     // Focus to the URL input box if available
-    await page.locator('#vivliostyle-input-url').focus({ timeout: 0 });
+    if (!import.meta.env?.VITEST) {
+      /* v8 ignore next 6 */
+      await page.evaluate(() => {
+        document
+          .querySelector<HTMLInputElement>('#vivliostyle-input-url')
+          ?.focus();
+      });
+    }
 
     closeBrowser = () => {
       page.off('close', handlePageClose);

@@ -1,8 +1,8 @@
 import sirv from 'sirv';
 import upath from 'upath';
 import * as vite from 'vite';
-import { ResolvedTaskConfig } from '../config/resolve.js';
-import { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import type { ResolvedTaskConfig } from '../config/resolve.js';
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 
 export function vsStaticServePlugin({
   config: _config,

@@ -1,20 +1,22 @@
 import { codeFrameColumns } from '@babel/code-frame';
 import {
-  JSONValue,
-  ValueNode as JsonValueNode,
+  type JSONValue,
+  type ValueNode as JsonValueNode,
   evaluate,
   parse,
 } from '@humanwhocodes/momoa';
-import { Ajv, Plugin as AjvPlugin, Schema } from 'ajv';
+import type { BrowserPlatform } from '@puppeteer/browsers';
+import { Ajv, type Plugin as AjvPlugin, type Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
 import StreamZip from 'node-stream-zip';
 import fs from 'node:fs';
+import os from 'node:os';
 import readline from 'node:readline';
 import util from 'node:util';
 import tmp from 'tmp';
 import upath from 'upath';
-import { BaseIssue } from 'valibot';
+import type { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
 import { Logger } from './logger.js';
 import {
@@ -81,11 +83,11 @@ if (process.platform === 'win32') {
 }
 
 export class DetailError extends Error {
-  constructor(
-    message: string | undefined,
-    public detail: string | undefined,
-  ) {
+  detail: string | undefined;
+
+  constructor(message: string | undefined, detail: string | undefined) {
     super(message);
+    this.detail = detail;
   }
 }
 
@@ -198,17 +200,22 @@ export function isValidUri(str: string): boolean {
   return /^(https?|file|data):/i.test(str);
 }
 
-export function isInContainer(): boolean {
-  return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
+function cachedFn<T>(fn: () => T): () => T {
+  let cache: T | null = null;
+  return (): T => cache ?? (cache = fn());
 }
 
-export function isRunningOnWSL(): boolean {
+export const isInContainer = cachedFn(function isInContainer() {
+  return fs.existsSync('/opt/vivliostyle-cli/.vs-cli-version');
+});
+
+export const isRunningOnWSL = cachedFn(function isRunningOnWSL() {
   // Detection method based on microsoft/WSL#4071
   return (
     fs.existsSync('/proc/version') &&
     fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')
   );
-}
+});
 
 export async function openEpub(epubPath: string, tmpDir: string) {
   await inflateZip(epubPath, tmpDir);
@@ -388,4 +395,62 @@ export function debounce<T extends (...args: any[]) => unknown>(
       invoke(...args);
     }
   };
+}
+
+export const getCacheDir = cachedFn(function getCacheDir() {
+  let osCacheDir: string;
+  if (process.platform === 'linux') {
+    osCacheDir =
+      process.env.XDG_CACHE_HOME || upath.join(os.homedir(), '.cache');
+  } else if (process.platform === 'darwin') {
+    osCacheDir = upath.join(os.homedir(), 'Library', 'Caches');
+  } else if (process.platform === 'win32') {
+    osCacheDir =
+      process.env.LOCALAPPDATA || upath.join(os.homedir(), 'AppData', 'Local');
+  } else {
+    throw new Error(`Unsupported platform: ${process.platform}`);
+  }
+  return upath.join(osCacheDir, 'vivliostyle');
+});
+
+// Detects the browser platform, similar to detectBrowserPlatform in @puppeteer/browsers
+// Included here to avoid adding @puppeteer/browsers as a dependency
+export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
+  | BrowserPlatform
+  | undefined {
+  const platform = process.platform;
+  const arch = process.arch;
+  switch (platform) {
+    case 'darwin':
+      return arch === 'arm64'
+        ? ('mac_arm' as BrowserPlatform)
+        : ('mac' as BrowserPlatform);
+    case 'linux':
+      return arch === 'arm64'
+        ? ('linux_arm' as BrowserPlatform)
+        : ('linux' as BrowserPlatform);
+    case 'win32':
+      return arch === 'x64' ||
+        // Windows 11 for ARM supports x64 emulation
+        (arch === 'arm64' && isWindows11(os.release()))
+        ? ('win64' as BrowserPlatform)
+        : ('win32' as BrowserPlatform);
+    default:
+      return undefined;
+  }
+});
+
+function isWindows11(version: string): boolean {
+  const parts = version.split('.');
+  if (parts.length > 2) {
+    const major = parseInt(parts[0] as string, 10);
+    const minor = parseInt(parts[1] as string, 10);
+    const patch = parseInt(parts[2] as string, 10);
+    return (
+      major > 10 ||
+      (major === 10 && minor > 0) ||
+      (major === 10 && minor === 0 && patch >= 22000)
+    );
+  }
+  return false;
 }

@@ -11,8 +11,8 @@ import {
   prettifySchemaError,
 } from '../util.js';
 import {
-  InlineOptions,
-  ParsedVivliostyleConfigSchema,
+  type InlineOptions,
+  type ParsedVivliostyleConfigSchema,
   VivliostyleConfigSchema,
 } from './schema.js';
 

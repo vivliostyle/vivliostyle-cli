@@ -1,16 +1,16 @@
 import upath from 'upath';
 import {
-  ConfigEnv,
+  type ConfigEnv,
   createLogger,
-  InlineConfig,
+  type InlineConfig,
   mergeConfig as mergeViteConfig,
   resolveConfig,
-  ResolvedConfig as ResolvedViteConfig,
+  type ResolvedConfig as ResolvedViteConfig,
 } from 'vite';
 import { dim } from 'yoctocolors';
 import { Logger } from '../logger.js';
 import { useTmpDirectory } from '../util.js';
-import { ResolvedTaskConfig } from './resolve.js';
+import type { ResolvedTaskConfig } from './resolve.js';
 
 // Be careful not to confuse the preview/build commands of Vivliostyle CLI with Vite's mode.
 // In Vivliostyle CLI, "preview" command starts the dev server in Vite,

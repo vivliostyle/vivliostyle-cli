@@ -1,23 +1,23 @@
 import {
-  Metadata,
+  type Metadata,
   readMetadata,
-  StringifyMarkdownOptions,
+  type StringifyMarkdownOptions,
   VFM,
 } from '@vivliostyle/vfm';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import npa from 'npm-package-arg';
-import { Processor } from 'unified';
+import type { Processor } from 'unified';
 import upath from 'upath';
-import { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
+import type { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
 import {
   ArticleEntryConfig,
   BrowserType,
   ContentsEntryConfig,
   CoverEntryConfig,
   EntryConfig,
-  InputFormat,
+  type InputFormat,
   StructuredDocument,
   StructuredDocumentSection,
   ThemeConfig,
@@ -28,6 +28,7 @@ import {
   CONTAINER_URL,
   COVER_HTML_FILENAME,
   COVER_HTML_IMAGE_ALT,
+  DEFAULT_BROWSER_VERSIONS,
   EPUB_OUTPUT_VERSION,
   MANIFEST_FILENAME,
   TOC_FILENAME,
@@ -37,6 +38,7 @@ import { Logger } from '../logger.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import {
   cwd as defaultCwd,
+  detectBrowserPlatform,
   getEpubRootDir,
   isInContainer,
   isValidUri,
@@ -46,7 +48,7 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
-import { InlineOptions, ParsedBuildTask } from './schema.js';
+import type { InlineOptions, ParsedBuildTask } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -258,6 +260,7 @@ export type ResolvedTaskConfig = {
   sandbox: boolean;
   browser: {
     type: BrowserType;
+    tag: string;
     executablePath: string | undefined;
   };
   proxy:
@@ -528,10 +531,17 @@ export function resolveTaskConfig(
 
   const timeout = config.timeout ?? 300_000; // 5 minutes
   const sandbox = options.sandbox ?? false;
-  const browser = {
-    type: config.browser ?? 'chromium',
-    executablePath: options.executableBrowser,
-  };
+  const browser = (() => {
+    const type = config.browser?.type ?? 'chrome';
+    const platform = detectBrowserPlatform();
+    return {
+      type,
+      tag:
+        config.browser?.tag ??
+        (platform ? DEFAULT_BROWSER_VERSIONS[type][platform] : 'latest'),
+      executablePath: options.executableBrowser,
+    };
+  })();
   const proxyServer =
     options.proxyServer ?? process.env.HTTP_PROXY ?? undefined;
   const proxy = proxyServer

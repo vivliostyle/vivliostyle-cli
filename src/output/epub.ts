@@ -21,8 +21,8 @@ import {
 } from '../const.js';
 import { Logger } from '../logger.js';
 import {
-  PageListResourceTreeRoot,
-  TocResourceTreeRoot,
+  type PageListResourceTreeRoot,
+  type TocResourceTreeRoot,
   getJsdomFromUrlOrFile,
   parsePageListDocument,
   parseTocDocument,

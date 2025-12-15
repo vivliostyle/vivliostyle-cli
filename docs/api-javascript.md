@@ -46,7 +46,7 @@ build({
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
@@ -240,7 +240,7 @@ build({
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
@@ -436,7 +436,7 @@ Initialize a new vivliostyle.config.js file.
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
@@ -632,7 +632,7 @@ Open a browser for previewing the publication.
 
 ###### browser?
 
-`"chromium"` \| `"firefox"` \| `"webkit"` = `...`
+`string` = `...`
 
 ###### config?
 
