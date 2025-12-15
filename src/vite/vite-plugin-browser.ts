@@ -3,7 +3,7 @@ import { launchPreview } from '../browser.js';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { getViewerFullUrl } from '../server.js';
-import { runExitHandlers } from '../util.js';
+import { getOsLocale, runExitHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
 export function vsBrowserPlugin({
@@ -23,6 +23,7 @@ export function vsBrowserPlugin({
   }
 
   async function openPreviewPage() {
+    const locale = await getOsLocale();
     const url = await getViewerFullUrl(config);
     const { page, browser } = await launchPreview({
       mode: 'preview',
@@ -36,7 +37,6 @@ export function vsBrowserPlugin({
     });
 
     // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
     if (!import.meta.env?.VITEST) {
       /* v8 ignore next 4 */
       await page.evaluate((locale) => {

@@ -3,7 +3,9 @@
 ### vivliostyle.config.js
 
 ```js
-module.exports = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Single HTML publication',
   author: 'spring-raining',
   language: 'en',
@@ -13,5 +15,5 @@ module.exports = {
     'draft.pdf',
     'draft', // Exports Web Publication
   ],
-};
+});
 ```

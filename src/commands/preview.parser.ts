@@ -1,6 +1,9 @@
 import { Command, Option } from 'commander';
+import upath from 'upath';
+import { versionForDisplay } from '../const.js';
+import { createParserProgram } from './cli-flags.js';
 
-export function setupPreviewParserProgram(): Command {
+function setupPreviewParserProgram(): Command {
   const program = new Command();
   program
     .name('vivliostyle preview')
@@ -111,9 +114,25 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
       '--no-vite-config-file',
       'ignore Vite config file even if it exists',
     )
+    .version(versionForDisplay, '-v, --version')
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp())
     .addOption(new Option('--http').hideHelp());
   return program;
 }
+
+export const parsePreviewCommand = createParserProgram({
+  setupProgram: setupPreviewParserProgram,
+  parseArgs: (options, [input]) => {
+    if (
+      input &&
+      !options.config &&
+      upath.basename(input).startsWith('vivliostyle.config')
+    ) {
+      // Load an input argument as a Vivliostyle config
+      return { ...options, config: input };
+    }
+    return { ...options, input };
+  },
+});

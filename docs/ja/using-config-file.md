@@ -14,17 +14,15 @@ vivliostyle init
 
 ```js
 // @ts-check
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const vivliostyleConfig = {
-  title: 'Principia',
-  author: 'Isaac Newton',
-  language: 'la',
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  title: 'My Book Title',
+  author: 'John Doe',
+  language: 'en',
   image: 'ghcr.io/vivliostyle/cli:latest',
-  entry: [
-    ...
-  ],
-};
-module.exports = vivliostyleConfig;
+  entry: ['manuscript.md'],
+});
 ```
 
 ## 構成ファイルの設定内容
@@ -53,8 +51,8 @@ module.exports = vivliostyleConfig;
   ```
   entry には文字列またはオブジェクト形式で入力の指定ができます。オブジェクト形式の場合、以下のプロパティを追加できます。
   - `path`: エントリーのパスを指定します。このプロパティは必須ですが、`rel: 'contents'` または `rel: 'cover'` を指定するときのみ不要です。この指定については、以下の項目を参照してください
-      - [目次を出版物の先頭以外の場所に出力するには](./toc-page.md#目次を出版物の先頭以外の場所に出力するには)
-      - [表紙ページを出版物の先頭以外の場所に出力するには](./cover-page.md#表紙ページを出版物の先頭以外の場所に出力するには)
+    - [目次を出版物の先頭以外の場所に出力するには](./toc-page.md#目次を出版物の先頭以外の場所に出力するには)
+    - [表紙ページを出版物の先頭以外の場所に出力するには](./cover-page.md#表紙ページを出版物の先頭以外の場所に出力するには)
   - `title`: エントリーのタイトルを指定します。このプロパティを設定しない場合、エントリーの内容からタイトルが取得されます。
   - `theme`: エントリーに適用する Vivliostyle Themes のパッケージ名、または CSS ファイルのパスを指定します。
 - **output**: 出力先を指定。例: `output: 'output.pdf'`。デフォルトは `{title}.pdf`。次のように複数の出力を配列形式で指定することも可能です:

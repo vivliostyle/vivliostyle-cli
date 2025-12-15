@@ -15,19 +15,18 @@ export async function createVitePlugin(
   inlineConfig: VivliostyleInlineConfig = {},
 ): Promise<vite.Plugin[]> {
   const parsedInlineConfig = v.parse(VivliostyleInlineConfig, inlineConfig);
-  Logger.setLogLevel(parsedInlineConfig.logLevel);
-  if (parsedInlineConfig.logger) {
-    Logger.setCustomLogger(parsedInlineConfig.logger);
-  } else {
-    const { info, warn, error } = vite.createLogger('info', {
-      prefix: '[vivliostyle]',
-    });
-    Logger.setCustomLogger({
-      info: (msg) => info(msg, { timestamp: true }),
-      warn: (msg) => warn(msg, { timestamp: true }),
-      error: (msg) => error(msg, { timestamp: true }),
-    });
-  }
+  let viteLogger: ReturnType<typeof vite.createLogger>;
+  Logger.setLogOptions({
+    ...parsedInlineConfig,
+    logger: parsedInlineConfig.logger ?? {
+      info: (msg) => viteLogger?.info(msg, { timestamp: true }),
+      warn: (msg) => viteLogger?.warn(msg, { timestamp: true }),
+      error: (msg) => viteLogger?.error(msg, { timestamp: true }),
+    },
+  });
+  viteLogger = vite.createLogger('info', {
+    prefix: '[vivliostyle]',
+  });
   Logger.debug('inlineConfig %O', parsedInlineConfig);
   const vivliostyleConfig =
     (await loadVivliostyleConfig(parsedInlineConfig)) ??

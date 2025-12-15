@@ -1,5 +1,7 @@
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-module.exports = {
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'ToC customization example',
   language: 'en',
   entry: [
@@ -26,4 +28,4 @@ module.exports = {
     src: 'cover-image.jpg',
     name: 'My awesome cover',
   },
-};
+});

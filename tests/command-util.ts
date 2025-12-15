@@ -5,17 +5,15 @@ import upath from 'upath';
 import * as v from 'valibot';
 import { ViteDevServer } from 'vite';
 import { afterEach } from 'vitest';
-import { setupBuildParserProgram } from '../src/commands/build.parser.js';
-import {
-  parseFlagsToInlineConfig,
-  setupConfigFromFlags,
-} from '../src/commands/cli-flags.js';
-import { setupInitParserProgram } from '../src/commands/init.parser.js';
-import { setupPreviewParserProgram } from '../src/commands/preview.parser.js';
+import { parseBuildCommand } from '../src/commands/build.parser.js';
+import { setupConfigFromFlags } from '../src/commands/cli-flags.js';
+import { parseCreateCommand } from '../src/commands/create.parser.js';
+import { parsePreviewCommand } from '../src/commands/preview.parser.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
 import { build } from '../src/core/build.js';
-import { init } from '../src/core/init.js';
+import { create } from '../src/core/create.js';
 import { preview } from '../src/core/preview.js';
+import { parseInitCommand } from './../src/commands/init.parser';
 import { ResolvedTaskConfig, resolveTaskConfig } from './../src/config/resolve';
 import {
   BuildTask,
@@ -35,7 +33,7 @@ afterEach(async () => {
 });
 
 export const runCommand = async (
-  [command, ...args]: ['init' | 'build' | 'preview', ...string[]],
+  [command, ...args]: ['build' | 'preview' | 'create' | 'init', ...string[]],
   {
     cwd,
     config,
@@ -48,16 +46,16 @@ export const runCommand = async (
     port?: number;
   },
 ): Promise<ViteDevServer | void> => {
-  let inlineConfig = parseFlagsToInlineConfig(
-    ['vivliostyle', command, ...args],
-    {
-      init: setupInitParserProgram,
-      build: setupBuildParserProgram,
-      preview: setupPreviewParserProgram,
-    }[command],
-  );
+  let inlineConfig = {
+    build: parseBuildCommand,
+    preview: parsePreviewCommand,
+    create: parseCreateCommand,
+    init: parseInitCommand,
+  }[command](['vivliostyle', command, ...args]);
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  const server = await { init, build, preview }[command](inlineConfig);
+  const server = await { build, preview, create, init: create }[command](
+    inlineConfig,
+  );
   if (server) {
     runningServers.add(server);
   }
@@ -94,10 +92,7 @@ export const getTaskConfig = async (
   cwd: string,
   config?: VivliostyleConfigSchema,
 ): Promise<ResolvedTaskConfig> => {
-  const inlineConfig = parseFlagsToInlineConfig(
-    ['vivliostyle', ...args],
-    setupBuildParserProgram,
-  );
+  const inlineConfig = parseBuildCommand(['vivliostyle', ...args]);
   let vivliostyleConfig = config
     ? v.parse(VivliostyleConfigSchema, config)
     : setupConfigFromFlags(inlineConfig);

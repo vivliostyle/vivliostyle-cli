@@ -1,6 +1,9 @@
 import { Command, Option } from 'commander';
+import upath from 'upath';
+import { versionForDisplay } from '../const.js';
+import { createParserProgram } from './cli-flags.js';
 
-export function setupBuildParserProgram(): Command {
+function setupBuildParserProgram(): Command {
   // Provide an order-sensitive command parser
   // ex: "-o foo -o bar -f baz"
   //    → [{path: "foo"}, {path:"bar", format: "baz"}]
@@ -185,6 +188,7 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
       '--no-vite-config-file',
       'ignore Vite config file even if it exists',
     )
+    .version(versionForDisplay, '-v, --version')
     // TODO: Remove it in the next major version up
     .addOption(new Option('--executable-chromium <path>').hideHelp())
     .addOption(new Option('--verbose').hideHelp())
@@ -206,3 +210,18 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
 function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) ? +val * 1000 : undefined;
 }
+
+export const parseBuildCommand = createParserProgram({
+  setupProgram: setupBuildParserProgram,
+  parseArgs: (options, [input]) => {
+    if (
+      input &&
+      !options.config &&
+      upath.basename(input).startsWith('vivliostyle.config')
+    ) {
+      // Load an input argument as a Vivliostyle config
+      return { ...options, config: input };
+    }
+    return { ...options, input };
+  },
+});

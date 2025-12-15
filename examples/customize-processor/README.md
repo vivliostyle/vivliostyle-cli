@@ -40,11 +40,12 @@ export default config;
 You can also set `documentProcessor` and `documentMetadataReader` for individual entries. This allows different processing for each file:
 
 ```js
+import { defineConfig } from '@vivliostyle/cli';
 import { VFM, readMetadata } from '@vivliostyle/vfm';
 import unified from 'unified';
 // ... other imports
 
-const config = {
+const config = defineConfig({
   title: 'Markdown processor customization example',
   entry: [
     // Uses the global documentProcessor
@@ -70,7 +71,7 @@ const config = {
       })
       .use(rehypeStringify),
   output: 'draft.pdf',
-};
+});
 
 export default config;
 ```

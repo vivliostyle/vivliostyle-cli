@@ -1,11 +1,13 @@
 # Manual workspace directory
 
-Vivliostyle generates intermediate files (manuscript HTMLs, publication.json, etc.) on the same directory. If you don't prefer this behavior, you can change the directory by `workspaceDir` option.
+Vivliostyle generates intermediate files (manuscript HTMLs, publication.json, etc.) in `.vivliostyle` folder. If you don't prefer this behavior, you can change the directory by `workspaceDir` option.
 
 #### vivliostyle.config.js
 
 ```js
-module.exports = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Manual workspace directory',
   author: 'spring-raining',
   language: 'en',
@@ -13,5 +15,5 @@ module.exports = {
   entry: 'manuscript.md',
   output: 'draft.pdf',
   workspaceDir: 'workDir',
-};
+});
 ```

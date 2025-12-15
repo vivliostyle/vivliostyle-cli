@@ -1,0 +1,39 @@
+{
+  "name": "theme-with-template",
+  "version": "1.0.0",
+  "private": true,
+  "vivliostyle": {
+    "theme": {
+      "name": "theme-a",
+      "style": "./theme.css"
+    },
+    "template": {
+      "default": {
+        "name": "default template",
+        "source": "theme-with-template/template/default"
+      },
+      "custom-prompt": {
+        "name": "custom template",
+        "source": "theme-with-template/template/custom-prompt",
+        "prompt": [
+          {
+            "type": "text",
+            "name": "stringPromptA",
+            "message": "Enter stringPromptA:",
+            "required": true
+          },
+          {
+            "type": "select",
+            "name": "selectPromptA",
+            "message": "Enter selectPromptA:",
+            "options": [
+              "option1",
+              "option2",
+              "option3"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

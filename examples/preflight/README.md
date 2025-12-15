@@ -5,7 +5,9 @@ Set the `preflight` option to apply post-processing to the PDF for special purpo
 ### vivliostyle.config.js
 
 ```js
-module.exports = {
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
   title: 'Preflight',
   language: 'en',
   size: 'letter',
@@ -28,7 +30,7 @@ module.exports = {
         'gray-scale',
         'enforce-outline',
       ],
-    }
+    },
   ],
-};
+});
 ```

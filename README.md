@@ -5,13 +5,21 @@
 
 [npm-url]: https://npmjs.org/package/@vivliostyle/cli
 
-Supercharge your command-line publication workflow.
+<div align="center">
+  <b>Supercharge your command-line publication workflow.</b>
+</div>
+
+# Vivliostyle CLI
 
 ## Install
 
 ```
 npm install -g @vivliostyle/cli
 ```
+
+## User Guide
+
+See [User Guide](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/docs#readme)
 
 ## Use
 
@@ -23,49 +31,84 @@ Options:
   -h, --help      display help for command
 
 Commands:
-  init            create vivliostyle config
-  build           build and create PDF file
-  preview         launch preview server
+  create          Scaffold a new Vivliostyle project
+  init            Create a Vivliostyle configuration file
+  build           Create PDF, EPUB, and other publication files
+  preview         Open the preview page and interactively save PDFs
   help [command]  display help for command
 ```
 
-### `init`
+### `create`
 
-> create vivliostyle config file.
+> Scaffold a new Vivliostyle project
 
-```bash
-vivliostyle init
-```
-
-You are new to Vivliostyle? Check out our latest project [Create Book](https://github.com/vivliostyle/create-book#readme).
+You are new to Vivliostyle? Check out our [Create Book](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/packages/create-book#readme) project.
 With Create Book, you can easily bootstrap your book project and start writing without any extra effort.
 
-#### CLI Options
+<details>
+<summary><b>Full CLI options</b></summary>
 
 ```
+Usage: vivliostyle create [options] [projectPath]
+
+scaffold a new Vivliostyle project
+
+Options:
+  --title <title>               title
+  --author <author>             author
+  -l, --language <language>     language
+  -s, --size <size>             paper size
+  -T, --theme <theme>           theme
+  --template <template>         Template source in the format of `[provider]:repo[/subpath][#ref]` or as a local directory to copy from.
+  --create-config-file-only     Create a Vivliostyle config file without generating project template files.
+  --proxy-server <proxyServer>  HTTP/SOCK proxy server url
+  --proxy-bypass <proxyBypass>  optional comma-separated domains to bypass proxy
+  --proxy-user <proxyUser>      optional username for HTTP proxy authentication
+  --proxy-pass <proxyPass>      optional password for HTTP proxy authentication
+  --log-level <level>           specify a log level of console outputs (choices: "silent", "info", "verbose", "debug", default: "info")
+  -v, --version                 output the version number
+  -h, --help                    display help for command
+```
+
+</details>
+
+### `init`
+
+> Create a Vivliostyle configuration file
+
+<details>
+<summary><b>Full CLI options</b></summary>
+
+```
+Usage: vivliostyle init [options]
+
+create vivliostyle config file
+
 Options:
   --title <title>            title
   --author <author>          author
   -l, --language <language>  language
-  -s, --size  <size>         paper size
+  -s, --size <size>          paper size
   -T, --theme <theme>        theme
   --log-level <level>        specify a log level of console outputs (choices: "silent", "info", "verbose", "debug", default: "info")
+  -v, --version              output the version number
   -h, --help                 display help for command
 ```
 
+</details>
+
 ### `build`
 
-> build and create PDF file.
+> Create PDF, EPUB, and other publication files
 
-Put [vivliostyle.config.js](https://github.com/vivliostyle/create-book/blob/master/templates/default/vivliostyle.config.js) in the root directory, then:
-
-```bash
-vivliostyle build
-```
-
-#### CLI options
+<details>
+<summary><b>Full CLI options</b></summary>
 
 ```
+Usage: vivliostyle build [options] [input]
+
+build and create PDF file
+
 Options:
   -c, --config <config_file>         path to vivliostyle.config.js [vivliostyle.config.js]
   -o, --output <path>                specify output file name or directory [<title>.pdf]
@@ -101,6 +144,7 @@ Options:
   --viewer <URL>                     specify a URL of displaying viewer instead of vivliostyle-cli's one
                                      It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   --viewer-param <parameters>        specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
+  --browser <browser>                Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]
   --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
   --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
   --proxy-user <proxyUser>           optional username for HTTP proxy authentication
@@ -112,20 +156,24 @@ Options:
   --no-enable-static-serve           disable static file serving
   --vite-config-file <path>          Vite config file path
   --no-vite-config-file              ignore Vite config file even if it exists
+  -v, --version                      output the version number
   -h, --help                         display help for command
 ```
 
+</details>
+
 ### `preview`
 
-> open preview page and save PDF interactively.
+> Open the preview page and interactively save PDFs
 
-```bash
-vivliostyle preview
-```
-
-#### CLI options
+<details>
+<summary><b>Full CLI options</b></summary>
 
 ```
+Usage: vivliostyle preview [options] [input]
+
+launch preview server
+
 Options:
   -c, --config <config_file>         path to vivliostyle.config.js
   -T, --theme <theme...>             theme path or package name
@@ -148,8 +196,7 @@ Options:
   --viewer <URL>                     specify a URL of displaying viewer instead of vivliostyle-cli's one
                                      It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   --viewer-param <parameters>        specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
-  --browser <browser>                EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer [chromium]
-                                     Currently, Firefox and Webkit support preview command only! (choices: "chromium", "firefox", "webkit")
+  --browser <browser>                Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]
   --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
   --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
   --proxy-user <proxyUser>           optional username for HTTP proxy authentication
@@ -163,18 +210,15 @@ Options:
   --no-enable-viewer-start-page      disable viewer start page
   --vite-config-file <path>          Vite config file path
   --no-vite-config-file              ignore Vite config file even if it exists
+  -v, --version                      output the version number
   -h, --help                         display help for command
 ```
 
-## User Guide
-
-See [User Guide](https://docs.vivliostyle.org/#/vivliostyle-cli)
+</details>
 
 ## Contribute
 
 See [Contribution Guide](CONTRIBUTING.md).
-
-[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/0)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/0)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/1)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/1)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/2)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/2)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/3)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/3)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/4)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/4)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/5)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/5)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/6)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/6)[![](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/images/7)](https://sourcerer.io/fame/uetchy/vivliostyle/vivliostyle-cli/links/7)
 
 ## License
 

@@ -1,11 +1,9 @@
 import { Command, type OptionValues } from 'commander';
-import upath from 'upath';
 import * as v from 'valibot';
 import {
   type InlineOptions,
-  OutputConfig,
+  type OutputConfig,
   type ParsedVivliostyleConfigSchema,
-  type ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfig,
 } from '../config/schema.js';
 import { EMPTY_DATA_URI } from '../const.js';
@@ -47,27 +45,25 @@ export interface CliFlags {
   proxyPass?: string;
   logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
   ignoreHttpsErrors?: boolean;
+  projectPath?: string;
+  template?: string;
 }
 
-export function parseFlagsToInlineConfig(
-  argv: string[],
-  setupProgram: () => Command,
-): ParsedVivliostyleInlineConfig {
-  const program = setupProgram();
-  program.parse(argv);
-  let options = program.opts<CliFlags>();
-  const input = program.args?.[0];
-  options = warnDeprecatedFlags(options);
-  let inlineConfig: unknown = { input, ...options };
-  if (
-    input &&
-    !options.config &&
-    upath.basename(input).startsWith('vivliostyle.config')
-  ) {
-    // Load an input argument as a Vivliostyle config
-    inlineConfig = { config: input, ...options };
-  }
-  return v.parse(VivliostyleInlineConfig, inlineConfig);
+export function createParserProgram({
+  setupProgram,
+  parseArgs,
+}: {
+  setupProgram: () => Command;
+  parseArgs?: (options: CliFlags, args: string[]) => CliFlags;
+}) {
+  return (argv: string[]) => {
+    const program = setupProgram();
+    program.parse(argv);
+    let options = program.opts<CliFlags>();
+    options = parseArgs?.(options, program.args ?? []) || options;
+    options = warnDeprecatedFlags(options);
+    return v.parse(VivliostyleInlineConfig, options);
+  };
 }
 
 export function setupConfigFromFlags(
