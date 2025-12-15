@@ -24,7 +24,7 @@ Vivliostyle CLIはデフォルトでMinimal、Basic、Documentation、Novel、Ac
 また、自分で用意したテンプレートを使用することもできます。`--template` オプションで指定したテンプレートをもとにプロジェクトを作成します。
 
 ```sh
-npm create book --template gh:org/repo/templates/awesome-template
+npm create book -- --template gh:org/repo/templates/awesome-template
 ```
 
 テンプレートの参照方法は [giget](https://github.com/unjs/giget#readme) のドキュメントを参照してください。

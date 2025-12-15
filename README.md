@@ -42,16 +42,17 @@ Commands:
 
 > Scaffold a new Vivliostyle project
 
-```bash
-vivliostyle create
-```
-
 You are new to Vivliostyle? Check out our [Create Book](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/packages/create-book#readme) project.
 With Create Book, you can easily bootstrap your book project and start writing without any extra effort.
 
-#### CLI Options
+<details>
+<summary><b>Full CLI options</b></summary>
 
 ```
+Usage: vivliostyle create [options] [projectPath]
+
+scaffold a new Vivliostyle project
+
 Options:
   --title <title>               title
   --author <author>             author
@@ -69,17 +70,20 @@ Options:
   -h, --help                    display help for command
 ```
 
+</details>
+
 ### `init`
 
 > Create a Vivliostyle configuration file
 
-```bash
-vivliostyle init
-```
-
-#### CLI Options
+<details>
+<summary><b>Full CLI options</b></summary>
 
 ```
+Usage: vivliostyle init [options]
+
+create vivliostyle config file
+
 Options:
   --title <title>            title
   --author <author>          author
@@ -91,17 +95,20 @@ Options:
   -h, --help                 display help for command
 ```
 
+</details>
+
 ### `build`
 
 > Create PDF, EPUB, and other publication files
 
-```bash
-vivliostyle build
-```
-
-#### CLI options
+<details>
+<summary><b>Full CLI options</b></summary>
 
 ```
+Usage: vivliostyle build [options] [input]
+
+build and create PDF file
+
 Options:
   -c, --config <config_file>         path to vivliostyle.config.js [vivliostyle.config.js]
   -o, --output <path>                specify output file name or directory [<title>.pdf]
@@ -137,6 +144,7 @@ Options:
   --viewer <URL>                     specify a URL of displaying viewer instead of vivliostyle-cli's one
                                      It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   --viewer-param <parameters>        specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
+  --browser <browser>                Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]
   --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
   --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
   --proxy-user <proxyUser>           optional username for HTTP proxy authentication
@@ -152,17 +160,20 @@ Options:
   -h, --help                         display help for command
 ```
 
+</details>
+
 ### `preview`
 
 > Open the preview page and interactively save PDFs
 
-```bash
-vivliostyle preview
-```
-
-#### CLI options
+<details>
+<summary><b>Full CLI options</b></summary>
 
 ```
+Usage: vivliostyle preview [options] [input]
+
+launch preview server
+
 Options:
   -c, --config <config_file>         path to vivliostyle.config.js
   -T, --theme <theme...>             theme path or package name
@@ -185,8 +196,7 @@ Options:
   --viewer <URL>                     specify a URL of displaying viewer instead of vivliostyle-cli's one
                                      It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   --viewer-param <parameters>        specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
-  --browser <browser>                EXPERIMENTAL SUPPORT: Specify a browser type to launch Vivliostyle viewer [chromium]
-                                     Currently, Firefox and Webkit support preview command only! (choices: "chromium", "firefox", "webkit")
+  --browser <browser>                Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]
   --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
   --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
   --proxy-user <proxyUser>           optional username for HTTP proxy authentication
@@ -203,6 +213,8 @@ Options:
   -v, --version                      output the version number
   -h, --help                         display help for command
 ```
+
+</details>
 
 ## Contribute
 

@@ -24,7 +24,7 @@ Vivliostyle CLI provides several default templates: Minimal, Basic, Documentatio
 You can also use your own template. Specify the template with the `--template` option when creating a project.
 
 ```sh
-npm create book --template gh:org/repo/templates/awesome-template
+npm create book -- --template gh:org/repo/templates/awesome-template
 ```
 
 For details on referencing templates, see the [giget](https://github.com/unjs/giget#readme) documentation.
