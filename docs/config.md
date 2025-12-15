@@ -82,7 +82,10 @@ type VivliostyleConfigSchema =
     Timeout limit for waiting for the Vivliostyle process (in ms). (default: `300000`)
 
   - `documentProcessor`: (option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor  
-    Custom function to provide a unified Processor for converting markdown to HTML.
+    Custom function to provide a unified Processor for converting the source document to HTML.
+
+  - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
+    Custom function to extract metadata from the source document content.
 
   - `vfm`: [VfmConfig](#vfmconfig)  
     Options for converting Markdown into a stringified format (HTML).
@@ -170,6 +173,9 @@ type BuildTask = {
     option: import("@vivliostyle/vfm").StringifyMarkdownOptions,
     metadata: import("@vivliostyle/vfm").Metadata,
   ) => import("unified").Processor;
+  documentMetadataReader?: (
+    content: string,
+  ) => import("@vivliostyle/vfm").Metadata;
   vfm?: VfmConfig;
   image?: string;
   http?: boolean;
@@ -323,6 +329,12 @@ type CoverEntryConfig = {
 
   - `rel`: (string)[] | string
 
+  - `documentProcessor`: (option: import("@vivliostyle/vfm").StringifyMarkdownOptions, metadata: import("@vivliostyle/vfm").Metadata) => import("unified").Processor  
+    Custom function to provide a unified Processor for converting the source document to HTML.
+
+  - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
+    Custom function to extract metadata from the source document content.
+
 #### Type definition
 
 ```ts
@@ -336,6 +348,13 @@ type ArticleEntryConfig = {
     | string;
   encodingFormat?: string;
   rel?: string[] | string;
+  documentProcessor?: (
+    option: import("@vivliostyle/vfm").StringifyMarkdownOptions,
+    metadata: import("@vivliostyle/vfm").Metadata,
+  ) => import("unified").Processor;
+  documentMetadataReader?: (
+    content: string,
+  ) => import("@vivliostyle/vfm").Metadata;
 };
 ```
 

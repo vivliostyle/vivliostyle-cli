@@ -93,6 +93,11 @@ export function mergeInlineConfig(
     })),
     inlineOptions: {
       ...pruneObject(inlineOptions),
+      ...pruneObject({
+        renderMode,
+        preflight,
+        preflightOption,
+      }),
       ...pruneObject(
         overrideInlineOptions satisfies HasOnlyInlineOptionsProperties<
           typeof overrideInlineOptions

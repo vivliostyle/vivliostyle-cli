@@ -41,7 +41,6 @@ Object {
   "css": undefined,
   "customStyle": "https://vivlostyle.org",
   "customUserStyle": "theme.css",
-  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "coverImageAlt": "Cover image alt",
@@ -234,7 +233,6 @@ Object {
   "css": undefined,
   "customStyle": undefined,
   "customUserStyle": undefined,
-  "documentProcessorFactory": [Function],
   "entries": Array [
     Object {
       "coverImageAlt": "Cover image alt",
