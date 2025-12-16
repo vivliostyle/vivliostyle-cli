@@ -44,9 +44,6 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
       ).choices(['ltr', 'rtl']),
     )
     .addOption(new Option('--sandbox', `launch chrome with sandbox`).hideHelp())
-    .addOption(
-      new Option('--no-sandbox', `launch chrome without sandbox`).hideHelp(),
-    )
     .option(
       '--executable-browser <path>',
       'specify a path of executable browser you installed',
@@ -114,11 +111,7 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
       '--no-vite-config-file',
       'ignore Vite config file even if it exists',
     )
-    .version(versionForDisplay, '-v, --version')
-    // TODO: Remove it in the next major version up
-    .addOption(new Option('--executable-chromium <path>').hideHelp())
-    .addOption(new Option('--verbose').hideHelp())
-    .addOption(new Option('--http').hideHelp());
+    .version(versionForDisplay, '-v, --version');
   return program;
 }
 
