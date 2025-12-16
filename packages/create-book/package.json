@@ -6,7 +6,7 @@
   "type": "module",
   "license": "AGPL-3.0",
   "engines": {
-    "node": ">=18"
+    "node": "^20.0.0 || >=22.0.0"
   },
   "bin": "dist/cli.js",
   "keywords": [
