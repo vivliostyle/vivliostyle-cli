@@ -359,7 +359,7 @@ export async function generateManifest({
     encodingFormat:
       !('contentType' in entry) ||
       entry.contentType === 'text/markdown' ||
-      entry.contentType === 'text/x-vivliostyle-unknown' ||
+      entry.contentType === 'text/x-vivliostyle-custom' ||
       entry.contentType === 'text/html'
         ? undefined
         : entry.contentType,

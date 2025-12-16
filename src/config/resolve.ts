@@ -100,7 +100,7 @@ export const manuscriptMediaTypes = [
   'text/plain',
   'application/xhtml+xml',
   // a special MIME type indicates that a custom processor is used
-  'text/x-vivliostyle-unknown',
+  'text/x-vivliostyle-custom',
 ] as const;
 export type ManuscriptMediaType = (typeof manuscriptMediaTypes)[number];
 
@@ -1116,7 +1116,7 @@ function resolveComposedProjectConfig({
       );
       const contentType =
         hasCustomProcessor && rawContentType !== 'text/markdown'
-          ? 'text/x-vivliostyle-unknown'
+          ? 'text/x-vivliostyle-custom'
           : rawContentType;
       if (
         !isManuscriptMediaType(contentType) ||
@@ -1129,7 +1129,7 @@ function resolveComposedProjectConfig({
 
       const useDocumentProcessor =
         contentType === 'text/markdown' ||
-        contentType === 'text/x-vivliostyle-unknown';
+        contentType === 'text/x-vivliostyle-custom';
       return {
         type: 'file',
         pathname,

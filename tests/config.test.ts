@@ -501,8 +501,8 @@ it('allows non-markdown extensions when documentProcessor is provided', async ()
       e.source.pathname.endsWith('sample.xyz'),
   );
   expect(xyzEntry).toBeDefined();
-  // contentType should be 'text/x-vivliostyle-unknown' for unknown extensions
-  expect((xyzEntry as any).contentType).toBe('text/x-vivliostyle-unknown');
+  // contentType should be 'text/x-vivliostyle-custom' for unknown extensions
+  expect((xyzEntry as any).contentType).toBe('text/x-vivliostyle-custom');
   // Target should have .html extension
   expect((xyzEntry as any).target).toMatch(/sample\.html$/);
   // Title should be extracted using custom metadata reader
