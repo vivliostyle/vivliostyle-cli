@@ -4,6 +4,7 @@ import { isUtf8 } from 'node:buffer';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
+import { x } from 'tinyexec';
 import upath from 'upath';
 import * as v from 'valibot';
 import { cyan, dim, gray, green, yellow } from 'yoctocolors';
@@ -31,7 +32,6 @@ import {
   interactiveLogWarn,
 } from '../interactive.js';
 import { Logger } from '../logger.js';
-import { importNodeModule } from '../node-modules.js';
 import {
   createFetch,
   fetchPackageMetadata,
@@ -642,11 +642,20 @@ async function performInstallDependencies({
 }: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>> & {
   pm: PackageManager;
 }) {
-  const { execa } = await importNodeModule('execa');
-  await execa(pm, ['install'], {
-    cwd: upath.join(cwd, projectPath),
-    stdio: 'inherit',
+  const proc = x(pm, ['install'], {
+    throwOnError: true,
+    nodeOptions: {
+      cwd: upath.join(cwd, projectPath),
+      stdio: Logger.isInteractive ? 'inherit' : undefined,
+    },
   });
+  if (Logger.isInteractive) {
+    await proc;
+  } else {
+    for await (const line of proc) {
+      Logger.log(line);
+    }
+  }
 }
 
 function caveat(
