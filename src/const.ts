@@ -298,10 +298,13 @@ export const cliVersion = (() => {
   return pkg.version;
 })();
 
-export const viewerRoot = resolvePkg('@vivliostyle/viewer', { cwd: cliRoot })!;
+export const viewerRoot = resolvePkg('@vivliostyle/viewer', { cwd: cliRoot });
 export const coreVersion = (() => {
   if (import.meta.env?.VITEST) {
     return '0.0.1';
+  }
+  if (!viewerRoot) {
+    return 'Unknown';
   }
   const pkg = JSON.parse(
     fs.readFileSync(upath.join(viewerRoot, 'package.json'), 'utf8'),
