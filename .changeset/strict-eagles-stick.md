@@ -3,4 +3,4 @@
 ---
 
 Allow non-markdown file extensions when documentProcessor is provided.
-resolves #541
+(fix #541)
