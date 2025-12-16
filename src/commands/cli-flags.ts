@@ -7,7 +7,6 @@ import {
   VivliostyleInlineConfig,
 } from '../config/schema.js';
 import { EMPTY_DATA_URI } from '../const.js';
-import { Logger } from '../logger.js';
 
 export interface CliFlags {
   input?: string;
@@ -92,31 +91,12 @@ export function setupConfigFromFlags(
 function warnDeprecatedFlags(options: OptionValues): OptionValues {
   const modifiedOptions = { ...options };
 
-  if (options.executableChromium) {
-    Logger.logWarn(
-      "'--executable-chromium' option was deprecated and will be removed in a future release. Please replace with '--executable-browser' option.",
-    );
-    modifiedOptions.executableBrowser = options.executableChromium;
-  }
-
-  if (options.verbose) {
-    Logger.logWarn(
-      "'--verbose' option was deprecated and will be removed in a future release. Please replace with '--log-level verbose' option.",
-    );
-    modifiedOptions.logLevel = 'verbose';
-  }
-
-  if (options.sandbox === false) {
-    Logger.logWarn(
-      "'--no-sandbox' option was deprecated and will be removed in a future release. It is no longer necessary because the sandbox is disabled by default.",
-    );
-  }
-
-  if (options.http) {
-    Logger.logWarn(
-      "'--http' option was deprecated and will be removed in a future release. It is unnecessary because the HTTP server starts automatically.",
-    );
-  }
+  // Place here warnings for deprecated flags
+  // if (options.someDeprecatedFlag) {
+  //   Logger.logWarn(
+  //     "'--some-deprecated-flag' option was deprecated and will be removed in a future release. Please use '--new-flag' instead.",
+  //   );
+  // }
 
   return modifiedOptions;
 }

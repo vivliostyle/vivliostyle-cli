@@ -5,15 +5,7 @@ import { resolveFixture, runCommand } from './command-util';
 describe('pdf output', () => {
   it('generate pdf without errors', async () => {
     await runCommand(
-      [
-        'build',
-        '-s',
-        'A4',
-        '-o',
-        '.vs-pdf/test.pdf',
-        '--no-sandbox',
-        'index.html',
-      ],
+      ['build', '-s', 'A4', '-o', '.vs-pdf/test.pdf', 'index.html'],
       {
         cwd: resolveFixture('wood'),
         port: 23000,
