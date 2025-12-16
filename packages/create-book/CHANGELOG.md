@@ -1,5 +1,11 @@
 # create-book
 
+## 10.0.2
+
+### Patch Changes
+
+- Fix issue failing to install dependencies on create command. ([#685](https://github.com/vivliostyle/vivliostyle-cli/pull/685))
+
 ## 10.0.1
 
 ### Patch Changes
