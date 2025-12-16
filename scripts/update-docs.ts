@@ -1,9 +1,9 @@
-import { execa } from 'execa';
 import { slug } from 'github-slugger';
 import * as fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import prettier from 'prettier';
+import { x } from 'tinyexec';
 import { JSONOutput } from 'typedoc';
 import * as v from 'valibot';
 import { VivliostyleConfigSchema } from '../dist/config/schema.js';
@@ -241,7 +241,7 @@ async function buildConfigDocs(): Promise<string> {
 
 async function buildApiDocs() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vs-cli-docs-'));
-  const proc = await execa(
+  await x(
     'npx',
     [
       'typedoc',
@@ -252,11 +252,8 @@ async function buildApiDocs() {
       '--json',
       path.join(tmp, 'api.json'),
     ],
-    { stdio: 'inherit' },
+    { throwOnError: true, nodeOptions: { stdio: 'inherit' } },
   );
-  if (proc.exitCode !== 0) {
-    throw new Error(`typedoc process exited with code ${proc.exitCode}`);
-  }
 
   const json = JSON.parse(
     fs.readFileSync(path.join(tmp, 'api.json'), 'utf-8'),

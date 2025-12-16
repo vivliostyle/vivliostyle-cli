@@ -1,5 +1,6 @@
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { x } from 'tinyexec';
 import upath from 'upath';
 import type { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
@@ -96,11 +97,19 @@ export async function runContainer({
       ...commandArgs,
     ];
     Logger.debug(`docker ${args.join(' ')}`);
-    const { execa } = await importNodeModule('execa');
-    const proc = execa('docker', args, {
-      stdio: 'inherit',
+    const proc = x('docker', args, {
+      throwOnError: true,
+      nodeOptions: {
+        stdio: Logger.isInteractive ? 'inherit' : undefined,
+      },
     });
-    await proc;
+    if (Logger.isInteractive) {
+      await proc;
+    } else {
+      for await (const line of proc) {
+        Logger.log(line);
+      }
+    }
   } catch (error) {
     throw new Error(
       'An error occurred on the running container. Please see logs above.',
