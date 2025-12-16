@@ -1,5 +1,11 @@
 # create-book
 
+## 10.0.1
+
+### Patch Changes
+
+- Resolve prior release issue ([#683](https://github.com/vivliostyle/vivliostyle-cli/pull/683))
+
 ## 10.0.0
 
 ### Major Changes
