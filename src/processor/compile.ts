@@ -181,12 +181,11 @@ export async function transformManuscript(
   );
 
   if (source?.type === 'file') {
-    if (source.contentType === 'text/markdown') {
-      // Compile markdown
-      const manuscriptEntry = entry as ManuscriptEntry;
+    if (source.documentProcessor) {
+      // Process with a configured document processor
       const vfile = await processMarkdown(
-        manuscriptEntry.documentProcessorFactory,
-        manuscriptEntry.documentMetadataReader,
+        source.documentProcessor.processorFactory,
+        source.documentProcessor.metadataReader,
         source.pathname,
         {
           ...vfmOptions,
@@ -360,6 +359,7 @@ export async function generateManifest({
     encodingFormat:
       !('contentType' in entry) ||
       entry.contentType === 'text/markdown' ||
+      entry.contentType === 'text/x-vivliostyle-custom' ||
       entry.contentType === 'text/html'
         ? undefined
         : entry.contentType,
