@@ -7,9 +7,7 @@
     "preview": "vivliostyle preview"
   },
   "dependencies": {
-    "@asciidoctor/core": "^3.0.4"
-  },
-  "devDependencies": {
-    "@vivliostyle/cli": "file:../../"
+    "@asciidoctor/core": "^3.0.4",
+    "@vivliostyle/cli": "workspace:*"
   }
 }
