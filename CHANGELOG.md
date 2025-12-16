@@ -1,5 +1,37 @@
 # @vivliostyle/cli
 
+## 10.0.0
+
+### Major Changes
+
+- Migrate the internal browser library from Playwright to Puppeteer. ([#602](https://github.com/vivliostyle/vivliostyle-cli/pull/602))
+
+  - Implement browser version switching:
+    - Command line option: `--browser <browser>`
+    - Configuration file: `browser` option
+  - Remove WebKit support as Puppeteer does not support it
+
+- - Add a `create` command for interactive project scaffolding ([#634](https://github.com/vivliostyle/vivliostyle-cli/pull/634))
+  - Add the new template system to achieve more flexible project scaffolding
+  - Unify `create-book` program to vivliostyle-cli. The two commands `npm create book` and `npx vivliostyle create` are now equivalent.
+
+- BREAKING CHANGE: Drop support for Node.js 18. Now Node.js 20 or >=22 is required. ([#681](https://github.com/vivliostyle/vivliostyle-cli/pull/681))
+
+- BREAKING CHANGE: Remove deprecated flags: `--no-sandbox`, `--executable-chromium`, `--verbose` and `--http`. ([#682](https://github.com/vivliostyle/vivliostyle-cli/pull/682))
+
+  - If you were using `--no-sandbox` or `--http`, you can simply remove them as they are no longer necessary.
+  - If you were using `--executable-chromium`, please switch to `--executable-browser` option.
+  - If you were using `--verbose`, please use `--log-level verbose` instead.
+
+### Minor Changes
+
+- Allow non-markdown file extensions when documentProcessor is provided. ([#680](https://github.com/vivliostyle/vivliostyle-cli/pull/680))
+  (fix [#541](https://github.com/vivliostyle/vivliostyle-cli/issues/541))
+
+### Patch Changes
+
+- Update arborist and add installLinks to the options ([`ecfa73b`](https://github.com/vivliostyle/vivliostyle-cli/commit/ecfa73bf857ce44136b5d8e0fd4799143ce2e43e))
+
 # [9.9.0](https://github.com/vivliostyle/vivliostyle-cli/compare/v9.8.4...v9.9.0) (2025-12-14)
 
 ### Bug Fixes
