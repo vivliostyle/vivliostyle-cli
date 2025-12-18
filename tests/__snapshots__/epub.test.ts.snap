@@ -231,7 +231,7 @@ exports[`generate EPUB from single Markdown input > foo bar%.xhtml 1`] = `
     <meta name=\\"viewport\\" content=\\"width=device-width, initial-scale=1\\" />
   </head>
   <body>
-    <section class=\\"level1\\" aria-labelledby=\\"日本語\\">
+    <section class=\\"level1\\">
       <h1 id=\\"日本語\\">日本語</h1>
     </section>
   
