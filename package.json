@@ -31,7 +31,7 @@
     "@puppeteer/browsers": "2.10.5",
     "@vivliostyle/jsdom": "25.0.1-vivliostyle-cli.1",
     "@vivliostyle/vfm": "2.4.0",
-    "@vivliostyle/viewer": "2.37.0",
+    "@vivliostyle/viewer": "2.38.0",
     "ajv": "8.17.1",
     "ajv-formats": "3.0.1",
     "archiver": "7.0.1",
