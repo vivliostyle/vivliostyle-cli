@@ -9,10 +9,3 @@ This example demonstrates how to mix AsciiDoc and Markdown files in a single pub
 ├── chapter2.md             # Markdown (default VFM)
 └── vivliostyle.config.js
 ```
-
-## Usage
-
-```bash
-npm install
-npm run build
-```
