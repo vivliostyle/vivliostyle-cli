@@ -1,5 +1,13 @@
 # @vivliostyle/cli
 
+## 10.1.0
+
+### Minor Changes
+
+- feat: Update Vivliostyle.js to 2.38.0: CSS initial-letter support ([#688](https://github.com/vivliostyle/vivliostyle-cli/pull/688))
+
+- feat: Update VFM to 2.5.0 ([#689](https://github.com/vivliostyle/vivliostyle-cli/pull/689))
+
 ## 10.0.2
 
 ### Patch Changes
