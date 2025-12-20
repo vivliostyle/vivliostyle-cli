@@ -39,8 +39,8 @@ importers:
         specifier: 2.5.0
         version: 2.5.0
       '@vivliostyle/viewer':
-        specifier: 2.37.0
-        version: 2.37.0
+        specifier: 2.38.0
+        version: 2.38.0
       ajv:
         specifier: 8.17.1
         version: 8.17.1
@@ -2139,8 +2139,8 @@ packages:
   '@vitest/utils@3.1.2':
     resolution: {integrity: sha512-5GGd0ytZ7BH3H6JTj9Kw7Prn1Nbg0wZVrIvou+UWxm54d+WoXXgAgjFJ8wn3LdagWLFSEfpPeyYrByZaGEZHLg==}
 
-  '@vivliostyle/core@2.37.0':
-    resolution: {integrity: sha512-ZCMN4E0mRAsRcVvZ3GXGfPf3Z7WTTnq5jLwQ58EY2DtAguC5KSyOgrkta11+0TRC7gtIhJsEzThAX8K71f0qIw==}
+  '@vivliostyle/core@2.38.0':
+    resolution: {integrity: sha512-WLDAAzQ214o56YKioZh8j9dnbaQ6reJCpthuWWSI6xCKAO7jBuAP4Ua+P49riZagyQx0/2FyKQtgpEFqoUW1xg==}
     engines: {node: '>=20'}
 
   '@vivliostyle/jsdom@25.0.1-vivliostyle-cli.1':
@@ -2157,8 +2157,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  '@vivliostyle/viewer@2.37.0':
-    resolution: {integrity: sha512-Z44+pwaW7J0U7K8szii5OHREYD4dzaM38Fa2EnwSvLFsS8s4SwN7zo+CxPfB+51+tedrEU1lDv+lUB3IEJXMRQ==}
+  '@vivliostyle/viewer@2.38.0':
+    resolution: {integrity: sha512-bBBWNSW384W1/KvIWuZ5qHY7e8C0zeFcyXyEH8m30ngy0iQ3Kgt4X+XyiL7Hw/AGpfVUStufvhwQkD5eRpl0+Q==}
     engines: {node: '>=20'}
 
   '@zachleat/heading-anchors@1.0.5':
@@ -8050,7 +8050,7 @@ snapshots:
       loupe: 3.1.3
       tinyrainbow: 2.0.0
 
-  '@vivliostyle/core@2.37.0':
+  '@vivliostyle/core@2.38.0':
     dependencies:
       fast-diff: 1.3.0
 
@@ -8125,9 +8125,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vivliostyle/viewer@2.37.0':
+  '@vivliostyle/viewer@2.38.0':
     dependencies:
-      '@vivliostyle/core': 2.37.0
+      '@vivliostyle/core': 2.38.0
       i18next-ko: 3.0.1
       knockout: 3.5.1
 

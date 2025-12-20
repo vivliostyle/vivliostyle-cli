@@ -1,3 +1,5 @@
+// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
 import Asciidoctor from '@asciidoctor/core';
 
 const asciidoctor = Asciidoctor();
@@ -35,8 +37,7 @@ function readAsciidocMetadata(content) {
   };
 }
 
-/** @type {import('@vivliostyle/cli').VivliostyleConfigSchema} */
-const config = {
+const config = defineConfig({
   title: 'Mixed Format Example',
   author: 'Vivliostyle',
   language: 'en',
@@ -49,6 +50,6 @@ const config = {
     'chapter2.md',
   ],
   output: 'output.pdf',
-};
+});
 
 export default config;
