@@ -2,38 +2,46 @@
 import { defineConfig } from '@vivliostyle/cli';
 import Asciidoctor from '@asciidoctor/core';
 
-const asciidoctor = Asciidoctor();
+// Note: Package versions must be compatible with VFM's dependencies (unified v9, hast v2).
+// - rehype-stringify: v7 (v8 requires unified v10)
+// - hast-util-from-html: v1 (v2 requires hast v3)
+import unified from 'unified';
+import rehypeStringify from 'rehype-stringify';
+import { fromHtml } from 'hast-util-from-html';
 
-/**
- * Create a unified-compatible processor that converts AsciiDoc to HTML
- * @returns {import('unified').Processor}
- */
+const asciidoctor = Asciidoctor();
+/** @type {import("@asciidoctor/core").ProcessorOptions} */
+const asciidoctorOptions = {
+  standalone: false,
+  safe: 'safe',
+  attributes: {
+    showtitle: true,
+  },
+};
+
 function createAsciidocProcessor() {
-  return {
-    async process(file) {
-      const content = String(file);
-      const html = asciidoctor.convert(content, {
-        standalone: false,
-        safe: 'safe',
-        attributes: {
-          showtitle: true,
+  return unified()
+    .use(function () {
+      Object.assign(this, {
+        Parser: (/** @type {string} */ document) => {
+          const html = asciidoctor
+            .convert(document, asciidoctorOptions)
+            .toString();
+          return fromHtml(html);
         },
       });
-      file.contents = html;
-      return file;
-    },
-  };
+    })
+    .use(rehypeStringify);
 }
 
 /**
- * Extract metadata from AsciiDoc content
  * @param {string} content
  * @returns {import('@vivliostyle/vfm').Metadata}
  */
 function readAsciidocMetadata(content) {
-  const doc = asciidoctor.load(content, { safe: 'safe' });
+  const doc = asciidoctor.load(content, asciidoctorOptions);
   return {
-    title: doc.getDocumentTitle(),
+    title: doc.getDocumentTitle()?.toString(),
   };
 }
 
