@@ -403,6 +403,12 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  examples/ts-config:
+    dependencies:
+      '@vivliostyle/cli':
+        specifier: workspace:*
+        version: link:../..
+
   examples/with-astro:
     dependencies:
       '@astrojs/mdx':
