@@ -129,7 +129,14 @@ jobs:
       matrix:
         package: ${{ fromJson(needs.publish-dry-run.outputs.publish-summary).publishedPackages }}
     steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
@@ -141,6 +148,7 @@ jobs:
         run: |
           git config --global user.name '${{ needs.publish.outputs.git-user-name }}'
           git config --global user.email '${{ needs.publish.outputs.git-user-email }}'
+          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
       - name: Output current package info
         id: package
         run: |
