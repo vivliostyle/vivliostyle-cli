@@ -68,12 +68,21 @@ jobs:
       - name: Create changeset
         if: steps.check-changes.outputs.has-changes == 'true'
         run: |
-          cat > .changeset/update-browser-versions.md << 'EOF'
+          # Extract Linux versions from const.ts
+          CHROME_VERSION=$(sed -n '/chrome:/p' src/const.ts | grep -oP '"linux":"\K[^"]+')
+          CHROMIUM_VERSION=$(sed -n '/chromium:/p' src/const.ts | grep -oP '"linux":"\K[^"]+')
+          FIREFOX_VERSION=$(sed -n '/firefox:/p' src/const.ts | grep -oP '"linux":"\K[^"]+')
+
+          cat > .changeset/update-browser-versions.md << EOF
           ---
           "@vivliostyle/cli": patch
           ---
 
           Update default browser versions
+
+          - Chrome: $CHROME_VERSION
+          - Chromium: $CHROMIUM_VERSION
+          - Firefox: $FIREFOX_VERSION
           EOF
 
       - name: Create Pull Request
