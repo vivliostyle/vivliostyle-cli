@@ -1,6 +1,9 @@
 name: Update Browser Versions
 
 on:
+  push:
+    branches:
+      - ci/update-browser-versions # Temporary: for testing only
   schedule:
     # Run every day at 00:00 UTC
     - cron: '0 0 * * *'
