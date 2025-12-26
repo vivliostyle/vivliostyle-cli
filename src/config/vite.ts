@@ -76,13 +76,22 @@ export async function resolveViteConfig({
       ? serverRootDir
       : (await useTmpDirectory())[0];
 
+  // When serverRootDir is not a string (UseTemporaryServerRoot symbol),
+  // it means we're previewing an external URL or without input files.
+  // In this case, we should use temporary directory for Vite cache
+  // to avoid creating .vite directory in the current working directory.
+  const cacheDir =
+    typeof serverRootDir === 'string'
+      ? upath.join(workspaceDir, '.vite')
+      : upath.join(root, '.vite');
+
   const finalUserConfig = mergeViteConfig(viteConfig || {}, {
     server,
     preview: server,
     configFile: viteConfigFile === true ? undefined : viteConfigFile,
     root,
     customLogger: viteLogger,
-    cacheDir: upath.join(workspaceDir, '.vite'),
+    cacheDir,
   } satisfies InlineConfig);
   return await resolveConfig(
     finalUserConfig,

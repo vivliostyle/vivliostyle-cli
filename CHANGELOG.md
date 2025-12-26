@@ -1,5 +1,31 @@
 # @vivliostyle/cli
 
+## 10.2.0
+
+### Minor Changes
+
+- feat: Update Vivliostyle.js to 2.39.0: Extend CSS nth-* selectors support ([#702](https://github.com/vivliostyle/vivliostyle-cli/pull/702))
+
+### Patch Changes
+
+- fix(docker): add xz-utils for Firefox browser installation ([#701](https://github.com/vivliostyle/vivliostyle-cli/pull/701))
+
+- fix: don't create .vite directory for preview with URL input or no input ([#698](https://github.com/vivliostyle/vivliostyle-cli/pull/698))
+
+## 10.1.0
+## 10.2.0
+
+### Minor Changes
+
+- feat: Update Vivliostyle.js to 2.39.0: Extend CSS nth-\* selectors support ([#702](https://github.com/vivliostyle/vivliostyle-cli/pull/702))
+
+### Patch Changes
+
+- fix(docker): add xz-utils for Firefox browser installation ([#701](https://github.com/vivliostyle/vivliostyle-cli/pull/701))
+
+- fix: don't create .vite directory for preview with URL input or no input ([#698](https://github.com/vivliostyle/vivliostyle-cli/pull/698))
+
+>>>>>>> 15eede90b120a277ba0440c8ed94e7762623f751
 ## 10.1.0
 
 ### Minor Changes

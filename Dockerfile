@@ -29,6 +29,8 @@ RUN set -x \
     git openssh-client \
     # dependencies for press-ready
     ghostscript poppler-utils \
+    # for Puppeteer Firefox installation
+    xz-utils \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* `npm config get cache`/_npx
 
 # Install fonts
