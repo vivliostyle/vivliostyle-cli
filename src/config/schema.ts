@@ -527,6 +527,18 @@ const VfmConfig = v.pipe(
           Enable support for math syntax.
         `),
       ),
+      imgFigcaptionOrder: v.pipe(
+        v.union([v.literal('img-figcaption'), v.literal('figcaption-img')]),
+        v.description($`
+          Order of img and figcaption elements in figure.
+        `),
+      ),
+      assignIdToFigcaption: v.pipe(
+        v.boolean(),
+        v.description($`
+          Assign ID to figcaption instead of img/code.
+        `),
+      ),
     }),
   ),
   v.title('VfmConfig'),

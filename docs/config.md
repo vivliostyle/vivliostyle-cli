@@ -580,6 +580,12 @@ type CoverConfig = {
   - `math`: boolean  
     Enable support for math syntax.
 
+  - `imgFigcaptionOrder`: "img-figcaption" | "figcaption-img"  
+    Order of img and figcaption elements in figure.
+
+  - `assignIdToFigcaption`: boolean  
+    Assign ID to figcaption instead of img/code.
+
 #### Type definition
 
 ```ts
@@ -598,6 +604,10 @@ type VfmConfig = {
   hardLineBreaks?: boolean;
   disableFormatHtml?: boolean;
   math?: boolean;
+  imgFigcaptionOrder?:
+    | "img-figcaption"
+    | "figcaption-img";
+  assignIdToFigcaption?: boolean;
 };
 ```
 
