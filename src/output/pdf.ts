@@ -10,7 +10,7 @@ import type {
   PdfOutput,
   ResolvedTaskConfig,
 } from '../config/resolve.js';
-import type { Meta, Payload, TOCItem } from '../global-viewer.js';
+import type { CmykMap, Meta, Payload, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { pathEquals } from '../util.js';
@@ -168,6 +168,7 @@ export async function buildPDF({
   const metadata = await loadMetadata(page);
   const toc = await loadTOC(page);
   const pageSizeData = await loadPageSizeData(page);
+  const cmykMap = target.cmyk ? await loadCmykMap(page) : {};
 
   remainTime -= Date.now() - startTime;
   if (remainTime <= 0) {
@@ -222,6 +223,8 @@ export async function buildPDF({
     preflight: target.preflight,
     preflightOption: target.preflightOption,
     image: config.image,
+    cmyk: target.cmyk,
+    cmykMap,
   });
 
   return target.path;
@@ -276,4 +279,9 @@ async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
     return sizeData;
   });
   /* v8 ignore stop */
+}
+
+async function loadCmykMap(page: Page): Promise<CmykMap> {
+  /* v8 ignore next 3 */
+  return page.evaluate(() => window.coreViewer.getCmykMap?.() ?? {});
 }

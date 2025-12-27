@@ -11,13 +11,17 @@ import {
   runContainer,
   toContainerPath,
 } from '../container.js';
-import type { Meta, TOCItem } from '../global-viewer.js';
+import type { CmykMap, Meta, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import { isInContainer } from '../util.js';
+import { convertCmykColors } from './cmyk.js';
 
-export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
-  Pick<ResolvedTaskConfig, 'image'>;
+export type SaveOption = Pick<
+  PdfOutput,
+  'preflight' | 'preflightOption' | 'cmyk'
+> &
+  Pick<ResolvedTaskConfig, 'image'> & { cmykMap: CmykMap };
 
 const prefixes = {
   dcterms: 'http://purl.org/dc/terms/',
@@ -95,45 +99,57 @@ export class PostProcess {
 
   async save(
     output: string,
-    { preflight, preflightOption, image }: SaveOption,
+    { preflight, preflightOption, image, cmyk, cmykMap }: SaveOption,
   ) {
-    const input = preflight
-      ? upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
-      : output;
+    let pdf = await this.document.save();
 
-    const pdf = await this.document.save();
-    await fs.promises.writeFile(input, pdf);
+    if (cmyk) {
+      Logger.logInfo('Converting CMYK colors');
+      pdf = await convertCmykColors({
+        pdf,
+        cmykMap,
+        overrideMap: cmyk.overrideMap,
+        warnUnmapped: cmyk.warnUnmapped,
+      });
+    }
 
-    if (
-      preflight === 'press-ready-local' ||
-      (preflight === 'press-ready' && isInContainer())
-    ) {
-      using _ = Logger.suspendLogging('Running press-ready');
-      const { build } = await importNodeModule('press-ready');
-      await build({
-        ...preflightOption.reduce((acc, opt) => {
-          const optName = decamelize(opt, { separator: '-' });
-          return optName.startsWith('no-')
-            ? {
-                ...acc,
-                [optName.slice(3)]: false,
-              }
-            : {
-                ...acc,
-                [optName]: true,
-              };
-        }, {}),
-        input,
-        output,
-      });
-    } else if (preflight === 'press-ready') {
-      using _ = Logger.suspendLogging('Running press-ready');
-      await pressReadyWithContainer({
-        input,
-        output,
-        preflightOption,
-        image,
-      });
+    if (preflight) {
+      const input = upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`);
+      await fs.promises.writeFile(input, pdf);
+
+      if (
+        preflight === 'press-ready-local' ||
+        (preflight === 'press-ready' && isInContainer())
+      ) {
+        using _ = Logger.suspendLogging('Running press-ready');
+        const { build } = await importNodeModule('press-ready');
+        await build({
+          ...preflightOption.reduce((acc, opt) => {
+            const optName = decamelize(opt, { separator: '-' });
+            return optName.startsWith('no-')
+              ? {
+                  ...acc,
+                  [optName.slice(3)]: false,
+                }
+              : {
+                  ...acc,
+                  [optName]: true,
+                };
+          }, {}),
+          input,
+          output,
+        });
+      } else if (preflight === 'press-ready') {
+        using _ = Logger.suspendLogging('Running press-ready');
+        await pressReadyWithContainer({
+          input,
+          output,
+          preflightOption,
+          image,
+        });
+      }
+    } else {
+      await fs.promises.writeFile(output, pdf);
     }
   }
 

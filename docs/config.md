@@ -69,6 +69,10 @@ type VivliostyleConfigSchema =
     Generate a press-ready PDF compatible with PDF/X-1a. (default: `false`)
     This option is equivalent to setting `"preflight": "press-ready"`.
 
+  - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
+    Convert device-cmyk() colors to CMYK in the output PDF.
+    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+
   - `language`: string  
     Language of the document.
 
@@ -170,6 +174,7 @@ type BuildTask = {
   copyAsset?: CopyAssetConfig;
   size?: string;
   pressReady?: boolean;
+  cmyk?: boolean | CmykConfig;
   language?: string;
   readingProgression?: "ltr" | "rtl";
   toc?: TocConfig | boolean | string;
@@ -384,6 +389,10 @@ type ArticleEntryConfig = {
     Options for the preflight process (e.g., `gray-scale`, `enforce-outline`).
     Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
 
+  - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
+    Convert device-cmyk() colors to CMYK in the output PDF.
+    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+
 #### Type definition
 
 ```ts
@@ -395,6 +404,29 @@ type OutputConfig = {
     | "press-ready"
     | "press-ready-local";
   preflightOption?: string[];
+  cmyk?: boolean | CmykConfig;
+};
+```
+
+### CmykConfig
+
+#### Properties
+
+- `CmykConfig`
+
+  - `overrideMap`: ("{tuple(Array)}")[]  
+    Custom RGB to CMYK color mapping.
+    Each entry is a tuple of [{r, g, b}, {c, m, y, k}] where values are integers (0-10000).
+
+  - `warnUnmapped`: boolean  
+    Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+
+#### Type definition
+
+```ts
+type CmykConfig = {
+  overrideMap?: "{tuple(Array)}"[];
+  warnUnmapped?: boolean;
 };
 ```
 

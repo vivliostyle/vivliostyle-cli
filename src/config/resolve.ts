@@ -22,6 +22,7 @@ import {
   StructuredDocumentSection,
   ThemeConfig,
 } from '../config/schema.js';
+import type { CMYKValue } from '../global-viewer.js';
 import {
   cliVersion,
   CONTAINER_LOCAL_HOSTNAME,
@@ -182,12 +183,26 @@ export type ViewerInputConfig =
   | EpubOpfEntryConfig
   | WebBookEntryConfig;
 
+export interface RGBValue {
+  r: number;
+  g: number;
+  b: number;
+}
+
+export type CmykOverrideEntry = [RGBValue, CMYKValue];
+
+export interface CmykConfig {
+  warnUnmapped: boolean;
+  overrideMap: CmykOverrideEntry[];
+}
+
 export interface PdfOutput {
   format: 'pdf';
   path: string;
   renderMode: 'local' | 'docker';
   preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
+  cmyk: CmykConfig | false;
 }
 
 export interface WebPublicationOutput {
@@ -596,25 +611,57 @@ export function resolveTaskConfig(
     undefined;
 
   const outputs = ((): OutputConfig[] => {
+    const resolveCmykConfig = (): CmykConfig | false => {
+      // Config file object format takes priority
+      if (config.cmyk && typeof config.cmyk === 'object') {
+        return {
+          warnUnmapped: config.cmyk.warnUnmapped ?? true,
+          overrideMap: config.cmyk.overrideMap ?? [],
+        };
+      }
+      // CLI --cmyk flag or config.cmyk: true
+      if (options.cmyk || config.cmyk === true) {
+        return { warnUnmapped: true, overrideMap: [] };
+      }
+      return false;
+    };
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
       format: 'pdf',
       renderMode: options.renderMode ?? 'local',
       preflight:
         options.preflight ?? (config.pressReady ? 'press-ready' : undefined),
       preflightOption: options.preflightOption ?? [],
+      cmyk: resolveCmykConfig(),
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
         const outputPath = upath.resolve(context, target.path);
         const format = target.format;
         switch (format) {
-          case 'pdf':
+          case 'pdf': {
+            // Resolve output-level cmyk, falling back to default (config-level)
+            const { cmyk: targetCmyk, ...targetRest } = target;
+            const resolvedCmyk = ((): CmykConfig | false => {
+              if (targetCmyk && typeof targetCmyk === 'object') {
+                return {
+                  warnUnmapped: targetCmyk.warnUnmapped ?? true,
+                  overrideMap: targetCmyk.overrideMap ?? [],
+                };
+              }
+              if (targetCmyk === true) {
+                return { warnUnmapped: true, overrideMap: [] };
+              }
+              // Fall back to config-level cmyk if output-level is not set
+              return targetCmyk === false ? false : defaultPdfOptions.cmyk;
+            })();
             return {
               ...defaultPdfOptions,
-              ...target,
+              ...targetRest,
               format,
               path: outputPath,
+              cmyk: resolvedCmyk,
             };
+          }
           case 'epub':
             return {
               ...target,

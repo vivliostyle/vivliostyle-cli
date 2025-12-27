@@ -55,6 +55,10 @@ build({
 
 `string` = `...`
 
+###### cmyk?
+
+`boolean` \| \{ `overrideMap?`: \[\{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+
 ###### config?
 
 `string` = `...`
@@ -279,6 +283,10 @@ Scaffold a new Vivliostyle project.
 
 `string` = `...`
 
+###### cmyk?
+
+`boolean` \| \{ `overrideMap?`: \[\{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+
 ###### config?
 
 `string` = `...`
@@ -500,6 +508,10 @@ Scaffold a new Vivliostyle project.
 ###### browser?
 
 `string` = `...`
+
+###### cmyk?
+
+`boolean` \| \{ `overrideMap?`: \[\{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -745,6 +757,10 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### cmyk?
+
+`boolean` \| \{ `overrideMap?`: \[\{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+
 ###### config?
 
 `string` = `...`
@@ -963,6 +979,7 @@ Open a browser for previewing the publication.
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="cliversion"></a> `cliVersion` | `string` |
+| <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `overrideMap?`: \[\{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
 | <a id="config"></a> `config?` | `string` |
 | <a id="configdata"></a> `configData?` | `object` & `object` \| `object` & `object`[] \| `null` |
 | <a id="coreversion"></a> `coreVersion` | `string` |

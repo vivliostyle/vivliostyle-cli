@@ -233,6 +233,56 @@ export type OutputFormat = v.InferInput<typeof OutputFormat>;
 export const RenderMode = v.union([v.literal('local'), v.literal('docker')]);
 export type RenderMode = v.InferInput<typeof RenderMode>;
 
+const RGBValueSchema = v.pipe(
+  v.object({
+    r: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    g: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    b: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+  }),
+  v.title('RGBValue'),
+);
+
+const CMYKValueSchema = v.pipe(
+  v.object({
+    c: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    m: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    y: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    k: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+  }),
+  v.title('CMYKValue'),
+);
+
+const CmykOverrideEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
+
+const CmykConfigSchema = v.pipe(
+  v.partial(
+    v.object({
+      overrideMap: v.pipe(
+        v.array(CmykOverrideEntrySchema),
+        v.description($`
+          Custom RGB to CMYK color mapping.
+          Each entry is a tuple of [{r, g, b}, {c, m, y, k}] where values are integers (0-10000).
+        `),
+      ),
+      warnUnmapped: v.pipe(
+        v.boolean(),
+        v.description($`
+          Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+        `),
+      ),
+    }),
+  ),
+  v.title('CmykConfig'),
+);
+
+const CmykSchema = v.pipe(
+  v.union([v.boolean(), CmykConfigSchema]),
+  v.description($`
+    Convert device-cmyk() colors to CMYK in the output PDF.
+    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+  `),
+);
+
 export const OutputConfig = v.pipe(
   v.intersect([
     v.required(
@@ -273,6 +323,7 @@ export const OutputConfig = v.pipe(
             Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
           `),
         ),
+        cmyk: CmykSchema,
       }),
     ),
   ]),
@@ -700,6 +751,7 @@ export const BuildTask = v.pipe(
             This option is equivalent to setting \`"preflight": "press-ready"\`.
           `),
         ),
+        cmyk: CmykSchema,
         language: v.pipe(
           ValidString,
           v.description($`
@@ -1085,6 +1137,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
           Please refer the document of press-ready for further information.
         `),
     ),
+    cmyk: CmykSchema,
     sandbox: v.pipe(v.boolean(), v.description($`Launch chrome with sandbox.`)),
     executableBrowser: v.pipe(
       ValidString,
@@ -1331,6 +1384,7 @@ export type InlineOptions = Pick<
   | 'renderMode'
   | 'preflight'
   | 'preflightOption'
+  | 'cmyk'
   | 'disableServerStartup'
   | 'projectPath'
   | 'template'

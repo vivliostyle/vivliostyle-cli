@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CMYK</title>
+
+    <style>
+      @page {
+        size: A5;
+      }
+      .k100 {
+        color: device-cmyk(0 0 0 1);
+      }
+      .k80 {
+        color: device-cmyk(0 0 0 0.8);
+      }
+      .k60 {
+        color: device-cmyk(0 0 0 0.6);
+      }
+      .k40 {
+        color: device-cmyk(0 0 0 0.4);
+      }
+      .k20 {
+        color: device-cmyk(0 0 0 0.2);
+      }
+      .c100 {
+        color: device-cmyk(1 0 0 0);
+      }
+      .c80 {
+        color: device-cmyk(0.8 0 0 0);
+      }
+      .c60 {
+        color: device-cmyk(0.6 0 0 0);
+      }
+      .c40 {
+        color: device-cmyk(0.4 0 0 0);
+      }
+      .c20 {
+        color: device-cmyk(0.2 0 0 0);
+      }
+      .unmapped {
+        color: color(srgb 0.5 0.3 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <p class="k100">K100</p>
+    <p class="k80">K80</p>
+    <p class="k60">K60</p>
+    <p class="k40">K40</p>
+    <p class="k20">K20</p>
+    <p class="c100">C100</p>
+    <p class="c80">C80</p>
+    <p class="c60">C60</p>
+    <p class="c40">C40</p>
+    <p class="c20">C20</p>
+    <p class="unmapped">Unmapped</p>
+  </body>
+</html>

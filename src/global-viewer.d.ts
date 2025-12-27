@@ -4,6 +4,15 @@ declare global {
   }
 }
 
+export interface CMYKValue {
+  c: number;
+  m: number;
+  y: number;
+  k: number;
+}
+
+export type CmykMap = Record<string, CMYKValue>;
+
 export interface CoreViewer {
   readyState: string;
   addListener(type: string, listener: (payload: Payload) => void): void;
@@ -11,6 +20,7 @@ export interface CoreViewer {
   getMetadata(): Meta;
   showTOC(show: boolean): void;
   getTOC(): TOCItem[];
+  getCmykMap(): CmykMap;
 }
 
 export interface Payload {
