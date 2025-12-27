@@ -1,0 +1,12 @@
+{
+  "name": "ts-config",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "NODE_OPTIONS=\"--experimental-strip-types\" vivliostyle build",
+    "preview": "NODE_OPTIONS=\"--experimental-strip-types\" vivliostyle preview"
+  },
+  "dependencies": {
+    "@vivliostyle/cli": "workspace:*"
+  }
+}
