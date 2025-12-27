@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 10.2.1
+
+### Patch Changes
+
+- fix: Update Vivliostyle.js to 2.39.1: Bug Fix ([#706](https://github.com/vivliostyle/vivliostyle-cli/pull/706))
+
 ## 10.2.0
 
 ### Minor Changes
