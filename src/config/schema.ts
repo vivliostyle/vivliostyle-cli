@@ -273,6 +273,18 @@ export const OutputConfig = v.pipe(
             Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
           `),
         ),
+        cmyk: v.pipe(
+          v.boolean(),
+          v.description($`
+            Convert device-cmyk() colors to CMYK in the output PDF.
+          `),
+        ),
+        cmykWarnUnmapped: v.pipe(
+          v.boolean(),
+          v.description($`
+            Warn when RGB colors not mapped to CMYK are encountered during CMYK postprocessing.
+          `),
+        ),
       }),
     ),
   ]),
@@ -700,6 +712,18 @@ export const BuildTask = v.pipe(
             This option is equivalent to setting \`"preflight": "press-ready"\`.
           `),
         ),
+        cmyk: v.pipe(
+          v.boolean(),
+          v.description($`
+            Convert device-cmyk() colors to CMYK in the output PDF. (default: \`false\`)
+          `),
+        ),
+        cmykWarnUnmapped: v.pipe(
+          v.boolean(),
+          v.description($`
+            Warn when RGB colors not mapped to CMYK are encountered during CMYK postprocessing. (default: \`false\`)
+          `),
+        ),
         language: v.pipe(
           ValidString,
           v.description($`
@@ -1085,6 +1109,18 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
           Please refer the document of press-ready for further information.
         `),
     ),
+    cmyk: v.pipe(
+      v.boolean(),
+      v.description($`
+          Convert device-cmyk() colors to CMYK in the output PDF.
+        `),
+    ),
+    cmykWarnUnmapped: v.pipe(
+      v.boolean(),
+      v.description($`
+          Warn when RGB colors not mapped to CMYK are encountered during CMYK postprocessing.
+        `),
+    ),
     sandbox: v.pipe(v.boolean(), v.description($`Launch chrome with sandbox.`)),
     executableBrowser: v.pipe(
       ValidString,
@@ -1331,6 +1367,8 @@ export type InlineOptions = Pick<
   | 'renderMode'
   | 'preflight'
   | 'preflightOption'
+  | 'cmyk'
+  | 'cmykWarnUnmapped'
   | 'disableServerStartup'
   | 'projectPath'
   | 'template'

@@ -118,6 +118,11 @@ This option is equivalent with "--preflight press-ready"`,
 Please refer the document of press-ready for further information.
 https://github.com/vibranthq/press-ready`,
     )
+    .option('--cmyk', 'convert device-cmyk() colors to CMYK in the output PDF')
+    .option(
+      '--cmyk-warn-unmapped',
+      'warn when RGB colors not mapped to CMYK are encountered during CMYK postprocessing',
+    )
     .addOption(new Option('--sandbox', `launch chrome with sandbox`).hideHelp())
     .option(
       '--executable-browser <path>',

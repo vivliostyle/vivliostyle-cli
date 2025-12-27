@@ -55,6 +55,14 @@ build({
 
 `string` = `...`
 
+###### cmyk?
+
+`boolean` = `...`
+
+###### cmykWarnUnmapped?
+
+`boolean` = `...`
+
 ###### config?
 
 `string` = `...`
@@ -279,6 +287,14 @@ Scaffold a new Vivliostyle project.
 
 `string` = `...`
 
+###### cmyk?
+
+`boolean` = `...`
+
+###### cmykWarnUnmapped?
+
+`boolean` = `...`
+
 ###### config?
 
 `string` = `...`
@@ -500,6 +516,14 @@ Scaffold a new Vivliostyle project.
 ###### browser?
 
 `string` = `...`
+
+###### cmyk?
+
+`boolean` = `...`
+
+###### cmykWarnUnmapped?
+
+`boolean` = `...`
 
 ###### config?
 
@@ -745,6 +769,14 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### cmyk?
+
+`boolean` = `...`
+
+###### cmykWarnUnmapped?
+
+`boolean` = `...`
+
 ###### config?
 
 `string` = `...`
@@ -963,6 +995,8 @@ Open a browser for previewing the publication.
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="cliversion"></a> `cliVersion` | `string` |
+| <a id="cmyk"></a> `cmyk?` | `boolean` |
+| <a id="cmykwarnunmapped"></a> `cmykWarnUnmapped?` | `boolean` |
 | <a id="config"></a> `config?` | `string` |
 | <a id="configdata"></a> `configData?` | `object` & `object` \| `object` & `object`[] \| `null` |
 | <a id="coreversion"></a> `coreVersion` | `string` |

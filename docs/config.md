@@ -69,6 +69,12 @@ type VivliostyleConfigSchema =
     Generate a press-ready PDF compatible with PDF/X-1a. (default: `false`)
     This option is equivalent to setting `"preflight": "press-ready"`.
 
+  - `cmyk`: boolean  
+    Convert device-cmyk() colors to CMYK in the output PDF. (default: `false`)
+
+  - `cmykWarnUnmapped`: boolean  
+    Warn when RGB colors not mapped to CMYK are encountered during CMYK postprocessing. (default: `false`)
+
   - `language`: string  
     Language of the document.
 
@@ -170,6 +176,8 @@ type BuildTask = {
   copyAsset?: CopyAssetConfig;
   size?: string;
   pressReady?: boolean;
+  cmyk?: boolean;
+  cmykWarnUnmapped?: boolean;
   language?: string;
   readingProgression?: "ltr" | "rtl";
   toc?: TocConfig | boolean | string;
@@ -384,6 +392,12 @@ type ArticleEntryConfig = {
     Options for the preflight process (e.g., `gray-scale`, `enforce-outline`).
     Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
 
+  - `cmyk`: boolean  
+    Convert device-cmyk() colors to CMYK in the output PDF.
+
+  - `cmykWarnUnmapped`: boolean  
+    Warn when RGB colors not mapped to CMYK are encountered during CMYK postprocessing.
+
 #### Type definition
 
 ```ts
@@ -395,6 +409,8 @@ type OutputConfig = {
     | "press-ready"
     | "press-ready-local";
   preflightOption?: string[];
+  cmyk?: boolean;
+  cmykWarnUnmapped?: boolean;
 };
 ```
 

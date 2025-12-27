@@ -1,0 +1,13 @@
+{
+  "name": "cmyk",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vivliostyle build --cmyk",
+    "build:no-cmyk": "vivliostyle build",
+    "preview": "vivliostyle preview"
+  },
+  "dependencies": {
+    "@vivliostyle/cli": "workspace:*"
+  }
+}

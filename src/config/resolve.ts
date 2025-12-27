@@ -188,6 +188,8 @@ export interface PdfOutput {
   renderMode: 'local' | 'docker';
   preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
+  cmyk: boolean;
+  cmykWarnUnmapped: boolean;
 }
 
 export interface WebPublicationOutput {
@@ -602,6 +604,9 @@ export function resolveTaskConfig(
       preflight:
         options.preflight ?? (config.pressReady ? 'press-ready' : undefined),
       preflightOption: options.preflightOption ?? [],
+      cmyk: options.cmyk ?? config.cmyk ?? false,
+      cmykWarnUnmapped:
+        options.cmykWarnUnmapped ?? config.cmykWarnUnmapped ?? false,
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
