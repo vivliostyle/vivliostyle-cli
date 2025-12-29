@@ -11,9 +11,22 @@ interface Destroyable {
   destroy(): void;
 }
 
+interface Closeable extends Destroyable {
+  close(): void;
+}
+
 function disposable<T extends Destroyable>(obj: T): T & Disposable {
   return Object.assign(obj, {
     [Symbol.dispose]() {
+      obj.destroy();
+    },
+  });
+}
+
+function disposableDevice<T extends Closeable>(obj: T): T & Disposable {
+  return Object.assign(obj, {
+    [Symbol.dispose]() {
+      obj.close();
       obj.destroy();
     },
   });
@@ -102,8 +115,8 @@ export async function convertCmykColors({
   for (let i = 0; i < pageCount; i++) {
     using page = disposable(doc.loadPage(i));
     const mediabox = page.getBounds();
-    using outDevice = disposable(writer.beginPage(mediabox));
-    using convertDevice = disposable(
+    using outDevice = disposableDevice(writer.beginPage(mediabox));
+    using convertDevice = disposableDevice(
       new mupdf.Device({
         fillPath(path, evenOdd, ctm, colorspace, color, alpha) {
           if (isRGB(colorspace)) {
@@ -329,10 +342,6 @@ export async function convertCmykColors({
         endLayer() {
           outDevice.endLayer();
         },
-
-        close() {
-          outDevice.close();
-        },
       }),
     );
     page.run(convertDevice, mupdf.Matrix.identity);
@@ -340,5 +349,6 @@ export async function convertCmykColors({
   }
 
   writer.close();
-  return outputBuffer.asUint8Array();
+  // Create a copy to ensure the data remains valid after the buffer is destroyed
+  return new Uint8Array(outputBuffer.asUint8Array());
 }

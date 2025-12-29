@@ -225,6 +225,7 @@ export async function buildPDF({
     image: config.image,
     cmyk: target.cmyk,
     cmykMap,
+    replaceImage: target.replaceImage,
   });
 
   return target.path;

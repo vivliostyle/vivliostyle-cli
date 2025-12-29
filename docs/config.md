@@ -73,6 +73,11 @@ type VivliostyleConfigSchema =
     Convert device-cmyk() colors to CMYK in the output PDF.
     Can be a boolean or a config object with overrideMap and warnUnmapped options.
 
+  - `replaceImage`: {[key: (string)]: string}  
+    Replace images in the output PDF.
+    Keys are source image paths (relative to the document) and values are replacement image paths.
+    Useful for replacing RGB images with CMYK versions.
+
   - `language`: string  
     Language of the document.
 
@@ -175,6 +180,9 @@ type BuildTask = {
   size?: string;
   pressReady?: boolean;
   cmyk?: boolean | CmykConfig;
+  replaceImage?: {
+    [key: string]: string;
+  };
   language?: string;
   readingProgression?: "ltr" | "rtl";
   toc?: TocConfig | boolean | string;

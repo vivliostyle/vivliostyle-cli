@@ -130,6 +130,7 @@ Object {
       "preflight": "press-ready",
       "preflightOption": Array [],
       "renderMode": "local",
+      "replaceImage": Array [],
     },
     Object {
       "format": "webpub",
@@ -338,6 +339,7 @@ Object {
       "preflight": "press-ready",
       "preflightOption": Array [],
       "renderMode": "local",
+      "replaceImage": Array [],
     },
     Object {
       "cmyk": false,
@@ -346,6 +348,7 @@ Object {
       "preflight": "press-ready",
       "preflightOption": Array [],
       "renderMode": "local",
+      "replaceImage": Array [],
     },
   ],
   "proxy": undefined,

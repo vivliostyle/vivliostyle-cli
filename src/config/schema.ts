@@ -283,6 +283,15 @@ const CmykSchema = v.pipe(
   `),
 );
 
+const ReplaceImageSchema = v.pipe(
+  v.record(v.string(), v.string()),
+  v.description($`
+    Replace images in the output PDF.
+    Keys are source image paths (relative to the document) and values are replacement image paths.
+    Useful for replacing RGB images with CMYK versions.
+  `),
+);
+
 export const OutputConfig = v.pipe(
   v.intersect([
     v.required(
@@ -752,6 +761,7 @@ export const BuildTask = v.pipe(
           `),
         ),
         cmyk: CmykSchema,
+        replaceImage: ReplaceImageSchema,
         language: v.pipe(
           ValidString,
           v.description($`

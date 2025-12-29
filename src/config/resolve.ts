@@ -196,6 +196,13 @@ export interface CmykConfig {
   overrideMap: CmykOverrideEntry[];
 }
 
+export interface ReplaceImageEntry {
+  source: string;
+  replacement: string;
+}
+
+export type ReplaceImageConfig = ReplaceImageEntry[];
+
 export interface PdfOutput {
   format: 'pdf';
   path: string;
@@ -203,6 +210,7 @@ export interface PdfOutput {
   preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
   cmyk: CmykConfig | false;
+  replaceImage: ReplaceImageConfig;
 }
 
 export interface WebPublicationOutput {
@@ -625,6 +633,17 @@ export function resolveTaskConfig(
       }
       return false;
     };
+    const resolveReplaceImageConfig = (): ReplaceImageConfig => {
+      if (!config.replaceImage) {
+        return [];
+      }
+      return Object.entries(config.replaceImage).map(
+        ([source, replacement]) => ({
+          source: upath.resolve(entryContextDir, source),
+          replacement: upath.resolve(entryContextDir, replacement),
+        }),
+      );
+    };
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
       format: 'pdf',
       renderMode: options.renderMode ?? 'local',
@@ -632,6 +651,7 @@ export function resolveTaskConfig(
         options.preflight ?? (config.pressReady ? 'press-ready' : undefined),
       preflightOption: options.preflightOption ?? [],
       cmyk: resolveCmykConfig(),
+      replaceImage: resolveReplaceImageConfig(),
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {

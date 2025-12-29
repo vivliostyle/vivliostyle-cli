@@ -16,10 +16,11 @@ import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import { isInContainer } from '../util.js';
 import { convertCmykColors } from './cmyk.js';
+import { replaceImages } from './image.js';
 
 export type SaveOption = Pick<
   PdfOutput,
-  'preflight' | 'preflightOption' | 'cmyk'
+  'preflight' | 'preflightOption' | 'cmyk' | 'replaceImage'
 > &
   Pick<ResolvedTaskConfig, 'image'> & { cmykMap: CmykMap };
 
@@ -99,7 +100,14 @@ export class PostProcess {
 
   async save(
     output: string,
-    { preflight, preflightOption, image, cmyk, cmykMap }: SaveOption,
+    {
+      preflight,
+      preflightOption,
+      image,
+      cmyk,
+      cmykMap,
+      replaceImage,
+    }: SaveOption,
   ) {
     let pdf = await this.document.save();
 
@@ -110,6 +118,14 @@ export class PostProcess {
         cmykMap,
         overrideMap: cmyk.overrideMap,
         warnUnmapped: cmyk.warnUnmapped,
+      });
+    }
+
+    if (replaceImage.length > 0) {
+      Logger.logInfo('Replacing images');
+      pdf = await replaceImages({
+        pdf,
+        replaceImageConfig: replaceImage,
       });
     }
 
