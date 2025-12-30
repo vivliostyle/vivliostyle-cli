@@ -4,6 +4,7 @@ import { defineConfig } from '@vivliostyle/cli';
 export default defineConfig({
   entry: ['manuscript.html'],
   cmyk: {
+    mapOutput: 'cmyk-map.json',
     overrideMap: [
       [
         { r: 5000, g: 3000, b: 2000 },

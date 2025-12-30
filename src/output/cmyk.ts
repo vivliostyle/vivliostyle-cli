@@ -1,5 +1,4 @@
 import type * as mupdfType from 'mupdf';
-import type { CmykOverrideEntry } from '../config/resolve.js';
 import type { CmykMap } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
@@ -65,13 +64,11 @@ function lookupColor(
 
 export async function convertCmykColors({
   pdf,
-  cmykMap,
-  overrideMap,
+  colorMap,
   warnUnmapped,
 }: {
   pdf: Uint8Array;
-  cmykMap: CmykMap;
-  overrideMap: CmykOverrideEntry[];
+  colorMap: CmykMap;
   warnUnmapped: boolean;
 }): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
@@ -87,23 +84,12 @@ export async function convertCmykColors({
     Logger.logWarn(`RGB color not mapped to CMYK: ${key}`);
   }
 
-  // First, add cmykMap (auto-generated mapping)
-  for (const [key, value] of Object.entries(cmykMap)) {
+  for (const [key, value] of Object.entries(colorMap)) {
     colorTable.set(key, [
       value.c / CMYK_MAX,
       value.m / CMYK_MAX,
       value.y / CMYK_MAX,
       value.k / CMYK_MAX,
-    ]);
-  }
-  // Then, override with user-specified mapping (convert {r,g,b} to string key)
-  for (const [rgb, cmyk] of overrideMap) {
-    const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
-    colorTable.set(key, [
-      cmyk.c / CMYK_MAX,
-      cmyk.m / CMYK_MAX,
-      cmyk.y / CMYK_MAX,
-      cmyk.k / CMYK_MAX,
     ]);
   }
 

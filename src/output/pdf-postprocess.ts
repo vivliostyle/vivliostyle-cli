@@ -112,13 +112,28 @@ export class PostProcess {
     let pdf = await this.document.save();
 
     if (cmyk) {
+      const mergedMap: CmykMap = { ...cmykMap };
+      for (const [rgb, cmykValue] of cmyk.overrideMap) {
+        const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
+        mergedMap[key] = cmykValue;
+      }
+
       Logger.logInfo('Converting CMYK colors');
       pdf = await convertCmykColors({
         pdf,
-        cmykMap,
-        overrideMap: cmyk.overrideMap,
+        colorMap: mergedMap,
         warnUnmapped: cmyk.warnUnmapped,
       });
+
+      if (cmyk.mapOutput) {
+        const mapOutputDir = upath.dirname(cmyk.mapOutput);
+        fs.mkdirSync(mapOutputDir, { recursive: true });
+        await fs.promises.writeFile(
+          cmyk.mapOutput,
+          JSON.stringify(mergedMap, null, 2),
+        );
+        Logger.logInfo(`CMYK color map saved to ${cmyk.mapOutput}`);
+      }
     }
 
     if (replaceImage.length > 0) {

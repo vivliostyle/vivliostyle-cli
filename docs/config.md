@@ -429,12 +429,16 @@ type OutputConfig = {
   - `warnUnmapped`: boolean  
     Warn when RGB colors not mapped to CMYK are encountered. (default: true)
 
+  - `mapOutput`: string  
+    Output the CMYK color map to a JSON file at the specified path.
+
 #### Type definition
 
 ```ts
 type CmykConfig = {
   overrideMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
+  mapOutput?: string;
 };
 ```
 

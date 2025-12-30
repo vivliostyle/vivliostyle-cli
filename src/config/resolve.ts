@@ -194,6 +194,7 @@ export type CmykOverrideEntry = [RGBValue, CMYKValue];
 export interface CmykConfig {
   warnUnmapped: boolean;
   overrideMap: CmykOverrideEntry[];
+  mapOutput: string | undefined;
 }
 
 export interface ReplaceImageEntry {
@@ -619,17 +620,22 @@ export function resolveTaskConfig(
     undefined;
 
   const outputs = ((): OutputConfig[] => {
-    const resolveCmykConfig = (): CmykConfig | false => {
+    const resolveCmykConfig = (
+      cmykOption: typeof config.cmyk,
+    ): CmykConfig | false => {
       // Config file object format takes priority
-      if (config.cmyk && typeof config.cmyk === 'object') {
+      if (cmykOption && typeof cmykOption === 'object') {
         return {
-          warnUnmapped: config.cmyk.warnUnmapped ?? true,
-          overrideMap: config.cmyk.overrideMap ?? [],
+          warnUnmapped: cmykOption.warnUnmapped ?? true,
+          overrideMap: cmykOption.overrideMap ?? [],
+          mapOutput: cmykOption.mapOutput
+            ? upath.resolve(context, cmykOption.mapOutput)
+            : undefined,
         };
       }
-      // CLI --cmyk flag or config.cmyk: true
-      if (options.cmyk || config.cmyk === true) {
-        return { warnUnmapped: true, overrideMap: [] };
+      // CLI --cmyk flag or cmykOption: true
+      if (options.cmyk || cmykOption === true) {
+        return { warnUnmapped: true, overrideMap: [], mapOutput: undefined };
       }
       return false;
     };
@@ -650,7 +656,7 @@ export function resolveTaskConfig(
       preflight:
         options.preflight ?? (config.pressReady ? 'press-ready' : undefined),
       preflightOption: options.preflightOption ?? [],
-      cmyk: resolveCmykConfig(),
+      cmyk: resolveCmykConfig(config.cmyk),
       replaceImage: resolveReplaceImageConfig(),
     };
     if (config.output) {
@@ -661,19 +667,10 @@ export function resolveTaskConfig(
           case 'pdf': {
             // Resolve output-level cmyk, falling back to default (config-level)
             const { cmyk: targetCmyk, ...targetRest } = target;
-            const resolvedCmyk = ((): CmykConfig | false => {
-              if (targetCmyk && typeof targetCmyk === 'object') {
-                return {
-                  warnUnmapped: targetCmyk.warnUnmapped ?? true,
-                  overrideMap: targetCmyk.overrideMap ?? [],
-                };
-              }
-              if (targetCmyk === true) {
-                return { warnUnmapped: true, overrideMap: [] };
-              }
-              // Fall back to config-level cmyk if output-level is not set
-              return targetCmyk === false ? false : defaultPdfOptions.cmyk;
-            })();
+            const resolvedCmyk =
+              targetCmyk === undefined
+                ? defaultPdfOptions.cmyk
+                : resolveCmykConfig(targetCmyk);
             return {
               ...defaultPdfOptions,
               ...targetRest,

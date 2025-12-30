@@ -270,6 +270,12 @@ const CmykConfigSchema = v.pipe(
           Warn when RGB colors not mapped to CMYK are encountered. (default: true)
         `),
       ),
+      mapOutput: v.pipe(
+        ValidString,
+        v.description($`
+          Output the CMYK color map to a JSON file at the specified path.
+        `),
+      ),
     }),
   ),
   v.title('CmykConfig'),
