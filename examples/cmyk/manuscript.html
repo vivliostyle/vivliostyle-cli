@@ -1,13 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CMYK</title>
 
     <style>
+      @font-face {
+        font-family: 'Noto Sans JP';
+        font-style: normal;
+        font-weight: 400;
+        src: url('Noto_Sans_JP/NotoSansJP-VariableFont_wght.ttf');
+      }
       @page {
         size: A5;
+        marks: crop cross;
+        bleed: 3mm;
+        /* #1505 */
+        crop-marks-line-color: device-cmyk(1 0 0 1);
       }
       .k100 {
         color: device-cmyk(0 0 0 1);
@@ -42,6 +52,9 @@
       .unmapped {
         color: color(srgb 0.5 0.3 0.2);
       }
+      a {
+        color: device-cmyk(1 0 0 0);
+      }
     </style>
   </head>
   <body>
@@ -56,6 +69,10 @@
     <p class="c40">C40</p>
     <p class="c20">C20</p>
     <p class="unmapped">Unmapped</p>
+    <p><a href="#">link</a></p>
+    <p style="font-family: 'Noto Sans JP'">
+      Noto Sans JPのテキストはType 3フォントに変換されます。
+    </p>
     <img src="./ck_rgb.png" width="80%" />
   </body>
 </html>
