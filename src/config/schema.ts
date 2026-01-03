@@ -289,11 +289,29 @@ const CmykSchema = v.pipe(
   `),
 );
 
+const ReplaceImageEntrySchema = v.pipe(
+  v.object({
+    source: v.pipe(
+      v.union([ValidString, v.instance(RegExp)]),
+      v.description(
+        'Path to the source image file, or a RegExp pattern to match multiple files.',
+      ),
+    ),
+    replacement: v.pipe(
+      ValidString,
+      v.description(
+        'Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.',
+      ),
+    ),
+  }),
+  v.title('ReplaceImageEntry'),
+);
+
 const ReplaceImageSchema = v.pipe(
-  v.record(v.string(), v.string()),
+  v.array(ReplaceImageEntrySchema),
   v.description($`
     Replace images in the output PDF.
-    Keys are source image paths (relative to the document) and values are replacement image paths.
+    Each entry specifies a source image path and its replacement image path.
     Useful for replacing RGB images with CMYK versions.
   `),
 );

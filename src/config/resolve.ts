@@ -8,6 +8,7 @@ import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import npa from 'npm-package-arg';
+import { globSync } from 'tinyglobby';
 import type { Processor } from 'unified';
 import upath from 'upath';
 import type { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
@@ -643,12 +644,27 @@ export function resolveTaskConfig(
       if (!config.replaceImage) {
         return [];
       }
-      return Object.entries(config.replaceImage).map(
-        ([source, replacement]) => ({
+      const allFiles = globSync('**/*', {
+        cwd: entryContextDir,
+        onlyFiles: true,
+      });
+      return config.replaceImage.flatMap(({ source, replacement }) => {
+        if (source instanceof RegExp) {
+          return allFiles
+            .filter((file) => source.test(file))
+            .map((file) => ({
+              source: upath.resolve(entryContextDir, file),
+              replacement: upath.resolve(
+                entryContextDir,
+                file.replace(source, replacement),
+              ),
+            }));
+        }
+        return {
           source: upath.resolve(entryContextDir, source),
           replacement: upath.resolve(entryContextDir, replacement),
-        }),
-      );
+        };
+      });
     };
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
       format: 'pdf',

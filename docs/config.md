@@ -73,9 +73,9 @@ type VivliostyleConfigSchema =
     Convert device-cmyk() colors to CMYK in the output PDF.
     Can be a boolean or a config object with overrideMap and warnUnmapped options.
 
-  - `replaceImage`: {[key: (string)]: string}  
+  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry))[]  
     Replace images in the output PDF.
-    Keys are source image paths (relative to the document) and values are replacement image paths.
+    Each entry specifies a source image path and its replacement image path.
     Useful for replacing RGB images with CMYK versions.
 
   - `language`: string  
@@ -180,9 +180,7 @@ type BuildTask = {
   size?: string;
   pressReady?: boolean;
   cmyk?: boolean | CmykConfig;
-  replaceImage?: {
-    [key: string]: string;
-  };
+  replaceImage?: ReplaceImageEntry[];
   language?: string;
   readingProgression?: "ltr" | "rtl";
   toc?: TocConfig | boolean | string;
@@ -468,6 +466,27 @@ type CopyAssetConfig = {
   excludes?: string[];
   includeFileExtensions?: string[];
   excludeFileExtensions?: string[];
+};
+```
+
+### ReplaceImageEntry
+
+#### Properties
+
+- `ReplaceImageEntry`
+
+  - `source`: string | RegExp  
+    Path to the source image file, or a RegExp pattern to match multiple files.
+
+  - `replacement`: string  
+    Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.
+
+#### Type definition
+
+```ts
+type ReplaceImageEntry = {
+  source: string | RegExp;
+  replacement: string;
 };
 ```
 

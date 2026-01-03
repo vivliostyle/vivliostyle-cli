@@ -16,7 +16,5 @@ export default defineConfig({
       ],
     ],
   },
-  replaceImage: {
-    'ck_rgb.png': 'ck_cmyk.tiff',
-  },
+  replaceImage: [{ source: /^(.*)_rgb\.png$/, replacement: '$1_cmyk.tiff' }],
 });
