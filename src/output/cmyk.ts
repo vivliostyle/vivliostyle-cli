@@ -153,45 +153,32 @@ export async function convertCmykColors({
 
     // Annotations may have appearance streams with colors
     const annots = pageObj.get('Annots');
-    if (annots && annots.isArray()) {
-      for (let j = 0; j < annots.length; j++) {
-        const annot = annots.get(j);
-        if (annot) {
-          const annotResolved = annot.resolve();
-          const ap = annotResolved.get('AP');
-          if (ap && ap.isDictionary()) {
-            // Normal appearance
-            const n = ap.get('N');
-            if (n) {
-              if (n.isStream()) {
-                const buffer = n.readStream();
-                const content = buffer.asString();
-                const converted = convertStreamColors(
-                  content,
-                  colorMap,
-                  warnUnmapped,
-                  warnedColors,
-                );
-                n.writeStream(new mupdf.Buffer(converted));
-              } else if (n.isDictionary()) {
-                // Multiple appearance states
-                n.forEach((val) => {
-                  if (val && val.isStream()) {
-                    const buffer = val.readStream();
-                    const content = buffer.asString();
-                    const converted = convertStreamColors(
-                      content,
-                      colorMap,
-                      warnUnmapped,
-                      warnedColors,
-                    );
-                    val.writeStream(new mupdf.Buffer(converted));
-                  }
-                });
-              }
-            }
+    if (!annots?.isArray()) {
+      continue;
+    }
+    for (let j = 0; j < annots.length; j++) {
+      const annot = annots.get(j);
+      if (!annot) {
+        continue;
+      }
+      const ap = annot.resolve().get('AP');
+      if (!ap?.isDictionary()) {
+        continue;
+      }
+      // Normal appearance
+      const n = ap.get('N');
+      if (!n) {
+        continue;
+      }
+      if (n.isStream()) {
+        processStream(n, colorMap, warnUnmapped, warnedColors, mupdf);
+      } else if (n.isDictionary()) {
+        // Multiple appearance states
+        n.forEach((val) => {
+          if (val?.isStream()) {
+            processStream(val, colorMap, warnUnmapped, warnedColors, mupdf);
           }
-        }
+        });
       }
     }
   }
