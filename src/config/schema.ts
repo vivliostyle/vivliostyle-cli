@@ -316,6 +316,44 @@ const ReplaceImageSchema = v.pipe(
   `),
 );
 
+const PdfPostprocessConfigSchema = v.pipe(
+  v.partial(
+    v.object({
+      pressReady: v.pipe(
+        v.boolean(),
+        v.description($`
+          Generate a press-ready PDF compatible with PDF/X-1a. (default: \`false\`)
+          This option is equivalent to setting \`"preflight": "press-ready"\`.
+        `),
+      ),
+      preflight: v.pipe(
+        v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
+        v.description($`
+          Apply the process to generate a print-ready PDF.
+        `),
+      ),
+      preflightOption: v.pipe(
+        v.array(ValidString),
+        v.description($`
+          Options for the preflight process (e.g., \`gray-scale\`, \`enforce-outline\`).
+          Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
+        `),
+      ),
+      cmyk: CmykSchema,
+      replaceImage: ReplaceImageSchema,
+    }),
+  ),
+  v.title('PdfPostprocessConfig'),
+  v.description($`
+    PDF post-processing options.
+    When both pdfPostprocess and legacy options (pressReady, preflight, etc.) are specified,
+    pdfPostprocess takes precedence.
+  `),
+);
+export type PdfPostprocessConfig = v.InferInput<
+  typeof PdfPostprocessConfigSchema
+>;
+
 export const OutputConfig = v.pipe(
   v.intersect([
     v.required(
@@ -356,7 +394,7 @@ export const OutputConfig = v.pipe(
             Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
           `),
         ),
-        cmyk: CmykSchema,
+        pdfPostprocess: PdfPostprocessConfigSchema,
       }),
     ),
   ]),
@@ -784,8 +822,7 @@ export const BuildTask = v.pipe(
             This option is equivalent to setting \`"preflight": "press-ready"\`.
           `),
         ),
-        cmyk: CmykSchema,
-        replaceImage: ReplaceImageSchema,
+        pdfPostprocess: PdfPostprocessConfigSchema,
         language: v.pipe(
           ValidString,
           v.description($`
@@ -959,8 +996,19 @@ export const BuildTask = v.pipe(
 export type BuildTask = v.InferInput<typeof BuildTask>;
 export type ParsedBuildTask = v.InferOutput<typeof BuildTask>;
 
+/**
+ * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+ */
+export type VivliostyleConfigSchema = BuildTask[] | BuildTask;
+export type ParsedVivliostyleConfigSchema = {
+  tasks: ParsedBuildTask[];
+  inlineOptions: InlineOptions;
+};
 /** @hidden */
-export const VivliostyleConfigSchema = v.pipe(
+export const VivliostyleConfigSchema: v.GenericSchema<
+  VivliostyleConfigSchema,
+  ParsedVivliostyleConfigSchema
+> = v.pipe(
   v.union([
     v.pipe(
       v.array(BuildTask),
@@ -969,27 +1017,13 @@ export const VivliostyleConfigSchema = v.pipe(
     BuildTask,
   ]),
   v.transform(
-    (
-      input,
-    ): {
-      tasks: ParsedBuildTask[];
-      inlineOptions: InlineOptions;
-    } => ({
+    (input): ParsedVivliostyleConfigSchema => ({
       tasks: [input].flat(),
       inlineOptions: {},
     }),
   ),
   v.title('VivliostyleConfigSchema'),
 );
-/**
- * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
- */
-export type VivliostyleConfigSchema = v.InferInput<
-  typeof VivliostyleConfigSchema
->;
-export type ParsedVivliostyleConfigSchema = v.InferOutput<
-  typeof VivliostyleConfigSchema
->;
 
 export type InputFormat =
   | 'markdown'

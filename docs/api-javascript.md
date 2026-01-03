@@ -65,7 +65,7 @@ build({
 
 ###### configData?
 
-`object` & `object` \| `object` & `object`[] \| `null` = `...`
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` = `...`
 
 ###### createConfigFileOnly?
 
@@ -293,7 +293,7 @@ Scaffold a new Vivliostyle project.
 
 ###### configData?
 
-`object` & `object` \| `object` & `object`[] \| `null` = `...`
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` = `...`
 
 ###### createConfigFileOnly?
 
@@ -519,7 +519,7 @@ Scaffold a new Vivliostyle project.
 
 ###### configData?
 
-`object` & `object` \| `object` & `object`[] \| `null` = `...`
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` = `...`
 
 ###### createConfigFileOnly?
 
@@ -717,7 +717,7 @@ Scaffold a new Vivliostyle project.
 
 ### defineConfig()
 
-> **defineConfig**(`config`): `object` & `object` \| `object` & `object`[]
+> **defineConfig**(`config`): [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
 
 Define the configuration for Vivliostyle CLI.
 
@@ -725,13 +725,11 @@ Define the configuration for Vivliostyle CLI.
 
 ##### config
 
-`object` & `object` | `object` & `object`[]
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema)
 
 #### Returns
 
-`object` & `object`
-
-`object` & `object`[]
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema)
 
 ***
 
@@ -767,7 +765,7 @@ Open a browser for previewing the publication.
 
 ###### configData?
 
-`object` & `object` \| `object` & `object`[] \| `null` = `...`
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` = `...`
 
 ###### createConfigFileOnly?
 
@@ -981,7 +979,7 @@ Open a browser for previewing the publication.
 | <a id="cliversion"></a> `cliVersion` | `string` |
 | <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[\{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
 | <a id="config"></a> `config?` | `string` |
-| <a id="configdata"></a> `configData?` | `object` & `object` \| `object` & `object`[] \| `null` |
+| <a id="configdata"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
 | <a id="coreversion"></a> `coreVersion` | `string` |
 | <a id="createconfigfileonly"></a> `createConfigFileOnly?` | `boolean` |
 | <a id="cropmarks"></a> `cropMarks?` | `boolean` |
@@ -1102,7 +1100,7 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 
 ### VivliostyleConfigSchema
 
-> **VivliostyleConfigSchema** = `v.InferInput`\<*typeof* [`VivliostyleConfigSchema`](#vivliostyleconfigschema)\>
+> **VivliostyleConfigSchema** = `BuildTask`[] \| `BuildTask`
 
 #### See
 
