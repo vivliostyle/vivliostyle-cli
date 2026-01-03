@@ -4,9 +4,6 @@ declare global {
   }
 }
 
-export const SRGB_MAX = 10000;
-export const CMYK_MAX = 10000;
-
 export interface CMYKValue {
   c: number;
   m: number;

@@ -1,5 +1,16 @@
-import { CMYK_MAX, SRGB_MAX, type CmykMap } from '../global-viewer.js';
+import type { CmykMap } from '../global-viewer.js';
 import { Logger } from '../logger.js';
+
+/**
+ * `SRGBValue.MAX`
+ * @see https://github.com/vivliostyle/vivliostyle.js/blob/master/packages/core/src/vivliostyle/cmyk-store.ts
+ */
+const SRGB_MAX = 10000;
+/**
+ * `CMYKValue.MAX`
+ * @see https://github.com/vivliostyle/vivliostyle.js/blob/master/packages/core/src/vivliostyle/cmyk-store.ts
+ */
+const CMYK_MAX = 10000;
 
 interface NumberToken {
   type: 'number';
