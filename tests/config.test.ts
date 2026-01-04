@@ -524,3 +524,94 @@ it('rejects unknown extensions without documentProcessor', async () => {
     }),
   ).rejects.toThrow(/Invalid manuscript type/);
 });
+
+it('supports pdfPostprocess configuration', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      cmyk: true,
+      replaceImage: [{ source: 'img.png', replacement: 'img_cmyk.tiff' }],
+    },
+  });
+  maskConfig(config);
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    cmyk: {
+      warnUnmapped: true,
+      overrideMap: [],
+      mapOutput: undefined,
+    },
+    replaceImage: [
+      {
+        source: '__WORKSPACE__/tests/fixtures/config/img.png',
+        replacement: '__WORKSPACE__/tests/fixtures/config/img_cmyk.tiff',
+      },
+    ],
+  });
+});
+
+it('pdfPostprocess takes precedence over legacy pressReady option', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    pressReady: true, // legacy option (fallback)
+    pdfPostprocess: {
+      pressReady: false, // this takes precedence
+    },
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    preflight: undefined,
+  });
+});
+
+it('legacy pressReady works as fallback when pdfPostprocess not specified', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    pressReady: true, // used since pdfPostprocess.pressReady is not specified
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    preflight: 'press-ready',
+  });
+});
+
+it('output-level pdfPostprocess overrides build-level', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    pdfPostprocess: { cmyk: false },
+    output: [
+      {
+        path: 'output.pdf',
+        pdfPostprocess: { cmyk: true },
+      },
+    ],
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    cmyk: {
+      warnUnmapped: true,
+      overrideMap: [],
+      mapOutput: undefined,
+    },
+  });
+});
+
+it('output-level pdfPostprocess.preflight overrides output.preflight', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: [
+      {
+        path: 'output.pdf',
+        preflight: 'press-ready', // legacy option (fallback)
+        pdfPostprocess: {
+          preflight: 'press-ready-local', // this takes precedence
+        },
+      },
+    ],
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    preflight: 'press-ready-local',
+  });
+});

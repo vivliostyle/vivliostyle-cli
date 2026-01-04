@@ -8,6 +8,7 @@ import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import npa from 'npm-package-arg';
+import { globSync } from 'tinyglobby';
 import type { Processor } from 'unified';
 import upath from 'upath';
 import type { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
@@ -22,6 +23,7 @@ import {
   StructuredDocumentSection,
   ThemeConfig,
 } from '../config/schema.js';
+import type { CMYKValue } from '../global-viewer.js';
 import {
   cliVersion,
   CONTAINER_LOCAL_HOSTNAME,
@@ -182,12 +184,35 @@ export type ViewerInputConfig =
   | EpubOpfEntryConfig
   | WebBookEntryConfig;
 
+export interface RGBValue {
+  r: number;
+  g: number;
+  b: number;
+}
+
+export type CmykOverrideEntry = [RGBValue, CMYKValue];
+
+export interface CmykConfig {
+  warnUnmapped: boolean;
+  overrideMap: CmykOverrideEntry[];
+  mapOutput: string | undefined;
+}
+
+export interface ReplaceImageEntry {
+  source: string;
+  replacement: string;
+}
+
+export type ReplaceImageConfig = ReplaceImageEntry[];
+
 export interface PdfOutput {
   format: 'pdf';
   path: string;
   renderMode: 'local' | 'docker';
   preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
+  cmyk: CmykConfig | false;
+  replaceImage: ReplaceImageConfig;
 }
 
 export interface WebPublicationOutput {
@@ -596,25 +621,155 @@ export function resolveTaskConfig(
     undefined;
 
   const outputs = ((): OutputConfig[] => {
+    type CmykOption = NonNullable<typeof config.pdfPostprocess>['cmyk'];
+    const resolveCmykConfig = (cmykOption: CmykOption): CmykConfig | false => {
+      // Config file object format takes priority
+      if (cmykOption && typeof cmykOption === 'object') {
+        return {
+          warnUnmapped: cmykOption.warnUnmapped ?? true,
+          overrideMap: cmykOption.overrideMap ?? [],
+          mapOutput: cmykOption.mapOutput
+            ? upath.resolve(context, cmykOption.mapOutput)
+            : undefined,
+        };
+      }
+      // CLI --cmyk flag or cmykOption: true
+      if (options.cmyk || cmykOption === true) {
+        return { warnUnmapped: true, overrideMap: [], mapOutput: undefined };
+      }
+      return false;
+    };
+
+    type ReplaceImageOption = NonNullable<
+      typeof config.pdfPostprocess
+    >['replaceImage'];
+    const resolveReplaceImageConfig = (
+      replaceImageOption: ReplaceImageOption,
+    ): ReplaceImageConfig => {
+      if (!replaceImageOption) {
+        return [];
+      }
+      const allFiles = globSync('**/*', {
+        cwd: entryContextDir,
+        onlyFiles: true,
+      });
+      return replaceImageOption.flatMap(({ source, replacement }) => {
+        if (source instanceof RegExp) {
+          return allFiles
+            .filter((file) => source.test(file))
+            .map((file) => ({
+              source: upath.resolve(entryContextDir, file),
+              replacement: upath.resolve(
+                entryContextDir,
+                file.replace(source, replacement),
+              ),
+            }));
+        }
+        return {
+          source: upath.resolve(entryContextDir, source),
+          replacement: upath.resolve(entryContextDir, replacement),
+        };
+      });
+    };
+
+    // Resolve preflight with priority:
+    // CLI > pdfPostprocess.preflight > pdfPostprocess.pressReady > legacy pressReady
+    const resolveDefaultPreflight = ():
+      | 'press-ready'
+      | 'press-ready-local'
+      | undefined => {
+      if (options.preflight) {
+        return options.preflight;
+      }
+      const pp = config.pdfPostprocess;
+      if (pp?.preflight) {
+        return pp.preflight;
+      }
+      // If pdfPostprocess.pressReady is explicitly set (true or false), use it
+      if (pp?.pressReady !== undefined) {
+        return pp.pressReady ? 'press-ready' : undefined;
+      }
+      // Fallback to legacy pressReady only if pdfPostprocess.pressReady is not set
+      if (config.pressReady) {
+        return 'press-ready';
+      }
+      return undefined;
+    };
+
+    // Resolve preflightOption with priority:
+    // CLI > pdfPostprocess.preflightOption > []
+    const resolveDefaultPreflightOption = (): string[] => {
+      if (options.preflightOption) {
+        return options.preflightOption;
+      }
+      return config.pdfPostprocess?.preflightOption ?? [];
+    };
+
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
       format: 'pdf',
       renderMode: options.renderMode ?? 'local',
-      preflight:
-        options.preflight ?? (config.pressReady ? 'press-ready' : undefined),
-      preflightOption: options.preflightOption ?? [],
+      preflight: resolveDefaultPreflight(),
+      preflightOption: resolveDefaultPreflightOption(),
+      cmyk: resolveCmykConfig(config.pdfPostprocess?.cmyk),
+      replaceImage: resolveReplaceImageConfig(
+        config.pdfPostprocess?.replaceImage,
+      ),
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
         const outputPath = upath.resolve(context, target.path);
         const format = target.format;
         switch (format) {
-          case 'pdf':
+          case 'pdf': {
+            // Resolve output-level pdfPostprocess, with priority over build-level
+            const targetPp = target.pdfPostprocess;
+            const { pdfPostprocess: _, ...targetRest } = target;
+
+            // Resolve preflight: output.pdfPostprocess > output.preflight > default
+            const resolvedPreflight = (() => {
+              if (options.preflight) return options.preflight;
+              if (targetPp?.preflight) return targetPp.preflight;
+              // If output.pdfPostprocess.pressReady is explicitly set, use it
+              if (targetPp?.pressReady !== undefined) {
+                return targetPp.pressReady
+                  ? ('press-ready' as const)
+                  : undefined;
+              }
+              if (target.preflight) return target.preflight;
+              return defaultPdfOptions.preflight;
+            })();
+
+            // Resolve preflightOption: output.pdfPostprocess > output.preflightOption > default
+            const resolvedPreflightOption = (() => {
+              if (options.preflightOption) return options.preflightOption;
+              if (targetPp?.preflightOption) return targetPp.preflightOption;
+              if (target.preflightOption) return target.preflightOption;
+              return defaultPdfOptions.preflightOption;
+            })();
+
+            // Resolve cmyk: output.pdfPostprocess > build.pdfPostprocess
+            const resolvedCmyk =
+              targetPp?.cmyk !== undefined
+                ? resolveCmykConfig(targetPp.cmyk)
+                : defaultPdfOptions.cmyk;
+
+            // Resolve replaceImage: output.pdfPostprocess > build.pdfPostprocess
+            const resolvedReplaceImage =
+              targetPp?.replaceImage !== undefined
+                ? resolveReplaceImageConfig(targetPp.replaceImage)
+                : defaultPdfOptions.replaceImage;
+
             return {
               ...defaultPdfOptions,
-              ...target,
+              ...targetRest,
               format,
               path: outputPath,
+              preflight: resolvedPreflight,
+              preflightOption: resolvedPreflightOption,
+              cmyk: resolvedCmyk,
+              replaceImage: resolvedReplaceImage,
             };
+          }
           case 'epub':
             return {
               ...target,

@@ -52,6 +52,7 @@
     "hastscript": "9.0.1",
     "lcid": "5.0.0",
     "mime-types": "3.0.1",
+    "mupdf": "1.26.4",
     "node-fetch-native": "1.6.7",
     "node-stream-zip": "1.15.0",
     "npm-package-arg": "12.0.2",

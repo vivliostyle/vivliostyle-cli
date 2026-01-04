@@ -11,13 +11,18 @@ import {
   runContainer,
   toContainerPath,
 } from '../container.js';
-import type { Meta, TOCItem } from '../global-viewer.js';
+import type { CmykMap, Meta, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import { isInContainer } from '../util.js';
+import { convertCmykColors } from './cmyk.js';
+import { replaceImages } from './image.js';
 
-export type SaveOption = Pick<PdfOutput, 'preflight' | 'preflightOption'> &
-  Pick<ResolvedTaskConfig, 'image'>;
+export type SaveOption = Pick<
+  PdfOutput,
+  'preflight' | 'preflightOption' | 'cmyk' | 'replaceImage'
+> &
+  Pick<ResolvedTaskConfig, 'image'> & { cmykMap: CmykMap };
 
 const prefixes = {
   dcterms: 'http://purl.org/dc/terms/',
@@ -95,45 +100,87 @@ export class PostProcess {
 
   async save(
     output: string,
-    { preflight, preflightOption, image }: SaveOption,
+    {
+      preflight,
+      preflightOption,
+      image,
+      cmyk,
+      cmykMap,
+      replaceImage,
+    }: SaveOption,
   ) {
-    const input = preflight
-      ? upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`)
-      : output;
+    let pdf = await this.document.save();
 
-    const pdf = await this.document.save();
-    await fs.promises.writeFile(input, pdf);
+    if (cmyk) {
+      const mergedMap: CmykMap = { ...cmykMap };
+      for (const [rgb, cmykValue] of cmyk.overrideMap) {
+        const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
+        mergedMap[key] = cmykValue;
+      }
 
-    if (
-      preflight === 'press-ready-local' ||
-      (preflight === 'press-ready' && isInContainer())
-    ) {
-      using _ = Logger.suspendLogging('Running press-ready');
-      const { build } = await importNodeModule('press-ready');
-      await build({
-        ...preflightOption.reduce((acc, opt) => {
-          const optName = decamelize(opt, { separator: '-' });
-          return optName.startsWith('no-')
-            ? {
-                ...acc,
-                [optName.slice(3)]: false,
-              }
-            : {
-                ...acc,
-                [optName]: true,
-              };
-        }, {}),
-        input,
-        output,
+      Logger.logInfo('Converting CMYK colors');
+      pdf = await convertCmykColors({
+        pdf,
+        colorMap: mergedMap,
+        warnUnmapped: cmyk.warnUnmapped,
       });
-    } else if (preflight === 'press-ready') {
-      using _ = Logger.suspendLogging('Running press-ready');
-      await pressReadyWithContainer({
-        input,
-        output,
-        preflightOption,
-        image,
+
+      if (cmyk.mapOutput) {
+        const mapOutputDir = upath.dirname(cmyk.mapOutput);
+        fs.mkdirSync(mapOutputDir, { recursive: true });
+        await fs.promises.writeFile(
+          cmyk.mapOutput,
+          JSON.stringify(mergedMap, null, 2),
+        );
+        Logger.logInfo(`CMYK color map saved to ${cmyk.mapOutput}`);
+      }
+    }
+
+    if (replaceImage.length > 0) {
+      Logger.logInfo('Replacing images');
+      pdf = await replaceImages({
+        pdf,
+        replaceImageConfig: replaceImage,
       });
+    }
+
+    if (preflight) {
+      const input = upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`);
+      await fs.promises.writeFile(input, pdf);
+
+      if (
+        preflight === 'press-ready-local' ||
+        (preflight === 'press-ready' && isInContainer())
+      ) {
+        using _ = Logger.suspendLogging('Running press-ready');
+        const { build } = await importNodeModule('press-ready');
+        await build({
+          ...preflightOption.reduce((acc, opt) => {
+            const optName = decamelize(opt, { separator: '-' });
+            return optName.startsWith('no-')
+              ? {
+                  ...acc,
+                  [optName.slice(3)]: false,
+                }
+              : {
+                  ...acc,
+                  [optName]: true,
+                };
+          }, {}),
+          input,
+          output,
+        });
+      } else if (preflight === 'press-ready') {
+        using _ = Logger.suspendLogging('Running press-ready');
+        await pressReadyWithContainer({
+          input,
+          output,
+          preflightOption,
+          image,
+        });
+      }
+    } else {
+      await fs.promises.writeFile(output, pdf);
     }
   }
 
