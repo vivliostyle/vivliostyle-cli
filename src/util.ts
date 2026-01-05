@@ -83,7 +83,12 @@ exitSignals.forEach((sig) => {
       process.exitCode =
         exitCode !== undefined ? 128 + exitCode : Number(signal);
     }
-    process.exit();
+    // Only call process.exit() for signals, not for 'exit' event.
+    // Calling process.exit() inside 'exit' handler prevents other
+    // 'exit' listeners from being executed.
+    if (sig !== 'exit') {
+      process.exit();
+    }
   });
 });
 
