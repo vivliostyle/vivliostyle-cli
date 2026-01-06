@@ -1,68 +1,7 @@
 import Arborist from '@npmcli/arborist';
 import fs from 'node:fs';
-import upath from 'upath';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
-
-function getAllFiles(dir: string): string[] {
-  if (!fs.existsSync(dir)) {
-    return [];
-  }
-  const files: string[] = [];
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = upath.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...getAllFiles(fullPath));
-    } else {
-      files.push(fullPath);
-    }
-  }
-  return files;
-}
-
-function checkLocalThemeNeedsUpdate(
-  sourceDir: string,
-  targetDir: string,
-): boolean {
-  if (!fs.existsSync(targetDir)) {
-    return true;
-  }
-
-  const sourceFiles = getAllFiles(sourceDir).map((f) =>
-    upath.relative(sourceDir, f),
-  );
-  const targetFiles = getAllFiles(targetDir).map((f) =>
-    upath.relative(targetDir, f),
-  );
-
-  // Check for added or removed files
-  const sourceSet = new Set(sourceFiles);
-  const targetSet = new Set(targetFiles);
-  for (const file of sourceFiles) {
-    if (!targetSet.has(file)) {
-      return true; // File added
-    }
-  }
-  for (const file of targetFiles) {
-    if (!sourceSet.has(file)) {
-      return true; // File removed
-    }
-  }
-
-  // Check for modified files
-  for (const relPath of sourceFiles) {
-    const sourcePath = upath.join(sourceDir, relPath);
-    const targetPath = upath.join(targetDir, relPath);
-    const sourceContent = fs.readFileSync(sourcePath);
-    const targetContent = fs.readFileSync(targetPath);
-    if (!sourceContent.equals(targetContent)) {
-      return true; // File modified
-    }
-  }
-
-  return false;
-}
 
 export async function checkThemeInstallationNecessity({
   themesDir,
@@ -80,24 +19,9 @@ export async function checkThemeInstallationNecessity({
   const arb = new Arborist(commonOpt);
   const tree = await arb.loadActual();
   const pkgs = Array.from(tree.children.keys());
-
-  for (const theme of themeIndexes) {
-    if (theme.type !== 'package') {
-      continue;
-    }
-    // Check if package is not installed
-    if (!pkgs.includes(theme.name)) {
-      return true;
-    }
-    // For local directory themes, check if files have changed
-    if (!theme.registry) {
-      if (checkLocalThemeNeedsUpdate(theme.specifier, theme.location)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+  return [...themeIndexes].some(
+    (theme) => theme.type === 'package' && !pkgs.includes(theme.name),
+  );
 }
 
 export async function installThemeDependencies({
@@ -105,16 +29,6 @@ export async function installThemeDependencies({
   themeIndexes,
 }: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
   fs.mkdirSync(themesDir, { recursive: true });
-
-  // Remove local theme directories to force reinstallation
-  // Arborist does not update existing packages, so we need to delete them first
-  for (const theme of themeIndexes) {
-    if (theme.type === 'package' && !theme.registry) {
-      if (fs.existsSync(theme.location)) {
-        fs.rmSync(theme.location, { recursive: true });
-      }
-    }
-  }
 
   try {
     const commonOpt = {
