@@ -1,0 +1,10 @@
+@import url('../base/style.css');
+
+h1 {
+  color: navy;
+}
+h1::after {
+  content: url('ornament.svg');
+  display: block;
+  text-align: center;
+}

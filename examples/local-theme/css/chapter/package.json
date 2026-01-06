@@ -1,0 +1,7 @@
+{
+  "name": "chapter",
+  "main": "style.css",
+  "dependencies": {
+    "base": "file:../base"
+  }
+}
