@@ -2,4 +2,4 @@
 '@vivliostyle/cli': patch
 ---
 
-Detect local theme file changes for reinstallation
+Replace local theme directories with symlinks for hot reload support
