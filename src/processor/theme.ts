@@ -106,6 +106,16 @@ export async function installThemeDependencies({
 }: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
   fs.mkdirSync(themesDir, { recursive: true });
 
+  // Remove local theme directories to force reinstallation
+  // Arborist does not update existing packages, so we need to delete them first
+  for (const theme of themeIndexes) {
+    if (theme.type === 'package' && !theme.registry) {
+      if (fs.existsSync(theme.location)) {
+        fs.rmSync(theme.location, { recursive: true });
+      }
+    }
+  }
+
   try {
     const commonOpt = {
       path: themesDir,
