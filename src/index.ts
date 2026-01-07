@@ -6,6 +6,12 @@ import { preview as _preview } from './core/preview.js';
 import type { PublicationManifest as _PublicationManifest } from './schema/publication.schema.js';
 
 export { defineConfig } from './config/define.js';
+export {
+  VFM,
+  readMetadata,
+  type Metadata,
+  type StringifyMarkdownOptions,
+} from '@vivliostyle/vfm';
 export type {
   StructuredDocument,
   StructuredDocumentSection,
