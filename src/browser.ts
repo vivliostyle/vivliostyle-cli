@@ -39,6 +39,7 @@ async function launchBrowser({
   noSandbox,
   disableDevShmUsage,
   ignoreHttpsErrors,
+  protocolTimeout,
 }: {
   browserType: BrowserType;
   proxy:
@@ -54,6 +55,7 @@ async function launchBrowser({
   noSandbox: boolean;
   disableDevShmUsage: boolean;
   ignoreHttpsErrors: boolean;
+  protocolTimeout: number;
 }): Promise<{
   browser: Browser;
   browserContext: BrowserContext;
@@ -138,6 +140,7 @@ async function launchBrowser({
     headless,
     acceptInsecureCerts: ignoreHttpsErrors,
     waitForInitialPage: false,
+    protocolTimeout,
   } satisfies LaunchOptions;
   Logger.debug('launchOptions %O', launchOptions);
   const browser = await puppeteer.launch({
@@ -277,7 +280,13 @@ export async function launchPreview({
   url,
   onBrowserOpen,
   onPageOpen,
-  config: { browser: browserConfig, proxy, sandbox, ignoreHttpsErrors },
+  config: {
+    browser: browserConfig,
+    proxy,
+    sandbox,
+    ignoreHttpsErrors,
+    timeout,
+  },
 }: {
   mode: 'preview' | 'build';
   url: string;
@@ -285,7 +294,7 @@ export async function launchPreview({
   onPageOpen?: (page: Page) => void | Promise<void>;
   config: Pick<
     ResolvedTaskConfig,
-    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors'
+    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors' | 'timeout'
   >;
 }) {
   let executableBrowser = browserConfig.executablePath;
@@ -323,6 +332,7 @@ export async function launchPreview({
     noSandbox: !sandbox,
     disableDevShmUsage: isInContainer(),
     ignoreHttpsErrors,
+    protocolTimeout: timeout,
   });
   await onBrowserOpen?.(browser);
 
