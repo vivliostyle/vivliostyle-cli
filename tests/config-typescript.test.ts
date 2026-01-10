@@ -54,11 +54,10 @@ describe('TypeScript configuration files', () => {
       expect(config?.tasks[0].title).toBe('MTS Config');
     });
 
-    // Skipped: Vite's esbuild plugin does not transpile .cts files in SSR mode.
-    // See: https://github.com/vitejs/vite/issues/21322
-    // This only affects the test environment (vitest); the distributed CLI
+    // Skipped: Vitest does not support .cts files.
+    // See: https://github.com/vitest-dev/vitest/issues/3987
+    // This only affects the test environment (Vitest); the distributed CLI
     // uses Node.js directly and .cts files work correctly there.
-    // Once the Vite issue is resolved, this test can be re-enabled.
     it.skip('should load vivliostyle.config.cts', async () => {
       const config = await loadVivliostyleConfig({
         cwd: resolveFixture('ts-config'),
