@@ -67,6 +67,7 @@ RUN set -x \
   fi
 
 # Install Puppeteer browsers (for amd64 build, use Puppeteer's installation script))
+# Use chmod 777 for the cache directory to ensure Dev Container compatibility
 RUN set -x \
   && if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
     echo "Skipping Puppeteer browser installation on arm64 architecture"; \
@@ -74,7 +75,7 @@ RUN set -x \
     apt-get update -qq \
     && apt-get upgrade -yqq \
     && mkdir -p /opt/puppeteer \
-    && chown vivliostyle: /opt/puppeteer \
+    && chmod 777 /opt/puppeteer \
     && PUPPETEER_CACHE_DIR=/opt/puppeteer npx puppeteer browsers install --install-deps $BROWSER \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* `npm config get cache`/_npx; \
   fi
