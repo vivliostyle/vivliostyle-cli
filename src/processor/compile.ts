@@ -38,6 +38,7 @@ import {
 import { processMarkdown } from './markdown.js';
 import {
   checkThemeInstallationNecessity,
+  getLocalThemePaths,
   installThemeDependencies,
 } from './theme.js';
 
@@ -127,7 +128,7 @@ export async function cleanupWorkspace({
 export async function prepareThemeDirectory({
   themesDir,
   themeIndexes,
-}: ResolvedTaskConfig) {
+}: ResolvedTaskConfig): Promise<string[]> {
   // Backward compatibility: v8 to v9
   if (
     fs.existsSync(upath.join(themesDir, 'packages')) &&
@@ -152,6 +153,9 @@ export async function prepareThemeDirectory({
       await copy(theme.source, theme.location);
     }
   }
+
+  // Return all local theme paths (symlink targets in node_modules)
+  return getLocalThemePaths({ themesDir });
 }
 
 export async function transformManuscript(

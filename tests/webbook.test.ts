@@ -10,6 +10,7 @@ import { runCommand, toTree } from './command-util.js';
 
 const mockedThemeModule = vi.hoisted(() => ({
   checkThemeInstallationNecessity: vi.fn(),
+  getLocalThemePaths: vi.fn(() => []),
   installThemeDependencies: vi.fn(),
 }));
 

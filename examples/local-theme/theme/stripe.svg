@@ -1,8 +1,0 @@
-<svg width="148mm" height="210mm" viewBox="0 0 148 210" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <pattern id="diagonal-stripe" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
-      <rect width="5" height="10" fill="#000"/>
-    </pattern>
-  </defs>
-  <rect width="148" height="210" fill="url(#diagonal-stripe)" />
-</svg>

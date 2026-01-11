@@ -159,7 +159,7 @@ export function vsDevServerPlugin({
       await generateManifest(config);
     }
 
-    await prepareThemeDirectory(config);
+    const localThemePaths = await prepareThemeDirectory(config);
 
     const entriesLookup = createEntriesRouteLookup(
       config.entries,
@@ -230,7 +230,8 @@ export function vsDevServerPlugin({
       prevThemeFiles.filter((target) => !themeFiles.includes(target)),
     );
     server?.watcher.add(themeFiles);
-    projectDeps.push(...themeFiles);
+    server?.watcher.add(localThemePaths);
+    projectDeps.push(...themeFiles, ...localThemePaths);
     matchProjectDep = (pathname: string) =>
       projectDeps.some(
         (dep) => pathEquals(dep, pathname) || pathContains(dep, pathname),
