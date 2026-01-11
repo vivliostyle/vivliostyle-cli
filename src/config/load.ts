@@ -109,7 +109,7 @@ export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
     );
   }
 
-  if (config.tasks.some((task) => task.pressReady)) {
+  if (config.tasks.some((task) => task.pressReady !== undefined)) {
     Logger.logWarn(
       "'pressReady' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflight: \"press-ready\"' property instead.",
     );

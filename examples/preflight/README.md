@@ -27,7 +27,7 @@ export default defineConfig({
         // preflight: 'press-ready-local',
         preflightOption: [
           // Options for press-ready
-          // Please refer https://github.com/vibranthq/press-ready#options for the details
+          // Please refer to https://github.com/vibranthq/press-ready#options for the details
           'gray-scale',
           'enforce-outline',
         ],
