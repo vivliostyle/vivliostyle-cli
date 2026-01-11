@@ -382,10 +382,10 @@ type ArticleEntryConfig = {
   - `renderMode`: "local" | "docker"  
     If set to `docker`, Vivliostyle will render the PDF using a Docker container. (default: `local`)
 
-  - `preflight`: "press-ready" | "press-ready-local"  
+  - ~~`preflight`~~ _Deprecated_  
     Use `pdfPostprocess.preflight` instead
 
-  - `preflightOption`: (string)[]  
+  - ~~`preflightOption`~~ _Deprecated_  
     Use `pdfPostprocess.preflightOption` instead
 
   - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  

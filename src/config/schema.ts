@@ -377,6 +377,7 @@ export const OutputConfig = v.pipe(
         /** @deprecated */
         preflight: v.pipe(
           v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
+          v.metadata({ deprecated: true }),
           v.description($`
             Use \`pdfPostprocess.preflight\` instead
           `),
@@ -384,6 +385,7 @@ export const OutputConfig = v.pipe(
         /** @deprecated */
         preflightOption: v.pipe(
           v.array(ValidString),
+          v.metadata({ deprecated: true }),
           v.description($`
             Use \`pdfPostprocess.preflightOption\` instead
           `),
