@@ -25,7 +25,7 @@ export function locateVivliostyleConfig({
   if (config) {
     return upath.resolve(cwd, config);
   }
-  return ['.js', '.mjs', '.cjs', '.json']
+  return ['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.json']
     .map((ext) => upath.join(cwd, `vivliostyle.config${ext}`))
     .find((p) => fs.existsSync(p));
 }
