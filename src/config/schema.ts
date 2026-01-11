@@ -233,6 +233,127 @@ export type OutputFormat = v.InferInput<typeof OutputFormat>;
 export const RenderMode = v.union([v.literal('local'), v.literal('docker')]);
 export type RenderMode = v.InferInput<typeof RenderMode>;
 
+const RGBValueSchema = v.pipe(
+  v.object({
+    r: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    g: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    b: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+  }),
+  v.title('RGBValue'),
+);
+
+const CMYKValueSchema = v.pipe(
+  v.object({
+    c: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    m: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    y: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+    k: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
+  }),
+  v.title('CMYKValue'),
+);
+
+const CmykOverrideEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
+
+const CmykConfigSchema = v.pipe(
+  v.partial(
+    v.object({
+      overrideMap: v.pipe(
+        v.array(CmykOverrideEntrySchema),
+        v.description($`
+          Custom RGB to CMYK color mapping.
+          Each entry is a tuple of [{r, g, b}, {c, m, y, k}] where values are integers (0-10000).
+        `),
+      ),
+      warnUnmapped: v.pipe(
+        v.boolean(),
+        v.description($`
+          Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+        `),
+      ),
+      mapOutput: v.pipe(
+        ValidString,
+        v.description($`
+          Output the CMYK color map to a JSON file at the specified path.
+        `),
+      ),
+    }),
+  ),
+  v.title('CmykConfig'),
+);
+
+const CmykSchema = v.pipe(
+  v.union([v.boolean(), CmykConfigSchema]),
+  v.description($`
+    Convert device-cmyk() colors to CMYK in the output PDF.
+    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+  `),
+);
+
+const ReplaceImageEntrySchema = v.pipe(
+  v.object({
+    source: v.pipe(
+      v.union([ValidString, v.instance(RegExp)]),
+      v.description(
+        'Path to the source image file, or a RegExp pattern to match multiple files.',
+      ),
+    ),
+    replacement: v.pipe(
+      ValidString,
+      v.description(
+        'Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.',
+      ),
+    ),
+  }),
+  v.title('ReplaceImageEntry'),
+);
+
+const ReplaceImageSchema = v.pipe(
+  v.array(ReplaceImageEntrySchema),
+  v.description($`
+    Replace images in the output PDF.
+    Each entry specifies a source image path and its replacement image path.
+    Useful for replacing RGB images with CMYK versions.
+  `),
+);
+
+const PdfPostprocessConfigSchema = v.pipe(
+  v.partial(
+    v.object({
+      pressReady: v.pipe(
+        v.boolean(),
+        v.description($`
+          Generate a press-ready PDF compatible with PDF/X-1a. (default: \`false\`)
+          This option is equivalent to setting \`"preflight": "press-ready"\`.
+        `),
+      ),
+      preflight: v.pipe(
+        v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
+        v.description($`
+          Apply the process to generate a print-ready PDF.
+        `),
+      ),
+      preflightOption: v.pipe(
+        v.array(ValidString),
+        v.description($`
+          Options for the preflight process (e.g., \`gray-scale\`, \`enforce-outline\`).
+          Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
+        `),
+      ),
+      cmyk: CmykSchema,
+      replaceImage: ReplaceImageSchema,
+    }),
+  ),
+  v.title('PdfPostprocessConfig'),
+  v.description($`
+    PDF post-processing options.
+    When both pdfPostprocess and legacy options (pressReady, preflight, etc.) are specified,
+    pdfPostprocess takes precedence.
+  `),
+);
+export type PdfPostprocessConfig = v.InferInput<
+  typeof PdfPostprocessConfigSchema
+>;
+
 export const OutputConfig = v.pipe(
   v.intersect([
     v.required(
@@ -273,6 +394,7 @@ export const OutputConfig = v.pipe(
             Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
           `),
         ),
+        pdfPostprocess: PdfPostprocessConfigSchema,
       }),
     ),
   ]),
@@ -712,6 +834,7 @@ export const BuildTask = v.pipe(
             This option is equivalent to setting \`"preflight": "press-ready"\`.
           `),
         ),
+        pdfPostprocess: PdfPostprocessConfigSchema,
         language: v.pipe(
           ValidString,
           v.description($`
@@ -885,8 +1008,19 @@ export const BuildTask = v.pipe(
 export type BuildTask = v.InferInput<typeof BuildTask>;
 export type ParsedBuildTask = v.InferOutput<typeof BuildTask>;
 
+/**
+ * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
+ */
+export type VivliostyleConfigSchema = BuildTask[] | BuildTask;
+export type ParsedVivliostyleConfigSchema = {
+  tasks: ParsedBuildTask[];
+  inlineOptions: InlineOptions;
+};
 /** @hidden */
-export const VivliostyleConfigSchema = v.pipe(
+export const VivliostyleConfigSchema: v.GenericSchema<
+  VivliostyleConfigSchema,
+  ParsedVivliostyleConfigSchema
+> = v.pipe(
   v.union([
     v.pipe(
       v.array(BuildTask),
@@ -895,27 +1029,13 @@ export const VivliostyleConfigSchema = v.pipe(
     BuildTask,
   ]),
   v.transform(
-    (
-      input,
-    ): {
-      tasks: ParsedBuildTask[];
-      inlineOptions: InlineOptions;
-    } => ({
+    (input): ParsedVivliostyleConfigSchema => ({
       tasks: [input].flat(),
       inlineOptions: {},
     }),
   ),
   v.title('VivliostyleConfigSchema'),
 );
-/**
- * @see https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
- */
-export type VivliostyleConfigSchema = v.InferInput<
-  typeof VivliostyleConfigSchema
->;
-export type ParsedVivliostyleConfigSchema = v.InferOutput<
-  typeof VivliostyleConfigSchema
->;
 
 export type InputFormat =
   | 'markdown'
@@ -1097,6 +1217,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
           Please refer the document of press-ready for further information.
         `),
     ),
+    cmyk: CmykSchema,
     sandbox: v.pipe(v.boolean(), v.description($`Launch chrome with sandbox.`)),
     executableBrowser: v.pipe(
       ValidString,
@@ -1343,6 +1464,7 @@ export type InlineOptions = Pick<
   | 'renderMode'
   | 'preflight'
   | 'preflightOption'
+  | 'cmyk'
   | 'disableServerStartup'
   | 'projectPath'
   | 'template'

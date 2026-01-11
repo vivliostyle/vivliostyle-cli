@@ -124,11 +124,13 @@ Object {
   "logLevel": "info",
   "outputs": Array [
     Object {
+      "cmyk": false,
       "format": "pdf",
       "path": "__WORKSPACE__/tests/fixtures/config/yuno.pdf",
       "preflight": "press-ready",
       "preflightOption": Array [],
       "renderMode": "local",
+      "replaceImage": Array [],
     },
     Object {
       "format": "webpub",
@@ -331,18 +333,22 @@ Object {
   "logLevel": "info",
   "outputs": Array [
     Object {
+      "cmyk": false,
       "format": "pdf",
       "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
       "preflight": "press-ready",
       "preflightOption": Array [],
       "renderMode": "local",
+      "replaceImage": Array [],
     },
     Object {
+      "cmyk": false,
       "format": "pdf",
       "path": "__WORKSPACE__/tests/fixtures/config/output2.pdf",
       "preflight": "press-ready",
       "preflightOption": Array [],
       "renderMode": "local",
+      "replaceImage": Array [],
     },
   ],
   "proxy": undefined,

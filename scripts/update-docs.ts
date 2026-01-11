@@ -18,7 +18,8 @@ function insertDocs(
       `<!-- START ${docsName}([\\w\\W]+?)<!-- END ${docsName}.*\\n`,
       'm',
     ),
-    `<!-- START ${docsName} -->\n${insertedText}\n<!-- END ${docsName} -->\n`,
+    () =>
+      `<!-- START ${docsName} -->\n${insertedText}\n<!-- END ${docsName} -->\n`,
   );
 }
 

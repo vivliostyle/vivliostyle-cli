@@ -69,6 +69,11 @@ type VivliostyleConfigSchema =
     Generate a press-ready PDF compatible with PDF/X-1a. (default: `false`)
     This option is equivalent to setting `"preflight": "press-ready"`.
 
+  - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
+    PDF post-processing options.
+    When both pdfPostprocess and legacy options (pressReady, preflight, etc.) are specified,
+    pdfPostprocess takes precedence.
+
   - `language`: string  
     Language of the document.
 
@@ -170,6 +175,7 @@ type BuildTask = {
   copyAsset?: CopyAssetConfig;
   size?: string;
   pressReady?: boolean;
+  pdfPostprocess?: PdfPostprocessConfig;
   language?: string;
   readingProgression?: "ltr" | "rtl";
   toc?: TocConfig | boolean | string;
@@ -384,6 +390,11 @@ type ArticleEntryConfig = {
     Options for the preflight process (e.g., `gray-scale`, `enforce-outline`).
     Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
 
+  - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
+    PDF post-processing options.
+    When both pdfPostprocess and legacy options (pressReady, preflight, etc.) are specified,
+    pdfPostprocess takes precedence.
+
 #### Type definition
 
 ```ts
@@ -395,6 +406,98 @@ type OutputConfig = {
     | "press-ready"
     | "press-ready-local";
   preflightOption?: string[];
+  pdfPostprocess?: PdfPostprocessConfig;
+};
+```
+
+### PdfPostprocessConfig
+
+PDF post-processing options.
+When both pdfPostprocess and legacy options (pressReady, preflight, etc.) are specified,
+pdfPostprocess takes precedence.
+
+#### Properties
+
+- `PdfPostprocessConfig`
+
+  - `pressReady`: boolean  
+    Generate a press-ready PDF compatible with PDF/X-1a. (default: `false`)
+    This option is equivalent to setting `"preflight": "press-ready"`.
+
+  - `preflight`: "press-ready" | "press-ready-local"  
+    Apply the process to generate a print-ready PDF.
+
+  - `preflightOption`: (string)[]  
+    Options for the preflight process (e.g., `gray-scale`, `enforce-outline`).
+    Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
+
+  - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
+    Convert device-cmyk() colors to CMYK in the output PDF.
+    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+
+  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry))[]  
+    Replace images in the output PDF.
+    Each entry specifies a source image path and its replacement image path.
+    Useful for replacing RGB images with CMYK versions.
+
+#### Type definition
+
+```ts
+type PdfPostprocessConfig = {
+  pressReady?: boolean;
+  preflight?:
+    | "press-ready"
+    | "press-ready-local";
+  preflightOption?: string[];
+  cmyk?: boolean | CmykConfig;
+  replaceImage?: ReplaceImageEntry[];
+};
+```
+
+### CmykConfig
+
+#### Properties
+
+- `CmykConfig`
+
+  - `overrideMap`: ("{tuple(Array)}")[]  
+    Custom RGB to CMYK color mapping.
+    Each entry is a tuple of [{r, g, b}, {c, m, y, k}] where values are integers (0-10000).
+
+  - `warnUnmapped`: boolean  
+    Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+
+  - `mapOutput`: string  
+    Output the CMYK color map to a JSON file at the specified path.
+
+#### Type definition
+
+```ts
+type CmykConfig = {
+  overrideMap?: "{tuple(Array)}"[];
+  warnUnmapped?: boolean;
+  mapOutput?: string;
+};
+```
+
+### ReplaceImageEntry
+
+#### Properties
+
+- `ReplaceImageEntry`
+
+  - `source`: string | RegExp  
+    Path to the source image file, or a RegExp pattern to match multiple files.
+
+  - `replacement`: string  
+    Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.
+
+#### Type definition
+
+```ts
+type ReplaceImageEntry = {
+  source: string | RegExp;
+  replacement: string;
 };
 ```
 
