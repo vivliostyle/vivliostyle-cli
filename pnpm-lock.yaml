@@ -268,8 +268,8 @@ importers:
         specifier: 4.17.0
         version: 4.17.0
       pnpm:
-        specifier: 10.25.0
-        version: 10.25.0
+        specifier: 10.27.0
+        version: 10.27.0
       prettier:
         specifier: 3.5.3
         version: 3.5.3
@@ -4730,8 +4730,8 @@ packages:
   please-upgrade-node@3.2.0:
     resolution: {integrity: sha512-gQR3WpIgNIKwBMVLkpMUeR3e1/E1y42bqDQZfql+kDeXd8COYfM8PQA4X6y7a8u9Ua9FHmsrrmirW2vHs45hWg==}
 
-  pnpm@10.25.0:
-    resolution: {integrity: sha512-XoJjkCevN8+DIGG8xtY5whljRIjg8rrr54UCink957Ul/80/f/V09emGBlTgmP6FK6isXdXO/hdn0joCCpL1AQ==}
+  pnpm@10.27.0:
+    resolution: {integrity: sha512-ctaZ2haxF5wUup5k3HHJpAmIy9xlwmTLDkidt96RfyDc9NZNhyNiXylpulLUt+KhFwaC2awqXcrqq3MrfhbwSg==}
     engines: {node: '>=18.12'}
     hasBin: true
 
@@ -6121,6 +6121,7 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -11297,7 +11298,7 @@ snapshots:
     dependencies:
       semver-compare: 1.0.0
 
-  pnpm@10.25.0: {}
+  pnpm@10.27.0: {}
 
   postcss-load-config@6.0.1(postcss@8.5.3)(tsx@4.19.3)(yaml@2.8.1):
     dependencies:
