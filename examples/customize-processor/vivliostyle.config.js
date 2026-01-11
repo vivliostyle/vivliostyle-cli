@@ -1,6 +1,5 @@
 // @ts-check
-import { defineConfig } from '@vivliostyle/cli';
-import { VFM } from '@vivliostyle/vfm';
+import { defineConfig, VFM } from '@vivliostyle/cli';
 import rehypeExpressiveCode from 'rehype-expressive-code';
 import rehypeStringify from 'rehype-stringify';
 import remarkParse from 'remark-parse';

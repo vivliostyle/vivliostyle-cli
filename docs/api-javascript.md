@@ -10,18 +10,25 @@
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
 - [`preview`](#preview)
+- [`VFM`](#vfm)
 
 ### Interfaces
 
+- [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
 
 ### Type Aliases
 
+- [`Metadata`](#metadata)
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
 - [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
 - [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
 - [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
+
+### Variables
+
+- [`readMetadata`](#readmetadata)
 
 ## Functions
 
@@ -959,7 +966,54 @@ Open a browser for previewing the publication.
 
 `Promise`\<`ViteDevServer`\>
 
+***
+
+### VFM()
+
+> **VFM**(`options?`, `metadata?`): `Processor`
+
+Create Unified processor for Markdown AST and Hypertext AST.
+
+#### Parameters
+
+##### options?
+
+[`StringifyMarkdownOptions`](#stringifymarkdownoptions)
+
+Options.
+
+##### metadata?
+
+[`Metadata`](#metadata)
+
+#### Returns
+
+`Processor`
+
+Unified processor.
+
 ## Interfaces
+
+### StringifyMarkdownOptions
+
+Option for convert Markdown to a stringify (HTML).
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="assignidtofigcaption"></a> `assignIdToFigcaption?` | `boolean` | Assign ID to figcaption instead of img/code. |
+| <a id="disableformathtml"></a> `disableFormatHtml?` | `boolean` | Disable automatic HTML format. |
+| <a id="hardlinebreaks"></a> `hardLineBreaks?` | `boolean` | Add `<br>` at the position of hard line breaks, without needing spaces. |
+| <a id="imgfigcaptionorder"></a> `imgFigcaptionOrder?` | `"img-figcaption"` \| `"figcaption-img"` | Order of img and figcaption elements in figure. |
+| <a id="language"></a> `language?` | `string` | Document language (ignored in partial mode). |
+| <a id="math"></a> `math?` | `boolean` | Enable math syntax. |
+| <a id="partial"></a> `partial?` | `boolean` | Output markdown fragments. |
+| <a id="replace"></a> `replace?` | `ReplaceRule`[] | Replacement handler for HTML string. |
+| <a id="style"></a> `style?` | `string` \| `string`[] | Custom stylesheet path/URL. |
+| <a id="title"></a> `title?` | `string` | Document title (ignored in partial mode). |
+
+***
 
 ### TemplateVariable
 
@@ -996,7 +1050,7 @@ Open a browser for previewing the publication.
 | <a id="input"></a> `input?` | `object` |
 | `input.entry` | `string` |
 | `input.format` | `InputFormat` |
-| <a id="language"></a> `language` | `string` |
+| <a id="language-1"></a> `language` | `string` |
 | <a id="logger"></a> `logger?` | `LoggerInterface` |
 | <a id="loglevel"></a> `logLevel?` | `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` |
 | <a id="openviewer"></a> `openViewer?` | `boolean` |
@@ -1020,12 +1074,12 @@ Open a browser for previewing the publication.
 | <a id="stderr"></a> `stderr?` | `Writable` |
 | <a id="stdin"></a> `stdin?` | `Readable` |
 | <a id="stdout"></a> `stdout?` | `Writable` |
-| <a id="style"></a> `style?` | `string` |
+| <a id="style-1"></a> `style?` | `string` |
 | <a id="template"></a> `template?` | `string` |
 | <a id="theme"></a> `theme?` | `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] |
 | <a id="themepackage"></a> `themePackage?` | `VivliostylePackageJson` |
 | <a id="timeout"></a> `timeout?` | `number` |
-| <a id="title"></a> `title` | `string` |
+| <a id="title-1"></a> `title` | `string` |
 | <a id="userstyle"></a> `userStyle?` | `string` |
 | <a id="viewer"></a> `viewer?` | `string` |
 | <a id="viewerparam"></a> `viewerParam?` | `string` |
@@ -1033,6 +1087,113 @@ Open a browser for previewing the publication.
 | <a id="viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
+
+### Metadata
+
+> **Metadata** = `object`
+
+Metadata from Frontmatter.
+
+#### Properties
+
+##### base?
+
+> `optional` **base**: `Attribute`[]
+
+Attributes of `<base>`.
+
+##### body?
+
+> `optional` **body**: `Attribute`[]
+
+Attributes of `<body>`.
+
+##### class?
+
+> `optional` **class**: `string`
+
+Value of `<html class="...">`.
+
+##### custom?
+
+> `optional` **custom**: `object`
+
+A set of key-value pairs that are specified in `readMetadata` not to be processed as `<meta>`.
+The data types converted from Frontmatter's YAML are retained.
+Use this if want to add custom metadata with a third party tool.
+
+###### Index Signature
+
+\[`key`: `string`\]: `any`
+
+##### dir?
+
+> `optional` **dir**: `string`
+
+Value of `<html dir="...">`. e.g. `ltr`, `rtl`, `auto`.
+
+##### head?
+
+> `optional` **head**: `string`
+
+`<head>...</head>`, reserved for future use.
+
+##### html?
+
+> `optional` **html**: `Attribute`[]
+
+Attributes of `<html>`.
+The `id`,` lang`, `dir`, and` class` specified in the root take precedence over the value of this property.
+
+##### id?
+
+> `optional` **id**: `string`
+
+Value of `<html id="...">`.
+
+##### lang?
+
+> `optional` **lang**: `string`
+
+Value of `<html lang="...">`.
+
+##### link?
+
+> `optional` **link**: `Attribute`[][]
+
+Attribute collection of `<link>`.
+
+##### meta?
+
+> `optional` **meta**: `Attribute`[][]
+
+Attribute collection of `<meta>`.
+
+##### script?
+
+> `optional` **script**: `Attribute`[][]
+
+Attribute collection of `<script>`.
+
+##### style?
+
+> `optional` **style**: `string`
+
+`<style>...</style>`, reserved for future use.
+
+##### title?
+
+> `optional` **title**: `string`
+
+Value of `<title>...</title>`.
+
+##### vfm?
+
+> `optional` **vfm**: `VFMSettings`
+
+VFM settings.
+
+***
 
 ### StructuredDocument
 
@@ -1117,5 +1278,35 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 ### VivliostylePackageMetadata
 
 > **VivliostylePackageMetadata** = `v.InferInput`\<*typeof* [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)\>
+
+## Variables
+
+### readMetadata()
+
+> `const` **readMetadata**: (`md`, `customKeys?`) => [`Metadata`](#metadata)
+
+Read metadata from Markdown frontmatter.
+
+Keys that are not defined as VFM are treated as `meta`. If you specify a key name in `customKeys`, the key and its data type will be preserved and stored in `custom` instead of `meta`.
+
+#### Parameters
+
+##### md
+
+`string`
+
+Markdown.
+
+##### customKeys?
+
+`string`[]
+
+A collection of key names to be ignored by meta processing.
+
+#### Returns
+
+[`Metadata`](#metadata)
+
+Metadata.
 
 <!-- END JavaScript API -->

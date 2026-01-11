@@ -19,6 +19,7 @@ const config = {
   entry: ['manuscript.md'],
   // config is StringifyMarkdownOptions in @vivliostyle/vfm
   // metadata is Metadata in @vivliostyle/vfm
+  // These types are re-exported from @vivliostyle/cli
   // Generated Unified processor should be able to process markdown into HTML
   documentProcessor: (config, metadata) =>
     unified()
@@ -40,8 +41,7 @@ export default config;
 You can also set `documentProcessor` and `documentMetadataReader` for individual entries. This allows different processing for each file:
 
 ```js
-import { defineConfig } from '@vivliostyle/cli';
-import { VFM, readMetadata } from '@vivliostyle/vfm';
+import { defineConfig, VFM, readMetadata } from '@vivliostyle/cli';
 import unified from 'unified';
 // ... other imports
 
