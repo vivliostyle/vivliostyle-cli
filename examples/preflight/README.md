@@ -1,6 +1,6 @@
 # Preflight
 
-Set the `preflight` option to apply post-processing to the PDF for special purposes such as printing-related requirements. Currently, Vivliostyle supports post-processing converts to PDF/X-1a by setting `press-ready` that's powered by [vibranthq/press-ready](https://github.com/vibranthq/press-ready).
+Set the `pdfPostprocess.preflight` option to apply post-processing to the PDF for special purposes such as printing-related requirements. Currently, Vivliostyle supports post-processing converts to PDF/X-1a by setting `press-ready` that's powered by [vibranthq/press-ready](https://github.com/vibranthq/press-ready).
 
 ### vivliostyle.config.js
 
@@ -20,16 +20,18 @@ export default defineConfig({
     },
     {
       path: 'draft_press_ready.pdf',
-      // press-ready: runs press-ready on Docker container
-      // press-ready-local: runs press-ready without Docker
-      preflight: 'press-ready',
-      // preflight: 'press-ready-local',
-      preflightOption: [
-        // Options for press-ready
-        // Please refer https://github.com/vibranthq/press-ready#options
-        'gray-scale',
-        'enforce-outline',
-      ],
+      pdfPostprocess: {
+        // press-ready: runs press-ready on Docker container
+        // press-ready-local: runs press-ready without Docker
+        preflight: 'press-ready',
+        // preflight: 'press-ready-local',
+        preflightOption: [
+          // Options for press-ready
+          // Please refer to https://github.com/vibranthq/press-ready#options for the details
+          'gray-scale',
+          'enforce-outline',
+        ],
+      },
     },
   ],
 });

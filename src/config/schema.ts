@@ -319,13 +319,6 @@ const ReplaceImageSchema = v.pipe(
 const PdfPostprocessConfigSchema = v.pipe(
   v.partial(
     v.object({
-      pressReady: v.pipe(
-        v.boolean(),
-        v.description($`
-          Generate a press-ready PDF compatible with PDF/X-1a. (default: \`false\`)
-          This option is equivalent to setting \`"preflight": "press-ready"\`.
-        `),
-      ),
       preflight: v.pipe(
         v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
         v.description($`
@@ -381,17 +374,20 @@ export const OutputConfig = v.pipe(
             If set to \`docker\`, Vivliostyle will render the PDF using a Docker container. (default: \`local\`)
           `),
         ),
+        /** @deprecated */
         preflight: v.pipe(
           v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
+          v.metadata({ deprecated: true }),
           v.description($`
-            Apply the process to generate a print-ready PDF.
+            Use \`pdfPostprocess.preflight\` instead
           `),
         ),
+        /** @deprecated */
         preflightOption: v.pipe(
           v.array(ValidString),
+          v.metadata({ deprecated: true }),
           v.description($`
-            Options for the preflight process (e.g., \`gray-scale\`, \`enforce-outline\`).
-            Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
+            Use \`pdfPostprocess.preflightOption\` instead
           `),
         ),
         pdfPostprocess: PdfPostprocessConfigSchema,
@@ -827,11 +823,12 @@ export const BuildTask = v.pipe(
             - Custom (comma-separated): \`182mm,257mm\` or \`8.5in,11in\`
           `),
         ),
+        /** @deprecated */
         pressReady: v.pipe(
           v.boolean(),
+          v.metadata({ deprecated: true }),
           v.description($`
-            Generate a press-ready PDF compatible with PDF/X-1a. (default: \`false\`)
-            This option is equivalent to setting \`"preflight": "press-ready"\`.
+            Use \`pdfPostprocess.preflight: "press-ready"\` instead
           `),
         ),
         pdfPostprocess: PdfPostprocessConfigSchema,
