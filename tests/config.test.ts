@@ -556,7 +556,7 @@ it('pdfPostprocess takes precedence over legacy pressReady option', async () => 
     entry: 'manuscript.md',
     pressReady: true, // legacy option (fallback)
     pdfPostprocess: {
-      pressReady: false, // this takes precedence
+      preflight: undefined, // this takes precedence
     },
   });
   expect(config.outputs[0]).toMatchObject({

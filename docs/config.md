@@ -65,9 +65,8 @@ type VivliostyleConfigSchema =
     - Preset: `A5`, `A4`, `A3`, `B5`, `B4`, `JIS-B5`, `JIS-B4`, `letter`, `legal`, `ledger`
     - Custom (comma-separated): `182mm,257mm` or `8.5in,11in`
 
-  - `pressReady`: boolean  
-    Generate a press-ready PDF compatible with PDF/X-1a. (default: `false`)
-    This option is equivalent to setting `"preflight": "press-ready"`.
+  - ~~`pressReady`~~ _Deprecated_  
+    Use `pdfPostprocess.preflight: "press-ready"` instead
 
   - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
     PDF post-processing options.
@@ -384,11 +383,10 @@ type ArticleEntryConfig = {
     If set to `docker`, Vivliostyle will render the PDF using a Docker container. (default: `local`)
 
   - `preflight`: "press-ready" | "press-ready-local"  
-    Apply the process to generate a print-ready PDF.
+    Use `pdfPostprocess.preflight` instead
 
   - `preflightOption`: (string)[]  
-    Options for the preflight process (e.g., `gray-scale`, `enforce-outline`).
-    Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
+    Use `pdfPostprocess.preflightOption` instead
 
   - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
     PDF post-processing options.
@@ -420,10 +418,6 @@ pdfPostprocess takes precedence.
 
 - `PdfPostprocessConfig`
 
-  - `pressReady`: boolean  
-    Generate a press-ready PDF compatible with PDF/X-1a. (default: `false`)
-    This option is equivalent to setting `"preflight": "press-ready"`.
-
   - `preflight`: "press-ready" | "press-ready-local"  
     Apply the process to generate a print-ready PDF.
 
@@ -444,7 +438,6 @@ pdfPostprocess takes precedence.
 
 ```ts
 type PdfPostprocessConfig = {
-  pressReady?: boolean;
   preflight?:
     | "press-ready"
     | "press-ready-local";

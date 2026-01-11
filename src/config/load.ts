@@ -108,4 +108,31 @@ export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
       "'http' property of Vivliostyle config was deprecated and will be removed in a future release. This option is enabled by default, and the file protocol is no longer supported.",
     );
   }
+
+  if (config.tasks.some((task) => task.pressReady)) {
+    Logger.logWarn(
+      "'pressReady' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflight: \"press-ready\"' property instead.",
+    );
+  }
+
+  if (
+    config.tasks.some(
+      (task) => task.output && [task.output].flat().some((o) => o.preflight),
+    )
+  ) {
+    Logger.logWarn(
+      "'preflight' property of output config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflight' property instead.",
+    );
+  }
+
+  if (
+    config.tasks.some(
+      (task) =>
+        task.output && [task.output].flat().some((o) => o.preflightOption),
+    )
+  ) {
+    Logger.logWarn(
+      "'preflightOption' property of output config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflightOption' property instead.",
+    );
+  }
 }

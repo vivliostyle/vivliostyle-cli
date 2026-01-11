@@ -75,7 +75,9 @@ export default defineConfig({
   title: 'My Book',
   entry: ['manuscript.md'],
   output: 'book.pdf',
-  preflight: 'press-ready',
+  pdfPostprocess: {
+    preflight: 'press-ready',
+  },
 });
 ```
 

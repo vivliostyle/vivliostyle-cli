@@ -23,7 +23,6 @@ import {
   StructuredDocumentSection,
   ThemeConfig,
 } from '../config/schema.js';
-import type { CMYKValue } from '../global-viewer.js';
 import {
   cliVersion,
   CONTAINER_LOCAL_HOSTNAME,
@@ -36,6 +35,7 @@ import {
   TOC_FILENAME,
   TOC_TITLE,
 } from '../const.js';
+import type { CMYKValue } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import {
@@ -682,12 +682,8 @@ export function resolveTaskConfig(
         return options.preflight;
       }
       const pp = config.pdfPostprocess;
-      if (pp?.preflight) {
+      if (pp && 'preflight' in pp) {
         return pp.preflight;
-      }
-      // If pdfPostprocess.pressReady is explicitly set (true or false), use it
-      if (pp?.pressReady !== undefined) {
-        return pp.pressReady ? 'press-ready' : undefined;
       }
       // Fallback to legacy pressReady only if pdfPostprocess.pressReady is not set
       if (config.pressReady) {
@@ -729,12 +725,6 @@ export function resolveTaskConfig(
             const resolvedPreflight = (() => {
               if (options.preflight) return options.preflight;
               if (targetPp?.preflight) return targetPp.preflight;
-              // If output.pdfPostprocess.pressReady is explicitly set, use it
-              if (targetPp?.pressReady !== undefined) {
-                return targetPp.pressReady
-                  ? ('press-ready' as const)
-                  : undefined;
-              }
               if (target.preflight) return target.preflight;
               return defaultPdfOptions.preflight;
             })();
