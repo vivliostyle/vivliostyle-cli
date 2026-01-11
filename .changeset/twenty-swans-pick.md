@@ -2,4 +2,4 @@
 '@vivliostyle/cli': patch
 ---
 
-Set protocolTimeout
+Set the protocolTimeout option to improve the build stability for larger documents
