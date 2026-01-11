@@ -114,7 +114,7 @@ export async function buildPDF({
 
         handleEntry(response);
 
-        if (300 > response.status() && 200 <= response.status()) return;
+        if (400 > response.status() && 200 <= response.status()) return;
         // file protocol doesn't have status code
         if (response.url().startsWith('file://') && response.ok()) return;
 
