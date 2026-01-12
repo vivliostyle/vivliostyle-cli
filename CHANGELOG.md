@@ -1,5 +1,36 @@
 # @vivliostyle/cli
 
+## 10.3.0
+
+### Minor Changes
+
+- feat: Update Vivliostyle.js to 2.40.0: device-cmyk support and bug fixes ([#721](https://github.com/vivliostyle/vivliostyle-cli/pull/721))
+
+- Support TypeScript configuration file ([#695](https://github.com/vivliostyle/vivliostyle-cli/pull/695))
+
+- Add CMYK color output support for PDF. Please also refer to the example at [examples/cmyk](examples/cmyk). ([#708](https://github.com/vivliostyle/vivliostyle-cli/pull/708))
+
+  - Add `pdfPostprocess.cmyk` config property to specify whether to convert colors to CMYK in the output PDF.
+  - Add `pdfPostprocess.replaceImage` config property to specify images replacement rules during PDF post-processing.
+
+### Patch Changes
+
+- Do not call process.exit() inside 'exit' event handler ([#713](https://github.com/vivliostyle/vivliostyle-cli/pull/713))
+
+- fix: do not log ERROR for HTTP 3xx status codes ([#722](https://github.com/vivliostyle/vivliostyle-cli/pull/722))
+
+- Re-export VFM and readMetadata from @vivliostyle/cli to prevent version mismatch ([#715](https://github.com/vivliostyle/vivliostyle-cli/pull/715))
+
+- Add missing VFM v2.5.0 options to VfmConfig schema ([#696](https://github.com/vivliostyle/vivliostyle-cli/pull/696))
+
+- Change default UID/GID to 1000 for Dev Container compatibility ([#718](https://github.com/vivliostyle/vivliostyle-cli/pull/718))
+
+- Replace local theme directories with symlinks for hot reload support ([#712](https://github.com/vivliostyle/vivliostyle-cli/pull/712))
+
+- Set the protocolTimeout option to improve the build stability for larger documents ([#717](https://github.com/vivliostyle/vivliostyle-cli/pull/717))
+
+- Deprecate `pressReady`, `preflight`, and `preflightOption` config properties in favor of `pdfPostprocess` ([#720](https://github.com/vivliostyle/vivliostyle-cli/pull/720))
+
 ## 10.2.1
 
 ### Patch Changes

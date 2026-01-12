@@ -1,7 +1,7 @@
 {
   "name": "create-book",
   "description": "The fastest way to start writing book with Vivliostyle ecosystem.",
-  "version": "10.2.1",
+  "version": "10.3.0",
   "author": "Vivliostyle Foundation",
   "type": "module",
   "license": "AGPL-3.0",
