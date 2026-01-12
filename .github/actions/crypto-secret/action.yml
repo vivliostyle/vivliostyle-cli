@@ -3,12 +3,8 @@ description: Encrypt or decrypt tokens to securely pass secrets between jobs
 
 inputs:
   mode:
-    type: choice
     description: 'Operation to perform: encrypt or decrypt'
     required: true
-    options:
-      - encrypt
-      - decrypt
   token:
     description: Token to encrypt (when mode is encrypt)
     required: false
