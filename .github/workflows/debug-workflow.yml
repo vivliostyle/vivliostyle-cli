@@ -1,0 +1,53 @@
+name: debug-workflow
+
+on:
+  push:
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    outputs:
+      token: ${{ steps.crypto-secret.outputs.token }}
+      encrypted-token: ${{ steps.crypto-secret.outputs.encrypted-token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Secret
+        id: secret
+        run: |
+          echo "::add-mask::dummydummy"
+          echo "secret=dummydummy" >> $GITHUB_OUTPUT
+      - name: Encrypt app token
+        id: crypto-secret
+        uses: ./.github/actions/crypto-secret
+        with:
+          mode: encrypt
+          token: ${{ steps.secret.outputs.secret }}
+          encryption-key: ${{ secrets.ENCRYPTION_KEY }}
+      - name: Debug output
+        run: |
+          echo "Token: ${{ steps.crypto-secret.outputs.token }}"
+          echo "Encrypted Token: ${{ steps.crypto-secret.outputs.encrypted-token }}"
+
+  job2:
+    needs: job1
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decrypt app token
+        id: crypto-secret
+        uses: ./.github/actions/crypto-secret
+        with:
+          mode: decrypt
+          encrypted-token: ${{ needs.job1.outputs.encrypted-token }}
+          encryption-key: ${{ secrets.ENCRYPTION_KEY }}
+      - name: Debug output
+        run: |
+          echo "Token: ${{ needs.job1.outputs.token }}"
+          echo "Encrypted Token: ${{ needs.job1.outputs.encrypted-token }}"
+          echo "Decrypted Token: ${{ steps.crypto-secret.outputs.decrypted-token }}"
+          if [ "${{ steps.crypto-secret.outputs.decrypted-token }}" = "dummydummy" ]; then
+            echo "Decryption successful: tokens match."
+          else
+            echo "Decryption failed: tokens do not match."
+            exit 1
+          fi

@@ -1,0 +1,57 @@
+name: Crypto Secret
+description: Encrypt or decrypt tokens to securely pass secrets between jobs
+
+inputs:
+  mode:
+    type: choice
+    description: 'Operation to perform: encrypt or decrypt'
+    required: true
+    options:
+      - encrypt
+      - decrypt
+  token:
+    description: Token to encrypt (when mode is encrypt)
+    required: false
+  encrypted-token:
+    description: Base64 encoded encrypted token (when mode is decrypt)
+    required: false
+  encryption-key:
+    description: Encryption key used for AES-256-CBC
+    required: true
+
+outputs:
+  token:
+    description: Plain token (encrypt mode)
+    value: ${{ steps.encrypt.outputs.token }}
+  encrypted-token:
+    description: Encrypted token (encrypt mode) or passthrough (decrypt mode)
+    value: ${{ steps.encrypt.outputs.encrypted-token || steps.decrypt.outputs.encrypted-token }}
+  decrypted-token:
+    description: Decrypted token (decrypt mode)
+    value: ${{ steps.decrypt.outputs.decrypted-token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Encrypt token
+      id: encrypt
+      if: ${{ inputs.mode == 'encrypt' }}
+      shell: bash
+      run: |
+        set -eo pipefail
+        TOKEN="${{ inputs.token }}"
+        ENCRYPTED_TOKEN=$(echo -n "$TOKEN" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ inputs.encryption-key }}" | base64)
+        echo "::add-mask::$TOKEN"
+        echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+        echo "encrypted-token=$ENCRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
+    - name: Decrypt token
+      id: decrypt
+      if: ${{ inputs.mode == 'decrypt' }}
+      shell: bash
+      run: |
+        set -eo pipefail
+        ENCRYPTED_TOKEN="${{ inputs.encrypted-token }}"
+        DECRYPTED_TOKEN=$(echo -n "$ENCRYPTED_TOKEN" | base64 -d | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ inputs.encryption-key }}")
+        echo "::add-mask::$DECRYPTED_TOKEN"
+        echo "encrypted-token=$ENCRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
+        echo "decrypted-token=$DECRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
