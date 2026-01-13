@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { URL } from 'node:url';
 import upath from 'upath';
 import {
@@ -37,6 +38,8 @@ export type ViewerUrlOption = Pick<
   | 'quick'
   | 'viewerParam'
   | 'base'
+  | 'workspaceDir'
+  | 'entryContextDir'
 >;
 
 export function getViewerParams(
@@ -53,6 +56,8 @@ export function getViewerParams(
     quick,
     viewerParam,
     base,
+    workspaceDir,
+    entryContextDir,
   }: ViewerUrlOption,
 ): string {
   const pageSizeValue =
@@ -62,20 +67,67 @@ export function getViewerParams(
     return url.replace(/&/g, '%26');
   }
 
+  // Convert file:// URLs to paths relative to workspaceDir or entryContextDir
+  function resolveStylePath(
+    styleUrl: string,
+    workspaceDir: string,
+    entryContextDir: string,
+  ): string {
+    if (isValidUri(styleUrl)) {
+      // If it's a file:// URL with absolute path (file:///...), convert to relative path
+      if (styleUrl.startsWith('file:///') && typeof workspaceDir === 'string') {
+        try {
+          const stylePath = upath.normalize(fileURLToPath(styleUrl));
+          const normalizedWorkspace = upath.normalize(workspaceDir);
+          const normalizedContext = upath.normalize(entryContextDir);
+          const relativeFromWorkspace = upath.relative(
+            normalizedWorkspace,
+            stylePath,
+          );
+
+          // Check if the style file is inside workspaceDir
+          if (!relativeFromWorkspace.startsWith('..')) {
+            // Inside workspaceDir: use base path
+            return upath.posix.join(base, relativeFromWorkspace);
+          } else {
+            // Outside workspaceDir: check if inside entryContextDir
+            const relativeFromContext = upath.relative(
+              normalizedContext,
+              stylePath,
+            );
+            if (!relativeFromContext.startsWith('..')) {
+              return '/' + upath.posix.normalize(relativeFromContext);
+            } else {
+              // Outside both directories: use filename only
+              // This works because we add the style file's parent directory to static routes
+              const styleFilename = upath.basename(stylePath);
+              return '/' + styleFilename;
+            }
+          }
+        } catch (err) {
+          // If conversion fails, return as-is
+          return styleUrl;
+        }
+      }
+      return styleUrl;
+    }
+    return upath.posix.join(base, styleUrl);
+  }
+
   let viewerParams = src ? `src=${escapeParam(src)}` : '';
   viewerParams += `&bookMode=${!singleDoc}&renderAllPages=${!quick}`;
 
   if (customStyle) {
-    const param = isValidUri(customStyle)
-      ? customStyle
-      : upath.posix.join(base, customStyle);
+    const param = resolveStylePath(customStyle, workspaceDir, entryContextDir);
     viewerParams += `&style=${escapeParam(param)}`;
   }
 
   if (customUserStyle) {
-    const param = isValidUri(customUserStyle)
-      ? customUserStyle
-      : upath.posix.join(base, customUserStyle);
+    const param = resolveStylePath(
+      customUserStyle,
+      workspaceDir,
+      entryContextDir,
+    );
     viewerParams += `&userStyle=${escapeParam(param)}`;
   }
 
@@ -156,13 +208,19 @@ export async function getViewerFullUrl({
   viewerInput,
   base,
   workspaceDir,
+  entryContextDir,
   rootUrl,
   viewer,
   ...config
 }: ViewerUrlOption &
   Pick<
     ResolvedTaskConfig,
-    'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl' | 'viewer'
+    | 'viewerInput'
+    | 'base'
+    | 'workspaceDir'
+    | 'entryContextDir'
+    | 'rootUrl'
+    | 'viewer'
   >) {
   const viewerUrl = viewer
     ? new URL(viewer)
@@ -177,7 +235,7 @@ export async function getViewerFullUrl({
     sourceUrl === EMPTY_DATA_URI
       ? undefined // open Viewer start page
       : sourceUrl,
-    { base, ...config },
+    { base, workspaceDir, entryContextDir, ...config },
   );
   viewerUrl.hash = '';
   return `${viewerUrl.href}#${viewerParams}`;

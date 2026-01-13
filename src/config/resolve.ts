@@ -528,26 +528,21 @@ function parseFileMetadata({
 
 export function parseCustomStyle({
   customStyle,
-  entryContextDir,
+  context,
 }: {
   customStyle: string;
-  entryContextDir: string;
+  context: string;
 }): string {
   if (isValidUri(customStyle)) {
     return customStyle;
   }
-  const stylePath = upath.resolve(entryContextDir, customStyle);
-  if (!pathContains(entryContextDir, stylePath)) {
-    throw Error(
-      `Custom style file ${customStyle} is not in ${entryContextDir}. Make sure the file is located in the context directory or a subdirectory.`,
-    );
-  }
+  // Resolve the style path from context (where the command is executed)
+  const stylePath = upath.resolve(context, customStyle);
   if (!fs.existsSync(stylePath)) {
     throw new Error(`Custom style file not found: ${customStyle}`);
   }
-  return pathToFileURL(stylePath).href.slice(
-    pathToFileURL(entryContextDir).href.replace(/\/$/, '').length + 1,
-  );
+  // Return the absolute file URL - will be converted to relative path later
+  return pathToFileURL(stylePath).href;
 }
 
 export function resolveTaskConfig(
@@ -613,11 +608,11 @@ export function resolveTaskConfig(
 
   const customStyle =
     (options.style &&
-      parseCustomStyle({ customStyle: options.style, entryContextDir })) ||
+      parseCustomStyle({ customStyle: options.style, context })) ||
     undefined;
   const customUserStyle =
     (options.userStyle &&
-      parseCustomStyle({ customStyle: options.userStyle, entryContextDir })) ||
+      parseCustomStyle({ customStyle: options.userStyle, context })) ||
     undefined;
 
   const outputs = ((): OutputConfig[] => {
@@ -895,6 +890,56 @@ export function resolveTaskConfig(
     );
   }
 
+  // Add style file parent directories to static routes if they are outside workspaceDir
+  const finalStaticRoutes = { ...staticRoutes };
+  if (typeof projectConfig.serverRootDir === 'string') {
+    const externalStyleDirs = [customStyle, customUserStyle]
+      .filter((style): style is string => Boolean(style?.startsWith('file://')))
+      .map((style) => {
+        try {
+          const stylePath = fileURLToPath(style);
+          const relativeFromWorkspace = upath.relative(
+            projectConfig.workspaceDir,
+            stylePath,
+          );
+          // Style is external if it's outside workspaceDir
+          if (relativeFromWorkspace.startsWith('..')) {
+            // Check if style is inside entryContextDir
+            const relativeFromContext = upath.relative(
+              entryContextDir,
+              stylePath,
+            );
+            if (
+              !relativeFromContext.startsWith('..') &&
+              !upath.isAbsolute(relativeFromContext)
+            ) {
+              // Inside entryContextDir: add entryContextDir to static routes
+              return entryContextDir;
+            }
+            // Outside both: add style file's parent directory
+            return upath.dirname(stylePath);
+          }
+        } catch {
+          // Ignore errors
+        }
+        return null;
+      })
+      .filter((dir): dir is string => dir !== null)
+      // Remove duplicates
+      .filter((dir, index, self) => self.indexOf(dir) === index);
+
+    if (externalStyleDirs.length > 0) {
+      // Add style file parent directories to serve external style files
+      const existingRoot = finalStaticRoutes['/'];
+      const existingDirs = Array.isArray(existingRoot)
+        ? existingRoot
+        : existingRoot
+          ? [existingRoot]
+          : [];
+      finalStaticRoutes['/'] = [...existingDirs, ...externalStyleDirs];
+    }
+  }
+
   const resolvedConfig = {
     ...projectConfig,
     entryContextDir,
@@ -926,7 +971,7 @@ export function resolveTaskConfig(
     ignoreHttpsErrors,
     base,
     server,
-    static: staticRoutes,
+    static: finalStaticRoutes,
     rootUrl,
     viteConfig,
     viteConfigFile,

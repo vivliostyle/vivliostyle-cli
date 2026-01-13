@@ -41,7 +41,7 @@ Object {
   "cropOffset": undefined,
   "css": undefined,
   "customStyle": "https://vivlostyle.org",
-  "customUserStyle": "theme.css",
+  "customUserStyle": "file://__WORKSPACE__/tests/fixtures/config/theme.css",
   "entries": Array [
     Object {
       "coverImageAlt": "Cover image alt",
@@ -164,6 +164,7 @@ Object {
     "/": Array [
       "root1",
       "root2",
+      "__WORKSPACE__/tests/fixtures/config",
     ],
     "/static": Array [
       "path/to/static",

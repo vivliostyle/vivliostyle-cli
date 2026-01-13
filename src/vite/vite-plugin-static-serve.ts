@@ -35,11 +35,11 @@ export function vsStaticServePlugin({
     name: 'vivliostyle:static-serve',
     apply: () => Boolean(inlineConfig.enableStaticServe),
     configureServer(viteServer) {
-      return () => {
-        createMiddlewares().forEach(([base, middleware]) => {
-          viteServer.middlewares.use(base, middleware);
-        });
-      };
+      // Pre-hook: Register middlewares before Vite's default middlewares
+      const middlewares = createMiddlewares();
+      middlewares.forEach(([base, middleware]) => {
+        viteServer.middlewares.use(base, middleware);
+      });
     },
 
     configurePreviewServer(viteServer) {
