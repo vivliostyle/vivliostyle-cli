@@ -86,7 +86,11 @@ export function getViewerParams(
           );
 
           // Check if the style file is inside workspaceDir
-          if (!relativeFromWorkspace.startsWith('..')) {
+          // On Windows, upath.relative returns absolute path for different drives
+          if (
+            !relativeFromWorkspace.startsWith('..') &&
+            !upath.isAbsolute(relativeFromWorkspace)
+          ) {
             // Inside workspaceDir: use base path
             return upath.posix.join(base, relativeFromWorkspace);
           } else {
@@ -95,7 +99,10 @@ export function getViewerParams(
               normalizedContext,
               stylePath,
             );
-            if (!relativeFromContext.startsWith('..')) {
+            if (
+              !relativeFromContext.startsWith('..') &&
+              !upath.isAbsolute(relativeFromContext)
+            ) {
               return '/' + upath.posix.normalize(relativeFromContext);
             } else {
               // Outside both directories: use filename only

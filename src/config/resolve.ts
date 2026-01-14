@@ -903,7 +903,11 @@ export function resolveTaskConfig(
             stylePath,
           );
           // Style is external if it's outside workspaceDir
-          if (relativeFromWorkspace.startsWith('..')) {
+          // On Windows, upath.relative returns absolute path for different drives
+          if (
+            relativeFromWorkspace.startsWith('..') ||
+            upath.isAbsolute(relativeFromWorkspace)
+          ) {
             // Check if style is inside entryContextDir
             const relativeFromContext = upath.relative(
               entryContextDir,
