@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 10.3.1
+
+### Patch Changes
+
+- Fix taskkill error on Windows when exiting with Ctrl+C ([#726](https://github.com/vivliostyle/vivliostyle-cli/pull/726))
+
 ## 10.3.0
 
 ### Minor Changes
