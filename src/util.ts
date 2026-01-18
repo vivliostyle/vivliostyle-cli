@@ -234,7 +234,8 @@ export function pathEquals(path1: string, path2: string): boolean {
 
 export function pathContains(parentPath: string, childPath: string): boolean {
   const rel = upath.relative(parentPath, childPath);
-  return rel !== '' && !rel.startsWith('..');
+  // If relative path is absolute (different drives on Windows), they are not related
+  return rel !== '' && !rel.startsWith('..') && !upath.isAbsolute(rel);
 }
 
 export function isValidUri(str: string): boolean {
