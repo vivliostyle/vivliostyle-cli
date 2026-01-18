@@ -178,6 +178,7 @@ export function vsDevServerPlugin({
     const serveAssets = sirv(config.entryContextDir, {
       dev: true,
       etag: false,
+      dotfiles: false,
       extensions: [],
     });
     const serveAssetsMatcher = getAssetMatcher({
@@ -437,7 +438,21 @@ export function vsDevServerPlugin({
       return () => {
         viteServer.middlewares.use(
           config.base,
-          sirv(config.workspaceDir, { dev: true, etag: false, extensions: [] }),
+          sirv(config.workspaceDir, {
+            dev: true,
+            etag: false,
+            dotfiles: true,
+            extensions: [],
+          }),
+        );
+        viteServer.middlewares.use(
+          config.base,
+          sirv(config.entryContextDir, {
+            dev: true,
+            etag: false,
+            dotfiles: false,
+            extensions: [],
+          }),
         );
       };
     },
