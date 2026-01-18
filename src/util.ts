@@ -47,14 +47,16 @@ export async function exec(
   return subprocess;
 }
 
-const beforeExitHandlers: (() => void)[] = [];
+const beforeExitHandlers: (() => void | Promise<void>)[] = [];
+let exitHandlersRun = false;
+
 export const registerExitHandler = (
   debugMessage: string,
-  handler: () => void,
+  handler: () => void | Promise<void>,
 ) => {
   const callback = () => {
     Logger.debug(debugMessage);
-    handler();
+    return handler();
   };
   beforeExitHandlers.push(callback);
   return () => {
@@ -65,20 +67,33 @@ export const registerExitHandler = (
   };
 };
 
-export function runExitHandlers() {
+export async function runExitHandlers() {
+  if (exitHandlersRun) return;
+  exitHandlersRun = true;
   while (beforeExitHandlers.length) {
     try {
-      beforeExitHandlers.shift()?.();
+      await beforeExitHandlers.shift()?.();
     } catch (e) {
       // NOOP
     }
   }
 }
 
-const exitSignals = ['exit', 'SIGINT', 'SIGTERM'];
+// Windows does not support SIGINT/SIGTERM signals natively, so only register 'exit'
+// On other platforms, register all signals
+const exitSignals =
+  process.platform === 'win32' ? ['exit'] : ['exit', 'SIGINT', 'SIGTERM'];
+
 exitSignals.forEach((sig) => {
-  process.once(sig, (signal?: string | number, exitCode?: number) => {
-    runExitHandlers();
+  process.once(sig, async (signal?: string | number, exitCode?: number) => {
+    // For signals (not 'exit'), wait for handlers to complete
+    if (sig !== 'exit') {
+      await runExitHandlers();
+    } else {
+      // For 'exit' event, run handlers synchronously (non-blocking)
+      // as async operations cannot be awaited in 'exit' handler
+      void runExitHandlers();
+    }
     if (process.exitCode === undefined) {
       process.exitCode =
         exitCode !== undefined ? 128 + exitCode : Number(signal);
@@ -98,9 +113,10 @@ if (process.platform === 'win32') {
     input: process.stdin,
     output: process.stdout,
   });
-  rl.on('SIGINT', () => {
-    runExitHandlers();
-    process.exit(1);
+  rl.on('SIGINT', async () => {
+    await runExitHandlers();
+    // Exit code 130 = 128 + SIGINT (2)
+    process.exit(130);
   });
   registerExitHandler('Closing readline interface', () => {
     rl.close();
