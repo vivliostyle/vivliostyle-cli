@@ -148,12 +148,7 @@ async function launchBrowser({
     env: { ...process.env, LANG: 'en.UTF-8' },
   });
   registerExitHandler('Closing browser', async () => {
-    try {
-      await browser.close();
-    } catch (err) {
-      // Ignore errors during browser close on exit
-      // The browser process might already be terminated
-    }
+    await browser.close();
   });
   const [browserContext] = browser.browserContexts();
   return { browser, browserContext };
