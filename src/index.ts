@@ -17,7 +17,7 @@ export {
   defaultXhtmlProcessor,
   type HtmlOptions,
   type HtmlProcessorFactory,
-} from './processor/html-processor.js';
+} from './processor/html/processor.js';
 // Rehype plugins
 export {
   toc,

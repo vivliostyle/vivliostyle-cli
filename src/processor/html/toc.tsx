@@ -1,4 +1,10 @@
-import type { Content, Element as HElement, ElementContent, Root } from 'hast';
+import type {
+  Content,
+  Element as HElement,
+  ElementContent,
+  Root,
+  RootContent,
+} from 'hast';
 import { toHtml } from 'hast-util-to-html';
 import { h } from 'hastscript';
 import { u } from 'unist-builder';
@@ -214,6 +220,33 @@ export function toc(options: TocOptions = {}) {
 }
 
 /**
+ * Generate default ToC hast tree
+ */
+export function generateDefaultTocTree({
+  language,
+  title,
+}: {
+  language?: string;
+  title?: string;
+}): Root {
+  return u('root', [
+    (
+      <html lang={language}>
+        <head>
+          <meta charset="utf-8" />
+          <title>{title || ''}</title>
+          <style data-vv-style></style>
+        </head>
+        <body>
+          <h1>{title || ''}</h1>
+          <nav id="toc" role="doc-toc" />
+        </body>
+      </html>
+    ) as RootContent,
+  ]);
+}
+
+/**
  * Generate default ToC HTML template
  */
 export function generateDefaultTocHtml({
@@ -223,20 +256,7 @@ export function generateDefaultTocHtml({
   language?: string;
   title?: string;
 }) {
-  const html = (
-    <html lang={language}>
-      <head>
-        <meta charset="utf-8" />
-        <title>{title || ''}</title>
-        <style data-vv-style></style>
-      </head>
-      <body>
-        <h1>{title || ''}</h1>
-        <nav id="toc" role="doc-toc" />
-      </body>
-    </html>
-  );
-  return toHtml(html);
+  return toHtml(generateDefaultTocTree({ language, title }));
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { Element } from 'hast';
+import type { Element, Root, RootContent } from 'hast';
 import { toHtml } from 'hast-util-to-html';
 import { u } from 'unist-builder';
 import { SKIP, visit } from 'unist-util-visit';
@@ -82,6 +82,34 @@ export function cover(options: CoverOptions) {
 }
 
 /**
+ * Generate default cover hast tree
+ */
+export function generateDefaultCoverTree({
+  language,
+  title,
+}: {
+  language?: string;
+  title?: string;
+}): Root {
+  return u('root', [
+    (
+      <html lang={language}>
+        <head>
+          <meta charset="utf-8" />
+          <title>{title || ''}</title>
+          <style data-vv-style></style>
+        </head>
+        <body>
+          <section role="region" aria-label="Cover">
+            <img role="doc-cover" />
+          </section>
+        </body>
+      </html>
+    ) as RootContent,
+  ]);
+}
+
+/**
  * Generate default cover HTML template
  */
 export function generateDefaultCoverHtml({
@@ -91,19 +119,5 @@ export function generateDefaultCoverHtml({
   language?: string;
   title?: string;
 }) {
-  const html = (
-    <html lang={language}>
-      <head>
-        <meta charset="utf-8" />
-        <title>{title || ''}</title>
-        <style data-vv-style></style>
-      </head>
-      <body>
-        <section role="region" aria-label="Cover">
-          <img role="doc-cover" />
-        </section>
-      </body>
-    </html>
-  );
-  return toHtml(html);
+  return toHtml(generateDefaultCoverTree({ language, title }));
 }

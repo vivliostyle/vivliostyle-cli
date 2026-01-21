@@ -99,10 +99,10 @@ type VivliostyleConfigSchema =
   - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
     Custom function to extract metadata from the source document content.
 
-  - `htmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+  - `htmlProcessor`: (options: import("../processor/html/processor.js").HtmlOptions) => import("unified").Processor  
     Custom function to provide a unified Processor for transforming HTML documents.
 
-  - `xhtmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+  - `xhtmlProcessor`: (options: import("../processor/html/processor.js").HtmlOptions) => import("unified").Processor  
     Custom function to provide a unified Processor for transforming XHTML documents.
 
   - `vfm`: [VfmConfig](#vfmconfig)  
@@ -195,10 +195,10 @@ type BuildTask = {
     content: string,
   ) => import("@vivliostyle/vfm").Metadata;
   htmlProcessor?: (
-    options: import("../processor/html-processor.js").HtmlOptions,
+    options: import("../processor/html/processor.js").HtmlOptions,
   ) => import("unified").Processor;
   xhtmlProcessor?: (
-    options: import("../processor/html-processor.js").HtmlOptions,
+    options: import("../processor/html/processor.js").HtmlOptions,
   ) => import("unified").Processor;
   vfm?: VfmConfig;
   image?: string;
@@ -356,10 +356,10 @@ type CoverEntryConfig = {
   - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
     Custom function to extract metadata from the source document content.
 
-  - `htmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+  - `htmlProcessor`: (options: import("../processor/html/processor.js").HtmlOptions) => import("unified").Processor  
     Custom function to provide a unified Processor for transforming HTML documents.
 
-  - `xhtmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+  - `xhtmlProcessor`: (options: import("../processor/html/processor.js").HtmlOptions) => import("unified").Processor  
     Custom function to provide a unified Processor for transforming XHTML documents.
 
 #### Type definition
@@ -383,10 +383,10 @@ type ArticleEntryConfig = {
     content: string,
   ) => import("@vivliostyle/vfm").Metadata;
   htmlProcessor?: (
-    options: import("../processor/html-processor.js").HtmlOptions,
+    options: import("../processor/html/processor.js").HtmlOptions,
   ) => import("unified").Processor;
   xhtmlProcessor?: (
-    options: import("../processor/html-processor.js").HtmlOptions,
+    options: import("../processor/html/processor.js").HtmlOptions,
   ) => import("unified").Processor;
 };
 ```

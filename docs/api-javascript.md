@@ -6,21 +6,23 @@
 ### Functions
 
 - [`build`](#build)
+- [`cover`](#cover)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
+- [`generateDefaultCoverHtml`](#generatedefaultcoverhtml)
+- [`generateDefaultTocHtml`](#generatedefaulttochtml)
 - [`preview`](#preview)
-- [`rehypeCover`](#rehypecover)
-- [`rehypeToc`](#rehypetoc)
+- [`toc`](#toc)
 - [`VFM`](#vfm)
 
 ### Interfaces
 
+- [`CoverOptions`](#coveroptions)
 - [`HtmlOptions`](#htmloptions)
-- [`RehypeCoverOptions`](#rehypecoveroptions)
-- [`RehypeTocOptions`](#rehypetocoptions)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
+- [`TocOptions`](#tocoptions)
 
 ### Type Aliases
 
@@ -274,6 +276,34 @@ build({
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### cover()
+
+> **cover**(`options`): (`tree`) => `void`
+
+Rehype plugin to set cover image on <img role="doc-cover">
+
+#### Parameters
+
+##### options
+
+[`CoverOptions`](#coveroptions)
+
+#### Returns
+
+> (`tree`): `void`
+
+##### Parameters
+
+###### tree
+
+`any`
+
+##### Returns
+
+`void`
 
 ***
 
@@ -749,6 +779,54 @@ Define the configuration for Vivliostyle CLI.
 
 ***
 
+### generateDefaultCoverHtml()
+
+> **generateDefaultCoverHtml**(`__namedParameters`): `string`
+
+Generate default cover HTML template
+
+#### Parameters
+
+##### \_\_namedParameters
+
+###### language?
+
+`string`
+
+###### title?
+
+`string`
+
+#### Returns
+
+`string`
+
+***
+
+### generateDefaultTocHtml()
+
+> **generateDefaultTocHtml**(`__namedParameters`): `string`
+
+Generate default ToC HTML template
+
+#### Parameters
+
+##### \_\_namedParameters
+
+###### language?
+
+`string`
+
+###### title?
+
+`string`
+
+#### Returns
+
+`string`
+
+***
+
 ### preview()
 
 > **preview**(`options`): `Promise`\<`ViteDevServer`\>
@@ -977,37 +1055,9 @@ Open a browser for previewing the publication.
 
 ***
 
-### rehypeCover()
+### toc()
 
-> **rehypeCover**(`options`): (`tree`) => `void`
-
-Rehype plugin to set cover image on <img role="doc-cover">
-
-#### Parameters
-
-##### options
-
-[`RehypeCoverOptions`](#rehypecoveroptions)
-
-#### Returns
-
-> (`tree`): `void`
-
-##### Parameters
-
-###### tree
-
-`any`
-
-##### Returns
-
-`void`
-
-***
-
-### rehypeToc()
-
-> **rehypeToc**(`options`): (`tree`) => `Promise`\<`void`\>
+> **toc**(`options`): (`tree`) => `Promise`\<`void`\>
 
 Rehype plugin to inject table of contents into <nav role="doc-toc">
 
@@ -1015,7 +1065,7 @@ Rehype plugin to inject table of contents into <nav role="doc-toc">
 
 ##### options
 
-[`RehypeTocOptions`](#rehypetocoptions) = `{}`
+[`TocOptions`](#tocoptions) = `{}`
 
 #### Returns
 
@@ -1059,20 +1109,7 @@ Unified processor.
 
 ## Interfaces
 
-### HtmlOptions
-
-#### Properties
-
-| Property | Type | Description |
-| ------ | ------ | ------ |
-| <a id="contenttype"></a> `contentType?` | `"text/html"` \| `"application/xhtml+xml"` | Content type: 'text/html' or 'application/xhtml+xml' |
-| <a id="language"></a> `language?` | `string` | Document language (sets html lang if not present) |
-| <a id="style"></a> `style?` | `string`[] | Paths to stylesheets to inject |
-| <a id="title"></a> `title?` | `string` | Document title (sets <title> if not present) |
-
-***
-
-### RehypeCoverOptions
+### CoverOptions
 
 #### Extends
 
@@ -1088,21 +1125,16 @@ Unified processor.
 
 ***
 
-### RehypeTocOptions
-
-#### Extends
-
-- `TocStyleOptions`
+### HtmlOptions
 
 #### Properties
 
 | Property | Type | Description |
 | ------ | ------ | ------ |
-| <a id="manifestpath"></a> `manifestPath?` | `string` | Manifest path for publication link (relative to distDir) |
-| <a id="pagebreakbefore-1"></a> `pageBreakBefore?` | `"left"` \| `"right"` \| `"recto"` \| `"verso"` | Page break behavior |
-| <a id="pagecounterreset"></a> `pageCounterReset?` | `number` | Page counter reset value |
-| <a id="toccontent"></a> `tocContent?` | `HastElement` | ToC content as hast elements (pre-generated) |
-| <a id="toctitle"></a> `tocTitle?` | `string` | Title for the table of contents |
+| <a id="contenttype"></a> `contentType?` | `"text/html"` \| `"application/xhtml+xml"` | Content type: 'text/html' or 'application/xhtml+xml' |
+| <a id="language"></a> `language?` | `string` | Document language (sets html lang if not present) |
+| <a id="style"></a> `style?` | `string`[] | Paths to stylesheets to inject |
+| <a id="title"></a> `title?` | `string` | Document title (sets <title> if not present) |
 
 ***
 
@@ -1197,6 +1229,24 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="viewerparam"></a> `viewerParam?` | `string` |
 | <a id="vite"></a> `vite?` | `UserConfig` |
 | <a id="viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
+
+***
+
+### TocOptions
+
+#### Extends
+
+- `TocStyleOptions`
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="manifestpath"></a> `manifestPath?` | `string` | Manifest path for publication link (relative to distDir) |
+| <a id="pagebreakbefore-1"></a> `pageBreakBefore?` | `"left"` \| `"right"` \| `"recto"` \| `"verso"` | Page break behavior |
+| <a id="pagecounterreset"></a> `pageCounterReset?` | `number` | Page counter reset value |
+| <a id="toccontent"></a> `tocContent?` | `HastElement` | ToC content as hast elements (pre-generated) |
+| <a id="toctitle"></a> `tocTitle?` | `string` | Title for the table of contents |
 
 ## Type Aliases
 

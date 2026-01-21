@@ -8,7 +8,7 @@ import {
   defaultHtmlProcessor,
   defaultXhtmlProcessor,
   type HtmlProcessorFactory,
-} from '../processor/html-processor.js';
+} from '../processor/html/processor.js';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';

@@ -1,7 +1,6 @@
 import jsdom, { JSDOM } from '@vivliostyle/jsdom';
 import { copy, move } from 'fs-extra/esm';
 import fs from 'node:fs';
-import type { PluggableList } from 'unified';
 import upath from 'upath';
 import serializeToXml from 'w3c-xmlserializer';
 import MIMEType from 'whatwg-mimetype';
@@ -25,8 +24,9 @@ import {
   registerExitHandler,
   writeFileIfChanged,
 } from '../util.js';
-import { cover, generateDefaultCoverHtml } from './html/cover.js';
-import { generateDefaultTocHtml, generateTocContent, toc } from './html/toc.js';
+import { generateDefaultCoverTree } from './html/cover.js';
+import { getRelPlugin } from './html/rel.js';
+import { generateDefaultTocTree } from './html/toc.js';
 import {
   createVirtualConsole,
   getJsdomFromString,
@@ -38,7 +38,8 @@ import {
   defaultXhtmlProcessor,
   processHtml,
   processHtmlString,
-} from './html-processor.js';
+  processHtmlTree,
+} from './html/processor.js';
 import { processMarkdown } from './markdown.js';
 import {
   checkThemeInstallationNecessity,
@@ -160,71 +161,6 @@ export async function prepareThemeDirectory({
 
   // Return all local theme paths (symlink targets in node_modules)
   return getLocalThemePaths({ themesDir });
-}
-
-async function getRelPlugin(
-  entry: ParsedEntry,
-  {
-    entries,
-    manifestPath,
-    entryContextDir,
-    workspaceDir,
-  }: {
-    entries: ParsedEntry[];
-    manifestPath: string;
-    entryContextDir: string;
-    workspaceDir: string;
-  },
-): Promise<PluggableList> {
-  if (entry.rel === 'contents') {
-    const contentsEntry = entry as ContentsEntry;
-    const manuscriptEntries = entries.filter(
-      (e): e is ManuscriptEntry => 'source' in e,
-    );
-    const distDir = upath.dirname(contentsEntry.target);
-    const tocContent = await generateTocContent({
-      entries: manuscriptEntries,
-      distDir,
-      sectionDepth: contentsEntry.sectionDepth,
-      transform: contentsEntry.transform,
-    });
-    return [
-      [
-        toc,
-        {
-          tocTitle: contentsEntry.tocTitle,
-          tocContent,
-          manifestPath: upath.relative(distDir, manifestPath),
-          pageBreakBefore: contentsEntry.pageBreakBefore,
-          pageCounterReset: contentsEntry.pageCounterReset,
-        },
-      ],
-    ];
-  }
-
-  if (entry.rel === 'cover') {
-    const coverEntry = entry as CoverEntry;
-    const imageSrc = upath.relative(
-      upath.join(
-        entryContextDir,
-        upath.relative(workspaceDir, coverEntry.target),
-        '..',
-      ),
-      coverEntry.coverImageSrc,
-    );
-    return [
-      [
-        cover,
-        {
-          src: imageSrc,
-          alt: coverEntry.coverImageAlt,
-          pageBreakBefore: coverEntry.pageBreakBefore,
-        },
-      ],
-    ];
-  }
-
-  return [];
 }
 
 export async function transformManuscript(
@@ -353,13 +289,13 @@ export async function transformManuscript(
     }
   } else if (entry.rel === 'contents' || entry.rel === 'cover') {
     // Template-less generation
-    const defaultHtml =
+    const defaultTree =
       entry.rel === 'contents'
-        ? generateDefaultTocHtml({ language, title })
-        : generateDefaultCoverHtml({ language, title: entry.title });
-    const vfile = await processHtmlString(
+        ? generateDefaultTocTree({ language, title })
+        : generateDefaultCoverTree({ language, title: entry.title });
+    const vfile = await processHtmlTree(
       (opts) => defaultHtmlProcessor(opts).use(relPlugin),
-      defaultHtml,
+      defaultTree,
       {
         style,
         title: entry.rel === 'contents' ? title : entry.title,

@@ -94,11 +94,11 @@ export const DocumentMetadataReaderSchema = v.pipe(
 
 export const HtmlProcessorSchema = v.pipe(
   v.function() as v.GenericSchema<
-    (options: import('../processor/html-processor.js').HtmlOptions) => Processor
+    (options: import('../processor/html/processor.js').HtmlOptions) => Processor
   >,
   v.metadata({
     typeString:
-      '(options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor',
+      '(options: import("../processor/html/processor.js").HtmlOptions) => import("unified").Processor',
   }),
   v.description($`
     Custom function to provide a unified Processor for transforming HTML documents.
@@ -107,11 +107,11 @@ export const HtmlProcessorSchema = v.pipe(
 
 export const XhtmlProcessorSchema = v.pipe(
   v.function() as v.GenericSchema<
-    (options: import('../processor/html-processor.js').HtmlOptions) => Processor
+    (options: import('../processor/html/processor.js').HtmlOptions) => Processor
   >,
   v.metadata({
     typeString:
-      '(options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor',
+      '(options: import("../processor/html/processor.js").HtmlOptions) => import("unified").Processor',
   }),
   v.description($`
     Custom function to provide a unified Processor for transforming XHTML documents.

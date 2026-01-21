@@ -159,3 +159,13 @@ export async function processHtmlString(
   const processor = processorFactory(options);
   return processor.process(vfile({ contents }));
 }
+
+export async function processHtmlTree(
+  processorFactory: HtmlProcessorFactory,
+  tree: hast.Root,
+  options: HtmlOptions = {},
+): Promise<VFile> {
+  const processor = processorFactory(options);
+  const transformedTree = await processor.run(tree);
+  return vfile({ contents: processor.stringify(transformedTree) });
+}
