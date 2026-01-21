@@ -1065,7 +1065,7 @@ Rehype plugin to inject table of contents into <nav role="doc-toc">
 
 ##### options
 
-[`TocOptions`](#tocoptions) = `{}`
+[`TocOptions`](#tocoptions)
 
 #### Returns
 
@@ -1242,11 +1242,14 @@ Option for convert Markdown to a stringify (HTML).
 
 | Property | Type | Description |
 | ------ | ------ | ------ |
+| <a id="distdir"></a> `distDir` | `string` | Directory where the ToC file is located |
+| <a id="entries"></a> `entries` | `Pick`\<`ManuscriptEntry`, `"title"` \| `"target"`\>[] | Manuscript entries for ToC generation |
 | <a id="manifestpath"></a> `manifestPath?` | `string` | Manifest path for publication link (relative to distDir) |
 | <a id="pagebreakbefore-1"></a> `pageBreakBefore?` | `"left"` \| `"right"` \| `"recto"` \| `"verso"` | Page break behavior |
 | <a id="pagecounterreset"></a> `pageCounterReset?` | `number` | Page counter reset value |
-| <a id="toccontent"></a> `tocContent?` | `HastElement` | ToC content as hast elements (pre-generated) |
+| <a id="sectiondepth"></a> `sectionDepth?` | `number` | Depth of sections to include |
 | <a id="toctitle"></a> `tocTitle?` | `string` | Title for the table of contents |
+| <a id="transform"></a> `transform?` | `Partial`\<\{ `transformDocumentList`: (`nodeList`) => (`propsList`) => `HastElement`; `transformSectionList`: (`nodeList`) => (`propsList`) => `HastElement`; \}\> | Transform functions for ToC generation |
 
 ## Type Aliases
 

@@ -7,9 +7,9 @@ import type {
   ParsedEntry,
 } from '../../config/resolve.js';
 import { cover } from './cover.js';
-import { generateTocContent, toc } from './toc.js';
+import { toc } from './toc.js';
 
-export async function getRelPlugin(
+export function getRelPlugin(
   entry: ParsedEntry,
   {
     entries,
@@ -22,25 +22,22 @@ export async function getRelPlugin(
     entryContextDir: string;
     workspaceDir: string;
   },
-): Promise<PluggableList> {
+): PluggableList {
   if (entry.rel === 'contents') {
     const contentsEntry = entry as ContentsEntry;
     const manuscriptEntries = entries.filter(
       (e): e is ManuscriptEntry => 'source' in e,
     );
     const distDir = upath.dirname(contentsEntry.target);
-    const tocContent = await generateTocContent({
-      entries: manuscriptEntries,
-      distDir,
-      sectionDepth: contentsEntry.sectionDepth,
-      transform: contentsEntry.transform,
-    });
     return [
       [
         toc,
         {
           tocTitle: contentsEntry.tocTitle,
-          tocContent,
+          entries: manuscriptEntries,
+          distDir,
+          sectionDepth: contentsEntry.sectionDepth,
+          transform: contentsEntry.transform,
           manifestPath: upath.relative(distDir, manifestPath),
           pageBreakBefore: contentsEntry.pageBreakBefore,
           pageCounterReset: contentsEntry.pageCounterReset,

@@ -189,7 +189,7 @@ export async function transformManuscript(
     locateThemePath(theme, upath.dirname(entry.target)),
   );
 
-  const relPlugin = await getRelPlugin(entry, {
+  const relPlugin = getRelPlugin(entry, {
     entries,
     manifestPath,
     entryContextDir,

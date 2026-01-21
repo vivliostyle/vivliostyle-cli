@@ -5,6 +5,7 @@ import type {
   Root,
   RootContent,
 } from 'hast';
+import { select } from 'hast-util-select';
 import { toHtml } from 'hast-util-to-html';
 import { h } from 'hastscript';
 import { u } from 'unist-builder';
@@ -29,8 +30,14 @@ export interface TocStyleOptions {
 export interface TocOptions extends TocStyleOptions {
   /** Title for the table of contents */
   tocTitle?: string;
-  /** ToC content as hast elements (pre-generated) */
-  tocContent?: HastElement;
+  /** Manuscript entries for ToC generation */
+  entries: Pick<ManuscriptEntry, 'target' | 'title'>[];
+  /** Directory where the ToC file is located */
+  distDir: string;
+  /** Depth of sections to include */
+  sectionDepth?: number;
+  /** Transform functions for ToC generation */
+  transform?: Partial<typeof defaultTocTransform>;
   /** Manifest path for publication link (relative to distDir) */
   manifestPath?: string;
 }
@@ -127,10 +134,13 @@ export const defaultTocTransform = {
 /**
  * Rehype plugin to inject table of contents into <nav role="doc-toc">
  */
-export function toc(options: TocOptions = {}) {
+export function toc(options: TocOptions) {
   const {
     tocTitle,
-    tocContent,
+    entries,
+    distDir,
+    sectionDepth = 0,
+    transform,
     manifestPath,
     pageBreakBefore,
     pageCounterReset,
@@ -141,31 +151,23 @@ export function toc(options: TocOptions = {}) {
   return async (tree: any) => {
     // Add publication manifest link if not present
     if (manifestPath) {
-      let hasManifestLink = false;
-      visit(tree, 'element', (node: HElement) => {
-        if (
-          node.tagName === 'link' &&
-          node.properties?.rel === 'publication' &&
-          node.properties?.type === 'application/ld+json'
-        ) {
-          hasManifestLink = true;
+      const manifestLink = select(
+        'link[rel="publication"][type="application/ld+json"]',
+        tree,
+      );
+      if (!manifestLink) {
+        const head = select('head', tree);
+        if (head) {
+          head.children.push(
+            (
+              <link
+                rel="publication"
+                type="application/ld+json"
+                href={encodeURI(manifestPath)}
+              />
+            ) as ElementContent,
+          );
         }
-      });
-
-      if (!hasManifestLink) {
-        visit(tree, 'element', (node: HElement) => {
-          if (node.tagName === 'head') {
-            node.children.push(
-              (
-                <link
-                  rel="publication"
-                  type="application/ld+json"
-                  href={encodeURI(manifestPath)}
-                />
-              ) as ElementContent,
-            );
-          }
-        });
       }
     }
 
@@ -186,36 +188,37 @@ export function toc(options: TocOptions = {}) {
     });
 
     // Find nav element and inject ToC content
-    // Check if nav has no meaningful content (empty or whitespace-only text nodes)
-    const isNavEmpty = (node: HElement): boolean => {
-      return node.children.every(
+    const nav = select('nav, [role="doc-toc"]', tree);
+    if (nav) {
+      // Check if nav has no meaningful content (empty or whitespace-only text nodes)
+      const isNavEmpty = nav.children.every(
         (child) => child.type === 'text' && child.value.trim() === '',
       );
-    };
+      if (isNavEmpty) {
+        // Generate ToC content
+        const tocContent = await generateTocContent({
+          entries,
+          distDir,
+          sectionDepth,
+          transform,
+        });
 
-    visit(tree, 'element', (node: HElement) => {
-      if (
-        (node.tagName === 'nav' || node.properties?.role === 'doc-toc') &&
-        isNavEmpty(node)
-      ) {
         // Clear any whitespace-only text nodes
-        node.children = [];
+        nav.children = [];
 
         // Add title heading
         if (tocTitle) {
-          node.children.push((<h2>{tocTitle}</h2>) as ElementContent);
+          nav.children.push((<h2>{tocTitle}</h2>) as ElementContent);
         }
 
         // Add ToC content
-        if (tocContent) {
-          if (Array.isArray(tocContent)) {
-            node.children.push(...(tocContent as ElementContent[]));
-          } else {
-            node.children.push(tocContent as ElementContent);
-          }
+        if (Array.isArray(tocContent)) {
+          nav.children.push(...(tocContent as ElementContent[]));
+        } else {
+          nav.children.push(tocContent as ElementContent);
         }
       }
-    });
+    }
   };
 }
 
@@ -262,7 +265,7 @@ export function generateDefaultTocHtml({
 /**
  * Generate ToC content as hast elements
  */
-export async function generateTocContent({
+async function generateTocContent({
   entries,
   distDir,
   sectionDepth,
@@ -320,14 +323,4 @@ export async function generateTocContent({
   );
 
   return docToc;
-}
-
-/**
- * Generate ToC list section as HTML string
- */
-export async function generateTocListSection(
-  options: Parameters<typeof generateTocContent>[0],
-): Promise<string> {
-  const docToc = await generateTocContent(options);
-  return toHtml(docToc, { allowDangerousHtml: true });
 }

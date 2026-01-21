@@ -1,4 +1,5 @@
 import type { Element, Root, RootContent } from 'hast';
+import { select } from 'hast-util-select';
 import { toHtml } from 'hast-util-to-html';
 import { u } from 'unist-builder';
 import { SKIP, visit } from 'unist-util-visit';
@@ -70,14 +71,13 @@ export function cover(options: CoverOptions) {
     });
 
     // Find img[role="doc-cover"] and set src/alt
-    visit(tree, 'element', (node: Element) => {
-      if (node.tagName === 'img' && node.properties?.role === 'doc-cover') {
-        node.properties.src = encodeURI(src);
-        if (alt !== undefined) {
-          node.properties.alt = alt;
-        }
+    const img = select('img[role="doc-cover"]', tree);
+    if (img?.properties) {
+      img.properties.src = encodeURI(src);
+      if (alt !== undefined) {
+        img.properties.alt = alt;
       }
-    });
+    }
   };
 }
 

@@ -50,6 +50,7 @@
     "fs-extra": "11.2.0",
     "github-slugger": "2.0.0",
     "handlebars": "4.7.8",
+    "hast-util-select": "^5.0.5",
     "hast-util-to-html": "8.0.4",
     "hastscript": "7.2.0",
     "lcid": "5.0.0",
