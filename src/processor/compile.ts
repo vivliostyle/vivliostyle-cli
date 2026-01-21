@@ -24,17 +24,22 @@ import {
   registerExitHandler,
   writeFileIfChanged,
 } from '../util.js';
+import { generateDefaultCoverTree } from './html/cover.js';
+import { getRelPlugin } from './html/rel.js';
+import { generateDefaultTocTree } from './html/toc.js';
 import {
   createVirtualConsole,
-  generateDefaultCoverHtml,
-  generateDefaultTocHtml,
   getJsdomFromString,
   getJsdomFromUrlOrFile,
-  processCoverHtml,
-  processManuscriptHtml,
-  processTocHtml,
   ResourceLoader,
 } from './html.js';
+import {
+  defaultHtmlProcessor,
+  defaultXhtmlProcessor,
+  processHtml,
+  processHtmlString,
+  processHtmlTree,
+} from './html/processor.js';
 import { processMarkdown } from './markdown.js';
 import {
   checkThemeInstallationNecessity,
@@ -184,11 +189,19 @@ export async function transformManuscript(
     locateThemePath(theme, upath.dirname(entry.target)),
   );
 
+  const relPlugin = getRelPlugin(entry, {
+    entries,
+    manifestPath,
+    entryContextDir,
+    workspaceDir,
+  });
+
   if (source?.type === 'file') {
     if (source.documentProcessor) {
       // Process with a configured document processor
       const vfile = await processMarkdown(
-        source.documentProcessor.processorFactory,
+        (opts, meta) =>
+          source.documentProcessor!.processorFactory(opts, meta).use(relPlugin),
         source.documentProcessor.metadataReader,
         source.pathname,
         {
@@ -203,12 +216,20 @@ export async function transformManuscript(
       source.contentType === 'text/html' ||
       source.contentType === 'application/xhtml+xml'
     ) {
-      content = await getJsdomFromUrlOrFile({ src: source.pathname });
-      content = await processManuscriptHtml(content, {
-        style,
-        title: entry.title,
+      const baseProcessor = source.htmlProcessor ?? defaultHtmlProcessor;
+      const vfile = await processHtml(
+        (opts) => baseProcessor(opts).use(relPlugin),
+        source.pathname,
+        {
+          style,
+          title: entry.rel === 'contents' ? title : entry.title,
+          contentType: source.contentType,
+          language,
+        },
+      );
+      content = getJsdomFromString({
+        html: String(vfile),
         contentType: source.contentType,
-        language,
       });
     } else {
       if (!pathEquals(source.pathname, entry.target)) {
@@ -238,77 +259,55 @@ export async function transformManuscript(
     const contentFetcher = resourceLoader.fetcherMap.get(resourceUrl);
     if (contentFetcher) {
       const buffer = await contentFetcher;
-      const contentType = contentFetcher.response?.headers['content-type'];
-      if (!contentType || new MIMEType(contentType).essence !== 'text/html') {
+      const contentTypeHeader =
+        contentFetcher.response?.headers['content-type'];
+      const contentType = contentTypeHeader
+        ? new MIMEType(contentTypeHeader).essence
+        : undefined;
+      if (
+        contentType !== 'text/html' &&
+        contentType !== 'application/xhtml+xml'
+      ) {
         throw new Error(`The content is not an HTML document: ${resourceUrl}`);
       }
-      content = getJsdomFromString({ html: buffer.toString('utf8') });
-      content = await processManuscriptHtml(content, {
+
+      const baseProcessor =
+        contentType === 'application/xhtml+xml'
+          ? (source.xhtmlProcessor ?? defaultXhtmlProcessor)
+          : (source.htmlProcessor ?? defaultHtmlProcessor);
+      const vfile = await processHtmlString(
+        (opts) => baseProcessor(opts).use(relPlugin),
+        buffer.toString('utf8'),
+        {
+          style,
+          title: entry.rel === 'contents' ? title : entry.title,
+          contentType,
+          language,
+        },
+      );
+      content = getJsdomFromString({ html: String(vfile) });
+    }
+  } else if (entry.rel === 'contents' || entry.rel === 'cover') {
+    // Template-less generation
+    const defaultTree =
+      entry.rel === 'contents'
+        ? generateDefaultTocTree({ language, title })
+        : generateDefaultCoverTree({ language, title: entry.title });
+    const vfile = await processHtmlTree(
+      (opts) => defaultHtmlProcessor(opts).use(relPlugin),
+      defaultTree,
+      {
         style,
-        title: entry.title,
+        title: entry.rel === 'contents' ? title : entry.title,
         contentType: 'text/html',
         language,
-      });
-    }
-  } else if (entry.rel === 'contents') {
-    content = getJsdomFromString({
-      html: generateDefaultTocHtml({
-        language,
-        title,
-      }),
-    });
-    content = await processManuscriptHtml(content, {
-      style,
-      title,
-      contentType: 'text/html',
-      language,
-    });
-  } else if (entry.rel === 'cover') {
-    content = getJsdomFromString({
-      html: generateDefaultCoverHtml({ language, title: entry.title }),
-    });
-    content = await processManuscriptHtml(content, {
-      style,
-      title: entry.title,
-      contentType: 'text/html',
-      language,
-    });
+      },
+    );
+    content = getJsdomFromString({ html: String(vfile) });
   }
 
   if (!content) {
     return;
-  }
-
-  if (entry.rel === 'contents') {
-    const contentsEntry = entry as ContentsEntry;
-    const manuscriptEntries = entries.filter(
-      (e): e is ManuscriptEntry => 'source' in e,
-    );
-    content = await processTocHtml(content, {
-      entries: manuscriptEntries,
-      manifestPath,
-      distDir: upath.dirname(contentsEntry.target),
-      tocTitle: contentsEntry.tocTitle,
-      sectionDepth: contentsEntry.sectionDepth,
-      styleOptions: contentsEntry,
-      transform: contentsEntry.transform,
-    });
-  }
-
-  if (entry.rel === 'cover') {
-    const coverEntry = entry as CoverEntry;
-    content = await processCoverHtml(content, {
-      imageSrc: upath.relative(
-        upath.join(
-          entryContextDir,
-          upath.relative(workspaceDir, coverEntry.target),
-          '..',
-        ),
-        coverEntry.coverImageSrc,
-      ),
-      imageAlt: coverEntry.coverImageAlt,
-      styleOptions: coverEntry,
-    });
   }
 
   let html;

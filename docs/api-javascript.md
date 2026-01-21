@@ -6,19 +6,27 @@
 ### Functions
 
 - [`build`](#build)
+- [`cover`](#cover)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
+- [`generateDefaultCoverHtml`](#generatedefaultcoverhtml)
+- [`generateDefaultTocHtml`](#generatedefaulttochtml)
 - [`preview`](#preview)
+- [`toc`](#toc)
 - [`VFM`](#vfm)
 
 ### Interfaces
 
+- [`CoverOptions`](#coveroptions)
+- [`HtmlOptions`](#htmloptions)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
+- [`TocOptions`](#tocoptions)
 
 ### Type Aliases
 
+- [`HtmlProcessorFactory`](#htmlprocessorfactory)
 - [`Metadata`](#metadata)
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
@@ -28,6 +36,9 @@
 
 ### Variables
 
+- [`defaultHtmlProcessor`](#defaulthtmlprocessor)
+- [`defaultTocTransform`](#defaulttoctransform)
+- [`defaultXhtmlProcessor`](#defaultxhtmlprocessor)
 - [`readMetadata`](#readmetadata)
 
 ## Functions
@@ -136,7 +147,7 @@ build({
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"verbose"` \| `"info"` \| `"silent"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -268,6 +279,34 @@ build({
 
 ***
 
+### cover()
+
+> **cover**(`options`): (`tree`) => `void`
+
+Rehype plugin to set cover image on <img role="doc-cover">
+
+#### Parameters
+
+##### options
+
+[`CoverOptions`](#coveroptions)
+
+#### Returns
+
+> (`tree`): `void`
+
+##### Parameters
+
+###### tree
+
+`any`
+
+##### Returns
+
+`void`
+
+***
+
 ### create()
 
 > **create**(`options`): `Promise`\<`void`\>
@@ -364,7 +403,7 @@ Scaffold a new Vivliostyle project.
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"verbose"` \| `"info"` \| `"silent"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -590,7 +629,7 @@ Scaffold a new Vivliostyle project.
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"verbose"` \| `"info"` \| `"silent"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -740,6 +779,54 @@ Define the configuration for Vivliostyle CLI.
 
 ***
 
+### generateDefaultCoverHtml()
+
+> **generateDefaultCoverHtml**(`__namedParameters`): `string`
+
+Generate default cover HTML template
+
+#### Parameters
+
+##### \_\_namedParameters
+
+###### language?
+
+`string`
+
+###### title?
+
+`string`
+
+#### Returns
+
+`string`
+
+***
+
+### generateDefaultTocHtml()
+
+> **generateDefaultTocHtml**(`__namedParameters`): `string`
+
+Generate default ToC HTML template
+
+#### Parameters
+
+##### \_\_namedParameters
+
+###### language?
+
+`string`
+
+###### title?
+
+`string`
+
+#### Returns
+
+`string`
+
+***
+
 ### preview()
 
 > **preview**(`options`): `Promise`\<`ViteDevServer`\>
@@ -836,7 +923,7 @@ Open a browser for previewing the publication.
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"verbose"` \| `"info"` \| `"silent"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -968,6 +1055,34 @@ Open a browser for previewing the publication.
 
 ***
 
+### toc()
+
+> **toc**(`options`): (`tree`) => `Promise`\<`void`\>
+
+Rehype plugin to inject table of contents into <nav role="doc-toc">
+
+#### Parameters
+
+##### options
+
+[`TocOptions`](#tocoptions)
+
+#### Returns
+
+> (`tree`): `Promise`\<`void`\>
+
+##### Parameters
+
+###### tree
+
+`any`
+
+##### Returns
+
+`Promise`\<`void`\>
+
+***
+
 ### VFM()
 
 > **VFM**(`options?`, `metadata?`): `Processor`
@@ -994,6 +1109,35 @@ Unified processor.
 
 ## Interfaces
 
+### CoverOptions
+
+#### Extends
+
+- `CoverStyleOptions`
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="alt"></a> `alt?` | `string` | Cover image alt text |
+| <a id="pagebreakbefore"></a> `pageBreakBefore?` | `"left"` \| `"right"` \| `"recto"` \| `"verso"` | Page break behavior |
+| <a id="src"></a> `src` | `string` | Cover image source path |
+
+***
+
+### HtmlOptions
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="contenttype"></a> `contentType?` | `"text/html"` \| `"application/xhtml+xml"` | Content type: 'text/html' or 'application/xhtml+xml' |
+| <a id="language"></a> `language?` | `string` | Document language (sets html lang if not present) |
+| <a id="style"></a> `style?` | `string`[] | Paths to stylesheets to inject |
+| <a id="title"></a> `title?` | `string` | Document title (sets <title> if not present) |
+
+***
+
 ### StringifyMarkdownOptions
 
 Option for convert Markdown to a stringify (HTML).
@@ -1006,12 +1150,12 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="disableformathtml"></a> `disableFormatHtml?` | `boolean` | Disable automatic HTML format. |
 | <a id="hardlinebreaks"></a> `hardLineBreaks?` | `boolean` | Add `<br>` at the position of hard line breaks, without needing spaces. |
 | <a id="imgfigcaptionorder"></a> `imgFigcaptionOrder?` | `"img-figcaption"` \| `"figcaption-img"` | Order of img and figcaption elements in figure. |
-| <a id="language"></a> `language?` | `string` | Document language (ignored in partial mode). |
+| <a id="language-1"></a> `language?` | `string` | Document language (ignored in partial mode). |
 | <a id="math"></a> `math?` | `boolean` | Enable math syntax. |
 | <a id="partial"></a> `partial?` | `boolean` | Output markdown fragments. |
 | <a id="replace"></a> `replace?` | `ReplaceRule`[] | Replacement handler for HTML string. |
-| <a id="style"></a> `style?` | `string` \| `string`[] | Custom stylesheet path/URL. |
-| <a id="title"></a> `title?` | `string` | Document title (ignored in partial mode). |
+| <a id="style-1"></a> `style?` | `string` \| `string`[] | Custom stylesheet path/URL. |
+| <a id="title-1"></a> `title?` | `string` | Document title (ignored in partial mode). |
 
 ***
 
@@ -1050,9 +1194,9 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="input"></a> `input?` | `object` |
 | `input.entry` | `string` |
 | `input.format` | `InputFormat` |
-| <a id="language-1"></a> `language` | `string` |
+| <a id="language-2"></a> `language` | `string` |
 | <a id="logger"></a> `logger?` | `LoggerInterface` |
-| <a id="loglevel"></a> `logLevel?` | `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` |
+| <a id="loglevel"></a> `logLevel?` | `"verbose"` \| `"info"` \| `"silent"` \| `"debug"` |
 | <a id="openviewer"></a> `openViewer?` | `boolean` |
 | <a id="output"></a> `output?` | `object` & `object` & `object`[] |
 | <a id="port"></a> `port?` | `number` |
@@ -1074,19 +1218,56 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="stderr"></a> `stderr?` | `Writable` |
 | <a id="stdin"></a> `stdin?` | `Readable` |
 | <a id="stdout"></a> `stdout?` | `Writable` |
-| <a id="style-1"></a> `style?` | `string` |
+| <a id="style-2"></a> `style?` | `string` |
 | <a id="template"></a> `template?` | `string` |
 | <a id="theme"></a> `theme?` | `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] |
 | <a id="themepackage"></a> `themePackage?` | `VivliostylePackageJson` |
 | <a id="timeout"></a> `timeout?` | `number` |
-| <a id="title-1"></a> `title` | `string` |
+| <a id="title-2"></a> `title` | `string` |
 | <a id="userstyle"></a> `userStyle?` | `string` |
 | <a id="viewer"></a> `viewer?` | `string` |
 | <a id="viewerparam"></a> `viewerParam?` | `string` |
 | <a id="vite"></a> `vite?` | `UserConfig` |
 | <a id="viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
+***
+
+### TocOptions
+
+#### Extends
+
+- `TocStyleOptions`
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="distdir"></a> `distDir` | `string` | Directory where the ToC file is located |
+| <a id="entries"></a> `entries` | `Pick`\<`ManuscriptEntry`, `"title"` \| `"target"`\>[] | Manuscript entries for ToC generation |
+| <a id="manifestpath"></a> `manifestPath?` | `string` | Manifest path for publication link (relative to distDir) |
+| <a id="pagebreakbefore-1"></a> `pageBreakBefore?` | `"left"` \| `"right"` \| `"recto"` \| `"verso"` | Page break behavior |
+| <a id="pagecounterreset"></a> `pageCounterReset?` | `number` | Page counter reset value |
+| <a id="sectiondepth"></a> `sectionDepth?` | `number` | Depth of sections to include |
+| <a id="toctitle"></a> `tocTitle?` | `string` | Title for the table of contents |
+| <a id="transform"></a> `transform?` | `Partial`\<\{ `transformDocumentList`: (`nodeList`) => (`propsList`) => `HastElement`; `transformSectionList`: (`nodeList`) => (`propsList`) => `HastElement`; \}\> | Transform functions for ToC generation |
+
 ## Type Aliases
+
+### HtmlProcessorFactory()
+
+> **HtmlProcessorFactory** = (`options`) => `unified.Processor`
+
+#### Parameters
+
+##### options
+
+[`HtmlOptions`](#htmloptions)
+
+#### Returns
+
+`unified.Processor`
+
+***
 
 ### Metadata
 
@@ -1280,6 +1461,33 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 > **VivliostylePackageMetadata** = `v.InferInput`\<*typeof* [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)\>
 
 ## Variables
+
+### defaultHtmlProcessor
+
+> `const` **defaultHtmlProcessor**: [`HtmlProcessorFactory`](#htmlprocessorfactory)
+
+***
+
+### defaultTocTransform
+
+> `const` **defaultTocTransform**: `object`
+
+Default transform functions for ToC generation
+
+#### Type Declaration
+
+| Name | Type |
+| ------ | ------ |
+| <a id="transformdocumentlist"></a> `transformDocumentList()` | (`nodeList`) => (`propsList`) => `HastElement` |
+| <a id="transformsectionlist"></a> `transformSectionList()` | (`nodeList`) => (`propsList`) => `HastElement` |
+
+***
+
+### defaultXhtmlProcessor
+
+> `const` **defaultXhtmlProcessor**: [`HtmlProcessorFactory`](#htmlprocessorfactory)
+
+***
 
 ### readMetadata()
 

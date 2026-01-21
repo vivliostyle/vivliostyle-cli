@@ -12,6 +12,24 @@ export {
   type Metadata,
   type StringifyMarkdownOptions,
 } from '@vivliostyle/vfm';
+export {
+  defaultHtmlProcessor,
+  defaultXhtmlProcessor,
+  type HtmlOptions,
+  type HtmlProcessorFactory,
+} from './processor/html/processor.js';
+// Rehype plugins
+export {
+  toc,
+  defaultTocTransform,
+  generateDefaultTocHtml,
+  type TocOptions,
+} from './processor/html/toc.js';
+export {
+  cover,
+  generateDefaultCoverHtml,
+  type CoverOptions,
+} from './processor/html/cover.js';
 export type {
   StructuredDocument,
   StructuredDocumentSection,
