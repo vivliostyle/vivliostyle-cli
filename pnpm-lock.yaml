@@ -32,6 +32,12 @@ importers:
       '@puppeteer/browsers':
         specifier: 2.10.5
         version: 2.10.5
+      '@types/hast':
+        specifier: ^2.0.0
+        version: 2.3.10
+      '@types/xast':
+        specifier: ^1.0.0
+        version: 1.0.7
       '@vivliostyle/jsdom':
         specifier: 25.0.1-vivliostyle-cli.1
         version: 25.0.1-vivliostyle-cli.1(@napi-rs/canvas@0.1.69)
@@ -90,11 +96,11 @@ importers:
         specifier: 4.7.8
         version: 4.7.8
       hast-util-to-html:
-        specifier: 9.0.5
-        version: 9.0.5
+        specifier: 8.0.4
+        version: 8.0.4
       hastscript:
-        specifier: 9.0.1
-        version: 9.0.1
+        specifier: 7.2.0
+        version: 7.2.0
       lcid:
         specifier: 5.0.0
         version: 5.0.0
@@ -128,6 +134,9 @@ importers:
       puppeteer-core:
         specifier: 24.27.0
         version: 24.27.0
+      rehype:
+        specifier: 11.0.0
+        version: 11.0.0
       resolve-pkg:
         specifier: 2.0.0
         version: 2.0.0
@@ -155,6 +164,12 @@ importers:
       tmp:
         specifier: 0.2.4
         version: 0.2.4
+      unist-builder:
+        specifier: ^3.0.1
+        version: 3.0.1
+      unist-util-visit:
+        specifier: 4.1.2
+        version: 4.1.2
       upath:
         specifier: 2.0.1
         version: 2.0.1
@@ -176,6 +191,15 @@ importers:
       whatwg-mimetype:
         specifier: 4.0.0
         version: 4.0.0
+      xast-util-from-xml:
+        specifier: ^3.0.0
+        version: 3.0.0
+      xast-util-to-xml:
+        specifier: ^3.0.2
+        version: 3.0.2
+      xastscript:
+        specifier: 3.1.1
+        version: 3.1.1
       yocto-spinner:
         specifier: 0.2.2
         version: 0.2.2
@@ -210,9 +234,6 @@ importers:
       '@types/fs-extra':
         specifier: 11.0.4
         version: 11.0.4
-      '@types/hast':
-        specifier: 3.0.4
-        version: 3.0.4
       '@types/jsdom':
         specifier: 21.1.7
         version: 21.1.7
@@ -2056,6 +2077,9 @@ packages:
   '@types/parse5@5.0.3':
     resolution: {integrity: sha512-kUNnecmtkunAoQ3CnjmMkzNU/gtxG8guhi+Fk2U/kOpIKjIMKnXGp4IJCgQJrXSgMsWYimYG4TGjz/UzbGEBTw==}
 
+  '@types/parse5@6.0.3':
+    resolution: {integrity: sha512-SuT16Q1K51EAVPz1K29DJ/sXjhSQ0zjvsypYJ6tlwVsRV9jwW5Adq2ch8Dq8kDBCkYnELS7N7VNCSB5nC56t/g==}
+
   '@types/picomatch@4.0.0':
     resolution: {integrity: sha512-J1Bng+wlyEERWSgJQU1Pi0HObCLVcr994xT/M+1wcl/yNRTGBupsCxthgkdYG+GCOMaQH7iSVUY3LJVBBqG7MQ==}
 
@@ -2092,12 +2116,6 @@ packages:
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
 
-  '@types/unist@2.0.6':
-    resolution: {integrity: sha512-PBjIUxZHOuj0R15/xuwJYjFi+KZdNFrehocChv4g5hu6aFroHue8m0lBP0POdK2nKzbw0cgV1mws8+V/JAcEkQ==}
-
-  '@types/unist@3.0.2':
-    resolution: {integrity: sha512-dqId9J8K/vGi5Zr7oo212BGii5m3q5Hxlkwy3WpYuKPklmBEvsbMYYyLxAQpSffdLl/gdW0XUpKWFvYmyoWCoQ==}
-
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
 
@@ -2112,6 +2130,9 @@ packages:
 
   '@types/whatwg-mimetype@3.0.2':
     resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
+
+  '@types/xast@1.0.7':
+    resolution: {integrity: sha512-QkazU2uUKr+9u7EsMfDoNQ9UtWB6sfOIGbNevJme8qQMeAHEnHmCfbsBJf2eXUm+07kFQfUKbCQp/Y6/8O25kw==}
 
   '@types/yargs-parser@15.0.0':
     resolution: {integrity: sha512-FA/BWv8t8ZWJ+gEOnLLd8ygxH/2UFbAvgEonyfN6yWGLKc7zVjbpl2Y4CTjid9h2RfgPP6SEt6uHwEOply00yw==}
@@ -3477,6 +3498,9 @@ packages:
   hast-util-raw@6.1.0:
     resolution: {integrity: sha512-5FoZLDHBpka20OlZZ4I/+RBw5piVQ8iI1doEvffQhx5CbCyTtP8UCq8Tw6NmTAMtXgsQxmhW7Ly8OdFre5/YMQ==}
 
+  hast-util-raw@7.2.3:
+    resolution: {integrity: sha512-RujVQfVsOrxzPOPSzZFiwofMArbQke6DJjnFfceiEbFh7S05CbPt0cYN+A5YeD3pso0JQk6O1aHBnx9+Pm2uqg==}
+
   hast-util-raw@9.1.0:
     resolution: {integrity: sha512-Y8/SBAHkZGoNkpzqqfCldijcuUKh7/su31kEBp67cFY09Wy0mTRgtsLYsiIxMJxlu0f6AA5SUTbDR8K0rxnbUw==}
 
@@ -3492,6 +3516,9 @@ packages:
   hast-util-to-html@7.1.3:
     resolution: {integrity: sha512-yk2+1p3EJTEE9ZEUkgHsUSVhIpCsL/bvT8E5GzmWc+N1Po5gBw+0F8bo7dpxXR0nu0bQVxVZGX2lBGF21CmeDw==}
 
+  hast-util-to-html@8.0.4:
+    resolution: {integrity: sha512-4tpQTUOr9BMjtYyNlt0P50mH7xj0Ks2xpo8M943Vykljf99HW6EzulIoJP1N3eKOSScEHzyzi9dm7/cn0RfGwA==}
+
   hast-util-to-html@9.0.5:
     resolution: {integrity: sha512-OguPdidb+fbHQSU4Q4ZiLKnzWo8Wwsf5bZfbvu7//a9oTYoqD/fWpe96NuHkoS9h0ccGOTe0C4NGXdtS0iObOw==}
 
@@ -3500,6 +3527,9 @@ packages:
 
   hast-util-to-parse5@6.0.0:
     resolution: {integrity: sha512-Lu5m6Lgm/fWuz8eWnrKezHtVY83JeRGaNQ2kn9aJgqaxvVkFCZQBEhgodZUDUvoodgyROHDb3r5IxAEdl6suJQ==}
+
+  hast-util-to-parse5@7.1.0:
+    resolution: {integrity: sha512-YNRgAJkH2Jky5ySkIqFXTQiaqcAtJyVE+D5lkN6CdtOqrnkLfGYYrEcKuHOJZlp+MwjSwuD3fZuawI+sic/RBw==}
 
   hast-util-to-parse5@8.0.0:
     resolution: {integrity: sha512-3KKrV5ZVI8if87DVSi1vDeByYrkGzg4mEfeu4alwgmmIeARiBLKCZS2uw5Gb6nU9x9Yufyj3iudm6i7nl52PFw==}
@@ -3558,6 +3588,9 @@ packages:
 
   html-void-elements@1.0.5:
     resolution: {integrity: sha512-uE/TxKuyNIcx44cIWnjr/rfIATDH7ZaOMmstu0CwhFG1Dunhlp4OC6/NMbhiwoq5BpW0ubi303qnEk/PZj614w==}
+
+  html-void-elements@2.0.1:
+    resolution: {integrity: sha512-0quDb7s97CfemeJAnW9wC0hw78MtW7NU3hqtCD75g2vFlDLt36llsYD7uB7SUzojLMP24N5IatXf7ylGXiGG9A==}
 
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
@@ -4987,6 +5020,9 @@ packages:
   rehype-minify-whitespace@4.0.5:
     resolution: {integrity: sha512-QC3Z+bZ5wbv+jGYQewpAAYhXhzuH/TVRx7z08rurBmh9AbG8Nu8oJnvs9LWj43Fd/C7UIhXoQ7Wddgt+ThWK5g==}
 
+  rehype-parse@7.0.1:
+    resolution: {integrity: sha512-fOiR9a9xH+Le19i4fGzIEowAbwG7idy2Jzs4mOrFWBSJ0sNUgy0ev871dwWnbOo371SjgjG4pwzrbgSVrKxecw==}
+
   rehype-parse@9.0.1:
     resolution: {integrity: sha512-ksCzCD0Fgfh7trPDxr2rSylbwq9iYDkSn8TCDmEJ49ljEUBxDVCzCHv7QNzZOfODanX4+bWQ4WZqLCRWYLfhag==}
 
@@ -5004,6 +5040,9 @@ packages:
 
   rehype-stringify@8.0.0:
     resolution: {integrity: sha512-VkIs18G0pj2xklyllrPSvdShAV36Ff3yE5PUO9u36f6+2qJFnn22Z5gKwBOwgXviux4UC7K+/j13AnZfPICi/g==}
+
+  rehype@11.0.0:
+    resolution: {integrity: sha512-qXqRqiCFJD5CJ61CSJuNImTFrm3zVkOU9XywHDwrUuvWN74MWt72KJ67c5CM5x8g0vGcOkRVCrYj85vqkmHulQ==}
 
   rehype@13.0.2:
     resolution: {integrity: sha512-j31mdaRFrwFRUIlxGeuPXXKWQxet52RBQRvCmzl5eCefn/KGbomK5GMHNMsOJf55fgo3qw5tST5neDuarDYR2A==}
@@ -5493,10 +5532,12 @@ packages:
   tar@7.4.3:
     resolution: {integrity: sha512-5S7Va8hKfV7W5U6g3aYxXmlPoZVAwUMy9AOKyF2fVuZa2UD3qZjg578OrLRt8PcNN1PleVaL/5/yYATNL0ICUw==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   tar@7.5.2:
     resolution: {integrity: sha512-7NyxrTE4Anh8km8iEy7o0QYPs+0JKBTj5ZaqHg6B39erLg0qYXN3BijtShwbsNSvQ+LN75+KV+C4QR/f6Gwnpg==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   term-size@2.2.1:
     resolution: {integrity: sha512-wK0Ri4fOGjv/XPy8SBHZChl8CM7uMc5VML7SqiQ0zG7+J5Vr+RMQDoHa2CNT6KHUnTGIXH34UDMkPzAUyapBZg==}
@@ -6228,6 +6269,15 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xast-util-from-xml@3.0.0:
+    resolution: {integrity: sha512-zEfGxnue7vHbayZnRBAjJsjV1dQG6XWKLAzrsPxX2l4WHmqGZxM76XxRblaTHvcOYMFLlnVp3DFcUAl+Qk9SNQ==}
+
+  xast-util-to-xml@3.0.2:
+    resolution: {integrity: sha512-lbnJEVui7Lk9W/TydInkin5OnOyTAr2b4OpK5YjXo94qqoXaR6mFE/evXfOrBev9EnD91r0FOPxrLfTT0qLITQ==}
+
+  xastscript@3.1.1:
+    resolution: {integrity: sha512-rE7oVPLENyIZNKeRkXE96ao/QiucenYROqdBnEuNNkQHlyxf3vJ5EMNh2QQ4AYhdf9v/dVuxJ7F4u4AaOOhkOA==}
 
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
@@ -7858,11 +7908,11 @@ snapshots:
 
   '@types/hast@2.3.4':
     dependencies:
-      '@types/unist': 3.0.3
+      '@types/unist': 2.0.11
 
   '@types/hast@3.0.4':
     dependencies:
-      '@types/unist': 3.0.2
+      '@types/unist': 2.0.11
 
   '@types/jsdom@21.1.7':
     dependencies:
@@ -7880,7 +7930,7 @@ snapshots:
 
   '@types/mdast@3.0.10':
     dependencies:
-      '@types/unist': 3.0.3
+      '@types/unist': 2.0.11
 
   '@types/mdast@3.0.15':
     dependencies:
@@ -7888,11 +7938,11 @@ snapshots:
 
   '@types/mdast@4.0.3':
     dependencies:
-      '@types/unist': 3.0.3
+      '@types/unist': 2.0.11
 
   '@types/mdast@4.0.4':
     dependencies:
-      '@types/unist': 3.0.3
+      '@types/unist': 2.0.11
 
   '@types/mdurl@1.0.5': {}
 
@@ -7910,7 +7960,7 @@ snapshots:
 
   '@types/nlcst@2.0.3':
     dependencies:
-      '@types/unist': 3.0.3
+      '@types/unist': 2.0.11
 
   '@types/node-fetch@2.6.2':
     dependencies:
@@ -7960,6 +8010,8 @@ snapshots:
 
   '@types/parse5@5.0.3': {}
 
+  '@types/parse5@6.0.3': {}
+
   '@types/picomatch@4.0.0': {}
 
   '@types/readdir-glob@1.1.1':
@@ -8002,10 +8054,6 @@ snapshots:
 
   '@types/unist@2.0.11': {}
 
-  '@types/unist@2.0.6': {}
-
-  '@types/unist@3.0.2': {}
-
   '@types/unist@3.0.3': {}
 
   '@types/uuid@10.0.0': {}
@@ -8015,6 +8063,10 @@ snapshots:
   '@types/w3c-xmlserializer@2.0.4': {}
 
   '@types/whatwg-mimetype@3.0.2': {}
+
+  '@types/xast@1.0.7':
+    dependencies:
+      '@types/unist': 2.0.11
 
   '@types/yargs-parser@15.0.0': {}
 
@@ -9658,6 +9710,20 @@ snapshots:
       xtend: 4.0.2
       zwitch: 1.0.5
 
+  hast-util-raw@7.2.3:
+    dependencies:
+      '@types/hast': 2.3.10
+      '@types/parse5': 6.0.3
+      hast-util-from-parse5: 7.1.2
+      hast-util-to-parse5: 7.1.0
+      html-void-elements: 2.0.1
+      parse5: 6.0.1
+      unist-util-position: 4.0.4
+      unist-util-visit: 4.1.2
+      vfile: 5.3.7
+      web-namespaces: 2.0.1
+      zwitch: 2.0.4
+
   hast-util-raw@9.1.0:
     dependencies:
       '@types/hast': 3.0.4
@@ -9744,10 +9810,24 @@ snapshots:
       unist-util-is: 4.1.0
       xtend: 4.0.2
 
+  hast-util-to-html@8.0.4:
+    dependencies:
+      '@types/hast': 2.3.10
+      '@types/unist': 2.0.11
+      ccount: 2.0.1
+      comma-separated-tokens: 2.0.3
+      hast-util-raw: 7.2.3
+      hast-util-whitespace: 2.0.1
+      html-void-elements: 2.0.1
+      property-information: 6.5.0
+      space-separated-tokens: 2.0.2
+      stringify-entities: 4.0.4
+      zwitch: 2.0.4
+
   hast-util-to-html@9.0.5:
     dependencies:
       '@types/hast': 3.0.4
-      '@types/unist': 3.0.2
+      '@types/unist': 3.0.3
       ccount: 2.0.1
       comma-separated-tokens: 2.0.3
       hast-util-whitespace: 3.0.0
@@ -9785,6 +9865,15 @@ snapshots:
       web-namespaces: 1.1.4
       xtend: 4.0.2
       zwitch: 1.0.5
+
+  hast-util-to-parse5@7.1.0:
+    dependencies:
+      '@types/hast': 2.3.10
+      comma-separated-tokens: 2.0.3
+      property-information: 6.5.0
+      space-separated-tokens: 2.0.2
+      web-namespaces: 2.0.1
+      zwitch: 2.0.4
 
   hast-util-to-parse5@8.0.0:
     dependencies:
@@ -9840,7 +9929,7 @@ snapshots:
       '@types/hast': 3.0.4
       comma-separated-tokens: 2.0.3
       hast-util-parse-selector: 4.0.0
-      property-information: 7.0.0
+      property-information: 7.1.0
       space-separated-tokens: 2.0.2
 
   hexoid@2.0.0: {}
@@ -9864,6 +9953,8 @@ snapshots:
   html-escaper@3.0.3: {}
 
   html-void-elements@1.0.5: {}
+
+  html-void-elements@2.0.1: {}
 
   html-void-elements@3.0.0: {}
 
@@ -10294,7 +10385,7 @@ snapshots:
       '@types/mdast': 4.0.3
       escape-string-regexp: 5.0.0
       unist-util-is: 6.0.1
-      unist-util-visit-parents: 6.0.1
+      unist-util-visit-parents: 6.0.2
 
   mdast-util-from-markdown@0.8.5:
     dependencies:
@@ -11600,6 +11691,11 @@ snapshots:
       hast-util-whitespace: 1.0.4
       unist-util-is: 4.1.0
 
+  rehype-parse@7.0.1:
+    dependencies:
+      hast-util-from-parse5: 6.0.1
+      parse5: 6.0.1
+
   rehype-parse@9.0.1:
     dependencies:
       '@types/hast': 3.0.4
@@ -11633,6 +11729,12 @@ snapshots:
   rehype-stringify@8.0.0:
     dependencies:
       hast-util-to-html: 7.1.3
+
+  rehype@11.0.0:
+    dependencies:
+      rehype-parse: 7.0.1
+      rehype-stringify: 8.0.0
+      unified: 9.2.2
 
   rehype@13.0.2:
     dependencies:
@@ -12797,7 +12899,7 @@ snapshots:
 
   vfile@4.2.1:
     dependencies:
-      '@types/unist': 2.0.6
+      '@types/unist': 2.0.11
       is-buffer: 2.0.5
       unist-util-stringify-position: 2.0.3
       vfile-message: 2.0.4
@@ -13010,6 +13112,23 @@ snapshots:
   ws@8.18.2: {}
 
   ws@8.18.3: {}
+
+  xast-util-from-xml@3.0.0:
+    dependencies:
+      '@rgrove/parse-xml': 4.2.0
+      '@types/xast': 1.0.7
+      vfile-location: 4.1.0
+      vfile-message: 3.1.4
+
+  xast-util-to-xml@3.0.2:
+    dependencies:
+      '@types/xast': 1.0.7
+      ccount: 2.0.1
+      stringify-entities: 4.0.4
+
+  xastscript@3.1.1:
+    dependencies:
+      '@types/xast': 1.0.7
 
   xml-name-validator@5.0.0: {}
 
