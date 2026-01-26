@@ -109,7 +109,7 @@
     "husky": "9.1.7",
     "json-schema-to-typescript": "15.0.4",
     "memfs": "4.17.0",
-    "pnpm": "10.27.0",
+    "pnpm": "10.28.2",
     "prettier": "3.5.3",
     "prettier-plugin-astro": "0.14.1",
     "pretty-quick": "4.1.1",
