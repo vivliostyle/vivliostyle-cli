@@ -51,9 +51,8 @@ function processFormXObjects(
       return;
     }
 
-    const resolved = xobj.resolve();
-
-    const objNum = resolved.asIndirect();
+    // Use original indirect reference for stream operations (see #735)
+    const objNum = xobj.asIndirect();
     if (objNum && processed.has(objNum)) {
       // Avoid circular references
       return;
@@ -62,13 +61,13 @@ function processFormXObjects(
       processed.add(objNum);
     }
 
-    const subtype = resolved.get('Subtype');
+    const subtype = xobj.get('Subtype');
     if (!subtype || subtype.toString() !== '/Form') {
       return;
     }
 
-    processStream(resolved, colorMap, warnUnmapped, warnedColors, mupdf);
-    const nestedResources = resolved.get('Resources');
+    processStream(xobj, colorMap, warnUnmapped, warnedColors, mupdf);
+    const nestedResources = xobj.get('Resources');
     if (nestedResources && nestedResources.isDictionary()) {
       processFormXObjects(
         nestedResources,
@@ -93,14 +92,9 @@ function processContents(
     // Multiple content streams
     for (let i = 0; i < contents.length; i++) {
       const streamObj = contents.get(i);
+      // Use original indirect reference for stream operations (see #735)
       if (streamObj && streamObj.isStream()) {
-        processStream(
-          streamObj.resolve(),
-          colorMap,
-          warnUnmapped,
-          warnedColors,
-          mupdf,
-        );
+        processStream(streamObj, colorMap, warnUnmapped, warnedColors, mupdf);
       }
     }
   } else if (contents.isStream()) {
