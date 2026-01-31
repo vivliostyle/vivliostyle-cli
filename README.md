@@ -123,8 +123,8 @@ Options:
   --bleed <bleed>                    extent of the bleed area for printing with crop marks [3mm]
   --crop-offset <offset>             distance between the edge of the trim size and the edge of the media size. [auto (13mm + bleed)]
   --css <CSS>                        custom style CSS code. (ex: ":root {--my-color: lime;}")
-  --style <stylesheet>               additional stylesheet URL or path
-  --user-style <user_stylesheet>     user stylesheet URL or path
+  --style <stylesheet>               Additional stylesheet for Vivliostyle viewer.
+  --user-style <user_stylesheet>     Additional user stylesheet for Vivliostyle viewer.
   -d, --single-doc                   single HTML document input
   -p, --press-ready                  make generated PDF compatible with press ready PDF/X-1a [false]
                                      This option is equivalent with "--preflight press-ready"
@@ -184,8 +184,8 @@ Options:
   --bleed <bleed>                    extent of the bleed area for printing with crop marks [3mm]
   --crop-offset <offset>             distance between the edge of the trim size and the edge of the media size. [auto (13mm + bleed)]
   --css <CSS>                        custom style CSS code. (ex: ":root {--my-color: lime;}")
-  --style <stylesheet>               additional stylesheet URL or path
-  --user-style <user_stylesheet>     user stylesheet URL or path
+  --style <stylesheet>               Additional stylesheet for Vivliostyle viewer.
+  --user-style <user_stylesheet>     Additional user stylesheet for Vivliostyle viewer.
   -d, --single-doc                   single HTML document input
   -q, --quick                        quick loading with rough page count
   --title <title>                    title

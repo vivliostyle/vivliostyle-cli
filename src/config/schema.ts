@@ -1150,13 +1150,13 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
     style: v.pipe(
       ValidString,
       v.description($`
-          Additional stylesheet URL or path.
+          Additional stylesheet for Vivliostyle viewer.
         `),
     ),
     userStyle: v.pipe(
       ValidString,
       v.description($`
-          User stylesheet URL or path.
+          Additional user stylesheet for Vivliostyle viewer.
         `),
     ),
     singleDoc: v.pipe(
