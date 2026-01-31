@@ -66,11 +66,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     language,
     theme,
     template,
+    installDependencies,
     createConfigFileOnly = false,
   } = inlineConfig;
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
-  let installDependencies: boolean | undefined;
   let useLocalTemplate = false;
 
   if (template && !/^([\w-.]+):/.test(template)) {
@@ -142,7 +142,9 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
         themePackage?.vivliostyle,
       ));
     }
-    ({ installDependencies } = await askInstallDependencies());
+    if (typeof installDependencies !== 'boolean') {
+      ({ installDependencies } = await askInstallDependencies());
+    }
   }
 
   const browserType = 'chrome' as const;

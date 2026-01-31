@@ -18,6 +18,14 @@ function setupCreateParserProgram(): Command {
       `Template source in the format of \`[provider]:repo[/subpath][#ref]\` or as a local directory to copy from.`,
     )
     .option(
+      '--install-dependencies',
+      'Install dependencies after creating a project.',
+    )
+    .option(
+      '--no-install-dependencies',
+      'Do not install dependencies after creating a project.',
+    )
+    .option(
       '--create-config-file-only',
       `Create a Vivliostyle config file without generating project template files.`,
     )

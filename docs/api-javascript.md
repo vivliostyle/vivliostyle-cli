@@ -126,6 +126,10 @@ build({
 
 `string` = `...`
 
+###### installDependencies?
+
+`boolean` = `...`
+
 ###### language?
 
 `string` = `...`
@@ -354,6 +358,10 @@ Scaffold a new Vivliostyle project.
 
 `string` = `...`
 
+###### installDependencies?
+
+`boolean` = `...`
+
 ###### language?
 
 `string` = `...`
@@ -579,6 +587,10 @@ Scaffold a new Vivliostyle project.
 ###### input?
 
 `string` = `...`
+
+###### installDependencies?
+
+`boolean` = `...`
 
 ###### language?
 
@@ -826,6 +838,10 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### installDependencies?
+
+`boolean` = `...`
+
 ###### language?
 
 `string` = `...`
@@ -1050,6 +1066,7 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="input"></a> `input?` | `object` |
 | `input.entry` | `string` |
 | `input.format` | `InputFormat` |
+| <a id="installdependencies"></a> `installDependencies?` | `boolean` |
 | <a id="language-1"></a> `language` | `string` |
 | <a id="logger"></a> `logger?` | `LoggerInterface` |
 | <a id="loglevel"></a> `logLevel?` | `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` |
