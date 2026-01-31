@@ -24,13 +24,7 @@ import {
   TEMPLATE_SETTINGS,
 } from '../const.js';
 import { format, type TemplateVariable } from '../create-template.js';
-import {
-  askQuestion,
-  interactiveLogInfo,
-  interactiveLogLoading,
-  interactiveLogOutro,
-  interactiveLogWarn,
-} from '../interactive.js';
+import { askQuestion, InteractiveLogger } from '../interactive.js';
 import { Logger } from '../logger.js';
 import {
   createFetch,
@@ -58,6 +52,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.debug('create > inlineConfig %O', inlineConfig);
 
   const fetch = createFetch(inlineConfig);
+  const interactiveLogger = new InteractiveLogger();
   let {
     projectPath,
     cwd = defaultCwd,
@@ -66,11 +61,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     language,
     theme,
     template,
+    installDependencies,
     createConfigFileOnly = false,
   } = inlineConfig;
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
-  let installDependencies: boolean | undefined;
   let useLocalTemplate = false;
 
   if (template && !/^([\w-.]+):/.test(template)) {
@@ -78,20 +73,25 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     useLocalTemplate =
       fs.existsSync(upath.resolve(cwd, template)) &&
       fs.statSync(upath.resolve(cwd, template)).isDirectory();
+    const usingPresetTemplate = TEMPLATE_SETTINGS.find(
+      (t) => t.value === template,
+    );
     if (useLocalTemplate) {
       template = absTemplatePath;
-      interactiveLogInfo(
+      interactiveLogger.logInfo(
         `Using the specified local template directory\n${dim(upath.relative(cwd, absTemplatePath) || '.')}`,
       );
+    } else if (usingPresetTemplate) {
+      template = usingPresetTemplate.template;
     } else {
-      interactiveLogWarn(
+      interactiveLogger.logWarn(
         `The specified theme ${green(template)} was not found as a local directory. Proceeding to fetch it from GitHub repository.`,
       );
     }
   }
 
   if (!projectPath) {
-    ({ projectPath } = await askProjectPath());
+    ({ projectPath } = await askProjectPath({ interactiveLogger }));
   }
   const dist = upath.join(cwd, projectPath);
   if (createConfigFileOnly) {
@@ -109,40 +109,46 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   if (!title) {
     ({ title } = createConfigFileOnly
       ? { title: DEFAULT_PROJECT_TITLE }
-      : await askTitle({ projectPath }));
+      : await askTitle({ projectPath, interactiveLogger }));
   }
   if (!author) {
     ({ author } = createConfigFileOnly
       ? { author: DEFAULT_PROJECT_AUTHOR }
-      : await askAuthor());
+      : await askAuthor({ interactiveLogger }));
   }
   if (!language) {
     ({ language } = createConfigFileOnly
       ? { language: await getOsLocale() }
-      : await askLanguage());
+      : await askLanguage({ interactiveLogger }));
   }
 
   if (!createConfigFileOnly) {
     let presetTemplate: (typeof TEMPLATE_SETTINGS)[number] | undefined;
     if (!template) {
-      ({ presetTemplate } = await askPresetTemplate());
+      ({ presetTemplate } = await askPresetTemplate({ interactiveLogger }));
       if (presetTemplate) {
         template = presetTemplate.template;
       }
     }
-    if (!theme) {
+    if (!theme && theme !== false) {
       ({ theme, themePackage } = await askTheme({
         presetTemplate,
         template,
         fetch,
+        interactiveLogger,
       }));
     }
     if (!template) {
-      ({ template, extraTemplateVariables } = await askThemeTemplate(
-        themePackage?.vivliostyle,
-      ));
+      ({ template, extraTemplateVariables } = await askThemeTemplate({
+        themeMetadata: themePackage?.vivliostyle,
+        interactiveLogger,
+      }));
     }
-    ({ installDependencies } = await askInstallDependencies());
+    if (typeof installDependencies !== 'boolean') {
+      ({ installDependencies } = await askInstallDependencies({
+        interactiveLogger,
+      }));
+    }
   }
 
   const browserType = 'chrome' as const;
@@ -180,7 +186,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       },
     });
   } else {
-    interactiveLogOutro('All configurations are set! Creating your project...');
+    if (interactiveLogger.messageHistory.length > 0) {
+      interactiveLogger.logOutro(
+        'All configurations are set! Creating your project...',
+      );
+    }
     using _ = Logger.startLogging(
       useLocalTemplate ? 'Copying a local template' : 'Downloading a template',
     );
@@ -222,7 +232,11 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   }
 }
 
-async function askProjectPath() {
+async function askProjectPath({
+  interactiveLogger,
+}: {
+  interactiveLogger: InteractiveLogger;
+}) {
   return await askQuestion({
     question: {
       projectPath: {
@@ -235,10 +249,17 @@ async function askProjectPath() {
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['projectPath']),
     ),
+    interactiveLogger,
   });
 }
 
-async function askTitle({ projectPath }: { projectPath: string }) {
+async function askTitle({
+  projectPath,
+  interactiveLogger,
+}: {
+  projectPath: string;
+  interactiveLogger: InteractiveLogger;
+}) {
   return await askQuestion({
     question: {
       title: {
@@ -249,10 +270,15 @@ async function askTitle({ projectPath }: { projectPath: string }) {
       },
     },
     schema: v.required(v.pick(VivliostyleInlineConfigWithoutChecks, ['title'])),
+    interactiveLogger,
   });
 }
 
-async function askAuthor() {
+async function askAuthor({
+  interactiveLogger,
+}: {
+  interactiveLogger: InteractiveLogger;
+}) {
   return await askQuestion({
     question: {
       author: {
@@ -265,10 +291,15 @@ async function askAuthor() {
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['author']),
     ),
+    interactiveLogger,
   });
 }
 
-async function askLanguage() {
+async function askLanguage({
+  interactiveLogger,
+}: {
+  interactiveLogger: InteractiveLogger;
+}) {
   const initialValue = await getOsLocale();
   return await askQuestion({
     question: {
@@ -286,12 +317,17 @@ async function askLanguage() {
     schema: v.required(
       v.pick(VivliostyleInlineConfigWithoutChecks, ['language']),
     ),
+    interactiveLogger,
   });
 }
 
 export const PRESET_TEMPLATE_NOT_USE = 'Use templates from the community theme';
 
-async function askPresetTemplate(): Promise<{
+async function askPresetTemplate({
+  interactiveLogger,
+}: {
+  interactiveLogger: InteractiveLogger;
+}): Promise<{
   presetTemplate: (typeof TEMPLATE_SETTINGS)[number] | undefined;
 }> {
   const { presetTemplate } = await askQuestion({
@@ -319,6 +355,7 @@ async function askPresetTemplate(): Promise<{
         ),
       ),
     }),
+    interactiveLogger,
   });
   return { presetTemplate };
 }
@@ -338,16 +375,18 @@ async function askTheme({
   template,
   presetTemplate,
   fetch,
+  interactiveLogger,
 }: Pick<ParsedVivliostyleInlineConfig, 'template'> & {
   presetTemplate: (typeof TEMPLATE_SETTINGS)[number] | undefined;
   fetch: ReturnType<typeof createFetch>;
+  interactiveLogger: InteractiveLogger;
 }): Promise<
   Pick<ParsedVivliostyleInlineConfig, 'theme'> & {
     themePackage: VivliostylePackageJson | undefined;
   }
 > {
   const useCommunityThemes = !presetTemplate && !template;
-  const themePackages = await interactiveLogLoading(
+  const themePackages = await interactiveLogger.logLoading(
     'Fetching a list of Vivliostyle themes...',
     async () => {
       let themes = (await listVivliostyleThemes({ fetch })).objects;
@@ -419,6 +458,7 @@ async function askTheme({
     },
     schema: v.objectAsync({ theme: validateThemeMetadataSchema }),
     validateProgressMessage: 'Fetching package metadata...',
+    interactiveLogger,
   });
 
   if (theme === THEME_ANSWER_NOT_USE) {
@@ -456,6 +496,7 @@ async function askTheme({
         ),
       }),
       validateProgressMessage: 'Fetching package metadata...',
+      interactiveLogger,
     }).then((ret) => ret.themeManualInput);
   }
 
@@ -467,9 +508,13 @@ async function askTheme({
   };
 }
 
-async function askThemeTemplate(
-  themeMetadata?: VivliostylePackageMetadata,
-): Promise<
+async function askThemeTemplate({
+  interactiveLogger,
+  themeMetadata,
+}: {
+  interactiveLogger: InteractiveLogger;
+  themeMetadata?: VivliostylePackageMetadata;
+}): Promise<
   Required<Pick<ParsedVivliostyleInlineConfig, 'template'>> & {
     extraTemplateVariables: Record<string, unknown>;
   }
@@ -481,7 +526,7 @@ async function askThemeTemplate(
     hint: truncateString(tmpl.description || ''),
   }));
   if (!themeTemplate || options.length === 0) {
-    interactiveLogWarn(
+    interactiveLogger.logWarn(
       'The chosen theme does not set template settings. Applying the minimal template.',
     );
     return {
@@ -504,6 +549,7 @@ async function askThemeTemplate(
         v.transform((input) => themeTemplate[input]),
       ),
     }),
+    interactiveLogger,
   });
 
   let extraTemplateVariables: Record<string, unknown> = {};
@@ -512,12 +558,17 @@ async function askThemeTemplate(
       question: Object.fromEntries(
         usingTemplate.prompt.map((q) => [q.name, q]),
       ),
+      interactiveLogger,
     });
   }
   return { template: usingTemplate.source, extraTemplateVariables };
 }
 
-async function askInstallDependencies() {
+async function askInstallDependencies({
+  interactiveLogger,
+}: {
+  interactiveLogger: InteractiveLogger;
+}) {
   return await askQuestion({
     question: {
       installDependencies: {
@@ -533,6 +584,7 @@ async function askInstallDependencies() {
     schema: v.object({
       installDependencies: v.boolean(),
     }),
+    interactiveLogger,
   });
 }
 

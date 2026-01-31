@@ -13,9 +13,18 @@ function setupCreateParserProgram(): Command {
     .option('-l, --language <language>', 'language')
     .option('-s, --size <size>', 'paper size')
     .option('-T, --theme <theme>', 'theme')
+    .option('--no-theme', 'Do not include a theme.')
     .option(
       '--template <template>',
       `Template source in the format of \`[provider]:repo[/subpath][#ref]\` or as a local directory to copy from.`,
+    )
+    .option(
+      '--install-dependencies',
+      'Install dependencies after creating a project.',
+    )
+    .option(
+      '--no-install-dependencies',
+      'Do not install dependencies after creating a project.',
     )
     .option(
       '--create-config-file-only',

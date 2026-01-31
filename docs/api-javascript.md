@@ -126,6 +126,10 @@ build({
 
 `string` = `...`
 
+###### installDependencies?
+
+`boolean` = `...`
+
 ###### language?
 
 `string` = `...`
@@ -232,7 +236,7 @@ build({
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 
@@ -354,6 +358,10 @@ Scaffold a new Vivliostyle project.
 
 `string` = `...`
 
+###### installDependencies?
+
+`boolean` = `...`
+
 ###### language?
 
 `string` = `...`
@@ -460,7 +468,7 @@ Scaffold a new Vivliostyle project.
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 
@@ -580,6 +588,10 @@ Scaffold a new Vivliostyle project.
 
 `string` = `...`
 
+###### installDependencies?
+
+`boolean` = `...`
+
 ###### language?
 
 `string` = `...`
@@ -686,7 +698,7 @@ Scaffold a new Vivliostyle project.
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 
@@ -826,6 +838,10 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### installDependencies?
+
+`boolean` = `...`
+
 ###### language?
 
 `string` = `...`
@@ -932,7 +948,7 @@ Open a browser for previewing the publication.
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 
@@ -1050,6 +1066,7 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="input"></a> `input?` | `object` |
 | `input.entry` | `string` |
 | `input.format` | `InputFormat` |
+| <a id="installdependencies"></a> `installDependencies?` | `boolean` |
 | <a id="language-1"></a> `language` | `string` |
 | <a id="logger"></a> `logger?` | `LoggerInterface` |
 | <a id="loglevel"></a> `logLevel?` | `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` |

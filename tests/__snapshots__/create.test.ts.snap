@@ -122,6 +122,21 @@ export default {
 }
 `;
 
+exports[`create command > create project without any additional prompts 1`] = `
+"// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  title: \\"Book\\",
+  author: \\"john\\",
+  language: \\"ja\\",
+  browser: \\"chrome@100.0\\",
+  image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
+  entry: [\\"manuscript.md\\"],
+});
+"
+`;
+
 exports[`init command > test the init command 1`] = `
 "// @ts-check
 import { defineConfig } from '@vivliostyle/cli';

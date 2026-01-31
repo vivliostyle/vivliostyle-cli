@@ -1110,7 +1110,10 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         `),
     ),
     theme: v.pipe(
-      ThemeSpecifier,
+      v.union([
+        ThemeSpecifier,
+        v.literal(false), // Explicitly disable theme installation
+      ]),
       v.description($`
           Theme path or package name.
         `),
@@ -1368,6 +1371,12 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         Create a Vivliostyle config file without generating project template files.
       `),
     ),
+    installDependencies: v.pipe(
+      v.boolean(),
+      v.description($`
+        Install dependencies after creating a project.
+      `),
+    ),
     stdin: v.pipe(
       v.custom<import('node:stream').Readable>(() => true),
       v.metadata({
@@ -1466,6 +1475,7 @@ export type InlineOptions = Pick<
   | 'projectPath'
   | 'template'
   | 'createConfigFileOnly'
+  | 'installDependencies'
   | 'stdin'
   | 'stdout'
   | 'stderr'

@@ -183,6 +183,30 @@ describe('create command', () => {
     expect(files['/work/project-name/file.md']).toMatch('# Booook Titleeee');
   });
 
+  it('create project without any additional prompts', async () => {
+    mockedClackModule.answers.mockReturnValue({});
+
+    await runCommand(
+      [
+        'create',
+        '--title',
+        'book',
+        '--author',
+        'john',
+        '--language',
+        'ja',
+        '--template',
+        'minimal',
+        '--no-theme',
+        '--no-install-dependencies',
+        'project',
+      ],
+      { cwd: '/work' },
+    );
+    const files = vol.toJSON();
+    expect(files['/work/project/vivliostyle.config.js']).toMatchSnapshot();
+  });
+
   it('avoid overwrite', async () => {
     vol.fromJSON({
       '/work/out/touch': '',
