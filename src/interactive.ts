@@ -49,12 +49,14 @@ export async function askQuestion<
     keyof v.InferInput<S>,
     DistributiveOmit<PromptOption, 'name'>
   >;
+  interactiveLogger: InteractiveLogger;
   schema: S;
   validateProgressMessage?: string;
 }): Promise<S extends undefined ? T : v.InferOutput<NonNullable<S>>>;
 
 export async function askQuestion<T extends object>(_: {
   question: Record<string, DistributiveOmit<PromptOption, 'name'>>;
+  interactiveLogger: InteractiveLogger;
   schema?: undefined;
   validateProgressMessage?: string;
 }): Promise<T>;
@@ -63,6 +65,7 @@ export async function askQuestion<
   S extends v.ObjectSchema<any, any> | v.ObjectSchemaAsync<any, any>,
 >({
   question: questions,
+  interactiveLogger,
   schema,
   validateProgressMessage,
 }: {
@@ -70,6 +73,7 @@ export async function askQuestion<
     keyof v.InferInput<S>,
     DistributiveOmit<PromptOption, 'name'>
   >;
+  interactiveLogger: InteractiveLogger;
   schema?: S;
   validateProgressMessage?: string;
 }): Promise<any> {
@@ -130,12 +134,18 @@ export async function askQuestion<
         process.exit(0);
       }
       response[name] = result;
+      interactiveLogger.messageHistory.push({
+        type: 'question',
+        message: question.message,
+        answer: result,
+      });
     }
 
     let result: v.SafeParseResult<any>;
     if (schema && schema.async) {
-      result = await interactiveLogLoading(validateProgressMessage ?? '', () =>
-        v.safeParseAsync(schema, response),
+      result = await interactiveLogger?.logLoading(
+        validateProgressMessage ?? '',
+        () => v.safeParseAsync(schema, response),
       );
     } else if (schema) {
       result = v.safeParse(schema, response);
@@ -147,7 +157,7 @@ export async function askQuestion<
     if (success) {
       return output;
     }
-    interactiveLogWarn(issues[0].message);
+    interactiveLogger.logWarn(issues[0].message);
   }
 }
 
@@ -363,89 +373,103 @@ function autocompleteMultiSelectPrompt<Value>(
   return autocompletePrompt<Value>(opts, true) as Promise<Value[] | symbol>;
 }
 
-export async function interactiveLogLoading<T>(
-  message: string,
-  fn: () => Promise<T>,
-  deferredTimeMs = 300,
-): Promise<T> {
-  if (!Logger.isInteractive) {
-    return await fn();
+export class InteractiveLogger {
+  messageHistory: {
+    type: 'question' | 'loading' | 'info' | 'warn' | 'outro';
+    message: string;
+    answer?: unknown;
+  }[] = [];
+
+  async logLoading<T>(
+    message: string,
+    fn: () => Promise<T>,
+    deferredTimeMs = 300,
+  ): Promise<T> {
+    this.messageHistory.push({ type: 'loading', message });
+    if (!Logger.isInteractive || import.meta.env?.VITEST) {
+      return await fn();
+    }
+
+    const output = Logger.stdout;
+    const columns = getColumns(output);
+    const showMessage = (msg: string) => {
+      const wrapped = wrapAnsi(msg, columns, { hard: true, trim: false });
+      output.write(wrapped);
+      return () => {
+        const prevLines = wrapped.split('\n');
+        if (prevLines.length > 1) {
+          output.write(cursor.up(prevLines.length - 1));
+        }
+        output.write(cursor.to(0));
+        output.write(erase.down());
+      };
+    };
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let clearMessage: (() => void) | undefined;
+    const promise = new Promise<void>((resolve) => {
+      timer = setTimeout(() => {
+        output.write(`${blueBright('║')}\n`);
+        clearMessage = showMessage(
+          `${blueBright(`${promptStateSymbol.active}─`)} ${dim(message)}\n`,
+        );
+        resolve();
+      }, deferredTimeMs);
+    });
+    const result = await fn()
+      .then((r) => {
+        if (!clearMessage) {
+          return r;
+        }
+        return new Promise<T>((resolve) =>
+          setTimeout(() => resolve(r), deferredTimeMs),
+        );
+      })
+      .catch(async (e) => {
+        await promise;
+        clearMessage?.();
+        showMessage(
+          `${redBright(`${promptStateSymbol.error}─`)} ${dim(message)}\n\n`,
+        );
+        throw e;
+      });
+    clearTimeout(timer);
+    if (clearMessage) {
+      clearMessage();
+      showMessage(
+        `${blueBright(`${promptStateSymbol.submit}─`)} ${dim(message)}\n`,
+      );
+    }
+    return result;
   }
 
-  const output = Logger.stdout;
-  const columns = getColumns(output);
-  const showMessage = (msg: string) => {
-    const wrapped = wrapAnsi(msg, columns, { hard: true, trim: false });
-    output.write(wrapped);
-    return () => {
-      const prevLines = wrapped.split('\n');
-      if (prevLines.length > 1) {
-        output.write(cursor.up(prevLines.length - 1));
-      }
-      output.write(cursor.to(0));
-      output.write(erase.down());
-    };
-  };
-
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let clearMessage: (() => void) | undefined;
-  const promise = new Promise<void>((resolve) => {
-    timer = setTimeout(() => {
-      output.write(`${blueBright('║')}\n`);
-      clearMessage = showMessage(
-        `${blueBright(`${promptStateSymbol.active}─`)} ${dim(message)}\n`,
-      );
-      resolve();
-    }, deferredTimeMs);
-  });
-  const result = await fn()
-    .then((r) => {
-      if (!clearMessage) {
-        return r;
-      }
-      return new Promise<T>((resolve) =>
-        setTimeout(() => resolve(r), deferredTimeMs),
-      );
-    })
-    .catch(async (e) => {
-      await promise;
-      clearMessage?.();
-      showMessage(
-        `${redBright(`${promptStateSymbol.error}─`)} ${dim(message)}\n\n`,
-      );
-      throw e;
-    });
-  clearTimeout(timer);
-  if (clearMessage) {
-    clearMessage();
-    showMessage(
-      `${blueBright(`${promptStateSymbol.submit}─`)} ${dim(message)}\n`,
+  logInfo(message: string) {
+    this.messageHistory.push({ type: 'info', message });
+    if (import.meta.env?.VITEST) {
+      return;
+    }
+    Logger.stdout.write(
+      `${blueBright(`${promptStateSymbol.submit}─`)} ${message.split('\n').join(`\n${blueBright('║')}  `)}\n`,
     );
   }
-  return result;
-}
 
-export function interactiveLogInfo(message: string) {
-  if (import.meta.env?.VITEST) {
-    return;
+  logWarn(message: string) {
+    this.messageHistory.push({ type: 'warn', message });
+    if (import.meta.env?.VITEST) {
+      return;
+    }
+    Logger.stdout.write(
+      `${yellowBright(`${promptStateSymbol.error}─`)} ${yellowBright(message.split('\n').join(`\n${yellowBright('║')}  `))}\n`,
+    );
   }
-  Logger.stdout.write(
-    `${blueBright(`${promptStateSymbol.submit}─`)} ${message.split('\n').join(`\n${blueBright('║')}  `)}\n`,
-  );
-}
 
-export function interactiveLogWarn(message: string) {
-  if (import.meta.env?.VITEST) {
-    return;
+  logOutro(message: string) {
+    this.messageHistory.push({ type: 'outro', message });
+    if (import.meta.env?.VITEST) {
+      return;
+    }
+    Logger.stdout.write(
+      `${blueBright('║')}\n${blueBright('╙─')} ${message}\n\n`,
+    );
   }
-  Logger.stdout.write(
-    `${yellowBright(`${promptStateSymbol.error}─`)} ${yellowBright(message.split('\n').join(`\n${yellowBright('║')}  `))}\n`,
-  );
-}
-
-export function interactiveLogOutro(message: string) {
-  if (import.meta.env?.VITEST) {
-    return;
-  }
-  Logger.stdout.write(`${blueBright('║')}\n${blueBright('╙─')} ${message}\n\n`);
 }
