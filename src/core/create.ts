@@ -73,13 +73,16 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     useLocalTemplate =
       fs.existsSync(upath.resolve(cwd, template)) &&
       fs.statSync(upath.resolve(cwd, template)).isDirectory();
+    const usingPresetTemplate = TEMPLATE_SETTINGS.find(
+      (t) => t.value === template,
+    );
     if (useLocalTemplate) {
       template = absTemplatePath;
       interactiveLogger.logInfo(
         `Using the specified local template directory\n${dim(upath.relative(cwd, absTemplatePath) || '.')}`,
       );
-    } else if (TEMPLATE_SETTINGS.some((t) => t.value === template)) {
-      template = TEMPLATE_SETTINGS.find((t) => t.value === template)!.template;
+    } else if (usingPresetTemplate) {
+      template = usingPresetTemplate.template;
     } else {
       interactiveLogger.logWarn(
         `The specified theme ${green(template)} was not found as a local directory. Proceeding to fetch it from GitHub repository.`,
