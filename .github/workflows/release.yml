@@ -69,7 +69,7 @@ jobs:
         with:
           setupGitUser: false
 
-  get-release-token:
+  publish:
     needs:
       - publish-dry-run
       - create-version-pr
@@ -77,49 +77,49 @@ jobs:
     runs-on: ubuntu-latest
     environment: Production deployment
     outputs:
-      encrypted-token: ${{ steps.crypto-secret.outputs.encrypted-token }}
-      git-user-name: ${{ steps.app-token.outputs.app-slug }}[bot]
-      git-user-email: ${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com
+      encrypted-token: ${{ steps.encrypt-secret.outputs.encrypted-token }}
+      app-slug: ${{ steps.app-token.outputs.app-slug }}
+      user-id: ${{ steps.get-user-id.outputs.user-id }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+          persist-credentials: false
       - uses: actions/create-github-app-token@v2
         id: app-token
         with:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      - name: Get GitHub App User ID
-        id: get-user-id
-        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          skip-token-revoke: true
       - name: Encrypt release token
-        id: crypto-secret
+        id: encrypt-secret
         uses: ./.github/actions/crypto-secret
         with:
           mode: encrypt
           token: ${{ steps.app-token.outputs.token }}
           encryption-key: ${{ secrets.ENCRYPTION_KEY }}
-
-  publish:
-    needs:
-      - get-release-token
-    runs-on: ubuntu-latest
-    steps:
       - name: Decrypt release token
-        id: crypto-secret
+        id: decrypt-secret
         uses: ./.github/actions/crypto-secret
         with:
           mode: decrypt
-          encrypted-token: ${{ needs.get-release-token.outputs.encrypted-token }}
+          encrypted-token: ${{ steps.encrypt-secret.outputs.encrypted-token }}
           encryption-key: ${{ secrets.ENCRYPTION_KEY }}
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ steps.crypto-secret.outputs.decrypted-token }}
-          persist-credentials: false
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.decrypt-secret.outputs.decrypted-token }}
       - name: Set up git
         run: |
-          git config --global user.name "${{ needs.get-release-token.outputs.git-user-name }}"
-          git config --global user.email "${{ needs.get-release-token.outputs.git-user-email }}"
-          git remote set-url origin "https://x-access-token:${{ steps.crypto-secret.outputs.decrypted-token }}@github.com/${{ github.repository }}.git"
+          git config --global user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config --global user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+          git config --global url."https://x-access-token:${{ steps.decrypt-secret.outputs.decrypted-token }}@github.com/".insteadOf "https://github.com/"
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.decrypt-secret.outputs.decrypted-token }}
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           path: .
@@ -139,28 +139,37 @@ jobs:
       - name: Release
         run: pnpm publish -r --access public --publish-branch ${{ github.ref_name }}
         env:
-          GITHUB_TOKEN: ${{ steps.crypto-secret.outputs.decrypted-token }}
+          GITHUB_TOKEN: ${{ steps.decrypt-secret.outputs.decrypted-token }}
 
   release:
     needs:
       - publish-dry-run
-      - get-release-token
       - publish
     runs-on: ubuntu-latest
     strategy:
       matrix:
         package: ${{ fromJson(needs.publish-dry-run.outputs.publish-summary).publishedPackages }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+          persist-credentials: false
       - name: Decrypt release token
-        id: crypto-secret
+        id: decrypt-secret
         uses: ./.github/actions/crypto-secret
         with:
           mode: decrypt
-          encrypted-token: ${{ needs.get-release-token.outputs.encrypted-token }}
+          encrypted-token: ${{ needs.publish.outputs.encrypted-token }}
           encryption-key: ${{ secrets.ENCRYPTION_KEY }}
+      - name: Set up git
+        run: |
+          git config --global user.name "${{ needs.publish.outputs.app-slug }}[bot]"
+          git config --global user.email "${{ needs.publish.outputs.user-id }}+${{ needs.publish.outputs.app-slug }}[bot]@users.noreply.github.com"
+          git config --global url."https://x-access-token:${{ steps.decrypt-secret.outputs.decrypted-token }}@github.com/".insteadOf "https://github.com/"
       - uses: actions/checkout@v4
         with:
-          token: ${{ steps.crypto-secret.outputs.decrypted-token }}
+          token: ${{ steps.decrypt-secret.outputs.decrypted-token }}
           persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
@@ -169,11 +178,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: 'pnpm'
-      - name: Set up git
-        run: |
-          git config --global user.name "${{ needs.get-release-token.outputs.git-user-name }}"
-          git config --global user.email "${{ needs.get-release-token.outputs.git-user-email }}"
-          git remote set-url origin "https://x-access-token:${{ steps.crypto-secret.outputs.decrypted-token }}@github.com/${{ github.repository }}.git"
       - name: Output current package info
         id: package
         run: |
@@ -209,4 +213,4 @@ jobs:
           tag_name: ${{ steps.create-tag.outputs.name }}
           body_path: release_notes.txt
           generate_release_notes: true
-          token: ${{ steps.crypto-secret.outputs.decrypted-token }}
+          token: ${{ steps.decrypt-secret.outputs.decrypted-token }}

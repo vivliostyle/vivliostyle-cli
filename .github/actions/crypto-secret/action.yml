@@ -36,7 +36,7 @@ runs:
       run: |
         set -eo pipefail
         TOKEN="${{ inputs.token }}"
-        ENCRYPTED_TOKEN=$(echo -n "$TOKEN" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ inputs.encryption-key }}" | base64)
+        ENCRYPTED_TOKEN=$(echo -n "$TOKEN" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ inputs.encryption-key }}" | base64 -w 0)
         echo "::add-mask::$TOKEN"
         echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
         echo "encrypted-token=$ENCRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
@@ -47,7 +47,7 @@ runs:
       run: |
         set -eo pipefail
         ENCRYPTED_TOKEN="${{ inputs.encrypted-token }}"
-        DECRYPTED_TOKEN=$(echo -n "$ENCRYPTED_TOKEN" | base64 -d | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ inputs.encryption-key }}")
+        DECRYPTED_TOKEN=$(echo -n "$ENCRYPTED_TOKEN" | tr -d '\n' | base64 -d | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ inputs.encryption-key }}")
         echo "::add-mask::$DECRYPTED_TOKEN"
         echo "encrypted-token=$ENCRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
         echo "decrypted-token=$DECRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
