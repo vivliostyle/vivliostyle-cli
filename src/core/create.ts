@@ -83,6 +83,8 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       interactiveLogInfo(
         `Using the specified local template directory\n${dim(upath.relative(cwd, absTemplatePath) || '.')}`,
       );
+    } else if (TEMPLATE_SETTINGS.some((t) => t.value === template)) {
+      template = TEMPLATE_SETTINGS.find((t) => t.value === template)!.template;
     } else {
       interactiveLogWarn(
         `The specified theme ${green(template)} was not found as a local directory. Proceeding to fetch it from GitHub repository.`,
