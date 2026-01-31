@@ -96,6 +96,28 @@ describe('convertCmykColors', () => {
     expect(destHasCmyk).toBe(true);
   });
 
+  it('handles PDF with mix-blend-mode (Form XObjects)', async () => {
+    // https://github.com/vivliostyle/vivliostyle-cli/issues/735
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'blend-mode.pdf'));
+
+    const colorMap: CmykMap = {
+      '[0,0,0]': { c: 0, m: 0, y: 0, k: 10000 },
+      '[10000,10000,10000]': { c: 0, m: 0, y: 0, k: 0 },
+      '[10000,0,0]': { c: 0, m: 10000, y: 10000, k: 0 },
+      '[0,0,10000]': { c: 10000, m: 10000, y: 0, k: 0 },
+    };
+
+    // This should not throw "object is not a stream" error
+    const destPdf = await convertCmykColors({
+      pdf: srcPdf,
+      colorMap,
+      warnUnmapped: false,
+    });
+
+    expect(destPdf).toBeInstanceOf(Uint8Array);
+    expect(destPdf.length).toBeGreaterThan(0);
+  });
+
   it('preserves unmapped RGB colors', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
 
