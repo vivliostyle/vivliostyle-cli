@@ -30,8 +30,14 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
       '--css <CSS>',
       'custom style CSS code. (ex: ":root {--my-color: lime;}")',
     )
-    .option('--style <stylesheet>', 'additional stylesheet URL or path')
-    .option('--user-style <user_stylesheet>', 'user stylesheet URL or path')
+    .option(
+      '--style <stylesheet>',
+      'Additional stylesheet for Vivliostyle viewer.',
+    )
+    .option(
+      '--user-style <user_stylesheet>',
+      'Additional user stylesheet for Vivliostyle viewer.',
+    )
     .option('-d, --single-doc', 'single HTML document input')
     .option('-q, --quick', 'quick loading with rough page count')
     .option('--title <title>', 'title')
