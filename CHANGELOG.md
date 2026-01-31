@@ -1,5 +1,23 @@
 # @vivliostyle/cli
 
+## 10.3.1
+
+### Patch Changes
+
+- Use original indirect reference for stream operations in CMYK conversion ([#736](https://github.com/vivliostyle/vivliostyle-cli/pull/736))
+
+- Fix taskkill error on Windows when exiting with Ctrl+C ([#726](https://github.com/vivliostyle/vivliostyle-cli/pull/726))
+
+- Resolve --style/--user-style CSS path correctly in the single-entry mode ([#728](https://github.com/vivliostyle/vivliostyle-cli/pull/728))
+
+- Add `--no-theme`/`--(no-)install-dependencies` option to skip the prompts ([#740](https://github.com/vivliostyle/vivliostyle-cli/pull/740))
+
+- Update default browser versions ([#705](https://github.com/vivliostyle/vivliostyle-cli/pull/705))
+
+  - Chrome: 145.0.7632.26
+  - Chromium: 1577564
+  - Firefox: stable_147.0.2
+
 ## 10.3.0
 
 ### Minor Changes
