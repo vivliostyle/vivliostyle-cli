@@ -236,7 +236,7 @@ build({
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 
@@ -468,7 +468,7 @@ Scaffold a new Vivliostyle project.
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 
@@ -698,7 +698,7 @@ Scaffold a new Vivliostyle project.
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 
@@ -948,7 +948,7 @@ Open a browser for previewing the publication.
 
 ###### theme?
 
-`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
 ###### timeout?
 

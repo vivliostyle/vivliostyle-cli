@@ -1110,7 +1110,10 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         `),
     ),
     theme: v.pipe(
-      ThemeSpecifier,
+      v.union([
+        ThemeSpecifier,
+        v.literal(false), // Explicitly disable theme installation
+      ]),
       v.description($`
           Theme path or package name.
         `),

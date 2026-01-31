@@ -13,6 +13,7 @@ function setupCreateParserProgram(): Command {
     .option('-l, --language <language>', 'language')
     .option('-s, --size <size>', 'paper size')
     .option('-T, --theme <theme>', 'theme')
+    .option('--no-theme', 'Do not include a theme.')
     .option(
       '--template <template>',
       `Template source in the format of \`[provider]:repo[/subpath][#ref]\` or as a local directory to copy from.`,

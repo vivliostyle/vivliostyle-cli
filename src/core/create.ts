@@ -130,7 +130,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
         template = presetTemplate.template;
       }
     }
-    if (!theme) {
+    if (!theme && theme !== false) {
       ({ theme, themePackage } = await askTheme({
         presetTemplate,
         template,

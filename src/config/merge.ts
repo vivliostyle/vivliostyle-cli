@@ -63,7 +63,7 @@ export function mergeInlineConfig(
     tasks: tasks.map((task) => ({
       ...pruneObject(task),
       ...pruneObject({
-        theme,
+        theme: theme === false ? undefined : theme,
         size,
         pressReady,
         title,

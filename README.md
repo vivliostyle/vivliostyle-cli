@@ -59,6 +59,7 @@ Options:
   -l, --language <language>     language
   -s, --size <size>             paper size
   -T, --theme <theme>           theme
+  --no-theme                    Do not include a theme.
   --template <template>         Template source in the format of `[provider]:repo[/subpath][#ref]` or as a local directory to copy from.
   --install-dependencies        Install dependencies after creating a project.
   --no-install-dependencies     Do not install dependencies after creating a project.
