@@ -95,6 +95,9 @@ importers:
       hastscript:
         specifier: 9.0.1
         version: 9.0.1
+      hastscript-v7:
+        specifier: npm:hastscript@^7.2.0
+        version: hastscript@7.2.0
       lcid:
         specifier: 5.0.0
         version: 5.0.0
@@ -128,6 +131,9 @@ importers:
       puppeteer-core:
         specifier: 24.27.0
         version: 24.27.0
+      rehype:
+        specifier: 11.0.0
+        version: 11.0.0
       resolve-pkg:
         specifier: 2.0.0
         version: 2.0.0
@@ -155,6 +161,15 @@ importers:
       tmp:
         specifier: 0.2.4
         version: 0.2.4
+      unified:
+        specifier: 9.2.2
+        version: 9.2.2
+      unist-builder:
+        specifier: ^3.0.1
+        version: 3.0.1
+      unist-util-visit:
+        specifier: 4.1.2
+        version: 4.1.2
       upath:
         specifier: 2.0.1
         version: 2.0.1
@@ -176,6 +191,15 @@ importers:
       whatwg-mimetype:
         specifier: 4.0.0
         version: 4.0.0
+      xast-util-from-xml:
+        specifier: ^3.0.0
+        version: 3.0.0
+      xast-util-to-xml:
+        specifier: ^3.0.2
+        version: 3.0.2
+      xastscript:
+        specifier: 3.1.1
+        version: 3.1.1
       yocto-spinner:
         specifier: 0.2.2
         version: 0.2.2
@@ -213,6 +237,9 @@ importers:
       '@types/hast':
         specifier: 3.0.4
         version: 3.0.4
+      '@types/hast-v2':
+        specifier: npm:@types/hast@^2.0.0
+        version: '@types/hast@2.3.10'
       '@types/jsdom':
         specifier: 21.1.7
         version: 21.1.7
@@ -249,6 +276,9 @@ importers:
       '@types/whatwg-mimetype':
         specifier: 3.0.2
         version: 3.0.2
+      '@types/xast':
+        specifier: ^1.0.0
+        version: 1.0.7
       '@vitest/coverage-v8':
         specifier: 3.1.2
         version: 3.1.2(vitest@3.1.2(@types/debug@4.1.12)(@types/node@22.15.2)(tsx@4.19.3)(yaml@2.8.1))
@@ -297,9 +327,6 @@ importers:
       typescript:
         specifier: 5.8.3
         version: 5.8.3
-      unified:
-        specifier: 9.2.2
-        version: 9.2.2
       vitest:
         specifier: 3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.15.2)(tsx@4.19.3)(yaml@2.8.1)
@@ -340,8 +367,8 @@ importers:
         specifier: workspace:*
         version: link:../..
       rehype-expressive-code:
-        specifier: ^0.37.0
-        version: 0.37.1
+        specifier: 0.41.6
+        version: 0.41.6
       rehype-stringify:
         specifier: ^8.0.0
         version: 8.0.0
@@ -349,14 +376,17 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
       remark-rehype:
-        specifier: ^9.0.0
-        version: 9.1.0
+        specifier: ^8.1.0
+        version: 8.1.0
       remark-ruby:
         specifier: ^0.4.0
         version: 0.4.0(remark-parse@9.0.0)
       unified:
         specifier: ^9.2.0
         version: 9.2.2
+      unist-util-visit:
+        specifier: ^4.1.0
+        version: 4.1.2
 
   examples/local-theme:
     dependencies:
@@ -1196,17 +1226,17 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@expressive-code/core@0.37.1':
-    resolution: {integrity: sha512-nYgsK3uxK4W46v0IolHdB5+T6MQfy5weTpyB3kbzr11ur2UKUy2oHGhbWa+hRThfYEF1PM+TFxMtWU7amcjF8A==}
+  '@expressive-code/core@0.41.6':
+    resolution: {integrity: sha512-FvJQP+hG0jWi/FLBSmvHInDqWR7jNANp9PUDjdMqSshHb0y7sxx3vHuoOr6SgXjWw+MGLqorZyPQ0aAlHEok6g==}
 
-  '@expressive-code/plugin-frames@0.37.1':
-    resolution: {integrity: sha512-U1Pk8qmSlGaIvNpmo42pxVS+ROVkPUPtAgVR5OU9261zKw6r/MN7b5dCDE5B6QBqRi7iOS7/DQ/zYTzHcIQJQw==}
+  '@expressive-code/plugin-frames@0.41.6':
+    resolution: {integrity: sha512-d+hkSYXIQot6fmYnOmWAM+7TNWRv/dhfjMsNq+mIZz8Tb4mPHOcgcfZeEM5dV9TDL0ioQNvtcqQNuzA1sRPjxg==}
 
-  '@expressive-code/plugin-shiki@0.37.1':
-    resolution: {integrity: sha512-zzrX0kn6JMxm+0fKWpP1W8F3bLK8PYIUDvM5UUEplGjL5Z0otBqycHWalucl0Mk9aKX1UThXaUTuCQEVOkNSxg==}
+  '@expressive-code/plugin-shiki@0.41.6':
+    resolution: {integrity: sha512-Y6zmKBmsIUtWTzdefqlzm/h9Zz0Rc4gNdt2GTIH7fhHH2I9+lDYCa27BDwuBhjqcos6uK81Aca9dLUC4wzN+ng==}
 
-  '@expressive-code/plugin-text-markers@0.37.1':
-    resolution: {integrity: sha512-AjZG/SyE41uWcpAae0w9DVtSii/YkdhOsjl6godLsI8vRGBdUdYvgoCebjb33gySa7g+9NcWxGp3oEKCBut1wA==}
+  '@expressive-code/plugin-text-markers@0.41.6':
+    resolution: {integrity: sha512-PBFa1wGyYzRExMDzBmAWC6/kdfG1oLn4pLpBeTfIRrALPjcGA/59HP3e7q9J0Smk4pC7U+lWkA2LHR8FYV8U7Q==}
 
   '@gerrit0/mini-shiki@3.17.0':
     resolution: {integrity: sha512-Bpf6WuFar20ZXL6qU6VpVl4bVQfyyYiX+6O4xrns4nkU3Mr8paeupDbS1HENpcLOYj7pN4Rkd/yCaPA0vQwKww==}
@@ -1809,20 +1839,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@shikijs/core@1.29.2':
-    resolution: {integrity: sha512-vju0lY9r27jJfOY4Z7+Rt/nIOjzJpZ3y+nYpqtUZInVoXQ/TJZcfGnNOGnKjFdVZb8qexiCuSlZRKcGfhhTTZQ==}
-
   '@shikijs/core@3.15.0':
     resolution: {integrity: sha512-8TOG6yG557q+fMsSVa8nkEDOZNTSxjbbR8l6lF2gyr6Np+jrPlslqDxQkN6rMXCECQ3isNPZAGszAfYoJOPGlg==}
 
-  '@shikijs/engine-javascript@1.29.2':
-    resolution: {integrity: sha512-iNEZv4IrLYPv64Q6k7EPpOCE/nuvGiKl7zxdq0WFuRPF5PAE9PRo2JGq/d8crLusM59BRemJ4eOqrFrC4wiQ+A==}
-
   '@shikijs/engine-javascript@3.15.0':
     resolution: {integrity: sha512-ZedbOFpopibdLmvTz2sJPJgns8Xvyabe2QbmqMTz07kt1pTzfEvKZc5IqPVO/XFiEbbNyaOpjPBkkr1vlwS+qg==}
-
-  '@shikijs/engine-oniguruma@1.29.2':
-    resolution: {integrity: sha512-7iiOx3SG8+g1MnlzZVDYiaeHe7Ez2Kf2HrJzdmGwkRisT7r4rak0e655AcM/tF9JG/kg5fMNYlLLKglbN7gBqA==}
 
   '@shikijs/engine-oniguruma@3.15.0':
     resolution: {integrity: sha512-HnqFsV11skAHvOArMZdLBZZApRSYS4LSztk2K3016Y9VCyZISnlYUYsL2hzlS7tPqKHvNqmI5JSUJZprXloMvA==}
@@ -1830,26 +1851,17 @@ packages:
   '@shikijs/engine-oniguruma@3.17.1':
     resolution: {integrity: sha512-fsXPy4va/4iblEGS+22nP5V08IwwBcM+8xHUzSON0QmHm29/AJRghA95w9VDnxuwp9wOdJxEhfPkKp6vqcsN+w==}
 
-  '@shikijs/langs@1.29.2':
-    resolution: {integrity: sha512-FIBA7N3LZ+223U7cJDUYd5shmciFQlYkFXlkKVaHsCPgfVLiO+e12FmQE6Tf9vuyEsFe3dIl8qGWKXgEHL9wmQ==}
-
   '@shikijs/langs@3.15.0':
     resolution: {integrity: sha512-WpRvEFvkVvO65uKYW4Rzxs+IG0gToyM8SARQMtGGsH4GDMNZrr60qdggXrFOsdfOVssG/QQGEl3FnJ3EZ+8w8A==}
 
   '@shikijs/langs@3.17.1':
     resolution: {integrity: sha512-YTBVN+L2j7zBuOVjNZ2XiSNQEkm/7wZ1TSc5UO77GJPcg7Rk25WSscWA7y8pW7Bo25JIU0EWchUkq/UQjOJlJA==}
 
-  '@shikijs/themes@1.29.2':
-    resolution: {integrity: sha512-i9TNZlsq4uoyqSbluIcZkmPL9Bfi3djVxRnofUHwvx/h6SRW3cwgBC5SML7vsDcWyukY0eCzVN980rqP6qNl9g==}
-
   '@shikijs/themes@3.15.0':
     resolution: {integrity: sha512-8ow2zWb1IDvCKjYb0KiLNrK4offFdkfNVPXb1OZykpLCzRU6j+efkY+Y7VQjNlNFXonSw+4AOdGYtmqykDbRiQ==}
 
   '@shikijs/themes@3.17.1':
     resolution: {integrity: sha512-aohwwqNUB5h2ATfgrqYRPl8vyazqCiQ2wIV4xq+UzaBRHpqLMGSemkasK+vIEpl0YaendoaKUsDfpwhCqyHIaQ==}
-
-  '@shikijs/types@1.29.2':
-    resolution: {integrity: sha512-VJjK0eIijTZf0QSTODEXCqinjBn0joAHQ+aPSBzrv4O2d/QSbsMw+ZeSRx03kV34Hy7NzUvV/7NqfYGRLrASmw==}
 
   '@shikijs/types@3.15.0':
     resolution: {integrity: sha512-BnP+y/EQnhihgHy4oIAN+6FFtmfTekwOLsQbRw9hOKwqgNy8Bdsjq8B05oAt/ZgvIWWFrshV71ytOrlPfYjIJw==}
@@ -1965,9 +1977,6 @@ packages:
 
   '@types/hast@2.3.10':
     resolution: {integrity: sha512-McWspRw8xx8J9HurkVBfYj0xKoE25tOFlHGdx4MJ5xORQrMGZNqJhVQWaIbm6Oyla5kYOXtDiopzKRJzEOkwJw==}
-
-  '@types/hast@2.3.4':
-    resolution: {integrity: sha512-wLEm0QvaoawEDoTRwzTXp4b4jpwiJDvR5KMnFnVodm3scufTlBOWRD6N1OBf9TZMhjlNsSfcO5V+7AF4+Vy+9g==}
 
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
@@ -2112,6 +2121,9 @@ packages:
 
   '@types/whatwg-mimetype@3.0.2':
     resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
+
+  '@types/xast@1.0.7':
+    resolution: {integrity: sha512-QkazU2uUKr+9u7EsMfDoNQ9UtWB6sfOIGbNevJme8qQMeAHEnHmCfbsBJf2eXUm+07kFQfUKbCQp/Y6/8O25kw==}
 
   '@types/yargs-parser@15.0.0':
     resolution: {integrity: sha512-FA/BWv8t8ZWJ+gEOnLLd8ygxH/2UFbAvgEonyfN6yWGLKc7zVjbpl2Y4CTjid9h2RfgPP6SEt6uHwEOply00yw==}
@@ -2944,9 +2956,6 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  emoji-regex-xs@1.0.0:
-    resolution: {integrity: sha512-LRlerrMYoIDrT6jgpeZ2YYl/L8EulRTt5hQcYjy5AInh7HWXKimpqx68aknBFpGL2+/IcogTcaydJEgaTmOpDg==}
-
   emoji-regex@10.5.0:
     resolution: {integrity: sha512-lb49vf1Xzfx080OKA0o6l8DQQpV+6Vg95zyCJX9VB/BqKYlhG7N4wgROUUHRA+ZPUefLnteQOad7z1kT2bV7bg==}
 
@@ -3141,8 +3150,8 @@ packages:
   exponential-backoff@3.1.2:
     resolution: {integrity: sha512-8QxYTVXUkuy7fIIoitQkPwGonB8F3Zj8eEO8Sqg9Zv/bkI7RJAzowee4gr81Hak/dUTpA2Z7VfQgoijjPNlUZA==}
 
-  expressive-code@0.37.1:
-    resolution: {integrity: sha512-y7+5K2uJOt+Hy0KEPm83t974flu0O/DstvmezoiWXwV3Cwqf622CHMlWssaZ8uqFrJaJ1ES1cMcYXJtZSxe+9A==}
+  expressive-code@0.41.6:
+    resolution: {integrity: sha512-W/5+IQbrpCIM5KGLjO35wlp1NCwDOOVQb+PAvzEoGkW1xjGM807ZGfBKptNWH6UECvt6qgmLyWolCMYKh7eQmA==}
 
   extend-shallow@2.0.1:
     resolution: {integrity: sha512-zCnTtlxNoAiDc3gqY2aYAWFx7XWWiasuF2K8Me5WbN8otHKTUKBwjPtNpRs/rbUZm7KxWAaNj7P1a/p52GbVug==}
@@ -4527,9 +4536,6 @@ packages:
   oniguruma-parser@0.12.1:
     resolution: {integrity: sha512-8Unqkvk1RYc6yq2WBYRj4hdnsAxVze8i7iPfQr8e4uSP3tRv0rpZcbGUDvxfQQcdwHt/e9PrMvGCsa8OqG9X3w==}
 
-  oniguruma-to-es@2.3.0:
-    resolution: {integrity: sha512-bwALDxriqfKGfUufKGGepCzu9x7nJQuoRoAFp4AnwehhC2crqrDIAP/uN2qdlsAvSMpeRC3+Yzhqc7hLmle5+g==}
-
   oniguruma-to-es@4.3.3:
     resolution: {integrity: sha512-rPiZhzC3wXwE59YQMRDodUwwT9FZ9nNBwQQfsd1wfdtlKEyCdRV0avrTcSZ5xlIvGRVPd/cx6ZN45ECmS39xvg==}
 
@@ -4963,29 +4969,26 @@ packages:
   refractor@3.6.0:
     resolution: {integrity: sha512-MY9W41IOWxxk31o+YvFCNyNzdkc9M20NoZK5vq6jkv4I/uh2zkWcfudj0Q1fovjUQJrNewS9NMzeTtqPf+n5EA==}
 
-  regex-recursion@5.1.1:
-    resolution: {integrity: sha512-ae7SBCbzVNrIjgSbh7wMznPcQel1DNlDtzensnFxpiNpXt1U2ju/bHugH422r+4LAVS1FpW1YCwilmnNsjum9w==}
-
   regex-recursion@6.0.2:
     resolution: {integrity: sha512-0YCaSCq2VRIebiaUviZNs0cBz1kg5kVS2UKUfNIx8YVs1cN3AV7NTctO5FOKBA+UT2BPJIWZauYHPqJODG50cg==}
 
   regex-utilities@2.3.0:
     resolution: {integrity: sha512-8VhliFJAWRaUiVvREIiW2NXXTmHs4vMNnSzuJVhscgmGav3g9VDxLrQndI3dZZVVdp0ZO/5v0xmX516/7M9cng==}
 
-  regex@5.1.1:
-    resolution: {integrity: sha512-dN5I359AVGPnwzJm2jN1k0W9LPZ+ePvoOeVMMfqIMFz53sSwXkxaJoxr50ptnsC771lK95BnTrVSZxq0b9yCGw==}
-
   regex@6.0.1:
     resolution: {integrity: sha512-uorlqlzAKjKQZ5P+kTJr3eeJGSVroLKoHmquUj4zHWuR+hEyNqlXsSKlYYF5F4NI6nl7tWCs0apKJ0lmfsXAPA==}
 
-  rehype-expressive-code@0.37.1:
-    resolution: {integrity: sha512-HK6RJubSfgC6jpfk7UpGQcEgpMP+dhKrUQ1MmnDFYT9mOHteoLJv09WMURpQrIvXDpKCiAsaWQUBfNqRxjfL2Q==}
+  rehype-expressive-code@0.41.6:
+    resolution: {integrity: sha512-aBMX8kxPtjmDSFUdZlAWJkMvsQ4ZMASfee90JWIAV8tweltXLzkWC3q++43ToTelI8ac5iC0B3/S/Cl4Ql1y2g==}
 
   rehype-format@3.1.0:
     resolution: {integrity: sha512-XC88CLU83x6ocwHbDsqbK/y+qNxqWcSp7gZdYeJzUZPQH05ABFke3Zb+H53UGsRAUTB2W95/UMMtn/pM+UFiKQ==}
 
   rehype-minify-whitespace@4.0.5:
     resolution: {integrity: sha512-QC3Z+bZ5wbv+jGYQewpAAYhXhzuH/TVRx7z08rurBmh9AbG8Nu8oJnvs9LWj43Fd/C7UIhXoQ7Wddgt+ThWK5g==}
+
+  rehype-parse@7.0.1:
+    resolution: {integrity: sha512-fOiR9a9xH+Le19i4fGzIEowAbwG7idy2Jzs4mOrFWBSJ0sNUgy0ev871dwWnbOo371SjgjG4pwzrbgSVrKxecw==}
 
   rehype-parse@9.0.1:
     resolution: {integrity: sha512-ksCzCD0Fgfh7trPDxr2rSylbwq9iYDkSn8TCDmEJ49ljEUBxDVCzCHv7QNzZOfODanX4+bWQ4WZqLCRWYLfhag==}
@@ -5004,6 +5007,9 @@ packages:
 
   rehype-stringify@8.0.0:
     resolution: {integrity: sha512-VkIs18G0pj2xklyllrPSvdShAV36Ff3yE5PUO9u36f6+2qJFnn22Z5gKwBOwgXviux4UC7K+/j13AnZfPICi/g==}
+
+  rehype@11.0.0:
+    resolution: {integrity: sha512-qXqRqiCFJD5CJ61CSJuNImTFrm3zVkOU9XywHDwrUuvWN74MWt72KJ67c5CM5x8g0vGcOkRVCrYj85vqkmHulQ==}
 
   rehype@13.0.2:
     resolution: {integrity: sha512-j31mdaRFrwFRUIlxGeuPXXKWQxet52RBQRvCmzl5eCefn/KGbomK5GMHNMsOJf55fgo3qw5tST5neDuarDYR2A==}
@@ -5043,9 +5049,6 @@ packages:
 
   remark-rehype@8.1.0:
     resolution: {integrity: sha512-EbCu9kHgAxKmW1yEYjx3QafMyGY3q8noUbNUI5xyKbaFP89wbhDrKxyIQNukNYthzjNHZu6J7hwFg7hRm1svYA==}
-
-  remark-rehype@9.1.0:
-    resolution: {integrity: sha512-oLa6YmgAYg19zb0ZrBACh40hpBLteYROaPLhBXzLgjqyHQrN+gVP9N/FJvfzuNNuzCutktkroXEZBrxAxKhh7Q==}
 
   remark-ruby@0.4.0:
     resolution: {integrity: sha512-4GUhQuuIlKzP6kX1Ty89yvje6Rzs4BuVSv98L0Npx0784I9MpZejUbP2uesP/3eNsNtnGOVJmi3oV5IysNWtuA==}
@@ -5222,9 +5225,6 @@ packages:
     resolution: {integrity: sha512-S3I64fEiKgTZzKCC46zT/Ib9meqofLrQVbpSswtjFfAVDW+AZ54WTnAM/3/yENoxz/V1Cy6u3kiiEbQ4DNphvw==}
     engines: {node: '>=18'}
     hasBin: true
-
-  shiki@1.29.2:
-    resolution: {integrity: sha512-njXuliz/cP+67jU2hukkxCNuH1yUi4QfdZZY+sMr5PPrIyXSu5iTb/qYC4BiWWB0vZ+7TbdvYUCeL23zpwCfbg==}
 
   shiki@3.15.0:
     resolution: {integrity: sha512-kLdkY6iV3dYbtPwS9KXU7mjfmDm25f5m0IPNFnaXO7TBPcvbUOY72PYXSuSqDzwp+vlH/d7MXpHlKO/x+QoLXw==}
@@ -5750,9 +5750,6 @@ packages:
   unicode-trie@2.0.0:
     resolution: {integrity: sha512-x7bc76x0bm4prf1VLg79uhAzKw8DVboClSN5VxJuQ+LKDOVEW9CdH+VY7SP+vX7xCYQqzzgQpFqz15zeLvAtZQ==}
 
-  unified@10.1.2:
-    resolution: {integrity: sha512-pUSWAi/RAnVy1Pif2kAoeWNBa3JVrx0MId2LASj8G+7AiHWoKZNTomq6LG326T68U7/e263X6fTdcXIy7XnF7Q==}
-
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
 
@@ -6230,6 +6227,15 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xast-util-from-xml@3.0.0:
+    resolution: {integrity: sha512-zEfGxnue7vHbayZnRBAjJsjV1dQG6XWKLAzrsPxX2l4WHmqGZxM76XxRblaTHvcOYMFLlnVp3DFcUAl+Qk9SNQ==}
+
+  xast-util-to-xml@3.0.2:
+    resolution: {integrity: sha512-lbnJEVui7Lk9W/TydInkin5OnOyTAr2b4OpK5YjXo94qqoXaR6mFE/evXfOrBev9EnD91r0FOPxrLfTT0qLITQ==}
+
+  xastscript@3.1.1:
+    resolution: {integrity: sha512-rE7oVPLENyIZNKeRkXE96ao/QiucenYROqdBnEuNNkQHlyxf3vJ5EMNh2QQ4AYhdf9v/dVuxJ7F4u4AaOOhkOA==}
 
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
@@ -7043,7 +7049,7 @@ snapshots:
   '@esbuild/win32-x64@0.25.3':
     optional: true
 
-  '@expressive-code/core@0.37.1':
+  '@expressive-code/core@0.41.6':
     dependencies:
       '@ctrl/tinycolor': 4.1.0
       hast-util-select: 6.0.4
@@ -7053,20 +7059,20 @@ snapshots:
       postcss: 8.5.3
       postcss-nested: 6.2.0(postcss@8.5.3)
       unist-util-visit: 5.0.0
-      unist-util-visit-parents: 6.0.1
+      unist-util-visit-parents: 6.0.2
 
-  '@expressive-code/plugin-frames@0.37.1':
+  '@expressive-code/plugin-frames@0.41.6':
     dependencies:
-      '@expressive-code/core': 0.37.1
+      '@expressive-code/core': 0.41.6
 
-  '@expressive-code/plugin-shiki@0.37.1':
+  '@expressive-code/plugin-shiki@0.41.6':
     dependencies:
-      '@expressive-code/core': 0.37.1
-      shiki: 1.29.2
+      '@expressive-code/core': 0.41.6
+      shiki: 3.15.0
 
-  '@expressive-code/plugin-text-markers@0.37.1':
+  '@expressive-code/plugin-text-markers@0.41.6':
     dependencies:
-      '@expressive-code/core': 0.37.1
+      '@expressive-code/core': 0.41.6
 
   '@gerrit0/mini-shiki@3.17.0':
     dependencies:
@@ -7647,15 +7653,6 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.40.0':
     optional: true
 
-  '@shikijs/core@1.29.2':
-    dependencies:
-      '@shikijs/engine-javascript': 1.29.2
-      '@shikijs/engine-oniguruma': 1.29.2
-      '@shikijs/types': 1.29.2
-      '@shikijs/vscode-textmate': 10.0.2
-      '@types/hast': 3.0.4
-      hast-util-to-html: 9.0.5
-
   '@shikijs/core@3.15.0':
     dependencies:
       '@shikijs/types': 3.15.0
@@ -7663,22 +7660,11 @@ snapshots:
       '@types/hast': 3.0.4
       hast-util-to-html: 9.0.5
 
-  '@shikijs/engine-javascript@1.29.2':
-    dependencies:
-      '@shikijs/types': 1.29.2
-      '@shikijs/vscode-textmate': 10.0.2
-      oniguruma-to-es: 2.3.0
-
   '@shikijs/engine-javascript@3.15.0':
     dependencies:
       '@shikijs/types': 3.15.0
       '@shikijs/vscode-textmate': 10.0.2
       oniguruma-to-es: 4.3.3
-
-  '@shikijs/engine-oniguruma@1.29.2':
-    dependencies:
-      '@shikijs/types': 1.29.2
-      '@shikijs/vscode-textmate': 10.0.2
 
   '@shikijs/engine-oniguruma@3.15.0':
     dependencies:
@@ -7690,10 +7676,6 @@ snapshots:
       '@shikijs/types': 3.17.1
       '@shikijs/vscode-textmate': 10.0.2
 
-  '@shikijs/langs@1.29.2':
-    dependencies:
-      '@shikijs/types': 1.29.2
-
   '@shikijs/langs@3.15.0':
     dependencies:
       '@shikijs/types': 3.15.0
@@ -7702,10 +7684,6 @@ snapshots:
     dependencies:
       '@shikijs/types': 3.17.1
 
-  '@shikijs/themes@1.29.2':
-    dependencies:
-      '@shikijs/types': 1.29.2
-
   '@shikijs/themes@3.15.0':
     dependencies:
       '@shikijs/types': 3.15.0
@@ -7713,11 +7691,6 @@ snapshots:
   '@shikijs/themes@3.17.1':
     dependencies:
       '@shikijs/types': 3.17.1
-
-  '@shikijs/types@1.29.2':
-    dependencies:
-      '@shikijs/vscode-textmate': 10.0.2
-      '@types/hast': 3.0.4
 
   '@shikijs/types@3.15.0':
     dependencies:
@@ -7858,13 +7831,9 @@ snapshots:
     dependencies:
       '@types/unist': 2.0.11
 
-  '@types/hast@2.3.4':
-    dependencies:
-      '@types/unist': 3.0.3
-
   '@types/hast@3.0.4':
     dependencies:
-      '@types/unist': 3.0.2
+      '@types/unist': 3.0.3
 
   '@types/jsdom@21.1.7':
     dependencies:
@@ -8017,6 +7986,10 @@ snapshots:
   '@types/w3c-xmlserializer@2.0.4': {}
 
   '@types/whatwg-mimetype@3.0.2': {}
+
+  '@types/xast@1.0.7':
+    dependencies:
+      '@types/unist': 2.0.11
 
   '@types/yargs-parser@15.0.0': {}
 
@@ -8945,8 +8918,6 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  emoji-regex-xs@1.0.0: {}
-
   emoji-regex@10.5.0: {}
 
   emoji-regex@8.0.0: {}
@@ -9201,12 +9172,12 @@ snapshots:
 
   exponential-backoff@3.1.2: {}
 
-  expressive-code@0.37.1:
+  expressive-code@0.41.6:
     dependencies:
-      '@expressive-code/core': 0.37.1
-      '@expressive-code/plugin-frames': 0.37.1
-      '@expressive-code/plugin-shiki': 0.37.1
-      '@expressive-code/plugin-text-markers': 0.37.1
+      '@expressive-code/core': 0.41.6
+      '@expressive-code/plugin-frames': 0.41.6
+      '@expressive-code/plugin-shiki': 0.41.6
+      '@expressive-code/plugin-text-markers': 0.41.6
 
   extend-shallow@2.0.1:
     dependencies:
@@ -9842,7 +9813,7 @@ snapshots:
       '@types/hast': 3.0.4
       comma-separated-tokens: 2.0.3
       hast-util-parse-selector: 4.0.0
-      property-information: 7.0.0
+      property-information: 7.1.0
       space-separated-tokens: 2.0.2
 
   hexoid@2.0.0: {}
@@ -10296,7 +10267,7 @@ snapshots:
       '@types/mdast': 4.0.3
       escape-string-regexp: 5.0.0
       unist-util-is: 6.0.1
-      unist-util-visit-parents: 6.0.1
+      unist-util-visit-parents: 6.0.2
 
   mdast-util-from-markdown@0.8.5:
     dependencies:
@@ -11079,12 +11050,6 @@ snapshots:
 
   oniguruma-parser@0.12.1: {}
 
-  oniguruma-to-es@2.3.0:
-    dependencies:
-      emoji-regex-xs: 1.0.0
-      regex: 5.1.1
-      regex-recursion: 5.1.1
-
   oniguruma-to-es@4.3.3:
     dependencies:
       oniguruma-parser: 0.12.1
@@ -11561,28 +11526,19 @@ snapshots:
       parse-entities: 2.0.0
       prismjs: 1.27.0
 
-  regex-recursion@5.1.1:
-    dependencies:
-      regex: 5.1.1
-      regex-utilities: 2.3.0
-
   regex-recursion@6.0.2:
     dependencies:
       regex-utilities: 2.3.0
 
   regex-utilities@2.3.0: {}
 
-  regex@5.1.1:
-    dependencies:
-      regex-utilities: 2.3.0
-
   regex@6.0.1:
     dependencies:
       regex-utilities: 2.3.0
 
-  rehype-expressive-code@0.37.1:
+  rehype-expressive-code@0.41.6:
     dependencies:
-      expressive-code: 0.37.1
+      expressive-code: 0.41.6
 
   rehype-format@3.1.0:
     dependencies:
@@ -11601,6 +11557,11 @@ snapshots:
       hast-util-is-element: 1.1.0
       hast-util-whitespace: 1.0.4
       unist-util-is: 4.1.0
+
+  rehype-parse@7.0.1:
+    dependencies:
+      hast-util-from-parse5: 6.0.1
+      parse5: 6.0.1
 
   rehype-parse@9.0.1:
     dependencies:
@@ -11635,6 +11596,12 @@ snapshots:
   rehype-stringify@8.0.0:
     dependencies:
       hast-util-to-html: 7.1.3
+
+  rehype@11.0.0:
+    dependencies:
+      rehype-parse: 7.0.1
+      rehype-stringify: 8.0.0
+      unified: 9.2.2
 
   rehype@13.0.2:
     dependencies:
@@ -11723,13 +11690,6 @@ snapshots:
   remark-rehype@8.1.0:
     dependencies:
       mdast-util-to-hast: 10.2.0
-
-  remark-rehype@9.1.0:
-    dependencies:
-      '@types/hast': 2.3.4
-      '@types/mdast': 3.0.10
-      mdast-util-to-hast: 11.3.0
-      unified: 10.1.2
 
   remark-ruby@0.4.0(remark-parse@9.0.0):
     dependencies:
@@ -11977,17 +11937,6 @@ snapshots:
       fast-glob: 3.3.3
       interpret: 1.4.0
       rechoir: 0.6.2
-
-  shiki@1.29.2:
-    dependencies:
-      '@shikijs/core': 1.29.2
-      '@shikijs/engine-javascript': 1.29.2
-      '@shikijs/engine-oniguruma': 1.29.2
-      '@shikijs/langs': 1.29.2
-      '@shikijs/themes': 1.29.2
-      '@shikijs/types': 1.29.2
-      '@shikijs/vscode-textmate': 10.0.2
-      '@types/hast': 3.0.4
 
   shiki@3.15.0:
     dependencies:
@@ -12543,16 +12492,6 @@ snapshots:
       pako: 0.2.9
       tiny-inflate: 1.0.3
 
-  unified@10.1.2:
-    dependencies:
-      '@types/unist': 2.0.11
-      bail: 2.0.2
-      extend: 3.0.2
-      is-buffer: 2.0.5
-      is-plain-obj: 4.1.0
-      trough: 2.2.0
-      vfile: 5.3.7
-
   unified@11.0.5:
     dependencies:
       '@types/unist': 3.0.3
@@ -13012,6 +12951,23 @@ snapshots:
   ws@8.18.2: {}
 
   ws@8.18.3: {}
+
+  xast-util-from-xml@3.0.0:
+    dependencies:
+      '@rgrove/parse-xml': 4.2.0
+      '@types/xast': 1.0.7
+      vfile-location: 4.1.0
+      vfile-message: 3.1.4
+
+  xast-util-to-xml@3.0.2:
+    dependencies:
+      '@types/xast': 1.0.7
+      ccount: 2.0.1
+      stringify-entities: 4.0.4
+
+  xastscript@3.1.1:
+    dependencies:
+      '@types/xast': 1.0.7
 
   xml-name-validator@5.0.0: {}
 

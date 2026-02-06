@@ -99,6 +99,12 @@ type VivliostyleConfigSchema =
   - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
     Custom function to extract metadata from the source document content.
 
+  - `htmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+    Custom function to provide a unified Processor for transforming HTML documents.
+
+  - `xhtmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+    Custom function to provide a unified Processor for transforming XHTML documents.
+
   - `vfm`: [VfmConfig](#vfmconfig)  
     Options for converting Markdown into a stringified format (HTML).
 
@@ -188,6 +194,12 @@ type BuildTask = {
   documentMetadataReader?: (
     content: string,
   ) => import("@vivliostyle/vfm").Metadata;
+  htmlProcessor?: (
+    options: import("../processor/html-processor.js").HtmlOptions,
+  ) => import("unified").Processor;
+  xhtmlProcessor?: (
+    options: import("../processor/html-processor.js").HtmlOptions,
+  ) => import("unified").Processor;
   vfm?: VfmConfig;
   image?: string;
   http?: boolean;
@@ -344,6 +356,12 @@ type CoverEntryConfig = {
   - `documentMetadataReader`: (content: string) => import("@vivliostyle/vfm").Metadata  
     Custom function to extract metadata from the source document content.
 
+  - `htmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+    Custom function to provide a unified Processor for transforming HTML documents.
+
+  - `xhtmlProcessor`: (options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor  
+    Custom function to provide a unified Processor for transforming XHTML documents.
+
 #### Type definition
 
 ```ts
@@ -364,6 +382,12 @@ type ArticleEntryConfig = {
   documentMetadataReader?: (
     content: string,
   ) => import("@vivliostyle/vfm").Metadata;
+  htmlProcessor?: (
+    options: import("../processor/html-processor.js").HtmlOptions,
+  ) => import("unified").Processor;
+  xhtmlProcessor?: (
+    options: import("../processor/html-processor.js").HtmlOptions,
+  ) => import("unified").Processor;
 };
 ```
 

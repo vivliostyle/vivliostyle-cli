@@ -92,6 +92,32 @@ export const DocumentMetadataReaderSchema = v.pipe(
   `),
 );
 
+export const HtmlProcessorSchema = v.pipe(
+  v.function() as v.GenericSchema<
+    (options: import('../processor/html-processor.js').HtmlOptions) => Processor
+  >,
+  v.metadata({
+    typeString:
+      '(options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor',
+  }),
+  v.description($`
+    Custom function to provide a unified Processor for transforming HTML documents.
+  `),
+);
+
+export const XhtmlProcessorSchema = v.pipe(
+  v.function() as v.GenericSchema<
+    (options: import('../processor/html-processor.js').HtmlOptions) => Processor
+  >,
+  v.metadata({
+    typeString:
+      '(options: import("../processor/html-processor.js").HtmlOptions) => import("unified").Processor',
+  }),
+  v.description($`
+    Custom function to provide a unified Processor for transforming XHTML documents.
+  `),
+);
+
 export const ThemeConfig = v.pipe(
   v.intersect([
     v.required(
@@ -154,6 +180,8 @@ export const ArticleEntryConfig = v.pipe(
       ),
       documentProcessor: v.optional(DocumentProcessorSchema),
       documentMetadataReader: v.optional(DocumentMetadataReaderSchema),
+      htmlProcessor: v.optional(HtmlProcessorSchema),
+      xhtmlProcessor: v.optional(XhtmlProcessorSchema),
     }),
     ['path'],
     'Missing required field: path',
@@ -885,6 +913,8 @@ export const BuildTask = v.pipe(
         ),
         documentProcessor: DocumentProcessorSchema,
         documentMetadataReader: DocumentMetadataReaderSchema,
+        htmlProcessor: HtmlProcessorSchema,
+        xhtmlProcessor: XhtmlProcessorSchema,
         vfm: v.pipe(
           v.union([VfmConfig]),
           v.description($`
