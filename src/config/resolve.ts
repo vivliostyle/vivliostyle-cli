@@ -4,6 +4,11 @@ import {
   type StringifyMarkdownOptions,
   VFM,
 } from '@vivliostyle/vfm';
+import {
+  defaultHtmlProcessor,
+  defaultXhtmlProcessor,
+  type HtmlProcessorFactory,
+} from '../processor/html-processor.js';
 import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -88,12 +93,15 @@ export interface FileEntrySource {
   pathname: string;
   contentType: ManuscriptMediaType;
   documentProcessor?: DocumentProcessor;
+  htmlProcessor?: HtmlProcessorFactory;
 }
 
 export interface UriEntrySource {
   type: 'uri';
   href: string;
   rootDir: string;
+  htmlProcessor?: HtmlProcessorFactory;
+  xhtmlProcessor?: HtmlProcessorFactory;
 }
 
 export const manuscriptMediaTypes = [
@@ -1216,6 +1224,11 @@ function resolveComposedProjectConfig({
     metadataReader: config.documentMetadataReader ?? readMetadata,
   } satisfies DocumentProcessor;
 
+  const rootHtmlProcessor: HtmlProcessorFactory | undefined =
+    config.htmlProcessor;
+  const rootXhtmlProcessor: HtmlProcessorFactory | undefined =
+    config.xhtmlProcessor;
+
   const isContentsEntry = (entry: EntryConfig): entry is ContentsEntryConfig =>
     entry.rel === 'contents';
   const isCoverEntry = (entry: EntryConfig): entry is CoverEntryConfig =>
@@ -1230,16 +1243,36 @@ function resolveComposedProjectConfig({
       | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
       | (UriEntrySource & { metadata?: undefined }) => {
       if (/^https?:/.test(entryPath)) {
+        const htmlProcessor =
+          ('htmlProcessor' in entry && entry.htmlProcessor) ||
+          rootHtmlProcessor ||
+          defaultHtmlProcessor;
+        const xhtmlProcessor =
+          ('xhtmlProcessor' in entry && entry.xhtmlProcessor) ||
+          rootXhtmlProcessor ||
+          defaultXhtmlProcessor;
         return {
           type: 'uri',
           href: entryPath,
           rootDir: upath.join(workspaceDir, new URL(entryPath).host),
+          htmlProcessor,
+          xhtmlProcessor,
         };
       } else if (entryPath.startsWith('/')) {
+        const htmlProcessor =
+          ('htmlProcessor' in entry && entry.htmlProcessor) ||
+          rootHtmlProcessor ||
+          defaultHtmlProcessor;
+        const xhtmlProcessor =
+          ('xhtmlProcessor' in entry && entry.xhtmlProcessor) ||
+          rootXhtmlProcessor ||
+          defaultXhtmlProcessor;
         return {
           type: 'uri',
           href: entryPath,
           rootDir: upath.join(workspaceDir, 'localhost'),
+          htmlProcessor,
+          xhtmlProcessor,
         };
       }
       const pathname = upath.resolve(entryContextDir, entryPath);
@@ -1260,7 +1293,10 @@ function resolveComposedProjectConfig({
         documentProcessor.metadataReader !== readMetadata
       );
       const contentType =
-        hasCustomProcessor && rawContentType !== 'text/markdown'
+        hasCustomProcessor &&
+        rawContentType !== 'text/markdown' &&
+        rawContentType !== 'text/html' &&
+        rawContentType !== 'application/xhtml+xml'
           ? 'text/x-vivliostyle-custom'
           : rawContentType;
       if (
@@ -1275,6 +1311,16 @@ function resolveComposedProjectConfig({
       const useDocumentProcessor =
         contentType === 'text/markdown' ||
         contentType === 'text/x-vivliostyle-custom';
+      const htmlProcessor =
+        contentType === 'text/html'
+          ? ('htmlProcessor' in entry && entry.htmlProcessor) ||
+            rootHtmlProcessor ||
+            defaultHtmlProcessor
+          : contentType === 'application/xhtml+xml'
+            ? ('xhtmlProcessor' in entry && entry.xhtmlProcessor) ||
+              rootXhtmlProcessor ||
+              defaultXhtmlProcessor
+            : undefined;
       return {
         type: 'file',
         pathname,
@@ -1289,6 +1335,7 @@ function resolveComposedProjectConfig({
             : undefined,
         }),
         ...(useDocumentProcessor && { documentProcessor }),
+        ...(htmlProcessor && { htmlProcessor }),
       };
     };
 

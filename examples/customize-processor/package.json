@@ -8,11 +8,12 @@
   },
   "dependencies": {
     "@vivliostyle/cli": "workspace:*",
-    "rehype-expressive-code": "^0.37.0",
+    "rehype-expressive-code": "0.41.6",
     "rehype-stringify": "^8.0.0",
     "remark-parse": "^9.0.0",
-    "remark-rehype": "^9.0.0",
+    "remark-rehype": "^8.1.0",
     "remark-ruby": "^0.4.0",
-    "unified": "^9.2.0"
+    "unified": "^9.2.0",
+    "unist-util-visit": "^4.1.0"
   }
 }

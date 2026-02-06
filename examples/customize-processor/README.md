@@ -15,7 +15,7 @@ import rehypeStringify from 'rehype-stringify';
 import remarkRuby from 'remark-ruby';
 
 const config = {
-  title: 'Markdown processor customization example',
+  title: 'Processor customization example',
   entry: ['manuscript.md'],
   // config is StringifyMarkdownOptions in @vivliostyle/vfm
   // metadata is Metadata in @vivliostyle/vfm
@@ -41,12 +41,12 @@ export default config;
 You can also set `documentProcessor` and `documentMetadataReader` for individual entries. This allows different processing for each file:
 
 ```js
-import { defineConfig, VFM, readMetadata } from '@vivliostyle/cli';
+import { defineConfig, VFM } from '@vivliostyle/cli';
 import unified from 'unified';
 // ... other imports
 
 const config = defineConfig({
-  title: 'Markdown processor customization example',
+  title: 'Processor customization example',
   entry: [
     // Uses the global documentProcessor
     'manuscript.md',
@@ -55,8 +55,7 @@ const config = defineConfig({
       path: 'manuscript2.md',
       documentProcessor: VFM,
       documentMetadataReader: (content) => {
-        const match = content.match(/^#\s+(.+)$/m);
-        return { title: match ? match[1] : 'Untitled' };
+        return { title: 'Custom title' };
       },
     },
   ],
@@ -71,6 +70,47 @@ const config = defineConfig({
       })
       .use(rehypeStringify),
   output: 'draft.pdf',
+});
+
+export default config;
+```
+
+## htmlProcessor and xhtmlProcessor
+
+While `documentProcessor` handles Markdown-to-HTML conversion, `htmlProcessor` and `xhtmlProcessor` allow you to customize the processing of HTML and XHTML source files respectively.
+
+You can extend the built-in `defaultHtmlProcessor` (or `defaultXhtmlProcessor` for XHTML) with additional [rehype](https://github.com/rehypejs/rehype) plugins:
+
+```js
+import { defineConfig, defaultHtmlProcessor } from '@vivliostyle/cli';
+import { visit } from 'unist-util-visit';
+
+const openLinksInNewTab = () => (tree) => {
+  visit(tree, 'element', (node) => {
+    if (
+      node.tagName === 'a' &&
+      String(node.properties?.href).startsWith('http')
+    ) {
+      (node.properties ??= {}).target = '_blank';
+      node.properties.rel = 'noopener noreferrer';
+      node.children.push({
+        type: 'element',
+        tagName: 'span',
+        properties: {},
+        children: [{ type: 'text', value: ' ↗' }],
+      });
+    }
+  });
+};
+
+const config = defineConfig({
+  entry: [
+    {
+      path: 'page.html',
+      htmlProcessor: (options) =>
+        defaultHtmlProcessor(options).use(openLinksInNewTab),
+    },
+  ],
 });
 
 export default config;

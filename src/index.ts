@@ -18,6 +18,12 @@ export type {
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';
+export {
+  defaultHtmlProcessor,
+  defaultXhtmlProcessor,
+  type HtmlOptions,
+  type HtmlProcessorFactory,
+} from './processor/html-processor.js';
 export type { TemplateVariable } from './create-template.js';
 export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */
