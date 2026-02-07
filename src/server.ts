@@ -37,7 +37,9 @@ export type ViewerUrlOption = Pick<
   | 'quick'
   | 'viewerParam'
   | 'base'
->;
+> & {
+  cmykReserveMapUrl?: string;
+};
 
 export function getViewerParams(
   src: string | undefined,
@@ -53,6 +55,7 @@ export function getViewerParams(
     quick,
     viewerParam,
     base,
+    cmykReserveMapUrl,
   }: ViewerUrlOption,
 ): string {
   const pageSizeValue =
@@ -102,6 +105,10 @@ export function getViewerParams(
     viewerParams += `&style=data:,/*<viewer>*/${encodeURIComponent(
       pageStyle,
     )}/*</viewer>*/${encodeURIComponent(css ?? '')}`;
+  }
+
+  if (cmykReserveMapUrl) {
+    viewerParams += `&cmykReserveMap=${escapeParam(cmykReserveMapUrl)}`;
   }
 
   if (viewerParam) {
@@ -173,11 +180,19 @@ export async function getViewerFullUrl({
     workspaceDir,
     rootUrl,
   });
+  // Resolve cmykReserveMapUrl to absolute URL if it's a relative path
+  const resolvedConfig = { base, ...config };
+  if (resolvedConfig.cmykReserveMapUrl && rootUrl) {
+    resolvedConfig.cmykReserveMapUrl = new URL(
+      resolvedConfig.cmykReserveMapUrl,
+      rootUrl,
+    ).href;
+  }
   const viewerParams = getViewerParams(
     sourceUrl === EMPTY_DATA_URI
       ? undefined // open Viewer start page
       : sourceUrl,
-    { base, ...config },
+    resolvedConfig,
   );
   viewerUrl.hash = '';
   return `${viewerUrl.href}#${viewerParams}`;

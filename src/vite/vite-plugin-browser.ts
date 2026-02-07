@@ -1,7 +1,9 @@
+import upath from 'upath';
 import * as vite from 'vite';
 import { launchPreview } from '../browser.js';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { CMYK_RESERVE_MAP_FILENAME } from '../const.js';
 import { getViewerFullUrl } from '../server.js';
 import { getOsLocale, runExitHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
@@ -24,7 +26,18 @@ export function vsBrowserPlugin({
 
   async function openPreviewPage() {
     const locale = await getOsLocale();
-    const url = await getViewerFullUrl(config);
+    const pdfOutput = config.outputs.find((o) => o.format === 'pdf');
+    const cmykReserveMapUrl =
+      pdfOutput &&
+      'cmyk' in pdfOutput &&
+      pdfOutput.cmyk &&
+      pdfOutput.cmyk.reserveMap.length
+        ? upath.posix.join(config.base, CMYK_RESERVE_MAP_FILENAME)
+        : undefined;
+    const url = await getViewerFullUrl({
+      ...config,
+      cmykReserveMapUrl,
+    });
     const { page, browser } = await launchPreview({
       mode: 'preview',
       url,
