@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 70">
+  <!-- C50 ≈ #80ffff -->
+  <rect x="10" y="10" width="50" height="50" fill="#80ffff" />
+
+  <!-- K50 ≈ #808080 -->
+  <rect x="70" y="10" width="50" height="50" fill="#808080" />
+
+  <!-- C50 K50 ≈ #408080 -->
+  <rect x="130" y="10" width="50" height="50" fill="#408080" />
+</svg>

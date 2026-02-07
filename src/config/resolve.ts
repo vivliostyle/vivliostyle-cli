@@ -190,11 +190,81 @@ export interface RGBValue {
   b: number;
 }
 
-export type CmykOverrideEntry = [RGBValue, CMYKValue];
+export type CmykMapEntry = [RGBValue, CMYKValue];
+
+function parseHexColor(hex: string): RGBValue {
+  let r: number, g: number, b: number;
+  if (hex.length === 4 || hex.length === 5) {
+    // #RGB or #RGBA (alpha discarded)
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else {
+    // #RRGGBB or #RRGGBBAA (alpha discarded)
+    r = parseInt(hex.slice(1, 3), 16);
+    g = parseInt(hex.slice(3, 5), 16);
+    b = parseInt(hex.slice(5, 7), 16);
+  }
+  // NOTE:
+  // Chromium (Skia) converts 8-bit color values to decimal strings
+  // via the following chain:
+  //   Sk4f_fromL32 (SkSwizzlePriv.h)
+  //     float f = byte * (1 / 255.0f);
+  //   ColorToDecimalF (SkPDFUtils.cpp)
+  //     int x = floor(f * 10^4 + 0.5);
+  // For every value in the 0–255 range, this produces the same result as
+  // Math.round(byte_val / 255 * 10000).
+  // The following script can be used to verify this:
+  // ```
+  // $ uv run --with playwright --with pymupdf python3 - <<'EOF'
+  // import re
+  // import subprocess
+  // from playwright.sync_api import sync_playwright
+  // import pymupdf
+  // with sync_playwright() as p, p.chromium.launch() as browser, browser.new_page() as page:
+  //   for i in range(256):
+  //     page.set_content(f"<style>body{{background-color:rgb({i},0,0)}}</style>")
+  //     with pymupdf.open("pdf", page.pdf(print_background=True)) as doc:
+  //       print(
+  //         f"{i}:{
+  //           list(re.finditer(r'([\d.]+)\s+[\d.]+\s+[\d.]+\s+rg\b', doc.xref_stream(doc[0].get_contents()[0]).decode()))[0].group(1)
+  //         }:{
+  //           subprocess.run(['node', '-e', f'console.log(Math.round(({i} / 255) * 10000))'], stdout=subprocess.PIPE).stdout.decode().strip()
+  //         }"
+  //       )
+  // EOF
+  //
+  // 0:0:0
+  // 1:.0039:39
+  // 2:.0078:78
+  // 3:.0118:118
+  // 4:.0157:157
+  // ...
+  // 252:.9882:9882
+  // 253:.9922:9922
+  // 254:.9961:9961
+  // 255:1:10000
+  // ```
+  return {
+    r: Math.round((r / 255) * 10000),
+    g: Math.round((g / 255) * 10000),
+    b: Math.round((b / 255) * 10000),
+  };
+}
+
+function resolveMapEntries(
+  entries: [{ r: number; g: number; b: number } | string, CMYKValue][],
+): CmykMapEntry[] {
+  return entries.map(([rgb, cmyk]) => {
+    const resolvedRgb = typeof rgb === 'string' ? parseHexColor(rgb) : rgb;
+    return [resolvedRgb, cmyk];
+  });
+}
 
 export interface CmykConfig {
   warnUnmapped: boolean;
-  overrideMap: CmykOverrideEntry[];
+  overrideMap: CmykMapEntry[];
+  reserveMap: CmykMapEntry[];
   mapOutput: string | undefined;
 }
 
@@ -627,7 +697,8 @@ export function resolveTaskConfig(
       if (cmykOption && typeof cmykOption === 'object') {
         return {
           warnUnmapped: cmykOption.warnUnmapped ?? true,
-          overrideMap: cmykOption.overrideMap ?? [],
+          overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
+          reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
           mapOutput: cmykOption.mapOutput
             ? upath.resolve(context, cmykOption.mapOutput)
             : undefined,
@@ -635,7 +706,12 @@ export function resolveTaskConfig(
       }
       // CLI --cmyk flag or cmykOption: true
       if (options.cmyk || cmykOption === true) {
-        return { warnUnmapped: true, overrideMap: [], mapOutput: undefined };
+        return {
+          warnUnmapped: true,
+          overrideMap: [],
+          reserveMap: [],
+          mapOutput: undefined,
+        };
       }
       return false;
     };

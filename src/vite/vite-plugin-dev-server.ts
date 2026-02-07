@@ -1,5 +1,6 @@
 import type { NextHandleFunction } from 'connect';
 import escapeRe from 'escape-string-regexp';
+import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import sirv, { type RequestHandler } from 'sirv';
 import upath from 'upath';
@@ -12,6 +13,7 @@ import {
   type ResolvedTaskConfig,
 } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { CMYK_RESERVE_MAP_FILENAME } from '../const.js';
 import { Logger } from '../logger.js';
 import {
   getAssetMatcher,
@@ -75,6 +77,9 @@ function getWorkspaceMatcher({
   outputs,
   copyAsset,
 }: ResolvedTaskConfig) {
+  const hasCmykReserveMap = outputs.some(
+    (o) => o.format === 'pdf' && o.cmyk && o.cmyk.reserveMap.length > 0,
+  );
   if (viewerInput.type === 'webpub') {
     return getWebPubResourceMatcher({
       outputs,
@@ -83,6 +88,7 @@ function getWorkspaceMatcher({
       cwd: workspaceDir,
       manifestPath: viewerInput.manifestPath,
       copyAsset,
+      additionalPatterns: hasCmykReserveMap ? [CMYK_RESERVE_MAP_FILENAME] : [],
     });
   }
 
@@ -157,6 +163,20 @@ export function vsDevServerPlugin({
       needToUpdateManifest
     ) {
       await generateManifest(config);
+    }
+
+    // Write CMYK reserve map if configured
+    const pdfOutput = config.outputs.find((o) => o.format === 'pdf');
+    if (
+      pdfOutput &&
+      'cmyk' in pdfOutput &&
+      pdfOutput.cmyk &&
+      pdfOutput.cmyk.reserveMap.length
+    ) {
+      fs.writeFileSync(
+        upath.join(config.workspaceDir, CMYK_RESERVE_MAP_FILENAME),
+        JSON.stringify(pdfOutput.cmyk.reserveMap),
+      );
     }
 
     const localThemePaths = await prepareThemeDirectory(config);

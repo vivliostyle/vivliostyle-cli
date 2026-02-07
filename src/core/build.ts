@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
+import fs from 'node:fs';
 import upath from 'upath';
 import { type PreviewServer, build as viteBuild } from 'vite';
 import { cyan, gray } from 'yoctocolors';
@@ -7,6 +8,7 @@ import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { isWebPubConfig, resolveTaskConfig } from '../config/resolve.js';
+import { CMYK_RESERVE_MAP_FILENAME } from '../const.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { resolveViteConfig } from '../config/vite.js';
 import { buildPDFWithContainer } from '../container.js';
@@ -98,6 +100,20 @@ export async function build(
         await prepareThemeDirectory(config);
         await compile(config);
         await copyAssets(config);
+      }
+
+      // Write CMYK reserve map if configured
+      const pdfOutput = config.outputs.find((o) => o.format === 'pdf');
+      if (
+        pdfOutput &&
+        'cmyk' in pdfOutput &&
+        pdfOutput.cmyk &&
+        pdfOutput.cmyk.reserveMap.length
+      ) {
+        fs.writeFileSync(
+          upath.join(config.workspaceDir, CMYK_RESERVE_MAP_FILENAME),
+          JSON.stringify(pdfOutput.cmyk.reserveMap),
+        );
       }
     }
 
