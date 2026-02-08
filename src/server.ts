@@ -122,12 +122,16 @@ export async function getSourceUrl({
   'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
 >) {
   let input: string;
+  let isUrlPath = false;
   switch (viewerInput.type) {
     case 'webpub':
       input = viewerInput.manifestPath;
       break;
     case 'webbook':
       input = viewerInput.webbookEntryUrl;
+      // webbookEntryUrl is already a URL path (e.g., "/vivliostyle/test.html")
+      // or a full URL (e.g., "https://example.com/test.html")
+      isUrlPath = !isValidUri(input);
       break;
     case 'epub-opf':
       input = viewerInput.epubOpfPath;
@@ -145,10 +149,12 @@ export async function getSourceUrl({
   return (
     isValidUri(input)
       ? new URL(input)
-      : new URL(
-          upath.posix.join(base, upath.relative(workspaceDir, input)),
-          rootUrl,
-        )
+      : isUrlPath
+        ? new URL(input, rootUrl)
+        : new URL(
+            upath.posix.join(base, upath.relative(workspaceDir, input)),
+            rootUrl,
+          )
   ).href;
 }
 
