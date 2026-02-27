@@ -1,19 +1,18 @@
-````markdown
 # はじめに
 
-## Vivliostyle CLI について
+## Vivliostyle CLIについて
 
-Vivliostyle CLI は、HTML や Markdown ドキュメントを高品質な出版物に組版するための強力なコマンドラインツールです。Markdown のシンプルさと、書籍・技術文書・学術論文などに求められるプロフェッショナルな出力品質を兼ね備えています。
+Vivliostyle CLIは、HTMLやMarkdownドキュメントを高品質な出版物に組版するための強力なコマンドラインツールです。Markdownのシンプルさと、書籍・技術文書・学術論文などに求められるプロフェッショナルな出力品質を兼ね備えています。
 
 ### 主な特長
 
-Vivliostyle CLI はデジタル出版に対して以下のような利点を提供します：
+Vivliostyle CLIはデジタル出版に対して以下のような利点を提供します：
 
-- **Markdown による執筆**: シンプルで読みやすい Markdown 形式でコンテンツを執筆
-- **プロフェッショナルな組版**: 高度なレイアウト機能を備えた出版品質の PDF を生成
-- **複数の出力形式**: PDF、EPUB、Web 出版物に対応
-- **テーマシステム**: あらかじめ用意されたテーマの適用や CSS によるカスタムスタイルの作成が可能
-- **複数の入力形式**: Markdown、HTML、EPUB、Web 出版物を処理可能
+- **Markdownによる執筆**: シンプルで読みやすいMarkdown形式でコンテンツを執筆
+- **プロフェッショナルな組版**: 高度なレイアウト機能を備えた出版品質のPDFを生成
+- **複数の出力形式**: PDF、EPUB、Web出版物に対応
+- **テーマシステム**: あらかじめ用意されたテーマの適用やCSSによるカスタムスタイルの作成が可能
+- **複数の入力形式**: Markdown、HTML、EPUB、Web出版物を処理可能
 
 ### はじめ方
 
@@ -39,7 +38,7 @@ npm create book
 vivliostyle preview manuscript.md
 ```
 
-**PDF のビルド：**
+**PDFのビルド：**
 
 ```sh
 vivliostyle build manuscript.md -o output.pdf
@@ -77,6 +76,5 @@ export default defineConfig({
 - 出版物のメタデータを設定する
 - 出力オプションを設定する
 
-詳しくは [Vivliostyle CLI ドキュメント](https://github.com/vivliostyle/vivliostyle-cli#readme) をご覧ください。
+詳しくは [Vivliostyle CLIドキュメント](https://github.com/vivliostyle/vivliostyle-cli#readme) をご覧ください。
 
-````

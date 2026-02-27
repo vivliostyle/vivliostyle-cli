@@ -1,13 +1,12 @@
-````markdown
 # Vivliostyleの機能
 
 ## テーマとスタイリング
 
-Vivliostyle CLI は柔軟なテーマシステムを提供しており、CSS をゼロから書かなくてもプロフェッショナルなスタイルを出版物に適用できます。
+Vivliostyle CLIは柔軟なテーマシステムを提供しており、CSSをゼロから書かなくてもプロフェッショナルなスタイルを出版物に適用できます。
 
 ### 公式テーマの利用
 
-[Vivliostyle テーマ](https://vivliostyle.github.io/themes/) コレクションには、さまざまな出版物タイプ向けのデザイン済みスタイルが用意されています：
+[Vivliostyleテーマ](https://vivliostyle.github.io/themes/) コレクションには、さまざまな出版物タイプ向けのデザイン済みスタイルが用意されています：
 
 ```sh
 vivliostyle build manuscript.md --theme @vivliostyle/theme-techbook
@@ -21,13 +20,13 @@ vivliostyle build manuscript.md --theme @vivliostyle/theme-techbook
 
 ### カスタムスタイルシート
 
-追加の CSS スタイルを適用して出版物をカスタマイズできます：
+追加のCSSスタイルを適用して出版物をカスタマイズできます：
 
 ```sh
 vivliostyle build document.md --style custom.css
 ```
 
-コマンドラインから直接 CSS を注入することもできます：
+コマンドラインから直接CSSを注入することもできます：
 
 ```sh
 vivliostyle build document.md --css "body { font-family: 'Georgia'; }"
@@ -53,19 +52,19 @@ vivliostyle build book.md -m --bleed 5mm --crop-offset 20mm
 
 ## 複数の出力形式
 
-Vivliostyle CLI は同じソースからさまざまな形式の出版物を生成できます。
+Vivliostyle CLIは同じソースからさまざまな形式の出版物を生成できます。
 
-### PDF 出力
+### PDF出力
 
-デフォルトの出力形式で、商業印刷にも適した高品質な PDF を提供します：
+デフォルトの出力形式で、商業印刷にも適した高品質なPDFを提供します：
 
 ```sh
 vivliostyle build manuscript.md -o output.pdf
 ```
 
-### EPUB 出力
+### EPUB出力
 
-電子書籍リーダー向けのリフロー型 EPUB ファイルを生成します：
+電子書籍リーダー向けのリフロー型EPUBファイルを生成します：
 
 ```js
 // vivliostyle.config.js
@@ -78,9 +77,9 @@ export default {
 };
 ```
 
-### WebPub 出力
+### WebPub出力
 
-ブラウザで閲覧可能な Web 出版物を作成します：
+ブラウザで閲覧可能なWeb出版物を作成します：
 
 ```js
 // vivliostyle.config.js
@@ -176,7 +175,7 @@ export default defineConfig({
 vivliostyle preview manuscript.md
 ```
 
-Vivliostyle Viewer がブラウザで開き、組版結果をリアルタイムで表示します。
+Vivliostyle Viewerがブラウザで開き、組版結果をリアルタイムで表示します。
 
 ### クイックプレビューモード
 
@@ -190,9 +189,9 @@ vivliostyle preview --quick
 
 ## 高度な入力形式
 
-### EPUB ファイル
+### EPUBファイル
 
-既存の EPUB ファイルを PDF に変換できます：
+既存のEPUBファイルをPDFに変換できます：
 
 ```sh
 vivliostyle build book.epub -o book.pdf
@@ -200,7 +199,7 @@ vivliostyle build book.epub -o book.pdf
 
 ### Web URL
 
-リモートの HTML ドキュメントを処理できます：
+リモートのHTMLドキュメントを処理できます：
 
 ```sh
 vivliostyle build https://example.com/article.html -s A4 -o article.pdf
@@ -208,7 +207,7 @@ vivliostyle build https://example.com/article.html -s A4 -o article.pdf
 
 ### 出版物マニフェスト
 
-W3C Web Publication マニフェストファイルを使用できます：
+W3C Web Publicationマニフェストファイルを使用できます：
 
 ```sh
 vivliostyle build publication.json -o output.pdf
@@ -216,15 +215,15 @@ vivliostyle build publication.json -o output.pdf
 
 ### Webbook
 
-目次やマニフェストにリンクした HTML ファイルを処理できます：
+目次やマニフェストにリンクしたHTMLファイルを処理できます：
 
 ```sh
 vivliostyle build index.html -o book.pdf
 ```
 
-## Docker サポート
+## Dockerサポート
 
-コンテナ化された環境で Vivliostyle CLI を実行できます：
+コンテナ化された環境でVivliostyle CLIを実行できます：
 
 ```sh
 vivliostyle build -o output.pdf --render-mode docker
@@ -233,7 +232,7 @@ vivliostyle build -o output.pdf --render-mode docker
 これは以下のような場面で便利です：
 
 - 異なる環境間での一貫したビルド
-- CI/CD パイプライン
+- CI/CDパイプライン
 - ローカルの依存関係インストールを避けたい場合
 
 ## コマンドラインショートカット
@@ -261,4 +260,3 @@ vivliostyle help create
 
 各コマンドの利用可能なオプションと使用パターンの詳細情報が表示されます。
 
-````

@@ -1,9 +1,8 @@
-````markdown
 # 高度な機能とテクニック
 
 ## 複雑なドキュメントの作成
 
-この章では、Vivliostyle CLI を使って洗練された出版物を作成するための高度な機能を解説します。
+この章では、Vivliostyle CLIを使って洗練された出版物を作成するための高度な機能を解説します。
 
 ## マルチファイル出版物
 
@@ -286,7 +285,7 @@ class: cover-page
 
 ### カスタムフォントの読み込み
 
-CSS で Web フォントを読み込みます：
+CSSでWebフォントを読み込みます：
 
 ```css
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
@@ -420,7 +419,7 @@ export default {
 vivliostyle build book.md -m --bleed 3mm --crop-offset 10mm
 ```
 
-または CSS で設定します：
+またはCSSで設定します：
 
 ```css
 @page {
@@ -448,7 +447,6 @@ vivliostyle preview large-book.md --quick
 
 その他の例やコミュニティの貢献については、以下をご覧ください：
 
-- [Vivliostyle サンプル](https://vivliostyle.org/samples/)
+- [Vivliostyleサンプル](https://vivliostyle.org/samples/)
 - [Awesome Vivliostyle](https://github.com/vivliostyle/awesome-vivliostyle)
 
-````

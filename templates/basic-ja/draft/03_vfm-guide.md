@@ -1,15 +1,14 @@
-````markdown
 # VFM: Vivliostyle Flavored Markdown
 
-## VFM とは？
+## VFMとは？
 
-VFM（Vivliostyle Flavored Markdown）は、プロフェッショナルな出版に最適化された Markdown の方言です。標準的な Markdown を拡張し、高品質なドキュメントや出版物の作成に特化した機能を備えています。
+VFM（Vivliostyle Flavored Markdown）は、プロフェッショナルな出版に最適化されたMarkdownの方言です。標準的なMarkdownを拡張し、高品質なドキュメントや出版物の作成に特化した機能を備えています。
 
-VFM は CommonMark と GitHub Flavored Markdown をベースに、タイポグラフィ、数式、セマンティックなドキュメント構造のための機能を追加しています。
+VFMはCommonMarkとGitHub Flavored Markdownをベースに、タイポグラフィ、数式、セマンティックなドキュメント構造のための機能を追加しています。
 
-## Markdown の基本構文
+## Markdownの基本構文
 
-VFM は標準的な Markdown の機能をすべてサポートしています：
+VFMは標準的なMarkdownの機能をすべてサポートしています：
 
 ### 見出し
 
@@ -69,11 +68,11 @@ function greet(name) {
 console.log(greet('World'));
 ```
 
-## VFM の拡張機能
+## VFMの拡張機能
 
 ### キャプション付きコードブロック
 
-VFM ではコードブロックにキャプションを付けることができます：
+VFMではコードブロックにキャプションを付けることができます：
 
 ```js:example.js
 // キャプション付きのコードブロック
@@ -93,7 +92,7 @@ print(df.head())
 
 ### 数式
 
-VFM は LaTeX 記法を使った数式表記に対応しています。
+VFMはLaTeX記法を使った数式表記に対応しています。
 
 インライン数式：$E = mc^2$ という式は質量とエネルギーの等価性を表しています。
 
@@ -119,7 +118,7 @@ $$
 
 ### フロントマター
 
-VFM ファイルには YAML フロントマターでメタデータを指定できます：
+VFMファイルにはYAMLフロントマターでメタデータを指定できます：
 
 ```yaml
 ---
@@ -130,23 +129,23 @@ class: document-page
 
 ### ハードラインブレーク
 
-設定で有効にすると、VFM は単一の改行を `<br>` 要素に変換し、
+設定で有効にすると、VFMは単一の改行を `<br>` 要素に変換し、
 ソーステキストの視覚的な構造を
 出力に反映できます。
 
-### 生の HTML
+### 生のHTML
 
-VFM では必要に応じて生の HTML を含めることができます：
+VFMでは必要に応じて生のHTMLを含めることができます：
 
 <div class="custom-container">
 
-HTML ブロック内でも空行を含めれば **Markdown** の書式を混在させることができます。
+HTMLブロック内でも空行を含めれば **Markdown** の書式を混在させることができます。
 
 </div>
 
 ### セクション化
 
-VFM は見出しに続くコンテンツを自動的にセマンティックな `<section>` 要素で囲みます。これにより適切なドキュメントアウトラインが作成され、ドキュメント構造に基づいた高度なスタイリングが可能になります。
+VFMは見出しに続くコンテンツを自動的にセマンティックな `<section>` 要素で囲みます。これにより適切なドキュメントアウトラインが作成され、ドキュメント構造に基づいた高度なスタイリングが可能になります。
 
 自動セクション作成を無効にするには、見出しの末尾に対応するハッシュマークを付けます：
 
@@ -156,10 +155,9 @@ VFM は見出しに続くコンテンツを自動的にセマンティックな 
 
 ## 追加リソース
 
-VFM の完全な仕様と高度な機能については、以下をご覧ください：
+VFMの完全な仕様と高度な機能については、以下をご覧ください：
 
-- [VFM ドキュメント](https://vivliostyle.github.io/vfm/#/vfm)
-- [Vivliostyle ユーザーガイド](https://docs.vivliostyle.org/)
-- [Vivliostyle テーマ](https://github.com/vivliostyle/themes)
+- [VFMドキュメント](https://vivliostyle.github.io/vfm/#/vfm)
+- [Vivliostyleユーザーガイド](https://docs.vivliostyle.org/)
+- [Vivliostyleテーマ](https://github.com/vivliostyle/themes)
 
-````
