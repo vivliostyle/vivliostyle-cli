@@ -61,8 +61,7 @@ export const TEMPLATE_SETTINGS = [
   },
 ] as const;
 
-export const TEMPLATE_DEFAULT_FILES = {
-  'package.json': /* json */ `{
+export const TEMPLATE_DEFAULT_PACKAGE_JSON = /* json */ `{
   "name": "{{kebab title}}",
   "description": "{{proper title}}",
   "author": "{{author}}",
@@ -77,8 +76,9 @@ export const TEMPLATE_DEFAULT_FILES = {
     "@vivliostyle/cli": "{{cliVersion}}"
   }
 }
-`,
-  [DEFAULT_CONFIG_FILENAME]: /* js */ `// @ts-check
+`;
+
+export const TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS = /* js */ `// @ts-check
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
@@ -99,8 +99,7 @@ export default defineConfig({
   image: "${CONTAINER_URL}:{{cliVersion}}",
   entry: ["manuscript.md"],
 });
-`,
-} as const;
+`;
 
 // UNICODE LICENSE V3
 // https://github.com/unicode-org/cldr-json
