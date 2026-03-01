@@ -9,16 +9,16 @@ import * as fs from 'node:fs';
 async function main() {
   const START_MARKER = '// START DEFAULT_BROWSER_VERSIONS';
   const END_MARKER = '// END DEFAULT_BROWSER_VERSIONS';
-  const fileContent = fs.readFileSync('src/const.ts', 'utf-8');
+  const fileContent = fs.readFileSync('src/constants.ts', 'utf-8');
   const startAt = fileContent.indexOf(START_MARKER);
   const endAt = fileContent.indexOf(END_MARKER);
   if (startAt === -1 || endAt === -1) {
-    throw new Error('Markers not found in const.ts');
+    throw new Error('Markers not found in constants.ts');
   }
 
   const content = `// prettier-ignore\nexport const DEFAULT_BROWSER_VERSIONS = ${await getDefaultBrowserVersions()} as const;`;
   fs.writeFileSync(
-    'src/const.ts',
+    'src/constants.ts',
     `${fileContent.slice(0, startAt + START_MARKER.length)}\n${content}\n${fileContent.slice(endAt)}`,
   );
 }

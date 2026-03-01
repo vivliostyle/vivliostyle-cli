@@ -11,7 +11,7 @@ import {
 } from 'vite';
 import type { ResolvedTaskConfig } from './config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
-import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
+import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './constants.js';
 import { Logger } from './logger.js';
 import {
   getDefaultEpubOpfPath,

@@ -12,7 +12,7 @@ import {
   type WebPublicationOutput,
 } from '../config/resolve.js';
 import { ArticleEntryConfig } from '../config/schema.js';
-import { MANIFEST_FILENAME } from '../const.js';
+import { MANIFEST_FILENAME } from '../constants.js';
 import { Logger } from '../logger.js';
 import {
   getAssetMatcher,

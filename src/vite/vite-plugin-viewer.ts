@@ -5,7 +5,8 @@ import upath from 'upath';
 import * as vite from 'vite';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
-import { VIEWER_ROOT_PATH, viewerRoot } from '../const.js';
+import { VIEWER_ROOT_PATH } from '../constants.js';
+import { viewerRoot } from '../util.js';
 import { prependToHead } from './plugin-util.js';
 
 const viewerClientId = '@vivliostyle:viewer:client';

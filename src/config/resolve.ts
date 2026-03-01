@@ -24,7 +24,6 @@ import {
   ThemeConfig,
 } from '../config/schema.js';
 import {
-  cliVersion,
   CONTAINER_LOCAL_HOSTNAME,
   CONTAINER_URL,
   COVER_HTML_FILENAME,
@@ -34,11 +33,12 @@ import {
   MANIFEST_FILENAME,
   TOC_FILENAME,
   TOC_TITLE,
-} from '../const.js';
+} from '../constants.js';
 import type { CMYKValue } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import {
+  cliVersion,
   cwd as defaultCwd,
   detectBrowserPlatform,
   getEpubRootDir,

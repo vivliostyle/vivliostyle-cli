@@ -3,8 +3,9 @@ import { satisfies as semverSatisfies } from 'semver';
 import type { Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
-import { cliVersion, CONTAINER_URL } from '../const.js';
+import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
+import { cliVersion } from '../util.js';
 
 const $ = (strings: TemplateStringsArray, ...values: any[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');

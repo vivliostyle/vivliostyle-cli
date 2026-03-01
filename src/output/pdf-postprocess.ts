@@ -5,7 +5,6 @@ import type { PDFDocument, PDFRef } from 'pdf-lib';
 import upath from 'upath';
 import { v1 as uuid } from 'uuid';
 import type { PdfOutput, ResolvedTaskConfig } from '../config/resolve.js';
-import { coreVersion } from '../const.js';
 import {
   collectVolumeArgs,
   runContainer,
@@ -14,7 +13,7 @@ import {
 import type { CmykMap, Meta, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
-import { isInContainer } from '../util.js';
+import { coreVersion, isInContainer } from '../util.js';
 import { convertCmykColors } from './cmyk.js';
 import { replaceImages } from './image.js';
 

@@ -15,16 +15,14 @@ import {
   VivliostylePackageMetadata,
 } from '../config/schema.js';
 import {
-  cliVersion,
-  coreVersion,
   DEFAULT_CONFIG_FILENAME,
   DEFAULT_PROJECT_AUTHOR,
   DEFAULT_PROJECT_TITLE,
-  languages,
+  LANGUAGES,
   TEMPLATE_DEFAULT_PACKAGE_JSON,
   TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS,
   TEMPLATE_SETTINGS,
-} from '../const.js';
+} from '../constants.js';
 import { format, type TemplateVariable } from '../create-template.js';
 import { askQuestion, InteractiveLogger } from '../interactive.js';
 import { Logger } from '../logger.js';
@@ -36,6 +34,8 @@ import {
 } from '../npm.js';
 import { GlobMatcher } from '../processor/asset.js';
 import {
+  cliVersion,
+  coreVersion,
   cwd as defaultCwd,
   getDefaultBrowserTag,
   getOsLocale,
@@ -308,7 +308,7 @@ async function askLanguage({
       language: {
         type: 'autocomplete',
         message: "What's the language?",
-        options: Object.entries(languages).map(([value, displayName]) => ({
+        options: Object.entries(LANGUAGES).map(([value, displayName]) => ({
           value,
           label: displayName,
           hint: value,

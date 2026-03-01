@@ -1,6 +1,6 @@
 import { Command, Option } from 'commander';
 import upath from 'upath';
-import { versionForDisplay } from '../const.js';
+import { versionForDisplay } from '../util.js';
 import { createParserProgram } from './cli-flags.js';
 
 function setupBuildParserProgram(): Command {

@@ -4,7 +4,7 @@ import { x } from 'tinyexec';
 import upath from 'upath';
 import type { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
-import { CONTAINER_LOCAL_HOSTNAME, CONTAINER_ROOT_DIR } from './const.js';
+import { CONTAINER_LOCAL_HOSTNAME, CONTAINER_ROOT_DIR } from './constants.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
 import { getSourceUrl } from './server.js';

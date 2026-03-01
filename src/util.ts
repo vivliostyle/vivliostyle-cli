@@ -15,15 +15,17 @@ import childProcess, { type ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import readline from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import util from 'node:util';
 import { osLocale } from 'os-locale';
+import resolvePkg from 'resolve-pkg';
 import { titleCase } from 'title-case';
 import tmp from 'tmp';
 import upath from 'upath';
 import type { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
 import type { BrowserType } from './config/schema.js';
-import { DEFAULT_BROWSER_VERSIONS, languages } from './const.js';
+import { DEFAULT_BROWSER_VERSIONS, LANGUAGES } from './constants.js';
 import { Logger } from './logger.js';
 import {
   publicationSchema,
@@ -430,7 +432,7 @@ export async function getOsLocale(): Promise<string> {
     locale = await osLocale();
   }
 
-  const langs = Object.keys(languages);
+  const langs = Object.keys(LANGUAGES);
   locale = langs.includes(locale)
     ? locale
     : langs.includes(locale.split('-')[0])
@@ -571,3 +573,31 @@ export function whichPm(): PackageManager {
 
   return name as PackageManager;
 }
+
+export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
+export const cliVersion = (() => {
+  if (import.meta.env?.VITEST) {
+    return '0.0.1';
+  }
+  const pkg = JSON.parse(
+    fs.readFileSync(upath.join(cliRoot, 'package.json'), 'utf8'),
+  );
+  return pkg.version;
+})();
+
+export const viewerRoot = resolvePkg('@vivliostyle/viewer', { cwd: cliRoot });
+export const coreVersion = (() => {
+  if (import.meta.env?.VITEST) {
+    return '0.0.1';
+  }
+  if (!viewerRoot) {
+    return 'Unknown';
+  }
+  const pkg = JSON.parse(
+    fs.readFileSync(upath.join(viewerRoot, 'package.json'), 'utf8'),
+  );
+  return pkg.version;
+})();
+
+export const versionForDisplay = `cli: ${cliVersion}
+core: ${coreVersion}`;
