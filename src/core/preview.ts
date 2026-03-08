@@ -1,5 +1,4 @@
 import terminalLink from 'terminal-link';
-import upath from 'upath';
 import type { ViteDevServer } from 'vite';
 import { blueBright, cyan, dim } from 'yoctocolors';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
@@ -8,7 +7,7 @@ import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { resolveTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { resolveViteConfig } from '../config/vite.js';
-import { cliVersion, CMYK_RESERVE_MAP_FILENAME } from '../const.js';
+import { cliVersion } from '../const.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { createViteServer, getViewerFullUrl } from '../server.js';
 
@@ -53,18 +52,7 @@ export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
         vivliostyleConfig.inlineOptions,
       );
     }
-    const pdfOutput = config.outputs.find((o) => o.format === 'pdf');
-    const cmykReserveMapUrl =
-      pdfOutput &&
-      'cmyk' in pdfOutput &&
-      pdfOutput.cmyk &&
-      pdfOutput.cmyk.reserveMap.length
-        ? upath.posix.join(config.base, CMYK_RESERVE_MAP_FILENAME)
-        : undefined;
-    url = await getViewerFullUrl({
-      ...config,
-      cmykReserveMapUrl,
-    });
+    url = await getViewerFullUrl(config);
   }
 
   if (server.httpServer) {

@@ -15,6 +15,7 @@ import {
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { CMYK_RESERVE_MAP_FILENAME } from '../const.js';
 import { Logger } from '../logger.js';
+import { generateCmykReserveMap } from '../server.js';
 import {
   getAssetMatcher,
   getWebPubResourceMatcher,
@@ -166,18 +167,7 @@ export function vsDevServerPlugin({
     }
 
     // Write CMYK reserve map if configured
-    const pdfOutput = config.outputs.find((o) => o.format === 'pdf');
-    if (
-      pdfOutput &&
-      'cmyk' in pdfOutput &&
-      pdfOutput.cmyk &&
-      pdfOutput.cmyk.reserveMap.length
-    ) {
-      fs.writeFileSync(
-        upath.join(config.workspaceDir, CMYK_RESERVE_MAP_FILENAME),
-        JSON.stringify(pdfOutput.cmyk.reserveMap),
-      );
-    }
+    generateCmykReserveMap(config);
 
     const localThemePaths = await prepareThemeDirectory(config);
 

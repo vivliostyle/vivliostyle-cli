@@ -12,7 +12,6 @@ import type {
 } from '../config/resolve.js';
 import type { CmykMap, Meta, Payload, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
-import { CMYK_RESERVE_MAP_FILENAME } from '../const.js';
 import { getViewerFullUrl } from '../server.js';
 import { pathEquals } from '../util.js';
 import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
@@ -26,14 +25,7 @@ export async function buildPDF({
 }): Promise<string | null> {
   Logger.logUpdate(`Launching PDF build environment`);
 
-  const cmykReserveMapUrl =
-    target.cmyk && target.cmyk.reserveMap.length
-      ? upath.posix.join(config.base, CMYK_RESERVE_MAP_FILENAME)
-      : undefined;
-  const viewerFullUrl = await getViewerFullUrl({
-    ...config,
-    cmykReserveMapUrl,
-  });
+  const viewerFullUrl = await getViewerFullUrl(config);
   Logger.debug('viewerFullUrl', viewerFullUrl);
 
   let lastEntry: ManuscriptEntry | undefined;
