@@ -18,10 +18,10 @@ export type {
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';
+export type { HtmlOptions } from './config/schema.js';
 export {
   defaultHtmlProcessor,
   defaultXhtmlProcessor,
-  type HtmlOptions,
   type HtmlProcessorFactory,
 } from './processor/html-processor.js';
 export type { TemplateVariable } from './create-template.js';

@@ -1018,12 +1018,12 @@ Unified processor.
 
 #### Properties
 
-| Property | Type | Description |
-| ------ | ------ | ------ |
-| <a id="contenttype"></a> `contentType?` | `"text/html"` \| `"application/xhtml+xml"` | Content type: 'text/html' or 'application/xhtml+xml' |
-| <a id="language"></a> `language?` | `string` | Document language (sets html lang if not present) |
-| <a id="style"></a> `style?` | `string`[] | Paths to stylesheets to inject |
-| <a id="title"></a> `title?` | `string` | Document title (sets <title> if not present) |
+| Property | Type |
+| ------ | ------ |
+| <a id="contenttype"></a> `contentType?` | `"text/html"` \| `"application/xhtml+xml"` |
+| <a id="language"></a> `language?` | `string` |
+| <a id="style"></a> `style?` | `string`[] |
+| <a id="title"></a> `title?` | `string` |
 
 ***
 

@@ -28,17 +28,7 @@ import type * as xast from 'xast';
 import { fromXml } from 'xast-util-from-xml';
 import { toXml } from 'xast-util-to-xml';
 import { x } from 'xastscript';
-
-export interface HtmlOptions {
-  /** Paths to stylesheets to inject */
-  style?: string[];
-  /** Document title (sets <title> if not present) */
-  title?: string;
-  /** Document language (sets html lang if not present) */
-  language?: string;
-  /** Content type: 'text/html' or 'application/xhtml+xml' */
-  contentType?: 'text/html' | 'application/xhtml+xml';
-}
+import type { HtmlOptions } from '../config/schema.js';
 
 export type HtmlProcessorFactory = (options: HtmlOptions) => unified.Processor;
 
