@@ -23,6 +23,7 @@ export const EPUB_LANDMARKS_TITLE = 'Landmarks';
 export const EPUB_LANDMARKS_TOC_ENTRY = TOC_TITLE;
 export const EPUB_LANDMARKS_COVER_ENTRY = 'Cover Page';
 
+export const CMYK_RESERVE_MAP_FILENAME = 'cmyk-reserve-map.json';
 export const EMPTY_DATA_URI = 'data:,';
 export const VIEWER_ROOT_PATH = '/__vivliostyle-viewer';
 

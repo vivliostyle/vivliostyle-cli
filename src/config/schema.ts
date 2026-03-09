@@ -233,7 +233,7 @@ export type OutputFormat = v.InferInput<typeof OutputFormat>;
 export const RenderMode = v.union([v.literal('local'), v.literal('docker')]);
 export type RenderMode = v.InferInput<typeof RenderMode>;
 
-const RGBValueSchema = v.pipe(
+const RGBValueObjectSchema = v.pipe(
   v.object({
     r: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
     g: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10000)),
@@ -241,6 +241,17 @@ const RGBValueSchema = v.pipe(
   }),
   v.title('RGBValue'),
 );
+
+const HexColorSchema = v.pipe(
+  v.string(),
+  v.regex(
+    /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/,
+    'Must be a hex color (e.g. "#ff0000", "#f00", "#ff000080", "#f008")',
+  ),
+  v.title('HexColor'),
+);
+
+const RGBValueSchema = v.union([RGBValueObjectSchema, HexColorSchema]);
 
 const CMYKValueSchema = v.pipe(
   v.object({
@@ -252,16 +263,25 @@ const CMYKValueSchema = v.pipe(
   v.title('CMYKValue'),
 );
 
-const CmykOverrideEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
+const CmykMapEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
 
 const CmykConfigSchema = v.pipe(
   v.partial(
     v.object({
       overrideMap: v.pipe(
-        v.array(CmykOverrideEntrySchema),
+        v.array(CmykMapEntrySchema),
         v.description($`
           Custom RGB to CMYK color mapping.
-          Each entry is a tuple of [{r, g, b}, {c, m, y, k}] where values are integers (0-10000).
+          Each entry is a tuple of [rgb, {c, m, y, k}].
+          RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
+        `),
+      ),
+      reserveMap: v.pipe(
+        v.array(CmykMapEntrySchema),
+        v.description($`
+          Pre-register RGB to CMYK color mappings for use in SVG or other non-CSS contexts.
+          Each entry is a tuple of [rgb, {c, m, y, k}].
+          RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
         `),
       ),
       warnUnmapped: v.pipe(

@@ -540,6 +540,7 @@ it('supports pdfPostprocess configuration', async () => {
     cmyk: {
       warnUnmapped: true,
       overrideMap: [],
+      reserveMap: [],
       mapOutput: undefined,
     },
     replaceImage: [
@@ -592,7 +593,88 @@ it('output-level pdfPostprocess overrides build-level', async () => {
     cmyk: {
       warnUnmapped: true,
       overrideMap: [],
+      reserveMap: [],
       mapOutput: undefined,
+    },
+  });
+});
+
+it('cmyk overrideMap and reserveMap accept hex color strings', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      cmyk: {
+        overrideMap: [['#ff0000', { c: 0, m: 10000, y: 10000, k: 0 }]],
+        reserveMap: [
+          ['#00ff00', { c: 10000, m: 0, y: 10000, k: 0 }],
+          ['#abc', { c: 1000, m: 2000, y: 3000, k: 4000 }],
+          ['#abcd', { c: 1000, m: 2000, y: 3000, k: 5000 }],
+          ['#ff000080', { c: 0, m: 10000, y: 10000, k: 500 }],
+        ],
+      },
+    },
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    cmyk: {
+      overrideMap: [
+        [
+          { r: 10000, g: 0, b: 0 },
+          { c: 0, m: 10000, y: 10000, k: 0 },
+        ],
+      ],
+      reserveMap: [
+        [
+          { r: 0, g: 10000, b: 0 },
+          { c: 10000, m: 0, y: 10000, k: 0 },
+        ],
+        [
+          { r: 6667, g: 7333, b: 8000 },
+          { c: 1000, m: 2000, y: 3000, k: 4000 },
+        ],
+        [
+          { r: 6667, g: 7333, b: 8000 },
+          { c: 1000, m: 2000, y: 3000, k: 5000 },
+        ],
+        [
+          { r: 10000, g: 0, b: 0 },
+          { c: 0, m: 10000, y: 10000, k: 500 },
+        ],
+      ],
+    },
+  });
+});
+
+it('cmyk overrideMap and reserveMap accept mixed hex and object entries', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      cmyk: {
+        reserveMap: [
+          ['#808080', { c: 0, m: 0, y: 0, k: 5000 }],
+          [
+            { r: 5020, g: 10000, b: 10000 },
+            { c: 5000, m: 0, y: 0, k: 0 },
+          ],
+        ],
+      },
+    },
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    cmyk: {
+      reserveMap: [
+        [
+          { r: 5020, g: 5020, b: 5020 },
+          { c: 0, m: 0, y: 0, k: 5000 },
+        ],
+        [
+          { r: 5020, g: 10000, b: 10000 },
+          { c: 5000, m: 0, y: 0, k: 0 },
+        ],
+      ],
     },
   });
 });

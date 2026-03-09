@@ -1,5 +1,6 @@
 import type { NextHandleFunction } from 'connect';
 import escapeRe from 'escape-string-regexp';
+import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import sirv, { type RequestHandler } from 'sirv';
 import upath from 'upath';
@@ -12,7 +13,9 @@ import {
   type ResolvedTaskConfig,
 } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { CMYK_RESERVE_MAP_FILENAME } from '../const.js';
 import { Logger } from '../logger.js';
+import { generateCmykReserveMap } from '../server.js';
 import {
   getAssetMatcher,
   getWebPubResourceMatcher,
@@ -75,6 +78,9 @@ function getWorkspaceMatcher({
   outputs,
   copyAsset,
 }: ResolvedTaskConfig) {
+  const hasCmykReserveMap = outputs.some(
+    (o) => o.format === 'pdf' && o.cmyk && o.cmyk.reserveMap.length > 0,
+  );
   if (viewerInput.type === 'webpub') {
     return getWebPubResourceMatcher({
       outputs,
@@ -83,6 +89,7 @@ function getWorkspaceMatcher({
       cwd: workspaceDir,
       manifestPath: viewerInput.manifestPath,
       copyAsset,
+      additionalPatterns: hasCmykReserveMap ? [CMYK_RESERVE_MAP_FILENAME] : [],
     });
   }
 
@@ -158,6 +165,9 @@ export function vsDevServerPlugin({
     ) {
       await generateManifest(config);
     }
+
+    // Write CMYK reserve map if configured
+    generateCmykReserveMap(config);
 
     const localThemePaths = await prepareThemeDirectory(config);
 

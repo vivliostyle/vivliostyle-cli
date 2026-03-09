@@ -11,7 +11,11 @@ import {
 } from 'vite';
 import type { ResolvedTaskConfig } from './config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
-import { EMPTY_DATA_URI, VIEWER_ROOT_PATH } from './const.js';
+import {
+  CMYK_RESERVE_MAP_FILENAME,
+  EMPTY_DATA_URI,
+  VIEWER_ROOT_PATH,
+} from './const.js';
 import { Logger } from './logger.js';
 import {
   getDefaultEpubOpfPath,
@@ -37,7 +41,26 @@ export type ViewerUrlOption = Pick<
   | 'quick'
   | 'viewerParam'
   | 'base'
+  | 'outputs'
 >;
+
+export function generateCmykReserveMap({
+  outputs,
+  workspaceDir,
+}: Pick<ResolvedTaskConfig, 'outputs' | 'workspaceDir'>): void {
+  const pdfOutput = outputs.find((o) => o.format === 'pdf');
+  if (
+    pdfOutput &&
+    'cmyk' in pdfOutput &&
+    pdfOutput.cmyk &&
+    pdfOutput.cmyk.reserveMap.length
+  ) {
+    fs.writeFileSync(
+      upath.join(workspaceDir, CMYK_RESERVE_MAP_FILENAME),
+      JSON.stringify(pdfOutput.cmyk.reserveMap),
+    );
+  }
+}
 
 export function getViewerParams(
   src: string | undefined,
@@ -54,6 +77,7 @@ export function getViewerParams(
     viewerParam,
     base,
   }: ViewerUrlOption,
+  { cmykReserveMapUrl }: { cmykReserveMapUrl?: string } = {},
 ): string {
   const pageSizeValue =
     size && ('format' in size ? size.format : `${size.width} ${size.height}`);
@@ -102,6 +126,10 @@ export function getViewerParams(
     viewerParams += `&style=data:,/*<viewer>*/${encodeURIComponent(
       pageStyle,
     )}/*</viewer>*/${encodeURIComponent(css ?? '')}`;
+  }
+
+  if (cmykReserveMapUrl) {
+    viewerParams += `&cmykReserveMap=${escapeParam(cmykReserveMapUrl)}`;
   }
 
   if (viewerParam) {
@@ -173,11 +201,18 @@ export async function getViewerFullUrl({
     workspaceDir,
     rootUrl,
   });
+  const cmykOutput = config.outputs.find(
+    (o) => o.format === 'pdf' && o.cmyk && o.cmyk.reserveMap.length,
+  );
+  const cmykReserveMapUrl = cmykOutput
+    ? new URL(upath.posix.join(base, CMYK_RESERVE_MAP_FILENAME), rootUrl).href
+    : undefined;
   const viewerParams = getViewerParams(
     sourceUrl === EMPTY_DATA_URI
       ? undefined // open Viewer start page
       : sourceUrl,
     { base, ...config },
+    { cmykReserveMapUrl },
   );
   viewerUrl.hash = '';
   return `${viewerUrl.href}#${viewerParams}`;

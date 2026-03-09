@@ -455,7 +455,13 @@ type PdfPostprocessConfig = {
 
   - `overrideMap`: ("{tuple(Array)}")[]  
     Custom RGB to CMYK color mapping.
-    Each entry is a tuple of [{r, g, b}, {c, m, y, k}] where values are integers (0-10000).
+    Each entry is a tuple of [rgb, {c, m, y, k}].
+    RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
+
+  - `reserveMap`: ("{tuple(Array)}")[]  
+    Pre-register RGB to CMYK color mappings for use in SVG or other non-CSS contexts.
+    Each entry is a tuple of [rgb, {c, m, y, k}].
+    RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
 
   - `warnUnmapped`: boolean  
     Warn when RGB colors not mapped to CMYK are encountered. (default: true)
@@ -468,6 +474,7 @@ type PdfPostprocessConfig = {
 ```ts
 type CmykConfig = {
   overrideMap?: "{tuple(Array)}"[];
+  reserveMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
   mapOutput?: string;
 };

@@ -84,12 +84,14 @@ export function getWebPubResourceMatcher({
   cwd,
   manifestPath,
   copyAsset: { fileExtensions },
+  additionalPatterns = [],
 }: Pick<
   ResolvedTaskConfig,
   'outputs' | 'themesDir' | 'entries' | 'copyAsset'
 > & {
   cwd: string;
   manifestPath: string;
+  additionalPatterns?: string[];
 }) {
   return new GlobMatcher([
     {
@@ -97,6 +99,7 @@ export function getWebPubResourceMatcher({
         `**/${upath.relative(cwd, manifestPath)}`,
         '**/*.{html,htm,xhtml,xht}',
         `**/*.{${fileExtensions.join(',')}}`,
+        ...additionalPatterns,
       ],
       ignore: [
         ...getIgnoreAssetPatterns({
