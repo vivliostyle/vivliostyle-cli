@@ -14,7 +14,6 @@ import StreamZip from 'node-stream-zip';
 import childProcess, { type ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
-import readline from 'node:readline';
 import util from 'node:util';
 import { osLocale } from 'os-locale';
 import { titleCase } from 'title-case';
@@ -79,49 +78,27 @@ export async function runExitHandlers() {
   }
 }
 
-// Windows does not support SIGINT/SIGTERM signals natively, so only register 'exit'
-// On other platforms, register all signals
-const exitSignals =
-  process.platform === 'win32' ? ['exit'] : ['exit', 'SIGINT', 'SIGTERM'];
+let terminating = false;
 
-exitSignals.forEach((sig) => {
-  process.once(sig, async (signal?: string | number, exitCode?: number) => {
-    // For signals (not 'exit'), wait for handlers to complete
-    if (sig !== 'exit') {
+async function terminate(exitCode: number) {
+  if (terminating) return;
+  terminating = true;
+  try {
+    if (exitCode === 130 || exitCode === 143) {
       await runExitHandlers();
     } else {
-      // For 'exit' event, run handlers synchronously (non-blocking)
-      // as async operations cannot be awaited in 'exit' handler
-      void runExitHandlers();
+      runExitHandlers();
     }
-    if (process.exitCode === undefined) {
-      process.exitCode =
-        exitCode !== undefined ? 128 + exitCode : Number(signal);
-    }
-    // Only call process.exit() for signals, not for 'exit' event.
-    // Calling process.exit() inside 'exit' handler prevents other
-    // 'exit' listeners from being executed.
-    if (sig !== 'exit') {
-      process.exit();
-    }
-  });
-});
-
-if (process.platform === 'win32') {
-  // Windows does not support signals, so use readline interface
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  rl.on('SIGINT', async () => {
-    await runExitHandlers();
-    // Exit code 130 = 128 + SIGINT (2)
-    process.exit(130);
-  });
-  registerExitHandler('Closing readline interface', () => {
-    rl.close();
-  });
+  } finally {
+    process.exit(exitCode);
+  }
 }
+
+process.once('SIGINT', () => void terminate(130));
+process.once('SIGTERM', () => void terminate(143));
+process.once('exit', (code) => {
+  void runExitHandlers();
+});
 
 export class DetailError extends Error {
   detail: string | undefined;
