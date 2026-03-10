@@ -19,7 +19,7 @@ import {
   compile,
   prepareThemeDirectory,
 } from '../processor/compile.js';
-import { createViteServer } from '../server.js';
+import { createViteServer, generateCmykReserveMap } from '../server.js';
 import { cwd, runExitHandlers } from '../util.js';
 
 export async function build(
@@ -99,6 +99,9 @@ export async function build(
         await compile(config);
         await copyAssets(config);
       }
+
+      // Write CMYK reserve map if configured
+      generateCmykReserveMap(config);
     }
 
     // generate files
