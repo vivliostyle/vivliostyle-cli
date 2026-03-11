@@ -102,8 +102,8 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       mupdf:
-        specifier: 1.26.4
-        version: 1.26.4
+        specifier: npm:@u1f992/mupdf@1.27.0-patched.1
+        version: '@u1f992/mupdf@1.27.0-patched.1'
       node-fetch-native:
         specifier: 1.6.7
         version: 1.6.7
@@ -2121,6 +2121,9 @@ packages:
 
   '@types/yauzl@2.10.3':
     resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
+
+  '@u1f992/mupdf@1.27.0-patched.1':
+    resolution: {integrity: sha512-8M/9OteTc2ISddCin0VMojlHC3GJqnfjVm7A9HscyyTgO2jmE8aGRaSEe9pF/rJidoJ5mJR10sniouYGfgSvOQ==}
 
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
@@ -4359,9 +4362,6 @@ packages:
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
-
-  mupdf@1.26.4:
-    resolution: {integrity: sha512-lv+0KCowetjXu/80h1WKDsELnvHvt7zAE4cs3TC92gwbbJk8AJifMpPLRHMWFovvsWXdFZ6KKCGRds3EzA9TlQ==}
 
   mustache@4.1.0:
     resolution: {integrity: sha512-0FsgP/WVq4mKyjolIyX+Z9Bd+3WS8GOwoUTyKXT5cTYMGeauNTi2HPCwERqseC1IHAy0Z7MDZnJBfjabd4O8GQ==}
@@ -8029,6 +8029,8 @@ snapshots:
       '@types/node': 22.15.2
     optional: true
 
+  '@u1f992/mupdf@1.27.0-patched.1': {}
+
   '@ungap/structured-clone@1.2.0': {}
 
   '@vitest/coverage-v8@3.1.2(vitest@3.1.2(@types/debug@4.1.12)(@types/node@22.15.2)(tsx@4.19.3)(yaml@2.8.1))':
@@ -10904,8 +10906,6 @@ snapshots:
   ms@2.0.0: {}
 
   ms@2.1.3: {}
-
-  mupdf@1.26.4: {}
 
   mustache@4.1.0: {}
 
