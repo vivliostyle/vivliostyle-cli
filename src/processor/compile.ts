@@ -14,7 +14,7 @@ import type {
   WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import type { ArticleEntryConfig } from '../config/schema.js';
-import { XML_DECLARATION } from '../const.js';
+import { XML_DECLARATION } from '../constants.js';
 import { Logger } from '../logger.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {

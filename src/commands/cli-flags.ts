@@ -6,7 +6,7 @@ import {
   type ParsedVivliostyleConfigSchema,
   VivliostyleInlineConfig,
 } from '../config/schema.js';
-import { EMPTY_DATA_URI } from '../const.js';
+import { EMPTY_DATA_URI } from '../constants.js';
 
 export interface CliFlags {
   input?: string;

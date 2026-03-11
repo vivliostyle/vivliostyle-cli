@@ -23,7 +23,7 @@ jobs:
       - name: Output browser version
         id: browser
         run: |
-          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/const.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
+          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/constants.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
           echo "browser=chrome@$BROWSER_VERSION" >> $GITHUB_OUTPUT
       - name: Docker meta
         id: docker_meta

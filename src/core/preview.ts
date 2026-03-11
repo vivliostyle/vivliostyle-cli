@@ -7,9 +7,9 @@ import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
 import { resolveTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { resolveViteConfig } from '../config/vite.js';
-import { cliVersion } from '../const.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { createViteServer, getViewerFullUrl } from '../server.js';
+import { cliVersion } from '../util.js';
 
 export async function preview(inlineConfig: ParsedVivliostyleInlineConfig) {
   Logger.setLogOptions(inlineConfig);

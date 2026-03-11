@@ -13,7 +13,7 @@ import {
   type ResolvedTaskConfig,
 } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
-import { CMYK_RESERVE_MAP_FILENAME } from '../const.js';
+import { CMYK_RESERVE_MAP_FILENAME } from '../constants.js';
 import { Logger } from '../logger.js';
 import { generateCmykReserveMap } from '../server.js';
 import {

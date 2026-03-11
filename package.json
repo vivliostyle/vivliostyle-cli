@@ -138,6 +138,10 @@
       "types": "./dist/commands/*.d.ts",
       "import": "./dist/commands/*.js"
     },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.js"
+    },
     "./node-modules": {
       "types": "./dist/node-modules.d.ts",
       "import": "./dist/node-modules.js"

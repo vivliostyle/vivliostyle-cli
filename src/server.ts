@@ -15,7 +15,7 @@ import {
   CMYK_RESERVE_MAP_FILENAME,
   EMPTY_DATA_URI,
   VIEWER_ROOT_PATH,
-} from './const.js';
+} from './constants.js';
 import { Logger } from './logger.js';
 import {
   getDefaultEpubOpfPath,

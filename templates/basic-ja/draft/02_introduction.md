@@ -77,4 +77,3 @@ export default defineConfig({
 - 出力オプションを設定する
 
 詳しくは [Vivliostyle CLIドキュメント](https://github.com/vivliostyle/vivliostyle-cli#readme) をご覧ください。
-

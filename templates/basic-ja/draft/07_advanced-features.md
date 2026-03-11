@@ -449,4 +449,3 @@ vivliostyle preview large-book.md --quick
 
 - [Vivliostyleサンプル](https://vivliostyle.org/samples/)
 - [Awesome Vivliostyle](https://github.com/vivliostyle/awesome-vivliostyle)
-

@@ -8,21 +8,21 @@ import { x } from 'tinyexec';
 import upath from 'upath';
 import * as v from 'valibot';
 import { cyan, dim, gray, green, yellow } from 'yoctocolors';
+import { locateVivliostyleConfig } from '../config/load.js';
 import {
   type ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfigWithoutChecks,
   VivliostylePackageMetadata,
 } from '../config/schema.js';
 import {
-  cliVersion,
-  coreVersion,
   DEFAULT_CONFIG_FILENAME,
   DEFAULT_PROJECT_AUTHOR,
   DEFAULT_PROJECT_TITLE,
-  languages,
-  TEMPLATE_DEFAULT_FILES,
+  LANGUAGES,
+  TEMPLATE_DEFAULT_PACKAGE_JSON,
+  TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS,
   TEMPLATE_SETTINGS,
-} from '../const.js';
+} from '../constants.js';
 import { format, type TemplateVariable } from '../create-template.js';
 import { askQuestion, InteractiveLogger } from '../interactive.js';
 import { Logger } from '../logger.js';
@@ -34,6 +34,8 @@ import {
 } from '../npm.js';
 import { GlobMatcher } from '../processor/asset.js';
 import {
+  cliVersion,
+  coreVersion,
   cwd as defaultCwd,
   getDefaultBrowserTag,
   getOsLocale,
@@ -306,7 +308,7 @@ async function askLanguage({
       language: {
         type: 'autocomplete',
         message: "What's the language?",
-        options: Object.entries(languages).map(([value, displayName]) => ({
+        options: Object.entries(LANGUAGES).map(([value, displayName]) => ({
           value,
           label: displayName,
           hint: value,
@@ -644,13 +646,17 @@ async function setupTemplate({
     }
     cleanupExitHandler()?.();
   }
-  for (const [file, content] of Object.entries(TEMPLATE_DEFAULT_FILES)) {
-    const targetPath = upath.join(cwd, projectPath, file);
-    if (fs.existsSync(targetPath)) {
-      continue;
-    }
-    fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, content, 'utf8');
+
+  const packageJsonPath = upath.join(cwd, projectPath, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) {
+    fs.writeFileSync(packageJsonPath, TEMPLATE_DEFAULT_PACKAGE_JSON, 'utf8');
+  }
+  if (!locateVivliostyleConfig({ cwd: upath.join(cwd, projectPath) })) {
+    fs.writeFileSync(
+      upath.join(cwd, projectPath, DEFAULT_CONFIG_FILENAME),
+      TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS,
+      'utf8',
+    );
   }
 
   const replaceTemplateVariable = (dir: string) => {
@@ -682,7 +688,7 @@ function setupConfigFile({
   templateVariables: Record<string, unknown>;
 }) {
   const targetPath = upath.join(cwd, projectPath, DEFAULT_CONFIG_FILENAME);
-  const content = TEMPLATE_DEFAULT_FILES[DEFAULT_CONFIG_FILENAME];
+  const content = TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS;
   fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
   fs.writeFileSync(targetPath, format(content, templateVariables), 'utf8');
 }

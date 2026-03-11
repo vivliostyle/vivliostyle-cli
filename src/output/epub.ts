@@ -18,7 +18,7 @@ import {
   EPUB_NS,
   TOC_TITLE,
   XML_DECLARATION,
-} from '../const.js';
+} from '../constants.js';
 import { Logger } from '../logger.js';
 import {
   type PageListResourceTreeRoot,

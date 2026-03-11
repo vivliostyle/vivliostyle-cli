@@ -39,7 +39,7 @@ jobs:
         run: |
           # Check if chrome or firefox versions have changed
           # (ignoring chromium-only changes)
-          if git diff src/const.ts | grep -E '^\+.*\b(chrome|firefox):' > /dev/null; then
+          if git diff src/constants.ts | grep -E '^\+.*\b(chrome|firefox):' > /dev/null; then
             echo "has-changes=true" >> $GITHUB_OUTPUT
           else
             echo "has-changes=false" >> $GITHUB_OUTPUT
@@ -52,7 +52,7 @@ jobs:
           echo "## Updated Browser Versions" > browser-versions.txt
           echo "" >> browser-versions.txt
           echo "\`\`\`typescript" >> browser-versions.txt
-          sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/const.ts >> browser-versions.txt
+          sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/constants.ts >> browser-versions.txt
           echo "\`\`\`" >> browser-versions.txt
 
           # Set output for PR body
@@ -68,10 +68,10 @@ jobs:
       - name: Create changeset
         if: steps.check-changes.outputs.has-changes == 'true'
         run: |
-          # Extract Linux versions from const.ts
-          CHROME_VERSION=$(sed -n '/chrome:/p' src/const.ts | grep -oP '"linux":"\K[^"]+')
-          CHROMIUM_VERSION=$(sed -n '/chromium:/p' src/const.ts | grep -oP '"linux":"\K[^"]+')
-          FIREFOX_VERSION=$(sed -n '/firefox:/p' src/const.ts | grep -oP '"linux":"\K[^"]+')
+          # Extract Linux versions from constants.ts
+          CHROME_VERSION=$(sed -n '/chrome:/p' src/constants.ts | grep -oP '"linux":"\K[^"]+')
+          CHROMIUM_VERSION=$(sed -n '/chromium:/p' src/constants.ts | grep -oP '"linux":"\K[^"]+')
+          FIREFOX_VERSION=$(sed -n '/firefox:/p' src/constants.ts | grep -oP '"linux":"\K[^"]+')
 
           cat > .changeset/update-browser-versions.md << EOF
           ---
