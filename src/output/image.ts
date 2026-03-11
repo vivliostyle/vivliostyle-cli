@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import type * as mupdfType from '@u1f992/mupdf';
+import type * as mupdfType from 'mupdf';
 import type { ReplaceImageConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
@@ -126,7 +126,7 @@ export async function replaceImages({
     return pdf;
   }
 
-  const mupdf = await importNodeModule('@u1f992/mupdf');
+  const mupdf = await importNodeModule('mupdf');
 
   // Load image pairs
   const imagePairs: ImagePair[] = [];

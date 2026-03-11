@@ -6,7 +6,7 @@ export const nodeExternalModules = [
   '@napi-rs/canvas',
   '@puppeteer/browsers',
   'command-exists',
-  '@u1f992/mupdf',
+  'mupdf',
   'press-ready',
   'pdf-lib',
   'puppeteer-core',
@@ -16,7 +16,7 @@ type NodeExternalModules = {
   '@napi-rs/canvas': typeof import('@napi-rs/canvas');
   '@puppeteer/browsers': typeof import('@puppeteer/browsers');
   'command-exists': typeof import('command-exists');
-  mupdf: typeof import('@u1f992/mupdf');
+  mupdf: typeof import('mupdf');
   'press-ready': typeof import('press-ready');
   'pdf-lib': typeof import('pdf-lib');
   'puppeteer-core': typeof import('puppeteer-core');

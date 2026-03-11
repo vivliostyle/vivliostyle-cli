@@ -1,4 +1,4 @@
-import type * as mupdfType from '@u1f992/mupdf';
+import type * as mupdfType from 'mupdf';
 import type { CmykMap } from '../global-viewer.js';
 import { importNodeModule } from '../node-modules.js';
 import { convertStreamColors } from './pdf-stream.js';
@@ -20,7 +20,7 @@ function processStream(
   colorMap: CmykMap,
   warnUnmapped: boolean,
   warnedColors: Set<string>,
-  mupdf: typeof import('@u1f992/mupdf'),
+  mupdf: typeof import('mupdf'),
 ): void {
   const buffer = stream.readStream();
   const content = buffer.asString();
@@ -38,7 +38,7 @@ function processFormXObjects(
   colorMap: CmykMap,
   warnUnmapped: boolean,
   warnedColors: Set<string>,
-  mupdf: typeof import('@u1f992/mupdf'),
+  mupdf: typeof import('mupdf'),
   processed: Set<number>,
 ): void {
   const xobjects = resources.get('XObject');
@@ -86,7 +86,7 @@ function processContents(
   colorMap: CmykMap,
   warnUnmapped: boolean,
   warnedColors: Set<string>,
-  mupdf: typeof import('@u1f992/mupdf'),
+  mupdf: typeof import('mupdf'),
 ): void {
   if (contents.isArray()) {
     // Multiple content streams
@@ -112,7 +112,7 @@ export async function convertCmykColors({
   colorMap: CmykMap;
   warnUnmapped: boolean;
 }): Promise<Uint8Array> {
-  const mupdf = await importNodeModule('@u1f992/mupdf');
+  const mupdf = await importNodeModule('mupdf');
   const warnedColors = new Set<string>();
   const processedXObjects = new Set<number>();
 
