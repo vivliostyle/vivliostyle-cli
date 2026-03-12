@@ -1,5 +1,19 @@
 # @vivliostyle/cli
 
+## 10.4.0
+
+### Minor Changes
+
+- Add reserveMap for pre-registering RGB to CMYK mappings ([#742](https://github.com/vivliostyle/vivliostyle-cli/pull/742))
+
+### Patch Changes
+
+- Allow to set config JSON file in templates ([#749](https://github.com/vivliostyle/vivliostyle-cli/pull/749))
+
+- Add `@vivliostyle/cli/constants` subpath to package exports ([#749](https://github.com/vivliostyle/vivliostyle-cli/pull/749))
+
+- Fix behavior in non-interactive stdin environments on Windows ([#752](https://github.com/vivliostyle/vivliostyle-cli/pull/752))
+
 ## 10.3.1
 
 ### Patch Changes
