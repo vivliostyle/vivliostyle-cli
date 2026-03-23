@@ -1,5 +1,3 @@
-import type { NestedDirectoryJSON } from 'memfs';
-
 import { vi } from 'vitest';
 
 const mocked = await vi.hoisted(async () => {
@@ -28,18 +26,21 @@ const mocked = await vi.hoisted(async () => {
           : ['../../fixtures/themes', loc]),
       );
       const dest = path.join(cwd || '', dir || '');
-      const walk = (dir: string) => {
-        const files: NestedDirectoryJSON = {};
-        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-          const entryPath = path.join(dir, entry.name);
-          files[entry.name] = entry.isDirectory()
-            ? walk(entryPath)
-            : fs.readFileSync(entryPath, 'utf8');
+      const copyFiles = (srcDir: string, destDir: string) => {
+        vol.mkdirSync(destDir, { recursive: true });
+        for (const entry of fs.readdirSync(srcDir, {
+          withFileTypes: true,
+        })) {
+          const srcPath = path.join(srcDir, entry.name);
+          const dstPath = path.join(destDir, entry.name);
+          if (entry.isDirectory()) {
+            copyFiles(srcPath, dstPath);
+          } else {
+            vol.writeFileSync(dstPath, fs.readFileSync(srcPath));
+          }
         }
-        return files;
       };
-      const files = walk(source);
-      vol.fromNestedJSON(files, dest);
+      copyFiles(source, dest);
     },
   };
 

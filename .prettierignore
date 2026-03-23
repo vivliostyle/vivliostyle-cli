@@ -2,3 +2,4 @@
 /docs/config.md
 pnpm-lock.yaml
 /templates/basic/vivliostyle.config.js
+/templates/basic-ja/vivliostyle.config.js

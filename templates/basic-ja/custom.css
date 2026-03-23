@@ -1,0 +1,100 @@
+/**
+ * Vivliostyle カスタムスタイル
+ *
+ * このファイルでは、CSS カスタムプロパティを使って Vivliostyle テーマをカスタマイズできます。
+ * テーマ変数をオーバーライドすることで、フォント、色、余白、レイアウトを調整できます。
+ *
+ * 詳細:
+ * - https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base
+ */
+
+/* 必要に応じて部分的な CSS モジュールをインポートできます */
+/* 注釈に外部リンクを表示するスタイルの例 */
+/* @import url(themes/node_modules/@vivliostyle/theme-base/css/partial/footnote-external-link.css); */
+
+/* コードのシンタックスハイライト用 Prism.js CSS モジュール */
+/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/base.css); */
+/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/theme-okaidia.css); */
+
+:root {
+  /* ===================================
+   * フォント
+   * =================================== */
+
+  /* 基本フォントファミリー */
+  --vs-font-family:
+    '游明朝', 'YuMincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', serif;
+
+  /* 基本フォントサイズ（デフォルト: 印刷用 10pt、画面用 16px） */
+  /* --vs-font-size: 11pt; */
+
+  /* 行の高さ */
+  /* --vs-line-height: 1.8; */
+
+  /* ===================================
+   * 見出し
+   * =================================== */
+
+  /* すべての見出しスタイルを一括で制御 */
+  /* --vs--heading-font-family: "游ゴシック", "YuGothic", sans-serif; */
+  /* --vs--heading-line-height: 1.4; */
+  /* --vs--heading-font-weight: 700; */
+
+  /* 個別の見出しサイズ */
+  /* --vs--h1-font-size: 2.5rem; */
+  /* --vs--h2-font-size: 2rem; */
+  /* --vs--h3-font-size: 1.75rem; */
+  /* --vs--h4-font-size: 1.5rem; */
+  /* --vs--h5-font-size: 1.25rem; */
+  /* --vs--h6-font-size: 1rem; */
+
+  /* ===================================
+   * 色
+   * =================================== */
+
+  /* テキスト色 */
+  /* --vs-color-body: #5b4030; */
+  /* --vs--anchor-color: #0066cc; */
+
+  /* 背景色 */
+  /* --vs-color-bg: rgb(232, 220, 207); */
+
+  /* ===================================
+   * 余白
+   * =================================== */
+
+  /* スペーシング計算用のルート行の高さ */
+  /* --vs-spacing-rlh: 0.5rem; */
+
+  /* 段落の余白 */
+  /* --vs--heading-margin-block: 2rem 0; */
+  /* --vs--p-margin-block: 0.5rem; */
+  /* --vs--lists-margin-block: 0.5rem; */
+  /* --vs--pre-margin-block: 0.5rem; */
+
+  /* ===================================
+   * ページレイアウト（PDF 出力用）
+   * =================================== */
+
+  /* ページマージン */
+  /* --vs-page--margin-top: 20mm; */
+  /* --vs-page--margin-bottom: 20mm; */
+  /* --vs-page--margin-inner: 25mm; */
+  /* --vs-page--margin-outer: 25mm; */
+
+  /* ヘッダーとフッター */
+  /* ページ番号をページ下部中央に表示 */
+  /* --vs-page--mbox-content-bottom-center: counter(page); */
+
+  /* ドキュメントタイトルを左上に表示 */
+  /* --vs-page--mbox-content-top-left: env(pub-title); */
+
+  /* 章タイトルを右上に表示 */
+  /* --vs-page--mbox-content-top-right: env(doc-title); */
+
+  /* ===================================
+   * コードブロック（Prism.js）
+   * 注: Prism.js CSS モジュールを追加でインクルードするか、
+   * それを含むテーマを使用する必要があります（例: @vivliostyle/theme-techbook）
+   * =================================== */
+}

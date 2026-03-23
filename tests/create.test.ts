@@ -107,6 +107,23 @@ describe('create command', () => {
     expect(files).toMatchSnapshot();
   });
 
+  it('create project with basic-ja template', async () => {
+    mockedClackModule.answers.mockReturnValue({
+      projectPath: 'project-name',
+      title: 'Booook titleeee',
+      author: 'Authoooor',
+      language: 'ja',
+      presetTemplate: 'basic-ja',
+      theme: THEME_ANSWER_NOT_USE,
+      installDependencies: false,
+    });
+
+    await runCommand(['create'], { cwd: '/work' });
+    const files = vol.toJSON();
+    delete files['/work/project-name/manuscript.md'];
+    expect(files).toMatchSnapshot();
+  });
+
   it('create project with a default template', async () => {
     mockedClackModule.answers.mockReturnValue({
       projectPath: 'project-name',
