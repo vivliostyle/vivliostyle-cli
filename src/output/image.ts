@@ -20,6 +20,8 @@ function disposable<T extends Destroyable>(obj: T): T & Disposable {
   });
 }
 
+type DisposableImage = mupdfType.Image & Disposable;
+
 function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
   if (a.getWidth() !== b.getWidth() || a.getHeight() !== b.getHeight()) {
     return false;
@@ -67,10 +69,10 @@ function convertImageColorSpace(
   image: mupdfType.Image,
   colorSpace: mupdfType.ColorSpace,
   mupdf: typeof import('mupdf'),
-): mupdfType.Image {
+): DisposableImage {
   using pixmap = disposable(image.toPixmap());
   using converted = disposable(pixmap.convertToColorSpace(colorSpace));
-  return new mupdf.Image(converted);
+  return disposable(new mupdf.Image(converted));
 }
 
 /**
@@ -82,8 +84,10 @@ export async function builtinCmykConversion(
 ): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
   using img = disposable(new mupdf.Image(image.asPNG()));
-  using result = disposable(
-    convertImageColorSpace(img, mupdf.ColorSpace.DeviceCMYK, mupdf),
+  using result = convertImageColorSpace(
+    img,
+    mupdf.ColorSpace.DeviceCMYK,
+    mupdf,
   );
   return result.toPixmap().asPAM();
 }
@@ -97,8 +101,10 @@ export async function builtinGrayConversion(
 ): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
   using img = disposable(new mupdf.Image(image.asPNG()));
-  using result = disposable(
-    convertImageColorSpace(img, mupdf.ColorSpace.DeviceGray, mupdf),
+  using result = convertImageColorSpace(
+    img,
+    mupdf.ColorSpace.DeviceGray,
+    mupdf,
   );
   return result.toPixmap().asPAM();
 }
@@ -130,7 +136,7 @@ export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
       const resolved = value.resolve();
       if (resolved.get('Subtype')?.toString() !== '/Image') return;
 
-      const img = doc.loadImage(value);
+      using img = disposable(doc.loadImage(value));
       const cs = img.toPixmap().getColorSpace();
       if (cs && !cs.isCMYK() && !cs.isGray()) {
         const warnKey = `${img.getWidth()}x${img.getHeight()} on page ${i + 1}`;
@@ -139,7 +145,6 @@ export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
           Logger.logWarn(`Non-CMYK image remaining in PDF: ${warnKey}`);
         }
       }
-      img.destroy();
     });
   }
 }
@@ -159,35 +164,30 @@ function applyReplaceFunction(
   fn: ReplaceFunction,
   pdfImage: mupdfType.Image,
   mupdf: typeof import('mupdf'),
-  imagesToDestroy: mupdfType.Image[],
-): Promise<mupdfType.Image> | mupdfType.Image {
+): Promise<DisposableImage> | DisposableImage {
   const targetCs = builtinColorSpaceMap.get(fn);
   if (targetCs) {
     // Fast path: direct pixmap conversion without byte roundtrip
-    const newImage = convertImageColorSpace(pdfImage, targetCs(mupdf), mupdf);
-    imagesToDestroy.push(newImage);
-    return newImage;
+    return convertImageColorSpace(pdfImage, targetCs(mupdf), mupdf);
   }
   // General path: bytes in, bytes out
   return (async () => {
     const resultBytes = await fn(createImageContext(pdfImage));
-    const newImage = new mupdf.Image(resultBytes);
-    imagesToDestroy.push(newImage);
-    return newImage;
+    return disposable(new mupdf.Image(resultBytes));
   })();
 }
 
 // A prepared entry is a function that attempts to match and replace a PDF image.
-// Returns the replacement Image on match, or null to try the next entry.
+// Returns the replacement DisposableImage on match, or null to try the next entry.
 type PreparedEntry = (
   pdfImage: mupdfType.Image,
   pageIndex: number,
   key: string | number,
-) => Promise<mupdfType.Image | null>;
+) => Promise<DisposableImage | null>;
 
 function prepareFileEntry(
   srcImage: mupdfType.Image,
-  destImage: mupdfType.Image,
+  destImage: DisposableImage,
   sourcePath: string,
   replacementPath: string,
 ): PreparedEntry {
@@ -205,7 +205,6 @@ function prepareFnWithSourceEntry(
   sourcePath: string,
   fn: ReplaceFunction,
   mupdf: typeof import('mupdf'),
-  imagesToDestroy: mupdfType.Image[],
 ): PreparedEntry {
   // Chromium converts all images to RGB in its PDF output
   // (even grayscale PNGs are embedded as RGB).
@@ -213,12 +212,7 @@ function prepareFnWithSourceEntry(
   return async (pdfImage, pageIndex, key) => {
     if (!isRgbImage(pdfImage)) return null;
     if (!imagesEqual(pdfImage, srcImage)) return null;
-    const newImage = await applyReplaceFunction(
-      fn,
-      pdfImage,
-      mupdf,
-      imagesToDestroy,
-    );
+    const newImage = await applyReplaceFunction(fn, pdfImage, mupdf);
     Logger.debug(
       `  Page ${pageIndex + 1}, ref "${key}": ${sourcePath} -> [function]`,
     );
@@ -229,19 +223,13 @@ function prepareFnWithSourceEntry(
 function prepareBareFnEntry(
   fn: ReplaceFunction,
   mupdf: typeof import('mupdf'),
-  imagesToDestroy: mupdfType.Image[],
 ): PreparedEntry {
   // Chromium converts all images to RGB in its PDF output
   // (even grayscale PNGs are embedded as RGB).
   // Only pass RGB images to ReplaceFunction.
   return async (pdfImage, pageIndex, key) => {
     if (!isRgbImage(pdfImage)) return null;
-    const newImage = await applyReplaceFunction(
-      fn,
-      pdfImage,
-      mupdf,
-      imagesToDestroy,
-    );
+    const newImage = await applyReplaceFunction(fn, pdfImage, mupdf);
     Logger.debug(
       `  Page ${pageIndex + 1}, ref "${key}": [all RGB] -> [function]`,
     );
@@ -257,7 +245,7 @@ interface ReplaceStats {
 async function replaceImagesInDocument(
   doc: mupdfType.PDFDocument,
   preparedEntries: PreparedEntry[],
-  imagesToDestroy: mupdfType.Image[],
+  disposables: Set<Disposable>,
 ): Promise<ReplaceStats> {
   let replaced = 0;
   let total = 0;
@@ -287,11 +275,12 @@ async function replaceImagesInDocument(
       if (subtype && subtype.toString() === '/Image') {
         total++;
 
-        const pdfImage = doc.loadImage(value);
-        imagesToDestroy.push(pdfImage);
+        const pdfImage = disposable(doc.loadImage(value));
+        disposables.add(pdfImage);
         for (const entry of preparedEntries) {
           const result = await entry(pdfImage, i, key);
           if (result) {
+            disposables.add(result);
             const newImageRef = doc.addImage(result);
             xobjects.put(key, newImageRef);
             replaced++;
@@ -320,24 +309,24 @@ export async function replaceImages({
   }
 
   const mupdf = await importNodeModule('mupdf');
-  const imagesToDestroy: mupdfType.Image[] = [];
+  const disposables = new Set<Disposable>();
 
   try {
     // Prepare entries: each config item becomes a match-and-replace function
     const preparedEntries: PreparedEntry[] = [];
     for (const item of replaceImageConfig) {
       if (typeof item === 'function') {
-        preparedEntries.push(prepareBareFnEntry(item, mupdf, imagesToDestroy));
+        preparedEntries.push(prepareBareFnEntry(item, mupdf));
         continue;
       }
 
       const { source, replacement } = item;
 
-      let srcImage: mupdfType.Image;
+      let srcImage: DisposableImage;
       try {
         const srcBuffer = fs.readFileSync(source);
-        srcImage = new mupdf.Image(srcBuffer);
-        imagesToDestroy.push(srcImage);
+        srcImage = disposable(new mupdf.Image(srcBuffer));
+        disposables.add(srcImage);
         Logger.debug(
           `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
         );
@@ -348,22 +337,16 @@ export async function replaceImages({
 
       if (typeof replacement === 'function') {
         preparedEntries.push(
-          prepareFnWithSourceEntry(
-            srcImage,
-            source,
-            replacement,
-            mupdf,
-            imagesToDestroy,
-          ),
+          prepareFnWithSourceEntry(srcImage, source, replacement, mupdf),
         );
         continue;
       }
 
-      let destImage: mupdfType.Image;
+      let destImage: DisposableImage;
       try {
         const destBuffer = fs.readFileSync(replacement);
-        destImage = new mupdf.Image(destBuffer);
-        imagesToDestroy.push(destImage);
+        destImage = disposable(new mupdf.Image(destBuffer));
+        disposables.add(destImage);
         Logger.debug(
           `Loaded replacement image: ${replacement} (${destImage.getWidth()}x${destImage.getHeight()})`,
         );
@@ -393,7 +376,7 @@ export async function replaceImages({
     const stats = await replaceImagesInDocument(
       doc,
       preparedEntries,
-      imagesToDestroy,
+      disposables,
     );
     Logger.debug(`Replaced ${stats.replaced} of ${stats.total} images`);
 
@@ -401,8 +384,8 @@ export async function replaceImages({
     // Create a copy to ensure the data remains valid after the buffer is destroyed
     return new Uint8Array(outputBuffer.asUint8Array());
   } finally {
-    for (const img of imagesToDestroy) {
-      img.destroy();
+    for (const d of disposables) {
+      d[Symbol.dispose]();
     }
   }
 }
