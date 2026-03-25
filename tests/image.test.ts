@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { ImageContext } from '../src/config/resolve.js';
-import { replaceImages } from '../src/output/image.js';
+import { builtinCmykConversion, replaceImages } from '../src/output/image.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, 'fixtures', 'cmyk');
@@ -167,6 +167,21 @@ describe('replaceImages', () => {
 
     // File entry matched first, so the function should not have been called
     expect(functionCalled).toBe(false);
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('builtinCmykConversion converts RGB image to CMYK', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const srcColorSpace = await getImageColorSpace(srcPdf);
+    expect(srcColorSpace).toBe('RGB');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykConversion],
+    });
+
     const destColorSpace = await getImageColorSpace(destPdf);
     expect(destColorSpace).toBe('CMYK');
   });

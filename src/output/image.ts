@@ -63,6 +63,22 @@ function isRgbImage(pdfImage: mupdfType.Image): boolean {
   return cs?.isRGB() ?? false;
 }
 
+/**
+ * Built-in ReplaceFunction that converts RGB images to CMYK
+ * using mupdf's DeviceCMYK color space conversion.
+ */
+export async function builtinCmykConversion(
+  image: ImageContext,
+): Promise<Uint8Array> {
+  const mupdf = await importNodeModule('mupdf');
+  const img = new mupdf.Image(image.asPNG());
+  const pixmap = img.toPixmap();
+  const cmykPixmap = pixmap.convertToColorSpace(mupdf.ColorSpace.DeviceCMYK);
+  const result = cmykPixmap.asPAM();
+  img.destroy();
+  return result;
+}
+
 // A prepared entry is a function that attempts to match and replace a PDF image.
 // Returns the replacement Image on match, or null to try the next entry.
 type PreparedEntry = (
