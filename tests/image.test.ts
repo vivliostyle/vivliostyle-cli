@@ -172,6 +172,64 @@ describe('replaceImages', () => {
     expect(destColorSpace).toBe('CMYK');
   });
 
+  it('skips entries with nonexistent source file', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        { source: '/nonexistent/source.png', replacement: 'any.tiff' },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to load source image'),
+    );
+    expect(destPdf).toEqual(srcPdf);
+    spy.mockRestore();
+  });
+
+  it('skips entries with nonexistent replacement file', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        { source: srcImagePath, replacement: '/nonexistent/dest.tiff' },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to load replacement image'),
+    );
+    expect(destPdf).toEqual(srcPdf);
+    spy.mockRestore();
+  });
+
+  it('catches and warns on ReplaceFunction errors', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        () => {
+          throw new Error('test error');
+        },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to apply replacement function'),
+    );
+    // PDF should still be returned (image left unchanged)
+    expect(destPdf).toBeInstanceOf(Uint8Array);
+    spy.mockRestore();
+  });
+
   it('builtinCmykConversion converts RGB image to CMYK', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
@@ -211,7 +269,9 @@ describe('findNonCmykImages', () => {
     await findNonCmykImages(srcPdf);
 
     expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('Non-CMYK image remaining in PDF'),
+      expect.stringMatching(
+        /Non-CMYK image remaining in PDF: \d+x\d+ on page \d+/,
+      ),
     );
     spy.mockRestore();
   });

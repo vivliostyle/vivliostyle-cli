@@ -129,7 +129,7 @@ export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
   const pageCount = doc.countPages();
 
   for (let i = 0; i < pageCount; i++) {
-    const page = doc.loadPage(i);
+    using page = disposable(doc.loadPage(i));
     const pageObj = page.getObject().resolve();
     const res = pageObj.get('Resources');
     if (!res?.isDictionary()) continue;
@@ -217,11 +217,18 @@ function prepareFnWithSourceEntry(
   return async (pdfImage, pageIndex, key) => {
     if (!isRgbImage(pdfImage)) return null;
     if (!imagesEqual(pdfImage, srcImage)) return null;
-    const newImage = await applyReplaceFunction(fn, pdfImage, mupdf);
-    Logger.debug(
-      `  Page ${pageIndex + 1}, ref "${key}": ${sourcePath} -> [function]`,
-    );
-    return newImage;
+    try {
+      const newImage = await applyReplaceFunction(fn, pdfImage, mupdf);
+      Logger.debug(
+        `  Page ${pageIndex + 1}, ref "${key}": ${sourcePath} -> [function]`,
+      );
+      return newImage;
+    } catch (error) {
+      Logger.logWarn(
+        `Failed to apply replacement function for ${sourcePath} on page ${pageIndex + 1}: ${error}`,
+      );
+      return null;
+    }
   };
 }
 
@@ -234,11 +241,18 @@ function prepareBareFnEntry(
   // Only pass RGB images to ReplaceFunction.
   return async (pdfImage, pageIndex, key) => {
     if (!isRgbImage(pdfImage)) return null;
-    const newImage = await applyReplaceFunction(fn, pdfImage, mupdf);
-    Logger.debug(
-      `  Page ${pageIndex + 1}, ref "${key}": [all RGB] -> [function]`,
-    );
-    return newImage;
+    try {
+      const newImage = await applyReplaceFunction(fn, pdfImage, mupdf);
+      Logger.debug(
+        `  Page ${pageIndex + 1}, ref "${key}": [all RGB] -> [function]`,
+      );
+      return newImage;
+    } catch (error) {
+      Logger.logWarn(
+        `Failed to apply replacement function on page ${pageIndex + 1}: ${error}`,
+      );
+      return null;
+    }
   };
 }
 
@@ -258,7 +272,7 @@ async function replaceImagesInDocument(
   const pageCount = doc.countPages();
 
   for (let i = 0; i < pageCount; i++) {
-    const page = doc.loadPage(i);
+    using page = disposable(doc.loadPage(i));
     const pageObj = page.getObject().resolve();
 
     const res = pageObj.get('Resources');
