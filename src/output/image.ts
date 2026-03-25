@@ -128,9 +128,12 @@ export async function replaceImages({
 
   const mupdf = await importNodeModule('mupdf');
 
-  // Load image pairs
+  // Load image pairs (function entries are handled in a later phase)
   const imagePairs: ImagePair[] = [];
-  for (const { source, replacement } of replaceImageConfig) {
+  for (const item of replaceImageConfig) {
+    if (typeof item === 'function') continue;
+    if (typeof item.replacement === 'function') continue;
+    const { source, replacement } = item;
     let srcImage: mupdfType.Image;
     let destImage: mupdfType.Image;
 

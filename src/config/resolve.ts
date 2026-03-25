@@ -268,12 +268,21 @@ export interface CmykConfig {
   mapOutput: string | undefined;
 }
 
-export interface ReplaceImageEntry {
-  source: string;
-  replacement: string;
+export interface ImageContext {
+  asPNG(): Uint8Array;
 }
 
-export type ReplaceImageConfig = ReplaceImageEntry[];
+export type ReplaceFunction = (
+  image: ImageContext,
+) => Uint8Array | Promise<Uint8Array>;
+
+export interface ReplaceImageEntry {
+  source: string;
+  replacement: string | ReplaceFunction;
+}
+
+export type ReplaceImageConfigItem = ReplaceImageEntry | ReplaceFunction;
+export type ReplaceImageConfig = ReplaceImageConfigItem[];
 
 export interface PdfOutput {
   format: 'pdf';
@@ -729,23 +738,46 @@ export function resolveTaskConfig(
         cwd: entryContextDir,
         onlyFiles: true,
       });
-      return replaceImageOption.flatMap(({ source, replacement }) => {
-        if (source instanceof RegExp) {
-          return allFiles
-            .filter((file) => source.test(file))
-            .map((file) => ({
-              source: upath.resolve(entryContextDir, file),
-              replacement: upath.resolve(
-                entryContextDir,
-                file.replace(source, replacement),
-              ),
-            }));
-        }
-        return {
-          source: upath.resolve(entryContextDir, source),
-          replacement: upath.resolve(entryContextDir, replacement),
-        };
-      });
+      return replaceImageOption.flatMap(
+        (item): ReplaceImageConfigItem | ReplaceImageConfigItem[] => {
+          // Bare function: pass through as-is
+          if (typeof item === 'function') {
+            return item as ReplaceFunction;
+          }
+          const { source, replacement } = item;
+          const isFnReplacement = typeof replacement === 'function';
+
+          if (source instanceof RegExp) {
+            if (isFnReplacement) {
+              // RegExp source + function replacement
+              return allFiles
+                .filter((file) => source.test(file))
+                .map((file) => ({
+                  source: upath.resolve(entryContextDir, file),
+                  replacement,
+                }));
+            }
+            // RegExp source + string replacement (existing)
+            return allFiles
+              .filter((file) => source.test(file))
+              .map((file) => ({
+                source: upath.resolve(entryContextDir, file),
+                replacement: upath.resolve(
+                  entryContextDir,
+                  file.replace(source, replacement),
+                ),
+              }));
+          }
+
+          // String source + string or function replacement
+          return {
+            source: upath.resolve(entryContextDir, source),
+            replacement: isFnReplacement
+              ? replacement
+              : upath.resolve(entryContextDir, replacement),
+          };
+        },
+      );
     };
 
     // Resolve preflight with priority:
