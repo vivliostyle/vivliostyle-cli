@@ -27,8 +27,8 @@ function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
     return false;
   }
 
-  const pixmapA = a.toPixmap();
-  const pixmapB = b.toPixmap();
+  using pixmapA = disposable(a.toPixmap());
+  using pixmapB = disposable(b.toPixmap());
 
   const typeA = pixmapA.getColorSpace();
   const typeB = pixmapB.getColorSpace();
@@ -55,13 +55,15 @@ function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
 function createImageContext(pdfImage: mupdfType.Image): ImageContext {
   return {
     asPNG() {
-      return pdfImage.toPixmap().asPNG();
+      using pixmap = disposable(pdfImage.toPixmap());
+      return pixmap.asPNG();
     },
   };
 }
 
 function isRgbImage(pdfImage: mupdfType.Image): boolean {
-  const cs = pdfImage.toPixmap().getColorSpace();
+  using pixmap = disposable(pdfImage.toPixmap());
+  const cs = pixmap.getColorSpace();
   return cs?.isRGB() ?? false;
 }
 
@@ -89,7 +91,8 @@ export async function builtinCmykConversion(
     mupdf.ColorSpace.DeviceCMYK,
     mupdf,
   );
-  return result.toPixmap().asPAM();
+  using pixmap = disposable(result.toPixmap());
+  return pixmap.asPAM();
 }
 
 /**
@@ -106,7 +109,8 @@ export async function builtinGrayConversion(
     mupdf.ColorSpace.DeviceGray,
     mupdf,
   );
-  return result.toPixmap().asPAM();
+  using pixmap = disposable(result.toPixmap());
+  return pixmap.asPAM();
 }
 
 /**
@@ -137,7 +141,8 @@ export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
       if (resolved.get('Subtype')?.toString() !== '/Image') return;
 
       using img = disposable(doc.loadImage(value));
-      const cs = img.toPixmap().getColorSpace();
+      using pixmap = disposable(img.toPixmap());
+      const cs = pixmap.getColorSpace();
       if (cs && !cs.isCMYK() && !cs.isGray()) {
         const warnKey = `${img.getWidth()}x${img.getHeight()} on page ${i + 1}`;
         if (!warned.has(warnKey)) {

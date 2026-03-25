@@ -159,20 +159,15 @@ describe('replaceImages', () => {
     const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
     const destImagePath = path.join(fixturesDir, 'ck_cmyk.tiff');
 
-    let functionCalled = false;
     const destPdf = await replaceImages({
       pdf: srcPdf,
       replaceImageConfig: [
         { source: srcImagePath, replacement: destImagePath },
-        (_image: ImageContext) => {
-          functionCalled = true;
-          return new Uint8Array();
-        },
+        builtinGrayConversion,
       ],
     });
 
-    // File entry matched first, so the function should not have been called
-    expect(functionCalled).toBe(false);
+    // File entry matched first producing CMYK, not Gray from the fallback
     const destColorSpace = await getImageColorSpace(destPdf);
     expect(destColorSpace).toBe('CMYK');
   });
@@ -232,6 +227,31 @@ describe('findNonCmykImages', () => {
 
     const spy = vi.spyOn(Logger, 'logWarn');
     await findNonCmykImages(cmykPdf);
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('does not warn when all images are Gray', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const grayPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayConversion],
+    });
+
+    const spy = vi.spyOn(Logger, 'logWarn');
+    await findNonCmykImages(grayPdf);
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('does not warn for PDF with no images', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    const spy = vi.spyOn(Logger, 'logWarn');
+    await findNonCmykImages(srcPdf);
 
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
