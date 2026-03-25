@@ -91,6 +91,7 @@ function prepareFnWithSourceEntry(
   sourcePath: string,
   fn: ReplaceFunction,
   mupdf: typeof import('mupdf'),
+  imagesToDestroy: mupdfType.Image[],
 ): PreparedEntry {
   // Chromium converts all images to RGB in its PDF output
   // (even grayscale PNGs are embedded as RGB).
@@ -99,16 +100,19 @@ function prepareFnWithSourceEntry(
     if (!isRgbImage(pdfImage)) return null;
     if (!imagesEqual(pdfImage, srcImage)) return null;
     const resultBytes = await fn(createImageContext(pdfImage));
+    const newImage = new mupdf.Image(resultBytes);
+    imagesToDestroy.push(newImage);
     Logger.debug(
       `  Page ${pageIndex + 1}, ref "${key}": ${sourcePath} -> [function]`,
     );
-    return new mupdf.Image(resultBytes);
+    return newImage;
   };
 }
 
 function prepareBareFnEntry(
   fn: ReplaceFunction,
   mupdf: typeof import('mupdf'),
+  imagesToDestroy: mupdfType.Image[],
 ): PreparedEntry {
   // Chromium converts all images to RGB in its PDF output
   // (even grayscale PNGs are embedded as RGB).
@@ -116,10 +120,12 @@ function prepareBareFnEntry(
   return async (pdfImage, pageIndex, key) => {
     if (!isRgbImage(pdfImage)) return null;
     const resultBytes = await fn(createImageContext(pdfImage));
+    const newImage = new mupdf.Image(resultBytes);
+    imagesToDestroy.push(newImage);
     Logger.debug(
       `  Page ${pageIndex + 1}, ref "${key}": [all RGB] -> [function]`,
     );
-    return new mupdf.Image(resultBytes);
+    return newImage;
   };
 }
 
@@ -131,6 +137,7 @@ interface ReplaceStats {
 async function replaceImagesInDocument(
   doc: mupdfType.PDFDocument,
   preparedEntries: PreparedEntry[],
+  imagesToDestroy: mupdfType.Image[],
 ): Promise<ReplaceStats> {
   let replaced = 0;
   let total = 0;
@@ -161,6 +168,7 @@ async function replaceImagesInDocument(
         total++;
 
         const pdfImage = doc.loadImage(value);
+        imagesToDestroy.push(pdfImage);
         for (const entry of preparedEntries) {
           const result = await entry(pdfImage, i, key);
           if (result) {
@@ -192,70 +200,89 @@ export async function replaceImages({
   }
 
   const mupdf = await importNodeModule('mupdf');
+  const imagesToDestroy: mupdfType.Image[] = [];
 
-  // Prepare entries: each config item becomes a match-and-replace function
-  const preparedEntries: PreparedEntry[] = [];
-  for (const item of replaceImageConfig) {
-    if (typeof item === 'function') {
-      preparedEntries.push(prepareBareFnEntry(item, mupdf));
-      continue;
-    }
+  try {
+    // Prepare entries: each config item becomes a match-and-replace function
+    const preparedEntries: PreparedEntry[] = [];
+    for (const item of replaceImageConfig) {
+      if (typeof item === 'function') {
+        preparedEntries.push(prepareBareFnEntry(item, mupdf, imagesToDestroy));
+        continue;
+      }
 
-    const { source, replacement } = item;
+      const { source, replacement } = item;
 
-    let srcImage: mupdfType.Image;
-    try {
-      const srcBuffer = fs.readFileSync(source);
-      srcImage = new mupdf.Image(srcBuffer);
-      Logger.debug(
-        `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
-      );
-    } catch (error) {
-      Logger.logWarn(`Failed to load source image: ${source}: ${error}`);
-      continue;
-    }
+      let srcImage: mupdfType.Image;
+      try {
+        const srcBuffer = fs.readFileSync(source);
+        srcImage = new mupdf.Image(srcBuffer);
+        imagesToDestroy.push(srcImage);
+        Logger.debug(
+          `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
+        );
+      } catch (error) {
+        Logger.logWarn(`Failed to load source image: ${source}: ${error}`);
+        continue;
+      }
 
-    if (typeof replacement === 'function') {
+      if (typeof replacement === 'function') {
+        preparedEntries.push(
+          prepareFnWithSourceEntry(
+            srcImage,
+            source,
+            replacement,
+            mupdf,
+            imagesToDestroy,
+          ),
+        );
+        continue;
+      }
+
+      let destImage: mupdfType.Image;
+      try {
+        const destBuffer = fs.readFileSync(replacement);
+        destImage = new mupdf.Image(destBuffer);
+        imagesToDestroy.push(destImage);
+        Logger.debug(
+          `Loaded replacement image: ${replacement} (${destImage.getWidth()}x${destImage.getHeight()})`,
+        );
+      } catch (error) {
+        Logger.logWarn(
+          `Failed to load replacement image: ${replacement}: ${error}`,
+        );
+        continue;
+      }
+
       preparedEntries.push(
-        prepareFnWithSourceEntry(srcImage, source, replacement, mupdf),
+        prepareFileEntry(srcImage, destImage, source, replacement),
       );
-      continue;
     }
 
-    let destImage: mupdfType.Image;
-    try {
-      const destBuffer = fs.readFileSync(replacement);
-      destImage = new mupdf.Image(destBuffer);
-      Logger.debug(
-        `Loaded replacement image: ${replacement} (${destImage.getWidth()}x${destImage.getHeight()})`,
-      );
-    } catch (error) {
-      Logger.logWarn(
-        `Failed to load replacement image: ${replacement}: ${error}`,
-      );
-      continue;
+    if (preparedEntries.length === 0) {
+      return pdf;
     }
 
-    preparedEntries.push(
-      prepareFileEntry(srcImage, destImage, source, replacement),
+    using doc = disposable(
+      mupdf.PDFDocument.openDocument(
+        pdf,
+        'application/pdf',
+      ) as mupdfType.PDFDocument,
     );
+
+    const stats = await replaceImagesInDocument(
+      doc,
+      preparedEntries,
+      imagesToDestroy,
+    );
+    Logger.debug(`Replaced ${stats.replaced} of ${stats.total} images`);
+
+    using outputBuffer = disposable(doc.saveToBuffer('compress'));
+    // Create a copy to ensure the data remains valid after the buffer is destroyed
+    return new Uint8Array(outputBuffer.asUint8Array());
+  } finally {
+    for (const img of imagesToDestroy) {
+      img.destroy();
+    }
   }
-
-  if (preparedEntries.length === 0) {
-    return pdf;
-  }
-
-  using doc = disposable(
-    mupdf.PDFDocument.openDocument(
-      pdf,
-      'application/pdf',
-    ) as mupdfType.PDFDocument,
-  );
-
-  const stats = await replaceImagesInDocument(doc, preparedEntries);
-  Logger.debug(`Replaced ${stats.replaced} of ${stats.total} images`);
-
-  using outputBuffer = disposable(doc.saveToBuffer('compress'));
-  // Create a copy to ensure the data remains valid after the buffer is destroyed
-  return new Uint8Array(outputBuffer.asUint8Array());
 }
