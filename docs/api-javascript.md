@@ -7,6 +7,7 @@
 
 - [`build`](#build)
 - [`builtinCmykConversion`](#builtincmykconversion)
+- [`builtinGrayConversion`](#builtingrayconversion)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
@@ -281,6 +282,25 @@ build({
 
 Built-in ReplaceFunction that converts RGB images to CMYK
 using mupdf's DeviceCMYK color space conversion.
+
+#### Parameters
+
+##### image
+
+[`ImageContext`](#imagecontext)
+
+#### Returns
+
+`Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+***
+
+### builtinGrayConversion()
+
+> **builtinGrayConversion**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+Built-in ReplaceFunction that converts RGB images to grayscale
+using mupdf's DeviceGray color space conversion.
 
 #### Parameters
 

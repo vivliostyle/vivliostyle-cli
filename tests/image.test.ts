@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ImageContext } from '../src/config/resolve.js';
 import {
   builtinCmykConversion,
+  builtinGrayConversion,
   findNonCmykImages,
   replaceImages,
 } from '../src/output/image.js';
@@ -189,6 +190,21 @@ describe('replaceImages', () => {
 
     const destColorSpace = await getImageColorSpace(destPdf);
     expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('builtinGrayConversion converts RGB image to Gray', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const srcColorSpace = await getImageColorSpace(srcPdf);
+    expect(srcColorSpace).toBe('RGB');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayConversion],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('Gray');
   });
 });
 

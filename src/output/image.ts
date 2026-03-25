@@ -80,6 +80,22 @@ export async function builtinCmykConversion(
 }
 
 /**
+ * Built-in ReplaceFunction that converts RGB images to grayscale
+ * using mupdf's DeviceGray color space conversion.
+ */
+export async function builtinGrayConversion(
+  image: ImageContext,
+): Promise<Uint8Array> {
+  const mupdf = await importNodeModule('mupdf');
+  const img = new mupdf.Image(image.asPNG());
+  const pixmap = img.toPixmap();
+  const grayPixmap = pixmap.convertToColorSpace(mupdf.ColorSpace.DeviceGray);
+  const result = grayPixmap.asPAM();
+  img.destroy();
+  return result;
+}
+
+/**
  * Scan PDF for images with non-CMYK-compatible color spaces and log warnings.
  */
 export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {

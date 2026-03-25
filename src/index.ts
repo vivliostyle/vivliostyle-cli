@@ -20,7 +20,10 @@ export type {
 } from './config/schema.js';
 export type { ImageContext, ReplaceFunction } from './config/resolve.js';
 export type { TemplateVariable } from './create-template.js';
-export { builtinCmykConversion } from './output/image.js';
+export {
+  builtinCmykConversion,
+  builtinGrayConversion,
+} from './output/image.js';
 export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */
 export type PublicationManifest = _PublicationManifest;
