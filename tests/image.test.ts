@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import type { ImageContext } from '../src/config/resolve.js';
 import {
-  builtinCmykConversion,
-  builtinGrayConversion,
+  builtinCmykReplacement,
+  builtinGrayReplacement,
   findNonCmykImages,
   replaceImages,
 } from '../src/output/image.js';
@@ -163,7 +163,7 @@ describe('replaceImages', () => {
       pdf: srcPdf,
       replaceImageConfig: [
         { source: srcImagePath, replacement: destImagePath },
-        builtinGrayConversion,
+        builtinGrayReplacement,
       ],
     });
 
@@ -230,7 +230,7 @@ describe('replaceImages', () => {
     spy.mockRestore();
   });
 
-  it('builtinCmykConversion converts RGB image to CMYK', async () => {
+  it('builtinCmykReplacement converts RGB image to CMYK', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
     const srcColorSpace = await getImageColorSpace(srcPdf);
@@ -238,14 +238,14 @@ describe('replaceImages', () => {
 
     const destPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinCmykConversion],
+      replaceImageConfig: [builtinCmykReplacement],
     });
 
     const destColorSpace = await getImageColorSpace(destPdf);
     expect(destColorSpace).toBe('CMYK');
   });
 
-  it('builtinGrayConversion converts RGB image to Gray', async () => {
+  it('builtinGrayReplacement converts RGB image to Gray', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
     const srcColorSpace = await getImageColorSpace(srcPdf);
@@ -253,7 +253,7 @@ describe('replaceImages', () => {
 
     const destPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinGrayConversion],
+      replaceImageConfig: [builtinGrayReplacement],
     });
 
     const destColorSpace = await getImageColorSpace(destPdf);
@@ -282,7 +282,7 @@ describe('findNonCmykImages', () => {
     // Replace RGB image with CMYK first
     const cmykPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinCmykConversion],
+      replaceImageConfig: [builtinCmykReplacement],
     });
 
     const spy = vi.spyOn(Logger, 'logWarn');
@@ -297,7 +297,7 @@ describe('findNonCmykImages', () => {
 
     const grayPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinGrayConversion],
+      replaceImageConfig: [builtinGrayReplacement],
     });
 
     const spy = vi.spyOn(Logger, 'logWarn');

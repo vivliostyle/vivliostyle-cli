@@ -6,8 +6,8 @@
 ### Functions
 
 - [`build`](#build)
-- [`builtinCmykConversion`](#builtincmykconversion)
-- [`builtinGrayConversion`](#builtingrayconversion)
+- [`builtinCmykReplacement`](#builtincmykreplacement)
+- [`builtinGrayReplacement`](#builtingrayreplacement)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
@@ -276,9 +276,9 @@ build({
 
 ***
 
-### builtinCmykConversion()
+### builtinCmykReplacement()
 
-> **builtinCmykConversion**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+> **builtinCmykReplacement**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
 Built-in ReplaceFunction that converts RGB images to CMYK
 using mupdf's DeviceCMYK color space conversion.
@@ -295,9 +295,9 @@ using mupdf's DeviceCMYK color space conversion.
 
 ***
 
-### builtinGrayConversion()
+### builtinGrayReplacement()
 
-> **builtinGrayConversion**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+> **builtinGrayReplacement**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
 Built-in ReplaceFunction that converts RGB images to grayscale
 using mupdf's DeviceGray color space conversion.

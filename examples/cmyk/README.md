@@ -30,7 +30,7 @@ ck_cmyk.tiff is a cyan-and-key-plate gradient. Its RGB conversion is saved as ck
 
 The `replaceImage` array is processed front to back; the first entry that matches a given image wins. File-based replacement works by comparing pixel data, so it requires the original image stream to be preserved in the PDF. Simple resizing keeps the stream intact, but complex operations like filters or `object-view-box` cropping may cause the browser to rasterize the image, producing different pixel data. Images loaded from URLs also cannot be matched because no local source file exists. Additionally, images with semi-transparent pixels are not supported; only fully opaque RGB images (not RGBA) can be matched.
 
-### `ReplaceFunction` and `builtinCmykConversion` / `builtinGrayConversion`
+### `ReplaceFunction` and `builtinCmykReplacement` / `builtinGrayReplacement`
 
 For images that cannot be matched by pixel comparison, `replaceImage` also accepts a `ReplaceFunction`, a function that receives an image context and returns replacement image bytes. A bare `ReplaceFunction` placed in the array matches all RGB images (equivalent to `source: *`), so it should come last as a fallback after file-based entries.
 
@@ -42,11 +42,11 @@ The second is ck_rgb.png, cropped with `object-view-box: xywh(1px 0 100px 100px)
 
 ![ck_rgb.png cropped with object-view-box](ck_rgb.png){style="object-view-box: xywh(1px 0 100px 100px)"}
 
-In both cases, the `builtinGrayConversion` fallback at the end of the `replaceImage` array converts the image to grayscale. See `vivliostyle.config.js` in this example for the full configuration.
+In both cases, the `builtinGrayReplacement` fallback at the end of the `replaceImage` array converts the image to grayscale. See `vivliostyle.config.js` in this example for the full configuration.
 
 A `ReplaceFunction` can also be used as the `replacement` in a `{ source, replacement }` entry. This is useful for images like screenshots where CMYK accuracy is not critical: preparing a separate CMYK file for each one is unnecessary busywork that also creates a second copy to keep in sync, when an automatic conversion would suffice.
 
-`builtinCmykConversion` and `builtinGrayConversion` are `ReplaceFunction` implementations that convert RGB images to CMYK or grayscale.
+`builtinCmykReplacement` and `builtinGrayReplacement` are `ReplaceFunction` implementations that convert RGB images to CMYK or grayscale.
 
 A `ReplaceFunction` only receives RGB images; non-RGB images are skipped.
 

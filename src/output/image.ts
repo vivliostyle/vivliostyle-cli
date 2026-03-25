@@ -81,7 +81,7 @@ function convertImageColorSpace(
  * Built-in ReplaceFunction that converts RGB images to CMYK
  * using mupdf's DeviceCMYK color space conversion.
  */
-export async function builtinCmykConversion(
+export async function builtinCmykReplacement(
   image: ImageContext,
 ): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
@@ -99,7 +99,7 @@ export async function builtinCmykConversion(
  * Built-in ReplaceFunction that converts RGB images to grayscale
  * using mupdf's DeviceGray color space conversion.
  */
-export async function builtinGrayConversion(
+export async function builtinGrayReplacement(
   image: ImageContext,
 ): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
@@ -161,8 +161,8 @@ const builtinColorSpaceMap = new Map<
   ReplaceFunction,
   (mupdf: typeof import('mupdf')) => mupdfType.ColorSpace
 >([
-  [builtinCmykConversion, (mupdf) => mupdf.ColorSpace.DeviceCMYK],
-  [builtinGrayConversion, (mupdf) => mupdf.ColorSpace.DeviceGray],
+  [builtinCmykReplacement, (mupdf) => mupdf.ColorSpace.DeviceCMYK],
+  [builtinGrayReplacement, (mupdf) => mupdf.ColorSpace.DeviceGray],
 ]);
 
 function applyReplaceFunction(

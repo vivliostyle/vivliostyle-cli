@@ -1,5 +1,5 @@
 // @ts-check
-import { builtinGrayConversion, defineConfig } from '@vivliostyle/cli';
+import { builtinGrayReplacement, defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
   theme: './css',
@@ -19,7 +19,7 @@ export default defineConfig({
     },
     replaceImage: [
       { source: /^(.*)_rgb\.png$/, replacement: '$1_cmyk.tiff' },
-      builtinGrayConversion,
+      builtinGrayReplacement,
     ],
   },
 });

@@ -21,8 +21,8 @@ export type {
 export type { ImageContext, ReplaceFunction } from './config/resolve.js';
 export type { TemplateVariable } from './create-template.js';
 export {
-  builtinCmykConversion,
-  builtinGrayConversion,
+  builtinCmykReplacement,
+  builtinGrayReplacement,
 } from './output/image.js';
 export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */
