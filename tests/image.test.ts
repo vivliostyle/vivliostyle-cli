@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import type { ImageContext } from '../src/config/resolve.js';
 import { replaceImages } from '../src/output/image.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -94,5 +95,79 @@ describe('replaceImages', () => {
 
     // Should return the same PDF
     expect(destPdf).toEqual(srcPdf);
+  });
+
+  it('replaces RGB image using a bare ReplaceFunction', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const srcColorSpace = await getImageColorSpace(srcPdf);
+    expect(srcColorSpace).toBe('RGB');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        async (image: ImageContext) => {
+          const mupdf = await import('mupdf');
+          const img = new mupdf.Image(image.asPNG());
+          const pixmap = img.toPixmap();
+          const cmykPixmap = pixmap.convertToColorSpace(
+            mupdf.ColorSpace.DeviceCMYK,
+          );
+          return cmykPixmap.asPAM();
+        },
+      ],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('replaces image using file-to-function entry', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        {
+          source: srcImagePath,
+          replacement: async (image: ImageContext) => {
+            const mupdf = await import('mupdf');
+            const img = new mupdf.Image(image.asPNG());
+            const pixmap = img.toPixmap();
+            const cmykPixmap = pixmap.convertToColorSpace(
+              mupdf.ColorSpace.DeviceCMYK,
+            );
+            return cmykPixmap.asPAM();
+          },
+        },
+      ],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('file entry takes precedence over bare function (first match wins)', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+    const destImagePath = path.join(fixturesDir, 'ck_cmyk.tiff');
+
+    let functionCalled = false;
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        { source: srcImagePath, replacement: destImagePath },
+        (_image: ImageContext) => {
+          functionCalled = true;
+          return new Uint8Array();
+        },
+      ],
+    });
+
+    // File entry matched first, so the function should not have been called
+    expect(functionCalled).toBe(false);
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
   });
 });

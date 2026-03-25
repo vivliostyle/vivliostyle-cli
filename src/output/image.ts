@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import type * as mupdfType from 'mupdf';
-import type { ReplaceImageConfig } from '../config/resolve.js';
+import type {
+  ImageContext,
+  ReplaceFunction,
+  ReplaceImageConfig,
+} from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 
@@ -46,22 +50,44 @@ function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
   );
 }
 
-interface ImagePair {
+function createImageContext(pdfImage: mupdfType.Image): ImageContext {
+  return {
+    asPNG() {
+      return pdfImage.toPixmap().asPNG();
+    },
+  };
+}
+
+// Prepared entry types for the replacement pipeline
+type PreparedFileEntry = {
+  type: 'file';
   srcImage: mupdfType.Image;
   destImage: mupdfType.Image;
   sourcePath: string;
   replacementPath: string;
-}
+};
+type PreparedFnEntry = {
+  type: 'fn-with-source';
+  srcImage: mupdfType.Image;
+  sourcePath: string;
+  fn: ReplaceFunction;
+};
+type PreparedBareFn = {
+  type: 'bare-fn';
+  fn: ReplaceFunction;
+};
+type PreparedEntry = PreparedFileEntry | PreparedFnEntry | PreparedBareFn;
 
 interface ReplaceStats {
   replaced: number;
   total: number;
 }
 
-function replaceImagesInDocument(
+async function replaceImagesInDocument(
   doc: mupdfType.PDFDocument,
-  imagePairs: ImagePair[],
-): ReplaceStats {
+  preparedEntries: PreparedEntry[],
+  mupdf: typeof import('mupdf'),
+): Promise<ReplaceStats> {
   let replaced = 0;
   let total = 0;
 
@@ -90,17 +116,49 @@ function replaceImagesInDocument(
       if (subtype && subtype.toString() === '/Image') {
         total++;
 
-        // Extract image from PDF
         const pdfImage = doc.loadImage(value);
-
-        // Find matching source image
-        for (const pair of imagePairs) {
-          if (imagesEqual(pdfImage, pair.srcImage)) {
-            const newImageRef = doc.addImage(pair.destImage);
+        for (const entry of preparedEntries) {
+          if (entry.type === 'file') {
+            if (imagesEqual(pdfImage, entry.srcImage)) {
+              const newImageRef = doc.addImage(entry.destImage);
+              xobjects.put(key, newImageRef);
+              replaced++;
+              Logger.debug(
+                `  Page ${i + 1}, ref "${key}": ${entry.sourcePath} -> ${entry.replacementPath}`,
+              );
+              break;
+            }
+          } else if (entry.type === 'fn-with-source') {
+            // Chromium converts all images to RGB in its PDF output
+            // (even grayscale PNGs are embedded as RGB).
+            // Only pass RGB images to ReplaceFunction.
+            const cs = pdfImage.toPixmap().getColorSpace();
+            if (!cs?.isRGB()) continue;
+            if (imagesEqual(pdfImage, entry.srcImage)) {
+              const resultBytes = await entry.fn(createImageContext(pdfImage));
+              const newImage = new mupdf.Image(resultBytes);
+              const newImageRef = doc.addImage(newImage);
+              xobjects.put(key, newImageRef);
+              replaced++;
+              Logger.debug(
+                `  Page ${i + 1}, ref "${key}": ${entry.sourcePath} -> [function]`,
+              );
+              break;
+            }
+          } else {
+            // bare-fn: matches all RGB images
+            // Chromium converts all images to RGB in its PDF output
+            // (even grayscale PNGs are embedded as RGB).
+            // Only pass RGB images to ReplaceFunction.
+            const cs = pdfImage.toPixmap().getColorSpace();
+            if (!cs?.isRGB()) continue;
+            const resultBytes = await entry.fn(createImageContext(pdfImage));
+            const newImage = new mupdf.Image(resultBytes);
+            const newImageRef = doc.addImage(newImage);
             xobjects.put(key, newImageRef);
             replaced++;
             Logger.debug(
-              `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
+              `  Page ${i + 1}, ref "${key}": [all RGB] -> [function]`,
             );
             break;
           }
@@ -128,12 +186,39 @@ export async function replaceImages({
 
   const mupdf = await importNodeModule('mupdf');
 
-  // Load image pairs (function entries are handled in a later phase)
-  const imagePairs: ImagePair[] = [];
+  // Prepare entries: load source/dest images for file-based entries
+  const preparedEntries: PreparedEntry[] = [];
   for (const item of replaceImageConfig) {
-    if (typeof item === 'function') continue;
-    if (typeof item.replacement === 'function') continue;
+    if (typeof item === 'function') {
+      preparedEntries.push({ type: 'bare-fn', fn: item });
+      continue;
+    }
+
     const { source, replacement } = item;
+
+    if (typeof replacement === 'function') {
+      // File source + function replacement
+      let srcImage: mupdfType.Image;
+      try {
+        const srcBuffer = fs.readFileSync(source);
+        srcImage = new mupdf.Image(srcBuffer);
+        Logger.debug(
+          `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
+        );
+      } catch (error) {
+        Logger.logWarn(`Failed to load source image: ${source}: ${error}`);
+        continue;
+      }
+      preparedEntries.push({
+        type: 'fn-with-source',
+        srcImage,
+        sourcePath: source,
+        fn: replacement,
+      });
+      continue;
+    }
+
+    // File source + file replacement (existing behavior)
     let srcImage: mupdfType.Image;
     let destImage: mupdfType.Image;
 
@@ -161,7 +246,8 @@ export async function replaceImages({
       continue;
     }
 
-    imagePairs.push({
+    preparedEntries.push({
+      type: 'file',
       srcImage,
       destImage,
       sourcePath: source,
@@ -169,7 +255,7 @@ export async function replaceImages({
     });
   }
 
-  if (imagePairs.length === 0) {
+  if (preparedEntries.length === 0) {
     return pdf;
   }
 
@@ -180,7 +266,7 @@ export async function replaceImages({
     ) as mupdfType.PDFDocument,
   );
 
-  const stats = replaceImagesInDocument(doc, imagePairs);
+  const stats = await replaceImagesInDocument(doc, preparedEntries, mupdf);
   Logger.debug(`Replaced ${stats.replaced} of ${stats.total} images`);
 
   using outputBuffer = disposable(doc.saveToBuffer('compress'));
