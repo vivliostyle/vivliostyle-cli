@@ -1,9 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ImageContext } from '../src/config/resolve.js';
-import { builtinCmykConversion, replaceImages } from '../src/output/image.js';
+import {
+  builtinCmykConversion,
+  findNonCmykImages,
+  replaceImages,
+} from '../src/output/image.js';
+import { Logger } from '../src/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, 'fixtures', 'cmyk');
@@ -184,5 +189,35 @@ describe('replaceImages', () => {
 
     const destColorSpace = await getImageColorSpace(destPdf);
     expect(destColorSpace).toBe('CMYK');
+  });
+});
+
+describe('findNonCmykImages', () => {
+  it('warns about RGB images in PDF', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    await findNonCmykImages(srcPdf);
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Non-CMYK image remaining in PDF'),
+    );
+    spy.mockRestore();
+  });
+
+  it('does not warn when all images are CMYK', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    // Replace RGB image with CMYK first
+    const cmykPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykConversion],
+    });
+
+    const spy = vi.spyOn(Logger, 'logWarn');
+    await findNonCmykImages(cmykPdf);
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

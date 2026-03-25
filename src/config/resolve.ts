@@ -263,6 +263,7 @@ function resolveMapEntries(
 
 export interface CmykConfig {
   warnUnmapped: boolean;
+  warnUnreplacedImages: boolean;
   overrideMap: CmykMapEntry[];
   reserveMap: CmykMapEntry[];
   mapOutput: string | undefined;
@@ -706,6 +707,7 @@ export function resolveTaskConfig(
       if (cmykOption && typeof cmykOption === 'object') {
         return {
           warnUnmapped: cmykOption.warnUnmapped ?? true,
+          warnUnreplacedImages: cmykOption.warnUnreplacedImages ?? true,
           overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
           reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
           mapOutput: cmykOption.mapOutput
@@ -717,6 +719,7 @@ export function resolveTaskConfig(
       if (options.cmyk || cmykOption === true) {
         return {
           warnUnmapped: true,
+          warnUnreplacedImages: true,
           overrideMap: [],
           reserveMap: [],
           mapOutput: undefined,

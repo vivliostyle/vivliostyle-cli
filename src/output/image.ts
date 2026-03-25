@@ -79,6 +79,47 @@ export async function builtinCmykConversion(
   return result;
 }
 
+/**
+ * Scan PDF for images with non-CMYK-compatible color spaces and log warnings.
+ */
+export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
+  const mupdf = await importNodeModule('mupdf');
+  using doc = disposable(
+    mupdf.PDFDocument.openDocument(
+      pdf,
+      'application/pdf',
+    ) as import('mupdf').PDFDocument,
+  );
+
+  const warned = new Set<string>();
+  const pageCount = doc.countPages();
+
+  for (let i = 0; i < pageCount; i++) {
+    const page = doc.loadPage(i);
+    const pageObj = page.getObject().resolve();
+    const res = pageObj.get('Resources');
+    if (!res?.isDictionary()) continue;
+    const xobjects = res.get('XObject');
+    if (!xobjects?.isDictionary()) continue;
+
+    xobjects.forEach((value) => {
+      const resolved = value.resolve();
+      if (resolved.get('Subtype')?.toString() !== '/Image') return;
+
+      const img = doc.loadImage(value);
+      const cs = img.toPixmap().getColorSpace();
+      if (cs && !cs.isCMYK() && !cs.isGray()) {
+        const warnKey = `${img.getWidth()}x${img.getHeight()} on page ${i + 1}`;
+        if (!warned.has(warnKey)) {
+          warned.add(warnKey);
+          Logger.logWarn(`Non-CMYK image remaining in PDF: ${warnKey}`);
+        }
+      }
+      img.destroy();
+    });
+  }
+}
+
 // A prepared entry is a function that attempts to match and replace a PDF image.
 // Returns the replacement Image on match, or null to try the next entry.
 type PreparedEntry = (

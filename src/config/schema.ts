@@ -291,6 +291,12 @@ const CmykConfigSchema = v.pipe(
           Warn when RGB colors not mapped to CMYK are encountered. (default: true)
         `),
       ),
+      warnUnreplacedImages: v.pipe(
+        v.boolean(),
+        v.description($`
+          Warn when non-CMYK-compatible images remain in the PDF after image replacement. (default: true)
+        `),
+      ),
       mapOutput: v.pipe(
         ValidString,
         v.description($`

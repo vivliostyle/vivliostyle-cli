@@ -15,7 +15,7 @@ import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import { coreVersion, isInContainer } from '../util.js';
 import { convertCmykColors } from './cmyk.js';
-import { replaceImages } from './image.js';
+import { findNonCmykImages, replaceImages } from './image.js';
 
 export type SaveOption = Pick<
   PdfOutput,
@@ -141,6 +141,10 @@ export class PostProcess {
         pdf,
         replaceImageConfig: replaceImage,
       });
+    }
+
+    if (cmyk && cmyk.warnUnreplacedImages) {
+      await findNonCmykImages(pdf);
     }
 
     if (preflight) {
