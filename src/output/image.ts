@@ -63,6 +63,16 @@ function isRgbImage(pdfImage: mupdfType.Image): boolean {
   return cs?.isRGB() ?? false;
 }
 
+function convertImageColorSpace(
+  image: mupdfType.Image,
+  colorSpace: mupdfType.ColorSpace,
+  mupdf: typeof import('mupdf'),
+): mupdfType.Image {
+  using pixmap = disposable(image.toPixmap());
+  using converted = disposable(pixmap.convertToColorSpace(colorSpace));
+  return new mupdf.Image(converted);
+}
+
 /**
  * Built-in ReplaceFunction that converts RGB images to CMYK
  * using mupdf's DeviceCMYK color space conversion.
@@ -71,12 +81,11 @@ export async function builtinCmykConversion(
   image: ImageContext,
 ): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
-  const img = new mupdf.Image(image.asPNG());
-  const pixmap = img.toPixmap();
-  const cmykPixmap = pixmap.convertToColorSpace(mupdf.ColorSpace.DeviceCMYK);
-  const result = cmykPixmap.asPAM();
-  img.destroy();
-  return result;
+  using img = disposable(new mupdf.Image(image.asPNG()));
+  using result = disposable(
+    convertImageColorSpace(img, mupdf.ColorSpace.DeviceCMYK, mupdf),
+  );
+  return result.toPixmap().asPAM();
 }
 
 /**
@@ -87,12 +96,11 @@ export async function builtinGrayConversion(
   image: ImageContext,
 ): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
-  const img = new mupdf.Image(image.asPNG());
-  const pixmap = img.toPixmap();
-  const grayPixmap = pixmap.convertToColorSpace(mupdf.ColorSpace.DeviceGray);
-  const result = grayPixmap.asPAM();
-  img.destroy();
-  return result;
+  using img = disposable(new mupdf.Image(image.asPNG()));
+  using result = disposable(
+    convertImageColorSpace(img, mupdf.ColorSpace.DeviceGray, mupdf),
+  );
+  return result.toPixmap().asPAM();
 }
 
 /**
@@ -136,6 +144,39 @@ export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
   }
 }
 
+// Map of built-in functions to their target color spaces for fast-path conversion.
+// When a built-in function is detected, we skip the byte encode/decode roundtrip
+// and convert the pixmap directly.
+const builtinColorSpaceMap = new Map<
+  ReplaceFunction,
+  (mupdf: typeof import('mupdf')) => mupdfType.ColorSpace
+>([
+  [builtinCmykConversion, (mupdf) => mupdf.ColorSpace.DeviceCMYK],
+  [builtinGrayConversion, (mupdf) => mupdf.ColorSpace.DeviceGray],
+]);
+
+function applyReplaceFunction(
+  fn: ReplaceFunction,
+  pdfImage: mupdfType.Image,
+  mupdf: typeof import('mupdf'),
+  imagesToDestroy: mupdfType.Image[],
+): Promise<mupdfType.Image> | mupdfType.Image {
+  const targetCs = builtinColorSpaceMap.get(fn);
+  if (targetCs) {
+    // Fast path: direct pixmap conversion without byte roundtrip
+    const newImage = convertImageColorSpace(pdfImage, targetCs(mupdf), mupdf);
+    imagesToDestroy.push(newImage);
+    return newImage;
+  }
+  // General path: bytes in, bytes out
+  return (async () => {
+    const resultBytes = await fn(createImageContext(pdfImage));
+    const newImage = new mupdf.Image(resultBytes);
+    imagesToDestroy.push(newImage);
+    return newImage;
+  })();
+}
+
 // A prepared entry is a function that attempts to match and replace a PDF image.
 // Returns the replacement Image on match, or null to try the next entry.
 type PreparedEntry = (
@@ -172,9 +213,12 @@ function prepareFnWithSourceEntry(
   return async (pdfImage, pageIndex, key) => {
     if (!isRgbImage(pdfImage)) return null;
     if (!imagesEqual(pdfImage, srcImage)) return null;
-    const resultBytes = await fn(createImageContext(pdfImage));
-    const newImage = new mupdf.Image(resultBytes);
-    imagesToDestroy.push(newImage);
+    const newImage = await applyReplaceFunction(
+      fn,
+      pdfImage,
+      mupdf,
+      imagesToDestroy,
+    );
     Logger.debug(
       `  Page ${pageIndex + 1}, ref "${key}": ${sourcePath} -> [function]`,
     );
@@ -192,9 +236,12 @@ function prepareBareFnEntry(
   // Only pass RGB images to ReplaceFunction.
   return async (pdfImage, pageIndex, key) => {
     if (!isRgbImage(pdfImage)) return null;
-    const resultBytes = await fn(createImageContext(pdfImage));
-    const newImage = new mupdf.Image(resultBytes);
-    imagesToDestroy.push(newImage);
+    const newImage = await applyReplaceFunction(
+      fn,
+      pdfImage,
+      mupdf,
+      imagesToDestroy,
+    );
     Logger.debug(
       `  Page ${pageIndex + 1}, ref "${key}": [all RGB] -> [function]`,
     );
