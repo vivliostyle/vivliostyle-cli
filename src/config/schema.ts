@@ -322,7 +322,7 @@ const ReplaceFunctionSchema = v.pipe(
   >,
   v.metadata({
     typeString:
-      '(image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>',
+      '((image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>)',
   }),
   v.description(
     'Function that receives an image context and returns replacement image bytes.',

@@ -6,6 +6,7 @@
 ### Functions
 
 - [`build`](#build)
+- [`builtinCmykConversion`](#builtincmykconversion)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
@@ -14,12 +15,14 @@
 
 ### Interfaces
 
+- [`ImageContext`](#imagecontext)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
 
 ### Type Aliases
 
 - [`Metadata`](#metadata)
+- [`ReplaceFunction`](#replacefunction)
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
 - [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
@@ -64,7 +67,7 @@ build({
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -272,6 +275,25 @@ build({
 
 ***
 
+### builtinCmykConversion()
+
+> **builtinCmykConversion**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+Built-in ReplaceFunction that converts RGB images to CMYK
+using mupdf's DeviceCMYK color space conversion.
+
+#### Parameters
+
+##### image
+
+[`ImageContext`](#imagecontext)
+
+#### Returns
+
+`Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+
+***
+
 ### create()
 
 > **create**(`options`): `Promise`\<`void`\>
@@ -296,7 +318,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -526,7 +548,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -776,7 +798,7 @@ Open a browser for previewing the publication.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -1010,6 +1032,20 @@ Unified processor.
 
 ## Interfaces
 
+### ImageContext
+
+#### Methods
+
+##### asPNG()
+
+> **asPNG**(): `Uint8Array`
+
+###### Returns
+
+`Uint8Array`
+
+***
+
 ### StringifyMarkdownOptions
 
 Option for convert Markdown to a stringify (HTML).
@@ -1047,7 +1083,7 @@ Option for convert Markdown to a stringify (HTML).
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="cliversion"></a> `cliVersion` | `string` |
-| <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
+| <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} |
 | <a id="config"></a> `config?` | `string` |
 | <a id="configdata"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
 | <a id="coreversion"></a> `coreVersion` | `string` |
@@ -1209,6 +1245,22 @@ Value of `<title>...</title>`.
 > `optional` **vfm**: `VFMSettings`
 
 VFM settings.
+
+***
+
+### ReplaceFunction()
+
+> **ReplaceFunction** = (`image`) => `Uint8Array` \| `Promise`\<`Uint8Array`\>
+
+#### Parameters
+
+##### image
+
+[`ImageContext`](#imagecontext)
+
+#### Returns
+
+`Uint8Array` \| `Promise`\<`Uint8Array`\>
 
 ***
 
