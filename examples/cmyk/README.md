@@ -50,20 +50,20 @@ A `ReplaceFunction` can also be used as the `replacement` in a `{ source, replac
 
 A `ReplaceFunction` only receives RGB images; non-RGB images are skipped.
 
-## `overrideMap`
+## `cmyk.overrideMap`
 
-This CMYK feature assumes you know every color that appears in the PDF and control it through CSS. In large documents that is not always the case. `overrideMap` is a last resort for keeping the output fully CMYK.
+This CMYK feature assumes you know every color that appears in the PDF and control it through CSS. In large documents that is not always the case. `cmyk.overrideMap` is a last resort for keeping the output fully CMYK.
 
-When building this document, some unknown grays appeared (for demonstration purposes; I actually know the endnote `<hr>` produces them, and styling it with CSS would be the proper fix). `overrideMap` can convert these directly to CMYK values.
+When building this document, some unknown grays appeared (for demonstration purposes; I actually know the endnote `<hr>` produces them, and styling it with CSS would be the proper fix). `cmyk.overrideMap` can convert these directly to CMYK values.
 
 ```
 WARN RGB color not mapped to CMYK: {"r":6039,"g":6039,"b":6039}
 WARN RGB color not mapped to CMYK: {"r":9333,"g":9333,"b":9333}
 ```
 
-Like `replaceImage`, `overrideMap` also accepts functions. `builtinCmykConversion()` and `builtinGrayConversion()` are provided for automatic conversion.
+Like `replaceImage`, `cmyk.overrideMap` also accepts functions. `builtinCmykConversion()` and `builtinGrayConversion()` are provided for automatic conversion.
 
-These functions make it possible to produce a CMYK PDF without any explicit `device-cmyk()` declarations, but you should not do this. What print actually requires is a PDF with an output intent (which is why PDF/X-4 can accept RGB PDFs in the first place). If you are going to run automatic CMYK conversion, you would cause fewer problems by submitting the RGB PDF directly to the print shop. Chromium's PDFs do not carry an output intent, but treating them as sRGB is good enough. In any case, `overrideMap` is a tool for assisting intentional CMYK workflows, not for converting everything automatically.
+These functions make it possible to produce a CMYK PDF without any explicit `device-cmyk()` declarations, but you should not do this. What print actually requires is a PDF with an output intent (which is why PDF/X-4 can accept RGB PDFs in the first place). If you are going to run automatic CMYK conversion, you would cause fewer problems by submitting the RGB PDF directly to the print shop. Chromium's PDFs do not carry an output intent, but treating them as sRGB is good enough. In any case, `cmyk.overrideMap` is a tool for assisting intentional CMYK workflows, not for converting everything automatically.
 
 ## Other options
 
@@ -71,7 +71,7 @@ By design, this feature cannot produce PDFs that freely mix RGB and CMYK colors 
 
 Similarly, `cmyk.warnUnreplacedImages` (default: `true`) logs warnings for any non-CMYK images remaining in the PDF after image replacement.
 
-`mapOutput` is primarily a debugging tool. It writes the internal color mapping table to a file.
+`cmyk.mapOutput` is primarily a debugging tool. It writes the internal color mapping table to a file.
 
 ```shellsession
 $ npm run build && gs -dQUIET -dBATCH -dNOPAUSE -sOutputFile=- -sDEVICE=ink_cov output.pdf
@@ -90,7 +90,7 @@ SUCCESS Finished building output.pdf
  9.80958  0.00000  0.00000 12.63330 CMYK OK
  0.26049  0.00000  0.00000 11.39651 CMYK OK
  0.26049  0.00000  0.00000  4.64140 CMYK OK
- 0.26049  0.00000  0.00000  4.50371 CMYK OK
- 0.26049  0.00000  0.00000  3.73724 CMYK OK
- 0.28051  0.00000  0.00000  2.70549 CMYK OK
+ 0.26049  0.00000  0.00000  4.58088 CMYK OK
+ 0.26049  0.00000  0.00000  3.75094 CMYK OK
+ 0.28051  0.00000  0.00000  2.70628 CMYK OK
 ```
