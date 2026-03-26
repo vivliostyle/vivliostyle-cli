@@ -46,7 +46,7 @@ In both cases, the `builtinGrayReplacement` fallback at the end of the `replaceI
 
 A `ReplaceFunction` can also be used as the `replacement` in a `{ source, replacement }` entry. This is useful for images like screenshots where CMYK accuracy is not critical: preparing a separate CMYK file for each one is unnecessary busywork that also creates a second copy to keep in sync, when an automatic conversion would suffice.
 
-`builtinCmykReplacement` and `builtinGrayReplacement` are `ReplaceFunction` implementations that convert RGB images to CMYK or grayscale.
+`builtinCmykReplacement()` and `builtinGrayReplacement()` return `ReplaceFunction` implementations that convert RGB images to CMYK or grayscale. Both accept optional `inputProfile` and `outputProfile` arguments (as `Uint8Array` of ICC profile data) for profile-based conversion. When an output profile is provided, a separate mupdf WASM instance is used internally to avoid polluting global ICC state.
 
 A `ReplaceFunction` only receives RGB images; non-RGB images are skipped.
 

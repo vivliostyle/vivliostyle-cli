@@ -19,7 +19,7 @@ export default defineConfig({
     },
     replaceImage: [
       { source: /^(.*)_rgb\.png$/, replacement: '$1_cmyk.tiff' },
-      builtinGrayReplacement,
+      builtinGrayReplacement(),
     ],
   },
 });
