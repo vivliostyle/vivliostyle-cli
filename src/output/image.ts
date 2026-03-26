@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import type * as mupdfType from 'mupdf';
+import type { CMYKValue } from '../global-viewer.js';
 import type {
+  CmykConvertFunction,
   ImageContext,
+  RGBValue,
   ReplaceFunction,
   ReplaceImageConfig,
 } from '../config/resolve.js';
@@ -242,6 +245,42 @@ export function builtinGrayReplacement(
   options: ColorConversionOptions = {},
 ): ReplaceFunction {
   return createBuiltinReplacement('Gray', options);
+}
+
+/**
+ * Returns a CmykConvertFunction that converts RGB colors to CMYK.
+ * Internally creates a 1x1 RGB pixmap and delegates to builtinCmykReplacement
+ * for the actual conversion, reusing ICC profile support.
+ */
+export function builtinCmykConversion(
+  options: ColorConversionOptions = {},
+): CmykConvertFunction {
+  const replaceFn = builtinCmykReplacement(options);
+  return async (rgb: RGBValue): Promise<CMYKValue> => {
+    const mupdf = await importNodeModule('mupdf');
+    // Create a 1x1 RGB pixmap with the color
+    using pixmap = disposable(
+      new mupdf.Pixmap(mupdf.ColorSpace.DeviceRGB, [0, 0, 1, 1], false),
+    );
+    const pixels = pixmap.getPixels();
+    pixels[0] = Math.round((rgb.r / 10000) * 255);
+    pixels[1] = Math.round((rgb.g / 10000) * 255);
+    pixels[2] = Math.round((rgb.b / 10000) * 255);
+
+    // Delegate to builtinCmykReplacement via ImageContext
+    const resultBytes = await replaceFn({ asPNG: () => pixmap.asPNG() });
+
+    // Read CMYK values from the result
+    using resultImg = disposable(new mupdf.Image(resultBytes));
+    using resultPixmap = disposable(resultImg.toPixmap());
+    const cmykPixels = resultPixmap.getPixels();
+    return {
+      c: Math.round((cmykPixels[0] / 255) * 10000),
+      m: Math.round((cmykPixels[1] / 255) * 10000),
+      y: Math.round((cmykPixels[2] / 255) * 10000),
+      k: Math.round((cmykPixels[3] / 255) * 10000),
+    };
+  };
 }
 
 /**
