@@ -261,10 +261,14 @@ function resolveMapEntries(
   });
 }
 
+export type CmykConvertFunction = (
+  rgb: RGBValue,
+) => CMYKValue | Promise<CMYKValue>;
+
 export interface CmykConfig {
   warnUnmapped: boolean;
   warnUnreplacedImages: boolean;
-  overrideMap: CmykMapEntry[];
+  overrideMap: (CmykMapEntry | CmykConvertFunction)[];
   reserveMap: CmykMapEntry[];
   mapOutput: string | undefined;
 }
@@ -708,7 +712,12 @@ export function resolveTaskConfig(
         return {
           warnUnmapped: cmykOption.warnUnmapped ?? true,
           warnUnreplacedImages: cmykOption.warnUnreplacedImages ?? true,
-          overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
+          overrideMap: (cmykOption.overrideMap ?? []).flatMap(
+            (item): (CmykMapEntry | CmykConvertFunction)[] =>
+              typeof item === 'function'
+                ? [item as CmykConvertFunction]
+                : resolveMapEntries([item]),
+          ),
           reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
           mapOutput: cmykOption.mapOutput
             ? upath.resolve(context, cmykOption.mapOutput)

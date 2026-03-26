@@ -112,7 +112,9 @@ export class PostProcess {
 
     if (cmyk) {
       const mergedMap: CmykMap = { ...cmykMap };
-      for (const [rgb, cmykValue] of cmyk.overrideMap) {
+      for (const item of cmyk.overrideMap) {
+        if (typeof item === 'function') continue;
+        const [rgb, cmykValue] = item;
         const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
         mergedMap[key] = cmykValue;
       }
