@@ -150,7 +150,7 @@ export async function convertCmykColors({
 
   const pageCount = doc.countPages();
   for (let i = 0; i < pageCount; i++) {
-    const page = doc.loadPage(i) as mupdfType.PDFPage;
+    using page = disposable(doc.loadPage(i) as mupdfType.PDFPage);
     const pageObj = page.getObject().resolve();
 
     const contents = pageObj.get('Contents');

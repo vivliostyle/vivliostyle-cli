@@ -146,15 +146,18 @@ async function convertWithICC(
   let targetCsPtr: number;
   if (outputProfile) {
     const namePtr = toHeap(new TextEncoder().encode(`custom-${type}\0`));
-    using profileBuf = wasmDisposable(
-      lib._wasm_new_buffer_from_data(
-        toHeap(outputProfile),
-        outputProfile.length,
-      ),
-      (p: number) => lib._wasm_drop_buffer(p),
-    );
-    targetCsPtr = lib._wasm_new_icc_colorspace(namePtr, profileBuf.ptr);
-    lib._wasm_free(namePtr);
+    try {
+      using profileBuf = wasmDisposable(
+        lib._wasm_new_buffer_from_data(
+          toHeap(outputProfile),
+          outputProfile.length,
+        ),
+        (p: number) => lib._wasm_drop_buffer(p),
+      );
+      targetCsPtr = lib._wasm_new_icc_colorspace(namePtr, profileBuf.ptr);
+    } finally {
+      lib._wasm_free(namePtr);
+    }
     targetCsDisposable = {
       [Symbol.dispose]() {
         lib._wasm_drop_colorspace(targetCsPtr);

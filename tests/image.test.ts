@@ -6,6 +6,7 @@ import type { ImageContext } from '../src/config/resolve.js';
 import {
   builtinCmykConversion,
   builtinCmykReplacement,
+  builtinGrayConversion,
   builtinGrayReplacement,
   findNonCmykImages,
   replaceImages,
@@ -364,6 +365,26 @@ describe('builtinCmykConversion', () => {
     expect(result.c).toBeLessThan(500);
     expect(result.m).toBeLessThan(500);
     expect(result.y).toBeLessThan(500);
+    expect(result.k).toBeLessThan(500);
+  });
+});
+
+describe('builtinGrayConversion', () => {
+  it('converts black to high K', async () => {
+    const fn = builtinGrayConversion();
+    const result = await fn({ r: 0, g: 0, b: 0 });
+    expect(result.c).toBe(0);
+    expect(result.m).toBe(0);
+    expect(result.y).toBe(0);
+    expect(result.k).toBeGreaterThan(5000);
+  });
+
+  it('converts white to near-zero K', async () => {
+    const fn = builtinGrayConversion();
+    const result = await fn({ r: 10000, g: 10000, b: 10000 });
+    expect(result.c).toBe(0);
+    expect(result.m).toBe(0);
+    expect(result.y).toBe(0);
     expect(result.k).toBeLessThan(500);
   });
 });

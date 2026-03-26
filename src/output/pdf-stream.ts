@@ -218,7 +218,11 @@ export async function convertStreamColors(
 
         let cmyk: CMYKValue | null = null;
         for (const fn of converters) {
-          cmyk = await fn(rgb);
+          try {
+            cmyk = await fn(rgb);
+          } catch {
+            continue;
+          }
           if (cmyk !== null) break;
         }
 
