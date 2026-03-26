@@ -39,6 +39,7 @@ export default defineConfig({
     "09_distribution.md",
   ],
   toc: {
+    title: "目次",
     sectionDepth: 1,
   },
   cover: {
