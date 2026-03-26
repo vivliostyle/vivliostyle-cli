@@ -16,6 +16,7 @@
 
 ### Interfaces
 
+- [`ColorConversionOptions`](#colorconversionoptions)
 - [`ImageContext`](#imagecontext)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
@@ -278,25 +279,17 @@ build({
 
 ### builtinCmykReplacement()
 
-> **builtinCmykReplacement**(`inputProfile?`, `outputProfile?`): [`ReplaceFunction`](#replacefunction)
+> **builtinCmykReplacement**(`options`): [`ReplaceFunction`](#replacefunction)
 
 Returns a ReplaceFunction that converts RGB images to CMYK.
 When called without arguments, uses mupdf's DeviceCMYK color space.
-ICC profiles can be provided for more accurate conversion.
+An output ICC profile can be provided for profile-based conversion.
 
 #### Parameters
 
-##### inputProfile?
+##### options
 
-`Uint8Array`\<`ArrayBufferLike`\>
-
-ICC profile for interpreting the source RGB image
-
-##### outputProfile?
-
-`Uint8Array`\<`ArrayBufferLike`\>
-
-ICC profile for the target CMYK color space
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
 
 #### Returns
 
@@ -306,25 +299,17 @@ ICC profile for the target CMYK color space
 
 ### builtinGrayReplacement()
 
-> **builtinGrayReplacement**(`inputProfile?`, `outputProfile?`): [`ReplaceFunction`](#replacefunction)
+> **builtinGrayReplacement**(`options`): [`ReplaceFunction`](#replacefunction)
 
 Returns a ReplaceFunction that converts RGB images to grayscale.
 When called without arguments, uses mupdf's DeviceGray color space.
-ICC profiles can be provided for more accurate conversion.
+An output ICC profile can be provided for profile-based conversion.
 
 #### Parameters
 
-##### inputProfile?
+##### options
 
-`Uint8Array`\<`ArrayBufferLike`\>
-
-ICC profile for interpreting the source RGB image
-
-##### outputProfile?
-
-`Uint8Array`\<`ArrayBufferLike`\>
-
-ICC profile for the target Gray color space
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
 
 #### Returns
 
@@ -1069,6 +1054,17 @@ Options.
 Unified processor.
 
 ## Interfaces
+
+### ColorConversionOptions
+
+#### Properties
+
+| Property | Type |
+| ------ | ------ |
+| <a id="inputprofile"></a> `inputProfile?` | `Uint8Array`\<`ArrayBufferLike`\> |
+| <a id="outputprofile"></a> `outputProfile?` | `Uint8Array`\<`ArrayBufferLike`\> |
+
+***
 
 ### ImageContext
 

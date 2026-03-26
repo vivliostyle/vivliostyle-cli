@@ -23,6 +23,7 @@ export type { TemplateVariable } from './create-template.js';
 export {
   builtinCmykReplacement,
   builtinGrayReplacement,
+  type ColorConversionOptions,
 } from './output/image.js';
 export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */

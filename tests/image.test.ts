@@ -286,7 +286,9 @@ describe('replaceImages', () => {
     // 2. Convert with a real ICC profile (uses separate WASM instance)
     const pdf2 = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinCmykReplacement(undefined, cmykProfile)],
+      replaceImageConfig: [
+        builtinCmykReplacement({ outputProfile: cmykProfile }),
+      ],
     });
 
     // ICC profile should produce different output than DeviceCMYK
@@ -331,7 +333,9 @@ describe('replaceImages', () => {
 
     const pdf2 = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinGrayReplacement(undefined, grayProfile)],
+      replaceImageConfig: [
+        builtinGrayReplacement({ outputProfile: grayProfile }),
+      ],
     });
 
     expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf2))).not.toBe(0);

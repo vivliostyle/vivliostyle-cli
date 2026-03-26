@@ -186,11 +186,16 @@ function getBuiltinType(fn: ReplaceFunction): 'CMYK' | 'Gray' | undefined {
   return undefined;
 }
 
+export interface ColorConversionOptions {
+  inputProfile?: Uint8Array;
+  outputProfile?: Uint8Array;
+}
+
 function createBuiltinReplacement(
   type: 'CMYK' | 'Gray',
-  inputProfile?: Uint8Array,
-  outputProfile?: Uint8Array,
+  options: ColorConversionOptions = {},
 ): ReplaceFunction {
+  const { outputProfile } = options;
   // Only outputProfile triggers ICC path; inputProfile is reserved for future use
   const useICC = !!outputProfile;
   const fn: ReplaceFunction = async (image) => {
@@ -220,31 +225,23 @@ function createBuiltinReplacement(
 /**
  * Returns a ReplaceFunction that converts RGB images to CMYK.
  * When called without arguments, uses mupdf's DeviceCMYK color space.
- * ICC profiles can be provided for more accurate conversion.
- *
- * @param inputProfile - ICC profile for interpreting the source RGB image
- * @param outputProfile - ICC profile for the target CMYK color space
+ * An output ICC profile can be provided for profile-based conversion.
  */
 export function builtinCmykReplacement(
-  inputProfile?: Uint8Array,
-  outputProfile?: Uint8Array,
+  options: ColorConversionOptions = {},
 ): ReplaceFunction {
-  return createBuiltinReplacement('CMYK', inputProfile, outputProfile);
+  return createBuiltinReplacement('CMYK', options);
 }
 
 /**
  * Returns a ReplaceFunction that converts RGB images to grayscale.
  * When called without arguments, uses mupdf's DeviceGray color space.
- * ICC profiles can be provided for more accurate conversion.
- *
- * @param inputProfile - ICC profile for interpreting the source RGB image
- * @param outputProfile - ICC profile for the target Gray color space
+ * An output ICC profile can be provided for profile-based conversion.
  */
 export function builtinGrayReplacement(
-  inputProfile?: Uint8Array,
-  outputProfile?: Uint8Array,
+  options: ColorConversionOptions = {},
 ): ReplaceFunction {
-  return createBuiltinReplacement('Gray', inputProfile, outputProfile);
+  return createBuiltinReplacement('Gray', options);
 }
 
 /**
