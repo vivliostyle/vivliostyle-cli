@@ -26,44 +26,41 @@ async function getImageColorSpace(
     'application/pdf',
   ) as import('mupdf').PDFDocument;
 
-  const page = doc.loadPage(0) as import('mupdf').PDFPage;
-  const pageObj = page.getObject().resolve();
-  const res = pageObj.get('Resources');
+  try {
+    const page = doc.loadPage(0) as import('mupdf').PDFPage;
+    try {
+      const pageObj = page.getObject().resolve();
+      const res = pageObj.get('Resources');
+      if (!res?.isDictionary()) return 'Unknown';
 
-  if (!res?.isDictionary()) {
-    doc.destroy();
-    return 'Unknown';
-  }
+      const xobjects = res.get('XObject');
+      if (!xobjects?.isDictionary()) return 'Unknown';
 
-  const xobjects = res.get('XObject');
-  if (!xobjects?.isDictionary()) {
-    doc.destroy();
-    return 'Unknown';
-  }
+      let colorSpace: 'RGB' | 'CMYK' | 'Gray' | 'Unknown' = 'Unknown';
 
-  let colorSpace: 'RGB' | 'CMYK' | 'Gray' | 'Unknown' = 'Unknown';
+      xobjects.forEach((value) => {
+        const resolved = value.resolve();
+        if (resolved.get('Subtype')?.toString() !== '/Image') return;
 
-  xobjects.forEach((value) => {
-    const resolved = value.resolve();
-    const subtype = resolved.get('Subtype');
+        const pdfImage = doc.loadImage(value);
+        const pixmap = pdfImage.toPixmap();
+        const cs = pixmap.getColorSpace();
 
-    if (subtype?.toString() === '/Image') {
-      const pdfImage = doc.loadImage(value);
-      const pixmap = pdfImage.toPixmap();
-      const cs = pixmap.getColorSpace();
+        if (cs?.isRGB()) colorSpace = 'RGB';
+        else if (cs?.isCMYK()) colorSpace = 'CMYK';
+        else if (cs?.isGray()) colorSpace = 'Gray';
 
-      if (cs?.isRGB()) {
-        colorSpace = 'RGB';
-      } else if (cs?.isCMYK()) {
-        colorSpace = 'CMYK';
-      } else if (cs?.isGray()) {
-        colorSpace = 'Gray';
-      }
+        pixmap.destroy();
+        pdfImage.destroy();
+      });
+
+      return colorSpace;
+    } finally {
+      page.destroy();
     }
-  });
-
-  doc.destroy();
-  return colorSpace;
+  } finally {
+    doc.destroy();
+  }
 }
 
 describe('replaceImages', () => {
@@ -230,6 +227,30 @@ describe('replaceImages', () => {
     spy.mockRestore();
   });
 
+  it('catches and warns on file-to-function ReplaceFunction errors', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        {
+          source: srcImagePath,
+          replacement: () => {
+            throw new Error('test error');
+          },
+        },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to apply replacement function'),
+    );
+    expect(destPdf).toBeInstanceOf(Uint8Array);
+    spy.mockRestore();
+  });
+
   it('builtinCmykReplacement converts RGB image to CMYK', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
@@ -262,11 +283,14 @@ describe('replaceImages', () => {
       replaceImageConfig: [builtinCmykReplacement()],
     });
 
-    // 2. Convert with a real ICC profile to trigger enableICC
-    await replaceImages({
+    // 2. Convert with a real ICC profile (uses separate WASM instance)
+    const pdf2 = await replaceImages({
       pdf: srcPdf,
       replaceImageConfig: [builtinCmykReplacement(undefined, cmykProfile)],
     });
+
+    // ICC profile should produce different output than DeviceCMYK
+    expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf2))).not.toBe(0);
 
     // 3. Convert without profile again
     const pdf3 = await replaceImages({
@@ -274,7 +298,7 @@ describe('replaceImages', () => {
       replaceImageConfig: [builtinCmykReplacement()],
     });
 
-    // 1 and 3 must be identical
+    // 1 and 3 must be identical — ICC state must not leak
     expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf3))).toBe(0);
   });
 
@@ -291,6 +315,33 @@ describe('replaceImages', () => {
 
     const destColorSpace = await getImageColorSpace(destPdf);
     expect(destColorSpace).toBe('Gray');
+  });
+
+  // Same ICC state isolation test as CMYK, but for Gray
+  it('builtinGrayReplacement with ICC profiles does not pollute global state', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const grayProfile = fs.readFileSync(
+      path.join(fixturesDir, 'default_gray.icc'),
+    );
+
+    const pdf1 = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    const pdf2 = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayReplacement(undefined, grayProfile)],
+    });
+
+    expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf2))).not.toBe(0);
+
+    const pdf3 = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf3))).toBe(0);
   });
 });
 

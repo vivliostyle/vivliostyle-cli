@@ -77,35 +77,113 @@ function convertImageColorSpace(
   return disposable(new mupdf.Image(converted));
 }
 
-function resolveColorSpace(
+// Cached ICC-enabled WASM instance (lazily initialized).
+// A separate instance is required because enableICC() mutates global WASM state
+// and cannot be safely reverted on the shared instance.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let iccWasmInstance: Promise<any> | null = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getIccWasmInstance(): Promise<any> {
+  if (!iccWasmInstance) {
+    iccWasmInstance = (async () => {
+      const wasmUrl = new URL('./mupdf-wasm.js', import.meta.resolve('mupdf'))
+        .href;
+      const factory = (await import(/* @vite-ignore */ wasmUrl)).default;
+      const lib = await factory();
+      lib._wasm_init_context();
+      lib._wasm_enable_icc();
+      return lib;
+    })();
+  }
+  return iccWasmInstance;
+}
+
+async function convertWithICC(
+  pngBytes: Uint8Array,
   type: 'CMYK' | 'Gray',
-  mupdf: typeof import('mupdf'),
-  inputProfile?: Uint8Array,
   outputProfile?: Uint8Array,
-): { colorSpace: mupdfType.ColorSpace; useICC: boolean } {
+): Promise<Uint8Array> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lib: any = await getIccWasmInstance();
+
+  // Wrap a low-level WASM pointer with a drop function as Disposable
+  function wasmDisposable(
+    ptr: number,
+    drop: (ptr: number) => void,
+  ): Disposable & { ptr: number } {
+    return {
+      ptr,
+      [Symbol.dispose]() {
+        drop(ptr);
+      },
+    };
+  }
+
+  function toHeap(data: Uint8Array): number {
+    const ptr: number = lib._wasm_malloc(data.length);
+    lib.HEAPU8.set(data, ptr);
+    return ptr;
+  }
+
+  using imgBuf = wasmDisposable(
+    lib._wasm_new_buffer_from_data(toHeap(pngBytes), pngBytes.length),
+    (p: number) => lib._wasm_drop_buffer(p),
+  );
+  using img = wasmDisposable(
+    lib._wasm_new_image_from_buffer(imgBuf.ptr),
+    (p: number) => lib._wasm_drop_image(p),
+  );
+  using pixmap = wasmDisposable(
+    lib._wasm_get_pixmap_from_image(img.ptr),
+    (p: number) => lib._wasm_drop_pixmap(p),
+  );
+
+  let targetCsDisposable: Disposable | undefined;
+  let targetCsPtr: number;
   if (outputProfile) {
-    return {
-      colorSpace: new mupdf.ColorSpace(outputProfile, `custom-${type}`),
-      useICC: true,
+    const namePtr = toHeap(new TextEncoder().encode(`custom-${type}\0`));
+    using profileBuf = wasmDisposable(
+      lib._wasm_new_buffer_from_data(
+        toHeap(outputProfile),
+        outputProfile.length,
+      ),
+      (p: number) => lib._wasm_drop_buffer(p),
+    );
+    targetCsPtr = lib._wasm_new_icc_colorspace(namePtr, profileBuf.ptr);
+    lib._wasm_free(namePtr);
+    targetCsDisposable = {
+      [Symbol.dispose]() {
+        lib._wasm_drop_colorspace(targetCsPtr);
+      },
     };
+  } else {
+    targetCsPtr =
+      type === 'CMYK' ? lib._wasm_device_cmyk() : lib._wasm_device_gray();
   }
-  // inputProfile without outputProfile: enable ICC engine with device color space
-  if (inputProfile) {
-    return {
-      colorSpace:
-        type === 'CMYK'
-          ? mupdf.ColorSpace.DeviceCMYK
-          : mupdf.ColorSpace.DeviceGray,
-      useICC: true,
-    };
+  using _cs = targetCsDisposable;
+
+  using converted = wasmDisposable(
+    lib._wasm_convert_pixmap(pixmap.ptr, targetCsPtr, 0),
+    (p: number) => lib._wasm_drop_pixmap(p),
+  );
+  using pamBuf = wasmDisposable(
+    lib._wasm_new_buffer_from_pixmap_as_pam(converted.ptr),
+    (p: number) => lib._wasm_drop_buffer(p),
+  );
+  const pamDataPtr: number = lib._wasm_buffer_get_data(pamBuf.ptr);
+  const pamLen: number = lib._wasm_buffer_get_len(pamBuf.ptr);
+  return new Uint8Array(lib.HEAPU8.buffer, pamDataPtr, pamLen).slice();
+}
+
+const BUILTIN_TYPE = Symbol('builtinType');
+
+function getBuiltinType(fn: ReplaceFunction): 'CMYK' | 'Gray' | undefined {
+  if (BUILTIN_TYPE in fn) {
+    const value = (fn as Record<symbol, unknown>)[BUILTIN_TYPE];
+    if (value === 'CMYK' || value === 'Gray') return value;
   }
-  return {
-    colorSpace:
-      type === 'CMYK'
-        ? mupdf.ColorSpace.DeviceCMYK
-        : mupdf.ColorSpace.DeviceGray,
-    useICC: false,
-  };
+  return undefined;
 }
 
 function createBuiltinReplacement(
@@ -113,28 +191,29 @@ function createBuiltinReplacement(
   inputProfile?: Uint8Array,
   outputProfile?: Uint8Array,
 ): ReplaceFunction {
+  // Only outputProfile triggers ICC path; inputProfile is reserved for future use
+  const useICC = !!outputProfile;
   const fn: ReplaceFunction = async (image) => {
-    const mupdf = await importNodeModule('mupdf');
-    const { colorSpace, useICC } = resolveColorSpace(
-      type,
-      mupdf,
-      inputProfile,
-      outputProfile,
-    );
-    if (useICC) mupdf.enableICC();
-    try {
-      using img = disposable(new mupdf.Image(image.asPNG()));
-      using result = convertImageColorSpace(img, colorSpace, mupdf);
-      using pixmap = disposable(result.toPixmap());
-      return pixmap.asPAM();
-    } finally {
-      if (useICC) mupdf.disableICC();
+    if (useICC) {
+      return convertWithICC(image.asPNG(), type, outputProfile);
     }
+    const mupdf = await importNodeModule('mupdf');
+    using img = disposable(new mupdf.Image(image.asPNG()));
+    using result = convertImageColorSpace(
+      img,
+      type === 'CMYK'
+        ? mupdf.ColorSpace.DeviceCMYK
+        : mupdf.ColorSpace.DeviceGray,
+      mupdf,
+    );
+    using pixmap = disposable(result.toPixmap());
+    return pixmap.asPAM();
   };
-  // Tag for fast-path detection
-  (fn as any).__builtinType = type;
-  (fn as any).__inputProfile = inputProfile;
-  (fn as any).__outputProfile = outputProfile;
+  // Tag for fast-path detection (only when not using ICC;
+  // ICC conversions use a separate WASM instance via the general path)
+  if (!useICC) {
+    Object.defineProperty(fn, BUILTIN_TYPE, { value: type });
+  }
   return fn;
 }
 
@@ -214,25 +293,18 @@ function applyReplaceFunction(
   pdfImage: mupdfType.Image,
   mupdf: typeof import('mupdf'),
 ): Promise<DisposableImage> | DisposableImage {
-  const builtinType = (fn as any).__builtinType as 'CMYK' | 'Gray' | undefined;
+  const builtinType = getBuiltinType(fn);
   if (builtinType) {
-    // Fast path for builtin replacements: direct pixmap conversion
-    const inputProfile = (fn as any).__inputProfile as Uint8Array | undefined;
-    const outputProfile = (fn as any).__outputProfile as Uint8Array | undefined;
-    const { colorSpace, useICC } = resolveColorSpace(
-      builtinType,
+    // Fast path for non-ICC builtin replacements: direct pixmap conversion
+    return convertImageColorSpace(
+      pdfImage,
+      builtinType === 'CMYK'
+        ? mupdf.ColorSpace.DeviceCMYK
+        : mupdf.ColorSpace.DeviceGray,
       mupdf,
-      inputProfile,
-      outputProfile,
     );
-    if (useICC) mupdf.enableICC();
-    try {
-      return convertImageColorSpace(pdfImage, colorSpace, mupdf);
-    } finally {
-      if (useICC) mupdf.disableICC();
-    }
   }
-  // General path: bytes in, bytes out
+  // General path: bytes in, bytes out (includes ICC builtins)
   return (async () => {
     const resultBytes = await fn(createImageContext(pdfImage));
     return disposable(new mupdf.Image(resultBytes));

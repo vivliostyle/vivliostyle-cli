@@ -278,39 +278,57 @@ build({
 
 ### builtinCmykReplacement()
 
-> **builtinCmykReplacement**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+> **builtinCmykReplacement**(`inputProfile?`, `outputProfile?`): [`ReplaceFunction`](#replacefunction)
 
-Built-in ReplaceFunction that converts RGB images to CMYK
-using mupdf's DeviceCMYK color space conversion.
+Returns a ReplaceFunction that converts RGB images to CMYK.
+When called without arguments, uses mupdf's DeviceCMYK color space.
+ICC profiles can be provided for more accurate conversion.
 
 #### Parameters
 
-##### image
+##### inputProfile?
 
-[`ImageContext`](#imagecontext)
+`Uint8Array`\<`ArrayBufferLike`\>
+
+ICC profile for interpreting the source RGB image
+
+##### outputProfile?
+
+`Uint8Array`\<`ArrayBufferLike`\>
+
+ICC profile for the target CMYK color space
 
 #### Returns
 
-`Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+[`ReplaceFunction`](#replacefunction)
 
 ***
 
 ### builtinGrayReplacement()
 
-> **builtinGrayReplacement**(`image`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+> **builtinGrayReplacement**(`inputProfile?`, `outputProfile?`): [`ReplaceFunction`](#replacefunction)
 
-Built-in ReplaceFunction that converts RGB images to grayscale
-using mupdf's DeviceGray color space conversion.
+Returns a ReplaceFunction that converts RGB images to grayscale.
+When called without arguments, uses mupdf's DeviceGray color space.
+ICC profiles can be provided for more accurate conversion.
 
 #### Parameters
 
-##### image
+##### inputProfile?
 
-[`ImageContext`](#imagecontext)
+`Uint8Array`\<`ArrayBufferLike`\>
+
+ICC profile for interpreting the source RGB image
+
+##### outputProfile?
+
+`Uint8Array`\<`ArrayBufferLike`\>
+
+ICC profile for the target Gray color space
 
 #### Returns
 
-`Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
+[`ReplaceFunction`](#replacefunction)
 
 ***
 

@@ -8,3 +8,4 @@ License: https://github.com/ArtifexSoftware/ghostpdl/blob/ghostpdl-10.07.0/LICEN
 
 Files:
   default_cmyk.icc - Default CMYK ICC profile from GhostPDL
+  default_gray.icc - Default Gray ICC profile from GhostPDL
