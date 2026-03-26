@@ -132,4 +132,45 @@ describe('convertCmykColors', () => {
     const destHasRgb = destContents.some(containsRgbOperators);
     expect(destHasRgb).toBe(true);
   });
+
+  it('converts colors using a CmykConvertFunction fallback', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    // Verify source has RGB
+    const srcContents = await extractPdfContentStream(srcPdf);
+    expect(srcContents.some(containsRgbOperators)).toBe(true);
+
+    // Use a function that converts all colors to K100
+    const destPdf = await convertCmykColors({
+      pdf: srcPdf,
+      converters: [(rgb) => ({ c: 0, m: 0, y: 0, k: 10000 })],
+      warnUnmapped: false,
+    });
+
+    const destContents = await extractPdfContentStream(destPdf);
+    expect(destContents.some(containsCmykOperators)).toBe(true);
+    expect(destContents.some(containsRgbOperators)).toBe(false);
+  });
+
+  it('static map entries take priority over function fallback', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    // Static map for black, function for everything else
+    const colorMap: CmykMap = {
+      [JSON.stringify([0, 0, 0])]: { c: 0, m: 0, y: 0, k: 10000 },
+    };
+    const destPdf = await convertCmykColors({
+      pdf: srcPdf,
+      converters: [
+        mapToConverter(colorMap),
+        (rgb) => ({ c: 5000, m: 5000, y: 5000, k: 0 }),
+      ],
+      warnUnmapped: false,
+    });
+
+    const destContents = await extractPdfContentStream(destPdf);
+    // All RGB should be converted (no RGB operators remaining)
+    expect(destContents.some(containsRgbOperators)).toBe(false);
+    expect(destContents.some(containsCmykOperators)).toBe(true);
+  });
 });

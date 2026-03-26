@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import type { ImageContext } from '../src/config/resolve.js';
 import {
+  builtinCmykConversion,
   builtinCmykReplacement,
   builtinGrayReplacement,
   findNonCmykImages,
@@ -346,6 +347,24 @@ describe('replaceImages', () => {
     });
 
     expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf3))).toBe(0);
+  });
+});
+
+describe('builtinCmykConversion', () => {
+  it('converts black to mostly K', async () => {
+    const fn = builtinCmykConversion();
+    const result = await fn({ r: 0, g: 0, b: 0 });
+    // DeviceCMYK conversion is implementation-specific; K should dominate
+    expect(result.k).toBeGreaterThan(5000);
+  });
+
+  it('converts white to near-zero CMYK', async () => {
+    const fn = builtinCmykConversion();
+    const result = await fn({ r: 10000, g: 10000, b: 10000 });
+    expect(result.c).toBeLessThan(500);
+    expect(result.m).toBeLessThan(500);
+    expect(result.y).toBeLessThan(500);
+    expect(result.k).toBeLessThan(500);
   });
 });
 
