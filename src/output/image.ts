@@ -187,7 +187,6 @@ function getBuiltinType(fn: ReplaceFunction): 'CMYK' | 'Gray' | undefined {
 }
 
 export interface ColorConversionOptions {
-  inputProfile?: Uint8Array;
   outputProfile?: Uint8Array;
 }
 
@@ -196,7 +195,6 @@ function createBuiltinReplacement(
   options: ColorConversionOptions = {},
 ): ReplaceFunction {
   const { outputProfile } = options;
-  // Only outputProfile triggers ICC path; inputProfile is reserved for future use
   const useICC = !!outputProfile;
   const fn: ReplaceFunction = async (image) => {
     if (useICC) {

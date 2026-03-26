@@ -1061,7 +1061,6 @@ Unified processor.
 
 | Property | Type |
 | ------ | ------ |
-| <a id="inputprofile"></a> `inputProfile?` | `Uint8Array`\<`ArrayBufferLike`\> |
 | <a id="outputprofile"></a> `outputProfile?` | `Uint8Array`\<`ArrayBufferLike`\> |
 
 ***
