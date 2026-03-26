@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { CmykMap } from '../src/global-viewer.js';
-import { convertCmykColors } from '../src/output/cmyk.js';
+import { convertCmykColors, mapToConverter } from '../src/output/cmyk.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, 'fixtures', 'cmyk');
@@ -86,7 +86,7 @@ describe('convertCmykColors', () => {
 
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
-      colorMap,
+      converters: [mapToConverter(colorMap)],
       warnUnmapped: false,
     });
 
@@ -110,7 +110,7 @@ describe('convertCmykColors', () => {
     // This should not throw "object is not a stream" error
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
-      colorMap,
+      converters: [mapToConverter(colorMap)],
       warnUnmapped: false,
     });
 
@@ -123,7 +123,7 @@ describe('convertCmykColors', () => {
 
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
-      colorMap: {}, // no colors will be converted
+      converters: [], // no colors will be converted
       warnUnmapped: false,
     });
 
