@@ -77,40 +77,95 @@ function convertImageColorSpace(
   return disposable(new mupdf.Image(converted));
 }
 
-/**
- * Built-in ReplaceFunction that converts RGB images to CMYK
- * using mupdf's DeviceCMYK color space conversion.
- */
-export async function builtinCmykReplacement(
-  image: ImageContext,
-): Promise<Uint8Array> {
-  const mupdf = await importNodeModule('mupdf');
-  using img = disposable(new mupdf.Image(image.asPNG()));
-  using result = convertImageColorSpace(
-    img,
-    mupdf.ColorSpace.DeviceCMYK,
-    mupdf,
-  );
-  using pixmap = disposable(result.toPixmap());
-  return pixmap.asPAM();
+function resolveColorSpace(
+  type: 'CMYK' | 'Gray',
+  mupdf: typeof import('mupdf'),
+  inputProfile?: Uint8Array,
+  outputProfile?: Uint8Array,
+): { colorSpace: mupdfType.ColorSpace; useICC: boolean } {
+  if (outputProfile) {
+    return {
+      colorSpace: new mupdf.ColorSpace(outputProfile, `custom-${type}`),
+      useICC: true,
+    };
+  }
+  // inputProfile without outputProfile: enable ICC engine with device color space
+  if (inputProfile) {
+    return {
+      colorSpace:
+        type === 'CMYK'
+          ? mupdf.ColorSpace.DeviceCMYK
+          : mupdf.ColorSpace.DeviceGray,
+      useICC: true,
+    };
+  }
+  return {
+    colorSpace:
+      type === 'CMYK'
+        ? mupdf.ColorSpace.DeviceCMYK
+        : mupdf.ColorSpace.DeviceGray,
+    useICC: false,
+  };
+}
+
+function createBuiltinReplacement(
+  type: 'CMYK' | 'Gray',
+  inputProfile?: Uint8Array,
+  outputProfile?: Uint8Array,
+): ReplaceFunction {
+  const fn: ReplaceFunction = async (image) => {
+    const mupdf = await importNodeModule('mupdf');
+    const { colorSpace, useICC } = resolveColorSpace(
+      type,
+      mupdf,
+      inputProfile,
+      outputProfile,
+    );
+    if (useICC) mupdf.enableICC();
+    try {
+      using img = disposable(new mupdf.Image(image.asPNG()));
+      using result = convertImageColorSpace(img, colorSpace, mupdf);
+      using pixmap = disposable(result.toPixmap());
+      return pixmap.asPAM();
+    } finally {
+      if (useICC) mupdf.disableICC();
+    }
+  };
+  // Tag for fast-path detection
+  (fn as any).__builtinType = type;
+  (fn as any).__inputProfile = inputProfile;
+  (fn as any).__outputProfile = outputProfile;
+  return fn;
 }
 
 /**
- * Built-in ReplaceFunction that converts RGB images to grayscale
- * using mupdf's DeviceGray color space conversion.
+ * Returns a ReplaceFunction that converts RGB images to CMYK.
+ * When called without arguments, uses mupdf's DeviceCMYK color space.
+ * ICC profiles can be provided for more accurate conversion.
+ *
+ * @param inputProfile - ICC profile for interpreting the source RGB image
+ * @param outputProfile - ICC profile for the target CMYK color space
  */
-export async function builtinGrayReplacement(
-  image: ImageContext,
-): Promise<Uint8Array> {
-  const mupdf = await importNodeModule('mupdf');
-  using img = disposable(new mupdf.Image(image.asPNG()));
-  using result = convertImageColorSpace(
-    img,
-    mupdf.ColorSpace.DeviceGray,
-    mupdf,
-  );
-  using pixmap = disposable(result.toPixmap());
-  return pixmap.asPAM();
+export function builtinCmykReplacement(
+  inputProfile?: Uint8Array,
+  outputProfile?: Uint8Array,
+): ReplaceFunction {
+  return createBuiltinReplacement('CMYK', inputProfile, outputProfile);
+}
+
+/**
+ * Returns a ReplaceFunction that converts RGB images to grayscale.
+ * When called without arguments, uses mupdf's DeviceGray color space.
+ * ICC profiles can be provided for more accurate conversion.
+ *
+ * @param inputProfile - ICC profile for interpreting the source RGB image
+ * @param outputProfile - ICC profile for the target Gray color space
+ */
+export function builtinGrayReplacement(
+  inputProfile?: Uint8Array,
+  outputProfile?: Uint8Array,
+): ReplaceFunction {
+  return createBuiltinReplacement('Gray', inputProfile, outputProfile);
 }
 
 /**
@@ -154,26 +209,28 @@ export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
   }
 }
 
-// Map of built-in functions to their target color spaces for fast-path conversion.
-// When a built-in function is detected, we skip the byte encode/decode roundtrip
-// and convert the pixmap directly.
-const builtinColorSpaceMap = new Map<
-  ReplaceFunction,
-  (mupdf: typeof import('mupdf')) => mupdfType.ColorSpace
->([
-  [builtinCmykReplacement, (mupdf) => mupdf.ColorSpace.DeviceCMYK],
-  [builtinGrayReplacement, (mupdf) => mupdf.ColorSpace.DeviceGray],
-]);
-
 function applyReplaceFunction(
   fn: ReplaceFunction,
   pdfImage: mupdfType.Image,
   mupdf: typeof import('mupdf'),
 ): Promise<DisposableImage> | DisposableImage {
-  const targetCs = builtinColorSpaceMap.get(fn);
-  if (targetCs) {
-    // Fast path: direct pixmap conversion without byte roundtrip
-    return convertImageColorSpace(pdfImage, targetCs(mupdf), mupdf);
+  const builtinType = (fn as any).__builtinType as 'CMYK' | 'Gray' | undefined;
+  if (builtinType) {
+    // Fast path for builtin replacements: direct pixmap conversion
+    const inputProfile = (fn as any).__inputProfile as Uint8Array | undefined;
+    const outputProfile = (fn as any).__outputProfile as Uint8Array | undefined;
+    const { colorSpace, useICC } = resolveColorSpace(
+      builtinType,
+      mupdf,
+      inputProfile,
+      outputProfile,
+    );
+    if (useICC) mupdf.enableICC();
+    try {
+      return convertImageColorSpace(pdfImage, colorSpace, mupdf);
+    } finally {
+      if (useICC) mupdf.disableICC();
+    }
   }
   // General path: bytes in, bytes out
   return (async () => {

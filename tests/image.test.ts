@@ -163,7 +163,7 @@ describe('replaceImages', () => {
       pdf: srcPdf,
       replaceImageConfig: [
         { source: srcImagePath, replacement: destImagePath },
-        builtinGrayReplacement,
+        builtinGrayReplacement(),
       ],
     });
 
@@ -238,11 +238,44 @@ describe('replaceImages', () => {
 
     const destPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinCmykReplacement],
+      replaceImageConfig: [builtinCmykReplacement()],
     });
 
     const destColorSpace = await getImageColorSpace(destPdf);
     expect(destColorSpace).toBe('CMYK');
+  });
+
+  // ICC profile-based conversion internally calls mupdf.enableICC(), which
+  // mutates global WASM state. If that state leaks, subsequent non-ICC
+  // conversions produce different results. This test runs a no-profile
+  // conversion before and after a profile-based one and asserts the outputs
+  // are identical, catching any state pollution.
+  it('builtinCmykReplacement with ICC profiles does not pollute global state', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const cmykProfile = fs.readFileSync(
+      path.join(fixturesDir, 'default_cmyk.icc'),
+    );
+
+    // 1. Convert without profile
+    const pdf1 = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement()],
+    });
+
+    // 2. Convert with a real ICC profile to trigger enableICC
+    await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement(undefined, cmykProfile)],
+    });
+
+    // 3. Convert without profile again
+    const pdf3 = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement()],
+    });
+
+    // 1 and 3 must be identical
+    expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf3))).toBe(0);
   });
 
   it('builtinGrayReplacement converts RGB image to Gray', async () => {
@@ -253,7 +286,7 @@ describe('replaceImages', () => {
 
     const destPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinGrayReplacement],
+      replaceImageConfig: [builtinGrayReplacement()],
     });
 
     const destColorSpace = await getImageColorSpace(destPdf);
@@ -282,7 +315,7 @@ describe('findNonCmykImages', () => {
     // Replace RGB image with CMYK first
     const cmykPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinCmykReplacement],
+      replaceImageConfig: [builtinCmykReplacement()],
     });
 
     const spy = vi.spyOn(Logger, 'logWarn');
@@ -297,7 +330,7 @@ describe('findNonCmykImages', () => {
 
     const grayPdf = await replaceImages({
       pdf: srcPdf,
-      replaceImageConfig: [builtinGrayReplacement],
+      replaceImageConfig: [builtinGrayReplacement()],
     });
 
     const spy = vi.spyOn(Logger, 'logWarn');

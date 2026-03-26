@@ -1,0 +1,10 @@
+The ICC profile(s) in this directory are obtained from the GhostPDL
+project (ghostpdl-10.07.0) and are licensed under the GNU Affero General
+Public License (AGPL) version 3 or later.
+
+Release: https://github.com/ArtifexSoftware/ghostpdl/releases/tag/ghostpdl-10.07.0
+Source:  https://github.com/ArtifexSoftware/ghostpdl/blob/ghostpdl-10.07.0/iccprofiles
+License: https://github.com/ArtifexSoftware/ghostpdl/blob/ghostpdl-10.07.0/LICENSE
+
+Files:
+  default_cmyk.icc - Default CMYK ICC profile from GhostPDL
