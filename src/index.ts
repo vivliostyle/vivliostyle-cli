@@ -27,6 +27,7 @@ export type { TemplateVariable } from './create-template.js';
 export {
   builtinCmykConversion,
   builtinCmykReplacement,
+  builtinGrayConversion,
   builtinGrayReplacement,
   type ColorConversionOptions,
 } from './output/image.js';

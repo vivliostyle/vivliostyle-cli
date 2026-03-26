@@ -6,7 +6,9 @@
 ### Functions
 
 - [`build`](#build)
+- [`builtinCmykConversion`](#builtincmykconversion)
 - [`builtinCmykReplacement`](#builtincmykreplacement)
+- [`builtinGrayConversion`](#builtingrayconversion)
 - [`builtinGrayReplacement`](#builtingrayreplacement)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
@@ -23,6 +25,7 @@
 
 ### Type Aliases
 
+- [`CmykConvertFunction`](#cmykconvertfunction)
 - [`Metadata`](#metadata)
 - [`ReplaceFunction`](#replacefunction)
 - [`StructuredDocument`](#structureddocument)
@@ -69,7 +72,7 @@ build({
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: (\[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\] \| (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\>)[]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -277,6 +280,26 @@ build({
 
 ***
 
+### builtinCmykConversion()
+
+> **builtinCmykConversion**(`options`): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Returns a CmykConvertFunction that converts RGB colors to CMYK.
+Internally creates a 1x1 RGB pixmap and delegates to builtinCmykReplacement
+for the actual conversion, reusing ICC profile support.
+
+#### Parameters
+
+##### options
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
+
+***
+
 ### builtinCmykReplacement()
 
 > **builtinCmykReplacement**(`options`): [`ReplaceFunction`](#replacefunction)
@@ -294,6 +317,25 @@ An output ICC profile can be provided for profile-based conversion.
 #### Returns
 
 [`ReplaceFunction`](#replacefunction)
+
+***
+
+### builtinGrayConversion()
+
+> **builtinGrayConversion**(`options`): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Returns a CmykConvertFunction that converts RGB colors to grayscale (K only).
+Internally delegates to builtinGrayReplacement and maps the Gray value to K.
+
+#### Parameters
+
+##### options
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
 
 ***
 
@@ -341,7 +383,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: (\[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\] \| (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\>)[]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -571,7 +613,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: (\[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\] \| (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\>)[]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -821,7 +863,7 @@ Open a browser for previewing the publication.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: (\[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\] \| (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\>)[]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -1117,7 +1159,7 @@ Option for convert Markdown to a stringify (HTML).
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="cliversion"></a> `cliVersion` | `string` |
-| <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} |
+| <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: (\[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\] \| (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\>)[]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} |
 | <a id="config"></a> `config?` | `string` |
 | <a id="configdata"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
 | <a id="coreversion"></a> `coreVersion` | `string` |
@@ -1174,6 +1216,22 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
+
+### CmykConvertFunction()
+
+> **CmykConvertFunction** = (`rgb`) => `CMYKValue` \| `Promise`\<`CMYKValue`\>
+
+#### Parameters
+
+##### rgb
+
+`RGBValue`
+
+#### Returns
+
+`CMYKValue` \| `Promise`\<`CMYKValue`\>
+
+***
 
 ### Metadata
 

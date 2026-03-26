@@ -284,6 +284,35 @@ export function builtinCmykConversion(
 }
 
 /**
+ * Returns a CmykConvertFunction that converts RGB colors to grayscale (K only).
+ * Internally delegates to builtinGrayReplacement and maps the Gray value to K.
+ */
+export function builtinGrayConversion(
+  options: ColorConversionOptions = {},
+): CmykConvertFunction {
+  const replaceFn = builtinGrayReplacement(options);
+  return async (rgb: RGBValue): Promise<CMYKValue> => {
+    const mupdf = await importNodeModule('mupdf');
+    using pixmap = disposable(
+      new mupdf.Pixmap(mupdf.ColorSpace.DeviceRGB, [0, 0, 1, 1], false),
+    );
+    const pixels = pixmap.getPixels();
+    pixels[0] = Math.round((rgb.r / 10000) * 255);
+    pixels[1] = Math.round((rgb.g / 10000) * 255);
+    pixels[2] = Math.round((rgb.b / 10000) * 255);
+
+    const resultBytes = await replaceFn({ asPNG: () => pixmap.asPNG() });
+
+    using resultImg = disposable(new mupdf.Image(resultBytes));
+    using resultPixmap = disposable(resultImg.toPixmap());
+    const grayPixels = resultPixmap.getPixels();
+    // Gray value → K channel (inverted: 255=white=K0, 0=black=K10000)
+    const k = Math.round(((255 - grayPixels[0]) / 255) * 10000);
+    return { c: 0, m: 0, y: 0, k };
+  };
+}
+
+/**
  * Scan PDF for images with non-CMYK-compatible color spaces and log warnings.
  */
 export async function findNonCmykImages(pdf: Uint8Array): Promise<void> {
