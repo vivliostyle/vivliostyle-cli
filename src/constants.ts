@@ -55,6 +55,12 @@ export const TEMPLATE_SETTINGS = [
     hint: 'Use a basic template with starter content',
     template: 'gh:vivliostyle/vivliostyle-cli/templates/basic',
   },
+  {
+    value: 'basic-ja',
+    label: 'Basic (Japanese)',
+    hint: 'Use a basic template with starter content in Japanese',
+    template: 'gh:vivliostyle/vivliostyle-cli/templates/basic-ja',
+  },
 ] as const;
 
 export const TEMPLATE_DEFAULT_PACKAGE_JSON = /* json */ `{
