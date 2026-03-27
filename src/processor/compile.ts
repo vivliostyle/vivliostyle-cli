@@ -31,10 +31,15 @@ import {
   getJsdomFromString,
   getJsdomFromUrlOrFile,
   processCoverHtml,
-  processManuscriptHtml,
   processTocHtml,
   ResourceLoader,
 } from './html.js';
+import {
+  defaultHtmlProcessor,
+  defaultXhtmlProcessor,
+  processHtml,
+  processHtmlString,
+} from './html-processor.js';
 import { processMarkdown } from './markdown.js';
 import {
   checkThemeInstallationNecessity,
@@ -203,12 +208,16 @@ export async function transformManuscript(
       source.contentType === 'text/html' ||
       source.contentType === 'application/xhtml+xml'
     ) {
-      content = await getJsdomFromUrlOrFile({ src: source.pathname });
-      content = await processManuscriptHtml(content, {
+      const processor = source.htmlProcessor ?? defaultHtmlProcessor;
+      const vfile = await processHtml(processor, source.pathname, {
         style,
         title: entry.title,
         contentType: source.contentType,
-        language,
+        language: language ?? undefined,
+      });
+      content = getJsdomFromString({
+        html: String(vfile),
+        contentType: source.contentType,
       });
     } else {
       if (!pathEquals(source.pathname, entry.target)) {
@@ -238,41 +247,55 @@ export async function transformManuscript(
     const contentFetcher = resourceLoader.fetcherMap.get(resourceUrl);
     if (contentFetcher) {
       const buffer = await contentFetcher;
-      const contentType = contentFetcher.response?.headers['content-type'];
-      if (!contentType || new MIMEType(contentType).essence !== 'text/html') {
+      const contentTypeHeader =
+        contentFetcher.response?.headers['content-type'];
+      const contentType = contentTypeHeader
+        ? new MIMEType(contentTypeHeader).essence
+        : undefined;
+      if (
+        contentType !== 'text/html' &&
+        contentType !== 'application/xhtml+xml'
+      ) {
         throw new Error(`The content is not an HTML document: ${resourceUrl}`);
       }
-      content = getJsdomFromString({ html: buffer.toString('utf8') });
-      content = await processManuscriptHtml(content, {
-        style,
-        title: entry.title,
-        contentType: 'text/html',
-        language,
+
+      const processor =
+        contentType === 'application/xhtml+xml'
+          ? (source.xhtmlProcessor ?? defaultXhtmlProcessor)
+          : (source.htmlProcessor ?? defaultHtmlProcessor);
+      const vfile = await processHtmlString(
+        processor,
+        buffer.toString('utf8'),
+        {
+          style,
+          title: entry.title,
+          contentType,
+          language: language ?? undefined,
+        },
+      );
+      content = getJsdomFromString({
+        html: String(vfile),
+        contentType,
       });
     }
   } else if (entry.rel === 'contents') {
-    content = getJsdomFromString({
-      html: generateDefaultTocHtml({
-        language,
-        title,
-      }),
-    });
-    content = await processManuscriptHtml(content, {
+    const html = generateDefaultTocHtml({ language, title });
+    const vfile = await processHtmlString(defaultHtmlProcessor, html, {
       style,
       title,
       contentType: 'text/html',
-      language,
+      language: language ?? undefined,
     });
+    content = getJsdomFromString({ html: String(vfile) });
   } else if (entry.rel === 'cover') {
-    content = getJsdomFromString({
-      html: generateDefaultCoverHtml({ language, title: entry.title }),
-    });
-    content = await processManuscriptHtml(content, {
+    const html = generateDefaultCoverHtml({ language, title: entry.title });
+    const vfile = await processHtmlString(defaultHtmlProcessor, html, {
       style,
       title: entry.title,
       contentType: 'text/html',
-      language,
+      language: language ?? undefined,
     });
+    content = getJsdomFromString({ html: String(vfile) });
   }
 
   if (!content) {

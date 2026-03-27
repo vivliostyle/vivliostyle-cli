@@ -508,6 +508,28 @@ it('allows non-markdown extensions when documentProcessor is provided', async ()
   expect(xyzEntry?.title).toBe('Custom Format Title');
 });
 
+it('does not override HTML contentType when global documentProcessor is set', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called in config parsing');
+  };
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: ['sample.html'],
+    documentProcessor: customProcessor,
+  });
+
+  const htmlEntry = config.entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith('sample.html'),
+  );
+  expect(htmlEntry).toBeDefined();
+  expect((htmlEntry as any).contentType).toBe('text/html');
+  expect((htmlEntry as any).source.documentProcessor).toBeUndefined();
+  expect((htmlEntry as any).source.htmlProcessor).toBeDefined();
+});
+
 it('rejects text/plain files without documentProcessor', async () => {
   // .txt files are recognized as text/plain, which requires documentProcessor
   await expect(

@@ -205,15 +205,18 @@ export async function getJsdomFromUrlOrFile({
 
 export function getJsdomFromString({
   html,
+  contentType,
   virtualConsole = createVirtualConsole((error) => {
     throw error;
   }),
 }: {
   html: string;
+  contentType?: 'text/html' | 'application/xhtml+xml';
   virtualConsole?: VirtualConsole;
 }) {
   return new JSDOM(html, {
     virtualConsole,
+    ...(contentType && { contentType }),
   });
 }
 
