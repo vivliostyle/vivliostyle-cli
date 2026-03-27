@@ -9,14 +9,13 @@ import type { BrowserPlatform } from '@puppeteer/browsers';
 import { Ajv, type Plugin as AjvPlugin, type Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
-import lcid from 'lcid';
 import StreamZip from 'node-stream-zip';
 import childProcess, { type ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import util from 'node:util';
-import { osLocale } from 'os-locale';
+import osLocale from 'os-locale';
 import resolvePkg from 'resolve-pkg';
 import { titleCase } from 'title-case';
 import tmp from 'tmp';
@@ -382,40 +381,18 @@ export async function getOsLocale(): Promise<string> {
   if (import.meta.env?.VITEST) {
     return process.env.TEST_LOCALE || 'en';
   }
-  // It uses the same implementation as os-locale, but prioritizes the OS language settings on Windows and macOS.
   if (cachedLocale) {
     return cachedLocale;
   }
-  let locale: string | undefined;
-  if (process.platform === 'win32') {
-    const { stdout } = await exec('wmic', ['os', 'get', 'locale']);
-    const lcidCode = Number.parseInt(stdout.replace('Locale', ''), 16);
-    locale = lcid.from(lcidCode);
-  }
-  if (process.platform === 'darwin') {
-    const results = await Promise.all([
-      exec('defaults', ['read', '-globalDomain', 'AppleLocale']).then(
-        ({ stdout }) => stdout,
-      ),
-      exec('locale', ['-a']).then(({ stdout }) => stdout),
-    ]);
-    if (results[1].includes(results[0])) {
-      locale = results[0];
-    }
-  }
-  if (locale) {
-    locale = locale.replace(/_/, '-');
-  } else {
-    locale = await osLocale();
-  }
+  const locale = osLocale();
 
   const langs = Object.keys(LANGUAGES);
-  locale = langs.includes(locale)
+  cachedLocale = langs.includes(locale)
     ? locale
     : langs.includes(locale.split('-')[0])
       ? locale.split('-')[0]
       : 'en';
-  return (cachedLocale = locale.replace(/_/, '-'));
+  return cachedLocale;
 }
 
 export function toTitleCase<T = unknown>(input: T): T {
