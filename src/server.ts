@@ -42,6 +42,7 @@ export type ViewerUrlOption = Pick<
   | 'viewerParam'
   | 'base'
   | 'outputs'
+  | 'rootUrl'
 >;
 
 export function generateCmykReserveMap({
@@ -76,6 +77,7 @@ export function getViewerParams(
     quick,
     viewerParam,
     base,
+    rootUrl,
   }: ViewerUrlOption,
   { cmykReserveMapUrl }: { cmykReserveMapUrl?: string } = {},
 ): string {
@@ -92,14 +94,14 @@ export function getViewerParams(
   if (customStyle) {
     const param = isValidUri(customStyle)
       ? customStyle
-      : upath.posix.join(base, customStyle);
+      : new URL(upath.posix.join(base, customStyle), rootUrl).href;
     viewerParams += `&style=${escapeParam(param)}`;
   }
 
   if (customUserStyle) {
     const param = isValidUri(customUserStyle)
       ? customUserStyle
-      : upath.posix.join(base, customUserStyle);
+      : new URL(upath.posix.join(base, customUserStyle), rootUrl).href;
     viewerParams += `&userStyle=${escapeParam(param)}`;
   }
 
@@ -211,7 +213,7 @@ export async function getViewerFullUrl({
     sourceUrl === EMPTY_DATA_URI
       ? undefined // open Viewer start page
       : sourceUrl,
-    { base, ...config },
+    { base, rootUrl, ...config },
     { cmykReserveMapUrl },
   );
   viewerUrl.hash = '';
