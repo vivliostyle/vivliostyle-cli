@@ -434,6 +434,20 @@ export const VfmReplaceRule = v.looseObject({
 });
 export type VfmReplaceRule = v.InferInput<typeof VfmReplaceRule>;
 
+export const VfmFootnoteMode = v.union([
+  v.literal('pandoc'),
+  v.literal('dpub'),
+  v.literal('gcpm'),
+]);
+export type VfmFootnoteMode = v.InferInput<typeof VfmFootnoteMode>;
+
+export const VfmFootnoteOptions = v.union([
+  VfmFootnoteMode,
+  // Use v.looseObject to allow unknown keys in future VFM versions
+  v.looseObject({ mode: VfmFootnoteMode }),
+]);
+export type VfmFootnoteOptions = v.InferInput<typeof VfmFootnoteOptions>;
+
 export const BrowserType = v.union([
   v.literal('chrome'),
   v.literal('chromium'),
@@ -676,6 +690,12 @@ const VfmConfig = v.pipe(
         v.boolean(),
         v.description($`
           Assign ID to figcaption instead of img/code.
+        `),
+      ),
+      footnote: v.pipe(
+        VfmFootnoteOptions,
+        v.description($`
+          Footnote output mode. Default is \`'pandoc'\` (endnote section).
         `),
       ),
     }),

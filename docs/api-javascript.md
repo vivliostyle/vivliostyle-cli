@@ -1020,6 +1020,7 @@ Option for convert Markdown to a stringify (HTML).
 | ------ | ------ | ------ |
 | <a id="assignidtofigcaption"></a> `assignIdToFigcaption?` | `boolean` | Assign ID to figcaption instead of img/code. |
 | <a id="disableformathtml"></a> `disableFormatHtml?` | `boolean` | Disable automatic HTML format. |
+| <a id="footnote"></a> `footnote?` | `FootnoteMode` \| \{ `mode`: `"pandoc"`; \} \| \{ `body?`: `Properties` \| `DpubBodyFactory`; `call?`: `Properties` \| `DpubCallFactory`; `mode`: `"dpub"`; \} \| \{ `body?`: `Properties` \| `GcpmBodyFactory`; `duplicatedCall?`: `Properties` \| `GcpmDuplicatedCallFactory`; `mode`: `"gcpm"`; \} | Footnote output mode. Default is `'pandoc'` (endnote section). |
 | <a id="hardlinebreaks"></a> `hardLineBreaks?` | `boolean` | Add `<br>` at the position of hard line breaks, without needing spaces. |
 | <a id="imgfigcaptionorder"></a> `imgFigcaptionOrder?` | `"img-figcaption"` \| `"figcaption-img"` | Order of img and figcaption elements in figure. |
 | <a id="language"></a> `language?` | `string` | Document language (ignored in partial mode). |
