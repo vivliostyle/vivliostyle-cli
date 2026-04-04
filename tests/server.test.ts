@@ -312,6 +312,34 @@ describe('vite-plugin-browser', () => {
     });
   });
 
+  it('launches external viewer with custom style URLs', async () => {
+    const server = (await runCommand(
+      [
+        'preview',
+        '--viewer',
+        'https://example.com',
+        '--style',
+        'theme.css',
+        '--user-style',
+        'theme.css',
+      ],
+      {
+        cwd: resolveFixture('server'),
+        config: {
+          entry: 'main.md',
+          workspaceDir: '.vs-browser-external-viewer-style',
+        },
+      },
+    )) as ViteDevServer;
+    assert(server.resolvedUrls);
+    expect(launchPreviewSpy).toHaveBeenCalledOnce();
+    const { url } = launchPreviewSpy.mock.calls[0][0];
+    expect(parseUrlParams(url)).toMatchObject({
+      style: `${server.resolvedUrls.local[0]}vivliostyle/theme.css`,
+      userStyle: `${server.resolvedUrls.local[0]}vivliostyle/theme.css`,
+    });
+  });
+
   it('launches epub-opf input', async () => {
     const server = (await runCommand(
       ['preview', '../epubs/adaptive/OPS/content.opf'],
