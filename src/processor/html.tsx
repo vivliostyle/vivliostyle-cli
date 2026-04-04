@@ -61,10 +61,7 @@ export const createVirtualConsole = (onError: (error: DetailError) => void) => {
   return virtualConsole;
 };
 
-export const htmlPurify = DOMPurify(
-  // @ts-expect-error: jsdom.DOMWindow should have trustedTypes property
-  new JSDOM('').window as WindowLike,
-);
+export const htmlPurify = DOMPurify(new JSDOM('').window as WindowLike);
 
 export class ResourceLoader extends BaseResourceLoader {
   static dataUrlOrigin = 'http://localhost/' as const;
