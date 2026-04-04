@@ -689,6 +689,9 @@ type CoverConfig = {
   - `assignIdToFigcaption`: boolean  
     Assign ID to figcaption instead of img/code.
 
+  - `footnote`: "pandoc" | "dpub" | "gcpm" | {mode: "pandoc" | "dpub" | "gcpm"}  
+    Footnote output mode. Default is `'pandoc'` (endnote section).
+
 #### Type definition
 
 ```ts
@@ -711,6 +714,16 @@ type VfmConfig = {
     | "img-figcaption"
     | "figcaption-img";
   assignIdToFigcaption?: boolean;
+  footnote?:
+    | "pandoc"
+    | "dpub"
+    | "gcpm"
+    | {
+        mode:
+          | "pandoc"
+          | "dpub"
+          | "gcpm";
+      };
 };
 ```
 

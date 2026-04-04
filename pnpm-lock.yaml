@@ -36,8 +36,8 @@ importers:
         specifier: 25.0.1-vivliostyle-cli.1
         version: 25.0.1-vivliostyle-cli.1(@napi-rs/canvas@0.1.69)
       '@vivliostyle/vfm':
-        specifier: 2.5.0
-        version: 2.5.0
+        specifier: 2.6.0
+        version: 2.6.0
       '@vivliostyle/viewer':
         specifier: 2.40.0
         version: 2.40.0
@@ -2176,8 +2176,8 @@ packages:
       '@napi-rs/canvas':
         optional: true
 
-  '@vivliostyle/vfm@2.5.0':
-    resolution: {integrity: sha512-YKVRx55MYGF/XF7oRCQaJHnzk0FjBMLEyp7IYXxWKMYZ51OP3HssfVPRSe+Lwv/FMNFvn/kwENXCfc0l8EKLvQ==}
+  '@vivliostyle/vfm@2.6.0':
+    resolution: {integrity: sha512-JWUUMiYHvel34rOcVaOdTCTvTrh/VY1CcxciZdOFai+f9/ifYrAaRvHrK6Hv5ucVIauH1YFHHl1qFIbL6LvG9g==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -8108,7 +8108,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@vivliostyle/vfm@2.5.0':
+  '@vivliostyle/vfm@2.6.0':
     dependencies:
       '@types/hast': 2.3.10
       '@types/mdast': 3.0.15
