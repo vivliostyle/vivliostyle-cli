@@ -1,7 +1,7 @@
 import type { JSDOM } from '@vivliostyle/jsdom';
 import archiver from 'archiver';
 import { lookup as lookupLanguage } from 'bcp-47-match';
-import { XMLBuilder } from 'fast-xml-parser';
+import XMLBuilder from 'fast-xml-builder';
 import { copy } from 'fs-extra/esm';
 import GithubSlugger from 'github-slugger';
 import { lookup as mime } from 'mime-types';
