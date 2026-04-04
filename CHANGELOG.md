@@ -1,5 +1,33 @@
 # @vivliostyle/cli
 
+## 10.4.0
+
+### Minor Changes
+
+- Add reserveMap for pre-registering RGB to CMYK mappings ([#742](https://github.com/vivliostyle/vivliostyle-cli/pull/742))
+
+- Update VFM version to v2.6.0 ([#775](https://github.com/vivliostyle/vivliostyle-cli/pull/775))
+
+  https://github.com/vivliostyle/vfm/releases/tag/v2.6.0
+
+### Patch Changes
+
+- Allow to set config JSON file in templates ([#749](https://github.com/vivliostyle/vivliostyle-cli/pull/749))
+
+- Add `@vivliostyle/cli/constants` subpath to package exports ([#749](https://github.com/vivliostyle/vivliostyle-cli/pull/749))
+
+- Handle custom `--style` / `--user-style` for external viewers ([#773](https://github.com/vivliostyle/vivliostyle-cli/pull/773))
+
+- Improve logic for OS locale detection to prevent errors on Windows 11 ([#771](https://github.com/vivliostyle/vivliostyle-cli/pull/771))
+
+- Fix behavior in non-interactive stdin environments on Windows ([#752](https://github.com/vivliostyle/vivliostyle-cli/pull/752))
+
+- Update default browser versions ([#741](https://github.com/vivliostyle/vivliostyle-cli/pull/741))
+
+  - Chrome: 146.0.7680.153
+  - Chromium: 1603217
+  - Firefox: stable_148.0.2
+
 ## 10.3.1
 
 ### Patch Changes
