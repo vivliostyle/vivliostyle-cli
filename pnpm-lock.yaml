@@ -39,8 +39,8 @@ importers:
         specifier: 2.6.0
         version: 2.6.0
       '@vivliostyle/viewer':
-        specifier: 2.40.0
-        version: 2.40.0
+        specifier: 2.41.0
+        version: 2.41.0
       ajv:
         specifier: 8.18.0
         version: 8.18.0
@@ -2189,8 +2189,8 @@ packages:
   '@vitest/utils@3.1.2':
     resolution: {integrity: sha512-5GGd0ytZ7BH3H6JTj9Kw7Prn1Nbg0wZVrIvou+UWxm54d+WoXXgAgjFJ8wn3LdagWLFSEfpPeyYrByZaGEZHLg==}
 
-  '@vivliostyle/core@2.40.0':
-    resolution: {integrity: sha512-CExoyLexnHRm7MYBr1u1dGv+HPD7DZ0mROTECd/J7rtBaf0VV+AHBEvt2DSx2+Q8ToY+G8qPHG0pf3WYnxyVFA==}
+  '@vivliostyle/core@2.41.0':
+    resolution: {integrity: sha512-x8wGZSgKdgrsraBEhvxVeCypFoX8Hxc/GPv7sZ8SMqj1ApG62ytN48dGbF8/oGelUEwompBYyyoUQfugCA4aNA==}
     engines: {node: '>=20'}
 
   '@vivliostyle/jsdom@25.0.1-vivliostyle-cli.1':
@@ -2207,8 +2207,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  '@vivliostyle/viewer@2.40.0':
-    resolution: {integrity: sha512-qLEbTo5QMKkPRjilnoUG3Q9hIw9Q5CrtFjIvPutlZSkll9veo/umKUr+sn5p8Zrt5K/VEy/xDaVoq0GD+PM4zw==}
+  '@vivliostyle/viewer@2.41.0':
+    resolution: {integrity: sha512-vt17K3MSYDUUgEPgJEZ3di0iOpbAKqVmb+jsMDKR1sCC005n4OfqCVyHtuhGfxOV7hS8jk7Yyx//XwOtoggxYQ==}
     engines: {node: '>=20'}
 
   '@zachleat/heading-anchors@1.0.5':
@@ -3396,12 +3396,12 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+    deprecated: Glob versions prior to v9 are no longer supported
 
   globby@11.1.0:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
@@ -3912,8 +3912,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  knockout@3.5.1:
-    resolution: {integrity: sha512-wRJ9I4az0QcsH7A4v4l0enUpkS++MBx0BnL/68KaLzJg7x1qmbjSlwEoCNol7KTYZ+pmtI7Eh2J0Nu6/2Z5J/Q==}
+  knockout@3.5.3:
+    resolution: {integrity: sha512-6iPv8M/xDPYfsiKyEyIPcSYBt8L+FZoJS/frLT8Nq3n9kMvP+WZ6ZPehYZV5c22Qc64Ie7unmTqYqgSdCB1Taw==}
 
   lazystream@1.0.1:
     resolution: {integrity: sha512-b94GiNHQNy6JNTrt5w6zNyffMrNkXZb3KTkCZJb2V1xaEGCk093vkZ2jk3tpaeP33/OiXC+WvK9AxUebnf5nbw==}
@@ -8149,7 +8149,7 @@ snapshots:
       loupe: 3.1.3
       tinyrainbow: 2.0.0
 
-  '@vivliostyle/core@2.40.0':
+  '@vivliostyle/core@2.41.0':
     dependencies:
       fast-diff: 1.3.0
 
@@ -8224,11 +8224,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vivliostyle/viewer@2.40.0':
+  '@vivliostyle/viewer@2.41.0':
     dependencies:
-      '@vivliostyle/core': 2.40.0
+      '@vivliostyle/core': 2.41.0
       i18next-ko: 3.0.1
-      knockout: 3.5.1
+      knockout: 3.5.3
 
   '@zachleat/heading-anchors@1.0.5': {}
 
@@ -10193,7 +10193,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  knockout@3.5.1: {}
+  knockout@3.5.3: {}
 
   lazystream@1.0.1:
     dependencies:
