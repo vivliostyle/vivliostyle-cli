@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 10.5.0
+
+### Minor Changes
+
+- Update Vivliostyle.js to 2.41.0: Footnotes improvements, etc. ([#779](https://github.com/vivliostyle/vivliostyle-cli/pull/779))
+
 ## 10.4.0
 
 ### Minor Changes
