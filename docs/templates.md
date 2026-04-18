@@ -64,7 +64,7 @@ All files are copied recursively, excluding `node_modules/` and `.git/`.
 
 ### Vivliostyle Themes templates
 
-If a [Vivliostyle Themes](./themes-and-css) package you install provides templates via the `vivliostyle.template` field in its `package.json`, those templates appear as choices during interactive project creation. See [Providing Templates in a Vivliostyle Themes Package](#providing-templates-in-a-vivliostyle-themes-package) for the authoring format.
+If a [Vivliostyle Themes](./themes-and-css.md) package you install provides templates via the `vivliostyle.template` field in its `package.json`, those templates appear as choices during interactive project creation. See [Providing Templates in a Vivliostyle Themes Package](#providing-templates-in-a-vivliostyle-themes-package) for the authoring format.
 
 ## Template Variables
 
@@ -148,7 +148,7 @@ export default defineConfig({
 
 ## Providing Templates in a Vivliostyle Themes Package
 
-A [Vivliostyle Themes](./themes-and-css) package can bundle one or more project templates. Templates are declared in the `vivliostyle.template` field of `package.json`:
+A [Vivliostyle Themes](./themes-and-css.md) package can bundle one or more project templates. Templates are declared in the `vivliostyle.template` field of `package.json`:
 
 ```json
 {

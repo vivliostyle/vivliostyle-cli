@@ -10,6 +10,7 @@
 
 - [Getting Started](./getting-started.md)
 - [Themes and CSS](./themes-and-css.md)
+- [Templates](./templates.md)
 - [Using Config File](./using-config-file.md)
 - [Creating Table of Contents Page](./toc-page.md)
 - [Creating Cover Page](./cover-page.md)

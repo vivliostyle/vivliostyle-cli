@@ -64,7 +64,7 @@ vivliostyle create my-project --template minimal
 
 ### Vivliostyle Themes固有のテンプレート
 
-インストールした [Vivliostyle Themes](./themes-and-css) のパッケージが `package.json` の `vivliostyle.template` フィールドでテンプレートを提供している場合、プロジェクト作成の対話フローの中でそのテンプレートが選択肢として表示されます。Theme パッケージへのテンプレートの組み込み方は [Theme パッケージでテンプレートを提供する](#theme-パッケージでテンプレートを提供する) を参照してください。
+インストールした [Vivliostyle Themes](./themes-and-css.md) のパッケージが `package.json` の `vivliostyle.template` フィールドでテンプレートを提供している場合、プロジェクト作成の対話フローの中でそのテンプレートが選択肢として表示されます。Theme パッケージへのテンプレートの組み込み方は [Theme パッケージでテンプレートを提供する](#theme-パッケージでテンプレートを提供する) を参照してください。
 
 ## テンプレート変数
 
@@ -148,7 +148,7 @@ export default defineConfig({
 
 ## Theme パッケージでテンプレートを提供する
 
-[Vivliostyle Themes](./themes-and-css) のパッケージには、1 つ以上のプロジェクトテンプレートをバンドルできます。テンプレートは `package.json` の `vivliostyle.template` フィールドで宣言します：
+[Vivliostyle Themes](./themes-and-css.md) のパッケージには、1 つ以上のプロジェクトテンプレートをバンドルできます。テンプレートは `package.json` の `vivliostyle.template` フィールドで宣言します：
 
 ```json
 {
