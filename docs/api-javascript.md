@@ -6,6 +6,8 @@
 ### Functions
 
 - [`build`](#build)
+- [`builtinCmykReplacement`](#builtincmykreplacement)
+- [`builtinGrayReplacement`](#builtingrayreplacement)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
@@ -14,12 +16,15 @@
 
 ### Interfaces
 
+- [`ColorConversionOptions`](#colorconversionoptions)
+- [`ImageContext`](#imagecontext)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
 
 ### Type Aliases
 
 - [`Metadata`](#metadata)
+- [`ReplaceFunction`](#replacefunction)
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
 - [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
@@ -64,7 +69,7 @@ build({
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -272,6 +277,46 @@ build({
 
 ***
 
+### builtinCmykReplacement()
+
+> **builtinCmykReplacement**(`options`): [`ReplaceFunction`](#replacefunction)
+
+Returns a ReplaceFunction that converts RGB images to CMYK.
+When called without arguments, uses mupdf's DeviceCMYK color space.
+An output ICC profile can be provided for profile-based conversion.
+
+#### Parameters
+
+##### options
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ReplaceFunction`](#replacefunction)
+
+***
+
+### builtinGrayReplacement()
+
+> **builtinGrayReplacement**(`options`): [`ReplaceFunction`](#replacefunction)
+
+Returns a ReplaceFunction that converts RGB images to grayscale.
+When called without arguments, uses mupdf's DeviceGray color space.
+An output ICC profile can be provided for profile-based conversion.
+
+#### Parameters
+
+##### options
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ReplaceFunction`](#replacefunction)
+
+***
+
 ### create()
 
 > **create**(`options`): `Promise`\<`void`\>
@@ -296,7 +341,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -526,7 +571,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -776,7 +821,7 @@ Open a browser for previewing the publication.
 
 ###### cmyk?
 
-`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -1010,6 +1055,30 @@ Unified processor.
 
 ## Interfaces
 
+### ColorConversionOptions
+
+#### Properties
+
+| Property | Type |
+| ------ | ------ |
+| <a id="outputprofile"></a> `outputProfile?` | `Uint8Array`\<`ArrayBufferLike`\> |
+
+***
+
+### ImageContext
+
+#### Methods
+
+##### asPNG()
+
+> **asPNG**(): `Uint8Array`
+
+###### Returns
+
+`Uint8Array`
+
+***
+
 ### StringifyMarkdownOptions
 
 Option for convert Markdown to a stringify (HTML).
@@ -1048,7 +1117,7 @@ Option for convert Markdown to a stringify (HTML).
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="cliversion"></a> `cliVersion` | `string` |
-| <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
+| <a id="cmyk"></a> `cmyk?` | `boolean` \| \{ `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; `warnUnreplacedImages?`: `boolean`; \} |
 | <a id="config"></a> `config?` | `string` |
 | <a id="configdata"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
 | <a id="coreversion"></a> `coreVersion` | `string` |
@@ -1210,6 +1279,22 @@ Value of `<title>...</title>`.
 > `optional` **vfm**: `VFMSettings`
 
 VFM settings.
+
+***
+
+### ReplaceFunction()
+
+> **ReplaceFunction** = (`image`) => `Uint8Array` \| `Promise`\<`Uint8Array`\>
+
+#### Parameters
+
+##### image
+
+[`ImageContext`](#imagecontext)
+
+#### Returns
+
+`Uint8Array` \| `Promise`\<`Uint8Array`\>
 
 ***
 
