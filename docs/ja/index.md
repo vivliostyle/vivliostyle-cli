@@ -8,6 +8,7 @@
 
 - [はじめに](./getting-started.md)
 - [テーマと CSS](./themes-and-css.md)
+- [テンプレート](./templates.md)
 - [構成ファイル](./using-config-file.md)
 - [目次の作成](./toc-page.md)
 - [表紙ページの作成](./cover-page.md)
