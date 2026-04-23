@@ -14,8 +14,8 @@ import type { CmykMap, Meta, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import { coreVersion, isInContainer } from '../util.js';
-import { convertCmykColors } from './cmyk.js';
-import { replaceImages } from './image.js';
+import { convertCmykColors, mapToConverter } from './cmyk.js';
+import { findNonCmykImages, replaceImages } from './image.js';
 
 export type SaveOption = Pick<
   PdfOutput,
@@ -111,16 +111,26 @@ export class PostProcess {
     let pdf = await this.document.save();
 
     if (cmyk) {
-      const mergedMap: CmykMap = { ...cmykMap };
-      for (const [rgb, cmykValue] of cmyk.overrideMap) {
-        const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
-        mergedMap[key] = cmykValue;
+      // Build converter chain: static map first, then user functions as fallback
+      const converters: import('./pdf-stream.js').InternalColorConverter[] = [];
+      const overrideStaticMap: CmykMap = {};
+      for (const item of cmyk.overrideMap) {
+        if (typeof item === 'function') {
+          converters.push(item);
+        } else {
+          const [rgb, cmykValue] = item;
+          const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
+          overrideStaticMap[key] = cmykValue;
+        }
       }
+      // Static map: override entries take priority over base map from core
+      const mergedMap: CmykMap = { ...cmykMap, ...overrideStaticMap };
+      converters.unshift(mapToConverter(mergedMap));
 
       Logger.logInfo('Converting CMYK colors');
       pdf = await convertCmykColors({
         pdf,
-        colorMap: mergedMap,
+        converters,
         warnUnmapped: cmyk.warnUnmapped,
       });
 
@@ -141,6 +151,10 @@ export class PostProcess {
         pdf,
         replaceImageConfig: replaceImage,
       });
+    }
+
+    if (cmyk && cmyk.warnUnreplacedImages) {
+      await findNonCmykImages(pdf);
     }
 
     if (preflight) {

@@ -270,11 +270,34 @@ const CmykConfigSchema = v.pipe(
   v.partial(
     v.object({
       overrideMap: v.pipe(
-        v.array(CmykMapEntrySchema),
+        v.array(
+          v.union([
+            CmykMapEntrySchema,
+            v.pipe(
+              v.function() as v.GenericSchema<
+                (rgb: { r: number; g: number; b: number }) =>
+                  | { c: number; m: number; y: number; k: number }
+                  | Promise<{
+                      c: number;
+                      m: number;
+                      y: number;
+                      k: number;
+                    }>
+              >,
+              v.metadata({
+                typeString:
+                  '((rgb: { r: number; g: number; b: number }) => { c: number; m: number; y: number; k: number } | Promise<{ c: number; m: number; y: number; k: number }>)',
+              }),
+              v.description(
+                'Function that converts any unmapped RGB color to CMYK.',
+              ),
+            ),
+          ]),
+        ),
         v.description($`
           Custom RGB to CMYK color mapping.
-          Each entry is a tuple of [rgb, {c, m, y, k}].
-          RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
+          Each entry is either a tuple of [rgb, {c, m, y, k}] or a function
+          that converts unmapped RGB colors to CMYK (used as fallback).
         `),
       ),
       reserveMap: v.pipe(
@@ -289,6 +312,12 @@ const CmykConfigSchema = v.pipe(
         v.boolean(),
         v.description($`
           Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+        `),
+      ),
+      warnUnreplacedImages: v.pipe(
+        v.boolean(),
+        v.description($`
+          Warn when non-CMYK-compatible images remain in the PDF after image replacement. (default: true)
         `),
       ),
       mapOutput: v.pipe(
@@ -310,6 +339,19 @@ const CmykSchema = v.pipe(
   `),
 );
 
+const ReplaceFunctionSchema = v.pipe(
+  v.function() as v.GenericSchema<
+    (image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>
+  >,
+  v.metadata({
+    typeString:
+      '((image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>)',
+  }),
+  v.description(
+    'Function that receives an image context and returns replacement image bytes.',
+  ),
+);
+
 const ReplaceImageEntrySchema = v.pipe(
   v.object({
     source: v.pipe(
@@ -319,9 +361,9 @@ const ReplaceImageEntrySchema = v.pipe(
       ),
     ),
     replacement: v.pipe(
-      ValidString,
+      v.union([ValidString, ReplaceFunctionSchema]),
       v.description(
-        'Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.',
+        'Path to the replacement image file, a function that processes the image, or when source is a RegExp with a string replacement, supports $1, $2, etc.',
       ),
     ),
   }),
@@ -329,11 +371,11 @@ const ReplaceImageEntrySchema = v.pipe(
 );
 
 const ReplaceImageSchema = v.pipe(
-  v.array(ReplaceImageEntrySchema),
+  v.array(v.union([ReplaceImageEntrySchema, ReplaceFunctionSchema])),
   v.description($`
     Replace images in the output PDF.
-    Each entry specifies a source image path and its replacement image path.
-    Useful for replacing RGB images with CMYK versions.
+    Each entry can be an object with source/replacement paths, an object with a source path
+    and a replacement function, or a bare function that processes all RGB images.
   `),
 );
 
