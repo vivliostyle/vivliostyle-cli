@@ -2,7 +2,7 @@
 
 ## Development Guide
 
-Please ensure pnpm:>=10 is installed in your machine.
+Please ensure pnpm:>=10 is installed on your machine.
 
 ```bash
 git clone https://github.com/vivliostyle/vivliostyle-cli.git && cd vivliostyle-cli
