@@ -94,4 +94,4 @@ vivliostyle build manuscript.md --theme ./my-theme -o paper.pdf
 
 ### Create Book の利用
 
-Create Book を使用すると、あらかじめテーマが設定された状態のプロジェクトを簡単に作成できます。[Create Book](https://docs.vivliostyle.org/#/ja/create-book) を参照してください。
+Create Book を使用すると、あらかじめテーマが設定された状態のプロジェクトを簡単に作成できます。[Create Book](https://docs.vivliostyle.org/ja/cli/getting-started/) を参照してください。

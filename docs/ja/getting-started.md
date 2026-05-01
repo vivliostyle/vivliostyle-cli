@@ -1,6 +1,6 @@
 # はじめに
 
-Vivliostyle CLI は、HTML やマークダウン文書を組版するためのコマンドラインインターフェイスです。[Vivliostyle Viewer](https://docs.vivliostyle.org/#/ja/vivliostyle-viewer) を内蔵し、出版物に適した高品質な PDF を生成します。
+Vivliostyle CLI は、HTML やマークダウン文書を組版するためのコマンドラインインターフェイスです。[Vivliostyle Viewer](https://docs.vivliostyle.org/ja/viewer/vivliostyle-viewer/) を内蔵し、出版物に適した高品質な PDF を生成します。
 
 ## Vivliostyle プロジェクトを作成する
 

@@ -1,6 +1,6 @@
 # Getting Started
 
-Vivliostyle CLI is a command-line interface for typesetting HTML and Markdown documents. It includes the [Vivliostyle Viewer](https://docs.vivliostyle.org/#/vivliostyle-viewer) and generates high-quality PDFs suitable for publications.
+Vivliostyle CLI is a command-line interface for typesetting HTML and Markdown documents. It includes the [Vivliostyle Viewer](https://docs.vivliostyle.org/en/viewer/vivliostyle-viewer/) and generates high-quality PDFs suitable for publications.
 
 ## Creating a Vivliostyle Project
 
