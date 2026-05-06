@@ -39,8 +39,8 @@ importers:
         specifier: 2.6.0
         version: 2.6.0
       '@vivliostyle/viewer':
-        specifier: 2.41.0
-        version: 2.41.0
+        specifier: 2.42.0
+        version: 2.42.0
       ajv:
         specifier: 8.18.0
         version: 8.18.0
@@ -2189,8 +2189,8 @@ packages:
   '@vitest/utils@3.1.2':
     resolution: {integrity: sha512-5GGd0ytZ7BH3H6JTj9Kw7Prn1Nbg0wZVrIvou+UWxm54d+WoXXgAgjFJ8wn3LdagWLFSEfpPeyYrByZaGEZHLg==}
 
-  '@vivliostyle/core@2.41.0':
-    resolution: {integrity: sha512-x8wGZSgKdgrsraBEhvxVeCypFoX8Hxc/GPv7sZ8SMqj1ApG62ytN48dGbF8/oGelUEwompBYyyoUQfugCA4aNA==}
+  '@vivliostyle/core@2.42.0':
+    resolution: {integrity: sha512-tuh/5EytVKItD5vRCapVRYWRiBWsNMRg91PY38wUph6eupdbYLhNGswP+rOJmLkaRkRS6iyRZ+vFkZR6ZojarA==}
     engines: {node: '>=20'}
 
   '@vivliostyle/jsdom@25.0.1-vivliostyle-cli.1':
@@ -2207,8 +2207,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  '@vivliostyle/viewer@2.41.0':
-    resolution: {integrity: sha512-vt17K3MSYDUUgEPgJEZ3di0iOpbAKqVmb+jsMDKR1sCC005n4OfqCVyHtuhGfxOV7hS8jk7Yyx//XwOtoggxYQ==}
+  '@vivliostyle/viewer@2.42.0':
+    resolution: {integrity: sha512-5/4hT4JWzSuuHQgE67xVWBQ2thIQZv5OeGTy/AEZ6tk4GxQxhhf+H1fE4muXUtWbPWJyPkikDQU2IutES2ox0Q==}
     engines: {node: '>=20'}
 
   '@zachleat/heading-anchors@1.0.5':
@@ -3371,8 +3371,8 @@ packages:
     resolution: {integrity: sha512-nBF+F1rAZVCu/p7rjzgA+Yb4lfYXrpl7a6VmJrU8wF9I1CKvP/QwPNZHnOlwbTkY6dvtFIzFMSyQXbLoTQPRpA==}
     engines: {node: '>=8'}
 
-  get-tsconfig@4.13.7:
-    resolution: {integrity: sha512-7tN6rFgBlMgpBML5j8typ92BKFi2sFQvIdpAqLA2beia5avZDrMs0FLZiM5etShWq5irVyGcGMEA1jcDaK7A/Q==}
+  get-tsconfig@4.14.0:
+    resolution: {integrity: sha512-yTb+8DXzDREzgvYmh6s9vHsSVCHeC0G3PI5bEXNBHtmshPnO+S5O7qgLEOn0I5QvMy6kpZN8K1NKGyilLb93wA==}
 
   get-uri@6.0.5:
     resolution: {integrity: sha512-b1O07XYq8eRuVzBNgJLstU6FYc1tS6wnMtF1I1D9lE8LxZSOGZ7LhxN54yPP6mGw5f2CkXY2BQUL9Fx41qvcIg==}
@@ -8149,7 +8149,7 @@ snapshots:
       loupe: 3.1.3
       tinyrainbow: 2.0.0
 
-  '@vivliostyle/core@2.41.0':
+  '@vivliostyle/core@2.42.0':
     dependencies:
       fast-diff: 1.3.0
 
@@ -8224,9 +8224,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vivliostyle/viewer@2.41.0':
+  '@vivliostyle/viewer@2.42.0':
     dependencies:
-      '@vivliostyle/core': 2.41.0
+      '@vivliostyle/core': 2.42.0
       i18next-ko: 3.0.1
       knockout: 3.5.3
 
@@ -9485,7 +9485,7 @@ snapshots:
     dependencies:
       pump: 3.0.0
 
-  get-tsconfig@4.13.7:
+  get-tsconfig@4.14.0:
     dependencies:
       resolve-pkg-maps: 1.0.0
     optional: true
@@ -12551,7 +12551,7 @@ snapshots:
   tsx@4.19.3:
     dependencies:
       esbuild: 0.25.12
-      get-tsconfig: 4.13.7
+      get-tsconfig: 4.14.0
     optionalDependencies:
       fsevents: 2.3.3
     optional: true
