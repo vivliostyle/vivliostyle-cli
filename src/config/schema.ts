@@ -231,17 +231,46 @@ export const OutputFormat = v.union([
 ]);
 export type OutputFormat = v.InferInput<typeof OutputFormat>;
 
-export const RenderModeDockerObject = v.object({
-  mode: v.literal('docker'),
-  hostGateway: v.optional(ValidString),
-  pathTransformer: v.optional(
-    v.custom<(hostPath: string) => string>(
-      (value) => typeof value === 'function',
-      'pathTransformer must be a function (hostPath: string) => string',
+export const RenderModeDockerObject = v.pipe(
+  v.object({
+    mode: v.literal('docker'),
+    hostGateway: v.optional(
+      v.pipe(
+        ValidString,
+        v.description($`
+          Override the IP that \`host.docker.internal\` resolves to inside the
+          container. Default: Docker's special token \`host-gateway\`.
+        `),
+      ),
     ),
-  ),
-  extraRunArgs: v.optional(v.array(ValidString)),
-});
+    pathTransformer: v.optional(
+      v.pipe(
+        v.function() as v.GenericSchema<(hostPath: string) => string>,
+        v.metadata({ typeString: '(hostPath: string) => string' }),
+        v.description($`
+          Rewrite the host side of \`-v\` bind paths before they reach dockerd.
+          Used to translate Windows paths to WSL drvfs form, etc.
+        `),
+      ),
+    ),
+    extraRunArgs: v.optional(
+      v.pipe(
+        v.array(ValidString),
+        v.description($`
+          Additional arguments inserted between \`--rm\` and the image name in
+          \`docker run\`. Used for WSL mirrored mode (\`['--network=host']\`),
+          GPU passthrough, etc.
+        `),
+      ),
+    ),
+  }),
+  v.title('RenderModeDocker'),
+  v.description($`
+    Object form of \`renderMode: 'docker'\`. Use this to tune the docker
+    invocation when the daemon is not Docker Desktop (e.g. raw Linux Docker
+    Engine, or dockerd inside a WSL distro).
+  `),
+);
 export const RenderModeLocalObject = v.object({
   mode: v.literal('local'),
 });

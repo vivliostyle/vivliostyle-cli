@@ -200,7 +200,7 @@ build({
 
 ###### renderMode?
 
-`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -432,7 +432,7 @@ Scaffold a new Vivliostyle project.
 
 ###### renderMode?
 
-`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -662,7 +662,7 @@ Scaffold a new Vivliostyle project.
 
 ###### renderMode?
 
-`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -928,7 +928,7 @@ Open a browser for previewing the publication.
 
 ###### renderMode?
 
-`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -1182,7 +1182,7 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="proxyuser"></a> `proxyUser?` | `string` |
 | <a id="quick"></a> `quick?` | `boolean` |
 | <a id="readingprogression"></a> `readingProgression?` | `"ltr"` \| `"rtl"` |
-| <a id="rendermode"></a> `renderMode?` | `"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} |
+| <a id="rendermode"></a> `renderMode?` | `"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} |
 | <a id="sandbox"></a> `sandbox?` | `boolean` |
 | <a id="signal"></a> `signal?` | `AbortSignal` |
 | <a id="singledoc"></a> `singleDoc?` | `boolean` |
