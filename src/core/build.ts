@@ -109,7 +109,7 @@ export async function build(
       let output: string | null = null;
       const { format } = target;
       if (format === 'pdf') {
-        if (!containerForkMode && target.renderMode === 'docker') {
+        if (!containerForkMode && target.renderMode.mode === 'docker') {
           output = await buildPDFWithContainer({
             target,
             config,

@@ -9,8 +9,12 @@
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
+- [`getWslHostIp`](#getwslhostip)
 - [`preview`](#preview)
 - [`VFM`](#vfm)
+- [`wslMirroredRenderMode`](#wslmirroredrendermode)
+- [`wslNatRenderMode`](#wslnatrendermode)
+- [`wslPathTransformer`](#wslpathtransformer)
 
 ### Interfaces
 
@@ -196,7 +200,7 @@ build({
 
 ###### renderMode?
 
-`"local"` \| `"docker"` = `...`
+`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -428,7 +432,7 @@ Scaffold a new Vivliostyle project.
 
 ###### renderMode?
 
-`"local"` \| `"docker"` = `...`
+`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -658,7 +662,7 @@ Scaffold a new Vivliostyle project.
 
 ###### renderMode?
 
-`"local"` \| `"docker"` = `...`
+`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -749,6 +753,22 @@ Define the configuration for Vivliostyle CLI.
 #### Returns
 
 [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
+
+***
+
+### getWslHostIp()
+
+> **getWslHostIp**(): `string`
+
+Returns the IP at which the Windows host is reachable from inside WSL
+(the default gateway of WSL's eth0). Useful as `renderMode.hostGateway`
+for the NAT networking mode (the WSL default).
+
+Windows host only. Caller is responsible for gating on `process.platform`.
+
+#### Returns
+
+`string`
 
 ***
 
@@ -908,7 +928,7 @@ Open a browser for previewing the publication.
 
 ###### renderMode?
 
-`"local"` \| `"docker"` = `...`
+`"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -1008,6 +1028,84 @@ Options.
 
 Unified processor.
 
+***
+
+### wslMirroredRenderMode()
+
+> **wslMirroredRenderMode**(): `object`
+
+`renderMode` fields (without `mode`) for the WSL hybrid + mirrored
+networking case. Spread into a `renderMode` literal:
+
+```ts
+renderMode: { mode: 'docker', ...wslMirroredRenderMode() }
+```
+
+The values are static; this is a function only to mirror
+`wslNatRenderMode`'s shape.
+
+#### Returns
+
+| Name | Type | Default value |
+| ------ | ------ | ------ |
+| `extraRunArgs` | readonly \[`"--network=host"`\] | - |
+| `hostGateway` | `"127.0.0.1"` | - |
+| `pathTransformer()` | (`hostPath`) => `string` | `wslPathTransformer` |
+
+***
+
+### wslNatRenderMode()
+
+> **wslNatRenderMode**(): `object`
+
+`renderMode` fields (without `mode`) for the WSL hybrid + NAT networking
+case. Spread into a `renderMode` literal:
+
+```ts
+renderMode: { mode: 'docker', ...wslNatRenderMode() }
+```
+
+It's a function so `getWslHostIp()` runs at the call site; the WSL default
+gateway can change across VM restarts.
+
+#### Returns
+
+| Name | Type | Default value |
+| ------ | ------ | ------ |
+| `hostGateway` | `string` | - |
+| `pathTransformer()` | (`hostPath`) => `string` | `wslPathTransformer` |
+
+***
+
+### wslPathTransformer()
+
+> **wslPathTransformer**(`hostPath`): `string`
+
+Translate a Windows drive-letter absolute path to its WSL drvfs automount
+counterpart (`/mnt/<drive>/...`). Useful as `renderMode.pathTransformer`
+when the docker daemon is upstream moby running inside a WSL distro.
+
+Operating contract:
+  The input is expected to be an absolute path produced by `upath.resolve()`
+  (the canonical resolver used in `src/config/resolve.ts` for `workspaceDir`,
+  `target.path`, etc.). Under that contract the input is one of:
+    - POSIX absolute (`/foo/bar`) on Linux/macOS hosts: passed through
+    - Drive-letter + forward slash (`C:/Users/foo`) on Windows hosts: translated
+
+  Drive-letter + backslash (`C:\Users\foo`) is handled defensively for paths
+  that bypass `upath`. Anything else (relative paths, UNC `\\server\share\...`,
+  empty input) violates the contract and throws.
+
+#### Parameters
+
+##### hostPath
+
+`string`
+
+#### Returns
+
+`string`
+
 ## Interfaces
 
 ### StringifyMarkdownOptions
@@ -1084,7 +1182,7 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="proxyuser"></a> `proxyUser?` | `string` |
 | <a id="quick"></a> `quick?` | `boolean` |
 | <a id="readingprogression"></a> `readingProgression?` | `"ltr"` \| `"rtl"` |
-| <a id="rendermode"></a> `renderMode?` | `"local"` \| `"docker"` |
+| <a id="rendermode"></a> `renderMode?` | `"docker"` \| `"local"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| \{ `mode`: `"local"`; \} |
 | <a id="sandbox"></a> `sandbox?` | `boolean` |
 | <a id="signal"></a> `signal?` | `AbortSignal` |
 | <a id="singledoc"></a> `singleDoc?` | `boolean` |

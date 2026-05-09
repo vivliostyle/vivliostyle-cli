@@ -19,6 +19,7 @@ import {
   CoverEntryConfig,
   EntryConfig,
   type InputFormat,
+  type RenderMode,
   StructuredDocument,
   StructuredDocumentSection,
   ThemeConfig,
@@ -275,10 +276,40 @@ export interface ReplaceImageEntry {
 
 export type ReplaceImageConfig = ReplaceImageEntry[];
 
+export type ResolvedRenderMode =
+  | {
+      mode: 'docker';
+      hostGateway: string | undefined;
+      pathTransformer: ((hostPath: string) => string) | undefined;
+      extraRunArgs: string[] | undefined;
+    }
+  | { mode: 'local' };
+
+export function normalizeRenderMode(
+  input: RenderMode | undefined,
+): ResolvedRenderMode {
+  if (input === undefined || input === 'local') return { mode: 'local' };
+  if (input === 'docker') {
+    return {
+      mode: 'docker',
+      hostGateway: undefined,
+      pathTransformer: undefined,
+      extraRunArgs: undefined,
+    };
+  }
+  if (input.mode === 'local') return { mode: 'local' };
+  return {
+    mode: 'docker',
+    hostGateway: input.hostGateway ?? undefined,
+    pathTransformer: input.pathTransformer ?? undefined,
+    extraRunArgs: input.extraRunArgs ?? undefined,
+  };
+}
+
 export interface PdfOutput {
   format: 'pdf';
   path: string;
-  renderMode: 'local' | 'docker';
+  renderMode: ResolvedRenderMode;
   preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
   cmyk: CmykConfig | false;
@@ -779,7 +810,7 @@ export function resolveTaskConfig(
 
     const defaultPdfOptions: Omit<PdfOutput, 'path'> = {
       format: 'pdf',
-      renderMode: options.renderMode ?? 'local',
+      renderMode: normalizeRenderMode(options.renderMode),
       preflight: resolveDefaultPreflight(),
       preflightOption: resolveDefaultPreflightOption(),
       cmyk: resolveCmykConfig(config.pdfPostprocess?.cmyk),
@@ -834,6 +865,9 @@ export function resolveTaskConfig(
               preflightOption: resolvedPreflightOption,
               cmyk: resolvedCmyk,
               replaceImage: resolvedReplaceImage,
+              renderMode: normalizeRenderMode(
+                target.renderMode ?? options.renderMode,
+              ),
             };
           }
           case 'epub':
@@ -870,7 +904,8 @@ export function resolveTaskConfig(
     const port = config.server?.port ?? 13000;
     if (
       outputs.some(
-        (target) => target.format === 'pdf' && target.renderMode === 'docker',
+        (target) =>
+          target.format === 'pdf' && target.renderMode.mode === 'docker',
       ) &&
       !isInContainer()
     ) {

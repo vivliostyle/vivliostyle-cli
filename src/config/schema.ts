@@ -231,7 +231,26 @@ export const OutputFormat = v.union([
 ]);
 export type OutputFormat = v.InferInput<typeof OutputFormat>;
 
-export const RenderMode = v.union([v.literal('local'), v.literal('docker')]);
+export const RenderModeDockerObject = v.object({
+  mode: v.literal('docker'),
+  hostGateway: v.optional(ValidString),
+  pathTransformer: v.optional(
+    v.custom<(hostPath: string) => string>(
+      (value) => typeof value === 'function',
+      'pathTransformer must be a function (hostPath: string) => string',
+    ),
+  ),
+  extraRunArgs: v.optional(v.array(ValidString)),
+});
+export const RenderModeLocalObject = v.object({
+  mode: v.literal('local'),
+});
+export const RenderMode = v.union([
+  v.literal('local'),
+  v.literal('docker'),
+  RenderModeDockerObject,
+  RenderModeLocalObject,
+]);
 export type RenderMode = v.InferInput<typeof RenderMode>;
 
 const RGBValueObjectSchema = v.pipe(

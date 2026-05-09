@@ -29,7 +29,10 @@ export function toContainerPath(urlOrAbsPath: string): string {
   );
 }
 
-export function collectVolumeArgs(mountPoints: string[]): string[] {
+export function collectVolumeArgs(
+  mountPoints: string[],
+  pathTransformer?: (hostPath: string) => string,
+): string[] {
   return mountPoints
     .filter((p, i, array) => {
       if (i !== array.indexOf(p)) {
@@ -46,7 +49,10 @@ export function collectVolumeArgs(mountPoints: string[]): string[] {
       }
       return true;
     })
-    .map((p) => `${p}:${toContainerPath(p)}`);
+    .map(
+      (p) =>
+        `${pathTransformer ? pathTransformer(p) : p}:${toContainerPath(p)}`,
+    );
 }
 
 export async function runContainer({
@@ -56,6 +62,8 @@ export async function runContainer({
   entrypoint,
   env,
   workdir,
+  hostGateway,
+  extraRunArgs,
 }: {
   image: string;
   userVolumeArgs: string[];
@@ -63,6 +71,8 @@ export async function runContainer({
   entrypoint?: string;
   env?: [string, string][];
   workdir?: string;
+  hostGateway?: string;
+  extraRunArgs?: string[];
 }) {
   const { default: commandExists } = await importNodeModule('command-exists');
   if (!(await commandExists('docker'))) {
@@ -86,6 +96,14 @@ export async function runContainer({
       'run',
       ...(Logger.isInteractive ? ['-it'] : []),
       '--rm',
+      // Docker Desktop (and Colima) auto-provide host.docker.internal; raw
+      // Linux dockerd, including the dockerd that runs inside WSL, does not.
+      // `host-gateway` resolves to the daemon's docker0 bridge by default; the
+      // hostGateway override lets users point it at a different IP (e.g. the
+      // WSL eth0 gateway when the daemon lives in WSL but Vite runs on Windows).
+      '--add-host',
+      `${CONTAINER_LOCAL_HOSTNAME}:${hostGateway ?? 'host-gateway'}`,
+      ...(extraRunArgs ?? []),
       ...(entrypoint ? ['--entrypoint', entrypoint] : []),
       ...(env ? env.flatMap(([k, v]) => ['-e', `${k}=${v}`]) : []),
       ...(process.env.DEBUG
@@ -145,20 +163,29 @@ export async function buildPDFWithContainer({
     host: CONTAINER_LOCAL_HOSTNAME,
   } satisfies ParsedVivliostyleInlineConfig;
 
+  // buildPDFWithContainer is only invoked for docker-mode targets (see build.ts)
+  const renderMode =
+    target.renderMode.mode === 'docker' ? target.renderMode : undefined;
+
   await runContainer({
     image: config.image,
-    userVolumeArgs: collectVolumeArgs([
-      ...(typeof config.serverRootDir === 'string'
-        ? [config.serverRootDir]
-        : []),
-      upath.dirname(target.path),
-    ]),
+    userVolumeArgs: collectVolumeArgs(
+      [
+        ...(typeof config.serverRootDir === 'string'
+          ? [config.serverRootDir]
+          : []),
+        upath.dirname(target.path),
+      ],
+      renderMode?.pathTransformer,
+    ),
     env: [['VS_CLI_BUILD_PDF_OPTIONS', JSON.stringify(bypassedOption)]],
     commandArgs: ['build'],
     workdir:
       typeof config.serverRootDir === 'string'
         ? toContainerPath(config.serverRootDir)
         : undefined,
+    hostGateway: renderMode?.hostGateway,
+    extraRunArgs: renderMode?.extraRunArgs,
   });
 
   return target.path;

@@ -20,6 +20,12 @@ export type {
 } from './config/schema.js';
 export type { TemplateVariable } from './create-template.js';
 export { createVitePlugin } from './vite-adapter.js';
+export {
+  getWslHostIp,
+  wslMirroredRenderMode,
+  wslNatRenderMode,
+  wslPathTransformer,
+} from './wsl.js';
 /** @hidden */
 export type PublicationManifest = _PublicationManifest;
 

@@ -379,7 +379,7 @@ type ArticleEntryConfig = {
   - `format`: "pdf" | "epub" | "webpub"  
     Specifies the output format.
 
-  - `renderMode`: "local" | "docker"  
+  - `renderMode`: "local" | "docker" | {mode: "docker"; hostGateway?: string; pathTransformer?: "{custom(unknown)}"; extraRunArgs?: (string)[]} | {mode: "local"}  
     If set to `docker`, Vivliostyle will render the PDF using a Docker container. (default: `local`)
 
   - ~~`preflight`~~ _Deprecated_  
@@ -399,7 +399,16 @@ type ArticleEntryConfig = {
 type OutputConfig = {
   path: string;
   format?: "pdf" | "epub" | "webpub";
-  renderMode?: "local" | "docker";
+  renderMode?:
+    | "local"
+    | "docker"
+    | {
+        mode: "docker";
+        hostGateway?: string;
+        pathTransformer?: "{custom(unknown)}";
+        extraRunArgs?: string[];
+      }
+    | { mode: "local" };
   preflight?:
     | "press-ready"
     | "press-ready-local";
