@@ -97,7 +97,7 @@ jobs:
       # default-user provisioning (which `wsl --install -d` would otherwise
       # prompt for interactively).
       - name: Set up WSL with Ubuntu
-        uses: Vampire/setup-wsl@v3
+        uses: Vampire/setup-wsl@v7
         with:
           distribution: Ubuntu-24.04
           set-as-default: 'true'
