@@ -122,6 +122,26 @@ jobs:
             if sudo docker info > /dev/null 2>&1; then break; fi
             sleep 1
           done
+          if ! sudo docker info > /dev/null 2>&1; then
+            echo "::group::dockerd log (/tmp/dockerd.log)"
+            sudo cat /tmp/dockerd.log || true
+            echo "::endgroup::"
+            echo "::group::process tree"
+            ps auxf 2>&1 | grep -E 'docker|containerd' || true
+            echo "::endgroup::"
+            echo "::group::docker socket presence"
+            sudo ls -la /var/run/docker.sock /run/docker.sock 2>&1 || true
+            echo "::endgroup::"
+            echo "::group::iptables alternatives state"
+            update-alternatives --display iptables 2>&1 || true
+            update-alternatives --display ip6tables 2>&1 || true
+            echo "::endgroup::"
+            echo "::group::kernel info"
+            uname -a
+            cat /proc/version
+            echo "::endgroup::"
+            exit 1
+          fi
           sudo docker info
 
       - name: Output package version
