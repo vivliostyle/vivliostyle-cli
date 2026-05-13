@@ -157,24 +157,22 @@ jobs:
 
       - name: Build vivliostyle/cli image inside WSL
         shell: wsl-bash {0}
-        env:
-          # GitHub Actions injects environment variables (GITHUB_WORKSPACE etc.)
-          # into the Windows-side shell only; they do not propagate into the
-          # wsl-bash wrapper. Re-export the Windows path explicitly so we can
-          # translate it to a WSL path with wslpath below.
-          WORKSPACE_WIN: ${{ github.workspace }}
-          VS_CLI_VERSION: ${{ steps.package.outputs.version }}
-          BROWSER: ${{ steps.browser.outputs.browser }}
+        # GitHub Actions `env:` values are set on the Windows-side shell only;
+        # they do NOT propagate into Vampire/setup-wsl's wsl-bash wrapper.
+        # Substitute the values directly via YAML expression expansion so the
+        # script body contains the literals. Single quotes preserve the
+        # Windows-style backslashes in the workspace path so bash does not
+        # interpret them as escape sequences.
         run: |
           set -eux
           # The runner workspace is at /mnt/d/...; building from drvfs is
           # very slow (small-file I/O over 9P). Copy to the WSL ext4 fs.
-          WORKSPACE=$(wslpath -u "$WORKSPACE_WIN")
+          WORKSPACE=$(wslpath -u '${{ github.workspace }}')
           cp -r "$WORKSPACE" /tmp/repo
           cd /tmp/repo
           sudo docker build -t vivliostyle/cli:ci \
-            --build-arg VS_CLI_VERSION="$VS_CLI_VERSION" \
-            --build-arg BROWSER="$BROWSER" \
+            --build-arg VS_CLI_VERSION='${{ steps.package.outputs.version }}' \
+            --build-arg BROWSER='${{ steps.browser.outputs.browser }}' \
             .
 
       - name: Allow inbound on vEthernet (WSL) interface
