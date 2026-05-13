@@ -71,9 +71,12 @@ jobs:
           VIVLIOSTYLE_TEST_IMAGE: vivliostyle/cli:ci
         run: |
           # The container runs as the Dockerfile's `USER vivliostyle` (uid
-          # 1000); the runner's checkout dir is owned by a different uid, so
-          # the bind-mounted fixture dir is not writable by the container.
-          # Loosen permissions so the container can mkdir the output dir.
+          # 1000); the runner's checkout dir is owned by a different uid.
+          # Pre-create the output dir owned by the runner with permissive
+          # perms so (a) the container can write inside it and (b) vitest's
+          # global teardown (running as the runner user) can rm
+          # container-created files afterwards.
+          mkdir -p tests/fixtures/render-on-docker/.vs-pdf
           chmod -R a+rwX tests/fixtures/render-on-docker
           npx vitest run tests/render-on-docker.test.ts
 
