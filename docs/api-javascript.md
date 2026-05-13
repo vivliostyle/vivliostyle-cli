@@ -1014,21 +1014,35 @@ Unified processor.
 
 Option for convert Markdown to a stringify (HTML).
 
+Declared as `interface` so that downstream consumers (e.g.
+vivliostyle-cli) see a stable nominal name instead of
+`v.InferInput<typeof StringifyMarkdownOptionsSchema>`. The latter form
+causes TypeScript to expand the schema's structural shape during
+declaration emit and pulls non-portable `.pnpm/...` paths through pnpm
+isolated installs (TS2742). The compile-time check below pins this
+interface to the schema, so a drift in either direction is rejected.
+
+#### Extends
+
+- `InferInput`\<*typeof* `_stringifyMarkdownOptionsSchema`\>
+
 #### Properties
 
-| Property | Type | Description |
-| ------ | ------ | ------ |
-| <a id="assignidtofigcaption"></a> `assignIdToFigcaption?` | `boolean` | Assign ID to figcaption instead of img/code. |
-| <a id="disableformathtml"></a> `disableFormatHtml?` | `boolean` | Disable automatic HTML format. |
-| <a id="footnote"></a> `footnote?` | `FootnoteMode` \| \{ `mode`: `"pandoc"`; \} \| \{ `body?`: `Properties` \| `DpubBodyFactory`; `call?`: `Properties` \| `DpubCallFactory`; `mode`: `"dpub"`; \} \| \{ `body?`: `Properties` \| `GcpmBodyFactory`; `duplicatedCall?`: `Properties` \| `GcpmDuplicatedCallFactory`; `mode`: `"gcpm"`; \} | Footnote output mode. Default is `'pandoc'` (endnote section). |
-| <a id="hardlinebreaks"></a> `hardLineBreaks?` | `boolean` | Add `<br>` at the position of hard line breaks, without needing spaces. |
-| <a id="imgfigcaptionorder"></a> `imgFigcaptionOrder?` | `"img-figcaption"` \| `"figcaption-img"` | Order of img and figcaption elements in figure. |
-| <a id="language"></a> `language?` | `string` | Document language (ignored in partial mode). |
-| <a id="math"></a> `math?` | `boolean` | Enable math syntax. |
-| <a id="partial"></a> `partial?` | `boolean` | Output markdown fragments. |
-| <a id="replace"></a> `replace?` | `ReplaceRule`[] | Replacement handler for HTML string. |
-| <a id="style"></a> `style?` | `string` \| `string`[] | Custom stylesheet path/URL. |
-| <a id="title"></a> `title?` | `string` | Document title (ignored in partial mode). |
+| Property | Type |
+| ------ | ------ |
+| <a id="assignidtofigcaption"></a> `assignIdToFigcaption?` | `boolean` |
+| <a id="captionlessimagepolicy"></a> `captionlessImagePolicy?` | `"paragraph"` \| `"figure"` \| `"figure-with-figcaption"` |
+| <a id="disableformathtml"></a> `disableFormatHtml?` | `boolean` |
+| <a id="editplugins"></a> `editPlugins?` | `EditPlugins` |
+| <a id="footnote"></a> `footnote?` | `"pandoc"` \| `"dpub"` \| `"gcpm"` \| \{ `mode`: `"pandoc"`; \} \| \{ `body?`: `Properties` \| `DpubBodyFactory`; `call?`: `Properties` \| `DpubCallFactory`; `mode`: `"dpub"`; \} \| \{ `body?`: `Properties` \| `GcpmBodyFactory`; `duplicatedCall?`: `Properties` \| `GcpmDuplicatedCallFactory`; `mode`: `"gcpm"`; \} |
+| <a id="hardlinebreaks"></a> `hardLineBreaks?` | `boolean` |
+| <a id="imgfigcaptionorder"></a> `imgFigcaptionOrder?` | `"img-figcaption"` \| `"figcaption-img"` |
+| <a id="language"></a> `language?` | `string` |
+| <a id="math"></a> `math?` | `boolean` |
+| <a id="partial"></a> `partial?` | `boolean` |
+| <a id="replace"></a> `replace?` | `ReplaceRule`[] |
+| <a id="style"></a> `style?` | `string` \| `string`[] |
+| <a id="title"></a> `title?` | `string` |
 
 ***
 
