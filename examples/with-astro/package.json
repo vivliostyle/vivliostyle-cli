@@ -12,7 +12,7 @@
     "@astrojs/mdx": "^4.2.5",
     "@astrojs/sitemap": "^3.3.1",
     "@vivliostyle/cli": "workspace:*",
-    "astro": "^5.18.1"
+    "astro": "^6.1.10"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"
