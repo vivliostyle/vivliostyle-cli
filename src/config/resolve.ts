@@ -279,31 +279,18 @@ export type ReplaceImageConfig = ReplaceImageEntry[];
 export type ResolvedRenderMode =
   | {
       mode: 'docker';
-      hostGateway: string | undefined;
-      pathTransformer: ((hostPath: string) => string) | undefined;
-      extraRunArgs: string[] | undefined;
+      hostGateway?: string | undefined;
+      pathTransformer?: ((hostPath: string) => string) | undefined;
+      extraRunArgs?: string[] | undefined;
     }
   | { mode: 'local' };
 
-export function normalizeRenderMode(
+function normalizeRenderMode(
   input: RenderMode | undefined,
 ): ResolvedRenderMode {
-  if (input === undefined || input === 'local') return { mode: 'local' };
-  if (input === 'docker') {
-    return {
-      mode: 'docker',
-      hostGateway: undefined,
-      pathTransformer: undefined,
-      extraRunArgs: undefined,
-    };
-  }
-  if (input.mode === 'local') return { mode: 'local' };
-  return {
-    mode: 'docker',
-    hostGateway: input.hostGateway ?? undefined,
-    pathTransformer: input.pathTransformer ?? undefined,
-    extraRunArgs: input.extraRunArgs ?? undefined,
-  };
+  return input && typeof input === 'object'
+    ? input
+    : { mode: input || 'local' };
 }
 
 export interface PdfOutput {
