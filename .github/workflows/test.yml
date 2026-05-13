@@ -69,7 +69,13 @@ jobs:
       - name: Run render-on-docker tests
         env:
           VIVLIOSTYLE_TEST_IMAGE: vivliostyle/cli:ci
-        run: npx vitest run tests/render-on-docker.test.ts
+        run: |
+          # The container runs as the Dockerfile's `USER vivliostyle` (uid
+          # 1000); the runner's checkout dir is owned by a different uid, so
+          # the bind-mounted fixture dir is not writable by the container.
+          # Loosen permissions so the container can mkdir the output dir.
+          chmod -R a+rwX tests/fixtures/render-on-docker
+          npx vitest run tests/render-on-docker.test.ts
 
   # Runs render-on-docker.test.ts in the Win+WSL hybrid NAT configuration:
   # Node runs on Windows; dockerd runs inside a WSL Ubuntu distro; docker.exe
