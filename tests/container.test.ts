@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PdfOutput, ResolvedTaskConfig } from '../src/config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../src/config/schema.js';
-import {
-  CONTAINER_LOCAL_HOSTNAME,
-  CONTAINER_ROOT_DIR,
-} from '../src/constants.js';
 
 const tinyexecMock = vi.hoisted(() => {
   const x = vi.fn(async function* docker() {
@@ -111,7 +107,7 @@ describe('buildPDFWithContainer: HTTP source URL (server-startup path)', () => {
     const args = lastDockerArgs();
     const idx = args.indexOf('--add-host');
     expect(idx).toBeGreaterThan(-1);
-    expect(args[idx + 1]).toBe(`${CONTAINER_LOCAL_HOSTNAME}:host-gateway`);
+    expect(args[idx + 1]).toBe('host.docker.internal:host-gateway');
   });
 
   it('overrides --add-host gateway when renderMode.hostGateway is set', async () => {
@@ -130,7 +126,7 @@ describe('buildPDFWithContainer: HTTP source URL (server-startup path)', () => {
 
     const args = lastDockerArgs();
     const idx = args.indexOf('--add-host');
-    expect(args[idx + 1]).toBe(`${CONTAINER_LOCAL_HOSTNAME}:172.21.112.1`);
+    expect(args[idx + 1]).toBe('host.docker.internal:172.21.112.1');
   });
 
   it('passes renderMode.extraRunArgs through verbatim before the image', async () => {
@@ -179,7 +175,7 @@ describe('buildPDFWithContainer: HTTP source URL (server-startup path)', () => {
     );
     // container side is unchanged
     const workspaceMount = mounts.find((m) => m.host === '/mnt/c/workspace');
-    expect(workspaceMount?.container).toBe(`${CONTAINER_ROOT_DIR}/workspace`);
+    expect(workspaceMount?.container).toBe('/data/workspace');
   });
 
   // Smoke test for the WSL+Win hybrid wiring: a single renderMode object
@@ -206,17 +202,17 @@ describe('buildPDFWithContainer: HTTP source URL (server-startup path)', () => {
 
     // host.docker.internal must point at the Windows host IP, not host-gateway
     const idx = args.indexOf('--add-host');
-    expect(args[idx + 1]).toBe(`${CONTAINER_LOCAL_HOSTNAME}:172.21.112.1`);
+    expect(args[idx + 1]).toBe('host.docker.internal:172.21.112.1');
 
     // -v host paths must be /mnt/c/... (parsable by upstream dockerd in WSL),
-    // while container paths stay in CONTAINER_ROOT_DIR namespace.
+    // while container paths stay in '/data' namespace.
     // The output dir (work/out) is de-duplicated under serverRootDir (work)
     // by collectVolumeArgs, so a single mount covers both.
     const mounts = volumesFromArgs(args);
     expect(mounts).toEqual([
       {
         host: '/mnt/c/Users/me/work',
-        container: `${CONTAINER_ROOT_DIR}/Users/me/work`,
+        container: '/data/Users/me/work',
       },
     ]);
   });
@@ -239,9 +235,9 @@ describe('buildPDFWithContainer: HTTP source URL (server-startup path)', () => {
     const bypassed = JSON.parse(envFromArgs(args).VS_CLI_BUILD_PDF_OPTIONS);
     expect(bypassed.input).toEqual({
       format: 'webbook',
-      entry: `http://${CONTAINER_LOCAL_HOSTNAME}:13000/vivliostyle/index.html`,
+      entry: 'http://host.docker.internal:13000/vivliostyle/index.html',
     });
-    expect(bypassed.host).toBe(CONTAINER_LOCAL_HOSTNAME);
+    expect(bypassed.host).toBe('host.docker.internal');
   });
 
   it('translates the output PDF path to the container path and mounts the output directory', async () => {
@@ -256,18 +252,18 @@ describe('buildPDFWithContainer: HTTP source URL (server-startup path)', () => {
     const bypassed = JSON.parse(envFromArgs(args).VS_CLI_BUILD_PDF_OPTIONS);
     expect(bypassed.output).toEqual([
       expect.objectContaining({
-        path: `${CONTAINER_ROOT_DIR}/elsewhere/dist/out.pdf`,
+        path: '/data/elsewhere/dist/out.pdf',
       }),
     ]);
     expect(volumesFromArgs(args)).toEqual(
       expect.arrayContaining([
         {
           host: '/workspace',
-          container: `${CONTAINER_ROOT_DIR}/workspace`,
+          container: '/data/workspace',
         },
         {
           host: '/elsewhere/dist',
-          container: `${CONTAINER_ROOT_DIR}/elsewhere/dist`,
+          container: '/data/elsewhere/dist',
         },
       ]),
     );
