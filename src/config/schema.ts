@@ -277,8 +277,10 @@ export const RenderModeLocalObject = v.object({
 export const RenderMode = v.union([
   v.literal('local'),
   v.literal('docker'),
-  RenderModeDockerObject,
-  RenderModeLocalObject,
+  v.variant('mode', [
+    RenderModeDockerObject,
+    RenderModeLocalObject,
+  ]),
 ]);
 export type RenderMode = v.InferInput<typeof RenderMode>;
 
