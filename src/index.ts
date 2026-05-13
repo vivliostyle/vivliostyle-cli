@@ -21,10 +21,10 @@ export type {
 export type { TemplateVariable } from './create-template.js';
 export { createVitePlugin } from './vite-adapter.js';
 export {
+  createDefaultWslMirroredRenderMode,
+  createDefaultWslNatRenderMode,
+  createWslPathTransformer,
   getWslHostIp,
-  wslMirroredRenderMode,
-  wslNatRenderMode,
-  wslPathTransformer,
 } from './wsl.js';
 /** @hidden */
 export type PublicationManifest = _PublicationManifest;

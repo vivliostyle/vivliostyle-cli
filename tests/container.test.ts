@@ -187,14 +187,14 @@ describe('buildPDFWithContainer: HTTP source URL (server-startup path)', () => {
   // the docker0 gateway, which here is the WSL VM) and -v paths translated
   // to /mnt/<drive>/.
   it('produces WSL+Win hybrid-ready args when renderMode.hostGateway and pathTransformer are both set', async () => {
-    const { wslPathTransformer } = await import('../src/wsl.js');
+    const { createWslPathTransformer } = await import('../src/wsl.js');
     await buildPDFWithContainer({
       target: fabricateTarget({
         path: 'C:/Users/me/work/out/test.pdf',
         renderMode: {
           mode: 'docker',
           hostGateway: '172.21.112.1',
-          pathTransformer: wslPathTransformer,
+          pathTransformer: createWslPathTransformer(),
           extraRunArgs: undefined,
         },
       }),

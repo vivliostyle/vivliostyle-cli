@@ -16,17 +16,17 @@ import upath from 'upath';
  *      which upstream dockerd cannot parse. Translate them to drvfs
  *      automount form (`/mnt/c/Users/...`) via `renderMode.pathTransformer`.
  *
- * `wslNatRenderMode()` and `wslMirroredRenderMode()` return the settings
- * that work for each WSL networking mode. Spread the result into a
- * `renderMode` literal at the use site:
+ * `createDefaultWslNatRenderMode()` and `createDefaultWslMirroredRenderMode()`
+ * return the settings that work for each WSL networking mode. Spread the
+ * result into a `renderMode` literal at the use site:
  *
  * ```ts
- * import { wslNatRenderMode } from '@vivliostyle/cli';
+ * import { createDefaultWslNatRenderMode } from '@vivliostyle/cli';
  * export default {
  *   output: [{
  *     path: 'output.pdf',
  *     renderMode: process.platform === 'win32'
- *       ? { mode: 'docker', ...wslNatRenderMode() }
+ *       ? { mode: 'docker', ...createDefaultWslNatRenderMode() }
  *       : 'docker',
  *   }],
  * };
@@ -39,9 +39,9 @@ import upath from 'upath';
  * to limit the change to the current session.
  *
  * --- NAT mode (`networkingMode=nat`, the WSL default) ---
- * Use `wslNatRenderMode()`. The WSL VM has its own subnet; its eth0 default
- * gateway points at the Windows host, and `getWslHostIp()` resolves that IP
- * at config-evaluation time.
+ * Use `createDefaultWslNatRenderMode()`. The WSL VM has its own subnet; its
+ * eth0 default gateway points at the Windows host, and `getWslHostIp()`
+ * resolves that IP at config-evaluation time.
  *
  * Allow inbound on the `vEthernet (WSL)` interface from an elevated
  * PowerShell:
@@ -57,7 +57,7 @@ import upath from 'upath';
  * `Get-NetIPAddress -AddressFamily IPv4`.
  *
  * --- Mirrored mode (`networkingMode=mirrored`) ---
- * Use `wslMirroredRenderMode()`. The WSL VM shares Windows network
+ * Use `createDefaultWslMirroredRenderMode()`. The WSL VM shares Windows network
  * interfaces, so the WSL TCP stack intercepts the shared IPs and a
  * default-bridged container has no IP it can use to reach Windows. The
  * preset works around this by putting the container in the WSL VM netns
@@ -76,12 +76,38 @@ import upath from 'upath';
  * (`c_wslFirewallVmCreatorId` in microsoft/WSL).
  */
 
+export interface WslPathTransformerOptions {
+  /**
+   * The WSL automount root directory — i.e. the value of `automount.root`
+   * in the target distro's `/etc/wsl.conf`. `/mnt/` (the WSL default, used
+   * by Ubuntu and every other distro out of the box) means `C:` is mounted
+   * at `/mnt/c/`. Set this if the target distro has changed `automount.root`
+   * (e.g. `root = /` mounts `C:` at `/c/`) or if you have a custom value
+   * like `/windir/`. Trailing slash is optional.
+   *
+   * Note: `automount.root` is a WSL-level (DrvFs) setting, not a distro
+   * convention; the default is identical across Ubuntu, Debian, Alpine,
+   * Arch, openSUSE, etc.
+   */
+  automountRoot?: string;
+}
+
 /**
- * Translate a Windows drive-letter absolute path to its WSL drvfs automount
- * counterpart (`/mnt/<drive>/...`). Useful as `renderMode.pathTransformer`
- * when the docker daemon is upstream moby running inside a WSL distro.
+ * Build a `renderMode.pathTransformer` that translates Windows drive-letter
+ * absolute paths to their WSL drvfs automount counterpart (default
+ * `/mnt/<drive>/...`). Useful when the docker daemon is upstream moby
+ * running inside a WSL distro.
  *
- * Operating contract:
+ * Example:
+ * ```ts
+ * renderMode: {
+ *   mode: 'docker',
+ *   pathTransformer: createWslPathTransformer(),
+ *   // ...
+ * }
+ * ```
+ *
+ * Contract of the returned transformer:
  *   The input is expected to be an absolute path produced by `upath.resolve()`
  *   (the canonical resolver used in `src/config/resolve.ts` for `workspaceDir`,
  *   `target.path`, etc.). Under that contract the input is one of:
@@ -91,22 +117,33 @@ import upath from 'upath';
  *   Drive-letter + backslash (`C:\Users\foo`) is handled defensively for paths
  *   that bypass `upath`. Anything else (relative paths, UNC `\\server\share\...`,
  *   empty input) violates the contract and throws.
+ *
+ * Pass `{ automountRoot }` if the target WSL distro has changed
+ * `automount.root` in `/etc/wsl.conf` (see {@link WslPathTransformerOptions}).
+ * Override does not apply to POSIX inputs; those pass through unchanged.
  */
-export function wslPathTransformer(hostPath: string): string {
-  const { root } = path.win32.parse(hostPath);
+export function createWslPathTransformer({
+  automountRoot = '/mnt/',
+}: WslPathTransformerOptions = {}): (hostPath: string) => string {
+  const base = automountRoot.endsWith('/')
+    ? automountRoot
+    : `${automountRoot}/`;
+  return (hostPath) => {
+    const { root } = path.win32.parse(hostPath);
 
-  if (root === '/') return hostPath;
+    if (root === '/') return hostPath;
 
-  if (root.length === 3 && root[1] === ':') {
-    return `/mnt/${root[0].toLowerCase()}/${upath.toUnix(hostPath.slice(root.length))}`;
-  }
+    if (root.length === 3 && root[1] === ':') {
+      return `${base}${root[0].toLowerCase()}/${upath.toUnix(hostPath.slice(root.length))}`;
+    }
 
-  throw new Error(
-    `wslPathTransformer: expected absolute path from upath.resolve(), ` +
-      `got ${JSON.stringify(hostPath)} (parsed root: ${JSON.stringify(root)}). ` +
-      `UNC, relative, and non-standard paths are out of scope; supply a custom ` +
-      `\`renderMode.pathTransformer\` to handle them.`,
-  );
+    throw new Error(
+      `createWslPathTransformer: expected absolute path from upath.resolve(), ` +
+        `got ${JSON.stringify(hostPath)} (parsed root: ${JSON.stringify(root)}). ` +
+        `UNC, relative, and non-standard paths are out of scope; supply a custom ` +
+        `\`renderMode.pathTransformer\` to handle them.`,
+    );
+  };
 }
 
 /**
@@ -130,38 +167,48 @@ export function getWslHostIp(): string {
 }
 
 /**
- * `renderMode` fields (without `mode`) for the WSL hybrid + NAT networking
- * case. Spread into a `renderMode` literal:
+ * Build the conventional default `renderMode` fields (without `mode`) for
+ * the WSL hybrid + NAT networking case. Spread into a `renderMode` literal:
  *
  * ```ts
- * renderMode: { mode: 'docker', ...wslNatRenderMode() }
+ * renderMode: { mode: 'docker', ...createDefaultWslNatRenderMode() }
  * ```
  *
- * It's a function so `getWslHostIp()` runs at the call site; the WSL default
+ * `options` is forwarded to {@link createWslPathTransformer}; pass
+ * `{ automountRoot }` if the target WSL distro has changed `automount.root`
+ * in `/etc/wsl.conf`.
+ *
+ * It's a factory so `getWslHostIp()` runs at the call site; the WSL default
  * gateway can change across VM restarts.
  */
-export function wslNatRenderMode() {
+export function createDefaultWslNatRenderMode(
+  options: WslPathTransformerOptions = {},
+) {
   return {
     hostGateway: getWslHostIp(),
-    pathTransformer: wslPathTransformer,
+    pathTransformer: createWslPathTransformer(options),
   };
 }
 
 /**
- * `renderMode` fields (without `mode`) for the WSL hybrid + mirrored
- * networking case. Spread into a `renderMode` literal:
+ * Build the conventional default `renderMode` fields (without `mode`) for
+ * the WSL hybrid + mirrored networking case. Spread into a `renderMode`
+ * literal:
  *
  * ```ts
- * renderMode: { mode: 'docker', ...wslMirroredRenderMode() }
+ * renderMode: { mode: 'docker', ...createDefaultWslMirroredRenderMode() }
  * ```
  *
- * The values are static; this is a function only to mirror
- * `wslNatRenderMode`'s shape.
+ * `options` is forwarded to {@link createWslPathTransformer}; pass
+ * `{ automountRoot }` if the target WSL distro has changed `automount.root`
+ * in `/etc/wsl.conf`.
  */
-export function wslMirroredRenderMode() {
+export function createDefaultWslMirroredRenderMode(
+  options: WslPathTransformerOptions = {},
+) {
   return {
     hostGateway: '127.0.0.1' as const,
-    pathTransformer: wslPathTransformer,
+    pathTransformer: createWslPathTransformer(options),
     extraRunArgs: ['--network=host'] as const,
   };
 }

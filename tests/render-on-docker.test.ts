@@ -73,8 +73,8 @@ describe.skipIf(!image)(
 describe.skipIf(!image || !enableHybridNat)(
   'render-mode docker (Win + WSL hybrid, networkingMode=nat)',
   () => {
-    it('renders via { mode: "docker", ...wslNatRenderMode() }', async () => {
-      const { wslNatRenderMode } = await import('../src/wsl.js');
+    it('renders via { mode: "docker", ...createDefaultWslNatRenderMode() }', async () => {
+      const { createDefaultWslNatRenderMode } = await import('../src/wsl.js');
       await runCommand(
         [
           'build',
@@ -92,7 +92,10 @@ describe.skipIf(!image || !enableHybridNat)(
             output: [
               {
                 path: '.vs-pdf/out-wsl-nat.pdf',
-                renderMode: { mode: 'docker', ...wslNatRenderMode() },
+                renderMode: {
+                  mode: 'docker',
+                  ...createDefaultWslNatRenderMode(),
+                },
               },
             ],
           },
@@ -116,8 +119,10 @@ describe.skipIf(!image || !enableHybridNat)(
 describe.skipIf(!image || !enableHybridMirrored)(
   'render-mode docker (Win + WSL hybrid, networkingMode=mirrored)',
   () => {
-    it('renders via { mode: "docker", ...wslMirroredRenderMode() }', async () => {
-      const { wslMirroredRenderMode } = await import('../src/wsl.js');
+    it('renders via { mode: "docker", ...createDefaultWslMirroredRenderMode() }', async () => {
+      const { createDefaultWslMirroredRenderMode } = await import(
+        '../src/wsl.js'
+      );
       await runCommand(
         [
           'build',
@@ -135,7 +140,10 @@ describe.skipIf(!image || !enableHybridMirrored)(
             output: [
               {
                 path: '.vs-pdf/out-wsl-mirrored.pdf',
-                renderMode: { mode: 'docker', ...wslMirroredRenderMode() },
+                renderMode: {
+                  mode: 'docker',
+                  ...createDefaultWslMirroredRenderMode(),
+                },
               },
             ],
           },
