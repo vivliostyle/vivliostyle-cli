@@ -72,7 +72,7 @@ export async function runContainer({
   env?: [string, string][];
   workdir?: string;
   hostGateway?: string;
-  extraRunArgs?: string[];
+  extraRunArgs?: readonly string[];
 }) {
   const { default: commandExists } = await importNodeModule('command-exists');
   if (!(await commandExists('docker'))) {

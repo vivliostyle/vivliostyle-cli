@@ -255,7 +255,7 @@ export const RenderModeDockerObject = v.pipe(
     ),
     extraRunArgs: v.optional(
       v.pipe(
-        v.array(ValidString),
+        v.array(ValidString) as v.GenericSchema<readonly string[] | string[]>,
         v.description($`
           Additional arguments inserted between \`--rm\` and the image name in
           \`docker run\`. Used for WSL mirrored mode (\`['--network=host']\`),

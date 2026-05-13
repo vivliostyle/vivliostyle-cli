@@ -281,7 +281,7 @@ export type ResolvedRenderMode =
       mode: 'docker';
       hostGateway?: string | undefined;
       pathTransformer?: ((hostPath: string) => string) | undefined;
-      extraRunArgs?: string[] | undefined;
+      extraRunArgs?: readonly string[] | undefined;
     }
   | { mode: 'local' };
 
