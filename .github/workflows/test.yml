@@ -33,6 +33,149 @@ jobs:
       - run: pnpm install
       - run: pnpm build:cli
       - run: pnpm test
+  # Runs render-on-docker.test.ts against a locally-built CLI image on Linux,
+  # where the docker daemon is native (no Docker Desktop, no WSL).
+  render-on-docker-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm build:cli
+      - name: Output package version
+        id: package
+        run: echo "version=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+      - name: Output browser version
+        id: browser
+        run: |
+          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/constants.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
+          echo "browser=chrome@$BROWSER_VERSION" >> "$GITHUB_OUTPUT"
+      - name: Build vivliostyle/cli image
+        run: |
+          docker build -t vivliostyle/cli:ci \
+            --build-arg VS_CLI_VERSION=${{ steps.package.outputs.version }} \
+            --build-arg BROWSER=${{ steps.browser.outputs.browser }} \
+            .
+      - name: Run render-on-docker tests
+        env:
+          VIVLIOSTYLE_TEST_IMAGE: vivliostyle/cli:ci
+        run: npx vitest run tests/render-on-docker.test.ts
+
+  # Runs render-on-docker.test.ts in the Win+WSL hybrid NAT configuration:
+  # Node runs on Windows; dockerd runs inside a WSL Ubuntu distro; docker.exe
+  # on Windows is pointed at the WSL daemon via DOCKER_HOST. This is the
+  # configuration that `createDefaultWslNatRenderMode()` is designed for.
+  #
+  # The mirrored networking mode (`createDefaultWslMirroredRenderMode()`) is
+  # NOT covered here — see u1f992-temp/comment.md for why.
+  render-on-docker-wsl-nat:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm build:cli
+
+      # Vampire/setup-wsl handles `wsl --install`, distro download, and
+      # default-user provisioning (which `wsl --install -d` would otherwise
+      # prompt for interactively).
+      - name: Set up WSL with Ubuntu
+        uses: Vampire/setup-wsl@v3
+        with:
+          distribution: Ubuntu-24.04
+          set-as-default: 'true'
+
+      - name: Install Docker Engine inside WSL
+        shell: wsl-bash {0}
+        run: |
+          set -eux
+          curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+          sudo sh /tmp/get-docker.sh
+          # Make dockerd listen on TCP so Windows-side docker.exe can reach
+          # it. 0.0.0.0:2375 is unauthenticated; acceptable for a one-shot
+          # CI VM but never for a real host.
+          sudo mkdir -p /etc/docker
+          echo '{"hosts":["unix:///var/run/docker.sock","tcp://0.0.0.0:2375"]}' | sudo tee /etc/docker/daemon.json
+          # WSL doesn't run systemd by default; start dockerd directly. The
+          # `-H` flags on the command line conflict with daemon.json hosts,
+          # so override via the systemd-style override-less direct invocation.
+          sudo nohup dockerd > /tmp/dockerd.log 2>&1 &
+          # Wait for the socket to come up
+          for i in $(seq 1 30); do
+            if sudo docker info > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          sudo docker info
+
+      - name: Output package version
+        id: package
+        shell: bash
+        run: echo "version=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+      - name: Output browser version
+        id: browser
+        shell: bash
+        run: |
+          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/constants.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
+          echo "browser=chrome@$BROWSER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build vivliostyle/cli image inside WSL
+        shell: wsl-bash {0}
+        env:
+          VS_CLI_VERSION: ${{ steps.package.outputs.version }}
+          BROWSER: ${{ steps.browser.outputs.browser }}
+        run: |
+          set -eux
+          # The runner workspace is at /mnt/c/...; building from drvfs is
+          # very slow (small-file I/O over 9P). Copy to the WSL ext4 fs.
+          cp -r "$GITHUB_WORKSPACE" /tmp/repo
+          cd /tmp/repo
+          sudo docker build -t vivliostyle/cli:ci \
+            --build-arg VS_CLI_VERSION="$VS_CLI_VERSION" \
+            --build-arg BROWSER="$BROWSER" \
+            .
+
+      - name: Allow inbound on vEthernet (WSL) interface
+        shell: pwsh
+        run: |
+          # The WSL VM eth0 default gateway points at this Windows interface;
+          # Defender Firewall blocks inbound by default, which prevents the
+          # container from reaching the host Vite. Loosen for this run only.
+          $iface = Get-NetIPAddress -AddressFamily IPv4 |
+            Where-Object { $_.InterfaceAlias -like 'vEthernet (WSL*' } |
+            Select-Object -First 1
+          if (-not $iface) { throw 'No vEthernet (WSL*) interface found.' }
+          New-NetFirewallRule -DisplayName 'Vivliostyle CI: WSL inbound' `
+            -Direction Inbound `
+            -InterfaceAlias $iface.InterfaceAlias `
+            -Protocol TCP -Action Allow
+
+      - name: Run render-on-docker WSL hybrid NAT test
+        shell: pwsh
+        env:
+          VIVLIOSTYLE_TEST_IMAGE: vivliostyle/cli:ci
+          VIVLIOSTYLE_TEST_WSL_HYBRID_NAT: '1'
+        run: |
+          # Resolve WSL VM IP and point Windows-side docker.exe (pre-installed
+          # via Docker Desktop) at the in-WSL dockerd's TCP listener.
+          $wslIp = (wsl -- hostname -I).Trim().Split(' ')[0]
+          $env:DOCKER_HOST = "tcp://${wslIp}:2375"
+          docker version
+          npx vitest run tests/render-on-docker.test.ts
+
   build-and-push-image:
     runs-on: ubuntu-latest
     services:
