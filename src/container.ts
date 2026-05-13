@@ -90,6 +90,10 @@ export async function runContainer({
     );
   }
 
+  // Collect lines so we can surface the actual container output if the
+  // process exits non-zero (tinyexec's thrown error only contains exit
+  // status + spawn args, and Logger.log may be silenced by log level).
+  const collectedOutput: string[] = [];
   try {
     using _ = Logger.suspendLogging('Launching docker container');
     const args = [
@@ -126,11 +130,15 @@ export async function runContainer({
     } else {
       for await (const line of proc) {
         Logger.log(line);
+        collectedOutput.push(line);
       }
     }
   } catch (error) {
+    const tail = collectedOutput.slice(-50).join('\n');
     throw new Error(
-      'An error occurred on the running container. Please see logs above.',
+      `An error occurred on the running container.${
+        tail ? `\nLast container output:\n${tail}` : ''
+      }`,
       { cause: error },
     );
   }
