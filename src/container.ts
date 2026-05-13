@@ -131,6 +131,7 @@ export async function runContainer({
   } catch (error) {
     throw new Error(
       'An error occurred on the running container. Please see logs above.',
+      { cause: error },
     );
   }
 }
