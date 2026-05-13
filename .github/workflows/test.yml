@@ -158,13 +158,19 @@ jobs:
       - name: Build vivliostyle/cli image inside WSL
         shell: wsl-bash {0}
         env:
+          # GitHub Actions injects environment variables (GITHUB_WORKSPACE etc.)
+          # into the Windows-side shell only; they do not propagate into the
+          # wsl-bash wrapper. Re-export the Windows path explicitly so we can
+          # translate it to a WSL path with wslpath below.
+          WORKSPACE_WIN: ${{ github.workspace }}
           VS_CLI_VERSION: ${{ steps.package.outputs.version }}
           BROWSER: ${{ steps.browser.outputs.browser }}
         run: |
           set -eux
-          # The runner workspace is at /mnt/c/...; building from drvfs is
+          # The runner workspace is at /mnt/d/...; building from drvfs is
           # very slow (small-file I/O over 9P). Copy to the WSL ext4 fs.
-          cp -r "$GITHUB_WORKSPACE" /tmp/repo
+          WORKSPACE=$(wslpath -u "$WORKSPACE_WIN")
+          cp -r "$WORKSPACE" /tmp/repo
           cd /tmp/repo
           sudo docker build -t vivliostyle/cli:ci \
             --build-arg VS_CLI_VERSION="$VS_CLI_VERSION" \
