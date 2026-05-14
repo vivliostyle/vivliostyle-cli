@@ -36,6 +36,7 @@ async function buildConfigDocs(): Promise<string> {
     | v.ObjectSchema<v.ObjectEntries, any>
     | v.LooseObjectSchema<v.ObjectEntries, any>
     | v.UnionSchema<v.UnionOptions, any>
+    | v.VariantSchema<string, v.VariantOptions<string>, any>
     | v.IntersectSchema<v.IntersectOptions, any>
     | v.OptionalSchema<any, any>
     | v.NonOptionalSchemaAsync<any, any>
@@ -113,7 +114,11 @@ async function buildConfigDocs(): Promise<string> {
         )
         .join('; ')}}`;
       properties = { ...schema.entries };
-    } else if (v.isOfType('union', schema) || v.isOfType('intersect', schema)) {
+    } else if (
+      v.isOfType('union', schema) ||
+      v.isOfType('variant', schema) ||
+      v.isOfType('intersect', schema)
+    ) {
       const out = await [...schema.options].reduce(
         (acc, option) =>
           acc.then(async (acc) => [...acc, await traverse(option)]),
@@ -126,24 +131,44 @@ async function buildConfigDocs(): Promise<string> {
           /^{.+}$/g.test(getSchema(option)[definition] ?? ''),
         )
       ) {
-        // Merge plain object intersections
-        schema[definition] = `{${schema.options
-          .map((option) =>
-            (getSchema(option)[definition] ?? '').replace(/^{(.+)}$/, '$1'),
-          )
-          .join(';')}}`;
-        properties = [...schema.options].reduce(
-          (acc, option) => ({
-            ...acc,
-            ...(option as v.ObjectSchema<v.ObjectEntries, any>).entries,
-          }),
+        // Merge plain object intersections, recursing through nested
+        // intersects so all leaf entries contribute to `properties`
+        // (later occurrences of the same key override earlier ones, just
+        // as TypeScript's intersection semantics would).
+        const collectEntries = (
+          s: v.BaseSchema<any, any, any>,
+        ): v.ObjectEntries => {
+          const inner = getSchema(s);
+          if (
+            v.isOfType('object', inner) ||
+            v.isOfType('loose_object', inner)
+          ) {
+            return { ...inner.entries };
+          }
+          if (v.isOfType('intersect', inner)) {
+            return [...inner.options].reduce(
+              (acc, option) => ({ ...acc, ...collectEntries(option) }),
+              {} as v.ObjectEntries,
+            );
+          }
+          return {};
+        };
+        const merged = [...schema.options].reduce(
+          (acc, option) => ({ ...acc, ...collectEntries(option) }),
           {} as v.ObjectEntries,
         );
+        properties = merged;
+        schema[definition] = `{${Object.entries<any>(merged)
+          .map(
+            ([k, value]) =>
+              `${v.isOfType('optional', value) ? `${k}?` : k}: ${getSchema(value)[definition] || 'unknown'}`,
+          )
+          .join('; ')}}`;
       } else {
         schema[definition] = schema.options
           .map((option) => getSchema(option)[definition])
           .filter(Boolean)
-          .join(schema.type === 'union' ? ' | ' : ' & ');
+          .join(schema.type === 'intersect' ? ' & ' : ' | ');
       }
     } else if (
       v.isOfType('optional', schema) ||
