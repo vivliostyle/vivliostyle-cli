@@ -132,9 +132,7 @@ async function buildConfigDocs(): Promise<string> {
         )
       ) {
         // Merge plain object intersections, recursing through nested
-        // intersects so all leaf entries contribute to `properties`
-        // (later occurrences of the same key override earlier ones, just
-        // as TypeScript's intersection semantics would).
+        // intersects so all leaf entries contribute to `properties`.
         const collectEntries = (
           s: v.BaseSchema<any, any, any>,
         ): v.ObjectEntries => {
