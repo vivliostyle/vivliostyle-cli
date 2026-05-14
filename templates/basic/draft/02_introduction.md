@@ -19,7 +19,7 @@ Vivliostyle CLI offers several advantages for digital publishing:
 Creating a new publication project is simple. Run one of the following commands:
 
 ```sh
-npm create book
+npm create book@latest
 ```
 
 The interactive setup wizard will guide you through:

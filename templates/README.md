@@ -19,7 +19,7 @@ You can use templates provided by the community or your own templates by using t
 Templates are specified in the format `[provider]:repo[/subpath][#ref]`.
 
 ```sh
-npm create book -- --template gh:org/repo/templates/awesome-template
+npm create book@latest -- --template gh:org/repo/templates/awesome-template
 ```
 
 For details on referencing templates, see the [giget](https://github.com/unjs/giget#readme) documentation.
@@ -29,5 +29,5 @@ For details on referencing templates, see the [giget](https://github.com/unjs/gi
 You can also specify a local directory with the `--template` option. In this case, the local files will be copied.
 
 ```sh
-npm create book -- --template ./my-custom-template
+npm create book@latest -- --template ./my-custom-template
 ```

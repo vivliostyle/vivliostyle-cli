@@ -8,12 +8,12 @@
 
 [![npm badge](https://flat.badgen.net/npm/v/create-book)](https://npmjs.com/package/create-book) [![downloads](https://flat.badgen.net/npm/dt/create-book)]()
 
-Just run `npm create book` and start writing your book!
+Just run `npm create book@latest` and start writing your book!
 
 ## Use
 
 ```bash
-npm create book
+npm create book@latest
 yarn create book # for yarn users
 pnpm create book # for pnpm users
 ```

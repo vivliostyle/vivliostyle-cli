@@ -7,7 +7,7 @@ Vivliostyle CLI is a command-line interface for typesetting HTML and Markdown do
 Run one of the following commands. Answer the prompts, and your project will be created automatically.
 
 ```sh
-npm create book
+npm create book@latest
 yarn create book # For yarn users
 pnpm create book # For pnpm users
 ```
@@ -24,7 +24,7 @@ Vivliostyle CLI provides several default templates: Minimal, Basic, Documentatio
 You can also use your own template. Specify the template with the `--template` option when creating a project.
 
 ```sh
-npm create book -- --template gh:org/repo/templates/awesome-template
+npm create book@latest -- --template gh:org/repo/templates/awesome-template
 ```
 
 For details on referencing templates, see the [giget](https://github.com/unjs/giget#readme) documentation.
