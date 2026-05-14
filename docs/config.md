@@ -379,7 +379,7 @@ type ArticleEntryConfig = {
   - `format`: "pdf" | "epub" | "webpub"  
     Specifies the output format.
 
-  - `renderMode`: "local" | "docker" | [RenderModeDocker](#rendermodedocker) | {mode: "local"}  
+  - `renderMode`: "local" | "docker" | "{variant(Object)}"  
     If set to `docker`, Vivliostyle will render the PDF using a Docker container. (default: `local`)
 
   - ~~`preflight`~~ _Deprecated_  
@@ -402,51 +402,12 @@ type OutputConfig = {
   renderMode?:
     | "local"
     | "docker"
-    | RenderModeDocker
-    | { mode: "local" };
+    | "{variant(Object)}";
   preflight?:
     | "press-ready"
     | "press-ready-local";
   preflightOption?: string[];
   pdfPostprocess?: PdfPostprocessConfig;
-};
-```
-
-### RenderModeDocker
-
-Object form of `renderMode: 'docker'`. Use this to tune the docker
-invocation when the daemon is not Docker Desktop (e.g. raw Linux Docker
-Engine, or dockerd inside a WSL distro).
-
-#### Properties
-
-- `RenderModeDocker`
-
-  - `mode`: "docker"
-
-  - `hostGateway`: string  
-    Override the IP that `host.docker.internal` resolves to inside the
-    container. Default: Docker's special token `host-gateway`.
-
-  - `pathTransformer`: (hostPath: string) => string  
-    Rewrite the host side of `-v` bind paths before they reach dockerd.
-    Used to translate Windows paths to WSL drvfs form, etc.
-
-  - `extraRunArgs`: (string)[]  
-    Additional arguments inserted between `--rm` and the image name in
-    `docker run`. Used for WSL mirrored mode (`['--network=host']`),
-    GPU passthrough, etc.
-
-#### Type definition
-
-```ts
-type RenderModeDocker = {
-  mode: "docker";
-  hostGateway?: string;
-  pathTransformer?: (
-    hostPath: string,
-  ) => string;
-  extraRunArgs?: string[];
 };
 ```
 

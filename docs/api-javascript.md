@@ -7,14 +7,14 @@
 
 - [`build`](#build)
 - [`create`](#create)
+- [`createDefaultWslMirroredRenderMode`](#createdefaultwslmirroredrendermode)
+- [`createDefaultWslNatRenderMode`](#createdefaultwslnatrendermode)
 - [`createVitePlugin`](#createviteplugin)
+- [`createWslPathTransformer`](#createwslpathtransformer)
 - [`defineConfig`](#defineconfig)
 - [`getWslHostIp`](#getwslhostip)
 - [`preview`](#preview)
 - [`VFM`](#vfm)
-- [`wslMirroredRenderMode`](#wslmirroredrendermode)
-- [`wslNatRenderMode`](#wslnatrendermode)
-- [`wslPathTransformer`](#wslpathtransformer)
 
 ### Interfaces
 
@@ -200,7 +200,7 @@ build({
 
 ###### renderMode?
 
-`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[] \| readonly `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -432,7 +432,7 @@ Scaffold a new Vivliostyle project.
 
 ###### renderMode?
 
-`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[] \| readonly `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -505,6 +505,75 @@ Scaffold a new Vivliostyle project.
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### createDefaultWslMirroredRenderMode()
+
+> **createDefaultWslMirroredRenderMode**(`options`): `object`
+
+Build the conventional default `renderMode` fields (without `mode`) for
+the WSL hybrid + mirrored networking case. Spread into a `renderMode`
+literal:
+
+```ts
+renderMode: { mode: 'docker', ...createDefaultWslMirroredRenderMode() }
+```
+
+`options` is forwarded to [createWslPathTransformer](#createwslpathtransformer); pass
+`{ automountRoot }` if the target WSL distro has changed `automount.root`
+in `/etc/wsl.conf`.
+
+#### Parameters
+
+##### options
+
+`WslPathTransformerOptions` = `{}`
+
+#### Returns
+
+`object`
+
+| Name | Type |
+| ------ | ------ |
+| `extraRunArgs` | readonly \[`"--network=host"`\] |
+| `hostGateway` | `"127.0.0.1"` |
+| `pathTransformer()` | (`hostPath`) => `string` |
+
+***
+
+### createDefaultWslNatRenderMode()
+
+> **createDefaultWslNatRenderMode**(`options`): `object`
+
+Build the conventional default `renderMode` fields (without `mode`) for
+the WSL hybrid + NAT networking case. Spread into a `renderMode` literal:
+
+```ts
+renderMode: { mode: 'docker', ...createDefaultWslNatRenderMode() }
+```
+
+`options` is forwarded to [createWslPathTransformer](#createwslpathtransformer); pass
+`{ automountRoot }` if the target WSL distro has changed `automount.root`
+in `/etc/wsl.conf`.
+
+It's a factory so `getWslHostIp()` runs at the call site; the WSL default
+gateway can change across VM restarts.
+
+#### Parameters
+
+##### options
+
+`WslPathTransformerOptions` = `{}`
+
+#### Returns
+
+`object`
+
+| Name | Type |
+| ------ | ------ |
+| `hostGateway` | `string` |
+| `pathTransformer()` | (`hostPath`) => `string` |
 
 ***
 
@@ -662,7 +731,7 @@ Scaffold a new Vivliostyle project.
 
 ###### renderMode?
 
-`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[] \| readonly `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -735,6 +804,61 @@ Scaffold a new Vivliostyle project.
 #### Returns
 
 `Promise`\<`Plugin`\<`any`\>[]\>
+
+***
+
+### createWslPathTransformer()
+
+> **createWslPathTransformer**(`__namedParameters`): (`hostPath`) => `string`
+
+Build a `renderMode.pathTransformer` that translates Windows drive-letter
+absolute paths to their WSL drvfs automount counterpart (default
+`/mnt/<drive>/...`). Useful when the docker daemon is upstream moby
+running inside a WSL distro.
+
+Example:
+```ts
+renderMode: {
+  mode: 'docker',
+  pathTransformer: createWslPathTransformer(),
+  // ...
+}
+```
+
+Contract of the returned transformer:
+  The input is expected to be an absolute path produced by `upath.resolve()`
+  (the canonical resolver used in `src/config/resolve.ts` for `workspaceDir`,
+  `target.path`, etc.). Under that contract the input is one of:
+    - POSIX absolute (`/foo/bar`) on Linux/macOS hosts: passed through
+    - Drive-letter + forward slash (`C:/Users/foo`) on Windows hosts: translated
+
+  Drive-letter + backslash (`C:\Users\foo`) is handled defensively for paths
+  that bypass `upath`. Anything else (relative paths, UNC `\\server\share\...`,
+  empty input) violates the contract and throws.
+
+Pass `{ automountRoot }` if the target WSL distro has changed
+`automount.root` in `/etc/wsl.conf` (see WslPathTransformerOptions).
+Override does not apply to POSIX inputs; those pass through unchanged.
+
+#### Parameters
+
+##### \_\_namedParameters
+
+`WslPathTransformerOptions` = `{}`
+
+#### Returns
+
+> (`hostPath`): `string`
+
+##### Parameters
+
+###### hostPath
+
+`string`
+
+##### Returns
+
+`string`
 
 ***
 
@@ -928,7 +1052,7 @@ Open a browser for previewing the publication.
 
 ###### renderMode?
 
-`"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
+`"docker"` \| \{ `extraRunArgs?`: `string`[] \| readonly `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} = `...`
 
 ###### sandbox?
 
@@ -1028,84 +1152,6 @@ Options.
 
 Unified processor.
 
-***
-
-### wslMirroredRenderMode()
-
-> **wslMirroredRenderMode**(): `object`
-
-`renderMode` fields (without `mode`) for the WSL hybrid + mirrored
-networking case. Spread into a `renderMode` literal:
-
-```ts
-renderMode: { mode: 'docker', ...wslMirroredRenderMode() }
-```
-
-The values are static; this is a function only to mirror
-`wslNatRenderMode`'s shape.
-
-#### Returns
-
-| Name | Type | Default value |
-| ------ | ------ | ------ |
-| `extraRunArgs` | readonly \[`"--network=host"`\] | - |
-| `hostGateway` | `"127.0.0.1"` | - |
-| `pathTransformer()` | (`hostPath`) => `string` | `wslPathTransformer` |
-
-***
-
-### wslNatRenderMode()
-
-> **wslNatRenderMode**(): `object`
-
-`renderMode` fields (without `mode`) for the WSL hybrid + NAT networking
-case. Spread into a `renderMode` literal:
-
-```ts
-renderMode: { mode: 'docker', ...wslNatRenderMode() }
-```
-
-It's a function so `getWslHostIp()` runs at the call site; the WSL default
-gateway can change across VM restarts.
-
-#### Returns
-
-| Name | Type | Default value |
-| ------ | ------ | ------ |
-| `hostGateway` | `string` | - |
-| `pathTransformer()` | (`hostPath`) => `string` | `wslPathTransformer` |
-
-***
-
-### wslPathTransformer()
-
-> **wslPathTransformer**(`hostPath`): `string`
-
-Translate a Windows drive-letter absolute path to its WSL drvfs automount
-counterpart (`/mnt/<drive>/...`). Useful as `renderMode.pathTransformer`
-when the docker daemon is upstream moby running inside a WSL distro.
-
-Operating contract:
-  The input is expected to be an absolute path produced by `upath.resolve()`
-  (the canonical resolver used in `src/config/resolve.ts` for `workspaceDir`,
-  `target.path`, etc.). Under that contract the input is one of:
-    - POSIX absolute (`/foo/bar`) on Linux/macOS hosts: passed through
-    - Drive-letter + forward slash (`C:/Users/foo`) on Windows hosts: translated
-
-  Drive-letter + backslash (`C:\Users\foo`) is handled defensively for paths
-  that bypass `upath`. Anything else (relative paths, UNC `\\server\share\...`,
-  empty input) violates the contract and throws.
-
-#### Parameters
-
-##### hostPath
-
-`string`
-
-#### Returns
-
-`string`
-
 ## Interfaces
 
 ### StringifyMarkdownOptions
@@ -1182,7 +1228,7 @@ Option for convert Markdown to a stringify (HTML).
 | <a id="proxyuser"></a> `proxyUser?` | `string` |
 | <a id="quick"></a> `quick?` | `boolean` |
 | <a id="readingprogression"></a> `readingProgression?` | `"ltr"` \| `"rtl"` |
-| <a id="rendermode"></a> `renderMode?` | `"docker"` \| \{ `extraRunArgs?`: `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} |
+| <a id="rendermode"></a> `renderMode?` | `"docker"` \| \{ `extraRunArgs?`: `string`[] \| readonly `string`[]; `hostGateway?`: `string`; `mode`: `"docker"`; `pathTransformer?`: (`hostPath`) => `string`; \} \| `"local"` \| \{ `mode`: `"local"`; \} |
 | <a id="sandbox"></a> `sandbox?` | `boolean` |
 | <a id="signal"></a> `signal?` | `AbortSignal` |
 | <a id="singledoc"></a> `singleDoc?` | `boolean` |
