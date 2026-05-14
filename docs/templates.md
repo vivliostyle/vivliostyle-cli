@@ -10,20 +10,20 @@ When creating a project, you can specify a template with the `--template` option
 vivliostyle create my-project --template gh:org/repo/templates/awesome-template
 ```
 
-Or use `npm create book` with template options:
+Or use `npm create book@latest` with template options:
 
 ```sh
-npm create book -- --template gh:org/repo/templates/awesome-template
+npm create book@latest -- --template gh:org/repo/templates/awesome-template
 ```
 
 ## Built-in Templates
 
 Vivliostyle CLI ships with the following presets:
 
-| Name | Description |
-|------|-------------|
-| `minimal` | Minimal template with a single empty Markdown file |
-| `basic` | Basic template with starter content and examples in English |
+| Name       | Description                                                  |
+| ---------- | ------------------------------------------------------------ |
+| `minimal`  | Minimal template with a single empty Markdown file           |
+| `basic`    | Basic template with starter content and examples in English  |
 | `basic-ja` | Basic template with starter content and examples in Japanese |
 
 These presets are selected interactively when running `vivliostyle create` without specifying a template, or can be specified directly:
@@ -72,21 +72,21 @@ Template files can contain [Handlebars](https://handlebarsjs.com/) expressions t
 
 ### Available Variables
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| `projectPath` | `string` | Project path |
-| `title` | `string` | Project title |
-| `author` | `string` | Author name |
-| `language` | `string` | Language code (BCP 47) |
-| `theme` | `ThemeSpecifier \| undefined` | Theme configuration |
-| `themePackage` | `object \| undefined` | Theme package metadata |
-| `themePackage.name` | `string` | Theme package name |
-| `themePackage.version` | `string` | Theme package version |
-| `cliVersion` | `string` | Vivliostyle CLI version |
-| `coreVersion` | `string` | Vivliostyle Core version |
-| `browser` | `object \| undefined` | Browser configuration |
-| `browser.type` | `string` | Browser type (e.g. `"chrome"`) |
-| `browser.tag` | `string \| undefined` | Browser tag |
+| Variable               | Type                          | Description                    |
+| ---------------------- | ----------------------------- | ------------------------------ |
+| `projectPath`          | `string`                      | Project path                   |
+| `title`                | `string`                      | Project title                  |
+| `author`               | `string`                      | Author name                    |
+| `language`             | `string`                      | Language code (BCP 47)         |
+| `theme`                | `ThemeSpecifier \| undefined` | Theme configuration            |
+| `themePackage`         | `object \| undefined`         | Theme package metadata         |
+| `themePackage.name`    | `string`                      | Theme package name             |
+| `themePackage.version` | `string`                      | Theme package version          |
+| `cliVersion`           | `string`                      | Vivliostyle CLI version        |
+| `coreVersion`          | `string`                      | Vivliostyle Core version       |
+| `browser`              | `object \| undefined`         | Browser configuration          |
+| `browser.type`         | `string`                      | Browser type (e.g. `"chrome"`) |
+| `browser.tag`          | `string \| undefined`         | Browser tag                    |
 
 When a theme package defines [custom prompts](#custom-prompts), the user's answers are also available as variables using the `name` specified in each prompt definition.
 
@@ -94,17 +94,17 @@ When a theme package defines [custom prompts](#custom-prompts), the user's answe
 
 The following Handlebars helpers are registered:
 
-| Helper | Description | Example input → output |
-|--------|-------------|------------------------|
-| `upper` | Uppercase | `my book` → `MY BOOK` |
-| `lower` | Lowercase | `My Book` → `my book` |
-| `capital` | Capital case | `my book` → `My Book` |
-| `camel` | Camel case | `my book` → `myBook` |
-| `snake` | Snake case | `my book` → `my_book` |
-| `kebab` | Kebab case | `my book` → `my-book` |
-| `proper` | Title case | `a guide to vivliostyle` → `A Guide to Vivliostyle` |
-| `lorem` | Lorem ipsum placeholder text | (no input) |
-| `json` | JSON serialization | object → JSON string |
+| Helper    | Description                  | Example input → output                              |
+| --------- | ---------------------------- | --------------------------------------------------- |
+| `upper`   | Uppercase                    | `my book` → `MY BOOK`                               |
+| `lower`   | Lowercase                    | `My Book` → `my book`                               |
+| `capital` | Capital case                 | `my book` → `My Book`                               |
+| `camel`   | Camel case                   | `my book` → `myBook`                                |
+| `snake`   | Snake case                   | `my book` → `my_book`                               |
+| `kebab`   | Kebab case                   | `my book` → `my-book`                               |
+| `proper`  | Title case                   | `a guide to vivliostyle` → `A Guide to Vivliostyle` |
+| `lorem`   | Lorem ipsum placeholder text | (no input)                                          |
+| `json`    | JSON serialization           | object → JSON string                                |
 
 ### Example: `vivliostyle.config.js`
 
@@ -190,12 +190,12 @@ A [Vivliostyle Themes](./themes-and-css.md) package can bundle one or more proje
 
 Each key in `vivliostyle.template` is a template ID. The object has the following fields:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | `string` | | Display name shown in the interactive prompt |
-| `description` | `string` | | Short description shown as a hint |
-| `source` | `string` | ✔ | Template source in giget format |
-| `prompt` | `PromptOption[]` | | Additional prompts to collect user input |
+| Field         | Type             | Required | Description                                  |
+| ------------- | ---------------- | -------- | -------------------------------------------- |
+| `name`        | `string`         |          | Display name shown in the interactive prompt |
+| `description` | `string`         |          | Short description shown as a hint            |
+| `source`      | `string`         | ✔       | Template source in giget format              |
+| `prompt`      | `PromptOption[]` |          | Additional prompts to collect user input     |
 
 The `source` field accepts the same giget format as the `--template` option.
 
@@ -307,9 +307,9 @@ The following is the simplest possible template: a single Markdown file and a co
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: "{{proper title}}",
-  author: "{{author}}",
-  entry: ["manuscript.md"],
+  title: '{{proper title}}',
+  author: '{{author}}',
+  entry: ['manuscript.md'],
 });
 ```
 
@@ -328,8 +328,8 @@ When a user runs `vivliostyle create my-book --title "My First Book" --author "J
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: "My First Book",
-  author: "Jane Doe",
-  entry: ["manuscript.md"],
+  title: 'My First Book',
+  author: 'Jane Doe',
+  entry: ['manuscript.md'],
 });
 ```

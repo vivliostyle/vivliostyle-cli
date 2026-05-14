@@ -1,5 +1,24 @@
 # @vivliostyle/cli
 
+## 10.6.0
+
+### Minor Changes
+
+- Update VFM version to 2.7.0 ([#795](https://github.com/vivliostyle/vivliostyle-cli/pull/795))
+  https://github.com/vivliostyle/vfm/releases/tag/v2.7.0
+
+- Update Vivliostyle.js to 2.42.0: CSS Nesting Support and Footnote Enhancements ([#787](https://github.com/vivliostyle/vivliostyle-cli/pull/787))
+
+### Patch Changes
+
+- Update Vivliostyle.js to 2.42.1: Bug Fixes ([#794](https://github.com/vivliostyle/vivliostyle-cli/pull/794))
+
+- Update default browser versions ([#764](https://github.com/vivliostyle/vivliostyle-cli/pull/764))
+
+  - Chrome: 148.0.7778.167
+  - Chromium: 1629633
+  - Firefox: stable_150.0.3
+
 ## 10.5.0
 
 ### Minor Changes
