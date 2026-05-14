@@ -659,71 +659,95 @@ type CoverConfig = {
 
 - `VfmConfig`
 
-  - `style`: (string)[] | string  
-    Path(s) or URL(s) to custom stylesheets.
-
-  - `partial`: boolean  
-    Output markdown fragments instead of a full document.
+  - `style`: string | (string)[]  
+    Custom stylesheet path/URL.
 
   - `title`: string  
-    Title of the document (ignored in partial mode).
+    Document title (ignored in partial mode).
 
   - `language`: string  
-    Language of the document (ignored in partial mode).
+    Document language (ignored in partial mode).
 
-  - `replace`: ({test: RegExp; match: (result: RegExpMatchArray, h: any) => Object | string})[]  
-    Handlers for replacing matched HTML strings.
+  - `editPlugins`: (plugins: BuiltinPlugins) => EditedPlugins  
+    Edit the plugin lists assembled by VFM before they are used.
 
   - `hardLineBreaks`: boolean  
-    Insert `<br>` tags at hard line breaks without requiring spaces.
-
-  - `disableFormatHtml`: boolean  
-    Disable automatic HTML formatting.
+    Add `<br>` at the position of hard line breaks, without needing spaces.
 
   - `math`: boolean  
-    Enable support for math syntax.
+    Enable math syntax.
+
+  - `partial`: boolean  
+    Output markdown fragments.
+
+  - `disableFormatHtml`: boolean  
+    Disable automatic HTML format.
 
   - `imgFigcaptionOrder`: "img-figcaption" | "figcaption-img"  
     Order of img and figcaption elements in figure.
 
   - `assignIdToFigcaption`: boolean  
-    Assign ID to figcaption instead of img/code.
+    Assign ID to figcaption instead of the `<code>` element.
 
-  - `footnote`: "pandoc" | "dpub" | "gcpm" | {mode: "pandoc" | "dpub" | "gcpm"}  
-    Footnote output mode. Default is `'pandoc'` (endnote section).
+  - `captionlessImagePolicy`: "paragraph" | "figure" | "figure-with-figcaption"  
+    How to render an image-only paragraph whose `alt` is empty.
+
+  - `footnote`: "pandoc" | "dpub" | "gcpm" | {mode: "pandoc"} | {mode: "dpub"; call?: import("hast").Properties | DpubCallFactory; body?: import("hast").Properties | DpubBodyFactory} | {mode: "gcpm"; body?: import("hast").Properties | GcpmBodyFactory; duplicatedCall?: import("hast").Properties | GcpmDuplicatedCallFactory}
+
+  - `replace`: ({test: RegExp; match: (result: RegExpMatchArray, h: typeof import("hastscript").h) => import("unist").Node | string})[]
 
 #### Type definition
 
 ```ts
 type VfmConfig = {
-  style?: string[] | string;
-  partial?: boolean;
+  style?: string | string[];
   title?: string;
   language?: string;
-  replace?: {
-    test: RegExp;
-    match: (
-      result: RegExpMatchArray,
-      h: any,
-    ) => Object | string;
-  }[];
+  editPlugins?: (
+    plugins: BuiltinPlugins,
+  ) => EditedPlugins;
   hardLineBreaks?: boolean;
-  disableFormatHtml?: boolean;
   math?: boolean;
+  partial?: boolean;
+  disableFormatHtml?: boolean;
   imgFigcaptionOrder?:
     | "img-figcaption"
     | "figcaption-img";
   assignIdToFigcaption?: boolean;
+  captionlessImagePolicy?:
+    | "paragraph"
+    | "figure"
+    | "figure-with-figcaption";
   footnote?:
     | "pandoc"
     | "dpub"
     | "gcpm"
+    | { mode: "pandoc" }
     | {
-        mode:
-          | "pandoc"
-          | "dpub"
-          | "gcpm";
+        mode: "dpub";
+        call?:
+          | import("hast").Properties
+          | DpubCallFactory;
+        body?:
+          | import("hast").Properties
+          | DpubBodyFactory;
+      }
+    | {
+        mode: "gcpm";
+        body?:
+          | import("hast").Properties
+          | GcpmBodyFactory;
+        duplicatedCall?:
+          | import("hast").Properties
+          | GcpmDuplicatedCallFactory;
       };
+  replace?: {
+    test: RegExp;
+    match: (
+      result: RegExpMatchArray,
+      h: typeof import("hastscript").h,
+    ) => import("unist").Node | string;
+  }[];
 };
 ```
 

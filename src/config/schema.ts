@@ -1,4 +1,8 @@
-import type { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
+import {
+  type Metadata,
+  type StringifyMarkdownOptions,
+  StringifyMarkdownOptionsSchema,
+} from '@vivliostyle/vfm';
 import { satisfies as semverSatisfies } from 'semver';
 import type { Processor } from 'unified';
 import upath from 'upath';
@@ -419,35 +423,6 @@ export const OutputConfig = v.pipe(
 );
 export type OutputConfig = v.InferInput<typeof OutputConfig>;
 
-// Use v.looseObject to allow unknown keys in future VFM versions
-export const VfmReplaceRule = v.looseObject({
-  test: v.instance(RegExp),
-  match: v.pipe(
-    v.function() as v.GenericSchema<
-      (result: RegExpMatchArray, h: any) => Object | string
-    >,
-    // https://github.com/fabian-hiller/valibot/issues/243
-    v.metadata({
-      typeString: '(result: RegExpMatchArray, h: any) => Object | string',
-    }),
-  ),
-});
-export type VfmReplaceRule = v.InferInput<typeof VfmReplaceRule>;
-
-export const VfmFootnoteMode = v.union([
-  v.literal('pandoc'),
-  v.literal('dpub'),
-  v.literal('gcpm'),
-]);
-export type VfmFootnoteMode = v.InferInput<typeof VfmFootnoteMode>;
-
-export const VfmFootnoteOptions = v.union([
-  VfmFootnoteMode,
-  // Use v.looseObject to allow unknown keys in future VFM versions
-  v.looseObject({ mode: VfmFootnoteMode }),
-]);
-export type VfmFootnoteOptions = v.InferInput<typeof VfmFootnoteOptions>;
-
 export const BrowserType = v.union([
   v.literal('chrome'),
   v.literal('chromium'),
@@ -626,83 +601,8 @@ export const CoverConfig = v.pipe(
 );
 export type CoverConfig = v.InferInput<typeof CoverConfig>;
 
-const VfmConfig = v.pipe(
-  v.partial(
-    // Use v.looseObject to allow unknown keys in future VFM versions
-    v.looseObject({
-      style: v.pipe(
-        v.union([v.array(ValidString), ValidString]),
-
-        v.transform((input) => [input].flat()),
-        v.description($`
-          Path(s) or URL(s) to custom stylesheets.
-        `),
-      ),
-      partial: v.pipe(
-        v.boolean(),
-        v.description($`
-          Output markdown fragments instead of a full document.
-        `),
-      ),
-      title: v.pipe(
-        ValidString,
-        v.description($`
-          Title of the document (ignored in partial mode).
-        `),
-      ),
-      language: v.pipe(
-        ValidString,
-        v.description($`
-          Language of the document (ignored in partial mode).
-        `),
-      ),
-      replace: v.pipe(
-        v.array(VfmReplaceRule),
-        v.description($`
-          Handlers for replacing matched HTML strings.
-        `),
-      ),
-      hardLineBreaks: v.pipe(
-        v.boolean(),
-        v.description($`
-          Insert \`<br>\` tags at hard line breaks without requiring spaces.
-        `),
-      ),
-      disableFormatHtml: v.pipe(
-        v.boolean(),
-        v.description($`
-          Disable automatic HTML formatting.
-        `),
-      ),
-      math: v.pipe(
-        v.boolean(),
-        v.description($`
-          Enable support for math syntax.
-        `),
-      ),
-      imgFigcaptionOrder: v.pipe(
-        v.union([v.literal('img-figcaption'), v.literal('figcaption-img')]),
-        v.description($`
-          Order of img and figcaption elements in figure.
-        `),
-      ),
-      assignIdToFigcaption: v.pipe(
-        v.boolean(),
-        v.description($`
-          Assign ID to figcaption instead of img/code.
-        `),
-      ),
-      footnote: v.pipe(
-        VfmFootnoteOptions,
-        v.description($`
-          Footnote output mode. Default is \`'pandoc'\` (endnote section).
-        `),
-      ),
-    }),
-  ),
-  v.title('VfmConfig'),
-);
-export type VfmConfig = v.InferInput<typeof VfmConfig>;
+const VfmConfig = v.pipe(StringifyMarkdownOptionsSchema, v.title('VfmConfig'));
+export type VfmConfig = StringifyMarkdownOptions;
 
 export const ServerConfig = v.pipe(
   v.partial(
