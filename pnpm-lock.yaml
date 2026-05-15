@@ -4581,11 +4581,6 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@3.3.9:
-    resolution: {integrity: sha512-SppoicMGpZvbF1l3z4x7No3OlIjP7QJvC9XR7AhZr1kL133KHnKPztkKDc+Ir4aJ/1VhTySrtKhrsycmrMQfvg==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   negotiator@1.0.0:
     resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
     engines: {node: '>= 0.6'}
@@ -4976,10 +4971,6 @@ packages:
 
   postcss@8.5.14:
     resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
-    engines: {node: ^10 || ^12 || >=14}
-
-  postcss@8.5.3:
-    resolution: {integrity: sha512-dle9A3yYxlBSrt8Fu+IpjGT8SY8hN0mlaA6GY8t0P5PjIOZemULz/E2Bnm/2dcUOena75OTNkHI76uZBNUUq3A==}
     engines: {node: ^10 || ^12 || >=14}
 
   posthtml-match-helper@2.0.3:
@@ -7304,8 +7295,8 @@ snapshots:
       hast-util-to-html: 9.0.5
       hast-util-to-text: 4.0.2
       hastscript: 9.0.1
-      postcss: 8.5.3
-      postcss-nested: 6.2.0(postcss@8.5.3)
+      postcss: 8.5.14
+      postcss-nested: 6.2.0(postcss@8.5.14)
       unist-util-visit: 5.1.0
       unist-util-visit-parents: 6.0.1
 
@@ -11335,8 +11326,6 @@ snapshots:
 
   nanoid@3.3.12: {}
 
-  nanoid@3.3.9: {}
-
   negotiator@1.0.0: {}
 
   neo-async@2.6.2: {}
@@ -11726,9 +11715,9 @@ snapshots:
       tsx: 4.19.3
       yaml: 2.8.1
 
-  postcss-nested@6.2.0(postcss@8.5.3):
+  postcss-nested@6.2.0(postcss@8.5.14):
     dependencies:
-      postcss: 8.5.3
+      postcss: 8.5.14
       postcss-selector-parser: 6.1.2
 
   postcss-selector-parser@6.1.2:
@@ -11744,12 +11733,6 @@ snapshots:
   postcss@8.5.14:
     dependencies:
       nanoid: 3.3.12
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
-
-  postcss@8.5.3:
-    dependencies:
-      nanoid: 3.3.9
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -13252,7 +13235,7 @@ snapshots:
       esbuild: 0.25.3
       fdir: 6.4.4(picomatch@4.0.4)
       picomatch: 4.0.4
-      postcss: 8.5.3
+      postcss: 8.5.14
       rollup: 4.40.0
       tinyglobby: 0.2.13
     optionalDependencies:
