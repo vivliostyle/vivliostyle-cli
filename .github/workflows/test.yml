@@ -85,8 +85,9 @@ jobs:
 
   # Runs render-on-docker.test.ts in the Win+WSL hybrid NAT configuration:
   # Node runs on Windows; dockerd runs inside a WSL Ubuntu distro; docker.exe
-  # on Windows is pointed at the WSL daemon via DOCKER_HOST. This is the
-  # configuration that `createDefaultWslNatRenderMode()` is designed for.
+  # on Windows talks to the WSL daemon through a WinSocat-bridged named pipe
+  # at `\\.\pipe\docker_engine`. This is the configuration that
+  # `createDefaultWslNatRenderMode()` is designed for.
   #
   # The mirrored networking mode (`createDefaultWslMirroredRenderMode()`) is
   # NOT covered here — see u1f992-temp/comment.md for why.
@@ -114,47 +115,19 @@ jobs:
           distribution: Ubuntu-24.04
           set-as-default: 'true'
 
-      - name: Install Docker Engine inside WSL
+      - name: Install WinSocat on Windows host
+        id: winsocat
+        shell: pwsh
+        run: ./.github/scripts/install-winsocat.ps1
+
+      - name: Install Docker Engine in WSL and bridge to Windows named pipe
         shell: wsl-bash {0}
         run: |
-          set -eux
-          curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-          sudo sh /tmp/get-docker.sh
-          # Make dockerd listen on TCP so Windows-side docker.exe can reach
-          # it. 0.0.0.0:2375 is unauthenticated; acceptable for a one-shot
-          # CI VM but never for a real host.
-          sudo mkdir -p /etc/docker
-          echo '{"hosts":["unix:///var/run/docker.sock","tcp://0.0.0.0:2375"]}' | sudo tee /etc/docker/daemon.json
-          # WSL doesn't run systemd by default; start dockerd directly. The
-          # `-H` flags on the command line conflict with daemon.json hosts,
-          # so override via the systemd-style override-less direct invocation.
-          sudo nohup dockerd > /tmp/dockerd.log 2>&1 &
-          # Wait for the socket to come up
-          for i in $(seq 1 30); do
-            if sudo docker info > /dev/null 2>&1; then break; fi
-            sleep 1
-          done
-          if ! sudo docker info > /dev/null 2>&1; then
-            echo "::group::dockerd log (/tmp/dockerd.log)"
-            sudo cat /tmp/dockerd.log || true
-            echo "::endgroup::"
-            echo "::group::process tree"
-            ps auxf 2>&1 | grep -E 'docker|containerd' || true
-            echo "::endgroup::"
-            echo "::group::docker socket presence"
-            sudo ls -la /var/run/docker.sock /run/docker.sock 2>&1 || true
-            echo "::endgroup::"
-            echo "::group::iptables alternatives state"
-            update-alternatives --display iptables 2>&1 || true
-            update-alternatives --display ip6tables 2>&1 || true
-            echo "::endgroup::"
-            echo "::group::kernel info"
-            uname -a
-            cat /proc/version
-            echo "::endgroup::"
-            exit 1
-          fi
-          sudo docker info
+          # Vampire/setup-wsl's wsl-bash does not propagate Actions `env:`
+          # and does not cd into the workspace, so resolve the script path
+          # explicitly and pass the Windows username as a positional arg.
+          bash "$(wslpath -u '${{ github.workspace }}')/.github/scripts/setup-docker-wsl.sh" \
+            '${{ steps.winsocat.outputs.winuser }}'
 
       - name: Output package version
         id: package
@@ -208,10 +181,11 @@ jobs:
           VIVLIOSTYLE_TEST_IMAGE: vivliostyle/cli:ci
           VIVLIOSTYLE_TEST_WSL_HYBRID_NAT: '1'
         run: |
-          # Resolve WSL VM IP and point Windows-side docker.exe (pre-installed
-          # via Docker Desktop) at the in-WSL dockerd's TCP listener.
-          $wslIp = (wsl -- hostname -I).Trim().Split(' ')[0]
-          $env:DOCKER_HOST = "tcp://${wslIp}:2375"
+          # docker.exe on Windows reaches in-WSL dockerd through the
+          # WinSocat-bridged named pipe at \\.\pipe\docker_engine (the
+          # default), so no DOCKER_HOST is needed. Wait for dockerd to be
+          # ready before invoking it.
+          wsl -- bash -c "until systemctl is-active --quiet docker; do sleep 0.5; done"
           docker version
           npx vitest run tests/render-on-docker.test.ts
 
