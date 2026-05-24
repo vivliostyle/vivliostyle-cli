@@ -1,5 +1,25 @@
 # @vivliostyle/cli
 
+## 11.0.0
+
+### Major Changes
+
+- Upgrade Vite to v8 and bump related dev dependencies (`vitest`, `@vitest/coverage-v8` to v4). The required Vite peer dependency is now `>=8`, and the minimum Node.js version is `^20.19.0 || >=22.12.0` to match Vite v7+ requirements. ([#799](https://github.com/vivliostyle/vivliostyle-cli/pull/799))
+
+### Minor Changes
+
+- Update Vivliostyle.js to 2.43.0: typed attr() support and bug fixes ([#809](https://github.com/vivliostyle/vivliostyle-cli/pull/809))
+
+### Patch Changes
+
+- Reuse the Valibot schemas exported from `@vivliostyle/vfm` for `vfm:` config validation, surfacing newly added options (`editPlugins`, `captionlessImagePolicy`, expanded `footnote` variants) in the documented config schema. ([#800](https://github.com/vivliostyle/vivliostyle-cli/pull/800))
+
+- Update default browser versions ([#808](https://github.com/vivliostyle/vivliostyle-cli/pull/808))
+
+  - Chrome: 149.0.7827.22
+  - Chromium: 1634600
+  - Firefox: stable_151.0.1
+
 ## 10.6.0
 
 ### Minor Changes

@@ -31,6 +31,8 @@ RUN set -x \
     ghostscript poppler-utils \
     # for Puppeteer Firefox installation
     xz-utils \
+    # for @puppeteer/browsers v3+ Chrome zip extraction
+    unzip \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* `npm config get cache`/_npx
 
 # Install fonts
