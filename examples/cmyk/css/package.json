@@ -1,0 +1,9 @@
+{
+  "//": "see: https://github.com/vivliostyle/vivliostyle-cli/issues/517#issuecomment-2381590030",
+  "name": "css",
+  "vivliostyle": {
+    "theme": {
+      "style": "style.css"
+    }
+  }
+}

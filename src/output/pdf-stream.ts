@@ -1,5 +1,12 @@
-import type { CmykMap } from '../global-viewer.js';
+import type { CMYKValue } from '../global-viewer.js';
+import type { RGBValue } from '../config/resolve.js';
 import { Logger } from '../logger.js';
+
+// Internal converter: null means no match (try next entry).
+// User-facing CmykConvertFunction never returns null (matches all colors).
+export type InternalColorConverter = (
+  rgb: RGBValue,
+) => CMYKValue | null | Promise<CMYKValue | null>;
 
 /**
  * `SRGBValue.MAX`
@@ -173,12 +180,12 @@ function formatRgbKeyForWarning(r: number, g: number, b: number): string {
 /**
  * Convert RGB color operators to CMYK in a content stream
  */
-export function convertStreamColors(
+export async function convertStreamColors(
   content: string,
-  colorMap: CmykMap,
+  converters: InternalColorConverter[],
   warnUnmapped: boolean,
   warnedColors: Set<string>,
-): string {
+): Promise<string> {
   const result: string[] = [];
   const pendingNumbers: { value: number; raw: string }[] = [];
 
@@ -203,8 +210,21 @@ export function convertStreamColors(
         const r = pendingNumbers.pop()!;
         flushPendingNumbers();
 
-        const key = formatRgbKey(r.value, g.value, b.value);
-        const cmyk = colorMap[key];
+        const rgb: RGBValue = {
+          r: Math.round(r.value * SRGB_MAX),
+          g: Math.round(g.value * SRGB_MAX),
+          b: Math.round(b.value * SRGB_MAX),
+        };
+
+        let cmyk: CMYKValue | null = null;
+        for (const fn of converters) {
+          try {
+            cmyk = await fn(rgb);
+          } catch {
+            continue;
+          }
+          if (cmyk !== null) break;
+        }
 
         if (cmyk) {
           const c = (cmyk.c / CMYK_MAX).toString();
