@@ -16,11 +16,5 @@ export default defineConfig({
       NO_COLOR: 'true',
     },
     clearMocks: true,
-    pool:
-      process.platform === 'linux'
-        ? // In Linux, we need to use forks mode to avoid segfaults
-          // https://vitest.dev/guide/common-errors.html#segfaults-and-native-code-errors
-          'forks'
-        : 'threads',
   },
 });
