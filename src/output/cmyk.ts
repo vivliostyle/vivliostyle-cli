@@ -1,4 +1,5 @@
 import type * as mupdfType from 'mupdf';
+
 import type { CmykMap } from '../global-viewer.js';
 import { importNodeModule } from '../node-modules.js';
 import { convertStreamColors } from './pdf-stream.js';

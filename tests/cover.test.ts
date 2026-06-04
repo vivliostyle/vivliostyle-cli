@@ -1,13 +1,12 @@
 import './mocks/fs.js';
 import './mocks/vivliostyle__jsdom.js';
-
 import { JSDOM } from '@vivliostyle/jsdom';
 import { vol } from 'memfs';
-import { format } from 'prettier';
 import { assert, beforeEach, expect, it } from 'vitest';
+
 import { isWebPubConfig } from '../src/config/resolve.js';
 import { transformManuscript } from '../src/processor/compile.js';
-import { getTaskConfig, runCommand } from './command-util';
+import { formatHtml, getTaskConfig, runCommand } from './command-util.js';
 
 beforeEach(() => vol.reset());
 
@@ -32,12 +31,7 @@ it('generateCoverHtml', async () => {
   assert(isWebPubConfig(config));
   const content = await transformManuscript(config.entries[0], config);
   assert(content);
-  expect(
-    await format(content, {
-      parser: 'html',
-      htmlWhitespaceSensitivity: 'strict',
-    }),
-  ).toMatchSnapshot('cover.html');
+  expect(await formatHtml(content)).toMatchSnapshot('cover.html');
 });
 
 it('supports cover config', async () => {

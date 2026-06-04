@@ -1,9 +1,11 @@
-import debug from 'debug';
 import { Console } from 'node:console';
 import type { Readable, Writable } from 'node:stream';
 import type { WriteStream } from 'node:tty';
+
+import debug from 'debug';
 import yoctoSpinner, { type Spinner } from 'yocto-spinner';
 import { blueBright, greenBright, redBright, yellowBright } from 'yoctocolors';
+
 import { isInContainer, registerExitHandler } from './util.js';
 
 export const isUnicodeSupported =
@@ -84,13 +86,13 @@ export class Logger {
   static get isInteractive() {
     return Boolean(
       !this.#customLogger &&
-        (this.#stderr as WriteStream).isTTY &&
-        process.env.TERM !== 'dumb' &&
-        !('CI' in process.env) &&
-        !import.meta.env?.VITEST &&
-        !debug.enabled('vs-cli') &&
-        // Prevent stream output in docker container so that not to spawn process
-        !isInContainer(),
+      (this.#stderr as WriteStream).isTTY &&
+      process.env.TERM !== 'dumb' &&
+      !('CI' in process.env) &&
+      !import.meta.env?.VITEST &&
+      !debug.enabled('vs-cli') &&
+      // Prevent stream output in docker container so that not to spawn process
+      !isInContainer(),
     );
   }
 
@@ -166,9 +168,11 @@ export class Logger {
       if (this.#logPrefix) {
         message = `${this.#logPrefix} ${message}`;
       }
-      this.#logLevel >= 3
-        ? this.debug(message)
-        : this.#console[logMethod](message);
+      if (this.#logLevel >= 3) {
+        this.debug(message);
+      } else {
+        this.#console[logMethod](message);
+      }
       return;
     }
     this.logUpdate(this.#spinner.text);

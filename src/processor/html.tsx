@@ -1,14 +1,16 @@
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import type { VirtualConsole } from '@vivliostyle/jsdom';
 import jsdom, {
   type AbortablePromise,
   ResourceLoader as BaseResourceLoader,
   JSDOM,
-  VirtualConsole,
 } from '@vivliostyle/jsdom';
 import DOMPurify, { type WindowLike } from 'dompurify';
 import { toHtml } from 'hast-util-to-html';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
+
 import type { ManuscriptEntry } from '../config/resolve.js';
 import type {
   StructuredDocument,
@@ -95,12 +97,12 @@ export class ResourceLoader extends BaseResourceLoader {
         : new URL('.', rootUrl).href;
 
     const normalizeToLocalPath = (urlString: string, mimeType?: string) => {
-      let url = new URL(urlString);
+      const url = new URL(urlString);
       url.hash = '';
       if (mimeType === 'text/html' && !/\.html?$/.test(url.pathname)) {
         url.pathname = `${url.pathname.replace(/\/$/, '')}/index.html`;
       }
-      let relTarget = upath.relative(rootHref, url.href);
+      const relTarget = upath.relative(rootHref, url.href);
       return decodeURI(relTarget);
     };
 
@@ -226,7 +228,7 @@ export async function getStructuredSectionFromHtml(
       // TODO: Make customizable
       return !el.matches('blockquote *');
     })
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       const position = a.compareDocumentPosition(b);
       return position & 2 /* DOCUMENT_POSITION_PRECEDING */
         ? 1
@@ -733,7 +735,7 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
   };
 
   let heading: HTMLElement | undefined;
-  for (let child of Array.from(tocRoot.children)) {
+  for (const child of Array.from(tocRoot.children)) {
     if (child.tagName === 'OL') {
       const children = Array.from(child.children).reduce<
         TocResourceTreeItem[] | null
@@ -777,7 +779,7 @@ export function parsePageListDocument(
   const pageListRoot = docPageListEl.item(0);
 
   let heading: HTMLElement | undefined;
-  for (let child of Array.from(pageListRoot.children)) {
+  for (const child of Array.from(pageListRoot.children)) {
     if (child.tagName === 'OL') {
       const children = Array.from(child.children).reduce<
         PageListResourceTreeItem[] | null

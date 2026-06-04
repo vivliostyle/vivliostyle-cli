@@ -40,15 +40,21 @@ function* tokenize(content: string): Generator<Token> {
 
   while (i < len) {
     // Skip whitespace
-    while (i < len && /\s/.test(content[i])) i++;
-    if (i >= len) break;
+    while (i < len && /\s/.test(content[i])) {
+      i++;
+    }
+    if (i >= len) {
+      break;
+    }
 
     const c = content[i];
 
     // Comment - skip to end of line
     if (c === '%') {
       const start = i;
-      while (i < len && content[i] !== '\n' && content[i] !== '\r') i++;
+      while (i < len && content[i] !== '\n' && content[i] !== '\r') {
+        i++;
+      }
       yield { type: 'other', raw: content.slice(start, i) };
       continue;
     }
@@ -63,8 +69,11 @@ function* tokenize(content: string): Generator<Token> {
           str += content[i] + content[i + 1];
           i += 2;
         } else {
-          if (content[i] === '(') depth++;
-          else if (content[i] === ')') depth--;
+          if (content[i] === '(') {
+            depth++;
+          } else if (content[i] === ')') {
+            depth--;
+          }
           str += content[i];
           i++;
         }
@@ -112,7 +121,7 @@ function* tokenize(content: string): Generator<Token> {
     if (c === '/') {
       let name = '/';
       i++;
-      while (i < len && /[^\s\[\]()<>{}/%]/.test(content[i])) {
+      while (i < len && /[^\s[\]()<>{}/%]/.test(content[i])) {
         name += content[i];
         i++;
       }
@@ -122,7 +131,7 @@ function* tokenize(content: string): Generator<Token> {
 
     // Number or operator
     let token = '';
-    while (i < len && /[^\s\[\]()<>{}/%]/.test(content[i])) {
+    while (i < len && /[^\s[\]()<>{}/%]/.test(content[i])) {
       token += content[i];
       i++;
     }

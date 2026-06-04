@@ -1,4 +1,4 @@
-import { VivliostyleConfigSchema } from './schema.js';
+import type { VivliostyleConfigSchema } from './schema.js';
 
 /**
  * Define the configuration for Vivliostyle CLI.

@@ -7,6 +7,7 @@ import { satisfies as semverSatisfies } from 'semver';
 import type { Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
+
 import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';

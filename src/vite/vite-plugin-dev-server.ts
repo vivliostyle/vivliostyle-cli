@@ -1,10 +1,11 @@
+import { pathToFileURL } from 'node:url';
+
 import type { NextHandleFunction } from 'connect';
 import escapeRe from 'escape-string-regexp';
-import fs from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import sirv, { type RequestHandler } from 'sirv';
 import upath from 'upath';
-import * as vite from 'vite';
+import type * as vite from 'vite';
+
 import { locateVivliostyleConfig } from '../config/load.js';
 import {
   isWebPubConfig,
@@ -15,7 +16,6 @@ import {
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { CMYK_RESERVE_MAP_FILENAME } from '../constants.js';
 import { Logger } from '../logger.js';
-import { generateCmykReserveMap } from '../server.js';
 import {
   getAssetMatcher,
   getWebPubResourceMatcher,
@@ -26,6 +26,7 @@ import {
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';
+import { generateCmykReserveMap } from '../server.js';
 import {
   debounce,
   getFormattedError,
@@ -44,11 +45,13 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
     if (uri.charCodeAt(len) === 47) {
       uri = uri.substring(0, len);
     }
-    let arr = [],
+    const arr = [],
       tmp = `${uri}/index`;
     for (; i < extns.length; i++) {
       x = extns[i] ? `.${extns[i]}` : '';
-      if (uri) arr.push(uri + x);
+      if (uri) {
+        arr.push(uri + x);
+      }
       arr.push(tmp + x);
     }
 
@@ -64,7 +67,9 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
       data,
       arr = toAssume(uri);
     for (; i < arr.length; i++) {
-      if ((data = cache[arr[i]])) return [data, arr[i]] as const;
+      if ((data = cache[arr[i]])) {
+        return [data, arr[i]] as const;
+      }
     }
   };
 }
@@ -73,7 +78,6 @@ function getWorkspaceMatcher({
   workspaceDir,
   themesDir,
   viewerInput,
-  themeIndexes,
   entries,
   outputs,
   copyAsset,

@@ -1,14 +1,17 @@
 import './mocks/fs.js';
 import './mocks/vivliostyle__jsdom.js';
-
 import { JSDOM } from '@vivliostyle/jsdom';
 import { vol } from 'memfs';
-import { format } from 'prettier';
 import { assert, beforeEach, describe, expect, it } from 'vitest';
+
 import { isWebPubConfig } from '../src/config/resolve.js';
+import type {
+  StructuredDocument,
+  StructuredDocumentSection,
+} from '../src/config/schema.js';
 import { transformManuscript } from '../src/processor/compile.js';
 import { getStructuredSectionFromHtml } from '../src/processor/html.js';
-import { getTaskConfig, runCommand } from './command-util.js';
+import { formatHtml, getTaskConfig, runCommand } from './command-util.js';
 
 beforeEach(() => vol.reset());
 
@@ -31,12 +34,7 @@ it('generates ToC html', async () => {
   assert(isWebPubConfig(config));
   const content = await transformManuscript(config.entries[0], config);
   assert(content);
-  expect(
-    await format(content, {
-      parser: 'html',
-      htmlWhitespaceSensitivity: 'strict',
-    }),
-  ).toMatchSnapshot('toc.html');
+  expect(await formatHtml(content)).toMatchSnapshot('toc.html');
 });
 
 it('supports boolean toc config', async () => {
@@ -418,62 +416,66 @@ describe('sectionized document', () => {
         output: [],
         toc: {
           sectionDepth: 6,
-          transformDocumentList: (nodeList) => (propsList) => ({
-            type: 'element',
-            tagName: 'div',
-            properties: {
-              className: 'doc-list',
-              dataNodeLength: nodeList.length,
-            },
-            children: nodeList
-              .map((a, i) => [a, propsList[i]] as const)
-              .map(
-                ([
-                  { title, href, sections, children: childDoc },
-                  { children },
-                ]) => ({
-                  type: 'element',
-                  tagName: 'div',
-                  properties: {
-                    className: 'doc-list-item',
-                    dataContent: JSON.stringify({ title, href }),
-                    dataSections: JSON.stringify(sections),
-                    dataChildren: JSON.stringify(childDoc),
-                  },
-                  children,
-                }),
-              ),
-          }),
-          transformSectionList: (nodeList) => (propsList) => ({
-            type: 'element',
-            tagName: 'div',
-            properties: {
-              className: 'sec-list',
-              dataNodeLength: nodeList.length,
-            },
-            children: nodeList
-              .map((a, i) => [a, propsList[i]] as const)
-              .map(
-                ([
-                  { headingText, href, level, id, children: childSec },
-                  { children },
-                ]) => ({
-                  type: 'element',
-                  tagName: 'div',
-                  properties: {
-                    className: 'sec-list-item',
-                    dataContent: JSON.stringify({
-                      headingText,
-                      href,
-                      level,
-                      id,
-                    }),
-                    dataChildren: JSON.stringify(childSec),
-                  },
-                  children,
-                }),
-              ),
-          }),
+          transformDocumentList:
+            (nodeList: StructuredDocument[]) =>
+            (propsList: { children: any }[]) => ({
+              type: 'element',
+              tagName: 'div',
+              properties: {
+                className: 'doc-list',
+                dataNodeLength: nodeList.length,
+              },
+              children: nodeList
+                .map((a, i) => [a, propsList[i]] as const)
+                .map(
+                  ([
+                    { title, href, sections, children: childDoc },
+                    { children },
+                  ]) => ({
+                    type: 'element',
+                    tagName: 'div',
+                    properties: {
+                      className: 'doc-list-item',
+                      dataContent: JSON.stringify({ title, href }),
+                      dataSections: JSON.stringify(sections),
+                      dataChildren: JSON.stringify(childDoc),
+                    },
+                    children,
+                  }),
+                ),
+            }),
+          transformSectionList:
+            (nodeList: StructuredDocumentSection[]) =>
+            (propsList: { children: any }[]) => ({
+              type: 'element',
+              tagName: 'div',
+              properties: {
+                className: 'sec-list',
+                dataNodeLength: nodeList.length,
+              },
+              children: nodeList
+                .map((a, i) => [a, propsList[i]] as const)
+                .map(
+                  ([
+                    { headingText, href, level, id, children: childSec },
+                    { children },
+                  ]) => ({
+                    type: 'element',
+                    tagName: 'div',
+                    properties: {
+                      className: 'sec-list-item',
+                      dataContent: JSON.stringify({
+                        headingText,
+                        href,
+                        level,
+                        id,
+                      }),
+                      dataChildren: JSON.stringify(childSec),
+                    },
+                    children,
+                  }),
+                ),
+            }),
         },
       },
     });

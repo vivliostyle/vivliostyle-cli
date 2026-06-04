@@ -1,6 +1,7 @@
 import terminalLink from 'terminal-link';
 import type { ViteDevServer } from 'vite';
 import { blueBright, cyan, dim } from 'yoctocolors';
+
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';

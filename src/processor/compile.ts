@@ -1,9 +1,12 @@
-import jsdom, { JSDOM } from '@vivliostyle/jsdom';
-import { copy, move } from 'fs-extra/esm';
 import fs from 'node:fs';
+
+import type { JSDOM } from '@vivliostyle/jsdom';
+import type jsdom from '@vivliostyle/jsdom';
+import { copy, move } from 'fs-extra/esm';
 import upath from 'upath';
 import serializeToXml from 'w3c-xmlserializer';
 import MIMEType from 'whatwg-mimetype';
+
 import type {
   ContentsEntry,
   CoverEntry,

@@ -30,11 +30,9 @@ import {
   yellow,
   yellowBright,
 } from 'yoctocolors';
-import {
-  PromptOption,
-  SelectPromptOption,
-  ValidString,
-} from './config/schema.js';
+
+import type { PromptOption, SelectPromptOption } from './config/schema.js';
+import { ValidString } from './config/schema.js';
 import { isUnicodeSupported, Logger } from './logger.js';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any

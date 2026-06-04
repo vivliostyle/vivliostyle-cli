@@ -1,7 +1,9 @@
-import jsdom, { JSDOM } from '@vivliostyle/jsdom';
 import fs from 'node:fs';
+
+import jsdom, { JSDOM } from '@vivliostyle/jsdom';
 import { glob } from 'tinyglobby';
 import { expect, it } from 'vitest';
+
 import { resolveFixture, runCommand } from './command-util.js';
 
 it('generate workspace directory', async () => {

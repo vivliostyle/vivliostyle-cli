@@ -1,4 +1,5 @@
 import { Command, Option } from 'commander';
+
 import { versionForDisplay } from '../util.js';
 import { createParserProgram } from './cli-flags.js';
 

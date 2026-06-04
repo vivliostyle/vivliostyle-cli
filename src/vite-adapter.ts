@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import * as vite from 'vite';
+
 import { setupConfigFromFlags } from './commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from './config/load.js';
 import { mergeInlineConfig } from './config/merge.js';

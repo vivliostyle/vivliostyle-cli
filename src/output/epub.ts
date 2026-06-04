@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
+
 import type { JSDOM } from '@vivliostyle/jsdom';
 import archiver from 'archiver';
 import { lookup as lookupLanguage } from 'bcp-47-match';
@@ -5,11 +8,10 @@ import XMLBuilder from 'fast-xml-builder';
 import { copy } from 'fs-extra/esm';
 import GithubSlugger from 'github-slugger';
 import { lookup as mime } from 'mime-types';
-import fs from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import upath from 'upath';
 import { v4 as uuid } from 'uuid';
 import serializeToXml from 'w3c-xmlserializer';
+
 import {
   EPUB_CONTAINER_XML,
   EPUB_LANDMARKS_COVER_ENTRY,
@@ -65,7 +67,7 @@ const COVER_IMAGE_MIMETYPES = [
 ];
 
 const changeExtname = (filepath: string, newExt: string) => {
-  let ext = upath.extname(filepath);
+  const ext = upath.extname(filepath);
   return `${filepath.slice(0, -ext.length)}${newExt}`;
 };
 
@@ -315,7 +317,7 @@ export async function exportEpub({
   if (!docTitle) {
     throw new Error('EPUB must have a title of one or more characters');
   }
-  const { tocResourceTree } = await processTocDocument({
+  await processTocDocument({
     dom: processResult[tocHtml].dom,
     target: tocHtml,
     contextDir,
@@ -583,7 +585,7 @@ function buildEpubPackageDocument({
     [value]
       .flat()
       .filter(Boolean)
-      .map((v) => ({ ...(attributes || {}), '#text': `${value}` }));
+      .map(() => ({ ...attributes, '#text': `${value}` }));
   const transformContributor = (
     contributorMap: Record<string, Contributor | undefined>,
   ) =>
@@ -688,11 +690,9 @@ function buildEpubPackageDocument({
         ...(manifest.readingProgression
           ? { '_page-progression-direction': manifest.readingProgression }
           : {}),
-        itemref: [
-          ...spineItems.map(({ href }) => ({
-            _idref: itemIdMap.get(href),
-          })),
-        ],
+        itemref: spineItems.map(({ href }) => ({
+          _idref: itemIdMap.get(href),
+        })),
       },
     },
   });

@@ -20,21 +20,18 @@ exports[`generate webpub from a data URI input 1`] = `
 `;
 
 exports[`generate webpub from a data URI input 2`] = `
-"<!DOCTYPE html>
-<html lang=\\"en\\">
-  <head>
-    <meta charset=\\"UTF-8\\" />
-    <title></title>
-    <link
+"<!doctype html>
+<html lang=\\"en\\"
+  ><head
+    ><meta charset=\\"UTF-8\\" /><title></title
+    ><link
       rel=\\"publication\\"
       type=\\"application/ld+json\\"
-      href=\\"publication.json\\"
-    />
-  </head>
-  <body>
-    Hi
-  </body>
-</html>
+      href=\\"publication.json\\" /></head
+  ><body
+    >Hi</body
+  ></html
+>
 "
 `;
 
@@ -68,19 +65,15 @@ Object {
 `;
 
 exports[`generate webpub from a plain HTML 3`] = `
-"<!DOCTYPE html>
-<html lang=\\"ja\\">
-  <head>
+"<!doctype html>
+<html lang=\\"ja\\"
+  ><head>
     <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style.css\\" />
     <title>Doc title</title>
-    <link
-      rel=\\"publication\\"
-      type=\\"application/ld+json\\"
-      href=\\"publication.json\\"
-    />
-  </head>
-  <body></body>
-</html>
+    <link rel=\\"publication\\" type=\\"application/ld+json\\" href=\\"publication.json\\"
+  /></head>
+  <body> </body
+></html>
 "
 `;
 
@@ -117,22 +110,20 @@ Object {
 `;
 
 exports[`generate webpub from a remote HTML document 3`] = `
-"<html lang=\\"en\\">
-  <head>
+"<html lang=\\"en\\"
+  ><head>
     <title>Document</title>
     <link
       rel=\\"stylesheet\\"
       type=\\"text/css\\"
-      href=\\"../%E3%81%82/%E6%97%A5%E6%9C%AC%E8%AA%9E.css\\"
-    />
+      href=\\"../%E3%81%82/%E6%97%A5%E6%9C%AC%E8%AA%9E.css\\" />
     <link
       rel=\\"publication\\"
       type=\\"application/ld+json\\"
       href=\\"../../publication.json\\"
-    />
-  </head>
-  <body></body>
-</html>
+  /></head>
+  <body> </body
+></html>
 "
 `;
 
@@ -166,7 +157,7 @@ exports[`generate webpub from a single-document publication 2`] = `
       }
     </script>
   </head>
-  <body></body>
+  <body> </body>
 </html>
 "
 `;

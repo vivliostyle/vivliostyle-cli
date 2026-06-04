@@ -20,7 +20,7 @@ export function mergeConfig(
   override: Partial<ParsedBuildTask>,
 ): ParsedVivliostyleConfigSchema {
   return {
-    tasks: base.tasks.map((task, i) => ({
+    tasks: base.tasks.map((task) => ({
       ...pruneObject(task),
       ...pruneObject(override),
     })),

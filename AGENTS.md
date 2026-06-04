@@ -38,8 +38,8 @@ For narrower validation, prefer targeted Vitest runs, for example:
 
 ## Coding Conventions
 
-- The codebase uses TypeScript, ESM, and Prettier.
-- Follow `.prettierrc`: single quotes, semicolons, trailing commas, and arrow parens.
+- The codebase uses TypeScript and ESM. Formatting is handled by oxfmt and linting by oxlint (the oxc toolchain).
+- Follow `.oxfmtrc.json`: single quotes, semicolons, trailing commas, and arrow parens. Run `pnpm fmt` to format and `pnpm lint` to lint (`pnpm lint:fix` to auto-fix).
 - Keep imports and module boundaries consistent with nearby files.
 - Avoid broad refactors while fixing localized behavior.
 - Prefer typed helpers and existing config/schema utilities over ad hoc object or string manipulation.

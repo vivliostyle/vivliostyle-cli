@@ -1,5 +1,7 @@
 import fs from 'node:fs';
+
 import type * as mupdfType from 'mupdf';
+
 import type { ReplaceImageConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
@@ -72,10 +74,14 @@ function replaceImagesInDocument(
     const pageObj = page.getObject().resolve();
 
     const res = pageObj.get('Resources');
-    if (!res || !res.isDictionary()) continue;
+    if (!res || !res.isDictionary()) {
+      continue;
+    }
 
     const xobjects = res.get('XObject');
-    if (!xobjects || !xobjects.isDictionary()) continue;
+    if (!xobjects || !xobjects.isDictionary()) {
+      continue;
+    }
 
     // Collect keys first to avoid modification during iteration
     const entries: { key: string | number; value: mupdfType.PDFObject }[] = [];

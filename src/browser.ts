@@ -1,8 +1,9 @@
+import fs from 'node:fs';
+
 import type {
   InstalledBrowser,
   Browser as SupportedBrowser,
 } from '@puppeteer/browsers';
-import fs from 'node:fs';
 import type {
   Browser,
   BrowserContext,
@@ -10,6 +11,7 @@ import type {
   Page,
 } from 'puppeteer-core';
 import upath from 'upath';
+
 import type { ResolvedTaskConfig } from './config/resolve.js';
 import type { BrowserType } from './config/schema.js';
 import { Logger } from './logger.js';

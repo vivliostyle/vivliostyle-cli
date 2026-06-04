@@ -1,7 +1,9 @@
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+
 import { x } from 'tinyexec';
 import upath from 'upath';
+
 import type { PdfOutput, ResolvedTaskConfig } from './config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import { CONTAINER_LOCAL_HOSTNAME, CONTAINER_ROOT_DIR } from './constants.js';
@@ -113,6 +115,7 @@ export async function runContainer({
   } catch (error) {
     throw new Error(
       'An error occurred on the running container. Please see logs above.',
+      { cause: error },
     );
   }
 }

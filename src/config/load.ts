@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
+
 import upath from 'upath';
 import * as v from 'valibot';
+
 import { Logger } from '../logger.js';
 import {
   cwd as defaultRoot,

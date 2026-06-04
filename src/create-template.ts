@@ -1,19 +1,22 @@
 import { camelCase, capitalCase, kebabCase, snakeCase } from 'change-case';
 import Handlebars from 'handlebars';
 import { titleCase } from 'title-case';
-import {
-  type ParsedVivliostyleInlineConfig,
+
+import type {
   ThemeSpecifier,
   VivliostylePackageMetadata,
 } from './config/schema.js';
+import { type ParsedVivliostyleInlineConfig } from './config/schema.js';
 import type { PackageJson } from './npm.js';
 
 export type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
   vivliostyle?: VivliostylePackageMetadata;
 };
 
-export interface TemplateVariable
-  extends Omit<ParsedVivliostyleInlineConfig, 'theme'> {
+export interface TemplateVariable extends Omit<
+  ParsedVivliostyleInlineConfig,
+  'theme'
+> {
   projectPath: string;
   title: string;
   author: string;

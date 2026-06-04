@@ -1,4 +1,5 @@
 import type { ResolvedConfig as ResolvedViteConfig } from 'vite';
+
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';

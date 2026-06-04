@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
 import {
   type Metadata,
   readMetadata,
@@ -5,20 +8,19 @@ import {
   VFM,
 } from '@vivliostyle/vfm';
 import { lookup as mime } from 'mime-types';
-import fs from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import npa from 'npm-package-arg';
 import { globSync } from 'tinyglobby';
 import type { Processor } from 'unified';
 import upath from 'upath';
 import type { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
-import {
+
+import type {
   ArticleEntryConfig,
   BrowserType,
   ContentsEntryConfig,
   CoverEntryConfig,
   EntryConfig,
-  type InputFormat,
+  InputFormat,
   StructuredDocument,
   StructuredDocumentSection,
   ThemeConfig,
@@ -799,17 +801,29 @@ export function resolveTaskConfig(
 
             // Resolve preflight: output.pdfPostprocess > output.preflight > default
             const resolvedPreflight = (() => {
-              if (options.preflight) return options.preflight;
-              if (targetPp?.preflight) return targetPp.preflight;
-              if (target.preflight) return target.preflight;
+              if (options.preflight) {
+                return options.preflight;
+              }
+              if (targetPp?.preflight) {
+                return targetPp.preflight;
+              }
+              if (target.preflight) {
+                return target.preflight;
+              }
               return defaultPdfOptions.preflight;
             })();
 
             // Resolve preflightOption: output.pdfPostprocess > output.preflightOption > default
             const resolvedPreflightOption = (() => {
-              if (options.preflightOption) return options.preflightOption;
-              if (targetPp?.preflightOption) return targetPp.preflightOption;
-              if (target.preflightOption) return target.preflightOption;
+              if (options.preflightOption) {
+                return options.preflightOption;
+              }
+              if (targetPp?.preflightOption) {
+                return targetPp.preflightOption;
+              }
+              if (target.preflightOption) {
+                return target.preflightOption;
+              }
               return defaultPdfOptions.preflightOption;
             })();
 
@@ -866,7 +880,7 @@ export function resolveTaskConfig(
 
   const { server, rootUrl } = (() => {
     let host = config.server?.host ?? false;
-    let allowedHosts = config.server?.allowedHosts || [];
+    const allowedHosts = config.server?.allowedHosts || [];
     const port = config.server?.port ?? 13000;
     if (
       outputs.some(

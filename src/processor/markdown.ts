@@ -1,6 +1,8 @@
-import type { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 import fs from 'node:fs';
+
+import type { Metadata, StringifyMarkdownOptions } from '@vivliostyle/vfm';
 import vfile, { type VFile } from 'vfile';
+
 import type {
   DocumentMetadataReader,
   DocumentProcessorFactory,

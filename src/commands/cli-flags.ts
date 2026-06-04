@@ -1,5 +1,6 @@
-import { Command, type OptionValues } from 'commander';
+import type { Command, OptionValues } from 'commander';
 import * as v from 'valibot';
+
 import {
   type InlineOptions,
   type OutputConfig,

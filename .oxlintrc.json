@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "eslint/no-unused-vars": [
+      "error",
+      {
+        "args": "after-used",
+        "argsIgnorePattern": "^_",
+        "caughtErrors": "none",
+        "varsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_"
+      }
+    ],
+    "typescript/consistent-type-imports": "warn",
+    "eslint/prefer-const": "warn",
+    "eslint/curly": "warn",
+    "vitest/require-mock-type-parameters": "warn",
+    "vitest/prefer-snapshot-hint": "warn",
+    "vitest/hoisted-apis-on-top": "warn",
+    "vitest/require-to-throw-message": "warn",
+    "vitest/no-disabled-tests": "warn"
+  },
+  "ignorePatterns": [
+    "dist",
+    "tmp",
+    "coverage",
+    "examples",
+    "templates",
+    "docs",
+    "tests/fixtures",
+    "src/schema/publication.schema.ts",
+    "**/*.astro"
+  ]
+}

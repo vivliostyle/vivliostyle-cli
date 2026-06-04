@@ -1,7 +1,8 @@
 import { JSDOM } from '@vivliostyle/jsdom';
 import supertest from 'supertest';
-import { ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
 import { assert, describe, expect, it, vi } from 'vitest';
+
 import {
   createServerMiddleware,
   resolveFixture,

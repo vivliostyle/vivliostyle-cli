@@ -1,12 +1,11 @@
 import './mocks/fs.js';
 import './mocks/tmp.js';
 import './mocks/vivliostyle__jsdom.js';
-
 import { vol } from 'memfs';
-import { format } from 'prettier';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { VivliostyleConfigSchema } from '../src/config/schema.js';
-import { runCommand, toTree } from './command-util.js';
+
+import type { VivliostyleConfigSchema } from '../src/config/schema.js';
+import { formatHtml, runCommand, toTree } from './command-util.js';
 
 const mockedThemeModule = vi.hoisted(() => ({
   checkThemeInstallationNecessity: vi.fn(),
@@ -115,7 +114,7 @@ it('generate webpub from a plain HTML', async () => {
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
   const entry = file['/work/output/webbook.html']!;
-  expect(await format(entry, { parser: 'html' })).toMatchSnapshot();
+  expect(await formatHtml(entry)).toMatchSnapshot();
 });
 
 it('generate webpub from a single-document publication', async () => {
@@ -178,7 +177,7 @@ it('generate webpub from a single-document publication', async () => {
   expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
   const file = vol.toJSON();
   const entry = file['/work/output/webbook.html']!;
-  expect(await format(entry, { parser: 'html' })).toMatchSnapshot();
+  expect(await formatHtml(entry)).toMatchSnapshot();
   expect(file['/work/output/escape check%.html']).toBe(
     file['/work/input/escape check%.html'],
   );
@@ -266,7 +265,7 @@ it('generate webpub from a remote HTML document', async () => {
   delete manifest.dateModified;
   expect(manifest).toMatchSnapshot();
   const entry = file['/work/output/remote/foo bar%/escape check%.html']!;
-  expect(await format(entry, { parser: 'html' })).toMatchSnapshot();
+  expect(await formatHtml(entry)).toMatchSnapshot();
   expect(file['/work/output/remote/あ/日本語.css']).toBe(
     file['/remote/あ/日本語.css'],
   );
@@ -291,11 +290,9 @@ it('generate webpub from a data URI input', async () => {
   expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
   const file = vol.toJSON();
   const entry = file['/work/output/index.html']!;
-  const outHtml = await format(entry, { parser: 'html' });
+  const outHtml = await formatHtml(entry);
   expect(outHtml).toMatchSnapshot();
-  expect(
-    await format(file['/work/output2/index.html']!, { parser: 'html' }),
-  ).toBe(outHtml);
+  expect(await formatHtml(file['/work/output2/index.html']!)).toBe(outHtml);
 });
 
 it('generate webpub with complex copyAsset settings', async () => {

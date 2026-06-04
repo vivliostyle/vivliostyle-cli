@@ -1,5 +1,4 @@
-/// <reference path="../../types/jsdom.d.ts" />
-import {
+import type {
   AbortablePromise,
   BaseOptions,
   ConstructorOptions,

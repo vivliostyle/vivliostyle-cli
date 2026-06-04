@@ -1,9 +1,0 @@
-{
-  "jsxBracketSameLine": true,
-  "semi": true,
-  "singleQuote": true,
-  "trailingComma": "all",
-  "arrowParens": "always",
-  "bracketSpacing": true,
-  "plugins": ["prettier-plugin-astro"]
-}
