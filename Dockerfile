@@ -3,8 +3,6 @@
 # - https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.noble
 
 FROM debian:13-slim AS base
-ARG BROWSER
-RUN test $BROWSER
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=Asia/Tokyo
