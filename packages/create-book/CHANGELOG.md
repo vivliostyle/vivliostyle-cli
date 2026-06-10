@@ -1,5 +1,23 @@
 # create-book
 
+## 11.0.1
+
+### Patch Changes
+
+- Drop Node.js 20 support and upgrade @puppeteer/browsers to v3 and puppeteer-core to v25. ([#815](https://github.com/vivliostyle/vivliostyle-cli/pull/815))
+
+  This fixes broken Chrome downloads on recent Node.js releases (24.16.0+ and 26.1.0+), where a
+  Node.js stream-backpressure change stalls the frozen `extract-zip` dependency in
+  @puppeteer/browsers v2 mid-extraction without erroring, leaving a corrupted Chrome cache
+  (puppeteer/puppeteer#14957, nodejs/node#63487). The minimum
+  supported Node.js is now `>=22.12.0`. Because @puppeteer/browsers v3 extracts Chrome `.zip`
+  archives via the system `unzip` CLI, `unzip` must be available on the host (Linux); the
+  official Docker image already bundles it.
+
+  Note: While dropping Node.js version support typically warrants a major version bump, this is
+  released as a patch version as an exception because it affects all users of the recently released
+  v11, and the Chrome download breakage is a critical blocker for those environments.
+
 ## 11.0.0
 
 ## 10.6.0
