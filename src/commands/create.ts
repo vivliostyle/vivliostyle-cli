@@ -1,12 +1,7 @@
-import { create } from '../core/create.js';
-import { gracefulError } from '../util.js';
-import { parseCreateCommand } from './create.parser.js';
+import process from 'node:process';
 
-try {
-  const inlineConfig = parseCreateCommand(process.argv);
-  await create(inlineConfig);
-} catch (err) {
-  if (err instanceof Error) {
-    gracefulError(err);
-  }
-}
+import { runCreateCli } from './create.runner.js';
+
+export { runCreateCli } from './create.runner.js';
+
+await runCreateCli(process.argv);

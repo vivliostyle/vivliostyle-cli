@@ -148,6 +148,9 @@ async function launchBrowser({
   const browser = await puppeteer.launch({
     ...launchOptions,
     env: { ...process.env, LANG: 'en.UTF-8' },
+    handleSIGINT: false,
+    handleSIGTERM: false,
+    handleSIGHUP: false,
   });
   registerExitHandler('Closing browser', async () => {
     await browser.close();

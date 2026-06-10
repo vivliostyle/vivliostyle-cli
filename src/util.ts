@@ -51,6 +51,7 @@ export async function exec(
 
 const beforeExitHandlers: (() => void | Promise<void>)[] = [];
 let exitHandlersRun = false;
+let exitHandlersInstalled = false;
 
 export const registerExitHandler = (
   debugMessage: string,
@@ -101,11 +102,18 @@ async function terminate(exitCode: number) {
   }
 }
 
-process.once('SIGINT', () => void terminate(130));
-process.once('SIGTERM', () => void terminate(143));
-process.once('exit', () => {
-  void runExitHandlers();
-});
+export function setupExitHandlers() {
+  if (exitHandlersInstalled) {
+    return;
+  }
+  exitHandlersInstalled = true;
+
+  process.once('SIGINT', () => void terminate(130));
+  process.once('SIGTERM', () => void terminate(143));
+  process.once('exit', () => {
+    void runExitHandlers();
+  });
+}
 
 export class DetailError extends Error {
   detail: string | undefined;
@@ -122,12 +130,12 @@ export function getFormattedError(err: Error) {
     : err.stack || `${err.message}`;
 }
 
-export function gracefulError(err: Error) {
+export async function gracefulError(err: Error) {
   console.log(`${redBright('ERROR')} ${getFormattedError(err)}
 
 ${gray('If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues')}`);
-
-  process.exit(1);
+  process.exitCode = 1;
+  await runExitHandlers();
 }
 
 export function readJSON(path: string) {

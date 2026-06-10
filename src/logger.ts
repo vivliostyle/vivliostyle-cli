@@ -282,6 +282,7 @@ export class Logger {
 
   constructor(stream: Writable) {
     this.#_spinner = yoctoSpinner({
+      handleSignals: false,
       spinner: {
         frames: spinnerFrames,
         interval: spinnerInterval,

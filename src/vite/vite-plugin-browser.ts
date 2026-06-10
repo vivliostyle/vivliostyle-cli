@@ -20,7 +20,7 @@ export function vsBrowserPlugin({
 
   async function handlePageClose() {
     await server?.close();
-    runExitHandlers();
+    await runExitHandlers();
   }
 
   async function openPreviewPage() {

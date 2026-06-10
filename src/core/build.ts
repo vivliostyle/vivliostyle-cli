@@ -142,7 +142,7 @@ export async function build(
     await server?.close();
   }
 
-  runExitHandlers();
+  await runExitHandlers();
   if (!containerForkMode) {
     const num = vivliostyleConfig.tasks.flatMap((t) => t.output ?? []).length;
     const symbol = isUnicodeSupported
