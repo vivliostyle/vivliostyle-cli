@@ -33,6 +33,72 @@ const browserEnumMap = {
   [key in BrowserType]: SupportedBrowser;
 };
 
+function getAbortReason(signal: AbortSignal): unknown {
+  try {
+    signal.throwIfAborted();
+  } catch (err) {
+    return err;
+  }
+  return signal.reason;
+}
+
+export async function runBrowserOperationWithAbort<T>({
+  signal,
+  closeBrowser,
+  operation,
+}: {
+  signal?: AbortSignal;
+  closeBrowser: () => Promise<void>;
+  operation: () => Promise<T>;
+}): Promise<T> {
+  if (!signal) {
+    return await operation();
+  }
+
+  signal.throwIfAborted();
+
+  let abortClosePromise: Promise<void> | undefined;
+  let removeAbortListener: (() => void) | undefined;
+  const abortPromise = new Promise<never>((_, reject) => {
+    const handleAbort = () => {
+      abortClosePromise = closeBrowser();
+      void abortClosePromise.then(
+        () => reject(getAbortReason(signal)),
+        () => reject(getAbortReason(signal)),
+      );
+    };
+    signal.addEventListener('abort', handleAbort, { once: true });
+    removeAbortListener = () => {
+      signal.removeEventListener('abort', handleAbort);
+    };
+  });
+
+  const operationPromise = operation().catch((err) => {
+    if (signal.aborted) {
+      throw getAbortReason(signal);
+    }
+    throw err;
+  });
+
+  try {
+    const result = await Promise.race([operationPromise, abortPromise]);
+    signal.throwIfAborted();
+    return result;
+  } catch (err) {
+    if (signal.aborted) {
+      try {
+        await (abortClosePromise ?? closeBrowser());
+      } catch (closeError) {
+        Logger.debug('Failed to close browser after abort', closeError);
+      }
+      throw getAbortReason(signal);
+    }
+    throw err;
+  } finally {
+    removeAbortListener?.();
+  }
+}
+
 async function launchBrowser({
   browserType,
   proxy,
@@ -61,6 +127,7 @@ async function launchBrowser({
 }): Promise<{
   browser: Browser;
   browserContext: BrowserContext;
+  closeBrowser: () => Promise<void>;
 }> {
   const puppeteer = await importNodeModule('puppeteer-core');
 
@@ -145,18 +212,20 @@ async function launchBrowser({
     protocolTimeout,
   } satisfies LaunchOptions;
   Logger.debug('launchOptions %O', launchOptions);
-  const browser = await puppeteer.launch({
+  const browserLaunch = puppeteer.launch({
     ...launchOptions,
     env: { ...process.env, LANG: 'en.UTF-8' },
     handleSIGINT: false,
     handleSIGTERM: false,
     handleSIGHUP: false,
   });
-  registerCleanupHandler('Closing browser', async () => {
-    await browser.close();
-  });
+  let closeBrowserPromise: Promise<void> | undefined;
+  const closeBrowser = () =>
+    (closeBrowserPromise ??= browserLaunch.then((browser) => browser.close()));
+  registerCleanupHandler('Closing browser', closeBrowser);
+  const browser = await browserLaunch;
   const [browserContext] = browser.browserContexts();
-  return { browser, browserContext };
+  return { browser, browserContext, closeBrowser };
 }
 
 function getPuppeteerCacheDir() {
@@ -332,7 +401,7 @@ export async function launchPreview({
   }
 
   signal?.throwIfAborted();
-  const { browser, browserContext } = await launchBrowser({
+  const { browser, browserContext, closeBrowser } = await launchBrowser({
     browserType: browserConfig.type,
     proxy,
     executablePath: executableBrowser,
@@ -345,27 +414,34 @@ export async function launchPreview({
   await onBrowserOpen?.(browser);
   signal?.throwIfAborted();
 
-  const page =
-    (await browserContext.pages())[0] ?? (await browserContext.newPage());
-  await page.setViewport(
-    mode === 'build'
-      ? // This viewport size is important to detect headless environment in Vivliostyle viewer
-        // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
-        { width: 800, height: 600 }
-      : null,
-  );
-  await onPageOpen?.(page);
+  const page = await runBrowserOperationWithAbort({
+    signal,
+    closeBrowser,
+    operation: async () => {
+      const previewPage =
+        (await browserContext.pages())[0] ?? (await browserContext.newPage());
+      await previewPage.setViewport(
+        mode === 'build'
+          ? // This viewport size is important to detect headless environment in Vivliostyle viewer
+            // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
+            { width: 800, height: 600 }
+          : null,
+      );
+      await onPageOpen?.(previewPage);
 
-  // Prevent confirm dialog from being auto-dismissed
-  page.on('dialog', () => {});
+      // Prevent confirm dialog from being auto-dismissed
+      previewPage.on('dialog', () => {});
 
-  if (proxy?.username && proxy?.password) {
-    await page.authenticate({
-      username: proxy.username,
-      password: proxy.password,
-    });
-  }
-  await page.goto(url, { signal });
+      if (proxy?.username && proxy?.password) {
+        await previewPage.authenticate({
+          username: proxy.username,
+          password: proxy.password,
+        });
+      }
+      await previewPage.goto(url, { signal });
+      return previewPage;
+    },
+  });
 
-  return { browser, page };
+  return { browser, page, closeBrowser };
 }
