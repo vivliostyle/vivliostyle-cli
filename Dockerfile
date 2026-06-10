@@ -3,8 +3,6 @@
 # - https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.noble
 
 FROM debian:13-slim AS base
-ARG BROWSER
-RUN test $BROWSER
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=Asia/Tokyo
@@ -68,19 +66,6 @@ RUN set -x \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
   fi
 
-# Install Puppeteer browsers (for amd64 build, use Puppeteer's installation script))
-RUN set -x \
-  && if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
-    echo "Skipping Puppeteer browser installation on arm64 architecture"; \
-  else \
-    apt-get update -qq \
-    && apt-get upgrade -yqq \
-    && mkdir -p /opt/puppeteer \
-    && chown vivliostyle: /opt/puppeteer \
-    && PUPPETEER_CACHE_DIR=/opt/puppeteer npx puppeteer browsers install --install-deps $BROWSER \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* `npm config get cache`/_npx; \
-  fi
-
 # Font aliases for Noto CJK fonts
 COPY build/fonts.conf /etc/fonts/local.conf
 
@@ -100,6 +85,8 @@ RUN pnpm install && pnpm build
 
 # Runtime stage
 FROM base AS runtime
+ARG BROWSER
+RUN test $BROWSER
 ARG VS_CLI_VERSION
 RUN test $VS_CLI_VERSION
 COPY --chown=vivliostyle:vivliostyle . /opt/vivliostyle-cli
@@ -108,7 +95,21 @@ RUN pnpm install --prod --ignore-scripts \
 COPY --from=builder --chown=vivliostyle:vivliostyle /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/
 ENV PATH="/opt/vivliostyle-cli/node_modules/.bin:${PATH}"
 
+# Install Puppeteer browsers (for amd64 build, use the @puppeteer/browsers locked by Vivliostyle CLI)
 USER root
+RUN set -x \
+  && if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
+    echo "Skipping Puppeteer browser installation on arm64 architecture"; \
+  else \
+    apt-get update -qq \
+    && apt-get upgrade -yqq \
+    && mkdir -p /opt/puppeteer \
+    && /opt/vivliostyle-cli/node_modules/.bin/browsers install "$BROWSER" \
+      --path /opt/puppeteer --install-deps \
+    && chown -R vivliostyle: /opt/puppeteer \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
+  fi
+
 RUN ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vivliostyle \
   && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vs
 

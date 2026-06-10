@@ -13,7 +13,7 @@ pnpm create book # For pnpm users
 ```
 
 > [!NOTE]
-> You need to have [Node.js](https://nodejs.org/) (v20 or later) installed beforehand. If you use a runtime other than Node.js, such as Bun or Deno, follow the instructions for your chosen runtime.
+> You need to have [Node.js](https://nodejs.org/) (v22.12.0 or later) installed beforehand. If you use a runtime other than Node.js, such as Bun or Deno, follow the instructions for your chosen runtime.
 
 When you create a project, a configuration file named `vivliostyle.config.js` will be generated automatically. For details on usage, please see [Using Config File](./using-config-file.md).
 
