@@ -13,7 +13,7 @@ pnpm create book # For pnpm users
 ```
 
 > [!NOTE]
-> 事前に [Node.js](https://nodejs.org/) （v20以上）のインストールが必要です。BunやDenoなどNode.js以外のランタイムを使用する場合は、それぞれのランタイムの使用手順にしたがってください。
+> 事前に [Node.js](https://nodejs.org/) （v22.12.0以上）のインストールが必要です。BunやDenoなどNode.js以外のランタイムを使用する場合は、それぞれのランタイムの使用手順にしたがってください。
 
 プロジェクトを作成すると、自動的に `vivliostyle.config.js` という名前の構成ファイルが作成されます。詳しい使用方法は [構成ファイル](./using-config-file.md) を参照してください。
 

@@ -28,7 +28,7 @@
     "@humanwhocodes/momoa": "3.3.8",
     "@napi-rs/canvas": "0.1.69",
     "@npmcli/arborist": "9.1.7",
-    "@puppeteer/browsers": "2.10.5",
+    "@puppeteer/browsers": "3.0.4",
     "@vivliostyle/jsdom": "25.0.1-vivliostyle-cli.2",
     "@vivliostyle/vfm": "2.7.0",
     "@vivliostyle/viewer": "2.43.0",
@@ -60,7 +60,7 @@
     "pdf-lib": "1.17.1",
     "picomatch": "4.0.4",
     "press-ready": "4.0.3",
-    "puppeteer-core": "24.27.0",
+    "puppeteer-core": "25.1.0",
     "resolve-pkg": "2.0.0",
     "semver": "7.7.1",
     "sirv": "3.0.1",
@@ -176,7 +176,7 @@
   ],
   "license": "AGPL-3.0",
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=22.12.0"
   },
   "packageManager": "pnpm@10.25.0"
 }
