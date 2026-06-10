@@ -1,16 +1,10 @@
 import { preview } from '../core/preview.js';
-import { gracefulError, setupExitHandlers } from '../util.js';
+import { runCliCommand } from '../entry-util.js';
 import { parsePreviewCommand } from './preview.parser.js';
 
 export async function runPreviewCli(argv: string[]) {
-  setupExitHandlers();
-
-  try {
+  await runCliCommand(async (cliSignal) => {
     const inlineConfig = parsePreviewCommand(argv);
-    await preview(inlineConfig);
-  } catch (err) {
-    if (err instanceof Error) {
-      await gracefulError(err);
-    }
-  }
+    await preview({ ...inlineConfig, signal: cliSignal });
+  });
 }

@@ -22,7 +22,7 @@ import {
   getDefaultBrowserTag,
   isInContainer,
   isRunningOnWSL,
-  registerExitHandler,
+  registerCleanupHandler,
 } from './util.js';
 
 const browserEnumMap = {
@@ -152,7 +152,7 @@ async function launchBrowser({
     handleSIGTERM: false,
     handleSIGHUP: false,
   });
-  registerExitHandler('Closing browser', async () => {
+  registerCleanupHandler('Closing browser', async () => {
     await browser.close();
   });
   const [browserContext] = browser.browserContexts();
@@ -283,6 +283,7 @@ async function downloadBrowser({
 export async function launchPreview({
   mode,
   url,
+  signal,
   onBrowserOpen,
   onPageOpen,
   config: {
@@ -295,6 +296,7 @@ export async function launchPreview({
 }: {
   mode: 'preview' | 'build';
   url: string;
+  signal?: AbortSignal;
   onBrowserOpen?: (browser: Browser) => void | Promise<void>;
   onPageOpen?: (page: Page) => void | Promise<void>;
   config: Pick<
@@ -329,6 +331,7 @@ export async function launchPreview({
     }
   }
 
+  signal?.throwIfAborted();
   const { browser, browserContext } = await launchBrowser({
     browserType: browserConfig.type,
     proxy,
@@ -340,6 +343,7 @@ export async function launchPreview({
     protocolTimeout: timeout,
   });
   await onBrowserOpen?.(browser);
+  signal?.throwIfAborted();
 
   const page =
     (await browserContext.pages())[0] ?? (await browserContext.newPage());
@@ -361,7 +365,7 @@ export async function launchPreview({
       password: proxy.password,
     });
   }
-  await page.goto(url);
+  await page.goto(url, { signal });
 
   return { browser, page };
 }

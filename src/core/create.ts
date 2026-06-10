@@ -42,7 +42,7 @@ import {
   getDefaultBrowserTag,
   getOsLocale,
   type PackageManager,
-  registerExitHandler,
+  registerCleanupHandler,
   toTitleCase,
   whichPm,
 } from '../util.js';
@@ -632,7 +632,7 @@ async function setupTemplate({
       `.vs-template-${Date.now()}`,
     );
     Logger.debug('setupTemplate > tmpDownloadDir %s', tmpDownloadDir);
-    const cleanupExitHandler = registerExitHandler(
+    const takeCleanupHandler = registerCleanupHandler(
       `Removing the temporary directory: ${tmpDownloadDir}`,
       () => {
         fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
@@ -646,7 +646,7 @@ async function setupTemplate({
         upath.join(cwd, projectPath, entry),
       );
     }
-    cleanupExitHandler()?.();
+    takeCleanupHandler()?.();
   }
 
   const packageJsonPath = upath.join(cwd, projectPath, 'package.json');

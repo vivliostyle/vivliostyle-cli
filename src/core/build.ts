@@ -22,7 +22,7 @@ import {
   prepareThemeDirectory,
 } from '../processor/compile.js';
 import { createViteServer, generateCmykReserveMap } from '../server.js';
-import { cwd, runExitHandlers } from '../util.js';
+import { cwd, runCleanupHandlers } from '../util.js';
 
 export async function build(
   inlineConfig: ParsedVivliostyleInlineConfig,
@@ -118,7 +118,11 @@ export async function build(
             inlineConfig,
           });
         } else {
-          output = await buildPDF({ target, config });
+          output = await buildPDF({
+            target,
+            config,
+            signal: inlineConfig.signal,
+          });
         }
       } else if (format === 'webpub' || format === 'epub') {
         output = await buildWebPublication({ target, config });
@@ -142,7 +146,7 @@ export async function build(
     await server?.close();
   }
 
-  await runExitHandlers();
+  await runCleanupHandlers();
   if (!containerForkMode) {
     const num = vivliostyleConfig.tasks.flatMap((t) => t.output ?? []).length;
     const symbol = isUnicodeSupported

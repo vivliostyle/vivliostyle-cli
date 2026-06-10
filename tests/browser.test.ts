@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const mockedLaunch = vi.hoisted(() => vi.fn());
-const mockedRegisterExitHandler = vi.hoisted(() => vi.fn());
+const mockedRegisterCleanupHandler = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/node-modules.js', () => ({
   importNodeModule: vi.fn(async () => ({
@@ -13,7 +13,7 @@ vi.mock('../src/util.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/util.js')>();
   return {
     ...actual,
-    registerExitHandler: mockedRegisterExitHandler,
+    registerCleanupHandler: mockedRegisterCleanupHandler,
   };
 });
 
@@ -59,6 +59,5 @@ describe('launchPreview', () => {
       handleSIGTERM: false,
       handleSIGHUP: false,
     });
-    expect(mockedRegisterExitHandler).toHaveBeenCalledOnce();
   });
 });

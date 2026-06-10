@@ -1,16 +1,10 @@
 import { create } from '../core/create.js';
-import { gracefulError, setupExitHandlers } from '../util.js';
+import { runCliCommand } from '../entry-util.js';
 import { parseCreateCommand } from './create.parser.js';
 
 export async function runCreateCli(argv: string[]) {
-  setupExitHandlers();
-
-  try {
+  await runCliCommand(async (cliSignal) => {
     const inlineConfig = parseCreateCommand(argv);
-    await create(inlineConfig);
-  } catch (err) {
-    if (err instanceof Error) {
-      await gracefulError(err);
-    }
-  }
+    await create({ ...inlineConfig, signal: cliSignal });
+  });
 }

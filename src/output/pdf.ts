@@ -21,9 +21,11 @@ import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
 export async function buildPDF({
   target,
   config,
+  signal,
 }: {
   target: PdfOutput;
   config: ResolvedTaskConfig;
+  signal?: AbortSignal;
 }): Promise<string | null> {
   Logger.logUpdate(`Launching PDF build environment`);
 
@@ -77,6 +79,7 @@ export async function buildPDF({
   const { browser, page } = await launchPreview({
     mode: 'build',
     url: viewerFullUrl,
+    signal,
     config,
     onBrowserOpen: () => {
       Logger.logUpdate('Building pages');
@@ -137,8 +140,9 @@ export async function buildPDF({
   let remainTime = config.timeout;
   const startTime = Date.now();
 
-  await page.waitForNetworkIdle();
-  await page.waitForFunction(() => !!window.coreViewer);
+  signal?.throwIfAborted();
+  await page.waitForNetworkIdle({ signal });
+  await page.waitForFunction(() => !!window.coreViewer, { signal });
 
   const { protocol } = browser as Browser & {
     protocol: 'cdp' | 'webDriverBiDi';
@@ -150,8 +154,9 @@ export async function buildPDF({
   await page.waitForFunction(
     /* v8 ignore next */
     () => window.coreViewer.readyState === 'complete',
-    { polling: 1000 },
+    { polling: 1000, signal },
   );
+  signal?.throwIfAborted();
 
   if (lastEntry) {
     Logger.logSuccess(stringifyEntry(lastEntry));

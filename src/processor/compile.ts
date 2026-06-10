@@ -24,7 +24,7 @@ import {
   DetailError,
   pathContains,
   pathEquals,
-  registerExitHandler,
+  registerCleanupHandler,
   writeFileIfChanged,
 } from '../util.js';
 import {
@@ -112,7 +112,7 @@ export async function cleanupWorkspace({
       upath.relative(workspaceDir, themesDir),
     );
     fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
-    registerExitHandler(
+    registerCleanupHandler(
       `Removing the moved workspace directory: ${movedWorkspacePath}`,
       () => {
         if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {

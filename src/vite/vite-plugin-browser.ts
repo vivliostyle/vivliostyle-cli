@@ -4,7 +4,7 @@ import { launchPreview } from '../browser.js';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { getViewerFullUrl } from '../server.js';
-import { getOsLocale, runExitHandlers } from '../util.js';
+import { getOsLocale, runCleanupHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
 export function vsBrowserPlugin({
@@ -20,7 +20,7 @@ export function vsBrowserPlugin({
 
   async function handlePageClose() {
     await server?.close();
-    await runExitHandlers();
+    await runCleanupHandlers();
   }
 
   async function openPreviewPage() {

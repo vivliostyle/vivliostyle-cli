@@ -49,11 +49,14 @@ export async function exec(
   return subprocess;
 }
 
-const beforeExitHandlers: (() => void | Promise<void>)[] = [];
-let exitHandlersRun = false;
-let exitHandlersInstalled = false;
+const cleanupHandlers: (() => void | Promise<void>)[] = [];
+const terminationHooks = new Set<(exitCode: number) => void>();
+let cleanupStarted = false;
+let processTerminationInstalled = false;
+let handlingProcessTermination = false;
 
-export const registerExitHandler = (
+// Cleanup handlers release resources on normal completion, errors, and process termination.
+export const registerCleanupHandler = (
   debugMessage: string,
   handler: () => void | Promise<void>,
 ) => {
@@ -61,57 +64,67 @@ export const registerExitHandler = (
     Logger.debug(debugMessage);
     return handler();
   };
-  beforeExitHandlers.push(callback);
+  cleanupHandlers.push(callback);
   return () => {
-    const index = beforeExitHandlers.indexOf(callback);
+    const index = cleanupHandlers.indexOf(callback);
     if (index !== -1) {
-      return beforeExitHandlers.splice(index, 1)[0];
+      return cleanupHandlers.splice(index, 1)[0];
     }
   };
 };
 
-export async function runExitHandlers() {
-  if (exitHandlersRun) {
+// Termination hooks notify active work before cleanup starts closing resources.
+export function registerTerminationHook(hook: (exitCode: number) => void) {
+  terminationHooks.add(hook);
+  return () => {
+    terminationHooks.delete(hook);
+  };
+}
+
+export async function runCleanupHandlers() {
+  if (cleanupStarted) {
     return;
   }
-  exitHandlersRun = true;
-  while (beforeExitHandlers.length) {
+  cleanupStarted = true;
+  while (cleanupHandlers.length) {
     try {
-      await beforeExitHandlers.shift()?.();
+      await cleanupHandlers.shift()?.();
     } catch (e) {
       // NOOP
     }
   }
 }
 
-let terminating = false;
-
-async function terminate(exitCode: number) {
-  if (terminating) {
+async function handleProcessTermination(exitCode: number) {
+  if (handlingProcessTermination) {
     return;
   }
-  terminating = true;
-  try {
-    if (exitCode === 130 || exitCode === 143) {
-      await runExitHandlers();
-    } else {
-      runExitHandlers();
+  handlingProcessTermination = true;
+  for (const hook of terminationHooks) {
+    try {
+      hook(exitCode);
+    } catch (e) {
+      // NOOP
     }
+  }
+  try {
+    await runCleanupHandlers();
   } finally {
     process.exit(exitCode);
   }
 }
 
-export function setupExitHandlers() {
-  if (exitHandlersInstalled) {
+export function setupProcessTermination() {
+  if (processTerminationInstalled) {
     return;
   }
-  exitHandlersInstalled = true;
+  processTerminationInstalled = true;
 
-  process.once('SIGINT', () => void terminate(130));
-  process.once('SIGTERM', () => void terminate(143));
+  process.once('SIGINT', () => void handleProcessTermination(130));
+  process.once('SIGTERM', () => void handleProcessTermination(143));
+  process.once('SIGHUP', () => void handleProcessTermination(129));
   process.once('exit', () => {
-    void runExitHandlers();
+    void runCleanupHandlers();
   });
 }
 
@@ -135,7 +148,7 @@ export async function gracefulError(err: Error) {
 
 ${gray('If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues')}`);
   process.exitCode = 1;
-  await runExitHandlers();
+  await runCleanupHandlers();
 }
 
 export function readJSON(path: string) {
@@ -199,7 +212,7 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
         // clear();
         fs.rmSync(path, { force: true, recursive: true });
       };
-      registerExitHandler(
+      registerCleanupHandler(
         `Removing the temporary directory: ${path}`,
         callback,
       );
@@ -216,7 +229,7 @@ export function touchTmpFile(path: string): () => void {
   const callback = () => {
     fs.rmSync(path, { force: true, recursive: true });
   };
-  registerExitHandler(`Removing the temporary file: ${path}`, callback);
+  registerCleanupHandler(`Removing the temporary file: ${path}`, callback);
   return callback;
 }
 
@@ -256,7 +269,7 @@ export async function openEpub(epubPath: string, tmpDir: string) {
   const deleteEpub = () => {
     fs.rmSync(tmpDir, { force: true, recursive: true });
   };
-  registerExitHandler(
+  registerCleanupHandler(
     `Removing the temporary EPUB directory: ${tmpDir}`,
     deleteEpub,
   );
