@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 11.0.2
+
+### Patch Changes
+
+- Update Vivliostyle.js to 2.43.2: Bug Fixes ([#821](https://github.com/vivliostyle/vivliostyle-cli/pull/821))
+
 ## 11.0.1
 
 ### Patch Changes
