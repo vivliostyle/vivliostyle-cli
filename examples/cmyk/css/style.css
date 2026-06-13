@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300..700&display=swap');
+
+@font-face {
+  font-family: 'Noto Sans JP';
+  font-style: normal;
+  font-weight: 400;
+  src: url('Noto_Sans_JP/NotoSansJP-VariableFont_wght.ttf');
+}
+
+@page {
+  size: A5;
+  marks: crop cross;
+  bleed: 3mm;
+  /* see https://github.com/vivliostyle/vivliostyle.js/pull/1505 */
+  crop-marks-line-color: device-cmyk(1 0 0 1);
+}
+
+figure {
+  margin: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+.k100 {
+  color: device-cmyk(0 0 0 1);
+}
+
+.k80 {
+  color: device-cmyk(0 0 0 0.8);
+}
+
+.k60 {
+  color: device-cmyk(0 0 0 0.6);
+}
+
+.k40 {
+  color: device-cmyk(0 0 0 0.4);
+}
+
+.k20 {
+  color: device-cmyk(0 0 0 0.2);
+}
+
+.c100 {
+  color: device-cmyk(1 0 0 0);
+}
+
+.c80 {
+  color: device-cmyk(0.8 0 0 0);
+}
+
+.c60 {
+  color: device-cmyk(0.6 0 0 0);
+}
+
+.c40 {
+  color: device-cmyk(0.4 0 0 0);
+}
+
+.c20 {
+  color: device-cmyk(0.2 0 0 0);
+}
+
+a {
+  color: device-cmyk(1 0 0 0);
+}
+
+/* Intentionally left unstyled to demonstrate warnUnmapped
+hr {
+  border: none;
+  border-top: 1px solid device-cmyk(0 0 0 0.5);
+} */
+
+pre code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+code {
+  font:
+    80% monospace,
+    'Noto Emoji';
+}

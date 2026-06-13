@@ -18,7 +18,13 @@ export type {
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';
+export type { ImageContext, ReplaceFunction } from './config/resolve.js';
 export type { TemplateVariable } from './create-template.js';
+export {
+  builtinCmykReplacement,
+  builtinGrayReplacement,
+  type ColorConversionOptions,
+} from './output/image.js';
 export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */
 export type PublicationManifest = _PublicationManifest;
