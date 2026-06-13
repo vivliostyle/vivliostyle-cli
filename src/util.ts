@@ -264,15 +264,21 @@ export const isRunningOnWSL = cachedFn(function isRunningOnWSL() {
 });
 
 export async function openEpub(epubPath: string, tmpDir: string) {
-  await inflateZip(epubPath, tmpDir);
-  Logger.debug(`Created the temporary EPUB directory: ${tmpDir}`);
-  const deleteEpub = () => {
+  const inflation = inflateZip(epubPath, tmpDir);
+  const deleteEpub = async () => {
+    try {
+      await inflation;
+    } catch {
+      // Remove any partial output after a failed or interrupted extraction.
+    }
     fs.rmSync(tmpDir, { force: true, recursive: true });
   };
   registerCleanupHandler(
     `Removing the temporary EPUB directory: ${tmpDir}`,
     deleteEpub,
   );
+  await inflation;
+  Logger.debug(`Created the temporary EPUB directory: ${tmpDir}`);
   return deleteEpub;
 }
 
