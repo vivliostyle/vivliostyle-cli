@@ -6,13 +6,13 @@ declare module 'module' {
 
 // Mock modules loaded by require() statements
 // https://github.com/vitest-dev/vitest/discussions/3134
-export async function mockRequire(mockedUri, stub) {
+export async function mockRequire(mockedUri: string, stub: unknown) {
   const { Module } = await import('module');
 
   Module._load_original ||= Module._load;
   Module._load_stubs ||= {};
   Module._load_stubs[mockedUri] = stub;
-  Module._load = (uri, parent) => {
+  Module._load = (uri: string, parent: unknown) => {
     if (uri in Module._load_stubs) {
       return Module._load_stubs[uri];
     }

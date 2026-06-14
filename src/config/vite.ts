@@ -8,6 +8,7 @@ import {
   type ResolvedConfig as ResolvedViteConfig,
 } from 'vite';
 import { dim } from 'yoctocolors';
+
 import { Logger } from '../logger.js';
 import { useTmpDirectory } from '../util.js';
 import type { ResolvedTaskConfig } from './resolve.js';

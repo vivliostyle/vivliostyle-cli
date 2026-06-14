@@ -1,8 +1,10 @@
-import type { NextHandleFunction } from 'connect';
 import fs from 'node:fs';
+
+import type { NextHandleFunction } from 'connect';
 import sirv from 'sirv';
 import upath from 'upath';
-import * as vite from 'vite';
+import type * as vite from 'vite';
+
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { VIEWER_ROOT_PATH } from '../constants.js';

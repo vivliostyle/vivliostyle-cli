@@ -1,16 +1,16 @@
 import './mocks/bluwy__giget-core.js';
 import './mocks/fs.js';
 import './mocks/tmp.js';
-
 import { vol } from 'memfs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
   PRESET_TEMPLATE_NOT_USE,
   THEME_ANSWER_MANUAL,
   THEME_ANSWER_NOT_USE,
 } from '../src/core/create.js';
-import type { PackageJson, PackageSearchResult } from '../src/npm';
-import { runCommand } from './command-util';
+import type { PackageJson, PackageSearchResult } from '../src/npm.js';
+import { runCommand } from './command-util.js';
 
 const mockedClackModule = vi.hoisted(() => {
   const mockedAnswers = vi.fn().mockReturnValue({});
@@ -18,7 +18,6 @@ const mockedClackModule = vi.hoisted(() => {
     // @ts-ignore
     this.prompt = vi.fn().mockImplementation(async () => {
       const answers = mockedAnswers();
-      debugger;
       if (!(name in answers)) {
         throw new Error(`Unexpected question: ${name}`);
       }
@@ -79,7 +78,7 @@ const mockedNpmModule = vi.hoisted(async () => {
             }
           : testPackage,
       ),
-  } satisfies typeof import('../src/npm');
+  } satisfies typeof import('../src/npm.js');
 });
 
 vi.mock('../src/npm', () => mockedNpmModule);

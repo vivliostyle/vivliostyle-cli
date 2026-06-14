@@ -1,3 +1,9 @@
+import childProcess, { type ExecFileOptions } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import { fileURLToPath } from 'node:url';
+import util from 'node:util';
+
 import { codeFrameColumns } from '@babel/code-frame';
 import {
   type JSONValue,
@@ -10,11 +16,6 @@ import { Ajv, type Plugin as AjvPlugin, type Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
 import StreamZip from 'node-stream-zip';
-import childProcess, { type ExecFileOptions } from 'node:child_process';
-import fs from 'node:fs';
-import os from 'node:os';
-import { fileURLToPath } from 'node:url';
-import util from 'node:util';
 import osLocale from 'os-locale';
 import resolvePkg from 'resolve-pkg';
 import { titleCase } from 'title-case';
@@ -22,6 +23,7 @@ import tmp from 'tmp';
 import upath from 'upath';
 import type { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
+
 import type { BrowserType } from './config/schema.js';
 import { DEFAULT_BROWSER_VERSIONS, LANGUAGES } from './constants.js';
 import { Logger } from './logger.js';
@@ -68,7 +70,9 @@ export const registerExitHandler = (
 };
 
 export async function runExitHandlers() {
-  if (exitHandlersRun) return;
+  if (exitHandlersRun) {
+    return;
+  }
   exitHandlersRun = true;
   while (beforeExitHandlers.length) {
     try {
@@ -82,7 +86,9 @@ export async function runExitHandlers() {
 let terminating = false;
 
 async function terminate(exitCode: number) {
-  if (terminating) return;
+  if (terminating) {
+    return;
+  }
   terminating = true;
   try {
     if (exitCode === 130 || exitCode === 143) {
@@ -97,7 +103,7 @@ async function terminate(exitCode: number) {
 
 process.once('SIGINT', () => void terminate(130));
 process.once('SIGTERM', () => void terminate(143));
-process.once('exit', (code) => {
+process.once('exit', () => {
   void runExitHandlers();
 });
 
@@ -142,7 +148,7 @@ export function statFileSync(
     return fs.statSync(filePath);
   } catch (err) {
     if ((err as any).code === 'ENOENT') {
-      throw new Error(`${errorMessage}: ${filePath}`);
+      throw new Error(`${errorMessage}: ${filePath}`, { cause: err });
     }
     throw err;
   }
@@ -172,7 +178,7 @@ export async function inflateZip(filePath: string, dest: string) {
 
 export function useTmpDirectory(): Promise<[string, () => void]> {
   return new Promise<[string, () => void]>((res, rej) => {
-    tmp.dir({ unsafeCleanup: true }, (err, path, clear) => {
+    tmp.dir({ unsafeCleanup: true }, (err, path) => {
       if (err) {
         return rej(err);
       }

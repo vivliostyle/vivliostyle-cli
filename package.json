@@ -15,7 +15,17 @@
     "clean": "shx rm -rf dist tmp",
     "dev": "tsup --watch src",
     "test": "vitest run --coverage",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "prepare": "husky"
+  },
+  "lint-staged": {
+    "*": [
+      "oxlint --fix --no-error-on-unmatched-pattern",
+      "oxfmt --no-error-on-unmatched-pattern"
+    ]
   },
   "peerDependencies": {
     "vite": ">=8"
@@ -108,11 +118,11 @@
     "file-type": "21.3.2",
     "husky": "9.1.7",
     "json-schema-to-typescript": "15.0.4",
+    "lint-staged": "17.0.7",
     "memfs": "4.17.0",
+    "oxfmt": "0.53.0",
+    "oxlint": "1.68.0",
     "pnpm": "10.28.2",
-    "prettier": "3.5.3",
-    "prettier-plugin-astro": "0.14.1",
-    "pretty-quick": "4.1.1",
     "shx": "0.4.0",
     "supertest": "7.2.2",
     "tsup": "8.5.1",

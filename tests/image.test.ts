@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
+
 import { replaceImages } from '../src/output/image.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const fixturesDir = path.join(__dirname, 'fixtures', 'cmyk');
+const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 
 /**
  * Helper to extract image color space from PDF

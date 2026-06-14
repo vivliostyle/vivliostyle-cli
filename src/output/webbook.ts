@@ -1,9 +1,11 @@
-import { copy } from 'fs-extra/esm';
-import { lookup as mime } from 'mime-types';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
+
+import { copy } from 'fs-extra/esm';
+import { lookup as mime } from 'mime-types';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
+
 import {
   type EpubOutput,
   isWebbookConfig,
@@ -11,7 +13,7 @@ import {
   type WebBookEntryConfig,
   type WebPublicationOutput,
 } from '../config/resolve.js';
-import { ArticleEntryConfig } from '../config/schema.js';
+import type { ArticleEntryConfig } from '../config/schema.js';
 import { MANIFEST_FILENAME } from '../constants.js';
 import { Logger } from '../logger.js';
 import {
@@ -42,7 +44,7 @@ function sortManifestResources(manifest: PublicationManifest) {
   if (!Array.isArray(manifest.resources)) {
     return;
   }
-  manifest.resources = [...manifest.resources].sort((a, b) =>
+  manifest.resources = manifest.resources.toSorted((a, b) =>
     (typeof a === 'string' ? a : a.url) > (typeof b === 'string' ? b : b.url)
       ? 1
       : -1,
@@ -227,7 +229,7 @@ export async function retrieveWebbookEntry({
 
   let pathContains: (url: string) => boolean;
   if (webbookEntryUrl.startsWith('data:')) {
-    pathContains = (url) => false;
+    pathContains = () => false;
   } else {
     const rootUrl = /^https?:/i.test(webbookEntryUrl)
       ? new URL('/', webbookEntryUrl).href

@@ -1,4 +1,5 @@
-import * as vite from 'vite';
+import type * as vite from 'vite';
+
 import { launchPreview } from '../browser.js';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';

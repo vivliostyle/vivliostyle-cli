@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
+
 import type { CmykMap } from '../src/global-viewer.js';
 import { convertCmykColors } from '../src/output/cmyk.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const fixturesDir = path.join(__dirname, 'fixtures', 'cmyk');
+const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 
 /**
  * Helper to extract text content from a PDF content stream

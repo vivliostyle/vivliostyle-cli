@@ -1,6 +1,7 @@
 import sirv from 'sirv';
 import upath from 'upath';
-import * as vite from 'vite';
+import type * as vite from 'vite';
+
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 
@@ -11,7 +12,7 @@ export function vsStaticServePlugin({
   config: ResolvedTaskConfig;
   inlineConfig: ParsedVivliostyleInlineConfig;
 }): vite.Plugin {
-  let config = _config;
+  const config = _config;
 
   const createMiddlewares = () => {
     if (typeof config.serverRootDir !== 'string') {

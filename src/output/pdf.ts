@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
+
 import type { Browser, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
+
 import { launchPreview } from '../browser.js';
 import type {
   ManuscriptEntry,
@@ -87,7 +89,7 @@ export async function buildPDF({
       page.on('console', (msg) => {
         switch (msg.type()) {
           case 'error':
-            if (/\/vivliostyle-viewer\.js$/.test(msg.location().url ?? '')) {
+            if (msg.location().url?.endsWith('/vivliostyle-viewer.js')) {
               Logger.logError(msg.text());
               throw msg.text();
             }
@@ -114,9 +116,13 @@ export async function buildPDF({
 
         handleEntry(response);
 
-        if (400 > response.status() && 200 <= response.status()) return;
+        if (400 > response.status() && 200 <= response.status()) {
+          return;
+        }
         // file protocol doesn't have status code
-        if (response.url().startsWith('file://') && response.ok()) return;
+        if (response.url().startsWith('file://') && response.ok()) {
+          return;
+        }
 
         Logger.logError(red(`${response.status()}`), response.url());
       });

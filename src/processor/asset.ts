@@ -1,8 +1,10 @@
-import { copy } from 'fs-extra/esm';
 import fs from 'node:fs';
+
+import { copy } from 'fs-extra/esm';
 import picomatch, { type PicomatchOptions } from 'picomatch';
 import { glob, type GlobOptions } from 'tinyglobby';
 import upath from 'upath';
+
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { pathContains, pathEquals } from '../util.js';
@@ -181,10 +183,9 @@ export async function copyAssets({
     outputs,
     themesDir,
     entries,
-    ignore: [
+    ignore:
       // don't copy workspace itself
-      ...(relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : []),
-    ],
+      relWorkspaceDir ? [upath.join(relWorkspaceDir, '**')] : [],
   }).glob({ followSymbolicLinks: true });
   Logger.debug('assets', assets);
   for (const asset of assets) {

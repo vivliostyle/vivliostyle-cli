@@ -1,10 +1,13 @@
-import { toTreeSync } from 'memfs/lib/print/index.js';
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
+
+import { toTreeSync } from 'memfs/lib/print/index.js';
+import { format } from 'oxfmt';
 import upath from 'upath';
 import * as v from 'valibot';
-import { ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
 import { afterEach } from 'vitest';
+
 import { parseBuildCommand } from '../src/commands/build.parser.js';
 import { setupConfigFromFlags } from '../src/commands/cli-flags.js';
 import { parseCreateCommand } from '../src/commands/create.parser.js';
@@ -13,16 +16,24 @@ import { mergeInlineConfig } from '../src/config/merge.js';
 import { build } from '../src/core/build.js';
 import { create } from '../src/core/create.js';
 import { preview } from '../src/core/preview.js';
-import { parseInitCommand } from './../src/commands/init.parser';
-import { ResolvedTaskConfig, resolveTaskConfig } from './../src/config/resolve';
+import { parseInitCommand } from './../src/commands/init.parser.js';
+import type { ResolvedTaskConfig } from './../src/config/resolve.js';
+import { resolveTaskConfig } from './../src/config/resolve.js';
+import type { BuildTask, LogLevel } from './../src/config/schema.js';
 import {
-  BuildTask,
-  LogLevel,
   VivliostyleConfigSchema,
   VivliostyleInlineConfig,
-} from './../src/config/schema';
+} from './../src/config/schema.js';
 
 export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
+
+export const formatHtml = async (content: string): Promise<string> => {
+  const { code } = await format('snippet.html', content, {
+    printWidth: 80,
+    htmlWhitespaceSensitivity: 'strict',
+  });
+  return code;
+};
 
 const runningServers = new Set<ViteDevServer>();
 afterEach(async () => {
@@ -156,9 +167,13 @@ export function toTree(...[fs, opts]: Parameters<typeof toTreeSync>) {
   const modFs = new Proxy(fs, {
     get(target, prop) {
       if (prop === 'readdirSync') {
-        return (...params) => {
-          const list = Reflect.get(target, prop).call(target, ...params);
-          return list.sort((a, b) => (a.name > b.name ? 1 : -1));
+        return (...params: unknown[]) => {
+          const list = (
+            Reflect.get(target, prop) as (
+              ...args: unknown[]
+            ) => { name: string }[]
+          ).call(target, ...params);
+          return list.toSorted((a, b) => (a.name > b.name ? 1 : -1));
         };
       }
       return Reflect.get(target, prop);

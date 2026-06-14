@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { convertStreamColors } from '../src/output/pdf-stream.js';
+
 import type { CmykMap } from '../src/global-viewer.js';
+import { convertStreamColors } from '../src/output/pdf-stream.js';
 
 /**
  * Helper to create a color map from RGB (0-10000 scale) to CMYK values
@@ -446,7 +447,7 @@ describe('convertStreamColors', () => {
       const Logger = (await import('../src/logger.js')).Logger;
       originalLogWarn = Logger.logWarn;
       logWarnMock = vi.fn();
-      Logger.logWarn = logWarnMock;
+      Logger.logWarn = logWarnMock as typeof Logger.logWarn;
     });
 
     afterEach(async () => {

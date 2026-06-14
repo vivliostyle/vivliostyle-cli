@@ -1,6 +1,7 @@
 import { fileTypeFromFile } from 'file-type';
 import { describe, expect, it } from 'vitest';
-import { resolveFixture, runCommand } from './command-util';
+
+import { resolveFixture, runCommand } from './command-util.js';
 
 describe('pdf output', () => {
   it('generate pdf without errors', async () => {

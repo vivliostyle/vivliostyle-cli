@@ -1,8 +1,10 @@
 import { pathToFileURL } from 'node:url';
+
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { type PreviewServer, build as viteBuild } from 'vite';
 import { cyan, gray } from 'yoctocolors';
+
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
@@ -43,7 +45,7 @@ export async function build(
   const { inlineOptions } = vivliostyleConfig;
   Logger.debug('build > vivliostyleConfig %O', vivliostyleConfig);
 
-  for (let [i, task] of vivliostyleConfig.tasks.entries()) {
+  for (const [i, task] of vivliostyleConfig.tasks.entries()) {
     using _ = Logger.startLogging('Start building');
 
     let config = resolveTaskConfig(task, inlineOptions);

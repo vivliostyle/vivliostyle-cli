@@ -1,6 +1,8 @@
-import Arborist from '@npmcli/arborist';
 import fs from 'node:fs';
+
+import Arborist from '@npmcli/arborist';
 import upath from 'upath';
+
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
 

@@ -1,5 +1,6 @@
 import { Command, Option } from 'commander';
 import upath from 'upath';
+
 import { versionForDisplay } from '../util.js';
 import { createParserProgram } from './cli-flags.js';
 
@@ -194,7 +195,7 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     )
     .version(versionForDisplay, '-v, --version')
     .action((_arg, option) => {
-      let invalid = targets.find((it) => !('path' in it));
+      const invalid = targets.find((it) => !('path' in it));
       if (invalid) {
         // -f is an optional option but -o is required one
         throw new Error(

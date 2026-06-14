@@ -1,0 +1,20 @@
+{
+  "jsxBracketSameLine": true,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "printWidth": 80,
+  "sortImports": true,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "docs/**",
+    "examples/**",
+    "templates/**",
+    "tests/fixtures/**",
+    "pnpm-lock.yaml",
+    "CHANGELOG.md",
+    "**/*.astro"
+  ]
+}

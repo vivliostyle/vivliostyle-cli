@@ -1,7 +1,7 @@
 import './mocks/fs.js';
 import './mocks/tmp.js';
-
 import { expect, it, vi } from 'vitest';
+
 import { build, create, preview } from '../src/index.js';
 
 it('provides build function', async () => {

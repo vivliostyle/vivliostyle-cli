@@ -1,10 +1,11 @@
+import * as fs from 'node:fs';
+
 import {
   Browser,
   BrowserPlatform,
   BrowserTag,
   resolveBuildId,
 } from '@puppeteer/browsers';
-import * as fs from 'node:fs';
 
 async function main() {
   const START_MARKER = '// START DEFAULT_BROWSER_VERSIONS';

@@ -1,7 +1,8 @@
 import { VFM, readMetadata } from '@vivliostyle/vfm';
 import { expect, it, onTestFinished, vi } from 'vitest';
+
 import { UseTemporaryServerRoot } from '../src/config/resolve.js';
-import { VivliostyleConfigSchema } from '../src/config/schema.js';
+import type { VivliostyleConfigSchema } from '../src/config/schema.js';
 import { getTaskConfig, maskConfig, resolveFixture } from './command-util.js';
 
 const validConfigData = {

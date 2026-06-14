@@ -1,11 +1,13 @@
-import { slug } from 'github-slugger';
 import * as fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import prettier from 'prettier';
+
+import { slug } from 'github-slugger';
+import { format } from 'oxfmt';
 import { x } from 'tinyexec';
-import { JSONOutput } from 'typedoc';
+import type { JSONOutput } from 'typedoc';
 import * as v from 'valibot';
+
 import { VivliostyleConfigSchema } from '../dist/config/schema.js';
 
 function insertDocs(
@@ -214,9 +216,10 @@ async function buildConfigDocs(): Promise<string> {
 
     const namedDefinition = schema[definition];
     schema[definition] = meta.title;
-    const tsDefinition = await prettier.format(
+    const { code: tsDefinition } = await format(
+      'snippet.ts',
       `type ${meta.title} = ${namedDefinition};`,
-      { parser: 'typescript', printWidth: 40 },
+      { printWidth: 40 },
     );
     return [
       `### ${meta.title}`,
