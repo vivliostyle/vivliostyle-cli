@@ -8,6 +8,9 @@ on:
       - synchronize
   merge_group:
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
