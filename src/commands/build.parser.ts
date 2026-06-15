@@ -110,7 +110,7 @@ This option is equivalent with "--preflight press-ready"`,
     .addOption(
       new Option(
         '--render-mode <mode>',
-        'if docker is set, Vivliostyle try to render PDF on Docker container [local] (note: `docker` is deprecated, see https://github.com/vivliostyle/vivliostyle-cli/issues/823)',
+        'if docker is set, Vivliostyle tries to render PDF on Docker container [local] (note: `docker` is deprecated, see https://github.com/vivliostyle/vivliostyle-cli/issues/823)',
       ).choices(['local', 'docker']),
     )
     .addOption(
