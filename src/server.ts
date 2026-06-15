@@ -283,7 +283,9 @@ export async function createViteServer({
       closeLaunchedServer ??= server.close.bind(server);
       return closeLaunchedServer();
     }));
-  registerCleanupHandler('Closing Vite server', closeServer);
+  registerCleanupHandler('Closing Vite server', closeServer, {
+    prepend: true,
+  });
 
   const server = await serverLaunch;
   closeLaunchedServer = server.close.bind(server);

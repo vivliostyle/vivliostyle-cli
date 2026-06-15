@@ -15,6 +15,7 @@ const mockedRegisterCleanupHandler = vi.hoisted(() =>
     (
       message: string,
       handler: () => Promise<void>,
+      options?: { prepend?: boolean },
     ) => () => (() => Promise<void>) | undefined
   >(),
 );
@@ -101,6 +102,7 @@ describe('Vite server cleanup', () => {
       expect(mockedRegisterCleanupHandler).toHaveBeenCalledWith(
         'Closing Vite server',
         expect.any(Function),
+        { prepend: true },
       );
       const cleanup = cleanupHandler?.();
       expect(cleanup).toBeInstanceOf(Promise);

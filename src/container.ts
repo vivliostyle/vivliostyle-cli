@@ -10,7 +10,12 @@ import { CONTAINER_LOCAL_HOSTNAME, CONTAINER_ROOT_DIR } from './constants.js';
 import { Logger } from './logger.js';
 import { importNodeModule } from './node-modules.js';
 import { getSourceUrl } from './server.js';
-import { exec, isValidUri, pathEquals } from './util.js';
+import {
+  exec,
+  isValidUri,
+  pathEquals,
+  registerCleanupHandler,
+} from './util.js';
 
 export function toContainerPath(urlOrAbsPath: string): string {
   if (isValidUri(urlOrAbsPath)) {
@@ -58,6 +63,7 @@ export async function runContainer({
   entrypoint,
   env,
   workdir,
+  signal,
 }: {
   image: string;
   userVolumeArgs: string[];
@@ -65,16 +71,29 @@ export async function runContainer({
   entrypoint?: string;
   env?: [string, string][];
   workdir?: string;
+  signal?: AbortSignal;
 }) {
+  signal?.throwIfAborted();
   const { default: commandExists } = await importNodeModule('command-exists');
-  if (!(await commandExists('docker'))) {
+  const dockerExists = await commandExists('docker');
+  signal?.throwIfAborted();
+  if (!dockerExists) {
     throw new Error(
       `Docker isn't be installed. To use this feature, you'll need to install Docker.`,
     );
   }
-  const version = (
-    await exec('docker', ['version', '--format', '{{.Server.Version}}'])
-  ).stdout;
+  let version: string;
+  try {
+    version = (
+      await exec('docker', ['version', '--format', '{{.Server.Version}}'], {
+        signal,
+      })
+    ).stdout;
+  } catch (error) {
+    signal?.throwIfAborted();
+    throw error;
+  }
+  signal?.throwIfAborted();
   const [major, minor] = version.split('.').map(Number);
   if (major < 20 || (major === 20 && minor < 10)) {
     throw new Error(
@@ -101,18 +120,39 @@ export async function runContainer({
     Logger.debug(`docker ${args.join(' ')}`);
     const proc = x('docker', args, {
       throwOnError: true,
+      signal,
       nodeOptions: {
         stdio: Logger.isInteractive ? 'inherit' : undefined,
       },
     });
-    if (Logger.isInteractive) {
-      await proc;
-    } else {
-      for await (const line of proc) {
-        Logger.log(line);
+    const containerRun = (async () => {
+      if (Logger.isInteractive) {
+        await proc;
+      } else {
+        for await (const line of proc) {
+          Logger.log(line);
+        }
       }
+    })();
+    const unregisterCleanupHandler = registerCleanupHandler(
+      'Waiting for Docker process to stop',
+      async () => {
+        try {
+          await containerRun;
+        } catch {
+          // The active caller reports or normalizes the Docker error.
+        }
+      },
+      { prepend: true },
+    );
+    try {
+      await containerRun;
+    } finally {
+      unregisterCleanupHandler();
     }
+    signal?.throwIfAborted();
   } catch (error) {
+    signal?.throwIfAborted();
     throw new Error(
       'An error occurred on the running container. Please see logs above.',
       { cause: error },
@@ -158,6 +198,7 @@ export async function buildPDFWithContainer({
     ]),
     env: [['VS_CLI_BUILD_PDF_OPTIONS', JSON.stringify(bypassedOption)]],
     commandArgs: ['build'],
+    signal: inlineConfig.signal,
     workdir:
       typeof config.serverRootDir === 'string'
         ? toContainerPath(config.serverRootDir)

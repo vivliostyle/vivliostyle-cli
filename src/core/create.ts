@@ -202,6 +202,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
       projectPath,
       cwd,
       template: template!,
+      signal: inlineConfig.signal,
       templateVariables: {
         ...inlineConfig,
         ...explicitTemplateVariables,
@@ -211,7 +212,12 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     if (installDependencies) {
       const pm = whichPm();
       using _ = Logger.suspendLogging(`Installing dependencies with ${pm}`);
-      await performInstallDependencies({ projectPath, cwd, pm });
+      await performInstallDependencies({
+        projectPath,
+        cwd,
+        pm,
+        signal: inlineConfig.signal,
+      });
     }
   }
 
@@ -598,12 +604,15 @@ async function setupTemplate({
   template,
   templateVariables,
   useLocalTemplate,
+  signal,
 }: Required<
   Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath' | 'template'>
 > & {
   templateVariables: Record<string, unknown>;
   useLocalTemplate?: boolean;
+  signal?: AbortSignal;
 }) {
+  signal?.throwIfAborted();
   if (useLocalTemplate) {
     const matcher = new GlobMatcher([
       {
@@ -614,11 +623,14 @@ async function setupTemplate({
       },
     ]);
     const files = await matcher.glob({ followSymbolicLinks: true });
+    signal?.throwIfAborted();
     Logger.debug('setupTemplate > files from local template %O', files);
     for (const file of files) {
+      signal?.throwIfAborted();
       const targetPath = upath.join(cwd, projectPath, file);
       fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
       await copy(upath.join(template, file), targetPath);
+      signal?.throwIfAborted();
     }
   } else {
     // `downloadTemplate` deletes the destination directory for rollback purposes
@@ -632,21 +644,32 @@ async function setupTemplate({
       `.vs-template-${Date.now()}`,
     );
     Logger.debug('setupTemplate > tmpDownloadDir %s', tmpDownloadDir);
-    const takeCleanupHandler = registerCleanupHandler(
+    const templateDownload = downloadTemplate(template, {
+      dir: tmpDownloadDir,
+    });
+    const unregisterCleanupHandler = registerCleanupHandler(
       `Removing the temporary directory: ${tmpDownloadDir}`,
-      () => {
+      async () => {
+        try {
+          await templateDownload;
+        } catch {
+          // Remove any partial output after a failed or interrupted download.
+        }
         fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
       },
     );
 
-    await downloadTemplate(template, { dir: tmpDownloadDir });
+    await templateDownload;
+    signal?.throwIfAborted();
     for (const entry of fs.readdirSync(tmpDownloadDir)) {
       fs.renameSync(
         upath.join(tmpDownloadDir, entry),
         upath.join(cwd, projectPath, entry),
       );
+      signal?.throwIfAborted();
     }
-    takeCleanupHandler()?.();
+    fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
+    unregisterCleanupHandler();
   }
 
   const packageJsonPath = upath.join(cwd, projectPath, 'package.json');
@@ -699,23 +722,46 @@ async function performInstallDependencies({
   pm,
   cwd,
   projectPath,
+  signal,
 }: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>> & {
   pm: PackageManager;
+  signal?: AbortSignal;
 }) {
+  signal?.throwIfAborted();
   const proc = x(pm, ['install'], {
     throwOnError: true,
+    signal,
     nodeOptions: {
       cwd: upath.join(cwd, projectPath),
       stdio: Logger.isInteractive ? 'inherit' : undefined,
     },
   });
-  if (Logger.isInteractive) {
-    await proc;
-  } else {
-    for await (const line of proc) {
-      Logger.log(line);
+  const installation = (async () => {
+    if (Logger.isInteractive) {
+      await proc;
+    } else {
+      for await (const line of proc) {
+        Logger.log(line);
+      }
     }
+  })();
+  const unregisterCleanupHandler = registerCleanupHandler(
+    'Waiting for dependency installation to stop',
+    async () => {
+      try {
+        await installation;
+      } catch {
+        // The active caller reports or normalizes the installation error.
+      }
+    },
+    { prepend: true },
+  );
+  try {
+    await installation;
+  } finally {
+    unregisterCleanupHandler();
   }
+  signal?.throwIfAborted();
 }
 
 function caveat(

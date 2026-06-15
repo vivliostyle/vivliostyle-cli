@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   registerCleanupHandler,
   registerTerminationHook,
+  runCleanupHandlers,
   setupProcessTermination,
 } from '../src/util.js';
 
@@ -22,12 +23,13 @@ describe('process termination', () => {
     vi.restoreAllMocks();
   });
 
-  it('waits for cleanup after invoking a termination signal listener', async () => {
+  it('waits for cleanup already in progress after repeated signals', async () => {
     const listeners = new Map<string, (...args: any[]) => void>();
-    vi.spyOn(process, 'once').mockImplementation((event, listener) => {
+    vi.spyOn(process, 'on').mockImplementation((event, listener) => {
       listeners.set(String(event), listener);
       return process;
     });
+    vi.spyOn(process, 'once').mockImplementation(() => process);
     const exit = vi
       .spyOn(process, 'exit')
       .mockImplementation((() => undefined) as never);
@@ -51,19 +53,24 @@ describe('process termination', () => {
     expect(listeners.has('SIGTERM')).toBe(true);
     expect(listeners.has('SIGHUP')).toBe(true);
 
-    // Invoke SIGHUP as a representative registered listener. This exercises
-    // the cross-platform termination path without emulating OS signal delivery;
-    // the POSIX subprocess tests below cover real delivery for all three signals.
+    const cleanupRun = runCleanupHandlers();
+    expect(runCleanupHandlers()).toBe(cleanupRun);
+    expect(cleanup).toHaveBeenCalledOnce();
+
+    // Invoke SIGHUP twice while normal cleanup is already in progress. This
+    // exercises both cleanup serialization and repeated signal handling.
+    listeners.get('SIGHUP')?.();
     listeners.get('SIGHUP')?.();
 
     expect(terminationHook).toHaveBeenCalledWith(129);
-    expect(cleanup).toHaveBeenCalledOnce();
     expect(regularCleanup).not.toHaveBeenCalled();
     expect(exit).not.toHaveBeenCalled();
 
     resolveCleanup?.();
+    await cleanupRun;
     await vi.waitFor(() => {
       expect(regularCleanup).toHaveBeenCalledOnce();
+      expect(exit).toHaveBeenCalledOnce();
       expect(exit).toHaveBeenCalledWith(129);
     });
   });
@@ -95,12 +102,18 @@ describeOnPosix('process termination signals', () => {
 
       let output = '';
       let signalSent = false;
+      let repeatedSignalTimeout: NodeJS.Timeout | undefined;
       const ready = new Promise<void>((resolve, reject) => {
         const handleOutput = (chunk: Buffer) => {
           output += chunk.toString();
           if (!signalSent && output.includes('READY\n')) {
             signalSent = true;
             child.kill(terminationSignal);
+            repeatedSignalTimeout = setTimeout(() => {
+              if (child.exitCode === null && child.signalCode === null) {
+                child.kill(terminationSignal);
+              }
+            }, 20);
             resolve();
           }
         };
@@ -136,6 +149,7 @@ describeOnPosix('process termination signals', () => {
         );
       } finally {
         clearTimeout(timeout);
+        clearTimeout(repeatedSignalTimeout);
         if (child.exitCode === null && child.signalCode === null) {
           child.kill('SIGKILL');
           await closed;

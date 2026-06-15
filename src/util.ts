@@ -51,7 +51,7 @@ export async function exec(
 
 const cleanupHandlers: (() => void | Promise<void>)[] = [];
 const terminationHooks = new Set<(exitCode: number) => void>();
-let cleanupStarted = false;
+let cleanupPromise: Promise<void> | undefined;
 let processTerminationInstalled = false;
 let handlingProcessTermination = false;
 
@@ -86,18 +86,24 @@ export function registerTerminationHook(hook: (exitCode: number) => void) {
   };
 }
 
-export async function runCleanupHandlers() {
-  if (cleanupStarted) {
-    return;
+export function runCleanupHandlers() {
+  if (cleanupPromise) {
+    return cleanupPromise;
   }
-  cleanupStarted = true;
-  while (cleanupHandlers.length) {
-    try {
-      await cleanupHandlers.shift()?.();
-    } catch (e) {
-      // NOOP
+  let resolveCleanup: (() => void) | undefined;
+  cleanupPromise = new Promise<void>((resolve) => {
+    resolveCleanup = resolve;
+  });
+  void (async () => {
+    while (cleanupHandlers.length) {
+      try {
+        await cleanupHandlers.shift()?.();
+      } catch (e) {
+        // NOOP
+      }
     }
-  }
+  })().then(() => resolveCleanup?.());
+  return cleanupPromise;
 }
 
 async function handleProcessTermination(exitCode: number) {
@@ -125,9 +131,9 @@ export function setupProcessTermination() {
   }
   processTerminationInstalled = true;
 
-  process.once('SIGINT', () => void handleProcessTermination(130));
-  process.once('SIGTERM', () => void handleProcessTermination(143));
-  process.once('SIGHUP', () => void handleProcessTermination(129));
+  process.on('SIGINT', () => void handleProcessTermination(130));
+  process.on('SIGTERM', () => void handleProcessTermination(143));
+  process.on('SIGHUP', () => void handleProcessTermination(129));
   process.once('exit', () => {
     void runCleanupHandlers();
   });
@@ -203,26 +209,36 @@ export async function inflateZip(filePath: string, dest: string) {
 }
 
 export function useTmpDirectory(): Promise<[string, () => void]> {
-  return new Promise<[string, () => void]>((res, rej) => {
+  const directory = new Promise<string>((res, rej) => {
     tmp.dir({ unsafeCleanup: true }, (err, path) => {
       if (err) {
         return rej(err);
       }
       Logger.debug(`Created the temporary directory: ${path}`);
-      if (import.meta.env?.VITEST) {
-        return res([path, () => {}]);
-      }
-      const callback = () => {
-        // clear function doesn't work well?
-        // clear();
-        fs.rmSync(path, { force: true, recursive: true });
-      };
-      registerCleanupHandler(
-        `Removing the temporary directory: ${path}`,
-        callback,
-      );
-      res([path, callback]);
+      res(path);
     });
+  });
+  if (import.meta.env?.VITEST) {
+    return directory.then((path) => [path, () => {}]);
+  }
+
+  let path: string | undefined;
+  const callback = () => {
+    if (path) {
+      fs.rmSync(path, { force: true, recursive: true });
+    }
+  };
+  registerCleanupHandler('Removing the temporary directory', async () => {
+    try {
+      path = await directory;
+    } catch {
+      return;
+    }
+    callback();
+  });
+  return directory.then((createdPath) => {
+    path = createdPath;
+    return [createdPath, callback];
   });
 }
 
