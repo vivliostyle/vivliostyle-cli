@@ -272,9 +272,21 @@ export async function createViteServer({
     });
   }
 
-  if (mode === 'preview') {
-    return await createServer(viteInlineConfig);
-  } else {
-    return await preview(viteInlineConfig);
-  }
+  const serverLaunch =
+    mode === 'preview'
+      ? createServer(viteInlineConfig)
+      : preview(viteInlineConfig);
+  let closeServerPromise: Promise<void> | undefined;
+  let closeLaunchedServer: (() => Promise<void>) | undefined;
+  const closeServer = () =>
+    (closeServerPromise ??= serverLaunch.then((server) => {
+      closeLaunchedServer ??= server.close.bind(server);
+      return closeLaunchedServer();
+    }));
+  registerCleanupHandler('Closing Vite server', closeServer);
+
+  const server = await serverLaunch;
+  closeLaunchedServer = server.close.bind(server);
+  server.close = closeServer;
+  return server;
 }
