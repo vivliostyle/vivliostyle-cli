@@ -1,4 +1,5 @@
-import { pathToFileURL } from 'node:url';
+import fs from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   gracefulError,
@@ -7,10 +8,18 @@ import {
 } from './util.js';
 
 export function isDirectExecution(importMetaUrl: string) {
-  return (
-    Boolean(process.argv[1]) &&
-    importMetaUrl === pathToFileURL(process.argv[1]).href
-  );
+  const entryPath = process.argv[1];
+  if (!entryPath) {
+    return false;
+  }
+  try {
+    return (
+      fs.realpathSync(fileURLToPath(importMetaUrl)) ===
+      fs.realpathSync(entryPath)
+    );
+  } catch {
+    return importMetaUrl === pathToFileURL(entryPath).href;
+  }
 }
 
 export class CliInterruptError extends Error {
