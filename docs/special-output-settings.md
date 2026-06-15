@@ -55,6 +55,9 @@ You can also specify the `--preflight press-ready-local` option to execute the o
 
 - [Example: render-on-docker](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/render-on-docker)
 
+> [!WARNING]
+> The `renderMode: docker` option (`--render-mode docker`) is deprecated and may be removed in a future major release. See [#823](https://github.com/vivliostyle/vivliostyle-cli/issues/823) for the background and to share your feedback.
+
 To specify Docker as the environment for PDF output, use the `--render-mode docker` option in the `vivliostyle build` command (the above option only executes post-processing on Docker, but this option executes all processing on Docker). This option ensures that all processing is executed on Docker, fixing the environment at the time of output and ensuring consistent results across different environments and OS.
 
 When using Docker render mode, please note the following points:

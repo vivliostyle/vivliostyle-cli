@@ -55,6 +55,9 @@ vivliostyle build manuscript.md --preflight press-ready --preflight-option enfor
 
 - [Example: render-on-docker](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/render-on-docker)
 
+> [!WARNING]
+> `renderMode: docker` オプション（`--render-mode docker`）は非推奨となり、将来のメジャーリリースで削除される可能性があります。背景やフィードバックについては [#823](https://github.com/vivliostyle/vivliostyle-cli/issues/823) を参照してください。
+
 `vivliostyle build` コマンドで `--render-mode docker` オプションを指定すると、PDF 出力時の環境として Docker を指定できます（上記のオプションでは後処理のみ Docker 上で実行しますが、このオプションは全ての処理を Docker 上で実行します）Docker を用いることで出力時の環境を固定できるため、異なる環境・OSでも同じ出力結果となることを保証できます。
 
 Docker render mode を使用する際は、以下の点に注意してください。
