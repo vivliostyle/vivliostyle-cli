@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
+import terminalLink from 'terminal-link';
 import upath from 'upath';
 import * as v from 'valibot';
+import { cyan, underline } from 'yoctocolors';
 
 import { Logger } from '../logger.js';
 import {
@@ -135,6 +137,27 @@ export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
   ) {
     Logger.logWarn(
       "'preflightOption' property of output config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflightOption' property instead.",
+    );
+  }
+
+  if (
+    config.inlineOptions.renderMode === 'docker' ||
+    config.tasks.some(
+      (task) =>
+        task.output &&
+        [task.output].flat().some((o) => o.renderMode === 'docker'),
+    )
+  ) {
+    const issueUrl =
+      'https://github.com/vivliostyle/vivliostyle-cli/issues/823';
+    const issueLinkText = underline(issueUrl);
+    const issueLink = terminalLink(issueLinkText, issueUrl, {
+      fallback: () => issueLinkText,
+    });
+    Logger.logWarn(
+      `'renderMode: docker' option was deprecated and may be removed in a future major release.\n${cyan(
+        `     See ${issueLink} for details and to share your feedback.`,
+      )}`,
     );
   }
 }

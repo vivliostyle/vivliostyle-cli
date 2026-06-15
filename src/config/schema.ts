@@ -396,8 +396,10 @@ export const OutputConfig = v.pipe(
         ),
         renderMode: v.pipe(
           RenderMode,
+          v.metadata({ deprecated: true }),
           v.description($`
             If set to \`docker\`, Vivliostyle will render the PDF using a Docker container. (default: \`local\`)
+            \`renderMode: docker\` is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/823
           `),
         ),
         /** @deprecated */
@@ -1143,6 +1145,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
       RenderMode,
       v.description($`
           If docker is set, Vivliostyle try to render PDF on Docker container. [local]
+          \`renderMode: docker\` is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/823
         `),
     ),
     preflight: v.pipe(

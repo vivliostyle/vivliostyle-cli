@@ -1,8 +1,11 @@
 import { VFM, readMetadata } from '@vivliostyle/vfm';
+import * as v from 'valibot';
 import { expect, it, onTestFinished, vi } from 'vitest';
 
+import { warnDeprecatedConfig } from '../src/config/load.js';
 import { UseTemporaryServerRoot } from '../src/config/resolve.js';
-import type { VivliostyleConfigSchema } from '../src/config/schema.js';
+import { VivliostyleConfigSchema } from '../src/config/schema.js';
+import { Logger } from '../src/logger.js';
 import { getTaskConfig, maskConfig, resolveFixture } from './command-util.js';
 
 const validConfigData = {
@@ -697,4 +700,28 @@ it('output-level pdfPostprocess.preflight overrides output.preflight', async () 
     format: 'pdf',
     preflight: 'press-ready-local',
   });
+});
+
+it('warns when output config uses deprecated renderMode: docker', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    output: [{ path: 'output.pdf', renderMode: 'docker' }],
+  });
+  warnDeprecatedConfig(config);
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining('vivliostyle-cli/issues/823'),
+  );
+});
+
+it('warns when --render-mode docker is passed as an inline option', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, { entry: 'manuscript.md' });
+  config.inlineOptions.renderMode = 'docker';
+  warnDeprecatedConfig(config);
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining('vivliostyle-cli/issues/823'),
+  );
 });
