@@ -59,12 +59,17 @@ let handlingProcessTermination = false;
 export const registerCleanupHandler = (
   debugMessage: string,
   handler: () => void | Promise<void>,
+  { prepend = false }: { prepend?: boolean } = {},
 ) => {
   const callback = () => {
     Logger.debug(debugMessage);
     return handler();
   };
-  cleanupHandlers.push(callback);
+  if (prepend) {
+    cleanupHandlers.unshift(callback);
+  } else {
+    cleanupHandlers.push(callback);
+  }
   return () => {
     const index = cleanupHandlers.indexOf(callback);
     if (index !== -1) {

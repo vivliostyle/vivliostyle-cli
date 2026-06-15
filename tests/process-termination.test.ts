@@ -33,15 +33,17 @@ describe('process termination', () => {
       .mockImplementation((() => undefined) as never);
 
     let resolveCleanup: (() => void) | undefined;
-    const cleanup = vi.fn(
+    const cleanup = vi.fn<() => Promise<void>>(
       () =>
         new Promise<void>((resolve) => {
           resolveCleanup = resolve;
         }),
     );
-    const terminationHook = vi.fn();
+    const regularCleanup = vi.fn<() => void>();
+    const terminationHook = vi.fn<(exitCode: number) => void>();
     registerTerminationHook(terminationHook);
-    registerCleanupHandler('test cleanup', cleanup);
+    registerCleanupHandler('regular cleanup', regularCleanup);
+    registerCleanupHandler('priority cleanup', cleanup, { prepend: true });
 
     setupProcessTermination();
 
@@ -56,10 +58,12 @@ describe('process termination', () => {
 
     expect(terminationHook).toHaveBeenCalledWith(129);
     expect(cleanup).toHaveBeenCalledOnce();
+    expect(regularCleanup).not.toHaveBeenCalled();
     expect(exit).not.toHaveBeenCalled();
 
     resolveCleanup?.();
     await vi.waitFor(() => {
+      expect(regularCleanup).toHaveBeenCalledOnce();
       expect(exit).toHaveBeenCalledWith(129);
     });
   });

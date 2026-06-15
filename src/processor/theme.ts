@@ -4,7 +4,7 @@ import Arborist from '@npmcli/arborist';
 import upath from 'upath';
 
 import type { ResolvedTaskConfig } from '../config/resolve.js';
-import { DetailError } from '../util.js';
+import { DetailError, registerCleanupHandler } from '../util.js';
 
 function* iterateSymlinksInThemesNodeModules(
   themesDir: string,
@@ -72,7 +72,11 @@ export function getLocalThemePaths({
 export async function installThemeDependencies({
   themesDir,
   themeIndexes,
-}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
+  signal,
+}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'> & {
+  signal?: AbortSignal;
+}): Promise<void> {
+  signal?.throwIfAborted();
   fs.mkdirSync(themesDir, { recursive: true });
   removeThemesDirIfBrokenSymlinks(themesDir);
 
@@ -83,6 +87,7 @@ export async function installThemeDependencies({
       installLinks: true,
     };
     const tree = await new Arborist(commonOpt).buildIdealTree();
+    signal?.throwIfAborted();
     const existing = Array.from(tree.children.keys());
     const add = [
       ...new Set(
@@ -96,7 +101,26 @@ export async function installThemeDependencies({
     // Install dependencies
     const opt = { ...commonOpt, rm, add };
     const arb = new Arborist(opt);
-    const actualTree = await arb.reify(opt);
+    const reify = arb.reify(opt);
+    const unregisterReifyCleanup = registerCleanupHandler(
+      'Waiting for theme installation rollback',
+      async () => {
+        try {
+          await reify;
+        } catch {
+          // The active caller reports or normalizes the reify error.
+        }
+      },
+      // Arborist handles the process signal and must finish rollback before
+      // other cleanup removes directories that reify may still be using.
+      { prepend: true },
+    );
+    let actualTree;
+    try {
+      actualTree = await reify;
+    } finally {
+      unregisterReifyCleanup();
+    }
 
     // Replace all local package directories with symlinks for hot reload support
     for (const child of actualTree.children.values()) {
@@ -109,7 +133,9 @@ export async function installThemeDependencies({
         fs.symlinkSync(relPath, child.path, 'junction');
       }
     }
+    signal?.throwIfAborted();
   } catch (error) {
+    signal?.throwIfAborted();
     const thrownError = error as Error;
     throw new DetailError(
       'An error occurred during the installation of the theme',
