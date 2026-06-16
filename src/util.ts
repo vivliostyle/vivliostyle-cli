@@ -91,19 +91,25 @@ export function runCleanupHandlers() {
     return cleanupPromise;
   }
   let resolveCleanup: (() => void) | undefined;
-  cleanupPromise = new Promise<void>((resolve) => {
+  const currentCleanupPromise = new Promise<void>((resolve) => {
     resolveCleanup = resolve;
   });
+  cleanupPromise = currentCleanupPromise;
   void (async () => {
-    while (cleanupHandlers.length) {
-      try {
-        await cleanupHandlers.shift()?.();
-      } catch (e) {
-        // NOOP
+    try {
+      while (cleanupHandlers.length) {
+        try {
+          await cleanupHandlers.shift()?.();
+        } catch (e) {
+          // NOOP
+        }
       }
+    } finally {
+      cleanupPromise = undefined;
+      resolveCleanup?.();
     }
-  })().then(() => resolveCleanup?.());
-  return cleanupPromise;
+  })();
+  return currentCleanupPromise;
 }
 
 async function handleProcessTermination(exitCode: number) {

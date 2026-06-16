@@ -34,6 +34,7 @@ import {
 import type { PromptOption, SelectPromptOption } from './config/schema.js';
 import { ValidString } from './config/schema.js';
 import { isUnicodeSupported, Logger } from './logger.js';
+import { PromptCancelError } from './prompt-cancel.js';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
@@ -129,7 +130,8 @@ export async function askQuestion<
         result = question satisfies never;
       }
       if (isCancel(result)) {
-        process.exit(0);
+        // Let the CLI entry point handle cleanup while preserving prompt cancellation as non-error.
+        throw new PromptCancelError();
       }
       response[name] = result;
       interactiveLogger.messageHistory.push({

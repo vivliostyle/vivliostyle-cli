@@ -74,6 +74,20 @@ describe('process termination', () => {
       expect(exit).toHaveBeenCalledWith(129);
     });
   });
+
+  it('runs cleanup handlers registered after previous cleanup completed', async () => {
+    const firstCleanup = vi.fn<() => void>();
+    const secondCleanup = vi.fn<() => void>();
+
+    registerCleanupHandler('first cleanup', firstCleanup);
+    await runCleanupHandlers();
+
+    registerCleanupHandler('second cleanup', secondCleanup);
+    await runCleanupHandlers();
+
+    expect(firstCleanup).toHaveBeenCalledOnce();
+    expect(secondCleanup).toHaveBeenCalledOnce();
+  });
 });
 
 // Node.js cannot generate catchable CTRL_C_EVENT or CTRL_BREAK_EVENT for a

@@ -5,6 +5,8 @@ import { pathToFileURL } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PromptCancelError } from '../src/prompt-cancel.js';
+
 let terminationHook: ((exitCode: number) => void) | undefined;
 
 const mockedUtil = vi.hoisted(() => ({
@@ -50,6 +52,16 @@ describe('runCliCommand', () => {
     });
 
     expect(gracefulError).toHaveBeenCalledWith(err);
+    expect(mockedUtil.unregisterTerminationHook).toHaveBeenCalledOnce();
+  });
+
+  it('treats prompt cancellation as a non-error command exit', async () => {
+    await runCliCommand(async () => {
+      throw new PromptCancelError();
+    });
+
+    expect(setupProcessTermination).toHaveBeenCalledOnce();
+    expect(gracefulError).not.toHaveBeenCalled();
     expect(mockedUtil.unregisterTerminationHook).toHaveBeenCalledOnce();
   });
 });

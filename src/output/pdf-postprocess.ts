@@ -15,7 +15,7 @@ import {
 import type { CmykMap, Meta, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
-import { coreVersion, isInContainer } from '../util.js';
+import { coreVersion, isInContainer, registerCleanupHandler } from '../util.js';
 import { convertCmykColors } from './cmyk.js';
 import { replaceImages } from './image.js';
 
@@ -23,7 +23,10 @@ export type SaveOption = Pick<
   PdfOutput,
   'preflight' | 'preflightOption' | 'cmyk' | 'replaceImage'
 > &
-  Pick<ResolvedTaskConfig, 'image'> & { cmykMap: CmykMap };
+  Pick<ResolvedTaskConfig, 'image'> & {
+    cmykMap: CmykMap;
+    signal?: AbortSignal;
+  };
 
 const prefixes = {
   dcterms: 'http://purl.org/dc/terms/',
@@ -60,11 +63,13 @@ export async function pressReadyWithContainer({
   output,
   preflightOption,
   image,
+  signal,
 }: {
   input: string;
   output: string;
   preflightOption: string[];
   image: string;
+  signal?: AbortSignal;
 }) {
   await runContainer({
     image,
@@ -83,6 +88,7 @@ export async function pressReadyWithContainer({
         .map((opt) => `--${decamelize(opt, { separator: '-' })}`)
         .filter((str) => /^[\w-]+/.test(str)),
     ],
+    signal,
   });
 }
 
@@ -108,9 +114,11 @@ export class PostProcess {
       cmyk,
       cmykMap,
       replaceImage,
+      signal,
     }: SaveOption,
   ) {
     let pdf = await this.document.save();
+    signal?.throwIfAborted();
 
     if (cmyk) {
       const mergedMap: CmykMap = { ...cmykMap };
@@ -125,6 +133,7 @@ export class PostProcess {
         colorMap: mergedMap,
         warnUnmapped: cmyk.warnUnmapped,
       });
+      signal?.throwIfAborted();
 
       if (cmyk.mapOutput) {
         const mapOutputDir = upath.dirname(cmyk.mapOutput);
@@ -143,44 +152,72 @@ export class PostProcess {
         pdf,
         replaceImageConfig: replaceImage,
       });
+      signal?.throwIfAborted();
     }
 
     if (preflight) {
       const input = upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`);
-      await fs.promises.writeFile(input, pdf);
+      let inputReady: Promise<void> | undefined;
+      let preflightOperation: Promise<void> | undefined;
+      const unregisterPreflightInputCleanup = registerCleanupHandler(
+        `Removing temporary preflight input: ${input}`,
+        async () => {
+          try {
+            await inputReady;
+            await preflightOperation;
+          } catch {
+            // Remove the temporary input after failed or interrupted preflight.
+          }
+          await fs.promises.rm(input, { force: true });
+        },
+      );
 
-      if (
-        preflight === 'press-ready-local' ||
-        (preflight === 'press-ready' && isInContainer())
-      ) {
-        using _ = Logger.suspendLogging('Running press-ready');
-        const { build } = await importNodeModule('press-ready');
-        await build({
-          ...preflightOption.reduce((acc, opt) => {
-            const optName = decamelize(opt, { separator: '-' });
-            return optName.startsWith('no-')
-              ? {
-                  ...acc,
-                  [optName.slice(3)]: false,
-                }
-              : {
-                  ...acc,
-                  [optName]: true,
-                };
-          }, {}),
-          input,
-          output,
-        });
-      } else if (preflight === 'press-ready') {
-        using _ = Logger.suspendLogging('Running press-ready');
-        await pressReadyWithContainer({
-          input,
-          output,
-          preflightOption,
-          image,
-        });
+      try {
+        inputReady = fs.promises.writeFile(input, pdf);
+        await inputReady;
+        signal?.throwIfAborted();
+
+        preflightOperation = (async () => {
+          if (
+            preflight === 'press-ready-local' ||
+            (preflight === 'press-ready' && isInContainer())
+          ) {
+            using _ = Logger.suspendLogging('Running press-ready');
+            const { build } = await importNodeModule('press-ready');
+            await build({
+              ...preflightOption.reduce((acc, opt) => {
+                const optName = decamelize(opt, { separator: '-' });
+                return optName.startsWith('no-')
+                  ? {
+                      ...acc,
+                      [optName.slice(3)]: false,
+                    }
+                  : {
+                      ...acc,
+                      [optName]: true,
+                    };
+              }, {}),
+              input,
+              output,
+            });
+          } else if (preflight === 'press-ready') {
+            using _ = Logger.suspendLogging('Running press-ready');
+            await pressReadyWithContainer({
+              input,
+              output,
+              preflightOption,
+              image,
+              signal,
+            });
+          }
+        })();
+        await preflightOperation;
+      } finally {
+        unregisterPreflightInputCleanup();
+        await fs.promises.rm(input, { force: true });
       }
     } else {
+      signal?.throwIfAborted();
       await fs.promises.writeFile(output, pdf);
     }
   }

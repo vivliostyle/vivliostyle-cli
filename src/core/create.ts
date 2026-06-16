@@ -659,17 +659,24 @@ async function setupTemplate({
       },
     );
 
-    await templateDownload;
-    signal?.throwIfAborted();
-    for (const entry of fs.readdirSync(tmpDownloadDir)) {
-      fs.renameSync(
-        upath.join(tmpDownloadDir, entry),
-        upath.join(cwd, projectPath, entry),
-      );
+    try {
+      await templateDownload;
       signal?.throwIfAborted();
+      for (const entry of fs.readdirSync(tmpDownloadDir)) {
+        fs.renameSync(
+          upath.join(tmpDownloadDir, entry),
+          upath.join(cwd, projectPath, entry),
+        );
+        signal?.throwIfAborted();
+      }
+    } catch (error) {
+      signal?.throwIfAborted();
+      throw error;
+    } finally {
+      // Always release our cleanup handler and remove any leftover temp download.
+      fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
+      unregisterCleanupHandler();
     }
-    fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
-    unregisterCleanupHandler();
   }
 
   const packageJsonPath = upath.join(cwd, projectPath, 'package.json');
@@ -758,6 +765,9 @@ async function performInstallDependencies({
   );
   try {
     await installation;
+  } catch (error) {
+    signal?.throwIfAborted();
+    throw error;
   } finally {
     unregisterCleanupHandler();
   }

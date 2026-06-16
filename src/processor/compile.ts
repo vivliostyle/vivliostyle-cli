@@ -133,8 +133,11 @@ export async function cleanupWorkspace({
       }
     },
   );
-  await workspaceCleanup;
-  unregisterCleanupHandler();
+  try {
+    await workspaceCleanup;
+  } finally {
+    unregisterCleanupHandler();
+  }
 }
 
 export async function prepareThemeDirectory(

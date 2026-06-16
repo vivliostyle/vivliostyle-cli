@@ -1,4 +1,8 @@
+import { EventEmitter } from 'node:events';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type * as UtilModule from '../src/util.js';
 
 const mocked = vi.hoisted(() => ({
   build: vi.fn(),
@@ -9,6 +13,7 @@ const mocked = vi.hoisted(() => ({
   parseInitCommand: vi.fn(),
   parsePreviewCommand: vi.fn(),
   cliSignal: new AbortController().signal,
+  runCleanupHandlers: vi.fn<() => Promise<void>>(async () => {}),
 }));
 
 vi.mock('../src/entry-util.js', () => ({
@@ -16,6 +21,11 @@ vi.mock('../src/entry-util.js', () => ({
   runCliCommand: vi.fn(async (command) => {
     await command(mocked.cliSignal);
   }),
+}));
+
+vi.mock('../src/util.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof UtilModule>()),
+  runCleanupHandlers: mocked.runCleanupHandlers,
 }));
 
 vi.mock('../src/core/build.js', () => ({
@@ -76,4 +86,32 @@ describe('CLI command signals', () => {
       );
     },
   );
+
+  it('keeps the preview command active until the server closes', async () => {
+    const httpServer = new EventEmitter() as EventEmitter & {
+      listening: boolean;
+    };
+    httpServer.listening = true;
+    mocked.parsePreviewCommand.mockReturnValue({});
+    mocked.preview.mockResolvedValue({ httpServer });
+
+    let settled = false;
+    const running = runPreviewCli(['vivliostyle', 'preview']).then(() => {
+      settled = true;
+    });
+
+    await vi.waitFor(() => {
+      expect(mocked.preview).toHaveBeenCalledOnce();
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    expect(mocked.runCleanupHandlers).not.toHaveBeenCalled();
+
+    httpServer.listening = false;
+    httpServer.emit('close');
+
+    await running;
+    expect(settled).toBe(true);
+    expect(mocked.runCleanupHandlers).toHaveBeenCalledOnce();
+  });
 });

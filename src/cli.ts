@@ -4,21 +4,24 @@ import process from 'node:process';
 
 import { Command, CommanderError } from 'commander';
 
-import { runBuildCli } from './commands/build.runner.js';
-import { runCreateCli } from './commands/create.runner.js';
-import { runInitCli } from './commands/init.runner.js';
-import { runPreviewCli } from './commands/preview.runner.js';
 import { isDirectExecution } from './entry-util.js';
 import { versionForDisplay } from './util.js';
 
-const commandRunners = {
-  build: runBuildCli,
-  create: runCreateCli,
-  init: runInitCli,
-  preview: runPreviewCli,
+const commandLoaders = {
+  build: async () => (await import('./commands/build.runner.js')).runBuildCli,
+  create: async () =>
+    (await import('./commands/create.runner.js')).runCreateCli,
+  init: async () => (await import('./commands/init.runner.js')).runInitCli,
+  preview: async () =>
+    (await import('./commands/preview.runner.js')).runPreviewCli,
 } as const;
 
-type CommandName = keyof typeof commandRunners;
+type CommandName = keyof typeof commandLoaders;
+
+async function runCommand(command: CommandName, argv: string[]) {
+  const runner = await commandLoaders[command]();
+  await runner(argv);
+}
 
 function setupProgram(argv: string[]) {
   const program = new Command()
@@ -39,7 +42,7 @@ function setupProgram(argv: string[]) {
         // Preserve `--` so the existing parser does not reinterpret following
         // option-like operands during its second parse.
         const commandArgs = argv.slice(commandIndex + 1);
-        await commandRunners[command](['vivliostyle', command, ...commandArgs]);
+        await runCommand(command, ['vivliostyle', command, ...commandArgs]);
       });
   };
 
@@ -63,7 +66,7 @@ function setupProgram(argv: string[]) {
         return;
       }
       if (isCommandName(command)) {
-        await commandRunners[command](['vivliostyle', command, '--help']);
+        await runCommand(command, ['vivliostyle', command, '--help']);
         return;
       }
       program.help({ error: true });
@@ -73,7 +76,7 @@ function setupProgram(argv: string[]) {
 }
 
 function isCommandName(command: string): command is CommandName {
-  return Object.hasOwn(commandRunners, command);
+  return Object.hasOwn(commandLoaders, command);
 }
 
 export async function dispatchCli(argv: string[]) {

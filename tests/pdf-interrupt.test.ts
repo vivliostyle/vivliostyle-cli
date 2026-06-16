@@ -72,6 +72,7 @@ function setupPdfBuild(pdf: Page['pdf'], closeBrowser = vi.fn(async () => {})) {
 describe('buildPDF cancellation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedPostProcessLoad.mockReset();
     mockedGetViewerFullUrl.mockResolvedValue('http://localhost:13000/viewer');
   });
 
@@ -183,5 +184,32 @@ describe('buildPDF cancellation', () => {
     );
 
     await expect(buildPDF({ target, config })).rejects.toBe(protocolError);
+  });
+
+  it('passes the signal to PDF postprocess', async () => {
+    const controller = new AbortController();
+    const save = vi.fn<() => Promise<void>>(async () => {});
+    mockedPostProcessLoad.mockResolvedValue({
+      metadata: vi.fn<() => Promise<void>>(async () => {}),
+      toc: vi.fn<() => Promise<void>>(async () => {}),
+      setPageBoxes: vi.fn<() => Promise<void>>(async () => {}),
+      save,
+    });
+    setupPdfBuild(vi.fn(async () => new Uint8Array([1])));
+
+    await expect(
+      buildPDF({
+        target: { ...target, path: 'output.pdf' },
+        config,
+        signal: controller.signal,
+      }),
+    ).resolves.toBe('output.pdf');
+
+    expect(save).toHaveBeenCalledWith(
+      'output.pdf',
+      expect.objectContaining({
+        signal: controller.signal,
+      }),
+    );
   });
 });

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { PromptCancelError } from './prompt-cancel.js';
 import {
   gracefulError,
   registerTerminationHook,
@@ -52,6 +53,9 @@ export async function runCliCommand(
     await command(controller.signal);
   } catch (err) {
     if (err === controller.signal.reason) {
+      return;
+    }
+    if (err instanceof PromptCancelError) {
       return;
     }
     if (err instanceof Error) {

@@ -253,6 +253,7 @@ export async function buildPDF({
     cmyk: target.cmyk,
     cmykMap: browserResult.cmykMap,
     replaceImage: target.replaceImage,
+    signal,
   });
 
   return target.path;

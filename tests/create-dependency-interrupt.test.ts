@@ -61,7 +61,7 @@ it('aborts dependency installation and waits for the child process to stop', asy
     author: 'Author',
     language: 'en',
     theme: false,
-    template: templateDirectory,
+    template: 'template',
     installDependencies: true,
     logLevel: 'silent',
     signal: controller.signal,
@@ -87,4 +87,52 @@ it('aborts dependency installation and waits for the child process to stop', asy
 
   await expect(creating).rejects.toBe(abortReason);
   await cleanup;
+});
+
+it('normalizes dependency installation errors after cancellation', async () => {
+  temporaryDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'vivliostyle-cli-create-install-'),
+  );
+  const templateDirectory = path.join(temporaryDirectory, 'template');
+  fs.mkdirSync(templateDirectory);
+  fs.writeFileSync(path.join(templateDirectory, 'package.json'), '{}');
+
+  let rejectInstall: ((error: Error) => void) | undefined;
+  mockedX.mockReturnValue({
+    [Symbol.asyncIterator]() {
+      return {
+        async next() {
+          await new Promise<void>((_, reject) => {
+            rejectInstall = reject;
+          });
+          return { done: true, value: undefined };
+        },
+      };
+    },
+  });
+
+  const controller = new AbortController();
+  const abortReason = new Error('interrupted');
+  const installError = new Error('install failed');
+  const creating = create({
+    cwd: temporaryDirectory,
+    projectPath: 'book',
+    title: 'Book',
+    author: 'Author',
+    language: 'en',
+    theme: false,
+    template: 'template',
+    installDependencies: true,
+    logLevel: 'silent',
+    signal: controller.signal,
+  });
+
+  await vi.waitFor(() => {
+    expect(mockedX).toHaveBeenCalledOnce();
+  });
+
+  controller.abort(abortReason);
+  rejectInstall?.(installError);
+
+  await expect(creating).rejects.toBe(abortReason);
 });
