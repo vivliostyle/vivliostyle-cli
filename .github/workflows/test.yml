@@ -84,11 +84,13 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: network=host
+          buildkitd-flags: --allow-insecure-entitlement security.insecure
       - name: Build container
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
+          allow: security.insecure
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
             BROWSER=${{ steps.browser.outputs.browser }}
