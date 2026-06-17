@@ -1,8 +1,17 @@
 # syntax=docker/dockerfile:1
 
-# Inherit debian:13-slim's include/exclude configuration
 FROM debian:13-slim AS dpkg-excludes
-RUN sed 's/^\(path-\(include\|exclude\)\) /\1=/' /etc/dpkg/dpkg.cfg.d/docker > /tmp/debian-13-slim.conf
+# debian:13-slim's doc/man/locale stripping is its dpkg path-include/-exclude
+# directives across the dpkg.cfg + dpkg.cfg.d/* tree. Pull those lines out and
+# normalize to "path-exclude=<glob>": mmdebstrap's --variant=custom extraction
+# filters via mmtarfilter (no dpkg yet) and honors only the '=' form.
+# see https://gitlab.mister-muffin.de/josch/mmdebstrap/src/tag/1.5.7/mmdebstrap#L3625
+RUN cat /etc/dpkg/dpkg.cfg \
+      # plus the dpkg.cfg.d/ fragments dpkg actually honors, by its own name rule
+      # see https://salsa.debian.org/dpkg-team/dpkg/-/blob/1.22.22/lib/dpkg/options.c#L145
+      $(ls /etc/dpkg/dpkg.cfg.d | grep -E '^[0-9a-zA-Z_-]+$' | sort | sed 's,^,/etc/dpkg/dpkg.cfg.d/,') \
+    | sed -nE 's/^[[:space:]]*(path-(include|exclude))[[:space:]]*=?[[:space:]]*(.+)$/\1=\3/p' \
+    > /tmp/debian-13-slim.conf
 
 FROM debian:13 AS builder
 
