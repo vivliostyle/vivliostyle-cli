@@ -1,16 +1,16 @@
 # keep-anyway: packages that are removable (the runtime closure cannot reach them)
-# but that the image must keep. build/audit.ts subtracts this list from the
-# auto-derived `removable` set, so only genuinely-removable packages belong here.
-# Packages the closure already reaches -- including dlopen-only deps such as
-# libgtk-3-0t64 or dbus that DT_NEEDED cannot see but the package graph happens to
-# pull in -- are kept automatically and are deliberately NOT listed.
-# image-contract.sh is the guarantee that the kept set stays sufficient: if a
-# future purge breaks a contract test, add the offending package here with a
-# one-line reason. (audit.ts warns if an entry here is stale or already kept by
-# the closure, i.e. no longer needed.)
+# but that the image must keep. The build does NOT read this file; it is input to
+# the out-of-band curation tool build/audit-removable.ts, which subtracts it from
+# the candidate list so only genuinely-removable, genuinely-unwanted packages are
+# reported. Each entry is a blind spot of that closure (lddtree's DT_NEEDED tree of
+# the bundled chrome + apt-cache --recurse): a dependency loaded by dlopen, linked
+# only by firefox, reached only by exec, or pure data with no .so. To regenerate,
+# run audit-removable.ts and move whatever it reports as "unclassified removable"
+# here (kept) or into purge.txt (dropped). image-contract.sh is the real proof the
+# kept set is sufficient.
 
-# Essential packages used implicitly (e.g. dpkg shells out to /usr/bin/diff),
-# not reachable from the seed binaries.
+# essential / base packages used implicitly, not reachable from the seeds
+base-files
 coreutils
 dash
 debianutils
@@ -20,8 +20,7 @@ grep
 libc-bin
 sed
 
-# The bundled Noto font set: data only (no .so), loaded through fontconfig, so the
-# closure cannot see it. image-contract.sh exercises representative files.
+# the bundled Noto font set: data only (no .so), loaded through fontconfig
 fonts-noto-cjk
 fonts-noto-cjk-extra
 fonts-noto-color-emoji
@@ -30,6 +29,51 @@ fonts-noto-ui-core
 fonts-noto-ui-extra
 fonts-noto-unhinted
 
-# firefox loads libdbus-glib at runtime (Playwright nativeDeps), reached neither as
-# a DT_NEEDED of the shipped browser nor through the package graph.
+# chrome dlopens these at GUI init (theming, cursors, font shaping); firefox links
+# the GTK stack directly. The bundled chrome's DT_NEEDED tree does not include them.
+libgtk-3-0t64
+libgtk-3-common
+libgdk-pixbuf-2.0-0
+libgdk-pixbuf2.0-common
+libcairo-gobject2
+libpangoft2-1.0-0
+libpangocairo-1.0-0
+libcolord2
+libxcursor1
+libxinerama1
+
+# chrome's GL / Wayland paths; still consulted with --disable-gpu
+libepoxy0
+libwayland-client0
+libwayland-cursor0
+libwayland-egl1
+
+# chrome attempts a dbus connect on startup; the libs must resolve even if it fails
+dbus
+dbus-bin
+dbus-daemon
+dbus-system-bus-common
+dbus-session-bus-common
+dbus-user-session
+
+# chrome's sandbox + zygote walk /proc through ps
+procps
+libproc2-0
+
+# util-linux runtime deps
+mount
+libsmartcols1
+
+# libsystemd0 dlopens /usr/lib/systemd/libsystemd-shared-<ver>.so
+libsystemd-shared
+
+# firefox dlopens this at startup; no DT_NEEDED entry
+libcloudproviders0
+
+# firefox / input simulation (Playwright nativeDeps), not a DT_NEEDED of the bundle
 libdbus-glib-1-2
+libxtst6
+
+# data read at runtime via the mime / icon caches
+shared-mime-info
+hicolor-icon-theme
