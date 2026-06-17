@@ -1,9 +1,3 @@
-# Install-time-only packages force-purged after the rootfs is assembled.
-# DERIVED, not hand-written: the maximal set removable while image-contract.sh
-# still passes. See build/derive-purge/ for the method and how to regenerate.
-# build/audit.ts neutralizes maintainer scripts and dpkg --purge --force-all
-# removes this set in one order-independent pass.
-
 adduser
 adwaita-icon-theme
 at-spi2-common

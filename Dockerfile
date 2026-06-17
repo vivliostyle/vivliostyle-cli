@@ -23,9 +23,6 @@ ARG TZ=Asia/Tokyo
 ARG USER_GID=1000
 ARG USER_UID=1000
 
-# Opt-in switch for the removable-list audit hook below (--build-arg AUDIT_REMOVABLE=1).
-ARG AUDIT_REMOVABLE
-
 ARG BROWSER
 RUN test -n "$BROWSER"
 ARG VS_CLI_VERSION
@@ -189,23 +186,13 @@ RUN --security=insecure \
     --customize-hook="chown --recursive ${USER_UID}:${USER_GID} \"\$1/data\" \"\$1/opt/vivliostyle-cli\" \"\$1/home/vivliostyle\"" \
     --customize-hook='copy-in /tmp/puppeteer /opt/' \
     --customize-hook="chown --recursive ${USER_UID}:${USER_GID} \"\$1/opt/puppeteer\"" \
-    # ---- removable-list audit (opt-in: --build-arg AUDIT_REMOVABLE=1) --------
-    # Regenerates / verifies the curated lists: recomputes `removable` on the
-    # pre-purge rootfs (lddtree for the browser libs + apt-cache --recurse over the
-    # rootfs's own dpkg status) and diffs it against purge.txt / purge-late.txt /
-    # keep-anyway.txt -- run on a Debian bump or dependency change. Off by default,
-    # so a normal build pays nothing; when on it installs its own lddtree and only
-    # reports (writes nothing, purges nothing). See build/audit-removable.ts.
-    --customize-hook='[ -n "$AUDIT_REMOVABLE" ] && { apt-get update >&2 && apt-get install --yes --no-install-recommends pax-utils >&2 && node /tmp/vs-src/build/audit-removable.ts "$1" >&2; } || true' \
     # ---- install-time-only package purge ---------------------------------
-    # audit.ts orders purge.txt (pass 1) + purge-late.txt (pass 2) by dependency
-    # and writes them to <rootfs>/tmp/.purge-pass{1,2}; the second pass holds back
-    # tools (debconf/perl-base/mawk, libpython3*) that pass 1's postrm scripts
-    # still call. xargs --no-run-if-empty skips a pass whose list came out empty.
+    # audit.ts applies build/purge.txt -- the DERIVED maximal set of packages that
+    # can be removed while image-contract.sh still passes (see build/derive-purge/
+    # for the derivation). It neutralizes maintainer scripts and removes the set
+    # with a single order-independent `dpkg --purge --force-all`, leaving dpkg
+    # deliberately broken.
     --customize-hook='node /tmp/vs-src/build/audit.ts "$1"' \
-    --customize-hook="chroot \"\$1\" sh -c 'xargs --no-run-if-empty dpkg --purge --force-depends --force-remove-essential --force-remove-protected < /tmp/.purge-pass1'" \
-    --customize-hook="chroot \"\$1\" sh -c 'xargs --no-run-if-empty dpkg --purge --force-depends --force-remove-essential --force-remove-protected < /tmp/.purge-pass2'" \
-    --customize-hook='rm --force "$1/tmp/.purge-pass1" "$1/tmp/.purge-pass2"' \
     trixie /rootfs
 
 FROM scratch

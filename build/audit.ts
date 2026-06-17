@@ -1,18 +1,22 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 
-// Purge-list applier (build-time). Reads the curated static force-purge lists and
-// writes the two dpkg --purge passes the Dockerfile runs. It does NOT decide what
-// is removable: that curation lives in the lists, and is regenerated / verified
-// out of band by build/audit-removable.ts (see its header). image-contract.sh is
-// the gate that the purged image still works.
+// Apply build/purge.txt -- the DERIVED maximal set of install-time-only packages
+// removable while image-contract.sh still passes (see build/derive-purge/ for how
+// the list is derived and verified).
 //
-//   purge.txt       force-purged in pass 1
-//   purge-late.txt  force-purged in pass 2 -- tools (debconf / perl-base / mawk,
-//                   libpython3*) that pass 1's postrm scripts still call
+// This is a real purge: maintainer scripts RUN (conffiles removed, alternatives
+// and caches cleaned), so a script's tool dependencies must still be present when
+// it runs. That is a partial order -- "purge P before T" whenever P's script calls
+// a tool from package T -- and the purge order is a topological sort of it. The
+// edges are (a) declared dependencies (a package is purged before the packages it
+// depends on) and (b) tool dependencies that are NOT declared (an essential tool
+// used without a dependency, e.g. python3's prerm calling find/xargs); the latter
+// cannot be read off the scripts statically and are discovered by an execution
+// loop into build/purge-deps.txt (see build/derive-purge/order.mjs). dpkg is left
+// deliberately broken, as the README documents.
 //
-// Runs as an mmdebstrap customize-hook with argv[2] = the pre-purge rootfs; it
-// reads that rootfs's dpkg DB and writes only <rootfs>/tmp/.purge-pass{1,2}.
+// Runs as an mmdebstrap customize-hook with argv[2] = the assembled rootfs.
 
 process.env.LC_ALL = 'C';
 
@@ -40,27 +44,27 @@ function dq(...args: string[]): string {
     return typeof out === 'string' ? out : '';
   }
 }
-
-// Non-comment, non-blank lines of a sibling list file.
-function readList(name: string): string[] {
-  let text = '';
-  try {
-    text = fs.readFileSync(`${BUILD}/${name}`, 'utf8');
-  } catch {}
-  return text
+const read = (name: string): string[] =>
+  (() => {
+    try {
+      return fs.readFileSync(`${BUILD}/${name}`, 'utf8');
+    } catch {
+      return '';
+    }
+  })()
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith('#'));
-}
 
-// Installed (status ii) packages, and a Provides -> real-package map so a
-// dependency named by a virtual package resolves to what is actually installed.
 const installed = new Set(
   dq('-W', '--showformat=${db:Status-Abbrev} ${Package}\n')
     .split('\n')
     .filter((l) => l.startsWith('ii '))
     .map((l) => l.replace(/^ii */, '')),
 );
+
+// Provides -> real installed package, so a dependency named by a virtual package
+// resolves to the package that actually carries it.
 const real = new Map<string, string>();
 for (const line of dq('-W', '--showformat=${Package}\t${Provides}\n').split(
   '\n',
@@ -80,9 +84,7 @@ for (const line of dq('-W', '--showformat=${Package}\t${Provides}\n').split(
     }
   }
 }
-
-// Direct dependencies (Depends + Pre-Depends) resolved to real package names.
-const depsOf = (pkg: string): string[] =>
+const declaredDeps = (pkg: string): string[] =>
   dq('-W', '--showformat=${Depends}|${Pre-Depends}\n', pkg)
     .replace(/\([^)]*\)/g, '')
     .split(/[,|]/)
@@ -91,51 +93,69 @@ const depsOf = (pkg: string): string[] =>
     .map((d) => real.get(d))
     .filter((d): d is string => Boolean(d));
 
-// Order a purge set so each package comes BEFORE the packages it depends on. dpkg
-// runs maintainer scripts in argument order and a prerm / postrm may call a tool
-// from one of its own dependencies (e.g. libpam-systemd's prerm runs
-// pam-auth-update from libpam-runtime); removing the dependency first fails (127).
-function purgeOrder(pkgs: string[]): string[] {
-  const set = new Set(pkgs);
-  const done = new Set<string>();
-  const post: string[] = [];
-  const visit = (p: string): void => {
-    if (done.has(p)) {
-      return;
-    }
-    done.add(p);
-    for (const d of depsOf(p)) {
-      if (set.has(d)) {
-        visit(d);
-      }
-    }
-    post.push(p);
-  };
-  for (const p of pkgs) {
-    visit(p);
+// Tool-dependency edges "P T" discovered by order.mjs (P's script calls a tool
+// from T), not derivable from the declared dependencies above.
+const extra = new Map<string, string[]>();
+for (const line of read('purge-deps.txt')) {
+  const [p, dep] = line.split(/\s+/);
+  if (p && dep) {
+    extra.set(p, [...(extra.get(p) ?? []), dep]);
   }
-  return post.toReversed(); // dependents before their dependencies
 }
 
-const byteCmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
-const onlyInstalled = (names: string[]): string[] =>
-  [...new Set(names)].filter((p) => installed.has(p)).toSorted(byteCmp);
+const all = [...new Set(read('purge.txt').filter((p) => installed.has(p)))];
+const inSet = new Set(all);
+const edges = (pkg: string): string[] =>
+  [...declaredDeps(pkg), ...(extra.get(pkg) ?? [])].filter(
+    (d) => inSet.has(d) && d !== pkg,
+  );
 
-const pass1 = purgeOrder(onlyInstalled(readList('purge.txt')));
-const pass2 = purgeOrder(onlyInstalled(readList('purge-late.txt')));
+// Topological sort of the "purge P before T" relation: emit a package only after
+// recursively emitting the packages it must precede, then reverse. A cycle (rare
+// for maintainer-script tool use) is broken by the visited guard.
+const done = new Set<string>();
+const post: string[] = [];
+const visit = (p: string): void => {
+  if (done.has(p)) {
+    return;
+  }
+  done.add(p);
+  for (const d of edges(p)) {
+    visit(d);
+  }
+  post.push(p);
+};
+for (const p of all) {
+  visit(p);
+}
+const order = post.toReversed();
 
-fs.writeFileSync(
-  `${ROOTFS}/tmp/.purge-pass1`,
-  pass1.length ? `${pass1.join('\n')}\n` : '',
-);
-fs.writeFileSync(
-  `${ROOTFS}/tmp/.purge-pass2`,
-  pass2.length ? `${pass2.join('\n')}\n` : '',
-);
-
+// One `dpkg --purge` PER PACKAGE, in topological order: a single call with many
+// packages lets dpkg reorder the removal (undoing the order), so each package gets
+// its own call inside one chroot. A package whose maintainer script fails is
+// recorded (AUDITFAIL) but does not stop the rest, so order.mjs sees the whole
+// failing set in one run.
+const FORCE =
+  '--force-depends --force-remove-essential --force-remove-protected';
+const loop = `for p in "$@"; do dpkg --purge ${FORCE} "$p" 1>&2 || echo "AUDITFAIL $p"; done`;
+const out = order.length
+  ? execFileSync('chroot', [ROOTFS, 'sh', '-c', loop, 'sh', ...order], {
+      encoding: 'utf8',
+      maxBuffer: 256 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'inherit'],
+    })
+  : '';
+const failed = out
+  .split('\n')
+  .filter((l) => l.startsWith('AUDITFAIL '))
+  .map((l) => l.slice('AUDITFAIL '.length).trim())
+  .filter(Boolean);
 process.stdout.write(
-  `audit: pass1 (${pass1.length}): ${pass1.join(' ') || '-'}\n`,
+  `audit: purged ${order.length} packages (${extra.size} with discovered tool-edges); script failures ${failed.length}\n`,
 );
-process.stdout.write(
-  `audit: pass2 (${pass2.length}): ${pass2.join(' ') || '-'}\n`,
-);
+if (failed.length) {
+  process.stderr.write(
+    `audit: maintainer-script failures: ${failed.join(' ')}\n`,
+  );
+  process.exit(1);
+}

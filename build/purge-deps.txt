@@ -1,0 +1,34 @@
+# Tool-dependency edges "<P> <T>": package P's maintainer script calls a tool from
+# package T, so build/audit.ts purges P before T (it topologically sorts these
+# edges together with the declared dependencies). These are NOT declared
+# dependencies and can't be read off the scripts statically; they are DERIVED by
+# the execution loop build/derive-purge/order.mjs, which reads the command each
+# failing script reports as "not found" and maps it to its providing package.
+# Regenerate there if the purge set or Debian changes.
+libpython3.13-stdlib mawk
+tzdata debconf
+tzdata perl-base
+libpython3.13-minimal mawk
+gpg-agent init-system-helpers
+gpg-agent perl-base
+gpg init-system-helpers
+gpg perl-base
+x11-common init-system-helpers
+x11-common perl-base
+dirmngr init-system-helpers
+dirmngr perl-base
+procps init-system-helpers
+procps perl-base
+libpam-systemd libpam-runtime
+libpam-systemd perl-base
+libpam-runtime debconf
+libpam-runtime perl-base
+dbus init-system-helpers
+dbus perl-base
+ca-certificates findutils
+ca-certificates debconf
+ca-certificates perl-base
+libpam-modules debconf
+libpam-modules perl-base
+libpam0g debconf
+libpam0g perl-base
