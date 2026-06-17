@@ -68,10 +68,10 @@ RUN cp --archive /tmp/vs-src /tmp/vs-deps \
 
 # Download the browser and resolve its dependency-package list
 RUN mkdir /tmp/puppeteer \
-  && if [ "${TARGETARCH}" = "amd64" ]; then \
-    /tmp/vivliostyle-cli/node_modules/.bin/browsers install "${BROWSER}" --path /tmp/puppeteer; \
-  else \
+  && if [ "${TARGETARCH}" = "arm64" ]; then \
     echo "Skipping Puppeteer browser installation on arm64 architecture"; \
+  else \
+    /tmp/vivliostyle-cli/node_modules/.bin/browsers install "${BROWSER}" --path /tmp/puppeteer; \
   fi \
   && if [ "${BROWSER%%@*}" = chrome ]; then \
     # These components ship only with branded Chrome and are unneeded at least for Vivliostyle
