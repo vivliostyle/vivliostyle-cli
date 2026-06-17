@@ -1,0 +1,35 @@
+# keep-anyway: packages that are removable (the runtime closure cannot reach them)
+# but that the image must keep. build/audit.ts subtracts this list from the
+# auto-derived `removable` set, so only genuinely-removable packages belong here.
+# Packages the closure already reaches -- including dlopen-only deps such as
+# libgtk-3-0t64 or dbus that DT_NEEDED cannot see but the package graph happens to
+# pull in -- are kept automatically and are deliberately NOT listed.
+# image-contract.sh is the guarantee that the kept set stays sufficient: if a
+# future purge breaks a contract test, add the offending package here with a
+# one-line reason. (audit.ts warns if an entry here is stale or already kept by
+# the closure, i.e. no longer needed.)
+
+# Essential packages used implicitly (e.g. dpkg shells out to /usr/bin/diff),
+# not reachable from the seed binaries.
+coreutils
+dash
+debianutils
+diffutils
+findutils
+grep
+libc-bin
+sed
+
+# The bundled Noto font set: data only (no .so), loaded through fontconfig, so the
+# closure cannot see it. image-contract.sh exercises representative files.
+fonts-noto-cjk
+fonts-noto-cjk-extra
+fonts-noto-color-emoji
+fonts-noto-extra
+fonts-noto-ui-core
+fonts-noto-ui-extra
+fonts-noto-unhinted
+
+# firefox loads libdbus-glib at runtime (Playwright nativeDeps), reached neither as
+# a DT_NEEDED of the shipped browser nor through the package graph.
+libdbus-glib-1-2

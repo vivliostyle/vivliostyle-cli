@@ -100,9 +100,7 @@ COPY --from=dpkg-excludes /tmp/debian-13-slim.conf /tmp/debian-13-slim.conf
 # maintainer scripts. Those mounts need CAP_SYS_ADMIN, and docker's default
 # AppArmor profile (docker-default) also blocks mounting sysfs and devpts.
 RUN --security=insecure \
-  PURGE="$(sed -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' /tmp/vs-src/build/purge-packages.txt | tr '\n' ' ')" \
-  && PURGE_LATE="$(sed -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' /tmp/vs-src/build/purge-packages-late.txt | tr '\n' ' ')" \
-  && mmdebstrap \
+  mmdebstrap \
     --format=dir \
     --variant=custom \
     --dpkgopt=/tmp/debian-13-slim.conf \
@@ -191,14 +189,16 @@ RUN --security=insecure \
     --customize-hook='copy-in /tmp/puppeteer /opt/' \
     --customize-hook="chown --recursive ${USER_UID}:${USER_GID} \"\$1/opt/puppeteer\"" \
     # ---- install-time-only package purge ---------------------------------
-    # The audit hook fails the build unless every purgable package is
-    # classified in build/{keep,purge,purge-packages-late}-packages.txt, where
-    # the per-package rationale lives. The purge then runs in two passes: the
-    # second holds back tools (debconf/perl-base/mawk, libpython3*) that the
-    # first pass's postrm scripts still call.
+    # audit.ts derives `removable` (installed \ runtime closure) and writes the
+    # two purge passes to <rootfs>/tmp/.purge-pass{1,2}, applying the documented
+    # keep-anyway / purge-anyway / purge-late lists. The purge then runs in two
+    # passes: the second holds back tools (debconf/perl-base/mawk, libpython3*)
+    # that the first pass's postrm scripts still call. xargs --no-run-if-empty
+    # skips a pass whose list came out empty.
     --customize-hook='node /tmp/vs-src/build/audit.ts "$1"' \
-    --customize-hook="chroot \"\$1\" dpkg --purge --force-depends --force-remove-essential --force-remove-protected $PURGE" \
-    --customize-hook="chroot \"\$1\" dpkg --purge --force-depends --force-remove-essential --force-remove-protected $PURGE_LATE" \
+    --customize-hook="chroot \"\$1\" sh -c 'xargs --no-run-if-empty dpkg --purge --force-depends --force-remove-essential --force-remove-protected < /tmp/.purge-pass1'" \
+    --customize-hook="chroot \"\$1\" sh -c 'xargs --no-run-if-empty dpkg --purge --force-depends --force-remove-essential --force-remove-protected < /tmp/.purge-pass2'" \
+    --customize-hook='rm --force "$1/tmp/.purge-pass1" "$1/tmp/.purge-pass2"' \
     trixie /rootfs
 
 FROM scratch

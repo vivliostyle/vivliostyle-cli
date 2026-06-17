@@ -1,0 +1,17 @@
+# purge-late: second pass. Debian lets Essential packages be used by maintainer
+# scripts without being declared as dependencies, so under the forced purge the
+# first pass's removal scripts would lose tools they still call. build/audit.ts
+# defers these to a second dpkg --purge so the first pass can complete:
+#   - libpam-* postrm calls debconf's Perl frontend (debconf, perl-base)
+#   - postrm scripts call awk (mawk)
+#   - python3*'s postrm runs the interpreter (libpython3*)
+# Listing a package here also marks it for purge: it does not need to appear in
+# removable or purge-anyway separately.
+# see https://salsa.debian.org/dbnpolicy/policy/-/blob/debian/4.7.4.1/policy/ch-binary.rst#L330-337
+
+debconf
+perl-base
+mawk
+libpython3-stdlib
+libpython3.13-stdlib
+libpython3.13-minimal

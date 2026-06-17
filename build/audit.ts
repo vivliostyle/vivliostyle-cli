@@ -3,18 +3,23 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-// Audit gate: every package the runtime-closure analysis below flags as purgable
-// must be classified in build/keep-packages.txt, build/purge-packages.txt, or
-// build/purge-packages-late.txt; otherwise the build fails here. This is how the
-// purge lists are maintained -- empty them and let the errors name what to
-// triage, the same try-and-error loop as the essential-packages list in the Dockerfile.
+// Purge-list generator. The ONE thing derived mechanically here is `removable` =
+// installed packages the runtime-closure analysis below cannot reach. The build
+// purges that set; three sibling lists document every deviation from it:
+//   keep-anyway.txt  -- removable, but kept (the closure's blind spots)
+//   purge-anyway.txt -- in the closure, but removed anyway (e.g. unused system GL)
+//   purge-late.txt   -- removed, but in a second dpkg pass (postrm ordering)
+// This does NOT prove the image still works -- image-contract.sh does. Over-
+// removal surfaces there as a failed test, which is then recorded as a
+// keep-anyway exception. So there is no build-time gate: audit.ts only writes the
+// two pass lists and warns about drift (stale or redundant list entries).
 //
 // It runs on the BUILD HOST during the mmdebstrap customize-hook, before the
-// purge hooks, with argv[2] = the pre-purge rootfs. It only READS that rootfs
-// (readelf / dpkg-query --admindir / ldconfig -C) and downloads the extra
-// browsers outside it, so the runtime image is never touched.
+// purge hooks, with argv[2] = the pre-purge rootfs. It READS that rootfs
+// (readelf / dpkg-query --admindir / ldconfig -C), downloads the extra browsers
+// outside it, and writes only <rootfs>/tmp/.purge-pass{1,2} for the purge hooks.
 //
-// The closure follows DT_NEEDED links, so keep-packages.txt must cover what it
+// The closure follows DT_NEEDED links, so keep-anyway.txt must cover what it
 // cannot see: data read via fontconfig/icon/mime caches, Essentials used without
 // being declared, dlopen (mesa, libsystemd-shared, firefox's libcloudproviders0)
 // and exec (chrome's sandbox walking /proc via ps).
@@ -76,6 +81,11 @@ function canon(p: string): string {
 
 // Byte-wise comparator (LC_ALL=C `sort`), used for the set-difference steps.
 const byteCmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+// Advisory drift notice on stderr; image-contract.sh remains the real gate.
+const warn = (m: string): void => {
+  process.stderr.write(`audit: ${m}\n`);
+};
 
 // Expand a shell-style glob (only `*` within a path segment) to existing paths.
 // A pattern with no match -- like a literal seed path that is absent -- yields
@@ -343,7 +353,9 @@ function audit(dl: string): number {
     }
   }
 
-  // ---- candidates = installed - closure -------------------------------------
+  // ---- removable = installed \ closure --------------------------------------
+  // Everything installed that the closure could not reach. This is the set the
+  // build purges by default; the three sibling lists below adjust it.
   const installed = [
     ...new Set(
       dq('-W', '--showformat=${db:Status-Abbrev} ${Package}\n')
@@ -352,38 +364,117 @@ function audit(dl: string): number {
         .map((l) => l.replace(/^ii */, '')),
     ),
   ].toSorted(byteCmp);
-  const candidates = installed.filter((p) => !visited.has(p));
+  const installedSet = new Set(installed);
+  const removable = new Set(installed.filter((p) => !visited.has(p)));
 
-  // ---- gate: every candidate must be classified -----------------------------
-  const classified = new Set<string>([
-    ...strip(`${BUILD}/keep-packages.txt`),
-    ...strip(`${BUILD}/purge-packages.txt`),
-    ...strip(`${BUILD}/purge-packages-late.txt`),
-  ]);
-  const unclassified = candidates.filter((p) => !classified.has(p));
+  // ---- documented deviations from the mechanical verdict --------------------
+  const keepAnyway = new Set(strip(`${BUILD}/keep-anyway.txt`));
+  const purgeAnyway = new Set(strip(`${BUILD}/purge-anyway.txt`));
+  const purgeLate = new Set(strip(`${BUILD}/purge-late.txt`));
 
-  if (unclassified.length) {
-    process.stderr.write(
-      'audit: purgable packages not classified in build/{keep,purge,purge-packages-late}-packages.txt:\n',
-    );
-    const rows = unclassified.map((p) => {
-      const size = dq('-W', '--showformat=${Installed-Size}', p).trim();
-      return `  ${size.padStart(10)} KB  ${p}`;
-    });
-    // sort -rn: numeric desc by the leading size, ties broken by full-line desc.
-    rows.sort((a, b) => {
-      const na = Number.parseInt(a, 10) || 0;
-      const nb = Number.parseInt(b, 10) || 0;
-      return nb - na || -byteCmp(a, b);
-    });
-    process.stderr.write(`${rows.join('\n')}\n`);
-    process.stderr.write(
-      'audit: classify each as keep / purge / purge-packages-late, then rebuild.\n',
-    );
-    return 1;
+  // purge = (removable \ keep-anyway) ∪ purge-anyway ∪ purge-late, restricted to
+  // what is actually installed so dpkg --purge never names an absent package.
+  const purge = new Set<string>();
+  for (const p of removable) {
+    if (!keepAnyway.has(p)) {
+      purge.add(p);
+    }
   }
+  for (const p of purgeAnyway) {
+    purge.add(p);
+  }
+  for (const p of purgeLate) {
+    purge.add(p);
+  }
+  // Split into passes, then order each so a package is purged BEFORE the packages
+  // it depends on. dpkg runs maintainer scripts in argument order, and a prerm /
+  // postrm may call a tool from one of its own dependencies (e.g. libpam-systemd's
+  // prerm runs pam-auth-update from libpam-runtime). Removing the dependency first
+  // -- as a plain alphabetical list does -- makes that script fail with code 127.
+  const depsOf = (pkg: string): string[] =>
+    dq('-W', '--showformat=${Depends}|${Pre-Depends}\n', pkg)
+      .replace(/\([^)]*\)/g, '')
+      .split(/[,|]/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((d) => real.get(d))
+      .filter((d): d is string => Boolean(d));
+  const purgeOrder = (pkgs: string[]): string[] => {
+    const set = new Set(pkgs);
+    const done = new Set<string>();
+    const post: string[] = [];
+    const visit = (p: string) => {
+      if (done.has(p)) {
+        return;
+      }
+      done.add(p);
+      for (const d of depsOf(p)) {
+        if (set.has(d)) {
+          visit(d);
+        }
+      }
+      post.push(p);
+    };
+    for (const p of pkgs) {
+      visit(p);
+    }
+    return post.toReversed(); // dependents before their dependencies
+  };
+  const wanted = (late: boolean) =>
+    [...purge]
+      .filter((p) => installedSet.has(p) && purgeLate.has(p) === late)
+      .toSorted(byteCmp);
+  const pass1 = purgeOrder(wanted(false));
+  const pass2 = purgeOrder(wanted(true));
+
+  // ---- re-verification signals (advisory; the build never fails here) -------
+  // Drift the maintainer should reconcile against the lists; image-contract.sh
+  // remains the gate on whether the resulting image still works.
+  for (const p of keepAnyway) {
+    if (!installedSet.has(p)) {
+      warn(`keep-anyway: '${p}' is not installed (stale entry?)`);
+    } else if (!removable.has(p)) {
+      warn(`keep-anyway: '${p}' is already in the closure (redundant)`);
+    }
+  }
+  for (const p of purgeAnyway) {
+    if (!installedSet.has(p)) {
+      warn(`purge-anyway: '${p}' is not installed (stale entry?)`);
+    } else if (removable.has(p)) {
+      warn(`purge-anyway: '${p}' is already removable (redundant; drop it)`);
+    }
+  }
+  for (const p of purgeLate) {
+    if (!installedSet.has(p)) {
+      warn(`purge-late: '${p}' is not installed (stale entry?)`);
+    }
+  }
+
+  // ---- write the pass lists for the dpkg --purge hooks ----------------------
+  fs.writeFileSync(
+    `${ROOTFS}/tmp/.purge-pass1`,
+    pass1.length ? `${pass1.join('\n')}\n` : '',
+  );
+  fs.writeFileSync(
+    `${ROOTFS}/tmp/.purge-pass2`,
+    pass2.length ? `${pass2.join('\n')}\n` : '',
+  );
+
+  // List the derived sets so a build log doubles as the re-verification record:
+  // `removable` is the mechanical verdict, pass1/pass2 are exactly what is purged.
   process.stdout.write(
-    `audit: ${candidates.length} purgable packages, all classified.\n`,
+    `audit: removable (${removable.size}): ${[...removable].toSorted(byteCmp).join(' ') || '-'}\n`,
+  );
+  process.stdout.write(
+    `audit: pass1 (${pass1.length}): ${pass1.join(' ') || '-'}\n`,
+  );
+  process.stdout.write(
+    `audit: pass2 (${pass2.length}): ${pass2.join(' ') || '-'}\n`,
+  );
+  process.stdout.write(
+    `audit: ${installed.length} installed, ${removable.size} removable; ` +
+      `purge ${pass1.length + pass2.length} (pass1 ${pass1.length}, pass2 ${pass2.length}); ` +
+      `keep-anyway ${keepAnyway.size}, purge-anyway ${purgeAnyway.size}, purge-late ${purgeLate.size}.\n`,
   );
   return 0;
 }

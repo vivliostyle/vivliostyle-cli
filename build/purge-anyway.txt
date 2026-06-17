@@ -1,0 +1,71 @@
+# purge-anyway: packages the closure KEEPS, but that the image removes anyway.
+# build/audit.ts adds this list to the purge set on top of the auto-derived
+# `removable` packages, so each entry overrides a "keep" the closure inferred.
+# In practice the closure reaches nearly everything through the apt/dpkg + browser
+# dependency graph, so this list -- not `removable` -- is what actually slims the
+# image; state why each package is safe to drop. (A package that is already
+# removable does not belong here; audit.ts warns when an entry is redundant.)
+# image-contract.sh is the proof that the image still works without them.
+
+# update-rc.d / invoke-rc.d helpers; the image runs no services.
+init-system-helpers
+
+# system software-GL -- Chrome uses its own bundled SwiftShader instead.
+mesa-libgallium
+libllvm19
+libz3-4
+
+# GTK icon set -- surfaces only in GTK dialogs.
+adwaita-icon-theme
+
+# NodeSource pulls python in so node-gyp is available, but ships no compiler;
+# building native addons at "npm install" needs extra packages anyway, so
+# python alone is pointless.
+# see https://github.com/nodejs/node-gyp/blob/v12.3.0/README.md?plain=1#L72
+python3
+python3-minimal
+python3.13
+python3.13-minimal
+
+# gnupg. apt verifies repository signatures with gpgv (a separate, kept package);
+# full gnupg / key management is never used. libassuan9 stays via
+# poppler-utils -> libpoppler -> libgpgmepp6t64 -> libgpgme11t64.
+gnupg
+gnupg-l10n
+gpg
+gpg-agent
+gpgsm
+gpgconf
+dirmngr
+pinentry-curses
+libnpth0t64
+libksba8
+
+# reachable via Depends but unused by the render path: the GTK icon-cache tool,
+# X bitmap-font utils, the dconf settings backend, lm-sensors and the AppArmor
+# userspace library.
+gtk-update-icon-cache
+libfontenc1
+xfonts-utils
+xfonts-encodings
+dconf-service
+dconf-gsettings-backend
+libdconf1
+libsensors5
+libsensors-config
+libapparmor1
+
+# PAM, account management and init: nothing runs as a service or authenticates in
+# the image, and useradd/groupadd were only needed at build time (the vivliostyle
+# user already exists).
+libpam-systemd
+libpam-modules
+libpam-modules-bin
+libpam-runtime
+libpam0g
+passwd
+adduser
+login.defs
+systemd
+systemd-sysv
+sysvinit-utils
