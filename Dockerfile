@@ -37,27 +37,6 @@ RUN apt-get update \
       nodejs \
  && npm install --global pnpm
 
-COPY <<'EOF' /tmp/scripts/package.json
-{ "type": "module", "dependencies": { "npm-install-checks": "9.0.0" } }
-EOF
-COPY <<'EOF' /tmp/scripts/prune-foreign.js
-import { readFileSync } from 'node:fs';
-import { checkPlatform } from 'npm-install-checks';
-
-try {
-  const manifest = JSON.parse(readFileSync(process.argv[3], 'utf8'));
-  checkPlatform(manifest, false, {
-    os: 'linux',
-    cpu: process.argv[2] === 'arm64' ? 'arm64' : 'x64',
-    libc: 'glibc',
-  });
-  process.exit(1);
-} catch (e) {
-  process.exit(e?.code === 'EBADPLATFORM' ? 0 : 1);
-}
-EOF
-RUN npm install --prefix /tmp/scripts
-
 COPY . /tmp/vs-src
 
 # Install Vivliostyle CLI
@@ -72,14 +51,10 @@ RUN cp --archive /tmp/vs-src /tmp/vs-build \
  && pnpm install \
  && pnpm build \
  && cp --archive dist /tmp/vivliostyle-cli/
-# 3. Runtime dependencies pruned of foreign-platform packages
+# 3. Runtime dependencies
 RUN cp --archive /tmp/vs-src /tmp/vs-deps \
  && cd /tmp/vs-deps \
  && pnpm install --prod --ignore-scripts \
- && find node_modules/.pnpm -name package.json -type f -exec node /tmp/scripts/prune-foreign.js "${TARGETARCH}" {} \; -printf '%h\n' > /tmp/prune-foreign.txt \
- && while IFS= read -r dir; do \
-      if [ -d "${dir}" ]; then rm --recursive --force "${dir}" && echo "prune-foreign: removed ${dir}"; fi; \
-    done < /tmp/prune-foreign.txt \
  && cp --archive node_modules /tmp/vivliostyle-cli/
 
 # Download the browser and resolve its dependency-package list
