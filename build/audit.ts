@@ -7,7 +7,7 @@ import path from 'node:path';
 // must be classified in build/keep-packages.txt, build/purge-packages.txt, or
 // build/purge-packages-late.txt; otherwise the build fails here. This is how the
 // purge lists are maintained -- empty them and let the errors name what to
-// triage, the same try-and-error loop as build/essential-packages.txt.
+// triage, the same try-and-error loop as the essential-packages list in the Dockerfile.
 //
 // It runs on the BUILD HOST during the mmdebstrap customize-hook, before the
 // purge hooks, with argv[2] = the pre-purge rootfs. It only READS that rootfs

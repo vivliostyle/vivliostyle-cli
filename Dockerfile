@@ -91,8 +91,7 @@ COPY --from=dpkg-excludes /tmp/debian-13-slim.conf /tmp/debian-13-slim.conf
 # maintainer scripts. Those mounts need CAP_SYS_ADMIN, and docker's default
 # AppArmor profile (docker-default) also blocks mounting sysfs and devpts.
 RUN --security=insecure \
-    ESSENTIAL="$(sed -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' /tmp/vs-src/build/essential-packages.txt)" \
- && PURGE="$(sed -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' /tmp/vs-src/build/purge-packages.txt | tr '\n' ' ')" \
+    PURGE="$(sed -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' /tmp/vs-src/build/purge-packages.txt | tr '\n' ' ')" \
  && PURGE_LATE="$(sed -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' /tmp/vs-src/build/purge-packages-late.txt | tr '\n' ' ')" \
  && mmdebstrap \
       --format=dir \
@@ -109,7 +108,30 @@ RUN --security=insecure \
      && cp /usr/share/keyrings/nodesource.gpg "$1/usr/share/keyrings/" \
      && cp /etc/apt/sources.list.d/nodesource.sources "$1/etc/apt/sources.list.d/" \
      && cp /etc/apt/preferences.d/nodejs "$1/etc/apt/preferences.d/"' \
-      --include="$ESSENTIAL \
+      --include=" \
+        # With mmdebstrap --variant=custom the rootfs starts empty, so anything a
+        # maintainer script expects in PATH must be listed explicitly. Debian policy
+        # allows essential packages to be used without being declared as dependencies,
+        # so they cannot be derived automatically. To re-create this list, empty it
+        # once and use the build errors as clues to discover the required packages.
+        # see https://salsa.debian.org/dbnpolicy/policy/-/blob/debian/4.7.4.1/policy/ch-binary.rst#L330-337
+        #
+        #   $ docker run --rm --env DEBIAN_FRONTEND=noninteractive debian:13-slim \
+        #       sh -c 'apt-get --quiet=2 update >/dev/null \
+        #              && apt-get --quiet=2 install apt-file >/dev/null \
+        #              && apt-file --option quiet=2 update >/dev/null \
+        #              && apt-file search <path>'
+        #
+        coreutils \
+        dash \
+        diffutils \
+        findutils \
+        grep \
+        init-system-helpers \
+        libc-bin \
+        perl-base \
+        sed \
+        # ---
         # groupadd/useradd for the user-creation hook below.
         passwd \
         # recovery point for derived images
