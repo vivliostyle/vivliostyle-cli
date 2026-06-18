@@ -3,18 +3,12 @@
   "base-files": [],
   "coreutils": [],
   "dash": [],
-  "debian-archive-keyring": [
-    "derived image repair + install git"
-  ],
+  "debian-archive-keyring": ["derived image repair + install git"],
   "diffutils": [],
   "dpkg": [],
   "fontconfig": [],
-  "fontconfig-config": [
-    "CJK font aliases resolve to Noto (fc-match)"
-  ],
-  "fonts-noto-cjk": [
-    "fonts-noto-cjk loadable (NotoSansCJK-Regular.ttc)"
-  ],
+  "fontconfig-config": ["CJK font aliases resolve to Noto (fc-match)"],
+  "fonts-noto-cjk": ["fonts-noto-cjk loadable (NotoSansCJK-Regular.ttc)"],
   "fonts-noto-cjk-extra": [
     "fonts-noto-cjk-extra loadable (NotoSansCJK-Thin.ttc)"
   ],
@@ -27,13 +21,9 @@
   "ghostscript": [],
   "grep": [],
   "libacl1": [],
-  "libapt-pkg7.0": [
-    "derived image repair + install git"
-  ],
+  "libapt-pkg7.0": ["derived image repair + install git"],
   "libasound2t64": [],
-  "libassuan9": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
+  "libassuan9": ["press-ready preflight runs end-to-end (gs + poppler)"],
   "libatk-bridge2.0-0t64": [],
   "libatk1.0-0t64": [],
   "libatomic1": [],
@@ -52,9 +42,7 @@
   "libblkid1": [],
   "libbrotli1": [],
   "libbz2-1.0": [],
-  "libc-bin": [
-    "derived image repair + install git"
-  ],
+  "libc-bin": ["derived image repair + install git"],
   "libc6": [
     ".vs-cli-version marker exists (isInContainer)",
     "/data is writable by the runtime user",
@@ -130,15 +118,9 @@
   "libglib2.0-0t64": [],
   "libgmp10": [],
   "libgnutls30t64": [],
-  "libgpg-error0": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
-  "libgpgme11t64": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
-  "libgpgmepp6t64": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
+  "libgpg-error0": ["press-ready preflight runs end-to-end (gs + poppler)"],
+  "libgpgme11t64": ["press-ready preflight runs end-to-end (gs + poppler)"],
+  "libgpgmepp6t64": ["press-ready preflight runs end-to-end (gs + poppler)"],
   "libgraphite2-3": [],
   "libgs-common": [
     "press-ready is on PATH and runs",
@@ -191,17 +173,11 @@
     "press-ready is on PATH and runs",
     "press-ready preflight runs end-to-end (gs + poppler)"
   ],
-  "libldap2": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
+  "libldap2": ["press-ready preflight runs end-to-end (gs + poppler)"],
   "liblerc4": [],
-  "liblz4-1": [
-    "derived image repair + install git"
-  ],
+  "liblz4-1": ["derived image repair + install git"],
   "liblzma5": [],
-  "libmd0": [
-    "derived image repair + install git"
-  ],
+  "libmd0": ["derived image repair + install git"],
   "libmount1": [],
   "libnettle8t64": [
     "press-ready is on PATH and runs",
@@ -213,9 +189,7 @@
     "press-ready preflight runs end-to-end (gs + poppler)",
     "derived image repair + install git"
   ],
-  "libnghttp2-14": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
+  "libnghttp2-14": ["press-ready preflight runs end-to-end (gs + poppler)"],
   "libnghttp3-9": [],
   "libngtcp2-16": [],
   "libngtcp2-crypto-gnutls8": [
@@ -243,23 +217,15 @@
   "libpixman-1-0": [],
   "libpng16-16t64": [],
   "libpoppler147": [],
-  "libpsl5t64": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
+  "libpsl5t64": ["press-ready preflight runs end-to-end (gs + poppler)"],
   "librtmp1": [],
-  "libsasl2-2": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
-  "libseccomp2": [
-    "derived image repair + install git"
-  ],
+  "libsasl2-2": ["press-ready preflight runs end-to-end (gs + poppler)"],
+  "libseccomp2": ["derived image repair + install git"],
   "libselinux1": [],
   "libsharpyuv0": [],
   "libsm6": [],
   "libsqlite3-0": [],
-  "libssh2-1t64": [
-    "press-ready preflight runs end-to-end (gs + poppler)"
-  ],
+  "libssh2-1t64": ["press-ready preflight runs end-to-end (gs + poppler)"],
   "libssl3t64": [
     "press-ready preflight runs end-to-end (gs + poppler)",
     "derived image repair + install git"
@@ -373,19 +339,13 @@
     "press-ready is on PATH and runs",
     "press-ready preflight runs end-to-end (gs + poppler)"
   ],
-  "libxxhash0": [
-    "derived image repair + install git"
-  ],
+  "libxxhash0": ["derived image repair + install git"],
   "libzstd1": [],
   "nodejs": [],
   "poppler-utils": [],
   "sed": [],
-  "sqv": [
-    "derived image repair + install git"
-  ],
-  "tar": [
-    "derived image repair + install git"
-  ],
+  "sqv": ["derived image repair + install git"],
+  "tar": ["derived image repair + install git"],
   "unzip": [],
   "xz-utils": [
     "preview --browser firefox opens a GUI window",

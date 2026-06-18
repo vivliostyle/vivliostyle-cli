@@ -1,6 +1,6 @@
 # Deriving build/purge.txt
 
-`build/purge.txt` is **not hand-written**. It is *derived*: the maximal set of
+`build/purge.txt` is **not hand-written**. It is _derived_: the maximal set of
 installed packages that can be force-purged from the assembled rootfs while
 `image-contract.sh` still passes. This directory holds the tooling that derives
 it, so the list can be regenerated and re-verified instead of curated by guesswork.
@@ -21,9 +21,9 @@ this soundly. Only the behavioural test — purge it and run the contract — ca
 
 Two directions matter and only the loop covers both:
 
-- **over-purge** (removing something needed) is caught by a contract *failure*;
+- **over-purge** (removing something needed) is caught by a contract _failure_;
 - **under-purge** (keeping removable cruft) is caught by the candidate generator
-  proposing it and the contract *passing* when it is purged.
+  proposing it and the contract _passing_ when it is purged.
 
 At the fixpoint, every kept package has a contract test that fails without it, and
 every removed package keeps the contract green — i.e. "purge one more and the
@@ -37,16 +37,16 @@ contract fails".
 2. **Oracle** (`oracle.sh` + `oracle.Dockerfile`) — given a candidate purge set,
    apply it to the cached pre-purge base image and run `image-contract.sh`:
    - maintainer scripts (`*.prerm/*.postrm/*.preinst/*.postinst`) are deleted
-     first and the purge uses `dpkg --purge --force-all`, so this *search* is
+     first and the purge uses `dpkg --purge --force-all`, so this _search_ is
      **order-independent** -- it never fails on maintainer-script ordering, which
      is a separate problem solved by `order.mjs` (see "Ordering the real purge").
-     Neutralising scripts only for the search is sound: it leaves *staler* state
+     Neutralising scripts only for the search is sound: it leaves _staler_ state
      (un-run `update-alternatives`, un-rebuilt caches) than the real purge does, so
      a package removable against this harsher state is removable under the real
      purge too -- which the production build's contract run reverifies end-to-end;
    - the purged rootfs is shipped as a `scratch` image with the real final-stage
      config, so the contract judges exactly this purge.
-   Output: `PASS`, or `FAIL` followed by the names of the failed contract tests.
+     Output: `PASS`, or `FAIL` followed by the names of the failed contract tests.
 
 3. **Driver** (`derive.mjs`) — by monotonicity (removing more can only make the
    contract fail more), a package needed against a small purge is needed against a
@@ -87,7 +87,7 @@ The search above neutralises maintainer scripts, but the production build
 (`build/audit.ts`) runs a **real** purge — scripts execute, so conffiles,
 alternatives and caches are cleaned. A maintainer script may call a tool from
 another package, which must still be present when it runs. That is a partial
-order — *purge P before T* whenever P's script needs a tool from T — and the
+order — _purge P before T_ whenever P's script needs a tool from T — and the
 purge order is a **topological sort** of it (determined recursively, not a flat
 first/last split: a "late" tool may itself depend on another, e.g. `debconf`'s
 frontend is `perl`). `audit.ts` sorts the union of two edge sets and purges **one
@@ -112,7 +112,7 @@ on (`perl-base`, `debconf`, `init-system-helpers`, `mawk`, `findutils`,
 ## Soundness and coverage
 
 The derivation is maximal **with respect to `image-contract.sh`** — the contract's
-coverage *is* the definition of "works". The contract exercises the whole
+coverage _is_ the definition of "works". The contract exercises the whole
 system-package surface the CLI uses: the three browsers (GUI preview + headless
 build, including a download via `chrome@130`), the bundled fonts, `press-ready`
 (ghostscript + poppler, which also covers CMYK), `node`/`npm`/`pnpm`, `unzip`/`xz`,
