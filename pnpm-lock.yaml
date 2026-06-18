@@ -277,8 +277,8 @@ importers:
         specifier: 1.68.0
         version: 1.68.0
       pnpm:
-        specifier: 10.34.3
-        version: 10.34.3
+        specifier: 10.28.2
+        version: 10.28.2
       shx:
         specifier: 0.4.0
         version: 0.4.0
@@ -5177,8 +5177,8 @@ packages:
   please-upgrade-node@3.2.0:
     resolution: {integrity: sha512-gQR3WpIgNIKwBMVLkpMUeR3e1/E1y42bqDQZfql+kDeXd8COYfM8PQA4X6y7a8u9Ua9FHmsrrmirW2vHs45hWg==}
 
-  pnpm@10.34.3:
-    resolution: {integrity: sha512-8sUxsIgp175/A8kK3cJmYV+cVHdGPkvx0nXLJjzp6lfPDVWZEQ2UZJqbs/7Z8LXvzqdKcBa2FTKiTLmth4YMHQ==}
+  pnpm@10.28.2:
+    resolution: {integrity: sha512-QYcvA3rSL3NI47Heu69+hnz9RI8nJtnPdMCPGVB8MdLI56EVJbmD/rwt9kC1Q43uYCPrsfhO1DzC1lTSvDJiZA==}
     engines: {node: '>=18.12'}
     hasBin: true
 
@@ -12017,7 +12017,7 @@ snapshots:
     dependencies:
       semver-compare: 1.0.0
 
-  pnpm@10.34.3: {}
+  pnpm@10.28.2: {}
 
   postcss-load-config@6.0.1(postcss@8.5.14)(tsx@4.19.3)(yaml@2.9.0):
     dependencies:
