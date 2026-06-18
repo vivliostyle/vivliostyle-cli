@@ -31,17 +31,14 @@ RUN set -x \
     xz-utils \
     # for @puppeteer/browsers v3+ Chrome zip extraction
     unzip \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* `npm config get cache`/_npx
-
-# Install fonts
-RUN set -x \
-  && apt-get update -qq \
-  && apt-get upgrade -yqq \
-  # remove poor quality fonts
-  && apt-get purge -y ttf-unifont fonts-ipafont-gothic fonts-wqy-zenhei \
-  # install all Noto fonts
-  && apt-get install -y fonts-noto \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    # Small image size is paramount for a container, so the set of bundled fonts is
+    # limited. Implicit fallback from generic font specifications should fail
+    # "loudly", via a bitmap font that is inadequate for print. See #832.
+    fonts-unifont \
+  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* `npm config get cache`/_npx \
+  && rm /usr/share/fonts/opentype/unifont/unifont_sample.otf \
+        /usr/share/fonts/opentype/unifont/unifont_jp_sample.otf \
+        /usr/share/fonts/opentype/unifont/unifont_upper_sample.otf
 
 # Install Node.js
 RUN set -x \
@@ -65,9 +62,6 @@ RUN set -x \
     && chromium --version \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
   fi
-
-# Font aliases for Noto CJK fonts
-COPY build/fonts.conf /etc/fonts/local.conf
 
 RUN set -x \
   && mkdir -p /opt \
