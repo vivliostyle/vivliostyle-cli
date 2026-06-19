@@ -21,7 +21,7 @@ if ! docker build --build-arg "BASE=$BASE" --tag "oracle:$SUF" "$ctx" \
 fi
 rm -rf "$ctx"
 
-( cd "$CLI_DIR" && IMAGE="oracle:$SUF" ./image-contract.sh >"$HERE/contract-$SUF.log" 2>&1 )
+( cd "$CLI_DIR" && IMAGE="oracle:$SUF" ./build/image-contract.sh >"$HERE/contract-$SUF.log" 2>&1 )
 rc=$?
 if [ "$rc" -eq 0 ]; then
   echo "PASS"

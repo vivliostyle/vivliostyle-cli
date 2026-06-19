@@ -99,3 +99,6 @@ typings/
 .dynamodb/
 
 # End of https://www.gitignore.io/api/node
+
+# image-contract.sh GUI preview screenshots (build/image-contract.sh)
+/build/screenshots/

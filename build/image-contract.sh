@@ -12,6 +12,15 @@ set -uo pipefail
 
 IMAGE="${IMAGE:-ghcr.io/vivliostyle/cli:10.5.0}"
 
+# check_preview_gui leaves a timestamped screenshot per browser here. The GUI test
+# can prove a window maps but not that it rendered correctly, which is hard to
+# assert mechanically, so it saves an image for a human to eyeball instead.
+# Defaults to a screenshots/ dir beside this script (build/screenshots, which is
+# gitignored); override with CONTRACT_SHOT_DIR.
+_contract_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONTRACT_SHOT_DIR="${CONTRACT_SHOT_DIR:-$_contract_dir/screenshots}"
+mkdir -p "$CONTRACT_SHOT_DIR"
+
 pass=0
 fail=0
 total=0
@@ -187,21 +196,30 @@ check_font_file_loadable() {
 # check_preview_gui <browser-arg>
 check_preview_gui() {
     local browser_arg="$1"
-    local suffix sc pr code ready=0 deadline
+    local suffix sc pr code ready=0 deadline ts
     suffix=$(printf '%s' "$browser_arg" | tr --complement 'a-z0-9' '-')
+    ts=$(date -u +%Y%m%dT%H%M%SZ)
     sc="vivcli-xvfb-$$-${suffix}"   # $$: unique per run -> no clash with an interrupt's leftovers
     pr="vivcli-preview-$$-${suffix}"
 
     # The sidecar is also the judge: it exits 0 once a client window maps, 1 on
     # timeout. (chromium maps helper windows before xlsclients lists them, hence
     # the xwininfo fallback.)
-    docker run --rm --detach --name "$sc" debian:13-slim sh -c '
+    docker run --rm --detach --name "$sc" \
+        --volume "$CONTRACT_SHOT_DIR":/shots \
+        --env SHOT="/shots/preview-${suffix}-${ts}.png" \
+        debian:13-slim sh -c '
         apt-get update --quiet=2 >/dev/null 2>&1 || exit 1
-        apt-get install --yes --no-install-recommends xvfb x11-utils >/dev/null 2>&1 || exit 1
+        apt-get install --yes --no-install-recommends xvfb x11-utils imagemagick >/dev/null 2>&1 || exit 1
         Xvfb :99 -screen 0 1024x768x24 -ac -nolisten tcp &
         i=0
         while [ "$i" -lt 240 ]; do
             if [ -n "$(xlsclients -display :99 2>/dev/null)" ] || [ "$(xwininfo -root -children -display :99 2>/dev/null | grep -cE "^[[:space:]]+0x[0-9a-f]+")" -gt 0 ]; then
+                # Window mapped. Let the preview settle, then leave a screenshot for
+                # a human to inspect -- best-effort, a capture failure must not fail
+                # the test (the contract here is "a GUI window appears", not pixels).
+                sleep 5
+                import -display :99 -window root "$SHOT" >/dev/null 2>&1 || true
                 exit 0
             fi
             i=$((i + 1)); sleep 1
@@ -349,6 +367,7 @@ echo "[derived image extension]"
 run_test "derived image repair + install git"   check_apt_repair_install
 
 echo
+echo "GUI preview screenshots: $CONTRACT_SHOT_DIR/preview-*.png"
 echo "Total: $total  Pass: $pass  Fail: $fail"
 if [ "$fail" -gt 0 ]; then
     printf '\nFailed tests:\n'
