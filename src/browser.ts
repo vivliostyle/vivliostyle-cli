@@ -235,11 +235,6 @@ function getPuppeteerCacheDir() {
   return upath.join(getCacheDir(), 'browsers');
 }
 
-interface BuildIdsCache {
-  createdAt: number;
-  buildIds: Record<string, Record<string, string>>;
-}
-
 async function resolveBuildId({
   type,
   tag,
@@ -247,38 +242,11 @@ async function resolveBuildId({
 }: Pick<ResolvedTaskConfig['browser'], 'type' | 'tag'> & {
   browsers: typeof import('@puppeteer/browsers');
 }): Promise<string> {
-  // Return cached data to reduce network requests to browser registry
-  // Cache is valid for 24 hours
-  const cacheDataFilename = upath.join(
-    getPuppeteerCacheDir(),
-    'build-ids.json',
-  );
-  let cacheData: BuildIdsCache;
-  try {
-    cacheData = JSON.parse(fs.readFileSync(cacheDataFilename, 'utf-8'));
-    if (Date.now() - cacheData.createdAt > 24 * 60 * 60 * 1000) {
-      cacheData = { createdAt: Date.now(), buildIds: {} };
-    }
-  } catch (_) {
-    cacheData = { createdAt: Date.now(), buildIds: {} };
-  }
-  if (cacheData.buildIds[type]?.[tag]) {
-    return cacheData.buildIds[type][tag];
-  }
-
   const platform = detectBrowserPlatform();
   if (!platform) {
     throw new Error('The current platform is not supported.');
   }
-  const buildId = await browsers.resolveBuildId(
-    browserEnumMap[type],
-    platform,
-    tag,
-  );
-  (cacheData.buildIds[type] ??= {})[tag] = buildId;
-  fs.mkdirSync(upath.dirname(cacheDataFilename), { recursive: true });
-  fs.writeFileSync(cacheDataFilename, JSON.stringify(cacheData));
-  return buildId;
+  return browsers.resolveBuildId(browserEnumMap[type], platform, tag);
 }
 
 async function cleanupOutdatedBrowsers() {
