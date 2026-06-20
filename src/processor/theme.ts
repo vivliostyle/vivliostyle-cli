@@ -6,6 +6,11 @@ import upath from 'upath';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
 
+function getThemeInstallCacheDir(workspaceDir: string): string {
+  // see https://github.com/npm/cli/blob/arborist-v9.1.7/workspaces/arborist/lib/arborist/index.js#L104
+  return upath.join(workspaceDir, '.npm', '_cacache');
+}
+
 function* iterateSymlinksInThemesNodeModules(
   themesDir: string,
 ): Generator<string> {
@@ -44,7 +49,11 @@ function removeThemesDirIfBrokenSymlinks(themesDir: string): void {
 export async function checkThemeInstallationNecessity({
   themesDir,
   themeIndexes,
-}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<boolean> {
+  workspaceDir,
+}: Pick<
+  ResolvedTaskConfig,
+  'themesDir' | 'themeIndexes' | 'workspaceDir'
+>): Promise<boolean> {
   removeThemesDirIfBrokenSymlinks(themesDir);
   if (!fs.existsSync(themesDir)) {
     return [...themeIndexes].some((theme) => theme.type === 'package');
@@ -52,6 +61,7 @@ export async function checkThemeInstallationNecessity({
 
   const commonOpt = {
     path: themesDir,
+    cache: getThemeInstallCacheDir(workspaceDir),
     lockfileVersion: 3,
     installLinks: true,
   };
@@ -72,13 +82,18 @@ export function getLocalThemePaths({
 export async function installThemeDependencies({
   themesDir,
   themeIndexes,
-}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
+  workspaceDir,
+}: Pick<
+  ResolvedTaskConfig,
+  'themesDir' | 'themeIndexes' | 'workspaceDir'
+>): Promise<void> {
   fs.mkdirSync(themesDir, { recursive: true });
   removeThemesDirIfBrokenSymlinks(themesDir);
 
   try {
     const commonOpt = {
       path: themesDir,
+      cache: getThemeInstallCacheDir(workspaceDir),
       lockfileVersion: 3,
       installLinks: true,
     };
