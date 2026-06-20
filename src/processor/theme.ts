@@ -6,9 +6,10 @@ import upath from 'upath';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError } from '../util.js';
 
-function getThemeInstallCacheDir(workspaceDir: string): string {
-  // see https://github.com/npm/cli/blob/arborist-v9.1.7/workspaces/arborist/lib/arborist/index.js#L104
-  return upath.join(workspaceDir, '.npm', '_cacache');
+function getThemeInstallCacheDir(themesDir: string): string {
+  // Layout follows Arborist's default cache location:
+  // https://github.com/npm/cli/blob/arborist-v9.1.7/workspaces/arborist/lib/arborist/index.js#L104
+  return upath.join(themesDir, '.npm', '_cacache');
 }
 
 function* iterateSymlinksInThemesNodeModules(
@@ -49,11 +50,7 @@ function removeThemesDirIfBrokenSymlinks(themesDir: string): void {
 export async function checkThemeInstallationNecessity({
   themesDir,
   themeIndexes,
-  workspaceDir,
-}: Pick<
-  ResolvedTaskConfig,
-  'themesDir' | 'themeIndexes' | 'workspaceDir'
->): Promise<boolean> {
+}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<boolean> {
   removeThemesDirIfBrokenSymlinks(themesDir);
   if (!fs.existsSync(themesDir)) {
     return [...themeIndexes].some((theme) => theme.type === 'package');
@@ -61,7 +58,7 @@ export async function checkThemeInstallationNecessity({
 
   const commonOpt = {
     path: themesDir,
-    cache: getThemeInstallCacheDir(workspaceDir),
+    cache: getThemeInstallCacheDir(themesDir),
     lockfileVersion: 3,
     installLinks: true,
   };
@@ -82,18 +79,14 @@ export function getLocalThemePaths({
 export async function installThemeDependencies({
   themesDir,
   themeIndexes,
-  workspaceDir,
-}: Pick<
-  ResolvedTaskConfig,
-  'themesDir' | 'themeIndexes' | 'workspaceDir'
->): Promise<void> {
+}: Pick<ResolvedTaskConfig, 'themesDir' | 'themeIndexes'>): Promise<void> {
   fs.mkdirSync(themesDir, { recursive: true });
   removeThemesDirIfBrokenSymlinks(themesDir);
 
   try {
     const commonOpt = {
       path: themesDir,
-      cache: getThemeInstallCacheDir(workspaceDir),
+      cache: getThemeInstallCacheDir(themesDir),
       lockfileVersion: 3,
       installLinks: true,
     };

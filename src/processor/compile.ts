@@ -131,7 +131,6 @@ export async function cleanupWorkspace({
 export async function prepareThemeDirectory({
   themesDir,
   themeIndexes,
-  workspaceDir,
 }: ResolvedTaskConfig): Promise<string[]> {
   // Backward compatibility: v8 to v9
   if (
@@ -145,15 +144,9 @@ export async function prepareThemeDirectory({
   }
 
   // install theme packages
-  if (
-    await checkThemeInstallationNecessity({
-      themesDir,
-      themeIndexes,
-      workspaceDir,
-    })
-  ) {
+  if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
     Logger.startLogging('Installing theme files');
-    await installThemeDependencies({ themesDir, themeIndexes, workspaceDir });
+    await installThemeDependencies({ themesDir, themeIndexes });
   }
 
   // copy theme files
