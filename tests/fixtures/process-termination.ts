@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { Writable } from 'node:stream';
-import { CliInterruptError, runCliCommand } from '../../src/entry-util.js';
+import { runCliCommand } from '../../src/entry-util.js';
 import { Logger } from '../../src/logger.js';
 import { registerCleanupHandler } from '../../src/util.js';
 
@@ -29,8 +29,9 @@ await runCliCommand(async (signal) => {
       JSON.stringify({
         aborted: signal.aborted,
         exitCode:
-          signal.reason instanceof CliInterruptError
-            ? signal.reason.exitCode
+          // Check if the signal reason is a CliInterruptError
+          signal.reason instanceof Error && signal.reason.name === 'CliInterruptError'
+            ? (signal.reason as Error & { exitCode: number }).exitCode
             : null,
       }),
     );

@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { PromptCancelError } from './prompt-cancel.js';
 import {
   gracefulError,
   registerTerminationHook,
@@ -23,7 +22,7 @@ export function isDirectExecution(importMetaUrl: string) {
   }
 }
 
-export class CliInterruptError extends Error {
+class CliInterruptError extends Error {
   readonly exitCode: number;
 
   constructor(exitCode: number) {
@@ -34,6 +33,13 @@ export class CliInterruptError extends Error {
     );
     this.name = 'CliInterruptError';
     this.exitCode = exitCode;
+  }
+}
+
+export class PromptCancelError extends Error {
+  constructor() {
+    super('Prompt canceled');
+    this.name = 'PromptCancelError';
   }
 }
 
