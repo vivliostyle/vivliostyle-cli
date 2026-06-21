@@ -39,10 +39,10 @@ import {
   cliVersion,
   coreVersion,
   cwd as defaultCwd,
+  executeWithCleanupOnInterrupt,
   getDefaultBrowserTag,
   getOsLocale,
   type PackageManager,
-  registerCleanupHandler,
   toTitleCase,
   whichPm,
 } from '../util.js';
@@ -644,39 +644,28 @@ async function setupTemplate({
       `.vs-template-${Date.now()}`,
     );
     Logger.debug('setupTemplate > tmpDownloadDir %s', tmpDownloadDir);
-    const templateDownload = downloadTemplate(template, {
-      dir: tmpDownloadDir,
-    });
-    const unregisterCleanupHandler = registerCleanupHandler(
+    await executeWithCleanupOnInterrupt(
       `Removing the temporary directory: ${tmpDownloadDir}`,
       async () => {
         try {
-          await templateDownload;
-        } catch {
-          // Remove any partial output after a failed or interrupted download.
+          await downloadTemplate(template, { dir: tmpDownloadDir });
+          signal?.throwIfAborted();
+          for (const entry of fs.readdirSync(tmpDownloadDir)) {
+            fs.renameSync(
+              upath.join(tmpDownloadDir, entry),
+              upath.join(cwd, projectPath, entry),
+            );
+            signal?.throwIfAborted();
+          }
+        } catch (error) {
+          signal?.throwIfAborted();
+          throw error;
         }
+      },
+      () => {
         fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
       },
     );
-
-    try {
-      await templateDownload;
-      signal?.throwIfAborted();
-      for (const entry of fs.readdirSync(tmpDownloadDir)) {
-        fs.renameSync(
-          upath.join(tmpDownloadDir, entry),
-          upath.join(cwd, projectPath, entry),
-        );
-        signal?.throwIfAborted();
-      }
-    } catch (error) {
-      signal?.throwIfAborted();
-      throw error;
-    } finally {
-      // Always release our cleanup handler and remove any leftover temp download.
-      fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
-      unregisterCleanupHandler();
-    }
   }
 
   const packageJsonPath = upath.join(cwd, projectPath, 'package.json');
@@ -743,35 +732,24 @@ async function performInstallDependencies({
       stdio: Logger.isInteractive ? 'inherit' : undefined,
     },
   });
-  const installation = (async () => {
-    if (Logger.isInteractive) {
-      await proc;
-    } else {
-      for await (const line of proc) {
-        Logger.log(line);
-      }
-    }
-  })();
-  const unregisterCleanupHandler = registerCleanupHandler(
+  await executeWithCleanupOnInterrupt(
     'Waiting for dependency installation to stop',
     async () => {
       try {
-        await installation;
-      } catch {
-        // The active caller reports or normalizes the installation error.
+        if (Logger.isInteractive) {
+          await proc;
+        } else {
+          for await (const line of proc) {
+            Logger.log(line);
+          }
+        }
+        signal?.throwIfAborted();
+      } catch (error) {
+        signal?.throwIfAborted();
+        throw error;
       }
     },
-    { prepend: true },
   );
-  try {
-    await installation;
-  } catch (error) {
-    signal?.throwIfAborted();
-    throw error;
-  } finally {
-    unregisterCleanupHandler();
-  }
-  signal?.throwIfAborted();
 }
 
 function caveat(

@@ -33,8 +33,8 @@ import {
 
 import type { PromptOption, SelectPromptOption } from './config/schema.js';
 import { ValidString } from './config/schema.js';
+import { PromptCancelError } from './entry-util.js';
 import { isUnicodeSupported, Logger } from './logger.js';
-import { PromptCancelError } from './prompt-cancel.js';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>

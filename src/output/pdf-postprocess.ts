@@ -15,7 +15,11 @@ import {
 import type { CmykMap, Meta, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
-import { coreVersion, isInContainer, registerCleanupHandler } from '../util.js';
+import {
+  coreVersion,
+  executeWithCleanupOnInterrupt,
+  isInContainer,
+} from '../util.js';
 import { convertCmykColors } from './cmyk.js';
 import { replaceImages } from './image.js';
 
@@ -157,27 +161,12 @@ export class PostProcess {
 
     if (preflight) {
       const input = upath.join(os.tmpdir(), `vivliostyle-cli-${uuid()}.pdf`);
-      let inputReady: Promise<void> | undefined;
-      let preflightOperation: Promise<void> | undefined;
-      const unregisterPreflightInputCleanup = registerCleanupHandler(
+      await executeWithCleanupOnInterrupt(
         `Removing temporary preflight input: ${input}`,
         async () => {
-          try {
-            await inputReady;
-            await preflightOperation;
-          } catch {
-            // Remove the temporary input after failed or interrupted preflight.
-          }
-          await fs.promises.rm(input, { force: true });
-        },
-      );
+          await fs.promises.writeFile(input, pdf);
+          signal?.throwIfAborted();
 
-      try {
-        inputReady = fs.promises.writeFile(input, pdf);
-        await inputReady;
-        signal?.throwIfAborted();
-
-        preflightOperation = (async () => {
           if (
             preflight === 'press-ready-local' ||
             (preflight === 'press-ready' && isInContainer())
@@ -210,12 +199,11 @@ export class PostProcess {
               signal,
             });
           }
-        })();
-        await preflightOperation;
-      } finally {
-        unregisterPreflightInputCleanup();
-        await fs.promises.rm(input, { force: true });
-      }
+        },
+        async () => {
+          await fs.promises.rm(input, { force: true });
+        },
+      );
     } else {
       signal?.throwIfAborted();
       await fs.promises.writeFile(output, pdf);

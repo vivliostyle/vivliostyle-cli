@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PromptCancelError } from '../src/prompt-cancel.js';
+import { PromptCancelError } from '../src/entry-util.js';
 
 let terminationHook: ((exitCode: number) => void) | undefined;
 

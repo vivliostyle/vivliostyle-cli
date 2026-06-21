@@ -34,8 +34,8 @@ vi.mock('@clack/prompts', () => ({
   ),
 }));
 
+import { PromptCancelError } from '../src/entry-util.js';
 import { askQuestion, InteractiveLogger } from '../src/interactive.js';
-import { PromptCancelError } from '../src/prompt-cancel.js';
 
 beforeEach(() => {
   mockedPrompt.prompt.mockReset();

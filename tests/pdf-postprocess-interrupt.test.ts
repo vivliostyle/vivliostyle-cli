@@ -9,9 +9,6 @@ const mockedRunContainer = vi.hoisted(() =>
     (options: { commandArgs: string[]; signal?: AbortSignal }) => Promise<void>
   >(),
 );
-const mockedRegisterCleanupHandler = vi.hoisted(() =>
-  vi.fn<(message: string, handler: () => Promise<void>) => () => void>(),
-);
 
 vi.mock('../src/container.js', () => ({
   collectVolumeArgs: vi.fn<(args: string[]) => string[]>((args) => args),
@@ -22,10 +19,10 @@ vi.mock('../src/container.js', () => ({
 vi.mock('../src/util.js', async (importOriginal) => ({
   ...(await importOriginal<typeof UtilModule>()),
   isInContainer: vi.fn<() => boolean>(() => false),
-  registerCleanupHandler: mockedRegisterCleanupHandler,
 }));
 
 import { PostProcess } from '../src/output/pdf-postprocess.js';
+import { runCleanupHandlers } from '../src/util.js';
 
 function createPostProcess(document: any) {
   return Object.assign(Object.create(PostProcess.prototype), {
@@ -35,7 +32,6 @@ function createPostProcess(document: any) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockedRegisterCleanupHandler.mockReturnValue(vi.fn<() => void>());
 });
 
 it('passes the signal to press-ready Docker preflight', async () => {
@@ -68,12 +64,6 @@ it('waits for press-ready before removing the temporary preflight input', async 
       finishPreflight = resolve;
     }),
   );
-  const unregisterCleanupHandler = vi.fn<() => void>();
-  let cleanupHandler: (() => Promise<void>) | undefined;
-  mockedRegisterCleanupHandler.mockImplementation((_message, handler) => {
-    cleanupHandler = handler;
-    return unregisterCleanupHandler;
-  });
   const post = createPostProcess({
     save: vi.fn<() => Promise<Uint8Array>>(async () => new Uint8Array([1])),
   });
@@ -97,8 +87,7 @@ it('waits for press-ready before removing the temporary preflight input', async 
   expect(fs.existsSync(input!)).toBe(true);
 
   let cleanupSettled = false;
-  expect(cleanupHandler).toBeDefined();
-  const cleanup = cleanupHandler!().then(() => {
+  const cleanup = runCleanupHandlers().then(() => {
     cleanupSettled = true;
   });
   await Promise.resolve();
@@ -111,6 +100,5 @@ it('waits for press-ready before removing the temporary preflight input', async 
   await saving;
   await cleanup;
 
-  expect(unregisterCleanupHandler).toHaveBeenCalledOnce();
   expect(fs.existsSync(input!)).toBe(false);
 });
