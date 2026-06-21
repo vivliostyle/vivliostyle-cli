@@ -78,6 +78,32 @@ export const registerCleanupHandler = (
   };
 };
 
+export const executeWithCleanupOnInterrupt = <T>(
+  debugMessage: string,
+  tryTask: () => Promise<T>,
+  finallyTask?: (error: unknown | undefined) => void | Promise<void>,
+) => {
+  let thrownError: unknown | undefined;
+  const runPromise = tryTask()
+    .catch((error) => {
+      thrownError = error;
+      throw error;
+    })
+    .finally(() => finallyTask?.(thrownError));
+  const unregister = registerCleanupHandler(
+    debugMessage,
+    async () => {
+      try {
+        await runPromise;
+      } catch {
+        // The active caller reports or normalizes the error.
+      }
+    },
+    { prepend: true },
+  );
+  return runPromise.finally(unregister);
+};
+
 // Termination hooks notify active work before cleanup starts closing resources.
 export function registerTerminationHook(hook: (exitCode: number) => void) {
   terminationHooks.add(hook);

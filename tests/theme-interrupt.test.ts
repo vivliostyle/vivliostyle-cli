@@ -18,15 +18,6 @@ const mockedArborist = vi.hoisted(() => ({
   buildIdealTree: vi.fn<() => Promise<MockTree>>(),
   reify: vi.fn<(options?: unknown) => Promise<MockTree>>(),
 }));
-const mockedRegisterCleanupHandler = vi.hoisted(() =>
-  vi.fn<
-    (
-      message: string,
-      handler: () => Promise<void>,
-      options?: { prepend?: boolean },
-    ) => () => void
-  >(),
-);
 
 vi.mock('@npmcli/arborist', () => ({
   default: class Arborist {
@@ -35,20 +26,9 @@ vi.mock('@npmcli/arborist', () => ({
   },
 }));
 
-vi.mock('../src/util.js', () => ({
-  DetailError: class DetailError extends Error {
-    constructor(
-      message: string | undefined,
-      readonly detail: string | undefined,
-    ) {
-      super(message);
-    }
-  },
-  registerCleanupHandler: mockedRegisterCleanupHandler,
-}));
-
 import type { ParsedTheme } from '../src/config/resolve.js';
 import { installThemeDependencies } from '../src/processor/theme.js';
+import { runCleanupHandlers } from '../src/util.js';
 
 const themeIndexes = new Set<ParsedTheme>([
   {
@@ -61,22 +41,15 @@ const themeIndexes = new Set<ParsedTheme>([
 ]);
 
 describe('theme installation cancellation', () => {
-  let cleanupHandler: (() => Promise<void>) | undefined;
   let themesDir: string;
-  const unregisterCleanup = vi.fn<() => void>();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    cleanupHandler = undefined;
     themesDir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'vivliostyle-theme-interrupt-'),
     );
     mockedArborist.buildIdealTree.mockResolvedValue({
       children: new Map(),
-    });
-    mockedRegisterCleanupHandler.mockImplementation((_message, handler) => {
-      cleanupHandler = handler;
-      return unregisterCleanup;
     });
   });
 
@@ -102,17 +75,12 @@ describe('theme installation cancellation', () => {
     });
 
     await vi.waitFor(() => {
-      expect(cleanupHandler).toBeDefined();
+      expect(mockedArborist.reify).toHaveBeenCalledOnce();
     });
-    expect(mockedRegisterCleanupHandler).toHaveBeenCalledWith(
-      'Waiting for theme installation rollback',
-      expect.any(Function),
-      { prepend: true },
-    );
     controller.abort(abortReason);
 
     let cleanupSettled = false;
-    const cleanup = cleanupHandler?.().then(() => {
+    const cleanup = runCleanupHandlers().then(() => {
       cleanupSettled = true;
     });
     await Promise.resolve();
@@ -122,7 +90,6 @@ describe('theme installation cancellation', () => {
 
     await cleanup;
     await expect(installation).rejects.toBe(abortReason);
-    expect(unregisterCleanup).toHaveBeenCalledOnce();
   });
 
   it('keeps reporting non-cancellation reify errors as installation errors', async () => {
@@ -137,7 +104,6 @@ describe('theme installation cancellation', () => {
     await expect(installation).rejects.toMatchObject({
       message: 'An error occurred during the installation of the theme',
     });
-    expect(unregisterCleanup).toHaveBeenCalledOnce();
   });
 
   it('finishes local theme linking before reporting cancellation', async () => {
@@ -171,7 +137,6 @@ describe('theme installation cancellation', () => {
     ).rejects.toBe(abortReason);
 
     expect(fs.realpathSync(installedPath)).toBe(fs.realpathSync(sourcePath));
-    expect(unregisterCleanup).toHaveBeenCalledOnce();
   });
 
   it('does not start Arborist work when already aborted', async () => {

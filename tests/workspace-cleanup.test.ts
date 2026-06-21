@@ -5,13 +5,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import type * as UtilModule from '../src/util.js';
-
 const mockedMove = vi.hoisted(() =>
   vi.fn<(from: string, to: string) => Promise<void>>(),
-);
-const mockedRegisterCleanupHandler = vi.hoisted(() =>
-  vi.fn<(message: string, handler: () => Promise<void>) => () => void>(),
 );
 
 vi.mock('fs-extra/esm', async () => {
@@ -23,14 +18,6 @@ vi.mock('fs-extra/esm', async () => {
   };
 });
 
-vi.mock('../src/util.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof UtilModule>();
-  return {
-    ...actual,
-    registerCleanupHandler: mockedRegisterCleanupHandler,
-  };
-});
-
 import type { ResolvedTaskConfig } from '../src/config/resolve.js';
 import { cleanupWorkspace } from '../src/processor/compile.js';
 
@@ -38,7 +25,6 @@ let temporaryDirectory: string | undefined;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockedRegisterCleanupHandler.mockReturnValue(vi.fn<() => void>());
 });
 
 afterEach(() => {
@@ -47,7 +33,7 @@ afterEach(() => {
   }
 });
 
-it('unregisters workspace cleanup handler after cleanup failure', async () => {
+it('removes the temporary moved workspace after cleanup failure', async () => {
   temporaryDirectory = fs.mkdtempSync(
     path.join(os.tmpdir(), 'vivliostyle-workspace-cleanup-'),
   );
@@ -59,8 +45,6 @@ it('unregisters workspace cleanup handler after cleanup failure', async () => {
 
   const cleanupError = new Error('cleanup failed');
   mockedMove.mockRejectedValueOnce(cleanupError);
-  const unregisterCleanupHandler = vi.fn<() => void>();
-  mockedRegisterCleanupHandler.mockReturnValue(unregisterCleanupHandler);
 
   await expect(
     cleanupWorkspace({
@@ -71,9 +55,8 @@ it('unregisters workspace cleanup handler after cleanup failure', async () => {
     } as unknown as ResolvedTaskConfig),
   ).rejects.toBe(cleanupError);
 
-  expect(mockedRegisterCleanupHandler).toHaveBeenCalledWith(
-    'Waiting for workspace cleanup',
-    expect.any(Function),
-  );
-  expect(unregisterCleanupHandler).toHaveBeenCalledOnce();
+  const leftovers = fs
+    .readdirSync(temporaryDirectory)
+    .filter((name) => name.startsWith('.vs-'));
+  expect(leftovers).toEqual([]);
 });

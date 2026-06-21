@@ -12,9 +12,9 @@ import { importNodeModule } from './node-modules.js';
 import { getSourceUrl } from './server.js';
 import {
   exec,
+  executeWithCleanupOnInterrupt,
   isValidUri,
   pathEquals,
-  registerCleanupHandler,
 } from './util.js';
 
 export function toContainerPath(urlOrAbsPath: string): string {
@@ -125,31 +125,18 @@ export async function runContainer({
         stdio: Logger.isInteractive ? 'inherit' : undefined,
       },
     });
-    const containerRun = (async () => {
-      if (Logger.isInteractive) {
-        await proc;
-      } else {
-        for await (const line of proc) {
-          Logger.log(line);
-        }
-      }
-    })();
-    const unregisterCleanupHandler = registerCleanupHandler(
+    await executeWithCleanupOnInterrupt(
       'Waiting for Docker process to stop',
       async () => {
-        try {
-          await containerRun;
-        } catch {
-          // The active caller reports or normalizes the Docker error.
+        if (Logger.isInteractive) {
+          await proc;
+        } else {
+          for await (const line of proc) {
+            Logger.log(line);
+          }
         }
       },
-      { prepend: true },
     );
-    try {
-      await containerRun;
-    } finally {
-      unregisterCleanupHandler();
-    }
     signal?.throwIfAborted();
   } catch (error) {
     signal?.throwIfAborted();

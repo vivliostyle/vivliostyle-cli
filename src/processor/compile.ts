@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
-import type { JSDOM } from '@vivliostyle/jsdom';
 import type jsdom from '@vivliostyle/jsdom';
+import type { JSDOM } from '@vivliostyle/jsdom';
 import { copy, move } from 'fs-extra/esm';
 import upath from 'upath';
 import serializeToXml from 'w3c-xmlserializer';
@@ -22,9 +22,9 @@ import { Logger } from '../logger.js';
 import { writePublicationManifest } from '../output/webbook.js';
 import {
   DetailError,
+  executeWithCleanupOnInterrupt,
   pathContains,
   pathEquals,
-  registerCleanupHandler,
   writeFileIfChanged,
 } from '../util.js';
 import {
@@ -102,42 +102,32 @@ export async function cleanupWorkspace({
   // workspaceDir is placed on different directory; delete everything excepting theme files
   Logger.debug('cleanup workspace files', workspaceDir);
   let movedWorkspacePath: string | undefined;
-  const workspaceCleanup = (async () => {
-    if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
-      movedWorkspacePath = upath.join(
-        upath.dirname(workspaceDir),
-        `.vs-${Date.now()}`,
-      );
-      const movedThemePath = upath.join(
-        movedWorkspacePath,
-        upath.relative(workspaceDir, themesDir),
-      );
-      fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
-      await move(themesDir, movedThemePath);
-    }
-    await fs.promises.rm(workspaceDir, { recursive: true, force: true });
-    if (movedWorkspacePath) {
-      await move(movedWorkspacePath, workspaceDir);
-    }
-  })();
-  const unregisterCleanupHandler = registerCleanupHandler(
+  await executeWithCleanupOnInterrupt(
     'Waiting for workspace cleanup',
     async () => {
-      try {
-        await workspaceCleanup;
-      } catch {
-        // Remove any temporary moved workspace after cleanup fails.
+      if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
+        movedWorkspacePath = upath.join(
+          upath.dirname(workspaceDir),
+          `.vs-${Date.now()}`,
+        );
+        const movedThemePath = upath.join(
+          movedWorkspacePath,
+          upath.relative(workspaceDir, themesDir),
+        );
+        fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
+        await move(themesDir, movedThemePath);
       }
+      await fs.promises.rm(workspaceDir, { recursive: true, force: true });
+      if (movedWorkspacePath) {
+        await move(movedWorkspacePath, workspaceDir);
+      }
+    },
+    () => {
       if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {
         fs.rmSync(movedWorkspacePath, { recursive: true, force: true });
       }
     },
   );
-  try {
-    await workspaceCleanup;
-  } finally {
-    unregisterCleanupHandler();
-  }
 }
 
 export async function prepareThemeDirectory(
