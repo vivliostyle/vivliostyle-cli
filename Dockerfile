@@ -37,8 +37,6 @@ RUN set -x \
 RUN set -x \
   && apt-get update -qq \
   && apt-get upgrade -yqq \
-  # remove poor quality fonts
-  && apt-get purge -y ttf-unifont fonts-ipafont-gothic fonts-wqy-zenhei \
   # install all Noto fonts
   && apt-get install -y fonts-noto \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
