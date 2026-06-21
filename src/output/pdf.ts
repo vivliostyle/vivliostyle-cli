@@ -6,7 +6,7 @@ import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
 
-import { launchPreview } from '../browser.js';
+import { launchPreview, runBrowserOperationWithAbort } from '../browser.js';
 import type {
   ManuscriptEntry,
   PdfOutput,
@@ -21,9 +21,11 @@ import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
 export async function buildPDF({
   target,
   config,
+  signal,
 }: {
   target: PdfOutput;
   config: ResolvedTaskConfig;
+  signal?: AbortSignal;
 }): Promise<string | null> {
   Logger.logUpdate(`Launching PDF build environment`);
 
@@ -74,9 +76,10 @@ export async function buildPDF({
     }
   }
 
-  const { browser, page } = await launchPreview({
+  const { browser, page, closeBrowser } = await launchPreview({
     mode: 'build',
     url: viewerFullUrl,
+    signal,
     config,
     onBrowserOpen: () => {
       Logger.logUpdate('Building pages');
@@ -131,107 +134,126 @@ export async function buildPDF({
     },
   });
 
-  const browserVersion = await browser.version();
-  Logger.debug(green('success'), `browserVersion=${browserVersion}`);
+  const browserResult = await runBrowserOperationWithAbort({
+    signal,
+    closeBrowser,
+    operation: async () => {
+      const browserVersion = await browser.version();
+      Logger.debug(green('success'), `browserVersion=${browserVersion}`);
 
-  let remainTime = config.timeout;
-  const startTime = Date.now();
+      let remainTime = config.timeout;
+      const startTime = Date.now();
 
-  await page.waitForNetworkIdle();
-  await page.waitForFunction(() => !!window.coreViewer);
+      await page.waitForNetworkIdle({ signal });
+      await page.waitForFunction(() => !!window.coreViewer, { signal });
 
-  const { protocol } = browser as Browser & {
-    protocol: 'cdp' | 'webDriverBiDi';
-  };
-  // Only CDP supports emulateMediaType
-  if (protocol === 'cdp') {
-    await page.emulateMediaType('print');
-  }
-  await page.waitForFunction(
-    /* v8 ignore next */
-    () => window.coreViewer.readyState === 'complete',
-    { polling: 1000 },
-  );
+      const { protocol } = browser as Browser & {
+        protocol: 'cdp' | 'webDriverBiDi';
+      };
+      // Only CDP supports emulateMediaType
+      if (protocol === 'cdp') {
+        await page.emulateMediaType('print');
+      }
+      await page.waitForFunction(
+        /* v8 ignore next */
+        () => window.coreViewer.readyState === 'complete',
+        { polling: 1000, signal },
+      );
 
-  if (lastEntry) {
-    Logger.logSuccess(stringifyEntry(lastEntry));
-  }
+      if (lastEntry) {
+        Logger.logSuccess(stringifyEntry(lastEntry));
+      }
 
-  const pageProgression = await page.evaluate(() =>
-    /* v8 ignore next 5 */
-    document
-      .querySelector('#vivliostyle-viewer-viewport')
-      ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
-      ? 'rtl'
-      : 'ltr',
-  );
-  const viewerCoreVersion = await page.evaluate(() =>
-    /* v8 ignore next 3 */
-    document
-      .querySelector('#vivliostyle-menu_settings .version')
-      ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
-  );
-  const metadata = await loadMetadata(page);
-  const toc = await loadTOC(page);
-  const pageSizeData = await loadPageSizeData(page);
-  const cmykMap = target.cmyk ? await loadCmykMap(page) : {};
+      const pageProgression = await page.evaluate((): 'ltr' | 'rtl' =>
+        /* v8 ignore next 5 */
+        document
+          .querySelector('#vivliostyle-viewer-viewport')
+          ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
+          ? 'rtl'
+          : 'ltr',
+      );
+      const viewerCoreVersion = await page.evaluate(() =>
+        /* v8 ignore next 3 */
+        document
+          .querySelector('#vivliostyle-menu_settings .version')
+          ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
+      );
+      const metadata = await loadMetadata(page);
+      const toc = await loadTOC(page);
+      const pageSizeData = await loadPageSizeData(page);
+      const cmykMap = target.cmyk ? await loadCmykMap(page) : {};
 
-  remainTime -= Date.now() - startTime;
-  if (remainTime <= 0) {
-    throw new Error('Typesetting process timed out');
-  }
-  Logger.debug('Remaining timeout:', remainTime);
+      remainTime -= Date.now() - startTime;
+      if (remainTime <= 0) {
+        throw new Error('Typesetting process timed out');
+      }
+      Logger.debug('Remaining timeout:', remainTime);
 
-  Logger.logUpdate('Building PDF');
+      Logger.logUpdate('Building PDF');
 
-  // For Firefox WebDriver BiDi, explicitly set width and height
-  // because page.pdf() doesn't support for the preferCSSPageSize option.
-  // Use a sufficiently large value to accommodate user-defined page sizes.
-  const dimensionSizeForWebDriverBiDi =
-    parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) || 3780; // 1000mm
-  const pdf = await page.pdf({
-    margin: {
-      top: 0,
-      bottom: 0,
-      right: 0,
-      left: 0,
+      // For Firefox WebDriver BiDi, explicitly set width and height
+      // because page.pdf() doesn't support for the preferCSSPageSize option.
+      // Use a sufficiently large value to accommodate user-defined page sizes.
+      const dimensionSizeForWebDriverBiDi =
+        parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) || 3780; // 1000mm
+      const pdf = await page.pdf({
+        margin: {
+          top: 0,
+          bottom: 0,
+          right: 0,
+          left: 0,
+        },
+        printBackground: true,
+        tagged: true,
+        // timeout: remainTime,
+        ...(protocol === 'webDriverBiDi'
+          ? {
+              width: dimensionSizeForWebDriverBiDi,
+              height: dimensionSizeForWebDriverBiDi,
+            }
+          : {
+              preferCSSPageSize: true,
+            }),
+      });
+
+      return {
+        browserVersion,
+        pageProgression,
+        viewerCoreVersion,
+        metadata,
+        toc,
+        pageSizeData,
+        cmykMap,
+        pdf,
+      };
     },
-    printBackground: true,
-    tagged: true,
-    // timeout: remainTime,
-    ...(protocol === 'webDriverBiDi'
-      ? {
-          width: dimensionSizeForWebDriverBiDi,
-          height: dimensionSizeForWebDriverBiDi,
-        }
-      : {
-          preferCSSPageSize: true,
-        }),
   });
 
-  await browser.close();
+  await closeBrowser();
+  signal?.throwIfAborted();
 
   Logger.logUpdate('Processing PDF');
   fs.mkdirSync(upath.dirname(target.path), { recursive: true });
 
-  const post = await PostProcess.load(pdf);
-  await post.metadata(metadata, {
-    pageProgression,
-    browserVersion,
-    viewerCoreVersion,
+  const post = await PostProcess.load(browserResult.pdf);
+  await post.metadata(browserResult.metadata, {
+    pageProgression: browserResult.pageProgression,
+    browserVersion: browserResult.browserVersion,
+    viewerCoreVersion: browserResult.viewerCoreVersion,
     // If custom viewer is set and its version info is not available,
     // there is no guarantee that the default creator option is correct.
-    disableCreatorOption: !!config.viewer && !viewerCoreVersion,
+    disableCreatorOption: !!config.viewer && !browserResult.viewerCoreVersion,
   });
-  await post.toc(toc);
-  await post.setPageBoxes(pageSizeData);
+  await post.toc(browserResult.toc);
+  await post.setPageBoxes(browserResult.pageSizeData);
   await post.save(target.path, {
     preflight: target.preflight,
     preflightOption: target.preflightOption,
     image: config.image,
     cmyk: target.cmyk,
-    cmykMap,
+    cmykMap: browserResult.cmykMap,
     replaceImage: target.replaceImage,
+    signal,
   });
 
   return target.path;

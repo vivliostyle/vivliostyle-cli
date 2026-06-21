@@ -87,7 +87,7 @@
     "vite": "8.0.12",
     "w3c-xmlserializer": "5.0.0",
     "whatwg-mimetype": "4.0.0",
-    "yocto-spinner": "0.2.2",
+    "yocto-spinner": "1.2.0",
     "yoctocolors": "2.1.1"
   },
   "devDependencies": {
@@ -126,6 +126,7 @@
     "shx": "0.4.0",
     "supertest": "7.2.2",
     "tsup": "8.5.1",
+    "tsx": "4.19.3",
     "typedoc": "^0.28.3",
     "typedoc-plugin-markdown": "4.6.3",
     "typescript": "5.8.3",

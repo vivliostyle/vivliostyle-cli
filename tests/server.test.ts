@@ -14,6 +14,7 @@ const mockedBrowserModule = vi.hoisted(() => ({
   launchPreview: vi.fn().mockResolvedValue({
     page: {
       on: vi.fn(),
+      off: vi.fn(),
       bringToFront: vi.fn(),
       locator: vi.fn().mockReturnValue({
         focus: vi.fn(),
@@ -22,10 +23,14 @@ const mockedBrowserModule = vi.hoisted(() => ({
     browser: {
       close: vi.fn(),
     },
+    closeBrowser: vi.fn(),
   }),
 }));
 
-vi.mock('../src/browser', () => mockedBrowserModule);
+vi.mock('../src/browser', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/browser.js')>()),
+  ...mockedBrowserModule,
+}));
 
 const launchPreviewSpy = vi.spyOn(mockedBrowserModule, 'launchPreview');
 

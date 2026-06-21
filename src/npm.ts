@@ -39,11 +39,12 @@ export function createFetch(options: {
   proxyBypass?: string;
   proxyUser?: string;
   proxyPass?: string;
+  signal?: AbortSignal;
 }): typeof _fetch {
-  const url = options.proxyServer ?? process.env.HTTP_PROXY;
-  const proxy = url
+  const proxyUrl = options.proxyServer ?? process.env.HTTP_PROXY;
+  const proxy = proxyUrl
     ? createProxy({
-        url,
+        url: proxyUrl,
         noProxy: options.proxyBypass ?? process.env.NO_PROXY ?? undefined,
       })
     : undefined;
@@ -67,15 +68,26 @@ export function createFetch(options: {
       )[proxyHeadersKey]['proxy-authorization'] = token;
     }
   }
-  return (url, fetchOptions) =>
-    _fetch(url, { ...proxy, ...fetchOptions }).then((response) => {
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
-        );
-      }
-      return response;
-    });
+  return (url, fetchOptions) => {
+    const signal = fetchOptions?.signal ?? options.signal;
+    return _fetch(url, {
+      ...proxy,
+      ...fetchOptions,
+      signal,
+    })
+      .catch((error) => {
+        signal?.throwIfAborted();
+        throw error;
+      })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
+          );
+        }
+        return response;
+      });
+  };
 }
 
 export async function listVivliostyleThemes({

@@ -24,7 +24,7 @@ import {
   DetailError,
   pathContains,
   pathEquals,
-  registerExitHandler,
+  registerCleanupHandler,
   writeFileIfChanged,
 } from '../util.js';
 import {
@@ -102,36 +102,48 @@ export async function cleanupWorkspace({
   // workspaceDir is placed on different directory; delete everything excepting theme files
   Logger.debug('cleanup workspace files', workspaceDir);
   let movedWorkspacePath: string | undefined;
-  if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
-    movedWorkspacePath = upath.join(
-      upath.dirname(workspaceDir),
-      `.vs-${Date.now()}`,
-    );
-    const movedThemePath = upath.join(
-      movedWorkspacePath,
-      upath.relative(workspaceDir, themesDir),
-    );
-    fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
-    registerExitHandler(
-      `Removing the moved workspace directory: ${movedWorkspacePath}`,
-      () => {
-        if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {
-          fs.rmSync(movedWorkspacePath, { recursive: true, force: true });
-        }
-      },
-    );
-    await move(themesDir, movedThemePath);
-  }
-  await fs.promises.rm(workspaceDir, { recursive: true, force: true });
-  if (movedWorkspacePath) {
-    await move(movedWorkspacePath, workspaceDir);
+  const workspaceCleanup = (async () => {
+    if (pathContains(workspaceDir, themesDir) && fs.existsSync(themesDir)) {
+      movedWorkspacePath = upath.join(
+        upath.dirname(workspaceDir),
+        `.vs-${Date.now()}`,
+      );
+      const movedThemePath = upath.join(
+        movedWorkspacePath,
+        upath.relative(workspaceDir, themesDir),
+      );
+      fs.mkdirSync(upath.dirname(movedThemePath), { recursive: true });
+      await move(themesDir, movedThemePath);
+    }
+    await fs.promises.rm(workspaceDir, { recursive: true, force: true });
+    if (movedWorkspacePath) {
+      await move(movedWorkspacePath, workspaceDir);
+    }
+  })();
+  const unregisterCleanupHandler = registerCleanupHandler(
+    'Waiting for workspace cleanup',
+    async () => {
+      try {
+        await workspaceCleanup;
+      } catch {
+        // Remove any temporary moved workspace after cleanup fails.
+      }
+      if (movedWorkspacePath && fs.existsSync(movedWorkspacePath)) {
+        fs.rmSync(movedWorkspacePath, { recursive: true, force: true });
+      }
+    },
+  );
+  try {
+    await workspaceCleanup;
+  } finally {
+    unregisterCleanupHandler();
   }
 }
 
-export async function prepareThemeDirectory({
-  themesDir,
-  themeIndexes,
-}: ResolvedTaskConfig): Promise<string[]> {
+export async function prepareThemeDirectory(
+  { themesDir, themeIndexes }: ResolvedTaskConfig,
+  signal?: AbortSignal,
+): Promise<string[]> {
   // Backward compatibility: v8 to v9
   if (
     fs.existsSync(upath.join(themesDir, 'packages')) &&
@@ -146,7 +158,7 @@ export async function prepareThemeDirectory({
   // install theme packages
   if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
     Logger.startLogging('Installing theme files');
-    await installThemeDependencies({ themesDir, themeIndexes });
+    await installThemeDependencies({ themesDir, themeIndexes, signal });
   }
 
   // copy theme files

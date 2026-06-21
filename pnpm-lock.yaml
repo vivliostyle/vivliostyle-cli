@@ -177,8 +177,8 @@ importers:
         specifier: 4.0.0
         version: 4.0.0
       yocto-spinner:
-        specifier: 0.2.2
-        version: 0.2.2
+        specifier: 1.2.0
+        version: 1.2.0
       yoctocolors:
         specifier: 2.1.1
         version: 2.1.1
@@ -288,6 +288,9 @@ importers:
       tsup:
         specifier: 8.5.1
         version: 8.5.1(postcss@8.5.14)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.9.0)
+      tsx:
+        specifier: 4.19.3
+        version: 4.19.3
       typedoc:
         specifier: ^0.28.3
         version: 0.28.15(typescript@5.8.3)
@@ -6699,12 +6702,12 @@ packages:
     resolution: {integrity: sha512-4LCcse/U2MHZ63HAJVE+v71o7yOdIe4cZ70Wpf8D/IyjDKYQLV5GD46B+hSTjJsvV5PztjvHoU580EftxjDZFQ==}
     engines: {node: '>=12.20'}
 
-  yocto-spinner@0.2.2:
-    resolution: {integrity: sha512-21rPcM3e4vCpOXThiFRByX8amU5By1R0wNS8Oex+DP3YgC8xdU0vEJ/K8cbPLiIJVosSSysgcFof6s6MSD5/Vw==}
-    engines: {node: '>=18.19'}
-
   yocto-spinner@0.2.3:
     resolution: {integrity: sha512-sqBChb33loEnkoXte1bLg45bEBsOP9N1kzQh5JZNKj/0rik4zAPTNSAVPj3uQAdc6slYJ0Ksc403G2XgxsJQFQ==}
+    engines: {node: '>=18.19'}
+
+  yocto-spinner@1.2.0:
+    resolution: {integrity: sha512-Yw0hUB6UA3o4YUgKy3oSe9a4cxoaZ9sBfYDw+JSxo6Id0KoJGoxzPA24qqUXYKBWABs/zDSGTz9kww7t3F0XGw==}
     engines: {node: '>=18.19'}
 
   yoctocolors@2.1.1:
@@ -9613,7 +9616,6 @@ snapshots:
       '@esbuild/win32-arm64': 0.25.12
       '@esbuild/win32-ia32': 0.25.12
       '@esbuild/win32-x64': 0.25.12
-    optional: true
 
   esbuild@0.25.3:
     optionalDependencies:
@@ -9978,7 +9980,6 @@ snapshots:
   get-tsconfig@4.14.0:
     dependencies:
       resolve-pkg-maps: 1.0.0
-    optional: true
 
   github-slugger@2.0.0: {}
 
@@ -12383,8 +12384,7 @@ snapshots:
 
   resolve-from@5.0.0: {}
 
-  resolve-pkg-maps@1.0.0:
-    optional: true
+  resolve-pkg-maps@1.0.0: {}
 
   resolve-pkg@2.0.0:
     dependencies:
@@ -13115,7 +13115,6 @@ snapshots:
       get-tsconfig: 4.14.0
     optionalDependencies:
       fsevents: 2.3.3
-    optional: true
 
   tuf-js@4.0.0:
     dependencies:
@@ -13663,11 +13662,11 @@ snapshots:
 
   yocto-queue@1.2.2: {}
 
-  yocto-spinner@0.2.2:
+  yocto-spinner@0.2.3:
     dependencies:
       yoctocolors: 2.1.1
 
-  yocto-spinner@0.2.3:
+  yocto-spinner@1.2.0:
     dependencies:
       yoctocolors: 2.1.1
 
