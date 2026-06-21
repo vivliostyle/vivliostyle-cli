@@ -6,6 +6,12 @@ import upath from 'upath';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import { DetailError, registerCleanupHandler } from '../util.js';
 
+function getThemeInstallCacheDir(themesDir: string): string {
+  // Layout follows Arborist's default cache location:
+  // https://github.com/npm/cli/blob/arborist-v9.1.7/workspaces/arborist/lib/arborist/index.js#L104
+  return upath.join(themesDir, '.npm', '_cacache');
+}
+
 function* iterateSymlinksInThemesNodeModules(
   themesDir: string,
 ): Generator<string> {
@@ -52,6 +58,7 @@ export async function checkThemeInstallationNecessity({
 
   const commonOpt = {
     path: themesDir,
+    cache: getThemeInstallCacheDir(themesDir),
     lockfileVersion: 3,
     installLinks: true,
   };
@@ -83,6 +90,7 @@ export async function installThemeDependencies({
   try {
     const commonOpt = {
       path: themesDir,
+      cache: getThemeInstallCacheDir(themesDir),
       lockfileVersion: 3,
       installLinks: true,
     };
