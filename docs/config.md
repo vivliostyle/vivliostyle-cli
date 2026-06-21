@@ -379,7 +379,7 @@ type ArticleEntryConfig = {
   - `format`: "pdf" | "epub" | "webpub"  
     Specifies the output format.
 
-  - `renderMode`: "local" | "docker"  
+  - ~~`renderMode`~~ _Deprecated_  
     If set to `docker`, Vivliostyle will render the PDF using a Docker container. (default: `local`)
     `renderMode: docker` is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/823
 
