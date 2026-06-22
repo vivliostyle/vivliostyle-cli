@@ -724,16 +724,10 @@ export const BuildTask = v.pipe(
             [input].flat().map((item) => {
               const obj = typeof item === 'string' ? { path: item } : item;
               const ext = upath.extname(obj.path).toLowerCase();
-              return {
-                ...obj,
-                format:
-                  obj.format ||
-                  (ext === '.pdf'
-                    ? 'pdf'
-                    : ext === '.epub'
-                      ? 'epub'
-                      : 'webpub'),
-              };
+              const format =
+                obj.format ||
+                (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub');
+              return Object.assign({}, obj, { format });
             }),
           ),
           v.description($`
@@ -1043,12 +1037,10 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         [input].flat().map((item) => {
           const obj = typeof item === 'string' ? { path: item } : item;
           const ext = upath.extname(obj.path).toLowerCase();
-          return {
-            ...obj,
-            format:
-              obj.format ||
-              (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub'),
-          };
+          const format =
+            obj.format ||
+            (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub');
+          return Object.assign({}, obj, { format });
         }),
       ),
       v.description($`

@@ -78,14 +78,12 @@ export function mergeInlineConfig(
         vite,
         viteConfigFile,
       }),
-      output: (output?.length ? output : task.output)?.map((o) => ({
-        ...pruneObject(o),
-        ...pruneObject({
-          renderMode,
-          preflight,
-          preflightOption,
-        }),
-      })),
+      output: (output?.length ? output : task.output)?.map((o) =>
+        Object.assign(
+          pruneObject(o),
+          pruneObject({ renderMode, preflight, preflightOption }),
+        ),
+      ),
       server: {
         ...pruneObject(task.server ?? {}),
         ...pruneObject({ host, port }),

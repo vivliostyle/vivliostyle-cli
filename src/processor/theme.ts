@@ -64,9 +64,9 @@ export async function checkThemeInstallationNecessity({
   };
   const arb = new Arborist(commonOpt);
   const tree = await arb.loadActual();
-  const pkgs = Array.from(tree.children.keys());
+  const pkgs = new Set(Array.from(tree.children.keys()));
   return [...themeIndexes].some(
-    (theme) => theme.type === 'package' && !pkgs.includes(theme.name),
+    (theme) => theme.type === 'package' && !pkgs.has(theme.name),
   );
 }
 

@@ -4,6 +4,7 @@
   "categories": {
     "correctness": "error",
     "pedantic": "error",
+    "perf": "error",
     "suspicious": "error"
   },
   "rules": {
@@ -11,6 +12,7 @@
     "max-classes-per-file": "off",
     "max-lines": "off",
     "max-lines-per-function": "off",
+    "no-await-in-loop": "off",
     "no-inline-comments": ["error", { "ignorePattern": "@vite-ignore" }],
     "no-shadow": ["error", { "allow": ["_"] }],
     "no-unused-vars": [

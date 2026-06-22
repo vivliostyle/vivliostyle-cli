@@ -725,7 +725,11 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
         return acc;
       }
       const res = parseTocItem(val);
-      return res && [...acc, res];
+      if (!res) {
+        return null;
+      }
+      acc.push(res);
+      return acc;
     }, []);
     return (
       children && {
@@ -746,7 +750,11 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
           return acc;
         }
         const res = parseTocItem(val);
-        return res && [...acc, res];
+        if (!res) {
+          return null;
+        }
+        acc.push(res);
+        return acc;
       }, []);
       return children && { element: tocRoot as HTMLElement, heading, children };
     } else if (
@@ -786,12 +794,14 @@ export function parsePageListDocument(
       const children = Array.from(child.children).reduce<
         PageListResourceTreeItem[] | null
       >((acc, element) => {
-        return (
-          acc &&
-          (element.tagName === 'LI'
-            ? [...acc, { element: element as HTMLElement }]
-            : null)
-        );
+        if (!acc) {
+          return acc;
+        }
+        if (element.tagName !== 'LI') {
+          return null;
+        }
+        acc.push({ element: element as HTMLElement });
+        return acc;
       }, []);
       return (
         children && { element: pageListRoot as HTMLElement, heading, children }

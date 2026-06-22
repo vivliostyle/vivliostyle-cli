@@ -71,7 +71,7 @@ async function buildConfigDocs(): Promise<string> {
         } else if (item.type === 'description') {
           acc.description = item.description;
         } else if (item.type === 'metadata') {
-          acc = { ...acc, ...item.metadata };
+          Object.assign(acc, item.metadata);
         }
       }
       return acc;
@@ -147,14 +147,14 @@ async function buildConfigDocs(): Promise<string> {
           }
           if (v.isOfType('intersect', inner)) {
             return [...inner.options].reduce(
-              (acc, option) => ({ ...acc, ...collectEntries(option) }),
+              (acc, option) => Object.assign(acc, collectEntries(option)),
               {} as v.ObjectEntries,
             );
           }
           return {};
         };
         const merged = [...schema.options].reduce(
-          (acc, option) => ({ ...acc, ...collectEntries(option) }),
+          (acc, option) => Object.assign(acc, collectEntries(option)),
           {} as v.ObjectEntries,
         );
         properties = merged;

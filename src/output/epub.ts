@@ -58,13 +58,13 @@ interface SpineEntry {
 const TOC_ID = 'toc';
 const LANDMARKS_ID = 'landmarks';
 const PAGELIST_ID = 'page-list';
-const COVER_IMAGE_MIMETYPES = [
+const COVER_IMAGE_MIMETYPES = new Set([
   'image/gif',
   'image/jpeg',
   'image/png',
   'image/svg+xml',
   'image/webp',
-];
+]);
 
 const changeExtname = (filepath: string, newExt: string) => {
   const ext = upath.extname(filepath);
@@ -177,8 +177,7 @@ export async function exportEpub({
   const pictureCoverResource = findPublicationLink(
     'cover',
     manifest.resources,
-    (e) =>
-      COVER_IMAGE_MIMETYPES.includes(e.encodingFormat || mime(e.url) || ''),
+    (e) => COVER_IMAGE_MIMETYPES.has(e.encodingFormat || mime(e.url) || ''),
   );
   const htmlCoverResource = findPublicationLink(
     'cover',
@@ -587,7 +586,7 @@ function buildEpubPackageDocument({
     [value]
       .flat()
       .filter(Boolean)
-      .map(() => ({ ...attributes, '#text': `${value}` }));
+      .map(() => Object.assign({}, attributes, { '#text': `${value}` }));
   const transformContributor = (
     contributorMap: Record<string, Contributor | undefined>,
   ) =>

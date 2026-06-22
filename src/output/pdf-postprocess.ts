@@ -174,17 +174,14 @@ export class PostProcess {
             using _ = Logger.suspendLogging('Running press-ready');
             const { build } = await importNodeModule('press-ready');
             await build({
-              ...preflightOption.reduce((acc, opt) => {
+              ...preflightOption.reduce<Record<string, boolean>>((acc, opt) => {
                 const optName = decamelize(opt, { separator: '-' });
-                return optName.startsWith('no-')
-                  ? {
-                      ...acc,
-                      [optName.slice(3)]: false,
-                    }
-                  : {
-                      ...acc,
-                      [optName]: true,
-                    };
+                if (optName.startsWith('no-')) {
+                  acc[optName.slice(3)] = false;
+                } else {
+                  acc[optName] = true;
+                }
+                return acc;
               }, {}),
               input,
               output,

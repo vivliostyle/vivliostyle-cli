@@ -288,15 +288,15 @@ export async function retrieveWebbookEntry({
   });
 
   if (manifest) {
-    const referencedContents = [
-      ...[manifest.readingOrder || []].flat(),
-      ...[manifest.resources || []].flat(),
-    ].map((v) => (typeof v === 'string' ? v : v.url));
+    const referencedContents = new Set(
+      [
+        ...[manifest.readingOrder || []].flat(),
+        ...[manifest.resources || []].flat(),
+      ].map((v) => (typeof v === 'string' ? v : v.url)),
+    );
     manifest.resources = [
       ...[manifest.resources || []].flat(),
-      ...fetchedResources.filter(
-        ({ url }) => !referencedContents.includes(url),
-      ),
+      ...fetchedResources.filter(({ url }) => !referencedContents.has(url)),
     ];
     sortManifestResources(manifest);
   }
@@ -493,16 +493,16 @@ export async function copyWebPublicationAssets({
   // List copied files to resources field
   const normalizeToUrl = (val?: ResourceCategorization) =>
     [val || []].flat().map((e) => (typeof e === 'string' ? e : e.url));
-  const preDefinedResources = [
+  const preDefinedResources = new Set([
     ...normalizeToUrl(manifest.links),
     ...normalizeToUrl(manifest.readingOrder),
     ...normalizeToUrl(manifest.resources),
-  ];
+  ]);
   manifest.resources = [
     ...[manifest.resources || []].flat(),
     ...resources.flatMap((file) => {
       if (
-        preDefinedResources.includes(file) ||
+        preDefinedResources.has(file) ||
         // Omit publication.json itself
         pathEquals(file, upath.relative(outputDir, actualManifestPath))
       ) {
