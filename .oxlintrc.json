@@ -3,11 +3,17 @@
   "plugins": ["typescript", "unicorn", "oxc", "vitest"],
   "categories": {
     "correctness": "error",
+    "pedantic": "error",
     "suspicious": "error"
   },
   "rules": {
-    "eslint/no-shadow": ["error", { "allow": ["_"] }],
-    "eslint/no-unused-vars": [
+    "consistent-function-scoping": "off",
+    "max-classes-per-file": "off",
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "no-inline-comments": ["error", { "ignorePattern": "@vite-ignore" }],
+    "no-shadow": ["error", { "allow": ["_"] }],
+    "no-unused-vars": [
       "error",
       {
         "args": "after-used",
@@ -17,7 +23,8 @@
         "destructuredArrayIgnorePattern": "^_"
       }
     ],
-    "unicorn/consistent-function-scoping": "allow"
+    "no-warning-comments": "warn",
+    "require-unicode-regexp": ["error", { "requireFlag": "v" }]
   },
   "ignorePatterns": [
     "dist",

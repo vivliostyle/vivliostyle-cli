@@ -30,7 +30,7 @@ function expectRootHelp(calls: unknown[][]) {
 
   expect(output).toContain('Usage: vivliostyle [options] [command]');
   for (const command of ['create', 'init', 'build', 'preview']) {
-    expect(output).toMatch(new RegExp(`^  ${command}\\b`, 'm'));
+    expect(output).toMatch(new RegExp(`^  ${command}\\b`, 'mv'));
   }
 }
 

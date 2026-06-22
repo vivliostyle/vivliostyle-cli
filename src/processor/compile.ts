@@ -65,21 +65,20 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
       }
       return upath.relative(from, resolvedPath);
     });
-  } else {
-    const pkgJsonPath = upath.join(theme.location, 'package.json');
-    const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-    const maybeStyle =
-      packageJson?.vivliostyle?.theme?.style ??
-      packageJson.style ??
-      packageJson.main;
-    if (!maybeStyle) {
-      throw new DetailError(
-        `Could not find a style file for the theme: ${theme.name}.`,
-        'Please ensure this package satisfies a `vivliostyle.theme.style` property.',
-      );
-    }
-    return upath.relative(from, upath.join(theme.location, maybeStyle));
   }
+  const pkgJsonPath = upath.join(theme.location, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+  const maybeStyle =
+    packageJson?.vivliostyle?.theme?.style ??
+    packageJson.style ??
+    packageJson.main;
+  if (!maybeStyle) {
+    throw new DetailError(
+      `Could not find a style file for the theme: ${theme.name}.`,
+      'Please ensure this package satisfies a `vivliostyle.theme.style` property.',
+    );
+  }
+  return upath.relative(from, upath.join(theme.location, maybeStyle));
 }
 
 export async function cleanupWorkspace({
@@ -221,7 +220,7 @@ export async function transformManuscript(
       }
     }
   } else if (source?.type === 'uri') {
-    resourceUrl = /^https?:/.test(source.href)
+    resourceUrl = /^https?:/v.test(source.href)
       ? source.href
       : `${rootUrl}${source.href}`;
     resourceLoader = new ResourceLoader();
@@ -349,7 +348,7 @@ export async function transformManuscript(
   return html;
 }
 
-export async function generateManifest({
+export function generateManifest({
   entryContextDir,
   workspaceDir,
   viewerInput: { manifestPath },

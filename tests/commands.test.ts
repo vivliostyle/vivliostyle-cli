@@ -90,6 +90,7 @@ describe('CLI command signals', () => {
   );
 
   it('keeps the preview command active until the server closes', async () => {
+    // oxlint-disable-next-line prefer-event-target -- emulates a Node.js http.Server, which is an EventEmitter
     const httpServer = new EventEmitter() as EventEmitter & {
       listening: boolean;
     };

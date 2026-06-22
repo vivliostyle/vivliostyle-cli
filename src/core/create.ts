@@ -72,7 +72,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   let themePackage: VivliostylePackageJson | undefined;
   let useLocalTemplate = false;
 
-  if (template && !/^([\w-.]+):/.test(template)) {
+  if (template && !/^([\w.\-]+):/v.test(template)) {
     const absTemplatePath = upath.resolve(cwd, template);
     useLocalTemplate =
       fs.existsSync(upath.resolve(cwd, template)) &&
@@ -104,7 +104,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     }
   } else if (
     (projectPath === '.' &&
-      fs.readdirSync(dist).filter((n) => !n.startsWith('.')).length > 0) ||
+      fs.readdirSync(dist).some((n) => !n.startsWith('.'))) ||
     (projectPath !== '.' && fs.existsSync(dist))
   ) {
     throw new Error(`Destination ${dist} is not empty.`);
@@ -122,7 +122,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   }
   if (!language) {
     ({ language } = createConfigFileOnly
-      ? { language: await getOsLocale() }
+      ? { language: getOsLocale() }
       : await askLanguage({ interactiveLogger }));
   }
 
@@ -310,7 +310,7 @@ async function askLanguage({
 }: {
   interactiveLogger: InteractiveLogger;
 }) {
-  const initialValue = await getOsLocale();
+  const initialValue = getOsLocale();
   return await askQuestion({
     question: {
       language: {
@@ -372,7 +372,7 @@ async function askPresetTemplate({
 
 const TRUNCATE_LENGTH = 60;
 const truncateString = (str: string) => {
-  const trimmed = str.replace(/\s+/g, ' ');
+  const trimmed = str.replaceAll(/\s+/gv, ' ');
   return trimmed.length > TRUNCATE_LENGTH
     ? trimmed.slice(0, TRUNCATE_LENGTH) + '…'
     : trimmed;
@@ -453,9 +453,9 @@ async function askTheme({
         type: 'autocomplete',
         message: "What's the project theme?",
         options: [
-          ...(!useCommunityThemes
-            ? [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]
-            : []),
+          ...(useCommunityThemes
+            ? []
+            : [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]),
           { label: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
           ...themePackages.map((pkg) => ({
             label: pkg.name,

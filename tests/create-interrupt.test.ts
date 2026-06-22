@@ -91,7 +91,7 @@ it('removes temporary template download after download failure', async () => {
   const downloadError = new Error('download failed');
   let downloadDirectory: string | undefined;
   mockedDownloadTemplate.mockImplementation(
-    async (_template: string, { dir }: { dir: string }) => {
+    (_template: string, { dir }: { dir: string }) => {
       downloadDirectory = dir;
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'partial'), '');

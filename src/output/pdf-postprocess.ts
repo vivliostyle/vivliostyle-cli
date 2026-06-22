@@ -90,7 +90,7 @@ export async function pressReadyWithContainer({
       toContainerPath(output),
       ...preflightOption
         .map((opt) => `--${decamelize(opt, { separator: '-' })}`)
-        .filter((str) => /^[\w-]+/.test(str)),
+        .filter((str) => /^[\w\-]+/v.test(str)),
     ],
     signal,
   });
@@ -272,7 +272,7 @@ export class PostProcess {
   async toc(tocItems: TOCItem[]) {
     const { PDFDict, PDFHexString, PDFName, PDFNumber } =
       await importNodeModule('pdf-lib');
-    if (!tocItems || !tocItems.length) {
+    if (!tocItems || tocItems.length === 0) {
       return;
     }
 
@@ -302,12 +302,9 @@ export class PostProcess {
         if (next) {
           child.set(PDFName.of('Next'), next.ref);
         }
-        if (item.children.length) {
+        if (item.children.length > 0) {
           child.set(PDFName.of('First'), item.children[0].ref);
-          child.set(
-            PDFName.of('Last'),
-            item.children[item.children.length - 1].ref,
-          );
+          child.set(PDFName.of('Last'), item.children.at(-1)!.ref);
           child.set(PDFName.of('Count'), PDFNumber.of(countAll(item.children)));
         }
         this.document.context.assign(item.ref, child);
@@ -321,16 +318,13 @@ export class PostProcess {
 
     const outline = PDFDict.withContext(this.document.context);
     outline.set(PDFName.of('First'), itemsWithRefs[0].ref);
-    outline.set(
-      PDFName.of('Last'),
-      itemsWithRefs[itemsWithRefs.length - 1].ref,
-    );
+    outline.set(PDFName.of('Last'), itemsWithRefs.at(-1)!.ref);
     outline.set(PDFName.of('Count'), PDFNumber.of(countAll(itemsWithRefs)));
     this.document.context.assign(outlineRef, outline);
     this.document.catalog.set(PDFName.of('Outlines'), outlineRef);
   }
 
-  async setPageBoxes(pageSizeData: PageSizeData[]) {
+  setPageBoxes(pageSizeData: PageSizeData[]) {
     if (pageSizeData.length + 1 === this.document.getPageCount()) {
       // fix issue #312: Chromium LayoutNGPrinting adds unnecessary blank page
       this.document.removePage(pageSizeData.length);

@@ -24,7 +24,7 @@ export function vsBrowserPlugin({
   }
 
   async function openPreviewPage() {
-    const locale = await getOsLocale();
+    const locale = getOsLocale();
     const url = await getViewerFullUrl(config);
     const { page, closeBrowser: closeLaunchedBrowser } = await launchPreview({
       mode: 'preview',
@@ -32,7 +32,7 @@ export function vsBrowserPlugin({
       signal: inlineConfig.signal,
       config,
       /* v8 ignore next 4 */
-      onPageOpen: async (openedPage) => {
+      onPageOpen: (openedPage) => {
         // Terminate preview when the previewing page is closed
         openedPage.on('close', handlePageClose);
       },

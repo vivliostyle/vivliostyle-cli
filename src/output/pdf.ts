@@ -62,7 +62,7 @@ export async function buildPDF({
           ? pathEquals(candidate.target, url.pathname)
           : pathEquals(
               upath.relative(config.workspaceDir, candidate.target),
-              url.pathname.substring(1),
+              url.pathname.slice(1),
             );
       },
     );
@@ -100,7 +100,7 @@ export async function buildPDF({
             }
             return;
           case 'debug':
-            if (/time slice/.test(msg.text())) {
+            if (/time slice/v.test(msg.text())) {
               return;
             }
             break;
@@ -168,9 +168,8 @@ export async function buildPDF({
 
       const pageProgression = await page.evaluate((): 'ltr' | 'rtl' =>
         /* v8 ignore next 5 */
-        document
-          .querySelector('#vivliostyle-viewer-viewport')
-          ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
+        document.querySelector<HTMLElement>('#vivliostyle-viewer-viewport')
+          ?.dataset.vivliostylePageProgression === 'rtl'
           ? 'rtl'
           : 'ltr',
       );
@@ -178,7 +177,7 @@ export async function buildPDF({
         /* v8 ignore next 3 */
         document
           .querySelector('#vivliostyle-menu_settings .version')
-          ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
+          ?.textContent?.replace(/^.*?: (\d[\-+.\w]+).*$/v, '$1'),
       );
       const metadata = await loadMetadata(page);
       const toc = await loadTOC(page);
@@ -197,7 +196,9 @@ export async function buildPDF({
       // because page.pdf() doesn't support for the preferCSSPageSize option.
       // Use a sufficiently large value to accommodate user-defined page sizes.
       const dimensionSizeForWebDriverBiDi =
-        parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) || 3780; // 1000mm
+        parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) ||
+        // 1000mm
+        3780;
       const pdf = await page.pdf({
         margin: {
           top: 0,
@@ -261,14 +262,14 @@ export async function buildPDF({
   return target.path;
 }
 
-async function loadMetadata(page: Page): Promise<Meta> {
+function loadMetadata(page: Page): Promise<Meta> {
   return page.evaluate(() => window.coreViewer.getMetadata());
 }
 
 // Show and hide the TOC in order to read its contents.
 // Chromium needs to see the TOC links in the DOM to add
 // the PDF destinations used during postprocessing.
-async function loadTOC(page: Page): Promise<TOCItem[]> {
+function loadTOC(page: Page): Promise<TOCItem[]> {
   /* v8 ignore start */
   return page.evaluate(
     () =>
@@ -288,7 +289,7 @@ async function loadTOC(page: Page): Promise<TOCItem[]> {
   /* v8 ignore stop */
 }
 
-async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
+function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
   /* v8 ignore start */
   return page.evaluate(() => {
     const sizeData: PageSizeData[] = [];
@@ -312,7 +313,7 @@ async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
   /* v8 ignore stop */
 }
 
-async function loadCmykMap(page: Page): Promise<CmykMap> {
+function loadCmykMap(page: Page): Promise<CmykMap> {
   /* v8 ignore next 3 */
   return page.evaluate(() => window.coreViewer.getCmykMap?.() ?? {});
 }

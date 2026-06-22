@@ -1,9 +1,9 @@
-import './mocks/fs.js';
-import './mocks/tmp.js';
-import './mocks/vivliostyle__jsdom.js';
 import { vol } from 'memfs';
 import { beforeEach, expect, it, vi } from 'vitest';
 
+import './mocks/fs.js';
+import './mocks/tmp.js';
+import './mocks/vivliostyle__jsdom.js';
 import type { VivliostyleConfigSchema } from '../src/config/schema.js';
 import { formatHtml, runCommand, toTree } from './command-util.js';
 
@@ -91,7 +91,7 @@ it('generate webpub from vivliostyle.config.js', async () => {
 
 it('generate webpub from a plain HTML', async () => {
   vol.fromJSON({
-    '/work/input/webbook.html': /* html */ `
+    '/work/input/webbook.html': `
       <!DOCTYPE html>
       <html lang="ja">
       <head>
@@ -119,7 +119,7 @@ it('generate webpub from a plain HTML', async () => {
 
 it('generate webpub from a single-document publication', async () => {
   vol.fromJSON({
-    '/work/input/webbook.html': /* html */ `
+    '/work/input/webbook.html': `
       <html lang="en">
       <head>
         <title>Document with toc</title>
@@ -146,7 +146,7 @@ it('generate webpub from a single-document publication', async () => {
       </body>
       </html>
     `,
-    '/work/input/subdir/index.html': /* html */ `
+    '/work/input/subdir/index.html': `
       <!DOCTYPE html>
       <html lang="ja">
       <head>
@@ -157,7 +157,7 @@ it('generate webpub from a single-document publication', async () => {
       </body>
       </html>
     `,
-    '/work/input/escape check%.html': /* html */ `
+    '/work/input/escape check%.html': `
       <!DOCTYPE html>
       <html lang="ja">
       <head>
@@ -188,7 +188,7 @@ it('generate webpub from a single-document publication', async () => {
 
 it('generate webpub from remote HTML documents with publication manifest', async () => {
   vol.fromJSON({
-    '/remote/dir/index.html': /* html */ `
+    '/remote/dir/index.html': `
       <html lang="en">
       <head>
         <title>Document</title>
@@ -198,7 +198,7 @@ it('generate webpub from remote HTML documents with publication manifest', async
       </body>
       </html>
     `,
-    '/remote/dir/escape check%.html': /* html */ `
+    '/remote/dir/escape check%.html': `
       <!DOCTYPE html>
       <html lang="ja">
       <head>
@@ -238,7 +238,7 @@ it('generate webpub from remote HTML documents with publication manifest', async
 
 it('generate webpub from a remote HTML document', async () => {
   vol.fromJSON({
-    '/remote/foo bar%/escape check%.html': /* html */ `
+    '/remote/foo bar%/escape check%.html': `
       <html lang="en">
       <head>
         <title>Document</title>
@@ -272,7 +272,7 @@ it('generate webpub from a remote HTML document', async () => {
 });
 
 it('generate webpub from a data URI input', async () => {
-  const html = /* html */ `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title></title></head><body>Hi</body></html>`;
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title></title></head><body>Hi</body></html>`;
   await runCommand(
     ['build', `data:text/html;charset=utf-8,${html}`, '-o', 'output'],
     { cwd: '/work' },

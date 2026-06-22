@@ -50,7 +50,9 @@ async function extractPdfContentStream(pdf: Uint8Array): Promise<string[]> {
 function containsCmykOperators(content: string): boolean {
   // CMYK operators: 'k' (non-stroking) and 'K' (stroking)
   // Pattern: four numbers followed by k or K
-  return /\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+[kK]\b/.test(content);
+  return /\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+[kK]\b/v.test(
+    content,
+  );
 }
 
 /**
@@ -59,7 +61,7 @@ function containsCmykOperators(content: string): boolean {
 function containsRgbOperators(content: string): boolean {
   // RGB operators: 'rg' (non-stroking) and 'RG' (stroking)
   // Pattern: three numbers followed by rg or RG
-  return /\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+(?:rg|RG)\b/.test(content);
+  return /\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*\s+(?:rg|RG)\b/v.test(content);
 }
 
 describe('convertCmykColors', () => {
@@ -81,7 +83,9 @@ describe('convertCmykColors', () => {
 
     // Verify source PDF contains RGB operators
     const srcContents = await extractPdfContentStream(srcPdf);
-    const srcHasRgb = srcContents.some(containsRgbOperators);
+    const srcHasRgb = srcContents.some((content) =>
+      containsRgbOperators(content),
+    );
     expect(srcHasRgb).toBe(true);
 
     const destPdf = await convertCmykColors({
@@ -92,7 +96,9 @@ describe('convertCmykColors', () => {
 
     // Verify destination PDF contains CMYK operators
     const destContents = await extractPdfContentStream(destPdf);
-    const destHasCmyk = destContents.some(containsCmykOperators);
+    const destHasCmyk = destContents.some((content) =>
+      containsCmykOperators(content),
+    );
     expect(destHasCmyk).toBe(true);
   });
 
@@ -123,13 +129,16 @@ describe('convertCmykColors', () => {
 
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
-      colorMap: {}, // no colors will be converted
+      // no colors will be converted
+      colorMap: {},
       warnUnmapped: false,
     });
 
     // Verify destination PDF still contains RGB operators
     const destContents = await extractPdfContentStream(destPdf);
-    const destHasRgb = destContents.some(containsRgbOperators);
+    const destHasRgb = destContents.some((content) =>
+      containsRgbOperators(content),
+    );
     expect(destHasRgb).toBe(true);
   });
 });

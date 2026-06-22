@@ -290,7 +290,6 @@ export class Logger {
       color: 'gray',
       stream,
     });
-    return this;
   }
 
   #start(text: string) {

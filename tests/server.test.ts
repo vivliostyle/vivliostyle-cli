@@ -378,6 +378,7 @@ describe('vite-plugin-browser', () => {
     expect(src).toMatch(
       new RegExp(
         `^${server.resolvedUrls.local[0].replace('/', '\\/')}vivliostyle\\/.+adaptive\\.epub\\/OPS\\/content\\.opf$`,
+        'v',
       ),
     );
 

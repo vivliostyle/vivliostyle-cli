@@ -420,12 +420,10 @@ export async function launchPreview({
     operation: async () => {
       const previewPage =
         (await browserContext.pages())[0] ?? (await browserContext.newPage());
+      // This viewport size is important to detect headless environment in Vivliostyle viewer
+      // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
       await previewPage.setViewport(
-        mode === 'build'
-          ? // This viewport size is important to detect headless environment in Vivliostyle viewer
-            // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
-            { width: 800, height: 600 }
-          : null,
+        mode === 'build' ? { width: 800, height: 600 } : null,
       );
       await onPageOpen?.(previewPage);
 

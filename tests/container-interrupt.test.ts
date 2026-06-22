@@ -20,7 +20,7 @@ const mockedExec = vi.hoisted(() =>
       args?: string[],
       options?: ExecFileOptions,
     ) => Promise<{ stdout: string; stderr: string }>
-  >(async () => ({ stdout: '24.0.0', stderr: '' })),
+  >(() => Promise.resolve({ stdout: '24.0.0', stderr: '' })),
 );
 
 vi.mock('tinyexec', () => ({
@@ -29,9 +29,10 @@ vi.mock('tinyexec', () => ({
 
 vi.mock('../src/node-modules.js', () => ({
   importNodeModule: vi.fn<() => Promise<{ default: () => Promise<boolean> }>>(
-    async () => ({
-      default: vi.fn<() => Promise<boolean>>(async () => true),
-    }),
+    () =>
+      Promise.resolve({
+        default: vi.fn<() => Promise<boolean>>(() => Promise.resolve(true)),
+      }),
   ),
 }));
 

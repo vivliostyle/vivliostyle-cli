@@ -9,7 +9,7 @@ import {
 } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 
-const headStartTagRe = /<head[^>]*>/i;
+const headStartTagRe = /<head[^>]*>/iv;
 export const prependToHead = (html: string, content: string) =>
   html.replace(headStartTagRe, (match) => `${match}\n${content}`);
 

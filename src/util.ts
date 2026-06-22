@@ -1,7 +1,6 @@
 import childProcess, { type ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
-import { fileURLToPath } from 'node:url';
 import util from 'node:util';
 
 import { codeFrameColumns } from '@babel/code-frame';
@@ -123,7 +122,7 @@ export function runCleanupHandlers() {
   cleanupPromise = currentCleanupPromise;
   void (async () => {
     try {
-      while (cleanupHandlers.length) {
+      while (cleanupHandlers.length > 0) {
         try {
           await cleanupHandlers.shift()?.();
         } catch (e) {
@@ -197,8 +196,8 @@ ${gray('If you think this is a bug, please report at https://github.com/vivliost
 export function readJSON(path: string) {
   try {
     return JSON.parse(fs.readFileSync(path, 'utf8'));
-  } catch (err) {
-    return undefined;
+  } catch {
+    /* NOOP */
   }
 }
 
@@ -296,7 +295,7 @@ export function pathContains(parentPath: string, childPath: string): boolean {
 }
 
 export function isValidUri(str: string): boolean {
-  return /^(https?|file|data):/i.test(str);
+  return /^(https?|file|data):/iv.test(str);
 }
 
 function cachedFn<T>(fn: () => T): () => T {
@@ -343,7 +342,8 @@ export function getDefaultEpubOpfPath(epubDir: string) {
   const { container } = xmlParser.parse(
     fs.readFileSync(containerXmlPath, 'utf8'),
   );
-  const rootfile = [container.rootfiles.rootfile].flat()[0]; // Only supports a default rendition
+  // Only supports a default rendition
+  const rootfile = [container.rootfiles.rootfile].flat()[0];
   const epubOpfPath = upath.join(epubDir, rootfile['@_full-path']);
   return epubOpfPath;
 }
@@ -463,7 +463,7 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
 }
 
 let cachedLocale: string | undefined;
-export async function getOsLocale(): Promise<string> {
+export function getOsLocale(): string {
   if (import.meta.env?.VITEST) {
     return process.env.TEST_LOCALE || 'en';
   }
@@ -486,7 +486,7 @@ export function toTitleCase<T = unknown>(input: T): T {
     return input;
   }
   return titleCase(
-    input.replace(/[\W_]/g, ' ').replace(/\s+/g, ' ').trim(),
+    input.replaceAll(/[\W_]/gv, ' ').replaceAll(/\s+/gv, ' ').trim(),
   ) as T;
 }
 
@@ -609,12 +609,12 @@ export function whichPm(): PackageManager {
 
   const pmSpec = process.env.npm_config_user_agent.split(' ')[0];
   const separatorPos = pmSpec.lastIndexOf('/');
-  const name = pmSpec.substring(0, separatorPos);
+  const name = pmSpec.slice(0, separatorPos);
 
   return name as PackageManager;
 }
 
-export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
+export const cliRoot = upath.join(import.meta.filename, '../..');
 export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {
     return '0.0.1';

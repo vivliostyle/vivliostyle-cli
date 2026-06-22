@@ -15,6 +15,7 @@ vi.mock('node-stream-zip', async () => {
   const { join: joinPath } = await import('node:path');
 
   return {
+    // oxlint-disable-next-line prefer-event-target -- mocks node-stream-zip's Node.js EventEmitter-based API
     default: class extends EventEmitter {
       constructor() {
         super();

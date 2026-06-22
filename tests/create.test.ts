@@ -21,9 +21,10 @@ const mockedClackModule = vi.hoisted(() => {
   }: {
     name: string;
   }) {
-    // @ts-ignore
+    // @ts-expect-error -- assigning to `this` inside a mock constructor function
     this.prompt = vi
       .fn<() => Promise<unknown>>()
+      // oxlint-disable-next-line require-await -- mock must return a Promise to match the prompt signature
       .mockImplementation(async () => {
         const answers = mockedAnswers();
         if (!(name in answers)) {

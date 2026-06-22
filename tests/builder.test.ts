@@ -75,7 +75,8 @@ it('generate workspace directory', async () => {
 
   const coverHtml = new JSDOM(
     fs.readFileSync(resolveFixture('builder/.vs-workspace/cover.html'), 'utf8'),
-    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+    // Disable JSDOM console
+    { virtualConsole: new jsdom.VirtualConsole() },
   );
   expect(coverHtml.window.document.documentElement.lang).toBe('ja');
   expect(
@@ -281,7 +282,7 @@ it('generate with VFM options', async () => {
     resolveFixture('builder/.vs-workspace/manuscript/soda.html'),
     'utf8',
   );
-  expect(output1).toMatch(/hardLineBreaks option test\s+foo/g);
+  expect(output1).toMatch(/hardLineBreaks option test\s+foo/gv);
 
   await runCommand(['build', '-c', 'vfm.config.js'], {
     cwd: resolveFixture('builder'),
@@ -309,7 +310,7 @@ it('generate with VFM options', async () => {
     resolveFixture('builder/.vs-vfm/manuscript/soda.html'),
     'utf8',
   );
-  expect(output2).toMatch(/hardLineBreaks option test<br>\s*foo/g);
+  expect(output2).toMatch(/hardLineBreaks option test<br>\s*foo/gv);
   const doc1 = new JSDOM(
     fs.readFileSync(
       resolveFixture('builder/.vs-vfm/manuscript/frontmatter.html'),
@@ -395,7 +396,8 @@ it('generate files with multiple cover pages', async () => {
       resolveFixture('builder/.vs-multipleCoverPages/index.html'),
       'utf8',
     ),
-    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+    // Disable JSDOM console
+    { virtualConsole: new jsdom.VirtualConsole() },
   );
   expect(
     tocHtml.window.document.querySelector('style')?.innerHTML,
@@ -411,7 +413,8 @@ it('generate files with multiple cover pages', async () => {
       resolveFixture('builder/.vs-multipleCoverPages/cover.html'),
       'utf8',
     ),
-    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+    // Disable JSDOM console
+    { virtualConsole: new jsdom.VirtualConsole() },
   );
   expect(
     coverHtml.window.document.querySelector(
@@ -424,7 +427,8 @@ it('generate files with multiple cover pages', async () => {
       resolveFixture('builder/.vs-multipleCoverPages/another-cover.html'),
       'utf8',
     ),
-    { virtualConsole: new jsdom.VirtualConsole() }, // Disable JSDOM console
+    // Disable JSDOM console
+    { virtualConsole: new jsdom.VirtualConsole() },
   );
   expect(
     anotherCoverHtml.window.document.querySelector('style')?.innerHTML,
@@ -542,7 +546,8 @@ it('install remote themes', async () => {
       'link[rel="stylesheet"][href="../themes/node_modules/@vivliostyle/theme-base/theme-all.css"]',
     ),
   ).toBeTruthy();
-}, 300000); // Longer timeout to ensure installing remote themes
+  // Longer timeout to ensure installing remote themes
+}, 300000);
 
 it('use multiple themes', async () => {
   await runCommand(['build', '-c', 'multipleTheme.config.js'], {
@@ -578,7 +583,8 @@ it('use multiple themes', async () => {
     'themes/node_modules/@vivliostyle/theme-academic/theme.css',
     'manuscript/sample-theme.css',
   ]);
-}, 300000); // Longer timeout to ensure installing remote themes
+  // Longer timeout to ensure installing remote themes
+}, 300000);
 
 it('fail to install if package does not exist', async () => {
   await expect(

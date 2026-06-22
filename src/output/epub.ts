@@ -78,7 +78,7 @@ const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
   if (hrefUrl.protocol !== 'file:') {
     return target;
   }
-  if (/\.html?$/.test(hrefUrl.pathname)) {
+  if (/\.html?$/v.test(hrefUrl.pathname)) {
     hrefUrl.pathname = changeExtname(hrefUrl.pathname, '.xhtml');
   }
   const pathname = upath.posix.relative(
@@ -186,7 +186,7 @@ export async function exportEpub({
       ...[manifest.readingOrder || []].flat(),
       ...[manifest.resources || []].flat(),
     ],
-    (e) => /\.html?$/.test(e.url),
+    (e) => /\.html?$/v.test(e.url),
   );
 
   const manifestItem = [
@@ -209,7 +209,7 @@ export async function exportEpub({
         href: url,
         mediaType,
       };
-      if (/\.html?$/.test(url)) {
+      if (/\.html?$/v.test(url)) {
         acc[url].href = changeExtname(url, '.xhtml');
         acc[url].mediaType = 'application/xhtml+xml';
       }
@@ -222,7 +222,7 @@ export async function exportEpub({
   );
 
   const htmlFiles = Object.keys(manifestItem).filter((url) =>
-    /\.html?$/.test(url),
+    /\.html?$/v.test(url),
   );
   let tocHtml = htmlFiles.find((f) => f === tocResource?.url);
   const readingOrder = [manifest.readingOrder || entryHtmlRelPath]
@@ -304,6 +304,7 @@ export async function exportEpub({
   const { document: entryDocument } = processResult[tocHtml].dom.window;
   const docLanguages = [manifest.inLanguage]
     .flat()
+    // oxlint-disable-next-line prefer-native-coercion-functions -- The type predicate narrows the result to string[]
     .filter((v): v is string => Boolean(v));
   if (docLanguages.length === 0) {
     docLanguages.push(entryDocument.documentElement.lang || 'en');
@@ -414,7 +415,7 @@ async function transpileHtmlToXhtml({
 function replaceWithNavElement(dom: JSDOM, el: Element) {
   const nav = dom.window.document.createElement('nav');
   while (el.firstChild) {
-    nav.appendChild(el.firstChild);
+    nav.append(el.firstChild);
   }
   for (let i = 0; i < el.attributes.length; i++) {
     nav.attributes.setNamedItem(el.attributes[i].cloneNode() as Attr);
@@ -457,7 +458,7 @@ async function processTocDocument({
       nav.setAttribute('hidden', '');
       const h2 = document.createElement('h2');
       h2.textContent = TOC_TITLE;
-      nav.appendChild(h2);
+      nav.append(h2);
       const ol = document.createElement('ol');
       tocResourceTree = {
         element: nav,
@@ -476,13 +477,13 @@ async function processTocDocument({
         const a = document.createElement('a');
         a.textContent = name;
         a.href = getRelativeHref(content.url, '', target);
-        li.appendChild(a);
-        ol.appendChild(li);
+        li.append(a);
+        ol.append(li);
         tocResourceTree.children.push({ element: li, label: a });
       }
 
-      nav.appendChild(ol);
-      document.body.appendChild(nav);
+      nav.append(ol);
+      document.body.append(nav);
       Logger.debug('Generated toc nav element', nav.outerHTML);
     }
 
@@ -494,7 +495,7 @@ async function processTocDocument({
       nav.setAttribute('hidden', '');
       const h2 = document.createElement('h2');
       h2.textContent = EPUB_LANDMARKS_TITLE;
-      nav.appendChild(h2);
+      nav.append(h2);
       const ol = document.createElement('ol');
       for (const { type, href, text } of landmarks) {
         const li = document.createElement('li');
@@ -502,11 +503,11 @@ async function processTocDocument({
         a.setAttribute('epub:type', type);
         a.setAttribute('href', getRelativeHref(href, '', target));
         a.text = text;
-        li.appendChild(a);
-        ol.appendChild(li);
+        li.append(a);
+        ol.append(li);
       }
-      nav.appendChild(ol);
-      document.body.appendChild(nav);
+      nav.append(ol);
+      document.body.append(nav);
       Logger.debug('Generated landmark nav element', nav.outerHTML);
     }
   }
@@ -521,12 +522,13 @@ async function processTocDocument({
   if (publicationLinkEl) {
     const href = publicationLinkEl.getAttribute('href')!.trim();
     if (href.startsWith('#')) {
+      // oxlint-disable-next-line prefer-query-selector -- Match by raw id without CSS selector escaping
       const scriptEl = document.getElementById(href.slice(1));
       if (scriptEl?.getAttribute('type') === 'application/ld+json') {
-        scriptEl.parentNode?.removeChild(scriptEl);
+        scriptEl.remove();
       }
     }
-    publicationLinkEl.parentNode?.removeChild(publicationLinkEl);
+    publicationLinkEl.remove();
   }
 
   const absPath = upath.join(contextDir, target);
@@ -578,7 +580,10 @@ function buildEpubPackageDocument({
   const normalizeDate = (value: string | number | undefined) =>
     value && `${new Date(value).toISOString().split('.')[0]}Z`;
 
-  const transformToGenericTextNode = <T = {}>(value: unknown, attributes?: T) =>
+  const transformToGenericTextNode = <T = Record<string, unknown>>(
+    value: unknown,
+    attributes?: T,
+  ) =>
     [value]
       .flat()
       .filter(Boolean)
@@ -695,7 +700,7 @@ function buildEpubPackageDocument({
   });
 }
 
-async function compressEpub({
+function compressEpub({
   target,
   sourceDir,
 }: {
@@ -705,7 +710,8 @@ async function compressEpub({
   Logger.debug(`Compressing EPUB: ${target}`);
   const output = fs.createWriteStream(target);
   const archive = archiver('zip', {
-    zlib: { level: 9 }, // Compression level
+    // Compression level
+    zlib: { level: 9 },
   });
   return new Promise((resolve, reject) => {
     output.on('close', () => {

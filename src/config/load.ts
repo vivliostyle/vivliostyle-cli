@@ -85,13 +85,12 @@ export async function loadVivliostyleConfig({
         config: absPath,
       },
     };
-  } else {
-    const errorString = prettifySchemaError(jsonRaw, result.issues);
-    throw new DetailError(
-      `Validation of vivliostyle config failed. Please check the schema: ${config}`,
-      errorString,
-    );
   }
+  const errorString = prettifySchemaError(jsonRaw, result.issues);
+  throw new DetailError(
+    `Validation of vivliostyle config failed. Please check the schema: ${config}`,
+    errorString,
+  );
 }
 
 export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {

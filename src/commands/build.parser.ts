@@ -18,10 +18,10 @@ function setupBuildParserProgram(): Command {
     value: string,
     previous?: string[],
   ): string[] => {
-    if (targets.length === 0 || 'path' in targets[targets.length - 1]) {
+    if (targets.length === 0 || 'path' in targets.at(-1)!) {
       targets.push({ path: value });
     } else {
-      targets[targets.length - 1].path = value;
+      targets.at(-1)!.path = value;
     }
     return [...(previous || []), value];
   };
@@ -29,10 +29,10 @@ function setupBuildParserProgram(): Command {
     value: string,
     previous?: string[],
   ): string[] => {
-    if (targets.length === 0 || 'format' in targets[targets.length - 1]) {
+    if (targets.length === 0 || 'format' in targets.at(-1)!) {
       targets.push({ format: value });
     } else {
-      targets[targets.length - 1].format = value;
+      targets.at(-1)!.format = value;
     }
     return [...(previous || []), value];
   };

@@ -65,7 +65,9 @@ function setupPdfBuild(
 
   const browser = {
     protocol: 'cdp',
-    version: vi.fn<() => Promise<string>>(async () => 'Chrome/142.0.0.0'),
+    version: vi.fn<() => Promise<string>>(() =>
+      Promise.resolve('Chrome/142.0.0.0'),
+    ),
     close: vi.fn<() => Promise<void>>(async () => {}),
   } as unknown as Browser & { protocol: 'cdp' };
 
@@ -147,7 +149,7 @@ describe('buildPDF cancellation', () => {
       'Protocol error (Page.printToPDF): Printing failed',
     );
     setupPdfBuild(
-      vi.fn(async () => {
+      vi.fn(() => {
         controller.abort(reason);
         throw protocolError;
       }),
@@ -167,7 +169,7 @@ describe('buildPDF cancellation', () => {
     const { closeBrowser, page } = setupPdfBuild(vi.fn());
     vi.mocked(page.evaluate)
       .mockReset()
-      .mockImplementationOnce(async () => {
+      .mockImplementationOnce(() => {
         controller.abort(reason);
         throw protocolError;
       });
@@ -183,7 +185,7 @@ describe('buildPDF cancellation', () => {
       'Protocol error (Page.printToPDF): Printing failed',
     );
     setupPdfBuild(
-      vi.fn(async () => {
+      vi.fn(() => {
         throw protocolError;
       }),
     );
@@ -200,7 +202,7 @@ describe('buildPDF cancellation', () => {
       setPageBoxes: vi.fn<() => Promise<void>>(async () => {}),
       save,
     });
-    setupPdfBuild(vi.fn(async () => new Uint8Array([1])));
+    setupPdfBuild(vi.fn(() => Promise.resolve(new Uint8Array([1]))));
 
     await expect(
       buildPDF({

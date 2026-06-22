@@ -40,10 +40,10 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
   const extns = ['', 'html', 'htm'];
   const toAssume = (uri: string) => {
     let i = 0,
-      x,
-      len = uri.length - 1;
-    if (uri.charCodeAt(len) === 47) {
-      uri = uri.substring(0, len);
+      len = uri.length - 1,
+      x;
+    if (uri.codePointAt(len) === 47) {
+      uri = uri.slice(0, len);
     }
     const arr = [],
       tmp = `${uri}/index`;
@@ -58,14 +58,15 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
     return arr;
   };
   const cache = entries.reduce<Record<string, ParsedEntry>>((acc, e) => {
-    acc[`/${upath.relative(cwd, e.target).normalize().replace(/\\+/g, '/')}`] =
-      e;
+    acc[
+      `/${upath.relative(cwd, e.target).normalize().replaceAll(/\\+/gv, '/')}`
+    ] = e;
     return acc;
   }, {});
   return (uri: string) => {
-    let i = 0,
+    let arr = toAssume(uri),
       data,
-      arr = toAssume(uri);
+      i = 0;
     for (; i < arr.length; i++) {
       if ((data = cache[arr[i]])) {
         return [data, arr[i]] as const;
@@ -184,6 +185,7 @@ export function vsDevServerPlugin({
     );
     const urlMatchRe = new RegExp(
       `^${escapeRe(config.base)}(/[^?#]*)([?#].*)?$`,
+      'v',
     );
     const serveWorkspace = sirv(config.workspaceDir, {
       dev: true,
@@ -280,14 +282,13 @@ export function vsDevServerPlugin({
       } catch (error: any) {
         server?.config.logger.error(getFormattedError(error));
         transformCache.delete(entry.target);
-        return;
       }
     })();
     transformCache.set(entry.target, promise);
     return await promise;
   }
 
-  async function transformAll(host: string | undefined) {
+  async function transformAll(host?: string) {
     const tocEntries: ParsedEntry[] = [];
     for (const entry of config.entries) {
       if (entry.rel === 'contents') {
@@ -302,7 +303,7 @@ export function vsDevServerPlugin({
     }
   }
 
-  async function invalidate(entry: ParsedEntry) {
+  function invalidate(entry: ParsedEntry) {
     const cwd = pathToFileURL(config.workspaceDir);
     const target = pathToFileURL(entry.target);
     if (target.href.indexOf(cwd.href) !== 0) {
@@ -352,13 +353,12 @@ export function vsDevServerPlugin({
       if (req.headers['if-none-match'] === cached.etag) {
         res.statusCode = 304;
         return res.end();
-      } else {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/html;charset=utf-8');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Etag', cached.etag);
-        return res.end(cached.content);
       }
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html;charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Etag', cached.etag);
+      return res.end(cached.content);
     }
 
     const { host } = req.headers;
@@ -377,51 +377,56 @@ export function vsDevServerPlugin({
     return res.end(result.content);
   } satisfies NextHandleFunction;
 
-  const serveWorkspaceMiddleware =
-    async function vivliostyleServeWorkspaceMiddleware(req, res, next) {
-      if (!config || !program) {
-        return next();
+  const serveWorkspaceMiddleware = function vivliostyleServeWorkspaceMiddleware(
+    req,
+    res,
+    next,
+  ) {
+    if (!config || !program) {
+      return next();
+    }
+    const {
+      urlMatchRe,
+      serveWorkspace,
+      serveWorkspaceMatcher,
+      serveAssets,
+      serveAssetsMatcher,
+    } = program;
+    const [_, pathname] = decodeURI(req.url!).match(urlMatchRe) ?? [];
+    if (!pathname) {
+      return next();
+    }
+
+    const handleWorkspace = (proceed: () => void) => {
+      // oxlint-disable-next-line unicorn/prefer-regexp-test -- `match` is GlobMatcher's method, not String#match
+      if (!serveWorkspaceMatcher.match(pathname.slice(1))) {
+        return proceed();
       }
-      const {
-        urlMatchRe,
-        serveWorkspace,
-        serveWorkspaceMatcher,
-        serveAssets,
-        serveAssetsMatcher,
-      } = program;
-      const [_, pathname] = decodeURI(req.url!).match(urlMatchRe) ?? [];
-      if (!pathname) {
-        return next();
+      Logger.debug('dev-server > serveWorkspace %s', pathname);
+      const url = req.url!;
+      req.url = req.url!.slice(config.base.length);
+      return serveWorkspace(req, res, () => {
+        req.url = url;
+        proceed();
+      });
+    };
+
+    const handleAssets = (proceed: () => void) => {
+      // oxlint-disable-next-line unicorn/prefer-regexp-test -- `match` is GlobMatcher's method, not String#match
+      if (!serveAssetsMatcher.match(pathname.slice(1))) {
+        return proceed();
       }
+      Logger.debug('dev-server > serveAssets %s', pathname);
+      const url = req.url!;
+      req.url = url!.slice(config.base.length);
+      return serveAssets(req, res, () => {
+        req.url = url;
+        proceed();
+      });
+    };
 
-      const handleWorkspace = (proceed: () => void) => {
-        if (!serveWorkspaceMatcher.match(pathname.slice(1))) {
-          return proceed();
-        }
-        Logger.debug('dev-server > serveWorkspace %s', pathname);
-        const url = req.url!;
-        req.url = req.url!.slice(config.base.length);
-        return serveWorkspace(req, res, () => {
-          req.url = url;
-          proceed();
-        });
-      };
-
-      const handleAssets = (proceed: () => void) => {
-        if (!serveAssetsMatcher.match(pathname.slice(1))) {
-          return proceed();
-        }
-        Logger.debug('dev-server > serveAssets %s', pathname);
-        const url = req.url!;
-        req.url = url!.slice(config.base.length);
-        return serveAssets(req, res, () => {
-          req.url = url;
-          proceed();
-        });
-      };
-
-      handleWorkspace(() => handleAssets(next));
-    } satisfies NextHandleFunction;
+    handleWorkspace(() => handleAssets(next));
+  } satisfies NextHandleFunction;
 
   return {
     name: 'vivliostyle:dev-server',
@@ -475,7 +480,7 @@ export function vsDevServerPlugin({
     },
     async buildStart() {
       await reload(true);
-      await transformAll(undefined);
+      await transformAll();
     },
     async handleHotUpdate(ctx) {
       const entry = config?.entries.find(

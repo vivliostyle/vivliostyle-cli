@@ -1,7 +1,6 @@
 // Mocked modules: don't reorder this list
 import './mocks/fs.js';
 import './mocks/tmp.js';
-//
 import './mocks/archiver.js';
 import AdmZip from 'adm-zip';
 import { vol } from 'memfs';
@@ -60,7 +59,7 @@ it('generate EPUB from single HTML with pub manifest', async () => {
   };
   vol.fromJSON({
     '/work/input/publication.json': JSON.stringify(manifest),
-    '/work/input/index.html': /* html */ `
+    '/work/input/index.html': `
       <html lang="ja-JP">
       <head>
         <title>Document</title>
@@ -113,8 +112,8 @@ it('generate EPUB from single HTML with pub manifest', async () => {
   );
   expect(
     file['/tmp/1/EPUB/content.opf']
-      ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
-      .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
+      ?.replaceAll(/<dc:identifier id="bookid">.+<\/dc:identifier>/gv, '')
+      .replaceAll(/<meta property="dcterms:modified">.+<\/meta>/gv, ''),
   ).toMatchSnapshot('content.opf');
   const entry = file['/tmp/1/EPUB/index.xhtml'];
   assert(entry);
@@ -134,7 +133,7 @@ it('generate EPUB from series of HTML files', async () => {
   };
   vol.fromJSON({
     '/work/input/publication.json': JSON.stringify(manifest),
-    '/work/input/src/index.html': /* html */ `
+    '/work/input/src/index.html': `
       <html lang="en">
       <head>
         <title>My book</title>
@@ -147,7 +146,7 @@ it('generate EPUB from series of HTML files', async () => {
       </body>
       </html>
     `,
-    '/work/input/src/a/index.html': /* html */ `
+    '/work/input/src/a/index.html': `
       <html lang="en">
       <head>
         <title>yuno</title>
@@ -156,7 +155,7 @@ it('generate EPUB from series of HTML files', async () => {
       </body>
       </html>
     `,
-    '/work/input/src/b/c/d.html': /* html */ `
+    '/work/input/src/b/c/d.html': `
       <html lang="en">
       <head>
         <title>yunocchi</title>
@@ -164,7 +163,7 @@ it('generate EPUB from series of HTML files', async () => {
       <body></body>
       </html>
     `,
-    '/work/input/src/escape check%.html': /* html */ `
+    '/work/input/src/escape check%.html': `
       <html lang="en">
       <head>
         <title>日本語</title>
@@ -185,8 +184,8 @@ it('generate EPUB from series of HTML files', async () => {
   const file = vol.toJSON();
   expect(
     file['/tmp/1/EPUB/content.opf']
-      ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
-      .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
+      ?.replaceAll(/<dc:identifier id="bookid">.+<\/dc:identifier>/gv, '')
+      .replaceAll(/<meta property="dcterms:modified">.+<\/meta>/gv, ''),
   ).toMatchSnapshot('content.opf');
   const first = file['/tmp/1/EPUB/src/index.xhtml'];
   assert(first);
@@ -217,8 +216,8 @@ it('generate EPUB from single Markdown input', async () => {
   const file = vol.toJSON();
   expect(
     file['/tmp/2/EPUB/content.opf']
-      ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
-      .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
+      ?.replaceAll(/<dc:identifier id="bookid">.+<\/dc:identifier>/gv, '')
+      .replaceAll(/<meta property="dcterms:modified">.+<\/meta>/gv, ''),
   ).toMatchSnapshot('content.opf');
   expect(file['/tmp/2/EPUB/foo bar%.xhtml']).toMatchSnapshot('foo bar%.xhtml');
 });
@@ -266,8 +265,8 @@ it('generate EPUB from vivliostyle.config.js', async () => {
   const file = vol.toJSON();
   expect(
     file['/tmp/2/EPUB/content.opf']
-      ?.replace(/<dc:identifier id="bookid">.+<\/dc:identifier>/g, '')
-      .replace(/<meta property="dcterms:modified">.+<\/meta>/g, ''),
+      ?.replaceAll(/<dc:identifier id="bookid">.+<\/dc:identifier>/gv, '')
+      .replaceAll(/<meta property="dcterms:modified">.+<\/meta>/gv, ''),
   ).toMatchSnapshot('content.opf');
   const coverDocument = file['/tmp/2/EPUB/gen content%/cover document%.xhtml'];
   assert(coverDocument);
@@ -281,7 +280,7 @@ it('generate EPUB from vivliostyle.config.js', async () => {
 
 it('Do not insert nav element to HTML that have nav[epub:type]', async () => {
   vol.fromJSON({
-    '/work/input/index.html': /* html */ `
+    '/work/input/index.html': `
       <html lang="en">
       <head>
         <title>Document</title>
@@ -298,7 +297,7 @@ it('Do not insert nav element to HTML that have nav[epub:type]', async () => {
 
   const file = vol.toJSON();
   const xhtml = file['/tmp/2/EPUB/index.xhtml'];
-  expect(xhtml).toMatch(/epub:type="lot"/);
-  expect(xhtml).not.toMatch(/epub:type="toc"/);
-  expect(xhtml).not.toMatch(/epub:type="landmarks"/);
+  expect(xhtml).toMatch(/epub:type="lot"/v);
+  expect(xhtml).not.toMatch(/epub:type="toc"/v);
+  expect(xhtml).not.toMatch(/epub:type="landmarks"/v);
 });

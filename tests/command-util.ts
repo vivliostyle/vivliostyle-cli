@@ -1,5 +1,4 @@
 import assert from 'node:assert';
-import { fileURLToPath } from 'node:url';
 
 import { toTreeSync } from 'memfs/lib/print/index.js';
 import { format } from 'oxfmt';
@@ -25,7 +24,7 @@ import {
   VivliostyleInlineConfig,
 } from './../src/config/schema.js';
 
-export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
+export const rootPath = upath.join(import.meta.filename, '../..');
 
 export const formatHtml = async (content: string): Promise<string> => {
   const { code } = await format('snippet.html', content, {
@@ -98,6 +97,7 @@ export const createServerMiddleware = async ({
   return server.middlewares;
 };
 
+// oxlint-disable-next-line require-await -- callers use `await expect(...).rejects`, so synchronous throws must surface as a rejected Promise
 export const getTaskConfig = async (
   args: string[],
   cwd: string,
@@ -137,13 +137,13 @@ export const maskConfig = (obj: any) => {
       // These are function references that cannot be meaningfully compared in snapshots
       delete obj[k];
     } else if (typeof value === 'string') {
-      const normalized = value.match(/^(https?|file):\/{2}/)
+      const normalized = /^(https?|file):\/{2}/v.test(value)
         ? value
         : upath.toUnix(value);
       obj[k] = normalized
         .replace(rootPath, '__WORKSPACE__')
-        .replace(/\.vs-\d+\./g, '__TEMPORARY_FILE_PREFIX__')
-        .replace(/^(https?|file):\/+/, '$1://');
+        .replaceAll(/\.vs-\d+\./gv, '__TEMPORARY_FILE_PREFIX__')
+        .replace(/^(https?|file):\/+/v, '$1://');
     }
   });
 };
@@ -154,11 +154,11 @@ export const resolveFixture = (p?: string) =>
 export function assertSingleItem<T = unknown>(
   value: T | T[],
 ): asserts value is T {
-  return assert(!Array.isArray(value));
+  return assert.ok(!Array.isArray(value));
 }
 
 export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
-  return assert(Array.isArray(value));
+  return assert.ok(Array.isArray(value));
 }
 
 /**

@@ -101,7 +101,7 @@ export async function listVivliostyleThemes({
   ).then((response) => response.json());
 }
 
-export async function fetchPackageMetadata({
+export function fetchPackageMetadata({
   fetch,
   packageName,
   version,

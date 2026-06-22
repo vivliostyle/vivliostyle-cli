@@ -18,7 +18,7 @@ function insertDocs(
   return input.replace(
     new RegExp(
       `<!-- START ${docsName}([\\w\\W]+?)<!-- END ${docsName}.*\\n`,
-      'm',
+      'mv',
     ),
     () =>
       `<!-- START ${docsName} -->\n${insertedText}\n<!-- END ${docsName} -->\n`,
@@ -130,7 +130,7 @@ async function buildConfigDocs(): Promise<string> {
       if (
         schema.type === 'intersect' &&
         schema.options.every((option) =>
-          /^{.+}$/g.test(getSchema(option)[definition] ?? ''),
+          /^\{.+\}$/gv.test(getSchema(option)[definition] ?? ''),
         )
       ) {
         // Merge plain object intersections, recursing through nested
@@ -242,8 +242,8 @@ async function buildConfigDocs(): Promise<string> {
               : value;
           const propSchema = getSchema(value);
           const typeString = propSchema[definition]
-            ? propSchema[definition].replace(
-                new RegExp(`(${[...namedDefinitionSet].join('|')})`, 'g'),
+            ? propSchema[definition].replaceAll(
+                new RegExp(`(${[...namedDefinitionSet].join('|')})`, 'gv'),
                 (name) => `[${name}](#${slug(name)})`,
               )
             : unwrapped.expects || 'unknown';

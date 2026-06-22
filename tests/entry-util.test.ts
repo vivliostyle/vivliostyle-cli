@@ -36,6 +36,7 @@ describe('runCliCommand', () => {
   });
 
   it('suppresses the CLI interrupt reason after a termination signal', async () => {
+    // oxlint-disable-next-line require-await -- command callback must return a Promise for runCliCommand
     await runCliCommand(async (signal) => {
       terminationHook?.(130);
       signal.throwIfAborted();
@@ -49,6 +50,7 @@ describe('runCliCommand', () => {
   it('reports regular command errors', async () => {
     const err = new Error('boom');
 
+    // oxlint-disable-next-line require-await -- command callback must return a Promise for runCliCommand
     await runCliCommand(async () => {
       throw err;
     });
@@ -58,6 +60,7 @@ describe('runCliCommand', () => {
   });
 
   it('treats prompt cancellation as a non-error command exit', async () => {
+    // oxlint-disable-next-line require-await -- command callback must return a Promise for runCliCommand
     await runCliCommand(async () => {
       throw new PromptCancelError();
     });
@@ -70,6 +73,7 @@ describe('runCliCommand', () => {
 
 describe('isDirectExecution', () => {
   const originalEntryPath = process.argv[1];
+  const symlinkType = process.platform === 'win32' ? 'junction' : 'dir';
   let temporaryDirectory: string | undefined;
 
   beforeEach(() => {
@@ -93,11 +97,7 @@ describe('isDirectExecution', () => {
     const linkedEntryPath = path.join(linkedDirectory, 'cli.js');
     fs.mkdirSync(realDirectory);
     fs.writeFileSync(realEntryPath, '');
-    fs.symlinkSync(
-      realDirectory,
-      linkedDirectory,
-      process.platform === 'win32' ? 'junction' : 'dir',
-    );
+    fs.symlinkSync(realDirectory, linkedDirectory, symlinkType);
     process.argv[1] = linkedEntryPath;
 
     expect(isDirectExecution(pathToFileURL(realEntryPath).href)).toBe(true);

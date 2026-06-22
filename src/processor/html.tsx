@@ -92,15 +92,15 @@ export class ResourceLoader extends BaseResourceLoader {
   }) {
     const rootHref = rootUrl.startsWith('data:')
       ? ResourceLoader.dataUrlOrigin
-      : /^https?:/i.test(rootUrl)
+      : /^https?:/iv.test(rootUrl)
         ? new URL('/', rootUrl).href
         : new URL('.', rootUrl).href;
 
     const normalizeToLocalPath = (urlString: string, mimeType?: string) => {
       const url = new URL(urlString);
       url.hash = '';
-      if (mimeType === 'text/html' && !/\.html?$/.test(url.pathname)) {
-        url.pathname = `${url.pathname.replace(/\/$/, '')}/index.html`;
+      if (mimeType === 'text/html' && !/\.html?$/v.test(url.pathname)) {
+        url.pathname = `${url.pathname.replace(/\/$/v, '')}/index.html`;
       }
       const relTarget = upath.relative(rootHref, url.href);
       return decodeURI(relTarget);
@@ -108,13 +108,14 @@ export class ResourceLoader extends BaseResourceLoader {
 
     const fetchedResources: { url: string; encodingFormat?: string }[] = [];
     await Promise.allSettled(
+      // oxlint-disable-next-line require-await -- Each callback must return a Promise for Promise.allSettled
       [...fetcherMap.entries()].flatMap(async ([url, fetcher]) => {
         if (!url.startsWith(rootHref)) {
           return [];
         }
         return (
           fetcher
-            .then(async (buffer) => {
+            .then((buffer) => {
               let encodingFormat: string | undefined;
               try {
                 const contentType = fetcher.response?.headers['content-type'];
@@ -176,7 +177,7 @@ export async function getJsdomFromUrlOrFile({
     const data = decodeURIComponent(body);
     const buffer = Buffer.from(
       data,
-      /;base64$/i.test(head) ? 'base64' : 'utf8',
+      /;base64$/iv.test(head) ? 'base64' : 'utf8',
     );
     const dummyUrl = `${ResourceLoader.dataUrlOrigin}index.html`;
     if (resourceLoader) {
@@ -231,11 +232,9 @@ export async function getStructuredSectionFromHtml(
     })
     .toSorted((a, b) => {
       const position = a.compareDocumentPosition(b);
-      return position & 2 /* DOCUMENT_POSITION_PRECEDING */
-        ? 1
-        : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
-          ? -1
-          : 0;
+      // 2: DOCUMENT_POSITION_PRECEDING
+      // 4: DOCUMENT_POSITION_FOLLOWING
+      return position & 2 ? 1 : position & 4 ? -1 : 0;
     });
 
   function traverse(headers: Element[]): StructuredDocumentSection[] {
@@ -251,7 +250,7 @@ export async function getStructuredSectionFromHtml(
     return [
       {
         headingHtml: htmlPurify.sanitize(head.innerHTML),
-        headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
+        headingText: head.textContent?.trim().replaceAll(/\s+/gv, ' ') || '',
         level,
         ...(href && id && { href: `${href}#${encodeURIComponent(id)}` }),
         ...(id && { id }),
@@ -273,10 +272,10 @@ const getTocHtmlStyle = ({
   if (!pageBreakBefore && typeof pageCounterReset !== 'number') {
     return null;
   }
-  return /* css */ `
+  return `
 ${
   pageBreakBefore
-    ? /* css */ `:root {
+    ? `:root {
   break-before: ${pageBreakBefore};
 }`
     : ''
@@ -284,7 +283,7 @@ ${
 ${
   // Note: `--vs-document-first-page-counter-reset` is reserved variable name in Vivliostyle base themes
   typeof pageCounterReset === 'number'
-    ? /* css */ `@page :nth(1) {
+    ? `@page :nth(1) {
   --vs-document-first-page-counter-reset: page ${Math.floor(pageCounterReset - 1)};
   counter-reset: var(--vs-document-first-page-counter-reset);
 }`
@@ -405,7 +404,8 @@ export async function generateTocListSection({
         title: entry.title || upath.basename(entry.target, '.html'),
         href: encodeURI(upath.relative(distDir, entry.target)),
         sections,
-        children: [], // TODO
+        // TODO
+        children: [],
       };
     }),
   );
@@ -464,7 +464,7 @@ export async function processTocHtml(
     l.setAttribute('rel', 'publication');
     l.setAttribute('type', 'application/ld+json');
     l.setAttribute('href', encodeURI(upath.relative(distDir, manifestPath)));
-    document.head.appendChild(l);
+    document.head.append(l);
   }
 
   const style = document.querySelector('style[data-vv-style]');
@@ -481,7 +481,7 @@ export async function processTocHtml(
   if (nav && !nav.hasChildNodes()) {
     const h2 = document.createElement('h2');
     h2.textContent = tocTitle;
-    nav.appendChild(h2);
+    nav.append(h2);
     nav.innerHTML += await generateTocListSection({
       entries,
       distDir,
@@ -496,7 +496,7 @@ const getCoverHtmlStyle = ({
   pageBreakBefore,
 }: {
   pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
-}) => /* css */ `
+}) => `
 ${
   pageBreakBefore
     ? `:root {
@@ -542,6 +542,7 @@ export function generateDefaultCoverHtml({
   return toHtml(toc);
 }
 
+// oxlint-disable-next-line require-await -- Keep the Promise return type for the await-based call sites
 export async function processCoverHtml(
   dom: JSDOM,
   {
@@ -575,6 +576,7 @@ export async function processCoverHtml(
   return dom;
 }
 
+// oxlint-disable-next-line require-await -- Keep the Promise return type for the await-based call sites
 export async function processManuscriptHtml(
   dom: JSDOM,
   {
@@ -593,7 +595,7 @@ export async function processManuscriptHtml(
   if (title) {
     if (!document.querySelector('title')) {
       const t = document.createElement('title');
-      document.head.appendChild(t);
+      document.head.append(t);
     }
     document.title = title;
   }
@@ -602,7 +604,7 @@ export async function processManuscriptHtml(
     l.setAttribute('rel', 'stylesheet');
     l.setAttribute('type', 'text/css');
     l.setAttribute('href', encodeURI(s));
-    document.head.appendChild(l);
+    document.head.append(l);
   }
   if (language) {
     if (contentType === 'application/xhtml+xml') {
@@ -610,10 +612,8 @@ export async function processManuscriptHtml(
         document.documentElement.setAttribute('lang', language);
         document.documentElement.setAttribute('xml:lang', language);
       }
-    } else {
-      if (!document.documentElement.getAttribute('lang')) {
-        document.documentElement.setAttribute('lang', language);
-      }
+    } else if (!document.documentElement.getAttribute('lang')) {
+      document.documentElement.setAttribute('lang', language);
     }
   }
   return dom;
@@ -638,6 +638,7 @@ export async function fetchLinkedPublicationManifest({
   let manifest: PublicationManifest;
   let manifestUrl = baseUrl;
   if (href.startsWith('#')) {
+    // oxlint-disable-next-line prefer-query-selector -- Match by raw id without CSS selector escaping
     const scriptEl = document.getElementById(href.slice(1));
     if (scriptEl?.getAttribute('type') !== 'application/ld+json') {
       return null;

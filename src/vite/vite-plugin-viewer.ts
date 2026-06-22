@@ -13,7 +13,7 @@ import { prependToHead } from './plugin-util.js';
 
 const viewerClientId = '@vivliostyle:viewer:client';
 const viewerClientRequestPath = `/${viewerClientId}`;
-const viewerClientContent = /* js */ `
+const viewerClientContent = `
 if (import.meta.hot) {
   import.meta.hot.on('vite:beforeFullReload', (e) => {
     location.reload();
@@ -28,11 +28,7 @@ export function vsViewerPlugin(_: {
   const serve = sirv(serveRootDir, { dev: false, etag: true });
   let cachedIndexHtml: string;
 
-  const middleware = async function vivliostyleViewerMiddleware(
-    req,
-    res,
-    next,
-  ) {
+  const middleware = function vivliostyleViewerMiddleware(req, res, next) {
     if (req.url === '/' || req.url === '/index.html') {
       cachedIndexHtml ??= prependToHead(
         fs.readFileSync(upath.join(serveRootDir, 'index.html'), 'utf-8'),
@@ -42,9 +38,8 @@ export function vsViewerPlugin(_: {
       res.setHeader('Content-Type', 'text/html;charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache');
       return res.end(cachedIndexHtml);
-    } else {
-      return serve(req, res, next);
     }
+    return serve(req, res, next);
   } satisfies NextHandleFunction;
 
   return {

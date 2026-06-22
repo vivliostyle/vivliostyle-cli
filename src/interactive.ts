@@ -208,9 +208,7 @@ function textPrompt(opts: TextOptions) {
       const placeholder = opts.placeholder
         ? inverse(opts.placeholder[0]) + dim(opts.placeholder.slice(1))
         : inverse(hidden('_'));
-      const userInput = !this.userInput
-        ? placeholder
-        : this.userInputWithCursor;
+      const userInput = this.userInput ? this.userInputWithCursor : placeholder;
       const value = this.value ?? '';
 
       switch (this.state) {
@@ -244,7 +242,9 @@ function selectPrompt<Value>(opts: SelectOptions<Value>, multiple = false) {
       const values = [this.value].flat() as Value[];
       const selected = this.options.filter((o) => values.includes(o.value));
       const label =
-        selected.length > 0 ? selected.map(labelToString).join(', ') : 'none';
+        selected.length > 0
+          ? selected.map((o) => labelToString(o)).join(', ')
+          : 'none';
 
       switch (this.state) {
         case 'submit': {
@@ -306,7 +306,9 @@ function autocompletePrompt<Value>(
         this.selectedValues.includes(o.value),
       );
       const label =
-        selected.length > 0 ? selected.map(labelToString).join(', ') : 'none';
+        selected.length > 0
+          ? selected.map((o) => labelToString(o)).join(', ')
+          : 'none';
 
       switch (this.state) {
         case 'submit': {
@@ -328,11 +330,11 @@ function autocompletePrompt<Value>(
             searchText = ` ${this.userInputWithCursor}`;
           }
           const matches =
-            this.filteredOptions.length !== this.options.length
-              ? dim(
+            this.filteredOptions.length === this.options.length
+              ? ''
+              : dim(
                   ` (${this.filteredOptions.length} match${this.filteredOptions.length === 1 ? '' : 'es'})`,
-                )
-              : '';
+                );
           const headings = [
             blueBright('║'),
             `${blueBright(`${symbol}─`)} ${opts.message}`,
@@ -423,9 +425,9 @@ export class InteractiveLogger {
         if (!clearMessage) {
           return r;
         }
-        return new Promise<T>((resolve) =>
-          setTimeout(() => resolve(r), deferredTimeMs),
-        );
+        return new Promise<T>((resolve) => {
+          setTimeout(() => resolve(r), deferredTimeMs);
+        });
       })
       .catch(async (e) => {
         await promise;

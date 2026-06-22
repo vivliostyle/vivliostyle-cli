@@ -8,9 +8,11 @@ const mockedRegisterCleanupHandler = vi.hoisted(() =>
 );
 
 vi.mock('../src/node-modules.js', () => ({
-  importNodeModule: vi.fn<() => Promise<unknown>>(async () => ({
-    launch: mockedLaunch,
-  })),
+  importNodeModule: vi.fn<() => Promise<unknown>>(() =>
+    Promise.resolve({
+      launch: mockedLaunch,
+    }),
+  ),
 }));
 
 vi.mock('../src/util.js', async (importOriginal) => {
@@ -38,8 +40,8 @@ describe('launchPreview', () => {
     mockedLaunch.mockResolvedValue({
       browserContexts: () => [
         {
-          pages: async () => [],
-          newPage: async () => ({
+          pages: () => [],
+          newPage: () => ({
             setViewport: vi.fn<() => void>(),
             on: vi.fn<() => void>(),
             authenticate: vi.fn<() => void>(),
@@ -86,8 +88,8 @@ describe('launchPreview', () => {
     mockedLaunch.mockResolvedValue({
       browserContexts: () => [
         {
-          pages: async () => [],
-          newPage: async () => ({
+          pages: () => [],
+          newPage: () => ({
             setViewport: vi.fn<() => void>(),
             on: vi.fn<() => void>(),
             authenticate: vi.fn<() => void>(),

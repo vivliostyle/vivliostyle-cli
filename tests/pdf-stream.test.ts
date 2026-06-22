@@ -505,7 +505,8 @@ describe('convertStreamColors', () => {
       // The binary data should pass through unchanged
       expect(result).toContain('ID');
       expect(result).toContain('EI');
-      expect(result).not.toContain('k'); // Should NOT convert the fake rg in binary
+      // Should NOT convert the fake rg in binary
+      expect(result).not.toContain('k');
     });
 
     it('handles inline image followed by real color operator', () => {

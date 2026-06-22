@@ -45,7 +45,7 @@ describe('vsBrowserPlugin cancellation', () => {
     const page = {
       on: vi.fn<() => void>(),
       off: vi.fn<() => void>(),
-      bringToFront: vi.fn<() => Promise<void>>(async () => {
+      bringToFront: vi.fn<() => Promise<void>>(() => {
         controller.abort(reason);
         throw protocolError;
       }),
@@ -63,16 +63,14 @@ describe('vsBrowserPlugin cancellation', () => {
       } as ParsedVivliostyleInlineConfig,
     });
     const server = {
+      // oxlint-disable-next-line require-await -- mock must return a Promise to match listen's signature
       listen: vi.fn<() => Promise<unknown>>(async () => server),
       close: vi.fn<() => Promise<void>>(async () => {}),
       config: {},
     } as unknown as ViteDevServer;
     const configureServer = plugin.configureServer;
     expect(typeof configureServer).toBe('function');
-    if (typeof configureServer !== 'function') {
-      return;
-    }
-    configureServer(server);
+    (configureServer as (server: ViteDevServer) => void)(server);
 
     await expect(server.listen()).rejects.toBe(reason);
     expect(mockedLaunchPreview).toHaveBeenCalledWith(

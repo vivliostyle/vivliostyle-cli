@@ -65,11 +65,11 @@ function getIgnoreAssetPatterns({
 }): string[] {
   return [
     ...outputs.flatMap(({ format, path: p }) =>
-      !pathContains(cwd, p)
-        ? []
-        : format === 'webpub'
+      pathContains(cwd, p)
+        ? format === 'webpub'
           ? upath.join(upath.relative(cwd, p), '**')
-          : upath.relative(cwd, p),
+          : upath.relative(cwd, p)
+        : [],
     ),
     ...entries.flatMap(({ template }) => {
       return template?.type === 'file' && pathContains(cwd, template.pathname)
