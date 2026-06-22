@@ -24,7 +24,7 @@ export function vsBrowserPlugin({
   }
 
   async function openPreviewPage() {
-    const locale = await getOsLocale();
+    const locale = getOsLocale();
     const url = await getViewerFullUrl(config);
     const { page, closeBrowser: closeLaunchedBrowser } = await launchPreview({
       mode: 'preview',
@@ -32,9 +32,9 @@ export function vsBrowserPlugin({
       signal: inlineConfig.signal,
       config,
       /* v8 ignore next 4 */
-      onPageOpen: async (page) => {
+      onPageOpen: (openedPage) => {
         // Terminate preview when the previewing page is closed
-        page.on('close', handlePageClose);
+        openedPage.on('close', handlePageClose);
       },
     });
 
@@ -50,8 +50,8 @@ export function vsBrowserPlugin({
         // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
         if (!import.meta.env?.VITEST) {
           /* v8 ignore next 4 */
-          await page.evaluate((locale) => {
-            window.localStorage.setItem('i18nextLng', locale);
+          await page.evaluate((lng) => {
+            window.localStorage.setItem('i18nextLng', lng);
           }, locale);
         }
         // Move focus from the address bar to the page
@@ -75,12 +75,12 @@ export function vsBrowserPlugin({
     configureServer(viteServer) {
       server = viteServer;
 
-      const _listen = viteServer.listen;
+      const originalListen = viteServer.listen;
       viteServer.listen = async (...args) => {
-        const server = await _listen(...args);
-        config = await reloadConfig(config, inlineConfig, server.config);
+        const startedServer = await originalListen(...args);
+        config = await reloadConfig(config, inlineConfig, startedServer.config);
         await openPreviewPage();
-        return server;
+        return startedServer;
       };
     },
     async closeBundle() {

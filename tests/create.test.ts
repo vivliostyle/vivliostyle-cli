@@ -13,16 +13,25 @@ import type { PackageJson, PackageSearchResult } from '../src/npm.js';
 import { runCommand } from './command-util.js';
 
 const mockedClackModule = vi.hoisted(() => {
-  const mockedAnswers = vi.fn().mockReturnValue({});
-  const PromptClass = vi.fn(function ({ name }: { name: string }) {
-    // @ts-ignore
-    this.prompt = vi.fn().mockImplementation(async () => {
-      const answers = mockedAnswers();
-      if (!(name in answers)) {
-        throw new Error(`Unexpected question: ${name}`);
-      }
-      return answers[name];
-    });
+  const mockedAnswers = vi
+    .fn<() => Record<string, unknown>>()
+    .mockReturnValue({});
+  const PromptClass = vi.fn<(args: { name: string }) => void>(function ({
+    name,
+  }: {
+    name: string;
+  }) {
+    // @ts-expect-error -- assigning to `this` inside a mock constructor function
+    this.prompt = vi
+      .fn<() => Promise<unknown>>()
+      // oxlint-disable-next-line require-await -- mock must return a Promise to match the prompt signature
+      .mockImplementation(async () => {
+        const answers = mockedAnswers();
+        if (!(name in answers)) {
+          throw new Error(`Unexpected question: ${name}`);
+        }
+        return answers[name];
+      });
   });
 
   return {
@@ -32,8 +41,8 @@ const mockedClackModule = vi.hoisted(() => {
     MultiSelectPrompt: PromptClass,
     AutocompletePrompt: PromptClass,
     AutocompleteMultiselectPrompt: PromptClass,
-    isCancel: vi.fn().mockReturnValue(false),
-    getColumns: vi.fn().mockReturnValue(80),
+    isCancel: vi.fn<() => boolean>().mockReturnValue(false),
+    getColumns: vi.fn<() => number>().mockReturnValue(80),
   };
 });
 

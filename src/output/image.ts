@@ -93,23 +93,24 @@ function replaceImagesInDocument(
       const resolved = value.resolve();
       const subtype = resolved.get('Subtype');
 
-      if (subtype && subtype.toString() === '/Image') {
-        total++;
+      if (!subtype || subtype.toString() !== '/Image') {
+        continue;
+      }
+      total++;
 
-        // Extract image from PDF
-        const pdfImage = doc.loadImage(value);
+      // Extract image from PDF
+      const pdfImage = doc.loadImage(value);
 
-        // Find matching source image
-        for (const pair of imagePairs) {
-          if (imagesEqual(pdfImage, pair.srcImage)) {
-            const newImageRef = doc.addImage(pair.destImage);
-            xobjects.put(key, newImageRef);
-            replaced++;
-            Logger.debug(
-              `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
-            );
-            break;
-          }
+      // Find matching source image
+      for (const pair of imagePairs) {
+        if (imagesEqual(pdfImage, pair.srcImage)) {
+          const newImageRef = doc.addImage(pair.destImage);
+          xobjects.put(key, newImageRef);
+          replaced++;
+          Logger.debug(
+            `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
+          );
+          break;
         }
       }
     }

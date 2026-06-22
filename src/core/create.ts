@@ -51,7 +51,9 @@ type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
   vivliostyle?: VivliostylePackageMetadata;
 };
 
-export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
+export async function create(
+  inlineConfig: ParsedVivliostyleInlineConfig,
+): Promise<void> {
   Logger.setLogOptions(inlineConfig);
   Logger.debug('create > inlineConfig %O', inlineConfig);
 
@@ -72,7 +74,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   let themePackage: VivliostylePackageJson | undefined;
   let useLocalTemplate = false;
 
-  if (template && !/^([\w-.]+):/.test(template)) {
+  if (template && !/^([\w.\-]+):/v.test(template)) {
     const absTemplatePath = upath.resolve(cwd, template);
     useLocalTemplate =
       fs.existsSync(upath.resolve(cwd, template)) &&
@@ -104,7 +106,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     }
   } else if (
     (projectPath === '.' &&
-      fs.readdirSync(dist).filter((n) => !n.startsWith('.')).length > 0) ||
+      fs.readdirSync(dist).some((n) => !n.startsWith('.'))) ||
     (projectPath !== '.' && fs.existsSync(dist))
   ) {
     throw new Error(`Destination ${dist} is not empty.`);
@@ -122,7 +124,7 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
   }
   if (!language) {
     ({ language } = createConfigFileOnly
-      ? { language: await getOsLocale() }
+      ? { language: getOsLocale() }
       : await askLanguage({ interactiveLogger }));
   }
 
@@ -198,10 +200,14 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     using _ = Logger.startLogging(
       useLocalTemplate ? 'Copying a local template' : 'Downloading a template',
     );
+    /* v8 ignore next 3 */
+    if (!template) {
+      throw new Error('No template is set to create a project.');
+    }
     await setupTemplate({
       projectPath,
       cwd,
-      template: template!,
+      template,
       signal: inlineConfig.signal,
       templateVariables: {
         ...inlineConfig,
@@ -310,7 +316,7 @@ async function askLanguage({
 }: {
   interactiveLogger: InteractiveLogger;
 }) {
-  const initialValue = await getOsLocale();
+  const initialValue = getOsLocale();
   return await askQuestion({
     question: {
       language: {
@@ -372,7 +378,7 @@ async function askPresetTemplate({
 
 const TRUNCATE_LENGTH = 60;
 const truncateString = (str: string) => {
-  const trimmed = str.replace(/\s+/g, ' ');
+  const trimmed = str.replaceAll(/\s+/gv, ' ');
   return trimmed.length > TRUNCATE_LENGTH
     ? trimmed.slice(0, TRUNCATE_LENGTH) + '…'
     : trimmed;
@@ -453,9 +459,9 @@ async function askTheme({
         type: 'autocomplete',
         message: "What's the project theme?",
         options: [
-          ...(!useCommunityThemes
-            ? [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]
-            : []),
+          ...(useCommunityThemes
+            ? []
+            : [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]),
           { label: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
           ...themePackages.map((pkg) => ({
             label: pkg.name,
@@ -539,8 +545,15 @@ async function askThemeTemplate({
     interactiveLogger.logWarn(
       'The chosen theme does not set template settings. Applying the minimal template.',
     );
+    const minimalTemplate = TEMPLATE_SETTINGS.find(
+      (t) => t.value === 'minimal',
+    );
+    /* v8 ignore next 3 */
+    if (!minimalTemplate) {
+      throw new Error('The minimal template setting is not found.');
+    }
     return {
-      template: TEMPLATE_SETTINGS.find((t) => t.value === 'minimal')!.template,
+      template: minimalTemplate.template,
       extraTemplateVariables: {},
     };
   }
@@ -766,12 +779,12 @@ function caveat(
   if (!installDependencies) {
     steps.push(`${cyan('npm install')} to install dependencies`);
   }
-  steps.push('Create and edit Markdown files');
   steps.push(
+    'Create and edit Markdown files',
     `Modify the ${cyan('entry')} field in ${green('vivliostyle.config.js')}`,
+    `${cyan('npm run preview')} to open a preview browser window`,
+    `${cyan('npm run build')} to generate the output file`,
   );
-  steps.push(`${cyan('npm run preview')} to open a preview browser window`);
-  steps.push(`${cyan('npm run build')} to generate the output file`);
 
   Logger.logSuccess(message);
   Logger.log(

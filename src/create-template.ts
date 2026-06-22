@@ -6,7 +6,7 @@ import type {
   ThemeSpecifier,
   VivliostylePackageMetadata,
 } from './config/schema.js';
-import { type ParsedVivliostyleInlineConfig } from './config/schema.js';
+import type { ParsedVivliostyleInlineConfig } from './config/schema.js';
 import type { PackageJson } from './npm.js';
 
 export type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
@@ -72,7 +72,7 @@ function json(data: unknown) {
 }
 Handlebars.registerHelper('json', json);
 
-export function format(text: string, context: unknown) {
+export function format(text: string, context: unknown): string {
   const template = Handlebars.compile(text.toString(), { noEscape: true });
   return template(context);
 }

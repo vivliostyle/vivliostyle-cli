@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PdfOutput, ResolvedTaskConfig } from '../src/config/resolve.js';
 
-const mockedLaunchPreview = vi.hoisted(() => vi.fn());
-const mockedGetViewerFullUrl = vi.hoisted(() => vi.fn());
-const mockedPostProcessLoad = vi.hoisted(() => vi.fn());
+const mockedLaunchPreview = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
+const mockedGetViewerFullUrl = vi.hoisted(() =>
+  vi.fn<() => Promise<unknown>>(),
+);
+const mockedPostProcessLoad = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
 
 vi.mock('../src/browser.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/browser.js')>()),
@@ -43,13 +45,16 @@ const config = {
   image: undefined,
 } as unknown as ResolvedTaskConfig;
 
-function setupPdfBuild(pdf: Page['pdf'], closeBrowser = vi.fn(async () => {})) {
+function setupPdfBuild(
+  pdf: Page['pdf'],
+  closeBrowser = vi.fn<() => Promise<void>>(async () => {}),
+) {
   const page = {
-    waitForNetworkIdle: vi.fn(),
-    waitForFunction: vi.fn(),
-    emulateMediaType: vi.fn(),
+    waitForNetworkIdle: vi.fn<() => void>(),
+    waitForFunction: vi.fn<() => void>(),
+    emulateMediaType: vi.fn<() => void>(),
     evaluate: vi
-      .fn()
+      .fn<() => Promise<unknown>>()
       .mockResolvedValueOnce('ltr')
       .mockResolvedValueOnce('2.43.0')
       .mockResolvedValueOnce({})
@@ -60,8 +65,10 @@ function setupPdfBuild(pdf: Page['pdf'], closeBrowser = vi.fn(async () => {})) {
 
   const browser = {
     protocol: 'cdp',
-    version: vi.fn(async () => 'Chrome/142.0.0.0'),
-    close: vi.fn(async () => {}),
+    version: vi.fn<() => Promise<string>>(() =>
+      Promise.resolve('Chrome/142.0.0.0'),
+    ),
+    close: vi.fn<() => Promise<void>>(async () => {}),
   } as unknown as Browser & { protocol: 'cdp' };
 
   mockedLaunchPreview.mockResolvedValue({ browser, page, closeBrowser });
@@ -97,7 +104,7 @@ describe('buildPDF cancellation', () => {
     const controller = new AbortController();
     const reason = new Error('cancelled');
     let resolveClose: (() => void) | undefined;
-    const closeBrowser = vi.fn(
+    const closeBrowser = vi.fn<() => Promise<void>>(
       () =>
         new Promise<void>((resolve) => {
           resolveClose = resolve;
@@ -142,7 +149,7 @@ describe('buildPDF cancellation', () => {
       'Protocol error (Page.printToPDF): Printing failed',
     );
     setupPdfBuild(
-      vi.fn(async () => {
+      vi.fn(() => {
         controller.abort(reason);
         throw protocolError;
       }),
@@ -162,7 +169,7 @@ describe('buildPDF cancellation', () => {
     const { closeBrowser, page } = setupPdfBuild(vi.fn());
     vi.mocked(page.evaluate)
       .mockReset()
-      .mockImplementationOnce(async () => {
+      .mockImplementationOnce(() => {
         controller.abort(reason);
         throw protocolError;
       });
@@ -178,7 +185,7 @@ describe('buildPDF cancellation', () => {
       'Protocol error (Page.printToPDF): Printing failed',
     );
     setupPdfBuild(
-      vi.fn(async () => {
+      vi.fn(() => {
         throw protocolError;
       }),
     );
@@ -195,7 +202,7 @@ describe('buildPDF cancellation', () => {
       setPageBoxes: vi.fn<() => Promise<void>>(async () => {}),
       save,
     });
-    setupPdfBuild(vi.fn(async () => new Uint8Array([1])));
+    setupPdfBuild(vi.fn(() => Promise.resolve(new Uint8Array([1]))));
 
     await expect(
       buildPDF({

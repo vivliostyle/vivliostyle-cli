@@ -74,8 +74,7 @@ function transformPublicationManifest(
     if (typeof e === 'string') {
       return transformUrl(e);
     }
-    const ret = { ...e };
-    ret.url = transformUrl(e.url);
+    const ret = { ...e, url: transformUrl(e.url) };
     return ret;
   };
   const ret = { ...entity };
@@ -95,7 +94,9 @@ function transformPublicationManifest(
   return ret;
 }
 
-export function decodePublicationManifest(input: PublicationManifest) {
+export function decodePublicationManifest(
+  input: PublicationManifest,
+): PublicationManifest {
   return transformPublicationManifest(input, {
     url: decodeURI,
   });
@@ -208,7 +209,7 @@ export async function retrieveWebbookEntry({
   const webbookEntryUrl = viewerInput.webbookPath
     ? pathToFileURL(viewerInput.webbookPath).href
     : viewerInput.webbookEntryUrl;
-  if (/^https?:/i.test(webbookEntryUrl)) {
+  if (/^https?:/iv.test(webbookEntryUrl)) {
     Logger.logUpdate('Fetching remote contents');
   }
   const resourceLoader = new ResourceLoader();
@@ -231,7 +232,7 @@ export async function retrieveWebbookEntry({
   if (webbookEntryUrl.startsWith('data:')) {
     pathContains = () => false;
   } else {
-    const rootUrl = /^https?:/i.test(webbookEntryUrl)
+    const rootUrl = /^https?:/iv.test(webbookEntryUrl)
       ? new URL('/', webbookEntryUrl).href
       : new URL('.', webbookEntryUrl).href;
     pathContains = (url: string) =>
@@ -254,7 +255,7 @@ export async function retrieveWebbookEntry({
     for (const v of [manifest.readingOrder || []].flat()) {
       const url = typeof v === 'string' ? v : v.url;
       if (
-        !/\.html?$/.test(url) &&
+        !/\.html?$/v.test(url) &&
         !(typeof v === 'string' || v.encodingFormat === 'text/html')
       ) {
         continue;
@@ -272,7 +273,7 @@ export async function retrieveWebbookEntry({
         }),
       });
       subpathResourceLoader.fetcherMap.forEach(
-        (v, k) => !retriever.has(k) && retriever.set(k, v),
+        (fetcher, k) => !retriever.has(k) && retriever.set(k, fetcher),
       );
     }
   }
@@ -289,15 +290,15 @@ export async function retrieveWebbookEntry({
   });
 
   if (manifest) {
-    const referencedContents = [
-      ...[manifest.readingOrder || []].flat(),
-      ...[manifest.resources || []].flat(),
-    ].map((v) => (typeof v === 'string' ? v : v.url));
+    const referencedContents = new Set(
+      [
+        ...[manifest.readingOrder || []].flat(),
+        ...[manifest.resources || []].flat(),
+      ].map((v) => (typeof v === 'string' ? v : v.url)),
+    );
     manifest.resources = [
       ...[manifest.resources || []].flat(),
-      ...fetchedResources.filter(
-        ({ url }) => !referencedContents.includes(url),
-      ),
+      ...fetchedResources.filter(({ url }) => !referencedContents.has(url)),
     ];
     sortManifestResources(manifest);
   }
@@ -371,7 +372,7 @@ export async function supplyWebPublicationManifestForWebbook({
       upath.join(outputDir, MANIFEST_FILENAME),
     ),
   );
-  document.head.appendChild(link);
+  document.head.append(link);
   await fs.promises.writeFile(entryHtmlFile, dom.serialize(), 'utf8');
 
   Logger.debug(
@@ -494,16 +495,16 @@ export async function copyWebPublicationAssets({
   // List copied files to resources field
   const normalizeToUrl = (val?: ResourceCategorization) =>
     [val || []].flat().map((e) => (typeof e === 'string' ? e : e.url));
-  const preDefinedResources = [
+  const preDefinedResources = new Set([
     ...normalizeToUrl(manifest.links),
     ...normalizeToUrl(manifest.readingOrder),
     ...normalizeToUrl(manifest.resources),
-  ];
+  ]);
   manifest.resources = [
     ...[manifest.resources || []].flat(),
     ...resources.flatMap((file) => {
       if (
-        preDefinedResources.includes(file) ||
+        preDefinedResources.has(file) ||
         // Omit publication.json itself
         pathEquals(file, upath.relative(outputDir, actualManifestPath))
       ) {

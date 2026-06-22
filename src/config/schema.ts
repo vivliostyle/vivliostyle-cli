@@ -12,11 +12,11 @@ import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
 
-const $ = (strings: TemplateStringsArray, ...values: any[]) => {
+const $ = (strings: TemplateStringsArray, ...values: unknown[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
   const indent = lines
     .filter((line) => line.trim())
-    .map((line) => line.match(/^\s*/)?.[0].length ?? 0)
+    .map((line) => line.match(/^\s*/v)?.[0].length ?? 0)
     .reduce((min, len) => Math.min(min, len), Infinity);
   return lines
     .map((line) => line.slice(indent))
@@ -68,6 +68,11 @@ export const StructuredDocumentSection: v.GenericSchema<StructuredDocumentSectio
     }),
     v.title('StructuredDocumentSection'),
   );
+
+type HastElement = import('hast').ElementContent | import('hast').Root;
+export type HastTransformFunction<T> = (
+  nodeList: T[],
+) => (propsList: { children: HastElement | HastElement[] }[]) => HastElement;
 
 export const ValidString = v.pipe(
   v.string(),
@@ -209,7 +214,8 @@ export const CoverEntryConfig = v.pipe(
     title: v.optional(ValidString),
     theme: v.optional(ThemeSpecifier),
     imageSrc: v.optional(ValidString),
-    imageAlt: v.optional(v.string()), // Allow empty string
+    // Allow empty string
+    imageAlt: v.optional(v.string()),
     pageBreakBefore: v.pipe(
       v.optional(PageBreak),
       v.description($`
@@ -251,7 +257,7 @@ const RGBValueObjectSchema = v.pipe(
 const HexColorSchema = v.pipe(
   v.string(),
   v.regex(
-    /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/,
+    /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/v,
     'Must be a hex color (e.g. "#ff0000", "#f00", "#ff000080", "#f008")',
   ),
   v.title('HexColor'),
@@ -444,7 +450,7 @@ export const LogLevel = v.union([
 ]);
 export type LogLevel = v.InferInput<typeof LogLevel>;
 
-const notAllowedPatternRe = /(^\s*[/\\]|^(.*[/\\])?\s*\.\.\s*([/\\].*)?$)/g;
+const notAllowedPatternRe = /(^\s*[\/\\]|^(.*[\/\\])?\s*\.\.\s*([\/\\].*)?$)/gv;
 const validateAssetPatternSettings = (propName: string) =>
   v.check<string[], string>(
     (input) => input.every((pattern) => !notAllowedPatternRe.test(pattern)),
@@ -453,7 +459,7 @@ const validateAssetPatternSettings = (propName: string) =>
 
 // See the special characters of glob pattern
 // https://github.com/micromatch/picomatch
-const notAllowedExtensionRe = /([\\/*?@+!|(){}[\]]|\.\.|^\s*\.)/g;
+const notAllowedExtensionRe = /([\\\/*?@+!\|\(\)\{\}\[\]]|\.\.|^\s*\.)/gv;
 const validateAssetExtensionSettings = (propName: string) =>
   v.check<string[], string>(
     (input) => input.every((pattern) => !notAllowedExtensionRe.test(pattern)),
@@ -535,9 +541,7 @@ export const TocConfig = v.pipe(
       ),
       transformDocumentList: v.pipe(
         v.function() as v.GenericSchema<
-          (
-            nodeList: StructuredDocument[],
-          ) => (propsList: { children: any }[]) => any
+          HastTransformFunction<StructuredDocument>
         >,
         v.metadata({
           typeString:
@@ -550,9 +554,7 @@ export const TocConfig = v.pipe(
       ),
       transformSectionList: v.pipe(
         v.function() as v.GenericSchema<
-          (
-            nodeList: StructuredDocumentSection[],
-          ) => (propsList: { children: any }[]) => any
+          HastTransformFunction<StructuredDocumentSection>
         >,
         v.metadata({
           typeString:
@@ -585,7 +587,8 @@ export const CoverConfig = v.pipe(
     v.partial(
       v.object({
         name: v.pipe(
-          v.string(), // Allow empty string
+          // Allow empty string
+          v.string(),
           v.description($`
             Alternative text for the cover image.
           `),
@@ -722,16 +725,10 @@ export const BuildTask = v.pipe(
             [input].flat().map((item) => {
               const obj = typeof item === 'string' ? { path: item } : item;
               const ext = upath.extname(obj.path).toLowerCase();
-              return {
-                ...obj,
-                format:
-                  obj.format ||
-                  (ext === '.pdf'
-                    ? 'pdf'
-                    : ext === '.epub'
-                      ? 'epub'
-                      : 'webpub'),
-              };
+              const format =
+                obj.format ||
+                (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub');
+              return Object.assign({}, obj, { format });
             }),
           ),
           v.description($`
@@ -839,7 +836,7 @@ export const BuildTask = v.pipe(
           ValidString,
           v.check((value) => {
             const [url, version] = value.split(':');
-            if (url !== CONTAINER_URL || !/^\d+(\.\d+){0,2}$/.test(version)) {
+            if (url !== CONTAINER_URL || !/^\d+(\.\d+){0,2}$/v.test(version)) {
               return true;
             }
             return semverSatisfies(cliVersion, version);
@@ -879,9 +876,9 @@ export const BuildTask = v.pipe(
         ),
         base: v.pipe(
           ValidString,
-          v.regex(/^\//, 'Base path must start with a slash'),
+          v.regex(/^\//v, 'Base path must start with a slash'),
           v.check((value) => value !== '/', 'Base path must not be root'),
-          v.transform((value) => value.replace(/(?!^)\/+$/, '')),
+          v.transform((value) => value.replace(/(?!^)\/+$/v, '')),
           v.description($`
             Base path of the served documents. (default: \`/vivliostyle\`)
           `),
@@ -896,8 +893,8 @@ export const BuildTask = v.pipe(
           v.record(
             v.pipe(
               ValidString,
-              v.regex(/^\//, 'Base path must start with a slash'),
-              v.transform((value) => value.replace(/(?!^)\/+$/, '')),
+              v.regex(/^\//v, 'Base path must start with a slash'),
+              v.transform((value) => value.replace(/(?!^)\/+$/v, '')),
             ),
             v.pipe(
               v.union([v.array(ValidString), ValidString]),
@@ -1012,7 +1009,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
       ValidString,
       v.transform((input): { format: InputFormat; entry: string } => {
         const ext = upath.extname(input).toLowerCase();
-        if (/^(https?|data):/.test(input)) {
+        if (/^(https?|data):/v.test(input)) {
           return { format: 'webbook', entry: input };
         } else if (ext === '.md' || ext === '.markdown') {
           return { format: 'markdown', entry: input };
@@ -1041,12 +1038,10 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         [input].flat().map((item) => {
           const obj = typeof item === 'string' ? { path: item } : item;
           const ext = upath.extname(obj.path).toLowerCase();
-          return {
-            ...obj,
-            format:
-              obj.format ||
-              (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub'),
-          };
+          const format =
+            obj.format ||
+            (ext === '.pdf' ? 'pdf' : ext === '.epub' ? 'epub' : 'webpub');
+          return Object.assign({}, obj, { format });
         }),
       ),
       v.description($`
@@ -1056,7 +1051,8 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
     theme: v.pipe(
       v.union([
         ThemeSpecifier,
-        v.literal(false), // Explicitly disable theme installation
+        // Explicitly disable theme installation
+        v.literal(false),
       ]),
       v.description($`
           Theme path or package name.
@@ -1488,7 +1484,8 @@ export const SelectPromptOption = v.union([
   ValidString,
   v.object({
     value: v.union([
-      v.string(), // Allow empty string
+      // Allow empty string
+      v.string(),
       v.number(),
       v.boolean(),
     ]),

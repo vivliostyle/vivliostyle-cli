@@ -36,13 +36,20 @@ import { ValidString } from './config/schema.js';
 import { PromptCancelError } from './entry-util.js';
 import { isUnicodeSupported, Logger } from './logger.js';
 
-type DistributiveOmit<T, K extends keyof any> = T extends any
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never;
 
+type AnyObjectSchema =
+  | v.ObjectSchema<v.ObjectEntries, v.ErrorMessage<v.ObjectIssue> | undefined>
+  | v.ObjectSchemaAsync<
+      v.ObjectEntriesAsync,
+      v.ErrorMessage<v.ObjectIssue> | undefined
+    >;
+
 export async function askQuestion<
   T extends object,
-  S extends v.ObjectSchema<any, any> | v.ObjectSchemaAsync<any, any>,
+  S extends AnyObjectSchema,
 >(_: {
   question: Record<
     keyof v.InferInput<S>,
@@ -60,9 +67,7 @@ export async function askQuestion<T extends object>(_: {
   validateProgressMessage?: string;
 }): Promise<T>;
 
-export async function askQuestion<
-  S extends v.ObjectSchema<any, any> | v.ObjectSchemaAsync<any, any>,
->({
+export async function askQuestion<S extends AnyObjectSchema>({
   question: questions,
   interactiveLogger,
   schema,
@@ -75,7 +80,7 @@ export async function askQuestion<
   interactiveLogger: InteractiveLogger;
   schema?: S;
   validateProgressMessage?: string;
-}): Promise<any> {
+}): Promise<unknown> {
   const response: Record<string, unknown> = {};
 
   // Repeat until the input passes the validation
@@ -86,7 +91,9 @@ export async function askQuestion<
       // Maximum number of items to display at once.
       const maxItems = 10;
       const normalizeOptions = (options: SelectPromptOption[]) =>
-        options.map((v) => (typeof v === 'string' ? { value: v } : v));
+        options.map((option) =>
+          typeof option === 'string' ? { value: option } : option,
+        );
       const validate = (value: unknown = '') => {
         if (!question.required || 'defaultValue' in question) {
           return;
@@ -97,7 +104,7 @@ export async function askQuestion<
 
       if (import.meta.env?.VITEST) {
         // For testing, safely assign the name property using a type assertion
-        (question as any).name = name;
+        (question as { name?: string }).name = name;
       }
       if (question.type === 'text') {
         result = await textPrompt({ ...question, validate });
@@ -141,7 +148,7 @@ export async function askQuestion<
       });
     }
 
-    let result: v.SafeParseResult<any>;
+    let result: v.SafeParseResult<v.GenericSchema | v.GenericSchemaAsync>;
     if (schema && schema.async) {
       result = await interactiveLogger?.logLoading(
         validateProgressMessage ?? '',
@@ -206,9 +213,7 @@ function textPrompt(opts: TextOptions) {
       const placeholder = opts.placeholder
         ? inverse(opts.placeholder[0]) + dim(opts.placeholder.slice(1))
         : inverse(hidden('_'));
-      const userInput = !this.userInput
-        ? placeholder
-        : this.userInputWithCursor;
+      const userInput = this.userInput ? this.userInputWithCursor : placeholder;
       const value = this.value ?? '';
 
       switch (this.state) {
@@ -242,7 +247,9 @@ function selectPrompt<Value>(opts: SelectOptions<Value>, multiple = false) {
       const values = [this.value].flat() as Value[];
       const selected = this.options.filter((o) => values.includes(o.value));
       const label =
-        selected.length > 0 ? selected.map(labelToString).join(', ') : 'none';
+        selected.length > 0
+          ? selected.map((o) => labelToString(o)).join(', ')
+          : 'none';
 
       switch (this.state) {
         case 'submit': {
@@ -304,7 +311,9 @@ function autocompletePrompt<Value>(
         this.selectedValues.includes(o.value),
       );
       const label =
-        selected.length > 0 ? selected.map(labelToString).join(', ') : 'none';
+        selected.length > 0
+          ? selected.map((o) => labelToString(o)).join(', ')
+          : 'none';
 
       switch (this.state) {
         case 'submit': {
@@ -326,11 +335,11 @@ function autocompletePrompt<Value>(
             searchText = ` ${this.userInputWithCursor}`;
           }
           const matches =
-            this.filteredOptions.length !== this.options.length
-              ? dim(
+            this.filteredOptions.length === this.options.length
+              ? ''
+              : dim(
                   ` (${this.filteredOptions.length} match${this.filteredOptions.length === 1 ? '' : 'es'})`,
-                )
-              : '';
+                );
           const headings = [
             blueBright('║'),
             `${blueBright(`${symbol}─`)} ${opts.message}`,
@@ -421,9 +430,9 @@ export class InteractiveLogger {
         if (!clearMessage) {
           return r;
         }
-        return new Promise<T>((resolve) =>
-          setTimeout(() => resolve(r), deferredTimeMs),
-        );
+        return new Promise<T>((resolve) => {
+          setTimeout(() => resolve(r), deferredTimeMs);
+        });
       })
       .catch(async (e) => {
         await promise;
@@ -443,7 +452,7 @@ export class InteractiveLogger {
     return result;
   }
 
-  logInfo(message: string) {
+  logInfo(message: string): void {
     this.messageHistory.push({ type: 'info', message });
     if (import.meta.env?.VITEST) {
       return;
@@ -453,7 +462,7 @@ export class InteractiveLogger {
     );
   }
 
-  logWarn(message: string) {
+  logWarn(message: string): void {
     this.messageHistory.push({ type: 'warn', message });
     if (import.meta.env?.VITEST) {
       return;
@@ -463,7 +472,7 @@ export class InteractiveLogger {
     );
   }
 
-  logOutro(message: string) {
+  logOutro(message: string): void {
     this.messageHistory.push({ type: 'outro', message });
     if (import.meta.env?.VITEST) {
       return;

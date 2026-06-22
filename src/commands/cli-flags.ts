@@ -5,6 +5,7 @@ import {
   type InlineOptions,
   type OutputConfig,
   type ParsedVivliostyleConfigSchema,
+  type ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfig,
 } from '../config/schema.js';
 import { EMPTY_DATA_URI } from '../constants.js';
@@ -35,7 +36,8 @@ export interface CliFlags {
   sandbox?: boolean;
   executableBrowser?: string;
   image?: string;
-  /** @deprecated */ http?: boolean;
+  /** @deprecated */
+  http?: boolean;
   viewer?: string;
   viewerParam?: string;
   browser?: string;
@@ -56,7 +58,7 @@ export function createParserProgram({
   setupProgram: () => Command;
   parseArgs?: (options: CliFlags, args: string[]) => CliFlags;
 }) {
-  return (argv: string[]) => {
+  return (argv: string[]): ParsedVivliostyleInlineConfig => {
     const program = setupProgram();
     program.parse(argv);
     let options = program.opts<CliFlags>();
@@ -77,11 +79,10 @@ export function setupConfigFromFlags(
           input: { format: 'webbook', entry: EMPTY_DATA_URI },
         },
       };
-    } else {
-      throw new Error(
-        'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
-      );
     }
+    throw new Error(
+      'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
+    );
   }
   return {
     tasks: [{ entry: [] }],

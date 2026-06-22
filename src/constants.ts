@@ -63,7 +63,7 @@ export const TEMPLATE_SETTINGS = [
   },
 ] as const;
 
-export const TEMPLATE_DEFAULT_PACKAGE_JSON = /* json */ `{
+export const TEMPLATE_DEFAULT_PACKAGE_JSON = `{
   "name": "{{kebab title}}",
   "description": "{{proper title}}",
   "author": "{{author}}",
@@ -80,7 +80,7 @@ export const TEMPLATE_DEFAULT_PACKAGE_JSON = /* json */ `{
 }
 `;
 
-export const TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS = /* js */ `// @ts-check
+export const TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS = `// @ts-check
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({

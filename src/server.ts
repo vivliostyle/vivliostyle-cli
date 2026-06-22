@@ -56,7 +56,7 @@ export function generateCmykReserveMap({
     pdfOutput &&
     'cmyk' in pdfOutput &&
     pdfOutput.cmyk &&
-    pdfOutput.cmyk.reserveMap.length
+    pdfOutput.cmyk.reserveMap.length > 0
   ) {
     fs.writeFileSync(
       upath.join(workspaceDir, CMYK_RESERVE_MAP_FILENAME),
@@ -87,7 +87,7 @@ export function getViewerParams(
     size && ('format' in size ? size.format : `${size.width} ${size.height}`);
 
   function escapeParam(url: string) {
-    return url.replace(/&/g, '%26');
+    return url.replaceAll('&', '%26');
   }
 
   let viewerParams = src ? `src=${escapeParam(src)}` : '';
@@ -152,7 +152,7 @@ export async function getSourceUrl({
 }: Pick<
   ResolvedTaskConfig,
   'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
->) {
+>): Promise<string> {
   let input: string;
   switch (viewerInput.type) {
     case 'webpub':
@@ -195,7 +195,7 @@ export async function getViewerFullUrl({
   Pick<
     ResolvedTaskConfig,
     'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl' | 'viewer'
-  >) {
+  >): Promise<string> {
   const viewerUrl = viewer
     ? new URL(viewer)
     : new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
@@ -206,15 +206,14 @@ export async function getViewerFullUrl({
     rootUrl,
   });
   const cmykOutput = config.outputs.find(
-    (o) => o.format === 'pdf' && o.cmyk && o.cmyk.reserveMap.length,
+    (o) => o.format === 'pdf' && o.cmyk && o.cmyk.reserveMap.length > 0,
   );
   const cmykReserveMapUrl = cmykOutput
     ? new URL(upath.posix.join(base, CMYK_RESERVE_MAP_FILENAME), rootUrl).href
     : undefined;
   const viewerParams = getViewerParams(
-    sourceUrl === EMPTY_DATA_URI
-      ? undefined // open Viewer start page
-      : sourceUrl,
+    // open Viewer start page if the sourceUrl is empty
+    sourceUrl === EMPTY_DATA_URI ? undefined : sourceUrl,
     { base, rootUrl, ...config },
     { cmykReserveMapUrl },
   );
@@ -244,7 +243,7 @@ export async function createViteServer({
   viteConfig: ResolvedViteConfig;
   inlineConfig: ParsedVivliostyleInlineConfig;
   mode: 'preview' | 'build';
-}) {
+}): Promise<ViteDevServer | PreviewServer> {
   const viteInlineConfig = {
     clearScreen: false,
     configFile: false,

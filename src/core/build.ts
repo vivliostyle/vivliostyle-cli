@@ -27,7 +27,7 @@ import { cwd, runCleanupHandlers } from '../util.js';
 export async function build(
   inlineConfig: ParsedVivliostyleInlineConfig,
   { containerForkMode = false }: { containerForkMode?: boolean } = {},
-) {
+): Promise<void> {
   Logger.setLogOptions(inlineConfig);
   if (containerForkMode) {
     Logger.setLogPrefix(gray('[Docker]'));
@@ -75,22 +75,20 @@ export async function build(
           mode: 'build',
         });
 
-        if (server.httpServer) {
-          const addressInfo = server.httpServer.address();
-          if (addressInfo && typeof addressInfo !== 'string') {
-            const actualPort = addressInfo.port;
-            vivliostyleConfig = mergeConfig(vivliostyleConfig, {
-              temporaryFilePrefix: config.temporaryFilePrefix,
-              server: {
-                ...server.config.preview,
-                port: actualPort,
-              },
-            });
-            config = resolveTaskConfig(
-              vivliostyleConfig.tasks[i],
-              vivliostyleConfig.inlineOptions,
-            );
-          }
+        const addressInfo = server.httpServer?.address();
+        if (addressInfo && typeof addressInfo !== 'string') {
+          const actualPort = addressInfo.port;
+          vivliostyleConfig = mergeConfig(vivliostyleConfig, {
+            temporaryFilePrefix: config.temporaryFilePrefix,
+            server: {
+              ...server.config.preview,
+              port: actualPort,
+            },
+          });
+          config = resolveTaskConfig(
+            vivliostyleConfig.tasks[i],
+            vivliostyleConfig.inlineOptions,
+          );
         }
       }
 

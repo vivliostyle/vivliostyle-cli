@@ -1,9 +1,9 @@
-import './mocks/fs.js';
-import './mocks/vivliostyle__jsdom.js';
 import { JSDOM } from '@vivliostyle/jsdom';
 import { vol } from 'memfs';
 import { assert, beforeEach, describe, expect, it } from 'vitest';
 
+import './mocks/fs.js';
+import './mocks/vivliostyle__jsdom.js';
 import { isWebPubConfig } from '../src/config/resolve.js';
 import type {
   StructuredDocument,
@@ -213,7 +213,7 @@ it('customize ToC document', async () => {
 });
 
 describe('sectionized document', () => {
-  const sectionHtml = /* html */ `<!doctype html>
+  const sectionHtml = `<!doctype html>
 <html lang="en">
   <head>
     <title>Section Example</title>
@@ -263,7 +263,7 @@ describe('sectionized document', () => {
         children: [
           {
             headingHtml: expect.stringMatching(
-              /^\s*<span>H2<\/span>\s*<span>content<\/span>\s*$/,
+              /^\s*<span>H2<\/span>\s*<span>content<\/span>\s*$/v,
             ),
             headingText: 'H2 content',
             level: 2,
@@ -365,7 +365,7 @@ describe('sectionized document', () => {
         'ol > li:nth-child(1) > ol > li:nth-child(1)',
         2,
         expect.stringMatching(
-          /^\s*<a href="section\.html#h2">\s*<span>H2<\/span>\s*<span>content<\/span>\s*<\/a>\s*$/,
+          /^\s*<a href="section\.html#h2">\s*<span>H2<\/span>\s*<span>content<\/span>\s*<\/a>\s*$/v,
         ),
       ],
       [

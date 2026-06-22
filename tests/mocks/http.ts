@@ -7,7 +7,7 @@ const mocked = await vi.hoisted(async () => {
 
   const httpMod = {
     default: {
-      createServer: vi.fn(() => ({
+      createServer: vi.fn<() => unknown>(() => ({
         listen: (port: number, host: string, callback: () => void) => {
           callback();
         },

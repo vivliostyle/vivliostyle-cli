@@ -20,6 +20,7 @@ import type {
   ContentsEntryConfig,
   CoverEntryConfig,
   EntryConfig,
+  HastTransformFunction,
   InputFormat,
   StructuredDocument,
   StructuredDocumentSection,
@@ -129,14 +130,10 @@ export interface ContentsEntry {
   sectionDepth: number;
   transform: {
     transformDocumentList:
-      | ((
-          nodeList: StructuredDocument[],
-        ) => (propsList: { children: any }[]) => any)
+      | HastTransformFunction<StructuredDocument>
       | undefined;
     transformSectionList:
-      | ((
-          nodeList: StructuredDocumentSection[],
-        ) => (propsList: { children: any }[]) => any)
+      | HastTransformFunction<StructuredDocumentSection>
       | undefined;
   };
   pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
@@ -195,17 +192,17 @@ export interface RGBValue {
 export type CmykMapEntry = [RGBValue, CMYKValue];
 
 function parseHexColor(hex: string): RGBValue {
-  let r: number, g: number, b: number;
+  let b: number, g: number, r: number;
   if (hex.length === 4 || hex.length === 5) {
     // #RGB or #RGBA (alpha discarded)
-    r = parseInt(hex[1] + hex[1], 16);
-    g = parseInt(hex[2] + hex[2], 16);
-    b = parseInt(hex[3] + hex[3], 16);
+    r = Number.parseInt(hex[1] + hex[1], 16);
+    g = Number.parseInt(hex[2] + hex[2], 16);
+    b = Number.parseInt(hex[3] + hex[3], 16);
   } else {
     // #RRGGBB or #RRGGBBAA (alpha discarded)
-    r = parseInt(hex.slice(1, 3), 16);
-    g = parseInt(hex.slice(3, 5), 16);
-    b = parseInt(hex.slice(5, 7), 16);
+    r = Number.parseInt(hex.slice(1, 3), 16);
+    g = Number.parseInt(hex.slice(3, 5), 16);
+    b = Number.parseInt(hex.slice(5, 7), 16);
   }
   // NOTE:
   // Chromium (Skia) converts 8-bit color values to decimal strings
@@ -295,7 +292,8 @@ export interface WebPublicationOutput {
 export interface EpubOutput {
   format: 'epub';
   path: string;
-  version: '3.0'; // Reserved for future updates
+  // Reserved for future updates
+  version: '3.0';
 }
 
 export type OutputConfig = PdfOutput | WebPublicationOutput | EpubOutput;
@@ -539,7 +537,7 @@ export function parseTheme({
 
 function parsePageSize(size: string): PageSize {
   const [width, height, ...others] = `${size}`.split(',');
-  if (!width || others.length) {
+  if (!width || others.length > 0) {
     throw new Error(`Cannot parse size: ${size}`);
   } else if (width && height) {
     return {
@@ -593,7 +591,7 @@ function parseFileMetadata({
     contentType === 'application/xhtml+xml'
   ) {
     const content = fs.readFileSync(sourcePath, 'utf8');
-    title = content.match(/<title>([^<]*)<\/title>/)?.[1] || undefined;
+    title = content.match(/<title>([^<]*)<\/title>/v)?.[1] || undefined;
   }
   return { title, themes };
 }
@@ -610,7 +608,7 @@ export function parseCustomStyle({
   }
   const stylePath = upath.resolve(entryContextDir, customStyle);
   if (!pathContains(entryContextDir, stylePath)) {
-    throw Error(
+    throw new Error(
       `Custom style file ${customStyle} is not in ${entryContextDir}. Make sure the file is located in the context directory or a subdirectory.`,
     );
   }
@@ -618,7 +616,7 @@ export function parseCustomStyle({
     throw new Error(`Custom style file not found: ${customStyle}`);
   }
   return pathToFileURL(stylePath).href.slice(
-    pathToFileURL(entryContextDir).href.replace(/\/$/, '').length + 1,
+    pathToFileURL(entryContextDir).href.replace(/\/$/v, '').length + 1,
   );
 }
 
@@ -634,6 +632,7 @@ export function resolveTaskConfig(
     : context;
   const language = config.language;
   const readingProgression = config.readingProgression;
+  // oxlint-disable-next-line explicit-length-check -- `size` property is string and not the built-in property of Array
   const size = config.size ? parsePageSize(config.size) : undefined;
   const cropMarks = options.cropMarks ?? false;
   const bleed = options.bleed;
@@ -650,7 +649,8 @@ export function resolveTaskConfig(
     disableFormatHtml: config?.vfm?.disableFormatHtml ?? false,
   };
 
-  const timeout = config.timeout ?? 300_000; // 5 minutes
+  // 5 minutes
+  const timeout = config.timeout ?? 300_000;
   const sandbox = options.sandbox ?? false;
   const browser = (() => {
     const type = config.browser?.type ?? 'chrome';
@@ -829,15 +829,15 @@ export function resolveTaskConfig(
 
             // Resolve cmyk: output.pdfPostprocess > build.pdfPostprocess
             const resolvedCmyk =
-              targetPp?.cmyk !== undefined
-                ? resolveCmykConfig(targetPp.cmyk)
-                : defaultPdfOptions.cmyk;
+              targetPp?.cmyk === undefined
+                ? defaultPdfOptions.cmyk
+                : resolveCmykConfig(targetPp.cmyk);
 
             // Resolve replaceImage: output.pdfPostprocess > build.pdfPostprocess
             const resolvedReplaceImage =
-              targetPp?.replaceImage !== undefined
-                ? resolveReplaceImageConfig(targetPp.replaceImage)
-                : defaultPdfOptions.replaceImage;
+              targetPp?.replaceImage === undefined
+                ? defaultPdfOptions.replaceImage
+                : resolveReplaceImageConfig(targetPp.replaceImage);
 
             return {
               ...defaultPdfOptions,
@@ -897,7 +897,11 @@ export function resolveTaskConfig(
         allowedHosts.push(CONTAINER_LOCAL_HOSTNAME);
       }
     }
-    const rootHostname = !host ? 'localhost' : host === true ? '0.0.0.0' : host;
+    const rootHostname = host
+      ? host === true
+        ? '0.0.0.0'
+        : host
+      : 'localhost';
     return {
       server: {
         host,
@@ -928,11 +932,12 @@ export function resolveTaskConfig(
   };
 
   const themeIndexes = new Set<ParsedTheme>();
+  const { input } = options;
   const projectConfig =
-    !options.config && options.input
+    !options.config && input
       ? resolveSingleInputConfig({
           config,
-          input: options.input!,
+          input,
           context,
           temporaryFilePrefix,
           themeIndexes,
@@ -1253,7 +1258,7 @@ function resolveComposedProjectConfig({
   const themesDir = upath.resolve(workspaceDir, 'themes');
   const pkgJsonPath = upath.resolve(context, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
-    ? readJSON(pkgJsonPath)
+    ? readJSON<{ name?: string; author?: string }>(pkgJsonPath)
     : undefined;
   if (pkgJson) {
     Logger.debug('located package.json path', pkgJsonPath);
@@ -1319,7 +1324,7 @@ function resolveComposedProjectConfig({
     ):
       | (FileEntrySource & { metadata: ReturnType<typeof parseFileMetadata> })
       | (UriEntrySource & { metadata?: undefined }) => {
-      if (/^https?:/.test(entryPath)) {
+      if (/^https?:/v.test(entryPath)) {
         return {
           type: 'uri',
           href: entryPath,
@@ -1355,10 +1360,11 @@ function resolveComposedProjectConfig({
           : rawContentType;
       if (
         !isManuscriptMediaType(contentType) ||
-        contentType === 'text/plain' // disallow text/plain (for now)
+        // disallow text/plain (for now)
+        contentType === 'text/plain'
       ) {
         throw new Error(
-          `Invalid manuscript type ${rawContentType} detected: ${entry}`,
+          `Invalid manuscript type ${rawContentType} detected: ${entryPath}`,
         );
       }
 
@@ -1392,8 +1398,8 @@ function resolveComposedProjectConfig({
         case 'uri': {
           const url = new URL(source.href, 'a://dummy');
           let pathname = url.pathname;
-          if (!/\.\w+$/.test(pathname)) {
-            pathname = `${pathname.replace(/\/$/, '')}/index.html`;
+          if (!/\.\w+$/v.test(pathname)) {
+            pathname = `${pathname.replace(/\/$/v, '')}/index.html`;
           }
           return upath.join(source.rootDir, pathname);
         }
@@ -1466,6 +1472,7 @@ function resolveComposedProjectConfig({
       let target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
         : inputInfo && getTargetPath(inputInfo);
+      // Don't inherit rootThemes for cover documents
       const themes = entry.theme
         ? [entry.theme].flat().map((theme) =>
             parseTheme({
@@ -1475,7 +1482,7 @@ function resolveComposedProjectConfig({
               themesDir,
             }),
           )
-        : (metadata?.themes ?? []); // Don't inherit rootThemes for cover documents
+        : (metadata?.themes ?? []);
       themes.forEach((t) => themeIndexes.add(t));
       const coverImageSrc = ensureCoverImage(entry.imageSrc || cover?.src);
       if (!coverImageSrc) {
@@ -1553,20 +1560,28 @@ function resolveComposedProjectConfig({
       fallbackProjectTitle = upath.basename(outputs[0].path);
     }
   }
-  if (!!config?.toc && !entries.find(({ rel }) => rel === 'contents')) {
+  if (!!config?.toc && entries.every(({ rel }) => rel !== 'contents')) {
     entries.unshift({
       rel: 'contents',
       ...tocConfig,
       themes: [...rootThemes],
     });
   }
-  if (cover && coverHtml && !entries.find(({ rel }) => rel === 'cover')) {
+  if (cover && coverHtml && entries.every(({ rel }) => rel !== 'cover')) {
+    const coverImageSrc = ensureCoverImage(cover.src);
+    /* v8 ignore next 5 */
+    if (!coverImageSrc) {
+      throw new Error(
+        `A cover is set but a location of cover file is not set. Please set 'cover' property in your config file.`,
+      );
+    }
     entries.unshift({
       rel: 'cover',
       target: coverHtml,
       title: projectTitle,
-      themes: [], // Don't inherit rootThemes for cover documents
-      coverImageSrc: ensureCoverImage(cover.src)!,
+      // Don't inherit rootThemes for cover documents
+      themes: [],
+      coverImageSrc,
       coverImageAlt: cover.name,
     });
   }

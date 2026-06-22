@@ -65,21 +65,20 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
       }
       return upath.relative(from, resolvedPath);
     });
-  } else {
-    const pkgJsonPath = upath.join(theme.location, 'package.json');
-    const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-    const maybeStyle =
-      packageJson?.vivliostyle?.theme?.style ??
-      packageJson.style ??
-      packageJson.main;
-    if (!maybeStyle) {
-      throw new DetailError(
-        `Could not find a style file for the theme: ${theme.name}.`,
-        'Please ensure this package satisfies a `vivliostyle.theme.style` property.',
-      );
-    }
-    return upath.relative(from, upath.join(theme.location, maybeStyle));
   }
+  const pkgJsonPath = upath.join(theme.location, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+  const maybeStyle =
+    packageJson?.vivliostyle?.theme?.style ??
+    packageJson.style ??
+    packageJson.main;
+  if (!maybeStyle) {
+    throw new DetailError(
+      `Could not find a style file for the theme: ${theme.name}.`,
+      'Please ensure this package satisfies a `vivliostyle.theme.style` property.',
+    );
+  }
+  return upath.relative(from, upath.join(theme.location, maybeStyle));
 }
 
 export async function cleanupWorkspace({
@@ -87,7 +86,7 @@ export async function cleanupWorkspace({
   workspaceDir,
   themesDir,
   entries,
-}: ResolvedTaskConfig) {
+}: ResolvedTaskConfig): Promise<void> {
   if (
     pathEquals(workspaceDir, entryContextDir) ||
     pathContains(workspaceDir, entryContextDir) ||
@@ -221,7 +220,7 @@ export async function transformManuscript(
       }
     }
   } else if (source?.type === 'uri') {
-    resourceUrl = /^https?:/.test(source.href)
+    resourceUrl = /^https?:/v.test(source.href)
       ? source.href
       : `${rootUrl}${source.href}`;
     resourceLoader = new ResourceLoader();
@@ -233,10 +232,11 @@ export async function transformManuscript(
           Logger.logError(`Failed to fetch resources: ${error.detail}`);
         }),
       });
-    } catch (error: any) {
+    } catch (error) {
+      const thrownError = error as Error;
       throw new DetailError(
         `Failed to fetch the content from ${resourceUrl}`,
-        error.stack ?? error.message,
+        thrownError.stack ?? thrownError.message,
       );
     }
 
@@ -331,7 +331,12 @@ export async function transformManuscript(
   }
 
   if (source?.type === 'uri' && resourceLoader && resourceUrl) {
-    const { response } = resourceLoader.fetcherMap.get(resourceUrl)!;
+    const fetcher = resourceLoader.fetcherMap.get(resourceUrl);
+    /* v8 ignore next 3 */
+    if (!fetcher) {
+      throw new Error(`Failed to locate the fetched content: ${resourceUrl}`);
+    }
+    const { response } = fetcher;
     const contentFetcher = Promise.resolve(
       htmlBuffer,
     ) as jsdom.AbortablePromise<Buffer>;
@@ -349,7 +354,7 @@ export async function transformManuscript(
   return html;
 }
 
-export async function generateManifest({
+export function generateManifest({
   entryContextDir,
   workspaceDir,
   viewerInput: { manifestPath },
@@ -359,7 +364,7 @@ export async function generateManifest({
   language,
   readingProgression,
   cover,
-}: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig }) {
+}: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig }): void {
   const manifestEntries: ArticleEntryConfig[] = entries.map((entry) => ({
     title:
       (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||

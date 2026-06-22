@@ -31,6 +31,31 @@ interface OtherToken {
 
 type Token = NumberToken | OperatorToken | OtherToken;
 
+function scanStringLiteral(
+  content: string,
+  start: number,
+): { str: string; next: number } {
+  const len = content.length;
+  let depth = 1;
+  let str = '(';
+  let i = start + 1;
+  while (i < len && depth > 0) {
+    if (content[i] === '\\' && i + 1 < len) {
+      str += content[i] + content[i + 1];
+      i += 2;
+      continue;
+    }
+    if (content[i] === '(') {
+      depth++;
+    } else if (content[i] === ')') {
+      depth--;
+    }
+    str += content[i];
+    i++;
+  }
+  return { str, next: i };
+}
+
 /**
  * Tokenize PDF content stream
  */
@@ -40,7 +65,7 @@ function* tokenize(content: string): Generator<Token> {
 
   while (i < len) {
     // Skip whitespace
-    while (i < len && /\s/.test(content[i])) {
+    while (i < len && /\s/v.test(content[i])) {
       i++;
     }
     if (i >= len) {
@@ -61,24 +86,9 @@ function* tokenize(content: string): Generator<Token> {
 
     // String literal (...) - must skip properly to avoid parsing numbers inside
     if (c === '(') {
-      let depth = 1;
-      let str = '(';
-      i++;
-      while (i < len && depth > 0) {
-        if (content[i] === '\\' && i + 1 < len) {
-          str += content[i] + content[i + 1];
-          i += 2;
-        } else {
-          if (content[i] === '(') {
-            depth++;
-          } else if (content[i] === ')') {
-            depth--;
-          }
-          str += content[i];
-          i++;
-        }
-      }
-      yield { type: 'other', raw: str };
+      const scanned = scanStringLiteral(content, i);
+      i = scanned.next;
+      yield { type: 'other', raw: scanned.str };
       continue;
     }
 
@@ -121,7 +131,7 @@ function* tokenize(content: string): Generator<Token> {
     if (c === '/') {
       let name = '/';
       i++;
-      while (i < len && /[^\s[\]()<>{}/%]/.test(content[i])) {
+      while (i < len && /[^\s\[\]\(\)<>\{\}\/%]/v.test(content[i])) {
         name += content[i];
         i++;
       }
@@ -131,13 +141,13 @@ function* tokenize(content: string): Generator<Token> {
 
     // Number or operator
     let token = '';
-    while (i < len && /[^\s[\]()<>{}/%]/.test(content[i])) {
+    while (i < len && /[^\s\[\]\(\)<>\{\}\/%]/v.test(content[i])) {
       token += content[i];
       i++;
     }
 
-    if (/^[+-]?(\d+\.?\d*|\.\d+)$/.test(token)) {
-      yield { type: 'number', value: parseFloat(token), raw: token };
+    if (/^[+\-]?(\d+\.?\d*|\.\d+)$/v.test(token)) {
+      yield { type: 'number', value: Number.parseFloat(token), raw: token };
     } else if (token === 'ID') {
       // Inline image: ID is followed by single whitespace, then binary data until EI
       yield { type: 'operator', value: 'ID', raw: 'ID' };
@@ -146,10 +156,10 @@ function* tokenize(content: string): Generator<Token> {
       const dataStart = i;
       while (i < len) {
         if (
-          /\s/.test(content[i]) &&
+          /\s/v.test(content[i]) &&
           content[i + 1] === 'E' &&
           content[i + 2] === 'I' &&
-          (i + 3 >= len || /\s/.test(content[i + 3]))
+          (i + 3 >= len || /\s/v.test(content[i + 3]))
         ) {
           // Emit binary data including trailing whitespace before EI
           yield { type: 'other', raw: content.slice(dataStart, i + 1) };
@@ -179,6 +189,19 @@ function formatRgbKeyForWarning(r: number, g: number, b: number): string {
   return JSON.stringify({ r: ri, g: gi, b: bi });
 }
 
+function warnUnmappedColor(
+  r: number,
+  g: number,
+  b: number,
+  warnedColors: Set<string>,
+): void {
+  const warnKey = formatRgbKeyForWarning(r, g, b);
+  if (!warnedColors.has(warnKey)) {
+    warnedColors.add(warnKey);
+    Logger.logWarn(`RGB color not mapped to CMYK: ${warnKey}`);
+  }
+}
+
 /**
  * Convert RGB color operators to CMYK in a content stream
  */
@@ -198,6 +221,36 @@ export function convertStreamColors(
     pendingNumbers.length = 0;
   };
 
+  const convertRgbOperator = (
+    cmykOp: 'k' | 'K',
+    token: OperatorToken,
+  ): void => {
+    const b = pendingNumbers.pop();
+    const g = pendingNumbers.pop();
+    const r = pendingNumbers.pop();
+    /* v8 ignore next 3 */
+    if (!b || !g || !r) {
+      throw new Error('Expected at least three pending numbers for RGB color');
+    }
+    flushPendingNumbers();
+
+    const key = formatRgbKey(r.value, g.value, b.value);
+    const cmyk = colorMap[key];
+
+    if (cmyk) {
+      const c = (cmyk.c / CMYK_MAX).toString();
+      const m = (cmyk.m / CMYK_MAX).toString();
+      const y = (cmyk.y / CMYK_MAX).toString();
+      const k = (cmyk.k / CMYK_MAX).toString();
+      result.push(`${c} ${m} ${y} ${k} ${cmykOp}`);
+      return;
+    }
+    result.push(r.raw, g.raw, b.raw, token.raw);
+    if (warnUnmapped) {
+      warnUnmappedColor(r.value, g.value, b.value, warnedColors);
+    }
+  };
+
   for (const token of tokenize(content)) {
     if (token.type === 'number') {
       pendingNumbers.push({ value: token.value, raw: token.raw });
@@ -207,30 +260,7 @@ export function convertStreamColors(
       // RGB color: r g b rg (non-stroking) or r g b RG (stroking)
       const cmykOp = op === 'rg' ? 'k' : op === 'RG' ? 'K' : null;
       if (cmykOp && pendingNumbers.length >= 3) {
-        const b = pendingNumbers.pop()!;
-        const g = pendingNumbers.pop()!;
-        const r = pendingNumbers.pop()!;
-        flushPendingNumbers();
-
-        const key = formatRgbKey(r.value, g.value, b.value);
-        const cmyk = colorMap[key];
-
-        if (cmyk) {
-          const c = (cmyk.c / CMYK_MAX).toString();
-          const m = (cmyk.m / CMYK_MAX).toString();
-          const y = (cmyk.y / CMYK_MAX).toString();
-          const k = (cmyk.k / CMYK_MAX).toString();
-          result.push(`${c} ${m} ${y} ${k} ${cmykOp}`);
-        } else {
-          result.push(r.raw, g.raw, b.raw, token.raw);
-          if (warnUnmapped) {
-            const warnKey = formatRgbKeyForWarning(r.value, g.value, b.value);
-            if (!warnedColors.has(warnKey)) {
-              warnedColors.add(warnKey);
-              Logger.logWarn(`RGB color not mapped to CMYK: ${warnKey}`);
-            }
-          }
-        }
+        convertRgbOperator(cmykOp, token);
       } else {
         flushPendingNumbers();
         result.push(token.raw);

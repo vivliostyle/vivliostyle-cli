@@ -26,7 +26,9 @@ import {
   writeFileIfChanged,
 } from '../util.js';
 
-export const createVirtualConsole = (onError: (error: DetailError) => void) => {
+export const createVirtualConsole = (
+  onError: (error: DetailError) => void,
+): VirtualConsole => {
   const virtualConsole = new jsdom.VirtualConsole();
   /* v8 ignore start */
   virtualConsole.on('error', (message) => {
@@ -70,7 +72,10 @@ export class ResourceLoader extends BaseResourceLoader {
 
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();
 
-  fetch(url: string, options?: jsdom.FetchOptions) {
+  fetch(
+    url: string,
+    options?: jsdom.FetchOptions,
+  ): AbortablePromise<Buffer> | null {
     Logger.debug(`[JSDOM] Fetching resource: ${url}`);
     const fetcher = super.fetch(url, options);
     if (fetcher) {
@@ -89,18 +94,18 @@ export class ResourceLoader extends BaseResourceLoader {
     rootUrl: string;
     outputDir: string;
     onError?: (error: Error) => void;
-  }) {
+  }): Promise<{ url: string; encodingFormat?: string }[]> {
     const rootHref = rootUrl.startsWith('data:')
       ? ResourceLoader.dataUrlOrigin
-      : /^https?:/i.test(rootUrl)
+      : /^https?:/iv.test(rootUrl)
         ? new URL('/', rootUrl).href
         : new URL('.', rootUrl).href;
 
     const normalizeToLocalPath = (urlString: string, mimeType?: string) => {
       const url = new URL(urlString);
       url.hash = '';
-      if (mimeType === 'text/html' && !/\.html?$/.test(url.pathname)) {
-        url.pathname = `${url.pathname.replace(/\/$/, '')}/index.html`;
+      if (mimeType === 'text/html' && !/\.html?$/v.test(url.pathname)) {
+        url.pathname = `${url.pathname.replace(/\/$/v, '')}/index.html`;
       }
       const relTarget = upath.relative(rootHref, url.href);
       return decodeURI(relTarget);
@@ -108,13 +113,14 @@ export class ResourceLoader extends BaseResourceLoader {
 
     const fetchedResources: { url: string; encodingFormat?: string }[] = [];
     await Promise.allSettled(
+      // oxlint-disable-next-line require-await -- Each callback must return a Promise for Promise.allSettled
       [...fetcherMap.entries()].flatMap(async ([url, fetcher]) => {
         if (!url.startsWith(rootHref)) {
           return [];
         }
         return (
           fetcher
-            .then(async (buffer) => {
+            .then((buffer) => {
               let encodingFormat: string | undefined;
               try {
                 const contentType = fetcher.response?.headers['content-type'];
@@ -149,7 +155,7 @@ export async function getJsdomFromUrlOrFile({
   src: string;
   resourceLoader?: ResourceLoader;
   virtualConsole?: VirtualConsole;
-}) {
+}): Promise<JSDOM> {
   const url = isValidUri(src) ? new URL(src) : pathToFileURL(src);
   let dom: JSDOM;
   if (url.protocol === 'http:' || url.protocol === 'https:') {
@@ -159,6 +165,7 @@ export async function getJsdomFromUrlOrFile({
     });
   } else if (url.protocol === 'file:') {
     if (resourceLoader) {
+      // oxlint-disable-next-line no-underscore-dangle -- jsdom ResourceLoader API
       const file = resourceLoader._readFile(fileURLToPath(url));
       resourceLoader.fetcherMap.set(url.href, file);
     }
@@ -175,7 +182,7 @@ export async function getJsdomFromUrlOrFile({
     const data = decodeURIComponent(body);
     const buffer = Buffer.from(
       data,
-      /;base64$/i.test(head) ? 'base64' : 'utf8',
+      /;base64$/iv.test(head) ? 'base64' : 'utf8',
     );
     const dummyUrl = `${ResourceLoader.dataUrlOrigin}index.html`;
     if (resourceLoader) {
@@ -210,7 +217,7 @@ export function getJsdomFromString({
 }: {
   html: string;
   virtualConsole?: VirtualConsole;
-}) {
+}): JSDOM {
   return new JSDOM(html, {
     virtualConsole,
   });
@@ -219,7 +226,7 @@ export function getJsdomFromString({
 export async function getStructuredSectionFromHtml(
   htmlPath: string,
   href?: string,
-) {
+): Promise<StructuredDocumentSection[]> {
   const dom = await getJsdomFromUrlOrFile({ src: htmlPath });
   const { document } = dom.window;
   const allHeadings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
@@ -230,11 +237,9 @@ export async function getStructuredSectionFromHtml(
     })
     .toSorted((a, b) => {
       const position = a.compareDocumentPosition(b);
-      return position & 2 /* DOCUMENT_POSITION_PRECEDING */
-        ? 1
-        : position & 4 /* DOCUMENT_POSITION_FOLLOWING */
-          ? -1
-          : 0;
+      // 2: DOCUMENT_POSITION_PRECEDING
+      // 4: DOCUMENT_POSITION_FOLLOWING
+      return position & 2 ? 1 : position & 4 ? -1 : 0;
     });
 
   function traverse(headers: Element[]): StructuredDocumentSection[] {
@@ -242,7 +247,11 @@ export async function getStructuredSectionFromHtml(
       return [];
     }
     const [head, ...tail] = headers;
-    const section = head.parentElement!;
+    const section = head.parentElement;
+    /* v8 ignore next 3 */
+    if (!section) {
+      throw new Error('Heading element is not contained in any parent element');
+    }
     const id = head.id || section.id;
     const level = Number(head.tagName.slice(1));
     let i = tail.findIndex((s) => Number(s.tagName.slice(1)) <= level);
@@ -250,7 +259,7 @@ export async function getStructuredSectionFromHtml(
     return [
       {
         headingHtml: htmlPurify.sanitize(head.innerHTML),
-        headingText: head.textContent?.trim().replace(/\s+/g, ' ') || '',
+        headingText: head.textContent?.trim().replaceAll(/\s+/gv, ' ') || '',
         level,
         ...(href && id && { href: `${href}#${encodeURIComponent(id)}` }),
         ...(id && { id }),
@@ -272,10 +281,10 @@ const getTocHtmlStyle = ({
   if (!pageBreakBefore && typeof pageCounterReset !== 'number') {
     return null;
   }
-  return /* css */ `
+  return `
 ${
   pageBreakBefore
-    ? /* css */ `:root {
+    ? `:root {
   break-before: ${pageBreakBefore};
 }`
     : ''
@@ -283,7 +292,7 @@ ${
 ${
   // Note: `--vs-document-first-page-counter-reset` is reserved variable name in Vivliostyle base themes
   typeof pageCounterReset === 'number'
-    ? /* css */ `@page :nth(1) {
+    ? `@page :nth(1) {
   --vs-document-first-page-counter-reset: page ${Math.floor(pageCounterReset - 1)};
   counter-reset: var(--vs-document-first-page-counter-reset);
 }`
@@ -360,7 +369,7 @@ export function generateDefaultTocHtml({
 }: {
   language?: string;
   title?: string;
-}) {
+}): string {
   const toc = (
     <html lang={language}>
       <head>
@@ -404,7 +413,8 @@ export async function generateTocListSection({
         title: entry.title || upath.basename(entry.target, '.html'),
         href: encodeURI(upath.relative(distDir, entry.target)),
         sections,
-        children: [], // TODO
+        // TODO
+        children: [],
       };
     }),
   );
@@ -463,7 +473,7 @@ export async function processTocHtml(
     l.setAttribute('rel', 'publication');
     l.setAttribute('type', 'application/ld+json');
     l.setAttribute('href', encodeURI(upath.relative(distDir, manifestPath)));
-    document.head.appendChild(l);
+    document.head.append(l);
   }
 
   const style = document.querySelector('style[data-vv-style]');
@@ -480,7 +490,7 @@ export async function processTocHtml(
   if (nav && !nav.hasChildNodes()) {
     const h2 = document.createElement('h2');
     h2.textContent = tocTitle;
-    nav.appendChild(h2);
+    nav.append(h2);
     nav.innerHTML += await generateTocListSection({
       entries,
       distDir,
@@ -495,7 +505,7 @@ const getCoverHtmlStyle = ({
   pageBreakBefore,
 }: {
   pageBreakBefore?: 'recto' | 'verso' | 'left' | 'right';
-}) => /* css */ `
+}) => `
 ${
   pageBreakBefore
     ? `:root {
@@ -523,7 +533,7 @@ export function generateDefaultCoverHtml({
 }: {
   language?: string;
   title?: string;
-}) {
+}): string {
   const toc = (
     <html lang={language}>
       <head>
@@ -541,6 +551,7 @@ export function generateDefaultCoverHtml({
   return toHtml(toc);
 }
 
+// oxlint-disable-next-line require-await -- Keep the Promise return type for the await-based call sites
 export async function processCoverHtml(
   dom: JSDOM,
   {
@@ -574,6 +585,7 @@ export async function processCoverHtml(
   return dom;
 }
 
+// oxlint-disable-next-line require-await -- Keep the Promise return type for the await-based call sites
 export async function processManuscriptHtml(
   dom: JSDOM,
   {
@@ -592,7 +604,7 @@ export async function processManuscriptHtml(
   if (title) {
     if (!document.querySelector('title')) {
       const t = document.createElement('title');
-      document.head.appendChild(t);
+      document.head.append(t);
     }
     document.title = title;
   }
@@ -601,7 +613,7 @@ export async function processManuscriptHtml(
     l.setAttribute('rel', 'stylesheet');
     l.setAttribute('type', 'text/css');
     l.setAttribute('href', encodeURI(s));
-    document.head.appendChild(l);
+    document.head.append(l);
   }
   if (language) {
     if (contentType === 'application/xhtml+xml') {
@@ -609,10 +621,8 @@ export async function processManuscriptHtml(
         document.documentElement.setAttribute('lang', language);
         document.documentElement.setAttribute('xml:lang', language);
       }
-    } else {
-      if (!document.documentElement.getAttribute('lang')) {
-        document.documentElement.setAttribute('lang', language);
-      }
+    } else if (!document.documentElement.getAttribute('lang')) {
+      document.documentElement.setAttribute('lang', language);
     }
   }
   return dom;
@@ -633,10 +643,16 @@ export async function fetchLinkedPublicationManifest({
   if (!linkEl) {
     return null;
   }
-  const href = linkEl.getAttribute('href')!.trim();
+  const hrefAttr = linkEl.getAttribute('href');
+  /* v8 ignore next 3 */
+  if (hrefAttr === null) {
+    throw new Error('Publication manifest link has no href attribute');
+  }
+  const href = hrefAttr.trim();
   let manifest: PublicationManifest;
   let manifestUrl = baseUrl;
   if (href.startsWith('#')) {
+    // oxlint-disable-next-line prefer-query-selector -- Match by raw id without CSS selector escaping
     const scriptEl = document.getElementById(href.slice(1));
     if (scriptEl?.getAttribute('type') !== 'application/ld+json') {
       return null;
@@ -723,7 +739,11 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
         return acc;
       }
       const res = parseTocItem(val);
-      return res && [...acc, res];
+      if (!res) {
+        return null;
+      }
+      acc.push(res);
+      return acc;
     }, []);
     return (
       children && {
@@ -744,7 +764,11 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
           return acc;
         }
         const res = parseTocItem(val);
-        return res && [...acc, res];
+        if (!res) {
+          return null;
+        }
+        acc.push(res);
+        return acc;
       }, []);
       return children && { element: tocRoot as HTMLElement, heading, children };
     } else if (
@@ -784,12 +808,14 @@ export function parsePageListDocument(
       const children = Array.from(child.children).reduce<
         PageListResourceTreeItem[] | null
       >((acc, element) => {
-        return (
-          acc &&
-          (element.tagName === 'LI'
-            ? [...acc, { element: element as HTMLElement }]
-            : null)
-        );
+        if (!acc) {
+          return acc;
+        }
+        if (element.tagName !== 'LI') {
+          return null;
+        }
+        acc.push({ element: element as HTMLElement });
+        return acc;
       }, []);
       return (
         children && { element: pageListRoot as HTMLElement, heading, children }

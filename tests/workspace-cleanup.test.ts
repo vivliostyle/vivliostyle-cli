@@ -9,7 +9,7 @@ const mockedMove = vi.hoisted(() =>
   vi.fn<(from: string, to: string) => Promise<void>>(),
 );
 
-vi.mock('fs-extra/esm', async () => {
+vi.mock('fs-extra/esm', () => {
   return {
     copy: vi.fn<() => Promise<void>>(),
     move: mockedMove.mockImplementation(async (from, to) => {

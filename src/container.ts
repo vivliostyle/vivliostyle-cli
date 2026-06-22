@@ -23,16 +23,15 @@ export function toContainerPath(urlOrAbsPath: string): string {
       return pathToFileURL(
         upath.posix.join(
           CONTAINER_ROOT_DIR,
-          upath.toUnix(fileURLToPath(urlOrAbsPath)).replace(/^\w:/, ''),
+          upath.toUnix(fileURLToPath(urlOrAbsPath)).replace(/^\w:/v, ''),
         ),
       ).href;
-    } else {
-      return urlOrAbsPath;
     }
+    return urlOrAbsPath;
   }
   return upath.posix.join(
     CONTAINER_ROOT_DIR,
-    upath.toUnix(urlOrAbsPath).replace(/^\w:/, ''),
+    upath.toUnix(urlOrAbsPath).replace(/^\w:/v, ''),
   );
 }
 
@@ -72,7 +71,7 @@ export async function runContainer({
   env?: [string, string][];
   workdir?: string;
   signal?: AbortSignal;
-}) {
+}): Promise<void> {
   signal?.throwIfAborted();
   const { default: commandExists } = await importNodeModule('command-exists');
   const dockerExists = await commandExists('docker');
@@ -109,9 +108,8 @@ export async function runContainer({
       '--rm',
       ...(entrypoint ? ['--entrypoint', entrypoint] : []),
       ...(env ? env.flatMap(([k, v]) => ['-e', `${k}=${v}`]) : []),
-      ...(process.env.DEBUG
-        ? ['-e', `DEBUG=${process.env.DEBUG}`] // escape seems to work well
-        : []),
+      // escape seems to work well
+      ...(process.env.DEBUG ? ['-e', `DEBUG=${process.env.DEBUG}`] : []),
       ...userVolumeArgs.flatMap((arg) => ['-v', arg]),
       ...(workdir ? ['-w', workdir] : []),
       image,

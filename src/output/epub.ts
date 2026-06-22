@@ -58,13 +58,13 @@ interface SpineEntry {
 const TOC_ID = 'toc';
 const LANDMARKS_ID = 'landmarks';
 const PAGELIST_ID = 'page-list';
-const COVER_IMAGE_MIMETYPES = [
+const COVER_IMAGE_MIMETYPES = new Set([
   'image/gif',
   'image/jpeg',
   'image/png',
   'image/svg+xml',
   'image/webp',
-];
+]);
 
 const changeExtname = (filepath: string, newExt: string) => {
   const ext = upath.extname(filepath);
@@ -78,7 +78,7 @@ const getRelativeHref = (target: string, baseUrl: string, rootUrl: string) => {
   if (hrefUrl.protocol !== 'file:') {
     return target;
   }
-  if (/\.html?$/.test(hrefUrl.pathname)) {
+  if (/\.html?$/v.test(hrefUrl.pathname)) {
     hrefUrl.pathname = changeExtname(hrefUrl.pathname, '.xhtml');
   }
   const pathname = upath.posix.relative(
@@ -97,7 +97,7 @@ const normalizeLocalizableString = (
   }
   const values = [value]
     .flat()
-    .map((value) => (typeof value === 'string' ? { value } : value));
+    .map((item) => (typeof item === 'string' ? { value: item } : item));
   const localizedValues = values.filter(
     (v): v is LocalizableStringObject & { language: string } => !!v.language,
   );
@@ -135,7 +135,7 @@ export async function exportEpub({
   relManifestPath?: string;
   target: string;
   epubVersion: '3.0';
-}) {
+}): Promise<void> {
   Logger.debug('Export EPUB', {
     webpubDir,
     entryHtmlFile,
@@ -177,8 +177,7 @@ export async function exportEpub({
   const pictureCoverResource = findPublicationLink(
     'cover',
     manifest.resources,
-    (e) =>
-      COVER_IMAGE_MIMETYPES.includes(e.encodingFormat || mime(e.url) || ''),
+    (e) => COVER_IMAGE_MIMETYPES.has(e.encodingFormat || mime(e.url) || ''),
   );
   const htmlCoverResource = findPublicationLink(
     'cover',
@@ -186,7 +185,7 @@ export async function exportEpub({
       ...[manifest.readingOrder || []].flat(),
       ...[manifest.resources || []].flat(),
     ],
-    (e) => /\.html?$/.test(e.url),
+    (e) => /\.html?$/v.test(e.url),
   );
 
   const manifestItem = [
@@ -198,11 +197,8 @@ export async function exportEpub({
       const { url, encodingFormat } =
         typeof val === 'string' ? ({ url: val } as PublicationLinks) : val;
       // Only accepts path-like url
-      try {
-        new URL(url);
+      if (URL.canParse(url)) {
         return acc;
-      } catch (e) {
-        /* NOOP */
       }
       if (!fs.existsSync(upath.join(tmpDir, 'EPUB', url))) {
         return acc;
@@ -212,7 +208,7 @@ export async function exportEpub({
         href: url,
         mediaType,
       };
-      if (/\.html?$/.test(url)) {
+      if (/\.html?$/v.test(url)) {
         acc[url].href = changeExtname(url, '.xhtml');
         acc[url].mediaType = 'application/xhtml+xml';
       }
@@ -225,7 +221,7 @@ export async function exportEpub({
   );
 
   const htmlFiles = Object.keys(manifestItem).filter((url) =>
-    /\.html?$/.test(url),
+    /\.html?$/v.test(url),
   );
   let tocHtml = htmlFiles.find((f) => f === tocResource?.url);
   const readingOrder = [manifest.readingOrder || entryHtmlRelPath]
@@ -266,31 +262,31 @@ export async function exportEpub({
 
   const contextDir = upath.join(tmpDir, 'EPUB');
   type XhtmlEntry = Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
-  const processHtml = async (target: string) => {
+  const processHtml = async (htmlFile: string) => {
     let parseResult: XhtmlEntry;
     try {
       parseResult = await transpileHtmlToXhtml({
-        target,
+        target: htmlFile,
         contextDir,
       });
     } catch (error) {
       const thrownError = error as Error;
       throw new DetailError(
-        `Failed to transpile document to XHTML: ${target}`,
+        `Failed to transpile document to XHTML: ${htmlFile}`,
         thrownError.stack ?? thrownError.message,
       );
     }
     if (parseResult.hasMathmlContent) {
-      appendManifestProperty(manifestItem[target], 'mathml');
+      appendManifestProperty(manifestItem[htmlFile], 'mathml');
     }
     if (parseResult.hasRemoteResources) {
-      appendManifestProperty(manifestItem[target], 'remote-resources');
+      appendManifestProperty(manifestItem[htmlFile], 'remote-resources');
     }
     if (parseResult.hasScriptedContent) {
-      appendManifestProperty(manifestItem[target], 'scripted');
+      appendManifestProperty(manifestItem[htmlFile], 'scripted');
     }
     if (parseResult.hasSvgContent) {
-      appendManifestProperty(manifestItem[target], 'svg');
+      appendManifestProperty(manifestItem[htmlFile], 'svg');
     }
     return parseResult;
   };
@@ -298,15 +294,16 @@ export async function exportEpub({
   const processResult: Record<string, XhtmlEntry> = {};
   Logger.debug(`Transpiling ToC HTML to XHTML: ${tocHtml}`);
   processResult[tocHtml] = await processHtml(tocHtml);
-  for (const target of htmlFiles.filter((f) => f !== tocHtml)) {
-    Logger.debug(`Transpiling HTML to XHTML: ${target}`);
-    processResult[target] = await processHtml(target);
+  for (const htmlFile of htmlFiles.filter((f) => f !== tocHtml)) {
+    Logger.debug(`Transpiling HTML to XHTML: ${htmlFile}`);
+    processResult[htmlFile] = await processHtml(htmlFile);
   }
 
   // Process ToC document
   const { document: entryDocument } = processResult[tocHtml].dom.window;
   const docLanguages = [manifest.inLanguage]
     .flat()
+    // oxlint-disable-next-line prefer-native-coercion-functions -- The type predicate narrows the result to string[]
     .filter((v): v is string => Boolean(v));
   if (docLanguages.length === 0) {
     docLanguages.push(entryDocument.documentElement.lang || 'en');
@@ -341,7 +338,7 @@ export async function exportEpub({
       force: true,
       recursive: true,
     });
-    delete manifestItem[relManifestPath];
+    Reflect.deleteProperty(manifestItem, relManifestPath);
   }
 
   // META-INF/container.xml
@@ -396,7 +393,11 @@ async function transpileHtmlToXhtml({
   document.documentElement.setAttribute('xmlns:epub', EPUB_NS);
 
   document.querySelectorAll('a[href]').forEach((el) => {
-    const href = decodeURI(el.getAttribute('href')!);
+    const hrefAttr = el.getAttribute('href');
+    if (hrefAttr === null) {
+      return;
+    }
+    const href = decodeURI(hrefAttr);
     el.setAttribute('href', getRelativeHref(href, target, target));
   });
 
@@ -417,7 +418,7 @@ async function transpileHtmlToXhtml({
 function replaceWithNavElement(dom: JSDOM, el: Element) {
   const nav = dom.window.document.createElement('nav');
   while (el.firstChild) {
-    nav.appendChild(el.firstChild);
+    nav.append(el.firstChild);
   }
   for (let i = 0; i < el.attributes.length; i++) {
     nav.attributes.setNamedItem(el.attributes[i].cloneNode() as Attr);
@@ -460,7 +461,7 @@ async function processTocDocument({
       nav.setAttribute('hidden', '');
       const h2 = document.createElement('h2');
       h2.textContent = TOC_TITLE;
-      nav.appendChild(h2);
+      nav.append(h2);
       const ol = document.createElement('ol');
       tocResourceTree = {
         element: nav,
@@ -470,22 +471,22 @@ async function processTocDocument({
       for (const content of readingOrder) {
         let name = normalizeLocalizableString(content.name, docLanguages);
         if (!name) {
-          const dom = await getJsdomFromUrlOrFile({
+          const contentDom = await getJsdomFromUrlOrFile({
             src: upath.join(contextDir, changeExtname(content.url, '.xhtml')),
           });
-          name = dom.window.document.title;
+          name = contentDom.window.document.title;
         }
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.textContent = name;
         a.href = getRelativeHref(content.url, '', target);
-        li.appendChild(a);
-        ol.appendChild(li);
+        li.append(a);
+        ol.append(li);
         tocResourceTree.children.push({ element: li, label: a });
       }
 
-      nav.appendChild(ol);
-      document.body.appendChild(nav);
+      nav.append(ol);
+      document.body.append(nav);
       Logger.debug('Generated toc nav element', nav.outerHTML);
     }
 
@@ -497,7 +498,7 @@ async function processTocDocument({
       nav.setAttribute('hidden', '');
       const h2 = document.createElement('h2');
       h2.textContent = EPUB_LANDMARKS_TITLE;
-      nav.appendChild(h2);
+      nav.append(h2);
       const ol = document.createElement('ol');
       for (const { type, href, text } of landmarks) {
         const li = document.createElement('li');
@@ -505,11 +506,11 @@ async function processTocDocument({
         a.setAttribute('epub:type', type);
         a.setAttribute('href', getRelativeHref(href, '', target));
         a.text = text;
-        li.appendChild(a);
-        ol.appendChild(li);
+        li.append(a);
+        ol.append(li);
       }
-      nav.appendChild(ol);
-      document.body.appendChild(nav);
+      nav.append(ol);
+      document.body.append(nav);
       Logger.debug('Generated landmark nav element', nav.outerHTML);
     }
   }
@@ -522,14 +523,20 @@ async function processTocDocument({
     'link[href][rel="publication"]',
   );
   if (publicationLinkEl) {
-    const href = publicationLinkEl.getAttribute('href')!.trim();
+    const hrefAttr = publicationLinkEl.getAttribute('href');
+    /* v8 ignore next 3 */
+    if (hrefAttr === null) {
+      throw new Error('Expected publication link element to have href');
+    }
+    const href = hrefAttr.trim();
     if (href.startsWith('#')) {
+      // oxlint-disable-next-line prefer-query-selector -- Match by raw id without CSS selector escaping
       const scriptEl = document.getElementById(href.slice(1));
       if (scriptEl?.getAttribute('type') === 'application/ld+json') {
-        scriptEl.parentNode?.removeChild(scriptEl);
+        scriptEl.remove();
       }
     }
-    publicationLinkEl.parentNode?.removeChild(publicationLinkEl);
+    publicationLinkEl.remove();
   }
 
   const absPath = upath.join(contextDir, target);
@@ -581,11 +588,14 @@ function buildEpubPackageDocument({
   const normalizeDate = (value: string | number | undefined) =>
     value && `${new Date(value).toISOString().split('.')[0]}Z`;
 
-  const transformToGenericTextNode = <T = {}>(value: unknown, attributes?: T) =>
+  const transformToGenericTextNode = <T = Record<string, unknown>>(
+    value: unknown,
+    attributes?: T,
+  ) =>
     [value]
       .flat()
       .filter(Boolean)
-      .map(() => ({ ...attributes, '#text': `${value}` }));
+      .map(() => Object.assign({}, attributes, { '#text': `${value}` }));
   const transformContributor = (
     contributorMap: Record<string, Contributor | undefined>,
   ) =>
@@ -698,7 +708,7 @@ function buildEpubPackageDocument({
   });
 }
 
-async function compressEpub({
+function compressEpub({
   target,
   sourceDir,
 }: {
@@ -708,7 +718,8 @@ async function compressEpub({
   Logger.debug(`Compressing EPUB: ${target}`);
   const output = fs.createWriteStream(target);
   const archive = archiver('zip', {
-    zlib: { level: 9 }, // Compression level
+    // Compression level
+    zlib: { level: 9 },
   });
   return new Promise((resolve, reject) => {
     output.on('close', () => {

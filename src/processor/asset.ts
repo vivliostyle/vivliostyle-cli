@@ -14,17 +14,17 @@ export class GlobMatcher {
     patterns: string[];
   })[];
 
-  #_matchers: picomatch.Matcher[];
+  #matchers: picomatch.Matcher[];
 
   constructor(matcherConfig: typeof GlobMatcher.prototype.matcherConfig) {
     this.matcherConfig = matcherConfig;
-    this.#_matchers = matcherConfig.map(({ patterns, ...options }) =>
+    this.#matchers = matcherConfig.map(({ patterns, ...options }) =>
       picomatch(patterns, options),
     );
   }
 
   match(test: string): boolean {
-    return this.#_matchers.some((matcher) => matcher(test));
+    return this.#matchers.some((matcher) => matcher(test));
   }
 
   async glob(
@@ -65,11 +65,11 @@ function getIgnoreAssetPatterns({
 }): string[] {
   return [
     ...outputs.flatMap(({ format, path: p }) =>
-      !pathContains(cwd, p)
-        ? []
-        : format === 'webpub'
+      pathContains(cwd, p)
+        ? format === 'webpub'
           ? upath.join(upath.relative(cwd, p), '**')
-          : upath.relative(cwd, p),
+          : upath.relative(cwd, p)
+        : [],
     ),
     ...entries.flatMap(({ template }) => {
       return template?.type === 'file' && pathContains(cwd, template.pathname)
@@ -94,7 +94,7 @@ export function getWebPubResourceMatcher({
   cwd: string;
   manifestPath: string;
   additionalPatterns?: string[];
-}) {
+}): GlobMatcher {
   return new GlobMatcher([
     {
       patterns: [
@@ -137,7 +137,7 @@ export function getAssetMatcher({
 > & {
   cwd: string;
   ignore?: string[];
-}) {
+}): GlobMatcher {
   const ignorePatterns = [
     ...ignore,
     ...excludes,

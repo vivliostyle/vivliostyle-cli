@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
 
-import type { Browser, Page } from 'puppeteer-core';
+import type { Browser, HTTPResponse, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
@@ -51,19 +51,21 @@ export async function buildPDF({
     )} ${entry.title ? gray(entry.title) : ''}`;
   }
 
-  function handleEntry(response: any) {
-    const entry = config.entries.find((entry): entry is ManuscriptEntry => {
-      if (!('source' in entry)) {
-        return false;
-      }
-      const url = new URL(response.url());
-      return url.protocol === 'file:'
-        ? pathEquals(entry.target, url.pathname)
-        : pathEquals(
-            upath.relative(config.workspaceDir, entry.target),
-            url.pathname.substring(1),
-          );
-    });
+  function handleEntry(response: HTTPResponse) {
+    const entry = config.entries.find(
+      (candidate): candidate is ManuscriptEntry => {
+        if (!('source' in candidate)) {
+          return false;
+        }
+        const url = new URL(response.url());
+        return url.protocol === 'file:'
+          ? pathEquals(candidate.target, url.pathname)
+          : pathEquals(
+              upath.relative(config.workspaceDir, candidate.target),
+              url.pathname.slice(1),
+            );
+      },
+    );
     if (entry) {
       if (!lastEntry) {
         lastEntry = entry;
@@ -84,12 +86,12 @@ export async function buildPDF({
     onBrowserOpen: () => {
       Logger.logUpdate('Building pages');
     },
-    onPageOpen: async (page) => {
-      page.on('pageerror', (error) => {
+    onPageOpen: async (openedPage) => {
+      openedPage.on('pageerror', (error) => {
         Logger.logError(red((error as Error).message));
       });
 
-      page.on('console', (msg) => {
+      openedPage.on('console', (msg) => {
         switch (msg.type()) {
           case 'error':
             if (msg.location().url?.endsWith('/vivliostyle-viewer.js')) {
@@ -98,7 +100,7 @@ export async function buildPDF({
             }
             return;
           case 'debug':
-            if (/time slice/.test(msg.text())) {
+            if (/time slice/v.test(msg.text())) {
               return;
             }
             break;
@@ -110,7 +112,7 @@ export async function buildPDF({
         }
       });
 
-      page.on('response', (response) => {
+      openedPage.on('response', (response) => {
         Logger.debug(
           gray('viewer:response'),
           green(response.status().toString()),
@@ -130,7 +132,7 @@ export async function buildPDF({
         Logger.logError(red(`${response.status()}`), response.url());
       });
 
-      await page.setDefaultTimeout(config.timeout);
+      await openedPage.setDefaultTimeout(config.timeout);
     },
   });
 
@@ -166,9 +168,8 @@ export async function buildPDF({
 
       const pageProgression = await page.evaluate((): 'ltr' | 'rtl' =>
         /* v8 ignore next 5 */
-        document
-          .querySelector('#vivliostyle-viewer-viewport')
-          ?.getAttribute('data-vivliostyle-page-progression') === 'rtl'
+        document.querySelector<HTMLElement>('#vivliostyle-viewer-viewport')
+          ?.dataset.vivliostylePageProgression === 'rtl'
           ? 'rtl'
           : 'ltr',
       );
@@ -176,7 +177,7 @@ export async function buildPDF({
         /* v8 ignore next 3 */
         document
           .querySelector('#vivliostyle-menu_settings .version')
-          ?.textContent?.replace(/^.*?: (\d[-+.\w]+).*$/, '$1'),
+          ?.textContent?.replace(/^.*?: (\d[\-+.\w]+).*$/v, '$1'),
       );
       const metadata = await loadMetadata(page);
       const toc = await loadTOC(page);
@@ -195,7 +196,9 @@ export async function buildPDF({
       // because page.pdf() doesn't support for the preferCSSPageSize option.
       // Use a sufficiently large value to accommodate user-defined page sizes.
       const dimensionSizeForWebDriverBiDi =
-        parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) || 3780; // 1000mm
+        Number.parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) ||
+        // 1000mm
+        3780;
       const pdf = await page.pdf({
         margin: {
           top: 0,
@@ -259,14 +262,14 @@ export async function buildPDF({
   return target.path;
 }
 
-async function loadMetadata(page: Page): Promise<Meta> {
+function loadMetadata(page: Page): Promise<Meta> {
   return page.evaluate(() => window.coreViewer.getMetadata());
 }
 
 // Show and hide the TOC in order to read its contents.
 // Chromium needs to see the TOC links in the DOM to add
 // the PDF destinations used during postprocessing.
-async function loadTOC(page: Page): Promise<TOCItem[]> {
+function loadTOC(page: Page): Promise<TOCItem[]> {
   /* v8 ignore start */
   return page.evaluate(
     () =>
@@ -286,7 +289,7 @@ async function loadTOC(page: Page): Promise<TOCItem[]> {
   /* v8 ignore stop */
 }
 
-async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
+function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
   /* v8 ignore start */
   return page.evaluate(() => {
     const sizeData: PageSizeData[] = [];
@@ -299,10 +302,10 @@ async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
         'div[data-vivliostyle-bleed-box]',
       ) as HTMLElement;
       sizeData.push({
-        mediaWidth: parseFloat(pageContainer.style.width) * 0.75,
-        mediaHeight: parseFloat(pageContainer.style.height) * 0.75,
-        bleedOffset: parseFloat(bleedBox?.style.left) * 0.75,
-        bleedSize: parseFloat(bleedBox?.style.paddingLeft) * 0.75,
+        mediaWidth: Number.parseFloat(pageContainer.style.width) * 0.75,
+        mediaHeight: Number.parseFloat(pageContainer.style.height) * 0.75,
+        bleedOffset: Number.parseFloat(bleedBox?.style.left) * 0.75,
+        bleedSize: Number.parseFloat(bleedBox?.style.paddingLeft) * 0.75,
       });
     }
     return sizeData;
@@ -310,7 +313,7 @@ async function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
   /* v8 ignore stop */
 }
 
-async function loadCmykMap(page: Page): Promise<CmykMap> {
+function loadCmykMap(page: Page): Promise<CmykMap> {
   /* v8 ignore next 3 */
   return page.evaluate(() => window.coreViewer.getCmykMap?.() ?? {});
 }

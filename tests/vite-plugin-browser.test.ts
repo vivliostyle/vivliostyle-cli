@@ -5,9 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResolvedTaskConfig } from '../src/config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../src/config/schema.js';
 
-const mockedLaunchPreview = vi.hoisted(() => vi.fn());
-const mockedGetViewerFullUrl = vi.hoisted(() => vi.fn());
-const mockedReloadConfig = vi.hoisted(() => vi.fn());
+const mockedLaunchPreview = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
+const mockedGetViewerFullUrl = vi.hoisted(() =>
+  vi.fn<() => Promise<unknown>>(),
+);
+const mockedReloadConfig = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
 
 vi.mock('../src/browser.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/browser.js')>()),
@@ -39,11 +41,11 @@ describe('vsBrowserPlugin cancellation', () => {
     const protocolError = new Error(
       'Protocol error (Runtime.callFunctionOn): Target closed',
     );
-    const closeBrowser = vi.fn(async () => {});
+    const closeBrowser = vi.fn<() => Promise<void>>(async () => {});
     const page = {
-      on: vi.fn(),
-      off: vi.fn(),
-      bringToFront: vi.fn(async () => {
+      on: vi.fn<() => void>(),
+      off: vi.fn<() => void>(),
+      bringToFront: vi.fn<() => Promise<void>>(() => {
         controller.abort(reason);
         throw protocolError;
       }),
@@ -61,16 +63,14 @@ describe('vsBrowserPlugin cancellation', () => {
       } as ParsedVivliostyleInlineConfig,
     });
     const server = {
-      listen: vi.fn(async () => server),
-      close: vi.fn(async () => {}),
+      // oxlint-disable-next-line require-await -- mock must return a Promise to match listen's signature
+      listen: vi.fn<() => Promise<unknown>>(async () => server),
+      close: vi.fn<() => Promise<void>>(async () => {}),
       config: {},
     } as unknown as ViteDevServer;
     const configureServer = plugin.configureServer;
     expect(typeof configureServer).toBe('function');
-    if (typeof configureServer !== 'function') {
-      return;
-    }
-    configureServer(server);
+    (configureServer as (server: ViteDevServer) => void)(server);
 
     await expect(server.listen()).rejects.toBe(reason);
     expect(mockedLaunchPreview).toHaveBeenCalledWith(
