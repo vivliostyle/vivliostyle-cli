@@ -16,17 +16,16 @@ export async function createVitePlugin(
   inlineConfig: VivliostyleInlineConfig = {},
 ): Promise<vite.Plugin[]> {
   const parsedInlineConfig = v.parse(VivliostyleInlineConfig, inlineConfig);
-  let viteLogger: ReturnType<typeof vite.createLogger>;
+  const viteLogger = vite.createLogger('info', {
+    prefix: '[vivliostyle]',
+  });
   Logger.setLogOptions({
     ...parsedInlineConfig,
     logger: parsedInlineConfig.logger ?? {
-      info: (msg) => viteLogger?.info(msg, { timestamp: true }),
-      warn: (msg) => viteLogger?.warn(msg, { timestamp: true }),
-      error: (msg) => viteLogger?.error(msg, { timestamp: true }),
+      info: (msg) => viteLogger.info(msg, { timestamp: true }),
+      warn: (msg) => viteLogger.warn(msg, { timestamp: true }),
+      error: (msg) => viteLogger.error(msg, { timestamp: true }),
     },
-  });
-  viteLogger = vite.createLogger('info', {
-    prefix: '[vivliostyle]',
   });
   Logger.debug('inlineConfig %O', parsedInlineConfig);
   const vivliostyleConfig =

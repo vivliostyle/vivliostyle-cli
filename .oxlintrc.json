@@ -29,6 +29,17 @@
     "prefer-number-properties": "error",
     "prefer-node-protocol": "error",
     "no-param-reassign": "error",
+    "vitest/expect-expect": [
+      "error",
+      {
+        "assertFunctionNames": [
+          "expect",
+          "expectTypeOf",
+          "**.expect",
+          "**.expectTypeOf"
+        ]
+      }
+    ],
     // Pedantic Rules
     "max-classes-per-file": "off",
     "max-lines": "off",
@@ -40,7 +51,11 @@
     "no-await-in-loop": "off",
     // Suspicious Rules
     "consistent-function-scoping": "off",
-    "no-shadow": ["error", { "allow": ["_"] }]
+    "no-shadow": ["error", { "allow": ["_"] }],
+    // Style Rules
+    "consistent-type-imports": ["error", { "disallowTypeAnnotations": false }],
+    "curly": "error",
+    "prefer-const": ["error", { "destructuring": "all" }]
   },
   "overrides": [
     {

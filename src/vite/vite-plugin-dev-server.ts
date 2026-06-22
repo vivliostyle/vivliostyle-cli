@@ -39,8 +39,8 @@ import { reloadConfig } from './plugin-util.js';
 function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
   const extns = ['', 'html', 'htm'];
   const toAssume = (uri: string) => {
+    const len = uri.length - 1;
     let i = 0,
-      len = uri.length - 1,
       x;
     const path = uri.codePointAt(len) === 47 ? uri.slice(0, len) : uri;
     const arr = [],
@@ -62,8 +62,8 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
     return acc;
   }, {});
   return (uri: string) => {
-    let arr = toAssume(uri),
-      data,
+    const arr = toAssume(uri);
+    let data,
       i = 0;
     for (; i < arr.length; i++) {
       if ((data = cache[arr[i]])) {

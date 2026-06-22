@@ -779,12 +779,12 @@ function caveat(
   if (!installDependencies) {
     steps.push(`${cyan('npm install')} to install dependencies`);
   }
-  steps.push('Create and edit Markdown files');
   steps.push(
+    'Create and edit Markdown files',
     `Modify the ${cyan('entry')} field in ${green('vivliostyle.config.js')}`,
+    `${cyan('npm run preview')} to open a preview browser window`,
+    `${cyan('npm run build')} to generate the output file`,
   );
-  steps.push(`${cyan('npm run preview')} to open a preview browser window`);
-  steps.push(`${cyan('npm run build')} to generate the output file`);
 
   Logger.logSuccess(message);
   Logger.log(
