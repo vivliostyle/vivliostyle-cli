@@ -4,7 +4,6 @@ import {
   StringifyMarkdownOptionsSchema,
 } from '@vivliostyle/vfm';
 import { satisfies as semverSatisfies } from 'semver';
-import type { Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
 
@@ -82,7 +81,9 @@ export const ValidString = v.pipe(
 
 export const DocumentProcessorSchema = v.pipe(
   v.function() as v.GenericSchema<
-    (option: StringifyMarkdownOptions, metadata: Metadata) => Processor
+    // tsdown cannot bundle old unified Processor type, so we use any here
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (option: StringifyMarkdownOptions, metadata: Metadata) => any
   >,
   v.metadata({
     typeString:

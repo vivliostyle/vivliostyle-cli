@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: [
@@ -13,8 +13,9 @@ export default defineConfig({
     'src/commands/init.ts',
     'src/commands/preview.ts',
   ],
-  format: 'esm',
-  dts: true,
-  clean: true,
-  sourcemap: true,
+  target: false,
+  fixedExtension: false,
+  deps: {
+    onlyBundle: [/^@types\/.*/v],
+  },
 });
