@@ -1,6 +1,8 @@
 dist/
 tmp/
 *.pdf
+# contract fixtures
+!/build/fixtures/**/*.pdf
 .vscode
 .vs-*
 .vivliostyle

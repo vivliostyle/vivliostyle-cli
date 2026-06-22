@@ -155,6 +155,8 @@ RUN --security=insecure \
       # see https://github.com/puppeteer/puppeteer/blob/browsers-v3.0.4/packages/browsers/src/install.ts#L306-L345
       $(curl --fail --location https://raw.githubusercontent.com/microsoft/playwright/v1.60.0/packages/playwright-core/src/server/registry/nativeDeps.ts --output /tmp/nativeDeps.ts \
         && node --input-type=module --eval 'const{deps:{"debian13-x64":{chromium,firefox}}}=await import("/tmp/nativeDeps.ts");console.log([...new Set([...chromium, ...firefox])].join(" "))') \
+      # Required for rendering (see image-contract.sh for why).
+      fonts-liberation \
       # Chrome for Testing has no linux-arm64 build, so arm64 also needs the chromium package
       $([ "${TARGETARCH}" = arm64 ] && echo chromium) \
       # press-ready requirements

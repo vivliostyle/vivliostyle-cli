@@ -126,11 +126,22 @@ check_pnpm() {
 
 # The original image has /opt/vivliostyle-cli/node_modules/.bin on PATH. That
 # directory holds the bins of Vivliostyle CLI dependencies such as press-ready.
+# press-ready runs on a committed fixture PDF rather than one generated inline.
 check_press_ready() {
-    in_image '
-        d=$(mktemp -d) && cd "$d" &&
-        gs -q -dBATCH -dNOPAUSE -sDEVICE=pdfwrite -sOutputFile=in.pdf -c showpage &&
-        press-ready build -i in.pdf -o out.pdf'
+    local fixture="$_contract_dir/fixtures/press-ready/input.pdf"
+    local tmpdir rc=0
+    tmpdir=$(mktemp --directory)
+    chmod 777 "$tmpdir"
+    cp "$fixture" "$tmpdir/in.pdf"
+    docker run --rm --volume "$tmpdir":/data --entrypoint sh "$IMAGE" \
+        -c 'press-ready build -i /data/in.pdf -o /data/out.pdf' >/dev/null 2>&1 || rc=$?
+    if [ $rc -ne 0 ] || [ ! -s "$tmpdir/out.pdf" ] \
+       || ! head --bytes=4 "$tmpdir/out.pdf" | grep --quiet '^%PDF'; then
+        rm --recursive --force "$tmpdir"
+        return 1
+    fi
+    rm --recursive --force "$tmpdir"
+    return 0
 }
 
 # --- press-ready (PDF/X-1a preflight) ------------------------------------
@@ -295,6 +306,72 @@ EOF
     return 1
 }
 
+# --- rendering matches the committed golden -----------------------------
+# Browser rendering is such a complex black box that the exact cause is, frankly,
+# unclear -- but empirically, when fonts-liberation (declared by both Chrome's
+# deb.deps and Playwright's tools list) is missing, Noto CJK rendering develops a
+# visually near-indistinguishable difference.
+# expected.png was generated as follows:
+#
+#   $ docker run --rm --volume .:/data --entrypoint sh \
+#       ghcr.io/vivliostyle/cli:11.0.2 -c '
+#         cd fixtures/render-matches-golden &&
+#         vivliostyle build needs-liberation.html -o /tmp/out.pdf &&
+#         pdftoppm -png -r 150 -f 1 -l 1 /tmp/out.pdf page &&
+#         mv page-1.png expected.png
+#       '
+#
+# _without_liberation.png and its diff _diff.png were generated as follows:
+#
+#   $ docker build --tag vivliostyle-cli:without-liberation - >/dev/null <<DOCKERFILE
+#   FROM ghcr.io/vivliostyle/cli:11.0.2
+#   USER root
+#   RUN dpkg --purge --force-depends fonts-liberation
+#   USER vivliostyle
+#   DOCKERFILE
+#   $ docker run --rm --volume .:/data --entrypoint sh \
+#       vivliostyle-cli:without-liberation -c '
+#         cd fixtures/render-matches-golden &&
+#         vivliostyle build needs-liberation.html -o /tmp/out.pdf &&
+#         pdftoppm -png -r 150 -f 1 -l 1 /tmp/out.pdf page &&
+#         mv page-1.png _without_liberation.png
+#       '
+#   $ docker run --rm --volume .:/data --workdir /data --entrypoint sh \
+#       debian:13-slim -c '
+#         apt-get update &&
+#         apt-get install --yes imagemagick &&
+#         cd fixtures/render-matches-golden &&
+#         compare expected.png _without_liberation.png _diff.png
+#       '
+#
+# This test asserts that no such difference arises; note that how stable that is
+# against future Chrome versions is, for now, unknown.
+check_render_matches_golden() {
+    local fixtures="$_contract_dir/fixtures/render-matches-golden"
+    local golden="$fixtures/expected.png"
+    local tmpdir rc=0
+    tmpdir=$(mktemp --directory)
+    chmod 777 "$tmpdir"
+    cp -R "$fixtures/." "$tmpdir/"
+    rm -f "$tmpdir/expected.png"
+    docker run --rm --volume "$tmpdir":/data "$IMAGE" build needs-liberation.html -o out.pdf >/dev/null 2>&1 || rc=$?
+    docker run --rm --volume "$tmpdir":/data --entrypoint pdftoppm "$IMAGE" \
+        -png -r 150 -f 1 -l 1 /data/out.pdf /data/actual >/dev/null 2>&1
+    if [ $rc -ne 0 ] || [ ! -s "$tmpdir/actual-1.png" ]; then
+        echo "render failed (rc=$rc)"
+        ls --format=long --all "$tmpdir" >&2 || true
+        rm --recursive --force "$tmpdir"
+        return 1
+    fi
+    if ! cmp --silent "$tmpdir/actual-1.png" "$golden"; then
+        echo "rendered output differs from $golden -> a render-affecting package (e.g. fonts-liberation) is missing or changed"
+        rm --recursive --force "$tmpdir"
+        return 1
+    fi
+    rm --recursive --force "$tmpdir"
+    return 0
+}
+
 # --- derived-image extension (apt repair) -------------------------------
 # git is the right probe: it is absent from the image and Depends on perl, which
 # the build purged, so installing it only works if the repair pulls that purged
@@ -362,6 +439,7 @@ run_test "build --browser chromium"                        check_browser_build c
 run_test "build --browser firefox"                         check_browser_build firefox
 run_test "build --browser chrome@130"                      check_browser_build chrome@130
 run_test "press-ready preflight runs end-to-end (gs + poppler)"   check_press_ready_pdf
+run_test "rendered output matches the committed golden"           check_render_matches_golden
 
 echo "[derived image extension]"
 run_test "derived image repair + install git"   check_apt_repair_install
