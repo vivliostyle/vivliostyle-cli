@@ -90,6 +90,25 @@ it('generate workspace directory', async () => {
   ).toBeTruthy();
 });
 
+it('keeps the theme resolution cache across builds', async () => {
+  // Build from a clean workspace so the theme install runs and writes the cache.
+  fs.rmSync(resolveFixture('builder/.vs-workspace'), {
+    recursive: true,
+    force: true,
+  });
+  await runCommand(['build', '-c', 'workspace.config.js'], {
+    cwd: resolveFixture('builder'),
+  });
+  // A rebuild runs cleanupWorkspace, which only preserves themesDir, then skips
+  // the install; the cache must survive because it lives under themesDir.
+  await runCommand(['build', '-c', 'workspace.config.js'], {
+    cwd: resolveFixture('builder'),
+  });
+  const cacheDir = resolveFixture('builder/.vs-workspace/themes/.npm/_cacache');
+  expect(fs.existsSync(cacheDir)).toBe(true);
+  expect(fs.statSync(cacheDir).isDirectory()).toBe(true);
+});
+
 it('generate files with entryContext', async () => {
   await runCommand(['build', '-c', 'entryContext.config.js'], {
     cwd: resolveFixture('builder'),

@@ -33,6 +33,7 @@ import {
 
 import type { PromptOption, SelectPromptOption } from './config/schema.js';
 import { ValidString } from './config/schema.js';
+import { PromptCancelError } from './entry-util.js';
 import { isUnicodeSupported, Logger } from './logger.js';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
@@ -129,7 +130,8 @@ export async function askQuestion<
         result = question satisfies never;
       }
       if (isCancel(result)) {
-        process.exit(0);
+        // Let the CLI entry point handle cleanup while preserving prompt cancellation as non-error.
+        throw new PromptCancelError();
       }
       response[name] = result;
       interactiveLogger.messageHistory.push({

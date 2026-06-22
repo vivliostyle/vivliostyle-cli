@@ -49,63 +49,127 @@ export async function exec(
   return subprocess;
 }
 
-const beforeExitHandlers: (() => void | Promise<void>)[] = [];
-let exitHandlersRun = false;
+const cleanupHandlers: (() => void | Promise<void>)[] = [];
+const terminationHooks = new Set<(exitCode: number) => void>();
+let cleanupPromise: Promise<void> | undefined;
+let processTerminationInstalled = false;
+let handlingProcessTermination = false;
 
-export const registerExitHandler = (
+// Cleanup handlers release resources on normal completion, errors, and process termination.
+export const registerCleanupHandler = (
   debugMessage: string,
   handler: () => void | Promise<void>,
+  { prepend = false }: { prepend?: boolean } = {},
 ) => {
   const callback = () => {
     Logger.debug(debugMessage);
     return handler();
   };
-  beforeExitHandlers.push(callback);
+  if (prepend) {
+    cleanupHandlers.unshift(callback);
+  } else {
+    cleanupHandlers.push(callback);
+  }
   return () => {
-    const index = beforeExitHandlers.indexOf(callback);
+    const index = cleanupHandlers.indexOf(callback);
     if (index !== -1) {
-      return beforeExitHandlers.splice(index, 1)[0];
+      return cleanupHandlers.splice(index, 1)[0];
     }
   };
 };
 
-export async function runExitHandlers() {
-  if (exitHandlersRun) {
+export const executeWithCleanupOnInterrupt = <T>(
+  debugMessage: string,
+  tryTask: () => Promise<T>,
+  finallyTask?: (error: unknown | undefined) => void | Promise<void>,
+) => {
+  let thrownError: unknown | undefined;
+  const runPromise = tryTask()
+    .catch((error) => {
+      thrownError = error;
+      throw error;
+    })
+    .finally(() => finallyTask?.(thrownError));
+  const unregister = registerCleanupHandler(
+    debugMessage,
+    async () => {
+      try {
+        await runPromise;
+      } catch {
+        // The active caller reports or normalizes the error.
+      }
+    },
+    { prepend: true },
+  );
+  return runPromise.finally(unregister);
+};
+
+// Termination hooks notify active work before cleanup starts closing resources.
+export function registerTerminationHook(hook: (exitCode: number) => void) {
+  terminationHooks.add(hook);
+  return () => {
+    terminationHooks.delete(hook);
+  };
+}
+
+export function runCleanupHandlers() {
+  if (cleanupPromise) {
+    return cleanupPromise;
+  }
+  let resolveCleanup: (() => void) | undefined;
+  const currentCleanupPromise = new Promise<void>((resolve) => {
+    resolveCleanup = resolve;
+  });
+  cleanupPromise = currentCleanupPromise;
+  void (async () => {
+    try {
+      while (cleanupHandlers.length) {
+        try {
+          await cleanupHandlers.shift()?.();
+        } catch (e) {
+          // NOOP
+        }
+      }
+    } finally {
+      cleanupPromise = undefined;
+      resolveCleanup?.();
+    }
+  })();
+  return currentCleanupPromise;
+}
+
+async function handleProcessTermination(exitCode: number) {
+  if (handlingProcessTermination) {
     return;
   }
-  exitHandlersRun = true;
-  while (beforeExitHandlers.length) {
+  handlingProcessTermination = true;
+  for (const hook of terminationHooks) {
     try {
-      await beforeExitHandlers.shift()?.();
+      hook(exitCode);
     } catch (e) {
       // NOOP
     }
   }
-}
-
-let terminating = false;
-
-async function terminate(exitCode: number) {
-  if (terminating) {
-    return;
-  }
-  terminating = true;
   try {
-    if (exitCode === 130 || exitCode === 143) {
-      await runExitHandlers();
-    } else {
-      runExitHandlers();
-    }
+    await runCleanupHandlers();
   } finally {
     process.exit(exitCode);
   }
 }
 
-process.once('SIGINT', () => void terminate(130));
-process.once('SIGTERM', () => void terminate(143));
-process.once('exit', () => {
-  void runExitHandlers();
-});
+export function setupProcessTermination() {
+  if (processTerminationInstalled) {
+    return;
+  }
+  processTerminationInstalled = true;
+
+  process.on('SIGINT', () => void handleProcessTermination(130));
+  process.on('SIGTERM', () => void handleProcessTermination(143));
+  process.on('SIGHUP', () => void handleProcessTermination(129));
+  process.once('exit', () => {
+    void runCleanupHandlers();
+  });
+}
 
 export class DetailError extends Error {
   detail: string | undefined;
@@ -122,12 +186,12 @@ export function getFormattedError(err: Error) {
     : err.stack || `${err.message}`;
 }
 
-export function gracefulError(err: Error) {
+export async function gracefulError(err: Error) {
   console.log(`${redBright('ERROR')} ${getFormattedError(err)}
 
 ${gray('If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues')}`);
-
-  process.exit(1);
+  process.exitCode = 1;
+  await runCleanupHandlers();
 }
 
 export function readJSON(path: string) {
@@ -177,26 +241,36 @@ export async function inflateZip(filePath: string, dest: string) {
 }
 
 export function useTmpDirectory(): Promise<[string, () => void]> {
-  return new Promise<[string, () => void]>((res, rej) => {
+  const directory = new Promise<string>((res, rej) => {
     tmp.dir({ unsafeCleanup: true }, (err, path) => {
       if (err) {
         return rej(err);
       }
       Logger.debug(`Created the temporary directory: ${path}`);
-      if (import.meta.env?.VITEST) {
-        return res([path, () => {}]);
-      }
-      const callback = () => {
-        // clear function doesn't work well?
-        // clear();
-        fs.rmSync(path, { force: true, recursive: true });
-      };
-      registerExitHandler(
-        `Removing the temporary directory: ${path}`,
-        callback,
-      );
-      res([path, callback]);
+      res(path);
     });
+  });
+  if (import.meta.env?.VITEST) {
+    return directory.then((path) => [path, () => {}]);
+  }
+
+  let path: string | undefined;
+  const callback = () => {
+    if (path) {
+      fs.rmSync(path, { force: true, recursive: true });
+    }
+  };
+  registerCleanupHandler('Removing the temporary directory', async () => {
+    try {
+      path = await directory;
+    } catch {
+      return;
+    }
+    callback();
+  });
+  return directory.then((createdPath) => {
+    path = createdPath;
+    return [createdPath, callback];
   });
 }
 
@@ -208,7 +282,7 @@ export function touchTmpFile(path: string): () => void {
   const callback = () => {
     fs.rmSync(path, { force: true, recursive: true });
   };
-  registerExitHandler(`Removing the temporary file: ${path}`, callback);
+  registerCleanupHandler(`Removing the temporary file: ${path}`, callback);
   return callback;
 }
 
@@ -243,15 +317,21 @@ export const isRunningOnWSL = cachedFn(function isRunningOnWSL() {
 });
 
 export async function openEpub(epubPath: string, tmpDir: string) {
-  await inflateZip(epubPath, tmpDir);
-  Logger.debug(`Created the temporary EPUB directory: ${tmpDir}`);
-  const deleteEpub = () => {
+  const inflation = inflateZip(epubPath, tmpDir);
+  const deleteEpub = async () => {
+    try {
+      await inflation;
+    } catch {
+      // Remove any partial output after a failed or interrupted extraction.
+    }
     fs.rmSync(tmpDir, { force: true, recursive: true });
   };
-  registerExitHandler(
+  registerCleanupHandler(
     `Removing the temporary EPUB directory: ${tmpDir}`,
     deleteEpub,
   );
+  await inflation;
+  Logger.debug(`Created the temporary EPUB directory: ${tmpDir}`);
   return deleteEpub;
 }
 

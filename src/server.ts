@@ -23,7 +23,7 @@ import {
   getDefaultEpubOpfPath,
   isValidUri,
   openEpub,
-  registerExitHandler,
+  registerCleanupHandler,
 } from './util.js';
 import { vsBrowserPlugin } from './vite/vite-plugin-browser.js';
 import { vsDevServerPlugin } from './vite/vite-plugin-dev-server.js';
@@ -265,16 +265,30 @@ export async function createViteServer({
 
   if (config.serverRootDir === config.workspaceDir) {
     const { cacheDir } = viteInlineConfig;
-    registerExitHandler('Removing the Vite cacheDir', () => {
+    registerCleanupHandler('Removing the Vite cacheDir', () => {
       if (fs.existsSync(cacheDir)) {
         fs.rmSync(cacheDir, { recursive: true });
       }
     });
   }
 
-  if (mode === 'preview') {
-    return await createServer(viteInlineConfig);
-  } else {
-    return await preview(viteInlineConfig);
-  }
+  const serverLaunch =
+    mode === 'preview'
+      ? createServer(viteInlineConfig)
+      : preview(viteInlineConfig);
+  let closeServerPromise: Promise<void> | undefined;
+  let closeLaunchedServer: (() => Promise<void>) | undefined;
+  const closeServer = () =>
+    (closeServerPromise ??= serverLaunch.then((server) => {
+      closeLaunchedServer ??= server.close.bind(server);
+      return closeLaunchedServer();
+    }));
+  registerCleanupHandler('Closing Vite server', closeServer, {
+    prepend: true,
+  });
+
+  const server = await serverLaunch;
+  closeLaunchedServer = server.close.bind(server);
+  server.close = closeServer;
+  return server;
 }

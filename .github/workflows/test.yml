@@ -26,6 +26,15 @@ jobs:
       - run: pnpm install
       - run: pnpm lint
       - run: pnpm fmt:check
+      - run: pnpm build
+      - name: Check for unclean working tree
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Working tree is unclean after 'pnpm build'. Run 'pnpm build' locally and commit the generated changes."
+            git status --porcelain
+            git diff
+            exit 1
+          fi
   build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:

@@ -173,7 +173,10 @@ export function vsDevServerPlugin({
     // Write CMYK reserve map if configured
     generateCmykReserveMap(config);
 
-    const localThemePaths = await prepareThemeDirectory(config);
+    const localThemePaths = await prepareThemeDirectory(
+      config,
+      inlineConfig.signal,
+    );
 
     const entriesLookup = createEntriesRouteLookup(
       config.entries,
