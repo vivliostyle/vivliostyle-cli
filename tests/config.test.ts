@@ -1,5 +1,6 @@
 import { VFM, readMetadata } from '@vivliostyle/vfm';
 import * as v from 'valibot';
+import { ValiError } from 'valibot';
 import { expect, it, onTestFinished, vi } from 'vitest';
 
 import { warnDeprecatedConfig } from '../src/config/load.js';
@@ -163,19 +164,21 @@ it('deny invalid config', async () => {
         },
       },
     ),
-  ).rejects.toThrow();
+  ).rejects.toThrow(ValiError);
 });
 
 it('deny config which has no entry', async () => {
   await expect(
     getTaskConfig(['build'], resolveFixture('config'), { entry: [] }),
-  ).rejects.toThrow();
+  ).rejects.toThrow(ValiError);
 });
 
 it('deny if any config file or input file is not set', async () => {
   await expect(
-    getTaskConfig(['build'], resolveFixture('config')),
-  ).rejects.toThrow();
+    getTaskConfig(['build'], resolveFixture('config/empty-dir')),
+  ).rejects.toThrow(
+    'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
+  );
 });
 
 it('deny if duplicate entry is set', async () => {
@@ -184,7 +187,9 @@ it('deny if duplicate entry is set', async () => {
       entry: ['index.md'],
       toc: true,
     }),
-  ).rejects.toThrow();
+  ).rejects.toThrow(
+    'The output path "index.html" will overwrite existing content. Please choose a different name for the source file:',
+  );
 });
 
 it('yields a config with single markdown', async () => {
@@ -427,7 +432,9 @@ it('deny config which has incompatible image', async () => {
       ...validConfigData,
       image: 'ghcr.io/vivliostyle/cli:0.0.0',
     }),
-  ).rejects.toThrow();
+  ).rejects.toThrow(
+    'The specified image is not compatible with the CLI version',
+  );
 });
 
 it('allows per-entry documentProcessor and documentMetadataReader', async () => {
@@ -518,7 +525,7 @@ it('rejects text/plain files without documentProcessor', async () => {
     getTaskConfig(['build'], resolveFixture('config'), {
       entry: ['sample.txt'],
     }),
-  ).rejects.toThrow(/Invalid manuscript type/);
+  ).rejects.toThrow('Invalid manuscript type');
 });
 
 it('rejects unknown extensions without documentProcessor', async () => {
@@ -526,7 +533,7 @@ it('rejects unknown extensions without documentProcessor', async () => {
     getTaskConfig(['build'], resolveFixture('config'), {
       entry: ['sample.xyz'],
     }),
-  ).rejects.toThrow(/Invalid manuscript type/);
+  ).rejects.toThrow('Invalid manuscript type');
 });
 
 it('supports pdfPostprocess configuration', async () => {

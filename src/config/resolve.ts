@@ -1358,7 +1358,7 @@ function resolveComposedProjectConfig({
         contentType === 'text/plain' // disallow text/plain (for now)
       ) {
         throw new Error(
-          `Invalid manuscript type ${rawContentType} detected: ${entry}`,
+          `Invalid manuscript type ${rawContentType} detected: ${entryPath}`,
         );
       }
 

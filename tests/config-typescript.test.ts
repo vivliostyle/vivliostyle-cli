@@ -59,6 +59,7 @@ describe('TypeScript configuration files', () => {
     // See: https://github.com/vitest-dev/vitest/issues/3987
     // This only affects the test environment (Vitest); the distributed CLI
     // uses Node.js directly and .cts files work correctly there.
+    // eslint-disable-next-line vitest/no-disabled-tests
     it.skip('should load vivliostyle.config.cts', async () => {
       const config = await loadVivliostyleConfig({
         cwd: resolveFixture('ts-config'),

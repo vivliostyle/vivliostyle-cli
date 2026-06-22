@@ -10,20 +10,20 @@ import {
 } from './command-util.js';
 
 const mockedBrowserModule = vi.hoisted(() => ({
-  getExecutableBrowserPath: vi.fn().mockReturnValue('myBrowser'),
-  launchPreview: vi.fn().mockResolvedValue({
+  getExecutableBrowserPath: vi.fn<() => string>().mockReturnValue('myBrowser'),
+  launchPreview: vi.fn<() => Promise<unknown>>().mockResolvedValue({
     page: {
-      on: vi.fn(),
-      off: vi.fn(),
-      bringToFront: vi.fn(),
-      locator: vi.fn().mockReturnValue({
-        focus: vi.fn(),
+      on: vi.fn<() => void>(),
+      off: vi.fn<() => void>(),
+      bringToFront: vi.fn<() => void>(),
+      locator: vi.fn<() => { focus: () => void }>().mockReturnValue({
+        focus: vi.fn<() => void>(),
       }),
     },
     browser: {
-      close: vi.fn(),
+      close: vi.fn<() => void>(),
     },
-    closeBrowser: vi.fn(),
+    closeBrowser: vi.fn<() => void>(),
   }),
 }));
 

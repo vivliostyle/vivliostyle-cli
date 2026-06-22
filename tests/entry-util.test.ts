@@ -10,15 +10,17 @@ import { PromptCancelError } from '../src/entry-util.js';
 let terminationHook: ((exitCode: number) => void) | undefined;
 
 const mockedUtil = vi.hoisted(() => ({
-  gracefulError: vi.fn(),
-  setupProcessTermination: vi.fn(),
-  unregisterTerminationHook: vi.fn(),
+  gracefulError: vi.fn<(...args: any[]) => void>(),
+  setupProcessTermination: vi.fn<(...args: any[]) => void>(),
+  unregisterTerminationHook: vi.fn<() => void>(),
 }));
 
 vi.mock('../src/util.js', () => ({
   gracefulError: mockedUtil.gracefulError,
   setupProcessTermination: mockedUtil.setupProcessTermination,
-  registerTerminationHook: vi.fn((hook) => {
+  registerTerminationHook: vi.fn<
+    (hook: (exitCode: number) => void) => () => void
+  >((hook) => {
     terminationHook = hook;
     return mockedUtil.unregisterTerminationHook;
   }),

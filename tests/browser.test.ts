@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockedLaunch = vi.hoisted(() => vi.fn());
-const mockedRegisterCleanupHandler = vi.hoisted(() => vi.fn());
+const mockedLaunch = vi.hoisted(() =>
+  vi.fn<(options?: unknown) => Promise<unknown>>(),
+);
+const mockedRegisterCleanupHandler = vi.hoisted(() =>
+  vi.fn<(message: string, handler: () => void | Promise<void>) => void>(),
+);
 
 vi.mock('../src/node-modules.js', () => ({
-  importNodeModule: vi.fn(async () => ({
+  importNodeModule: vi.fn<() => Promise<unknown>>(async () => ({
     launch: mockedLaunch,
   })),
 }));
@@ -36,14 +40,14 @@ describe('launchPreview', () => {
         {
           pages: async () => [],
           newPage: async () => ({
-            setViewport: vi.fn(),
-            on: vi.fn(),
-            authenticate: vi.fn(),
-            goto: vi.fn(),
+            setViewport: vi.fn<() => void>(),
+            on: vi.fn<() => void>(),
+            authenticate: vi.fn<() => void>(),
+            goto: vi.fn<() => void>(),
           }),
         },
       ],
-      close: vi.fn(),
+      close: vi.fn<() => void>(),
     });
 
     await launchPreview({
@@ -73,7 +77,7 @@ describe('launchPreview', () => {
 
   it('shares browser closure between callers and cleanup', async () => {
     let resolveClose: (() => void) | undefined;
-    const browserClose = vi.fn(
+    const browserClose = vi.fn<() => Promise<void>>(
       () =>
         new Promise<void>((resolve) => {
           resolveClose = resolve;
@@ -84,10 +88,10 @@ describe('launchPreview', () => {
         {
           pages: async () => [],
           newPage: async () => ({
-            setViewport: vi.fn(),
-            on: vi.fn(),
-            authenticate: vi.fn(),
-            goto: vi.fn(),
+            setViewport: vi.fn<() => void>(),
+            on: vi.fn<() => void>(),
+            authenticate: vi.fn<() => void>(),
+            goto: vi.fn<() => void>(),
           }),
         },
       ],
@@ -129,7 +133,7 @@ describe('launchPreview', () => {
           close: () => Promise<void>;
         }) => void)
       | undefined;
-    const browserClose = vi.fn(async () => {});
+    const browserClose = vi.fn<() => Promise<void>>(async () => {});
     mockedLaunch.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -166,6 +170,6 @@ describe('launchPreview', () => {
 
     await cleanup;
     expect(browserClose).toHaveBeenCalledOnce();
-    await expect(launching).rejects.toThrow();
+    await expect(launching).rejects.toThrow(Error);
   });
 });

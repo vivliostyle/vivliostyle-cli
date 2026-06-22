@@ -5,7 +5,7 @@ const mocked = await vi.hoisted(async () => {
 
   const portfinderMod = {
     default: {
-      getPortPromise: vi.fn(async () => {
+      getPortPromise: vi.fn<() => Promise<number>>(async () => {
         return 33333;
       }),
     },

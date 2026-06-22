@@ -5,20 +5,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as UtilModule from '../src/util.js';
 
 const mocked = vi.hoisted(() => ({
-  build: vi.fn(),
-  create: vi.fn(),
-  preview: vi.fn(),
-  parseBuildCommand: vi.fn(),
-  parseCreateCommand: vi.fn(),
-  parseInitCommand: vi.fn(),
-  parsePreviewCommand: vi.fn(),
+  build: vi.fn<(...args: any[]) => Promise<unknown>>(),
+  create: vi.fn<(...args: any[]) => Promise<unknown>>(),
+  preview: vi.fn<(...args: any[]) => Promise<unknown>>(),
+  parseBuildCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
+  parseCreateCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
+  parseInitCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
+  parsePreviewCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
   cliSignal: new AbortController().signal,
   runCleanupHandlers: vi.fn<() => Promise<void>>(async () => {}),
 }));
 
 vi.mock('../src/entry-util.js', () => ({
-  isDirectExecution: vi.fn(() => false),
-  runCliCommand: vi.fn(async (command) => {
+  isDirectExecution: vi.fn<() => boolean>(() => false),
+  runCliCommand: vi.fn<
+    (command: (signal: AbortSignal) => unknown) => Promise<void>
+  >(async (command) => {
     await command(mocked.cliSignal);
   }),
 }));

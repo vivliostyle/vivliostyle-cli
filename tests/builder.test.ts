@@ -399,7 +399,7 @@ it('generate files with multiple cover pages', async () => {
   );
   expect(
     tocHtml.window.document.querySelector('style')?.innerHTML,
-  ).toMatchSnapshot();
+  ).toMatchSnapshot('toc-style');
   expect(
     tocHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="manuscript/sample-theme.css"]',
@@ -428,7 +428,7 @@ it('generate files with multiple cover pages', async () => {
   );
   expect(
     anotherCoverHtml.window.document.querySelector('style')?.innerHTML,
-  ).toMatchSnapshot();
+  ).toMatchSnapshot('another-cover-style');
   expect(
     coverHtml.window.document.querySelector(
       'link[rel="stylesheet"][href="themes/packages/debug-theme/theme.css"]',

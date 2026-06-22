@@ -3,7 +3,10 @@ import type { Writable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 
 const mockedYoctoSpinner = vi.hoisted(() =>
-  vi.fn(() => ({ text: '', stop: vi.fn() })),
+  vi.fn<() => { text: string; stop: () => void }>(() => ({
+    text: '',
+    stop: vi.fn<() => void>(),
+  })),
 );
 
 vi.mock('yocto-spinner', () => ({

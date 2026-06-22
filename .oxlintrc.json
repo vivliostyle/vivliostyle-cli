@@ -15,15 +15,7 @@
         "varsIgnorePattern": "^_",
         "destructuredArrayIgnorePattern": "^_"
       }
-    ],
-    "typescript/consistent-type-imports": "warn",
-    "eslint/prefer-const": "warn",
-    "eslint/curly": "warn",
-    "vitest/require-mock-type-parameters": "warn",
-    "vitest/prefer-snapshot-hint": "warn",
-    "vitest/hoisted-apis-on-top": "warn",
-    "vitest/require-to-throw-message": "warn",
-    "vitest/no-disabled-tests": "warn"
+    ]
   },
   "ignorePatterns": [
     "dist",

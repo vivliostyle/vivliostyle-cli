@@ -8,9 +8,9 @@ import type { VivliostyleConfigSchema } from '../src/config/schema.js';
 import { formatHtml, runCommand, toTree } from './command-util.js';
 
 const mockedThemeModule = vi.hoisted(() => ({
-  checkThemeInstallationNecessity: vi.fn(),
-  getLocalThemePaths: vi.fn(() => []),
-  installThemeDependencies: vi.fn(),
+  checkThemeInstallationNecessity: vi.fn<() => boolean>(),
+  getLocalThemePaths: vi.fn<() => string[]>(() => []),
+  installThemeDependencies: vi.fn<() => void>(),
 }));
 
 vi.mock('../src/processor/theme', () => mockedThemeModule);
@@ -25,11 +25,11 @@ it('generate webpub from single markdown file', async () => {
     cwd: '/work',
   });
 
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   delete manifest.dateModified;
-  expect(manifest).toMatchSnapshot();
+  expect(manifest).toMatchSnapshot('manifest');
 });
 
 it('generate webpub from vivliostyle.config.js', async () => {
@@ -76,11 +76,11 @@ it('generate webpub from vivliostyle.config.js', async () => {
   vol.fromJSON(themeDir, '/work');
   await runCommand(['build'], { cwd: '/work/input' });
 
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
-  expect(manifest).toMatchSnapshot();
+  expect(manifest).toMatchSnapshot('manifest');
 
   const manifest2 = JSON.parse(
     file['/work/input/output/publication.json'] as string,
@@ -108,13 +108,13 @@ it('generate webpub from a plain HTML', async () => {
     cwd: '/work',
   });
 
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
-  expect(manifest).toMatchSnapshot();
+  expect(manifest).toMatchSnapshot('manifest');
   const entry = file['/work/output/webbook.html']!;
-  expect(await formatHtml(entry)).toMatchSnapshot();
+  expect(await formatHtml(entry)).toMatchSnapshot('entry');
 });
 
 it('generate webpub from a single-document publication', async () => {
@@ -174,10 +174,10 @@ it('generate webpub from a single-document publication', async () => {
     cwd: '/work',
   });
 
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
   const file = vol.toJSON();
   const entry = file['/work/output/webbook.html']!;
-  expect(await formatHtml(entry)).toMatchSnapshot();
+  expect(await formatHtml(entry)).toMatchSnapshot('entry');
   expect(file['/work/output/escape check%.html']).toBe(
     file['/work/input/escape check%.html'],
   );
@@ -220,7 +220,7 @@ it('generate webpub from remote HTML documents with publication manifest', async
     ['build', 'https://example.com/remote/dir/', '-o', 'output'],
     { cwd: '/work' },
   );
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
   const file = vol.toJSON();
   expect(file['/work/output/remote/dir/index.html']).toBe(
     file['/remote/dir/index.html'],
@@ -259,13 +259,13 @@ it('generate webpub from a remote HTML document', async () => {
     ],
     { cwd: '/work' },
   );
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
   const file = vol.toJSON();
   const manifest = JSON.parse(file['/work/output/publication.json']!);
   delete manifest.dateModified;
-  expect(manifest).toMatchSnapshot();
+  expect(manifest).toMatchSnapshot('manifest');
   const entry = file['/work/output/remote/foo bar%/escape check%.html']!;
-  expect(await formatHtml(entry)).toMatchSnapshot();
+  expect(await formatHtml(entry)).toMatchSnapshot('entry');
   expect(file['/work/output/remote/あ/日本語.css']).toBe(
     file['/remote/あ/日本語.css'],
   );
@@ -287,11 +287,11 @@ it('generate webpub from a data URI input', async () => {
     { cwd: '/work' },
   );
 
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
   const file = vol.toJSON();
   const entry = file['/work/output/index.html']!;
   const outHtml = await formatHtml(entry);
-  expect(outHtml).toMatchSnapshot();
+  expect(outHtml).toMatchSnapshot('html');
   expect(await formatHtml(file['/work/output2/index.html']!)).toBe(outHtml);
 });
 
@@ -320,7 +320,7 @@ it('generate webpub with complex copyAsset settings', async () => {
   });
   await runCommand(['build'], { cwd: '/work/input' });
 
-  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot();
+  expect(toTree(vol, { dir: '/work/output' })).toMatchSnapshot('tree');
 });
 
 it('copy webpub assets properly', async () => {

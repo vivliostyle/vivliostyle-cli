@@ -446,7 +446,7 @@ describe('convertStreamColors', () => {
     beforeEach(async () => {
       const Logger = (await import('../src/logger.js')).Logger;
       originalLogWarn = Logger.logWarn;
-      logWarnMock = vi.fn();
+      logWarnMock = vi.fn<(...messages: any[]) => void>();
       Logger.logWarn = logWarnMock as typeof Logger.logWarn;
     });
 
