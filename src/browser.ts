@@ -246,7 +246,21 @@ async function resolveBuildId({
   if (!platform) {
     throw new Error('The current platform is not supported.');
   }
-  return browsers.resolveBuildId(browserEnumMap[type], platform, tag);
+  try {
+    return await browsers.resolveBuildId(browserEnumMap[type], platform, tag);
+  } catch (error) {
+    // Non-exact-pin tags (`chrome@129`, `chromium@latest`, ...) query the
+    // browser registry and can fail here on network errors. An invalid tag
+    // is not caught here; it passes through and fails at the browser download.
+    const fallbackTag = getDefaultBrowserTag(type);
+    if (!fallbackTag) {
+      throw error;
+    }
+    Logger.logWarn(
+      `Failed to resolve ${type}@${tag} from the browser registry. Falling back to the bundled default version ${type}@${fallbackTag}.\n${error}`,
+    );
+    return fallbackTag;
+  }
 }
 
 async function cleanupOutdatedBrowsers() {
