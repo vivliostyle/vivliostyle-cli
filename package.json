@@ -14,14 +14,14 @@
     "clean": "shx rm -rf dist tmp",
     "dev": "pnpm run --stream \"/^dev:.*/\"",
     "dev:cli": "tsdown --watch src",
-    "dev:typecheck": "tsc --noEmit --watch --preserveWatchOutput",
+    "dev:typecheck": "tsgo --noEmit --watch --preserveWatchOutput",
     "test": "vitest run --coverage",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "prepare": "husky",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "lint-staged": {
     "*": [
@@ -115,6 +115,7 @@
     "@types/tmp": "0.2.6",
     "@types/w3c-xmlserializer": "2.0.4",
     "@types/whatwg-mimetype": "3.0.2",
+    "@typescript/native-preview": "7.0.0-dev.20260622.1",
     "@vitest/coverage-v8": "4.1.9",
     "adm-zip": "0.5.17",
     "file-type": "22.0.1",
