@@ -269,10 +269,10 @@ export class PostProcess {
     }
   }
 
-  async toc(items: TOCItem[]) {
+  async toc(tocItems: TOCItem[]) {
     const { PDFDict, PDFHexString, PDFName, PDFNumber } =
       await importNodeModule('pdf-lib');
-    if (!items || !items.length) {
+    if (!tocItems || !tocItems.length) {
       return;
     }
 
@@ -316,7 +316,7 @@ export class PostProcess {
     };
 
     const outlineRef = this.document.context.nextRef();
-    const itemsWithRefs = addRefs(items, outlineRef);
+    const itemsWithRefs = addRefs(tocItems, outlineRef);
     addObjectsToPDF(itemsWithRefs);
 
     const outline = PDFDict.withContext(this.document.context);

@@ -159,6 +159,7 @@ export async function getJsdomFromUrlOrFile({
     });
   } else if (url.protocol === 'file:') {
     if (resourceLoader) {
+      // oxlint-disable-next-line no-underscore-dangle -- jsdom ResourceLoader API
       const file = resourceLoader._readFile(fileURLToPath(url));
       resourceLoader.fetcherMap.set(url.href, file);
     }

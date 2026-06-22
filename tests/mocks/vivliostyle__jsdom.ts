@@ -81,6 +81,7 @@ const mocked = await vi.hoisted(async () => {
     fetch(urlString: string, options: FetchOptions = {}) {
       if (/^https?:/.test(urlString)) {
         const url = new URL(urlString);
+        // oxlint-disable-next-line no-underscore-dangle -- jsdom ResourceLoader API
         const fetcher = this._readFile(
           mapToLocalPath(urlString),
         ) as AbortablePromise<Buffer>;

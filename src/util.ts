@@ -410,8 +410,8 @@ export function prettifySchemaError(
   });
 
   // Traverse to the deepest issue
-  function traverse(issues: BaseIssue<unknown>[], depth: number) {
-    return issues.flatMap((issue): [BaseIssue<unknown>[], number][] => {
+  function traverse(nodes: BaseIssue<unknown>[], depth: number) {
+    return nodes.flatMap((issue): [BaseIssue<unknown>[], number][] => {
       const p = issue.path?.length || 0;
       if (!issue.issues) {
         return [[[issue], depth + p]];

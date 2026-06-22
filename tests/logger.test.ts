@@ -17,8 +17,10 @@ import { Logger } from '../src/logger.js';
 
 describe('Logger', () => {
   it('disables dependency signal handlers for the spinner', () => {
-    new Logger({ write: () => true } as unknown as Writable);
+    // The Logger constructor should call the mocked yocto-spinner with handleSignals: false
+    const logger = new Logger({ write: () => true } as unknown as Writable);
 
+    expect(logger).toBeInstanceOf(Logger);
     expect(mockedYoctoSpinner).toHaveBeenCalledOnce();
     expect(mockedYoctoSpinner).toHaveBeenCalledWith(
       expect.objectContaining({

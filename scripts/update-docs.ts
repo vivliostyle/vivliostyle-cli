@@ -105,7 +105,7 @@ async function buildConfigDocs(): Promise<string> {
     ) {
       const entries = await Object.values(schema.entries).reduce(
         (acc, value) =>
-          acc.then(async (acc) => [...acc, await traverse(value)]),
+          acc.then(async (list) => [...list, await traverse(value)]),
         Promise.resolve([] as string[]),
       );
       docs += entries.filter(Boolean).join('\n\n');
@@ -123,7 +123,7 @@ async function buildConfigDocs(): Promise<string> {
     ) {
       const out = await [...schema.options].reduce(
         (acc, option) =>
-          acc.then(async (acc) => [...acc, await traverse(option)]),
+          acc.then(async (list) => [...list, await traverse(option)]),
         Promise.resolve([] as string[]),
       );
       docs += out.filter(Boolean).join('\n\n');
@@ -191,7 +191,7 @@ async function buildConfigDocs(): Promise<string> {
     } else if (v.isOfType('function', schema)) {
       const out = await ((meta.typeReferences as any[]) || []).reduce(
         (acc, type) =>
-          acc.then(async (acc: any[]) => [...acc, await traverse(type)]),
+          acc.then(async (list: any[]) => [...list, await traverse(type)]),
         Promise.resolve([] as string[]),
       );
       docs += out.filter(Boolean).join('\n\n');
@@ -240,11 +240,11 @@ async function buildConfigDocs(): Promise<string> {
             value.type === 'optional' || value.type === 'non_optional'
               ? (value as v.OptionalSchema<any, any>).wrapped
               : value;
-          const schema = getSchema(value);
-          const typeString = schema[definition]
-            ? schema[definition].replace(
+          const propSchema = getSchema(value);
+          const typeString = propSchema[definition]
+            ? propSchema[definition].replace(
                 new RegExp(`(${[...namedDefinitionSet].join('|')})`, 'g'),
-                (v) => `[${v}](#${slug(v)})`,
+                (name) => `[${name}](#${slug(name)})`,
               )
             : unwrapped.expects || 'unknown';
           ret += propMeta.deprecated

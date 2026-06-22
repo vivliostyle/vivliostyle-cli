@@ -97,7 +97,7 @@ const normalizeLocalizableString = (
   }
   const values = [value]
     .flat()
-    .map((value) => (typeof value === 'string' ? { value } : value));
+    .map((item) => (typeof item === 'string' ? { value: item } : item));
   const localizedValues = values.filter(
     (v): v is LocalizableStringObject & { language: string } => !!v.language,
   );
@@ -198,11 +198,8 @@ export async function exportEpub({
       const { url, encodingFormat } =
         typeof val === 'string' ? ({ url: val } as PublicationLinks) : val;
       // Only accepts path-like url
-      try {
-        new URL(url);
+      if (URL.canParse(url)) {
         return acc;
-      } catch (e) {
-        /* NOOP */
       }
       if (!fs.existsSync(upath.join(tmpDir, 'EPUB', url))) {
         return acc;
@@ -266,31 +263,31 @@ export async function exportEpub({
 
   const contextDir = upath.join(tmpDir, 'EPUB');
   type XhtmlEntry = Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
-  const processHtml = async (target: string) => {
+  const processHtml = async (htmlFile: string) => {
     let parseResult: XhtmlEntry;
     try {
       parseResult = await transpileHtmlToXhtml({
-        target,
+        target: htmlFile,
         contextDir,
       });
     } catch (error) {
       const thrownError = error as Error;
       throw new DetailError(
-        `Failed to transpile document to XHTML: ${target}`,
+        `Failed to transpile document to XHTML: ${htmlFile}`,
         thrownError.stack ?? thrownError.message,
       );
     }
     if (parseResult.hasMathmlContent) {
-      appendManifestProperty(manifestItem[target], 'mathml');
+      appendManifestProperty(manifestItem[htmlFile], 'mathml');
     }
     if (parseResult.hasRemoteResources) {
-      appendManifestProperty(manifestItem[target], 'remote-resources');
+      appendManifestProperty(manifestItem[htmlFile], 'remote-resources');
     }
     if (parseResult.hasScriptedContent) {
-      appendManifestProperty(manifestItem[target], 'scripted');
+      appendManifestProperty(manifestItem[htmlFile], 'scripted');
     }
     if (parseResult.hasSvgContent) {
-      appendManifestProperty(manifestItem[target], 'svg');
+      appendManifestProperty(manifestItem[htmlFile], 'svg');
     }
     return parseResult;
   };
@@ -298,9 +295,9 @@ export async function exportEpub({
   const processResult: Record<string, XhtmlEntry> = {};
   Logger.debug(`Transpiling ToC HTML to XHTML: ${tocHtml}`);
   processResult[tocHtml] = await processHtml(tocHtml);
-  for (const target of htmlFiles.filter((f) => f !== tocHtml)) {
-    Logger.debug(`Transpiling HTML to XHTML: ${target}`);
-    processResult[target] = await processHtml(target);
+  for (const htmlFile of htmlFiles.filter((f) => f !== tocHtml)) {
+    Logger.debug(`Transpiling HTML to XHTML: ${htmlFile}`);
+    processResult[htmlFile] = await processHtml(htmlFile);
   }
 
   // Process ToC document
@@ -470,10 +467,10 @@ async function processTocDocument({
       for (const content of readingOrder) {
         let name = normalizeLocalizableString(content.name, docLanguages);
         if (!name) {
-          const dom = await getJsdomFromUrlOrFile({
+          const contentDom = await getJsdomFromUrlOrFile({
             src: upath.join(contextDir, changeExtname(content.url, '.xhtml')),
           });
-          name = dom.window.document.title;
+          name = contentDom.window.document.title;
         }
         const li = document.createElement('li');
         const a = document.createElement('a');

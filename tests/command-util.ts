@@ -121,9 +121,9 @@ export const getTaskConfig = async (
 };
 
 export const maskConfig = (obj: any) => {
-  Object.entries(obj).forEach(([k, v]) => {
-    if (v && typeof v === 'object') {
-      maskConfig(v);
+  Object.entries(obj).forEach(([k, value]) => {
+    if (value && typeof value === 'object') {
+      maskConfig(value);
     } else if (k === 'executableBrowser' || k === 'executableChromium') {
       obj[k] = '__EXECUTABLE_CHROMIUM_PATH__';
     } else if (k === 'image') {
@@ -136,8 +136,10 @@ export const maskConfig = (obj: any) => {
     ) {
       // These are function references that cannot be meaningfully compared in snapshots
       delete obj[k];
-    } else if (typeof v === 'string') {
-      const normalized = v.match(/^(https?|file):\/{2}/) ? v : upath.toUnix(v);
+    } else if (typeof value === 'string') {
+      const normalized = value.match(/^(https?|file):\/{2}/)
+        ? value
+        : upath.toUnix(value);
       obj[k] = normalized
         .replace(rootPath, '__WORKSPACE__')
         .replace(/\.vs-\d+\./g, '__TEMPORARY_FILE_PREFIX__')

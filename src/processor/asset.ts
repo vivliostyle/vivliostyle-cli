@@ -14,17 +14,17 @@ export class GlobMatcher {
     patterns: string[];
   })[];
 
-  #_matchers: picomatch.Matcher[];
+  #matchers: picomatch.Matcher[];
 
   constructor(matcherConfig: typeof GlobMatcher.prototype.matcherConfig) {
     this.matcherConfig = matcherConfig;
-    this.#_matchers = matcherConfig.map(({ patterns, ...options }) =>
+    this.#matchers = matcherConfig.map(({ patterns, ...options }) =>
       picomatch(patterns, options),
     );
   }
 
   match(test: string): boolean {
-    return this.#_matchers.some((matcher) => matcher(test));
+    return this.#matchers.some((matcher) => matcher(test));
   }
 
   async glob(

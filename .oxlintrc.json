@@ -3,9 +3,10 @@
   "plugins": ["typescript", "unicorn", "oxc", "vitest"],
   "categories": {
     "correctness": "error",
-    "suspicious": "warn"
+    "suspicious": "error"
   },
   "rules": {
+    "eslint/no-shadow": ["error", { "allow": ["_"] }],
     "eslint/no-unused-vars": [
       "error",
       {
@@ -15,7 +16,8 @@
         "varsIgnorePattern": "^_",
         "destructuredArrayIgnorePattern": "^_"
       }
-    ]
+    ],
+    "unicorn/consistent-function-scoping": "allow"
   },
   "ignorePatterns": [
     "dist",

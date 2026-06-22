@@ -272,7 +272,7 @@ export async function retrieveWebbookEntry({
         }),
       });
       subpathResourceLoader.fetcherMap.forEach(
-        (v, k) => !retriever.has(k) && retriever.set(k, v),
+        (fetcher, k) => !retriever.has(k) && retriever.set(k, fetcher),
       );
     }
   }

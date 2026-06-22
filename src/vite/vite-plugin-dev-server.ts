@@ -310,9 +310,9 @@ export function vsDevServerPlugin({
     }
     transformCache.delete(entry.target);
     config.entries
-      .filter((entry) => entry.rel === 'contents')
-      .forEach((entry) => {
-        transformCache.delete(entry.target);
+      .filter((contentsEntry) => contentsEntry.rel === 'contents')
+      .forEach((contentsEntry) => {
+        transformCache.delete(contentsEntry.target);
       });
     server?.ws.send({
       type: 'full-reload',
@@ -394,29 +394,29 @@ export function vsDevServerPlugin({
         return next();
       }
 
-      const handleWorkspace = (next: () => void) => {
+      const handleWorkspace = (proceed: () => void) => {
         if (!serveWorkspaceMatcher.match(pathname.slice(1))) {
-          return next();
+          return proceed();
         }
         Logger.debug('dev-server > serveWorkspace %s', pathname);
         const url = req.url!;
         req.url = req.url!.slice(config.base.length);
         return serveWorkspace(req, res, () => {
           req.url = url;
-          next();
+          proceed();
         });
       };
 
-      const handleAssets = (next: () => void) => {
+      const handleAssets = (proceed: () => void) => {
         if (!serveAssetsMatcher.match(pathname.slice(1))) {
-          return next();
+          return proceed();
         }
         Logger.debug('dev-server > serveAssets %s', pathname);
         const url = req.url!;
         req.url = url!.slice(config.base.length);
         return serveAssets(req, res, () => {
           req.url = url;
-          next();
+          proceed();
         });
       };
 

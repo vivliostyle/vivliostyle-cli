@@ -64,7 +64,7 @@ export class Logger {
   }
 
   static get #spinner() {
-    return this.#loggerInstance && this.#loggerInstance.#_spinner;
+    return this.#loggerInstance && this.#loggerInstance.#spinnerInstance;
   }
 
   static get stdin() {
@@ -105,7 +105,7 @@ export class Logger {
       return;
     }
     if (this.#loggerInstance) {
-      this.#loggerInstance.#_spinner.text = text;
+      this.#loggerInstance.#spinnerInstance.text = text;
       return this.#loggerInstance;
     }
     this.#loggerInstance = new Logger(this.#stderr);
@@ -277,11 +277,11 @@ export class Logger {
     this.#logPrefix = prefix;
   }
 
-  #_spinner: Spinner;
-  #_disposeSpinnerCleanupHandler: (() => void) | undefined;
+  #spinnerInstance: Spinner;
+  #disposeSpinnerCleanupHandler: (() => void) | undefined;
 
   constructor(stream: Writable) {
-    this.#_spinner = yoctoSpinner({
+    this.#spinnerInstance = yoctoSpinner({
       handleSignals: false,
       spinner: {
         frames: spinnerFrames,
@@ -294,21 +294,21 @@ export class Logger {
   }
 
   #start(text: string) {
-    this.#_spinner.start(text);
-    this.#_disposeSpinnerCleanupHandler = registerCleanupHandler(
+    this.#spinnerInstance.start(text);
+    this.#disposeSpinnerCleanupHandler = registerCleanupHandler(
       'Stopping spinner',
       () => {
-        this.#_spinner.stop();
+        this.#spinnerInstance.stop();
       },
     );
   }
 
   [Symbol.dispose]() {
-    this.#_disposeSpinnerCleanupHandler?.();
-    this.#_spinner.stop(
+    this.#disposeSpinnerCleanupHandler?.();
+    this.#spinnerInstance.stop(
       Logger.#nonBlockingLogPrinted
         ? undefined
-        : `${infoSymbol} ${this.#_spinner.text}`,
+        : `${infoSymbol} ${this.#spinnerInstance.text}`,
     );
     Logger.#loggerInstance = undefined;
   }

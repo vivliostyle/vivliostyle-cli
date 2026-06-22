@@ -86,7 +86,9 @@ export async function askQuestion<
       // Maximum number of items to display at once.
       const maxItems = 10;
       const normalizeOptions = (options: SelectPromptOption[]) =>
-        options.map((v) => (typeof v === 'string' ? { value: v } : v));
+        options.map((option) =>
+          typeof option === 'string' ? { value: option } : option,
+        );
       const validate = (value: unknown = '') => {
         if (!question.required || 'defaultValue' in question) {
           return;

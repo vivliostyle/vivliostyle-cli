@@ -1,3 +1,4 @@
+/* oxlint-disable no-underscore-dangle -- patches Node's internal Module._load */
 declare module 'module' {
   let _load_stubs: any;
   let _load_original: any;

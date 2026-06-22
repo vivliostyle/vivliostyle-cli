@@ -52,18 +52,20 @@ export async function buildPDF({
   }
 
   function handleEntry(response: any) {
-    const entry = config.entries.find((entry): entry is ManuscriptEntry => {
-      if (!('source' in entry)) {
-        return false;
-      }
-      const url = new URL(response.url());
-      return url.protocol === 'file:'
-        ? pathEquals(entry.target, url.pathname)
-        : pathEquals(
-            upath.relative(config.workspaceDir, entry.target),
-            url.pathname.substring(1),
-          );
-    });
+    const entry = config.entries.find(
+      (candidate): candidate is ManuscriptEntry => {
+        if (!('source' in candidate)) {
+          return false;
+        }
+        const url = new URL(response.url());
+        return url.protocol === 'file:'
+          ? pathEquals(candidate.target, url.pathname)
+          : pathEquals(
+              upath.relative(config.workspaceDir, candidate.target),
+              url.pathname.substring(1),
+            );
+      },
+    );
     if (entry) {
       if (!lastEntry) {
         lastEntry = entry;
@@ -84,12 +86,12 @@ export async function buildPDF({
     onBrowserOpen: () => {
       Logger.logUpdate('Building pages');
     },
-    onPageOpen: async (page) => {
-      page.on('pageerror', (error) => {
+    onPageOpen: async (openedPage) => {
+      openedPage.on('pageerror', (error) => {
         Logger.logError(red((error as Error).message));
       });
 
-      page.on('console', (msg) => {
+      openedPage.on('console', (msg) => {
         switch (msg.type()) {
           case 'error':
             if (msg.location().url?.endsWith('/vivliostyle-viewer.js')) {
@@ -110,7 +112,7 @@ export async function buildPDF({
         }
       });
 
-      page.on('response', (response) => {
+      openedPage.on('response', (response) => {
         Logger.debug(
           gray('viewer:response'),
           green(response.status().toString()),
@@ -130,7 +132,7 @@ export async function buildPDF({
         Logger.logError(red(`${response.status()}`), response.url());
       });
 
-      await page.setDefaultTimeout(config.timeout);
+      await openedPage.setDefaultTimeout(config.timeout);
     },
   });
 
