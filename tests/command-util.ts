@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { toTreeSync } from 'memfs/lib/print/index.js';
+import { toTreeSync } from '@jsonjoy.com/fs-print';
 import { format } from 'oxfmt';
 import upath from 'upath';
 import * as v from 'valibot';
