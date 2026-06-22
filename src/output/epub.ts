@@ -135,7 +135,7 @@ export async function exportEpub({
   relManifestPath?: string;
   target: string;
   epubVersion: '3.0';
-}) {
+}): Promise<void> {
   Logger.debug('Export EPUB', {
     webpubDir,
     entryHtmlFile,
@@ -338,7 +338,7 @@ export async function exportEpub({
       force: true,
       recursive: true,
     });
-    delete manifestItem[relManifestPath];
+    Reflect.deleteProperty(manifestItem, relManifestPath);
   }
 
   // META-INF/container.xml
@@ -393,7 +393,11 @@ async function transpileHtmlToXhtml({
   document.documentElement.setAttribute('xmlns:epub', EPUB_NS);
 
   document.querySelectorAll('a[href]').forEach((el) => {
-    const href = decodeURI(el.getAttribute('href')!);
+    const hrefAttr = el.getAttribute('href');
+    if (hrefAttr === null) {
+      return;
+    }
+    const href = decodeURI(hrefAttr);
     el.setAttribute('href', getRelativeHref(href, target, target));
   });
 
@@ -519,7 +523,12 @@ async function processTocDocument({
     'link[href][rel="publication"]',
   );
   if (publicationLinkEl) {
-    const href = publicationLinkEl.getAttribute('href')!.trim();
+    const hrefAttr = publicationLinkEl.getAttribute('href');
+    /* v8 ignore next 3 */
+    if (hrefAttr === null) {
+      throw new Error('Expected publication link element to have href');
+    }
+    const href = hrefAttr.trim();
     if (href.startsWith('#')) {
       // oxlint-disable-next-line prefer-query-selector -- Match by raw id without CSS selector escaping
       const scriptEl = document.getElementById(href.slice(1));

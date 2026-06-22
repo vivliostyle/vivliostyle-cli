@@ -67,23 +67,23 @@ export class Logger {
     return this.#loggerInstance && this.#loggerInstance.#spinnerInstance;
   }
 
-  static get stdin() {
+  static get stdin(): Readable {
     return this.#stdin;
   }
 
-  static get stdout() {
+  static get stdout(): Writable {
     return this.#stdout;
   }
 
-  static get stderr() {
+  static get stderr(): Writable {
     return this.#stderr;
   }
 
-  static get signal() {
+  static get signal(): AbortSignal | undefined {
     return this.#signal;
   }
 
-  static get isInteractive() {
+  static get isInteractive(): boolean {
     return Boolean(
       !this.#customLogger &&
       (this.#stderr as WriteStream).isTTY &&
@@ -96,7 +96,7 @@ export class Logger {
     );
   }
 
-  static startLogging(text: string) {
+  static startLogging(text: string): Logger | undefined {
     if (this.#logLevel === 0) {
       return;
     }
@@ -113,7 +113,7 @@ export class Logger {
     return this.#loggerInstance;
   }
 
-  static suspendLogging(text: string) {
+  static suspendLogging(text: string): Disposable | undefined {
     if (this.#logLevel === 0) {
       return;
     }
@@ -125,7 +125,7 @@ export class Logger {
     this.logUpdate(currentMsg);
     this.#spinner.stop(`${infoSymbol} ${text}\n`);
     return {
-      [Symbol.dispose]() {
+      [Symbol.dispose](): void {
         if (Logger.isInteractive) {
           Logger.#console.log('');
           Logger.#spinner?.start(currentMsg);
@@ -135,14 +135,14 @@ export class Logger {
     };
   }
 
-  static log(...messages: any[]) {
+  static log(...messages: unknown[]): void {
     if (this.#logLevel < 1) {
       return;
     }
     Logger.#console.log(...messages);
   }
 
-  static logUpdate(...messages: any[]) {
+  static logUpdate(...messages: unknown[]): void {
     if (!this.#spinner || !this.isInteractive) {
       this.logInfo(...messages);
       return;
@@ -156,7 +156,7 @@ export class Logger {
     this.#nonBlockingLogPrinted = false;
   }
 
-  static getMessage(message: string, symbol?: string) {
+  static getMessage(message: string, symbol?: string): string {
     return !this.#customLogger && symbol ? `${symbol} ${message}` : message;
   }
 
@@ -165,13 +165,11 @@ export class Logger {
     message: string,
   ) {
     if (!this.#spinner || !this.isInteractive) {
-      if (this.#logPrefix) {
-        message = `${this.#logPrefix} ${message}`;
-      }
+      const line = this.#logPrefix ? `${this.#logPrefix} ${message}` : message;
       if (this.#logLevel >= 3) {
-        this.debug(message);
+        this.debug(line);
       } else {
-        this.#console[logMethod](message);
+        this.#console[logMethod](line);
       }
       return;
     }
@@ -181,7 +179,7 @@ export class Logger {
     this.#spinner.start();
   }
 
-  static logSuccess(...messages: any[]) {
+  static logSuccess(...messages: unknown[]): void {
     if (this.#logLevel < 1) {
       return;
     }
@@ -191,7 +189,7 @@ export class Logger {
     );
   }
 
-  static logError(...messages: any[]) {
+  static logError(...messages: unknown[]): void {
     if (this.#logLevel < 1) {
       return;
     }
@@ -201,7 +199,7 @@ export class Logger {
     );
   }
 
-  static logWarn(...messages: any[]) {
+  static logWarn(...messages: unknown[]): void {
     if (this.#logLevel < 1) {
       return;
     }
@@ -211,7 +209,7 @@ export class Logger {
     );
   }
 
-  static logInfo(...messages: any[]) {
+  static logInfo(...messages: unknown[]): void {
     if (this.#logLevel < 1) {
       return;
     }
@@ -221,7 +219,7 @@ export class Logger {
     );
   }
 
-  static logVerbose(...messages: any[]) {
+  static logVerbose(...messages: unknown[]): void {
     if (this.#logLevel < 2) {
       return;
     }
@@ -242,7 +240,7 @@ export class Logger {
     stdout?: Writable;
     stderr?: Writable;
     signal?: AbortSignal;
-  }) {
+  }): void {
     if (logLevel) {
       this.#logLevel = (
         {
@@ -273,7 +271,7 @@ export class Logger {
     }
   }
 
-  static setLogPrefix(prefix: string) {
+  static setLogPrefix(prefix: string): void {
     this.#logPrefix = prefix;
   }
 
@@ -302,7 +300,7 @@ export class Logger {
     );
   }
 
-  [Symbol.dispose]() {
+  [Symbol.dispose](): void {
     this.#disposeSpinnerCleanupHandler?.();
     this.#spinnerInstance.stop(
       Logger.#nonBlockingLogPrinted

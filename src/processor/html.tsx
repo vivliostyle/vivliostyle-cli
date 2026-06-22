@@ -26,7 +26,9 @@ import {
   writeFileIfChanged,
 } from '../util.js';
 
-export const createVirtualConsole = (onError: (error: DetailError) => void) => {
+export const createVirtualConsole = (
+  onError: (error: DetailError) => void,
+): VirtualConsole => {
   const virtualConsole = new jsdom.VirtualConsole();
   /* v8 ignore start */
   virtualConsole.on('error', (message) => {
@@ -70,7 +72,10 @@ export class ResourceLoader extends BaseResourceLoader {
 
   fetcherMap = new Map<string, jsdom.AbortablePromise<Buffer>>();
 
-  fetch(url: string, options?: jsdom.FetchOptions) {
+  fetch(
+    url: string,
+    options?: jsdom.FetchOptions,
+  ): AbortablePromise<Buffer> | null {
     Logger.debug(`[JSDOM] Fetching resource: ${url}`);
     const fetcher = super.fetch(url, options);
     if (fetcher) {
@@ -89,7 +94,7 @@ export class ResourceLoader extends BaseResourceLoader {
     rootUrl: string;
     outputDir: string;
     onError?: (error: Error) => void;
-  }) {
+  }): Promise<{ url: string; encodingFormat?: string }[]> {
     const rootHref = rootUrl.startsWith('data:')
       ? ResourceLoader.dataUrlOrigin
       : /^https?:/iv.test(rootUrl)
@@ -150,7 +155,7 @@ export async function getJsdomFromUrlOrFile({
   src: string;
   resourceLoader?: ResourceLoader;
   virtualConsole?: VirtualConsole;
-}) {
+}): Promise<JSDOM> {
   const url = isValidUri(src) ? new URL(src) : pathToFileURL(src);
   let dom: JSDOM;
   if (url.protocol === 'http:' || url.protocol === 'https:') {
@@ -212,7 +217,7 @@ export function getJsdomFromString({
 }: {
   html: string;
   virtualConsole?: VirtualConsole;
-}) {
+}): JSDOM {
   return new JSDOM(html, {
     virtualConsole,
   });
@@ -221,7 +226,7 @@ export function getJsdomFromString({
 export async function getStructuredSectionFromHtml(
   htmlPath: string,
   href?: string,
-) {
+): Promise<StructuredDocumentSection[]> {
   const dom = await getJsdomFromUrlOrFile({ src: htmlPath });
   const { document } = dom.window;
   const allHeadings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
@@ -242,7 +247,11 @@ export async function getStructuredSectionFromHtml(
       return [];
     }
     const [head, ...tail] = headers;
-    const section = head.parentElement!;
+    const section = head.parentElement;
+    /* v8 ignore next 3 */
+    if (!section) {
+      throw new Error('Heading element is not contained in any parent element');
+    }
     const id = head.id || section.id;
     const level = Number(head.tagName.slice(1));
     let i = tail.findIndex((s) => Number(s.tagName.slice(1)) <= level);
@@ -360,7 +369,7 @@ export function generateDefaultTocHtml({
 }: {
   language?: string;
   title?: string;
-}) {
+}): string {
   const toc = (
     <html lang={language}>
       <head>
@@ -524,7 +533,7 @@ export function generateDefaultCoverHtml({
 }: {
   language?: string;
   title?: string;
-}) {
+}): string {
   const toc = (
     <html lang={language}>
       <head>
@@ -634,7 +643,12 @@ export async function fetchLinkedPublicationManifest({
   if (!linkEl) {
     return null;
   }
-  const href = linkEl.getAttribute('href')!.trim();
+  const hrefAttr = linkEl.getAttribute('href');
+  /* v8 ignore next 3 */
+  if (hrefAttr === null) {
+    throw new Error('Publication manifest link has no href attribute');
+  }
+  const href = hrefAttr.trim();
   let manifest: PublicationManifest;
   let manifestUrl = baseUrl;
   if (href.startsWith('#')) {

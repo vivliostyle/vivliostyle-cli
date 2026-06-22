@@ -94,7 +94,9 @@ function transformPublicationManifest(
   return ret;
 }
 
-export function decodePublicationManifest(input: PublicationManifest) {
+export function decodePublicationManifest(
+  input: PublicationManifest,
+): PublicationManifest {
   return transformPublicationManifest(input, {
     url: decodeURI,
   });

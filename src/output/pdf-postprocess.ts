@@ -74,7 +74,7 @@ export async function pressReadyWithContainer({
   preflightOption: string[];
   image: string;
   signal?: AbortSignal;
-}) {
+}): Promise<void> {
   await runContainer({
     image,
     entrypoint: 'press-ready',
@@ -120,7 +120,7 @@ export class PostProcess {
       replaceImage,
       signal,
     }: SaveOption,
-  ) {
+  ): Promise<void> {
     let pdf = await this.document.save();
     signal?.throwIfAborted();
 
@@ -220,7 +220,7 @@ export class PostProcess {
       viewerCoreVersion?: string;
       disableCreatorOption?: boolean;
     } = {},
-  ) {
+  ): Promise<void> {
     const { ReadingDirection } = await importNodeModule('pdf-lib');
     const title = tree[metaTerms.title]?.[0].v;
     if (title) {
@@ -266,7 +266,7 @@ export class PostProcess {
     }
   }
 
-  async toc(tocItems: TOCItem[]) {
+  async toc(tocItems: TOCItem[]): Promise<void> {
     const { PDFDict, PDFHexString, PDFName, PDFNumber } =
       await importNodeModule('pdf-lib');
     if (!tocItems || tocItems.length === 0) {
@@ -299,9 +299,10 @@ export class PostProcess {
         if (next) {
           child.set(PDFName.of('Next'), next.ref);
         }
-        if (item.children.length > 0) {
+        const lastChild = item.children.at(-1);
+        if (lastChild) {
           child.set(PDFName.of('First'), item.children[0].ref);
-          child.set(PDFName.of('Last'), item.children.at(-1)!.ref);
+          child.set(PDFName.of('Last'), lastChild.ref);
           child.set(PDFName.of('Count'), PDFNumber.of(countAll(item.children)));
         }
         this.document.context.assign(item.ref, child);
@@ -313,15 +314,20 @@ export class PostProcess {
     const itemsWithRefs = addRefs(tocItems, outlineRef);
     addObjectsToPDF(itemsWithRefs);
 
+    const lastItem = itemsWithRefs.at(-1);
+    /* v8 ignore next 3 */
+    if (!lastItem) {
+      throw new Error('Expected at least one TOC item');
+    }
     const outline = PDFDict.withContext(this.document.context);
     outline.set(PDFName.of('First'), itemsWithRefs[0].ref);
-    outline.set(PDFName.of('Last'), itemsWithRefs.at(-1)!.ref);
+    outline.set(PDFName.of('Last'), lastItem.ref);
     outline.set(PDFName.of('Count'), PDFNumber.of(countAll(itemsWithRefs)));
     this.document.context.assign(outlineRef, outline);
     this.document.catalog.set(PDFName.of('Outlines'), outlineRef);
   }
 
-  setPageBoxes(pageSizeData: PageSizeData[]) {
+  setPageBoxes(pageSizeData: PageSizeData[]): void {
     if (pageSizeData.length + 1 === this.document.getPageCount()) {
       // fix issue #312: Chromium LayoutNGPrinting adds unnecessary blank page
       this.document.removePage(pageSizeData.length);
@@ -335,8 +341,8 @@ export class PostProcess {
       if (
         !sizeData.mediaWidth ||
         !sizeData.mediaHeight ||
-        isNaN(sizeData.bleedOffset) ||
-        isNaN(sizeData.bleedSize)
+        Number.isNaN(sizeData.bleedOffset) ||
+        Number.isNaN(sizeData.bleedSize)
       ) {
         continue;
       }

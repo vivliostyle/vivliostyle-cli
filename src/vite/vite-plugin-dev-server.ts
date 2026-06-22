@@ -42,15 +42,13 @@ function createEntriesRouteLookup(entries: ParsedEntry[], cwd: string) {
     let i = 0,
       len = uri.length - 1,
       x;
-    if (uri.codePointAt(len) === 47) {
-      uri = uri.slice(0, len);
-    }
+    const path = uri.codePointAt(len) === 47 ? uri.slice(0, len) : uri;
     const arr = [],
-      tmp = `${uri}/index`;
+      tmp = `${path}/index`;
     for (; i < extns.length; i++) {
       x = extns[i] ? `.${extns[i]}` : '';
-      if (uri) {
-        arr.push(uri + x);
+      if (path) {
+        arr.push(path + x);
       }
       arr.push(tmp + x);
     }
@@ -279,8 +277,12 @@ export function vsDevServerPlugin({
           server?.watcher.add(entry.source.pathname);
         }
         return { content: html, etag };
-      } catch (error: any) {
-        server?.config.logger.error(getFormattedError(error));
+      } catch (error: unknown) {
+        server?.config.logger.error(
+          getFormattedError(
+            error instanceof Error ? error : new Error(String(error)),
+          ),
+        );
         transformCache.delete(entry.target);
       }
     })();
@@ -326,11 +328,11 @@ export function vsDevServerPlugin({
     res,
     next,
   ) {
-    if (!program) {
+    if (!program || req.url === undefined) {
       return next();
     }
     const { entriesLookup, urlMatchRe } = program;
-    const [_, pathname, qs] = decodeURI(req.url!).match(urlMatchRe) ?? [];
+    const [_, pathname, qs] = decodeURI(req.url).match(urlMatchRe) ?? [];
     const match = pathname && entriesLookup(pathname);
     if (!match) {
       return next();
@@ -382,9 +384,10 @@ export function vsDevServerPlugin({
     res,
     next,
   ) {
-    if (!config || !program) {
+    if (!config || !program || req.url === undefined) {
       return next();
     }
+    const requestUrl = req.url;
     const {
       urlMatchRe,
       serveWorkspace,
@@ -392,7 +395,7 @@ export function vsDevServerPlugin({
       serveAssets,
       serveAssetsMatcher,
     } = program;
-    const [_, pathname] = decodeURI(req.url!).match(urlMatchRe) ?? [];
+    const [_, pathname] = decodeURI(requestUrl).match(urlMatchRe) ?? [];
     if (!pathname) {
       return next();
     }
@@ -403,8 +406,8 @@ export function vsDevServerPlugin({
         return proceed();
       }
       Logger.debug('dev-server > serveWorkspace %s', pathname);
-      const url = req.url!;
-      req.url = req.url!.slice(config.base.length);
+      const url = requestUrl;
+      req.url = requestUrl.slice(config.base.length);
       return serveWorkspace(req, res, () => {
         req.url = url;
         proceed();
@@ -417,8 +420,8 @@ export function vsDevServerPlugin({
         return proceed();
       }
       Logger.debug('dev-server > serveAssets %s', pathname);
-      const url = req.url!;
-      req.url = url!.slice(config.base.length);
+      const url = requestUrl;
+      req.url = url.slice(config.base.length);
       return serveAssets(req, res, () => {
         req.url = url;
         proceed();

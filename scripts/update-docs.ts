@@ -10,6 +10,16 @@ import * as v from 'valibot';
 
 import { VivliostyleConfigSchema } from '../dist/config/schema.js';
 
+type Schema = v.GenericSchema;
+
+interface SchemaMeta {
+  title?: string;
+  description?: string;
+  deprecated?: boolean;
+  typeReferences?: Schema[];
+  typeString?: string;
+}
+
 function insertDocs(
   input: string,
   docsName: string,
@@ -31,40 +41,58 @@ async function buildConfigDocs(): Promise<string> {
   const namedDefinitionSet = new Set<string>();
 
   const getSchema = (
-    s: v.BaseSchema<any, any, any>,
+    s: Schema,
   ): (
-    | v.BaseSchema<any, any, any>
-    | v.ArraySchema<any, any>
-    | v.ObjectSchema<v.ObjectEntries, any>
-    | v.LooseObjectSchema<v.ObjectEntries, any>
-    | v.UnionSchema<v.UnionOptions, any>
-    | v.VariantSchema<string, v.VariantOptions<string>, any>
-    | v.IntersectSchema<v.IntersectOptions, any>
-    | v.OptionalSchema<any, any>
-    | v.NonOptionalSchemaAsync<any, any>
-    | v.LazySchema<any>
-    | v.RecordSchema<any, any, any>
-    | v.FunctionSchema<any>
-    | v.InstanceSchema<any, any>
-    | v.StringSchema<any>
-    | v.NumberSchema<any>
-    | v.BooleanSchema<any>
-    | v.LiteralSchema<any, any>
+    | Schema
+    | v.ArraySchema<Schema, undefined>
+    | v.ObjectSchema<v.ObjectEntries, undefined>
+    | v.LooseObjectSchema<v.ObjectEntries, undefined>
+    | v.UnionSchema<v.UnionOptions, undefined>
+    | v.VariantSchema<string, v.VariantOptions<string>, undefined>
+    | v.IntersectSchema<v.IntersectOptions, undefined>
+    | v.OptionalSchema<Schema, undefined>
+    | v.NonOptionalSchemaAsync<Schema, undefined>
+    | v.LazySchema<Schema>
+    | v.RecordSchema<v.GenericSchema<string>, Schema, undefined>
+    | v.FunctionSchema<undefined>
+    | v.InstanceSchema<v.Class, undefined>
+    | v.StringSchema<undefined>
+    | v.NumberSchema<undefined>
+    | v.BooleanSchema<undefined>
+    | v.LiteralSchema<v.Literal, undefined>
   ) & {
     [visited]?: boolean;
     [definition]?: string;
   } => {
     let schema = s;
     while ('pipe' in schema) {
-      schema = (schema as v.SchemaWithPipe<any>).pipe[0];
+      schema = (
+        schema as v.SchemaWithPipe<
+          [Schema, ...v.PipeItem<unknown, unknown, v.BaseIssue<unknown>>[]]
+        >
+      ).pipe[0];
     }
     return schema;
   };
 
-  const getMeta = (s: v.BaseSchema<any, any, any>) => {
+  type MetaPipeItem =
+    | v.TitleAction<unknown, string>
+    | v.DescriptionAction<unknown, string>
+    | v.MetadataAction<unknown, Record<string, unknown>>
+    | v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>
+    | v.BaseValidation<unknown, unknown, v.BaseIssue<unknown>>
+    | v.BaseTransformation<unknown, unknown, v.BaseIssue<unknown>>;
+
+  const getMeta = (s: Schema): SchemaMeta => {
     return (
-      'pipe' in s ? ((s as v.SchemaWithPipe<any>).pipe as any[]) : []
-    ).reduce((acc, item) => {
+      'pipe' in s
+        ? ((
+            s as v.SchemaWithPipe<
+              [Schema, ...v.PipeItem<unknown, unknown, v.BaseIssue<unknown>>[]]
+            >
+          ).pipe as MetaPipeItem[])
+        : []
+    ).reduce<SchemaMeta>((acc, item) => {
       if (item.kind === 'metadata') {
         if (item.type === 'title') {
           acc.title = item.title;
@@ -78,9 +106,7 @@ async function buildConfigDocs(): Promise<string> {
     }, {});
   };
 
-  async function traverse(
-    schemaWithPipe: v.BaseSchema<any, any, any>,
-  ): Promise<string> {
+  async function traverse(schemaWithPipe: Schema): Promise<string> {
     const meta = getMeta(schemaWithPipe);
     const { title, description = '' } = meta;
     const schema = getSchema(schemaWithPipe);
@@ -109,7 +135,7 @@ async function buildConfigDocs(): Promise<string> {
         Promise.resolve([] as string[]),
       );
       docs += entries.filter(Boolean).join('\n\n');
-      schema[definition] = `{${Object.entries<any>(schema.entries)
+      schema[definition] = `{${Object.entries(schema.entries)
         .map(
           ([k, value]) =>
             `${v.isOfType('optional', value) ? `${k}?` : k}: ${getSchema(value)[definition] || 'unknown'}`,
@@ -135,9 +161,7 @@ async function buildConfigDocs(): Promise<string> {
       ) {
         // Merge plain object intersections, recursing through nested
         // intersects so all leaf entries contribute to `properties`.
-        const collectEntries = (
-          s: v.BaseSchema<any, any, any>,
-        ): v.ObjectEntries => {
+        const collectEntries = (s: Schema): v.ObjectEntries => {
           const inner = getSchema(s);
           if (
             v.isOfType('object', inner) ||
@@ -158,7 +182,7 @@ async function buildConfigDocs(): Promise<string> {
           {} as v.ObjectEntries,
         );
         properties = merged;
-        schema[definition] = `{${Object.entries<any>(merged)
+        schema[definition] = `{${Object.entries(merged)
           .map(
             ([k, value]) =>
               `${v.isOfType('optional', value) ? `${k}?` : k}: ${getSchema(value)[definition] || 'unknown'}`,
@@ -189,9 +213,9 @@ async function buildConfigDocs(): Promise<string> {
       schema[definition] =
         `{[key: (${getSchema(schema.key)[definition]})]: ${getSchema(schema.value)[definition]}}`;
     } else if (v.isOfType('function', schema)) {
-      const out = await ((meta.typeReferences as any[]) || []).reduce(
+      const out = await (meta.typeReferences || []).reduce(
         (acc, type) =>
-          acc.then(async (list: any[]) => [...list, await traverse(type)]),
+          acc.then(async (list) => [...list, await traverse(type)]),
         Promise.resolve([] as string[]),
       );
       docs += out.filter(Boolean).join('\n\n');
@@ -234,11 +258,21 @@ async function buildConfigDocs(): Promise<string> {
             'pipe' in value
               ? getMeta(value)
               : value.type === 'optional' || value.type === 'non_optional'
-                ? getMeta((value as v.OptionalSchema<any, any>).wrapped)
+                ? getMeta(
+                    (
+                      value as
+                        | v.OptionalSchema<Schema, undefined>
+                        | v.NonOptionalSchema<Schema, undefined>
+                    ).wrapped,
+                  )
                 : {};
           const unwrapped =
             value.type === 'optional' || value.type === 'non_optional'
-              ? (value as v.OptionalSchema<any, any>).wrapped
+              ? (
+                  value as
+                    | v.OptionalSchema<Schema, undefined>
+                    | v.NonOptionalSchema<Schema, undefined>
+                ).wrapped
               : value;
           const propSchema = getSchema(value);
           const typeString = propSchema[definition]

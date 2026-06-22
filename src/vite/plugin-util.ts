@@ -10,14 +10,14 @@ import {
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 
 const headStartTagRe = /<head[^>]*>/iv;
-export const prependToHead = (html: string, content: string) =>
+export const prependToHead = (html: string, content: string): string =>
   html.replace(headStartTagRe, (match) => `${match}\n${content}`);
 
 export async function reloadConfig(
   prevConfig: ResolvedTaskConfig,
   inlineConfig: ParsedVivliostyleInlineConfig,
   resolvedViteConfig?: ResolvedViteConfig,
-) {
+): Promise<ResolvedTaskConfig> {
   let config =
     (await loadVivliostyleConfig(inlineConfig)) ??
     setupConfigFromFlags(inlineConfig);

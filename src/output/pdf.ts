@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
 
-import type { Browser, Page } from 'puppeteer-core';
+import type { Browser, HTTPResponse, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
@@ -51,7 +51,7 @@ export async function buildPDF({
     )} ${entry.title ? gray(entry.title) : ''}`;
   }
 
-  function handleEntry(response: any) {
+  function handleEntry(response: HTTPResponse) {
     const entry = config.entries.find(
       (candidate): candidate is ManuscriptEntry => {
         if (!('source' in candidate)) {
@@ -196,7 +196,7 @@ export async function buildPDF({
       // because page.pdf() doesn't support for the preferCSSPageSize option.
       // Use a sufficiently large value to accommodate user-defined page sizes.
       const dimensionSizeForWebDriverBiDi =
-        parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) ||
+        Number.parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) ||
         // 1000mm
         3780;
       const pdf = await page.pdf({
@@ -302,10 +302,10 @@ function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
         'div[data-vivliostyle-bleed-box]',
       ) as HTMLElement;
       sizeData.push({
-        mediaWidth: parseFloat(pageContainer.style.width) * 0.75,
-        mediaHeight: parseFloat(pageContainer.style.height) * 0.75,
-        bleedOffset: parseFloat(bleedBox?.style.left) * 0.75,
-        bleedSize: parseFloat(bleedBox?.style.paddingLeft) * 0.75,
+        mediaWidth: Number.parseFloat(pageContainer.style.width) * 0.75,
+        mediaHeight: Number.parseFloat(pageContainer.style.height) * 0.75,
+        bleedOffset: Number.parseFloat(bleedBox?.style.left) * 0.75,
+        bleedSize: Number.parseFloat(bleedBox?.style.paddingLeft) * 0.75,
       });
     }
     return sizeData;

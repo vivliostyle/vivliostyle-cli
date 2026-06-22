@@ -79,7 +79,7 @@ function isCommandName(command: string): command is CommandName {
   return Object.hasOwn(commandLoaders, command);
 }
 
-export async function dispatchCli(argv: string[]) {
+export async function dispatchCli(argv: string[]): Promise<void> {
   const commandArgs = argv.slice(2);
   const rootProgram = setupProgram(commandArgs);
 

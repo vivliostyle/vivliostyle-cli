@@ -36,13 +36,20 @@ import { ValidString } from './config/schema.js';
 import { PromptCancelError } from './entry-util.js';
 import { isUnicodeSupported, Logger } from './logger.js';
 
-type DistributiveOmit<T, K extends keyof any> = T extends any
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never;
 
+type AnyObjectSchema =
+  | v.ObjectSchema<v.ObjectEntries, v.ErrorMessage<v.ObjectIssue> | undefined>
+  | v.ObjectSchemaAsync<
+      v.ObjectEntriesAsync,
+      v.ErrorMessage<v.ObjectIssue> | undefined
+    >;
+
 export async function askQuestion<
   T extends object,
-  S extends v.ObjectSchema<any, any> | v.ObjectSchemaAsync<any, any>,
+  S extends AnyObjectSchema,
 >(_: {
   question: Record<
     keyof v.InferInput<S>,
@@ -60,9 +67,7 @@ export async function askQuestion<T extends object>(_: {
   validateProgressMessage?: string;
 }): Promise<T>;
 
-export async function askQuestion<
-  S extends v.ObjectSchema<any, any> | v.ObjectSchemaAsync<any, any>,
->({
+export async function askQuestion<S extends AnyObjectSchema>({
   question: questions,
   interactiveLogger,
   schema,
@@ -75,7 +80,7 @@ export async function askQuestion<
   interactiveLogger: InteractiveLogger;
   schema?: S;
   validateProgressMessage?: string;
-}): Promise<any> {
+}): Promise<unknown> {
   const response: Record<string, unknown> = {};
 
   // Repeat until the input passes the validation
@@ -99,7 +104,7 @@ export async function askQuestion<
 
       if (import.meta.env?.VITEST) {
         // For testing, safely assign the name property using a type assertion
-        (question as any).name = name;
+        (question as { name?: string }).name = name;
       }
       if (question.type === 'text') {
         result = await textPrompt({ ...question, validate });
@@ -143,7 +148,7 @@ export async function askQuestion<
       });
     }
 
-    let result: v.SafeParseResult<any>;
+    let result: v.SafeParseResult<v.GenericSchema | v.GenericSchemaAsync>;
     if (schema && schema.async) {
       result = await interactiveLogger?.logLoading(
         validateProgressMessage ?? '',
@@ -447,7 +452,7 @@ export class InteractiveLogger {
     return result;
   }
 
-  logInfo(message: string) {
+  logInfo(message: string): void {
     this.messageHistory.push({ type: 'info', message });
     if (import.meta.env?.VITEST) {
       return;
@@ -457,7 +462,7 @@ export class InteractiveLogger {
     );
   }
 
-  logWarn(message: string) {
+  logWarn(message: string): void {
     this.messageHistory.push({ type: 'warn', message });
     if (import.meta.env?.VITEST) {
       return;
@@ -467,7 +472,7 @@ export class InteractiveLogger {
     );
   }
 
-  logOutro(message: string) {
+  logOutro(message: string): void {
     this.messageHistory.push({ type: 'outro', message });
     if (import.meta.env?.VITEST) {
       return;

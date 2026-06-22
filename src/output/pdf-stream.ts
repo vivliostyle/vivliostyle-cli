@@ -147,7 +147,7 @@ function* tokenize(content: string): Generator<Token> {
     }
 
     if (/^[+\-]?(\d+\.?\d*|\.\d+)$/v.test(token)) {
-      yield { type: 'number', value: parseFloat(token), raw: token };
+      yield { type: 'number', value: Number.parseFloat(token), raw: token };
     } else if (token === 'ID') {
       // Inline image: ID is followed by single whitespace, then binary data until EI
       yield { type: 'operator', value: 'ID', raw: 'ID' };
@@ -225,9 +225,13 @@ export function convertStreamColors(
     cmykOp: 'k' | 'K',
     token: OperatorToken,
   ): void => {
-    const b = pendingNumbers.pop()!;
-    const g = pendingNumbers.pop()!;
-    const r = pendingNumbers.pop()!;
+    const b = pendingNumbers.pop();
+    const g = pendingNumbers.pop();
+    const r = pendingNumbers.pop();
+    /* v8 ignore next 3 */
+    if (!b || !g || !r) {
+      throw new Error('Expected at least three pending numbers for RGB color');
+    }
     flushPendingNumbers();
 
     const key = formatRgbKey(r.value, g.value, b.value);

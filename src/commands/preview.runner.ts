@@ -20,7 +20,7 @@ async function waitForPreviewServerClose(
   signal.throwIfAborted();
 }
 
-export async function runPreviewCli(argv: string[]) {
+export async function runPreviewCli(argv: string[]): Promise<void> {
   await runCliCommand(async (cliSignal) => {
     const inlineConfig = parsePreviewCommand(argv);
     const server = await preview({ ...inlineConfig, signal: cliSignal });

@@ -20,6 +20,7 @@ import type {
   ContentsEntryConfig,
   CoverEntryConfig,
   EntryConfig,
+  HastTransformFunction,
   InputFormat,
   StructuredDocument,
   StructuredDocumentSection,
@@ -129,14 +130,10 @@ export interface ContentsEntry {
   sectionDepth: number;
   transform: {
     transformDocumentList:
-      | ((
-          nodeList: StructuredDocument[],
-        ) => (propsList: { children: any }[]) => any)
+      | HastTransformFunction<StructuredDocument>
       | undefined;
     transformSectionList:
-      | ((
-          nodeList: StructuredDocumentSection[],
-        ) => (propsList: { children: any }[]) => any)
+      | HastTransformFunction<StructuredDocumentSection>
       | undefined;
   };
   pageBreakBefore?: 'left' | 'right' | 'recto' | 'verso';
@@ -198,14 +195,14 @@ function parseHexColor(hex: string): RGBValue {
   let b: number, g: number, r: number;
   if (hex.length === 4 || hex.length === 5) {
     // #RGB or #RGBA (alpha discarded)
-    r = parseInt(hex[1] + hex[1], 16);
-    g = parseInt(hex[2] + hex[2], 16);
-    b = parseInt(hex[3] + hex[3], 16);
+    r = Number.parseInt(hex[1] + hex[1], 16);
+    g = Number.parseInt(hex[2] + hex[2], 16);
+    b = Number.parseInt(hex[3] + hex[3], 16);
   } else {
     // #RRGGBB or #RRGGBBAA (alpha discarded)
-    r = parseInt(hex.slice(1, 3), 16);
-    g = parseInt(hex.slice(3, 5), 16);
-    b = parseInt(hex.slice(5, 7), 16);
+    r = Number.parseInt(hex.slice(1, 3), 16);
+    g = Number.parseInt(hex.slice(3, 5), 16);
+    b = Number.parseInt(hex.slice(5, 7), 16);
   }
   // NOTE:
   // Chromium (Skia) converts 8-bit color values to decimal strings
@@ -935,11 +932,12 @@ export function resolveTaskConfig(
   };
 
   const themeIndexes = new Set<ParsedTheme>();
+  const { input } = options;
   const projectConfig =
-    !options.config && options.input
+    !options.config && input
       ? resolveSingleInputConfig({
           config,
-          input: options.input!,
+          input,
           context,
           temporaryFilePrefix,
           themeIndexes,
@@ -1260,7 +1258,7 @@ function resolveComposedProjectConfig({
   const themesDir = upath.resolve(workspaceDir, 'themes');
   const pkgJsonPath = upath.resolve(context, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
-    ? readJSON(pkgJsonPath)
+    ? readJSON<{ name?: string; author?: string }>(pkgJsonPath)
     : undefined;
   if (pkgJson) {
     Logger.debug('located package.json path', pkgJsonPath);
@@ -1570,13 +1568,20 @@ function resolveComposedProjectConfig({
     });
   }
   if (cover && coverHtml && entries.every(({ rel }) => rel !== 'cover')) {
+    const coverImageSrc = ensureCoverImage(cover.src);
+    /* v8 ignore next 5 */
+    if (!coverImageSrc) {
+      throw new Error(
+        `A cover is set but a location of cover file is not set. Please set 'cover' property in your config file.`,
+      );
+    }
     entries.unshift({
       rel: 'cover',
       target: coverHtml,
       title: projectTitle,
       // Don't inherit rootThemes for cover documents
       themes: [],
-      coverImageSrc: ensureCoverImage(cover.src)!,
+      coverImageSrc,
       coverImageAlt: cover.name,
     });
   }

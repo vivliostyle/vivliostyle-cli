@@ -86,7 +86,7 @@ export async function cleanupWorkspace({
   workspaceDir,
   themesDir,
   entries,
-}: ResolvedTaskConfig) {
+}: ResolvedTaskConfig): Promise<void> {
   if (
     pathEquals(workspaceDir, entryContextDir) ||
     pathContains(workspaceDir, entryContextDir) ||
@@ -232,10 +232,11 @@ export async function transformManuscript(
           Logger.logError(`Failed to fetch resources: ${error.detail}`);
         }),
       });
-    } catch (error: any) {
+    } catch (error) {
+      const thrownError = error as Error;
       throw new DetailError(
         `Failed to fetch the content from ${resourceUrl}`,
-        error.stack ?? error.message,
+        thrownError.stack ?? thrownError.message,
       );
     }
 
@@ -330,7 +331,12 @@ export async function transformManuscript(
   }
 
   if (source?.type === 'uri' && resourceLoader && resourceUrl) {
-    const { response } = resourceLoader.fetcherMap.get(resourceUrl)!;
+    const fetcher = resourceLoader.fetcherMap.get(resourceUrl);
+    /* v8 ignore next 3 */
+    if (!fetcher) {
+      throw new Error(`Failed to locate the fetched content: ${resourceUrl}`);
+    }
+    const { response } = fetcher;
     const contentFetcher = Promise.resolve(
       htmlBuffer,
     ) as jsdom.AbortablePromise<Buffer>;
@@ -358,7 +364,7 @@ export function generateManifest({
   language,
   readingProgression,
   cover,
-}: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig }) {
+}: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig }): void {
   const manifestEntries: ArticleEntryConfig[] = entries.map((entry) => ({
     title:
       (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||

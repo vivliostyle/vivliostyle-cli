@@ -12,7 +12,7 @@ import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
 
-const $ = (strings: TemplateStringsArray, ...values: any[]) => {
+const $ = (strings: TemplateStringsArray, ...values: unknown[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
   const indent = lines
     .filter((line) => line.trim())
@@ -68,6 +68,11 @@ export const StructuredDocumentSection: v.GenericSchema<StructuredDocumentSectio
     }),
     v.title('StructuredDocumentSection'),
   );
+
+type HastElement = import('hast').ElementContent | import('hast').Root;
+export type HastTransformFunction<T> = (
+  nodeList: T[],
+) => (propsList: { children: HastElement | HastElement[] }[]) => HastElement;
 
 export const ValidString = v.pipe(
   v.string(),
@@ -536,9 +541,7 @@ export const TocConfig = v.pipe(
       ),
       transformDocumentList: v.pipe(
         v.function() as v.GenericSchema<
-          (
-            nodeList: StructuredDocument[],
-          ) => (propsList: { children: any }[]) => any
+          HastTransformFunction<StructuredDocument>
         >,
         v.metadata({
           typeString:
@@ -551,9 +554,7 @@ export const TocConfig = v.pipe(
       ),
       transformSectionList: v.pipe(
         v.function() as v.GenericSchema<
-          (
-            nodeList: StructuredDocumentSection[],
-          ) => (propsList: { children: any }[]) => any
+          HastTransformFunction<StructuredDocumentSection>
         >,
         v.metadata({
           typeString:

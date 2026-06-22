@@ -152,7 +152,7 @@ export async function getSourceUrl({
 }: Pick<
   ResolvedTaskConfig,
   'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl'
->) {
+>): Promise<string> {
   let input: string;
   switch (viewerInput.type) {
     case 'webpub':
@@ -195,7 +195,7 @@ export async function getViewerFullUrl({
   Pick<
     ResolvedTaskConfig,
     'viewerInput' | 'base' | 'workspaceDir' | 'rootUrl' | 'viewer'
-  >) {
+  >): Promise<string> {
   const viewerUrl = viewer
     ? new URL(viewer)
     : new URL(`${VIEWER_ROOT_PATH}/index.html`, rootUrl);
@@ -243,7 +243,7 @@ export async function createViteServer({
   viteConfig: ResolvedViteConfig;
   inlineConfig: ParsedVivliostyleInlineConfig;
   mode: 'preview' | 'build';
-}) {
+}): Promise<ViteDevServer | PreviewServer> {
   const viteInlineConfig = {
     clearScreen: false,
     configFile: false,

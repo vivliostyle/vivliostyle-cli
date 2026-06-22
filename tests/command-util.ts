@@ -55,7 +55,7 @@ export const runCommand = async (
     logLevel?: LogLevel;
     port?: number;
   },
-): Promise<ViteDevServer | void> => {
+): Promise<ViteDevServer | undefined> => {
   let inlineConfig = {
     build: parseBuildCommand,
     preview: parsePreviewCommand,
@@ -80,7 +80,7 @@ export const createServerMiddleware = async ({
   cwd: string;
   input?: string;
   config?: BuildTask;
-}) => {
+}): Promise<ViteDevServer['middlewares']> => {
   const inlineConfig = v.parse(VivliostyleInlineConfig, {
     cwd,
     input,
@@ -120,10 +120,10 @@ export const getTaskConfig = async (
   return resolvedConfig;
 };
 
-export const maskConfig = (obj: any) => {
+export const maskConfig = (obj: Record<string, unknown>): void => {
   Object.entries(obj).forEach(([k, value]) => {
     if (value && typeof value === 'object') {
-      maskConfig(value);
+      maskConfig(value as Record<string, unknown>);
     } else if (k === 'executableBrowser' || k === 'executableChromium') {
       obj[k] = '__EXECUTABLE_CHROMIUM_PATH__';
     } else if (k === 'image') {
@@ -135,7 +135,7 @@ export const maskConfig = (obj: any) => {
       k === 'documentMetadataReader'
     ) {
       // These are function references that cannot be meaningfully compared in snapshots
-      delete obj[k];
+      Reflect.deleteProperty(obj, k);
     } else if (typeof value === 'string') {
       const normalized = /^(https?|file):\/{2}/v.test(value)
         ? value
@@ -148,7 +148,7 @@ export const maskConfig = (obj: any) => {
   });
 };
 
-export const resolveFixture = (p?: string) =>
+export const resolveFixture = (p?: string): string =>
   upath.resolve(rootPath, 'tests/fixtures', p || '');
 
 export function assertSingleItem<T = unknown>(
@@ -165,7 +165,9 @@ export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
  * Modified version of memfs's `toTreeSync` function that sorts by directory item names
  * source: https://github.com/streamich/memfs/blob/cd6c25698536aab8845774c4a0036376a0fd599f/src/print/index.ts#L6-L30
  */
-export function toTree(...[fs, opts]: Parameters<typeof toTreeSync>) {
+export function toTree(
+  ...[fs, opts]: Parameters<typeof toTreeSync>
+): ReturnType<typeof toTreeSync> {
   const modFs = new Proxy(fs, {
     get(target, prop) {
       if (prop === 'readdirSync') {

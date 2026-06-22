@@ -26,4 +26,5 @@ export const importNodeModule = <
   T extends (typeof nodeExternalModules)[number],
 >(
   name: T,
-) => import(name) as Promise<NodeExternalModules[T]>;
+): Promise<NodeExternalModules[T]> =>
+  import(name) as Promise<NodeExternalModules[T]>;

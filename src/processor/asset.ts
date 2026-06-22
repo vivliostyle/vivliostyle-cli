@@ -94,7 +94,7 @@ export function getWebPubResourceMatcher({
   cwd: string;
   manifestPath: string;
   additionalPatterns?: string[];
-}) {
+}): GlobMatcher {
   return new GlobMatcher([
     {
       patterns: [
@@ -137,7 +137,7 @@ export function getAssetMatcher({
 > & {
   cwd: string;
   ignore?: string[];
-}) {
+}): GlobMatcher {
   const ignorePatterns = [
     ...ignore,
     ...excludes,

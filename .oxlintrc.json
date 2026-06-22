@@ -8,13 +8,7 @@
     "suspicious": "error"
   },
   "rules": {
-    "consistent-function-scoping": "off",
-    "max-classes-per-file": "off",
-    "max-lines": "off",
-    "max-lines-per-function": "off",
-    "no-await-in-loop": "off",
-    "no-inline-comments": ["error", { "ignorePattern": "@vite-ignore" }],
-    "no-shadow": ["error", { "allow": ["_"] }],
+    // Correctness Rules
     "no-unused-vars": [
       "error",
       {
@@ -25,9 +19,38 @@
         "destructuredArrayIgnorePattern": "^_"
       }
     ],
+    // Restriction Rules
+    "no-explicit-any": "error",
+    "explicit-module-boundary-types": "error",
+    "no-non-null-assertion": "error",
+    "no-dynamic-delete": "error",
+    "no-import-type-side-effects": "error",
+    "no-invalid-void-type": "error",
+    "prefer-number-properties": "error",
+    "prefer-node-protocol": "error",
+    "no-param-reassign": "error",
+    // Pedantic Rules
+    "max-classes-per-file": "off",
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "no-inline-comments": ["error", { "ignorePattern": "@vite-ignore" }],
     "no-warning-comments": "warn",
-    "require-unicode-regexp": ["error", { "requireFlag": "v" }]
+    "require-unicode-regexp": ["error", { "requireFlag": "v" }],
+    // Perf Rules
+    "no-await-in-loop": "off",
+    // Suspicious Rules
+    "consistent-function-scoping": "off",
+    "no-shadow": ["error", { "allow": ["_"] }]
   },
+  "overrides": [
+    {
+      "files": ["tests/**"],
+      "rules": {
+        "no-explicit-any": "off",
+        "no-non-null-assertion": "off"
+      }
+    }
+  ],
   "ignorePatterns": [
     "dist",
     "tmp",

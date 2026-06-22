@@ -25,7 +25,7 @@ const require = createRequire(import.meta.url);
 export function locateVivliostyleConfig({
   config,
   cwd = defaultRoot,
-}: Pick<InlineOptions, 'config' | 'cwd'>) {
+}: Pick<InlineOptions, 'config' | 'cwd'>): string | undefined {
   if (config) {
     return upath.resolve(cwd, config);
   }
@@ -58,7 +58,7 @@ export async function loadVivliostyleConfig({
       parsedConfig = parseJsonc(jsonRaw);
     } else {
       // Clear require cache to reload CJS config files
-      delete require.cache[require.resolve(absPath)];
+      Reflect.deleteProperty(require.cache, require.resolve(absPath));
       const url = pathToFileURL(absPath);
       // Invalidate cache for ESM config files
       // https://github.com/nodejs/node/issues/49442
@@ -93,7 +93,9 @@ export async function loadVivliostyleConfig({
   );
 }
 
-export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
+export function warnDeprecatedConfig(
+  config: ParsedVivliostyleConfigSchema,
+): void {
   if (config.tasks.some((task) => task.includeAssets)) {
     Logger.logWarn(
       "'includeAssets' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'copyAsset.includes' property instead.",

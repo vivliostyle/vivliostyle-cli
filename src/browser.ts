@@ -372,7 +372,11 @@ export async function launchPreview({
     ResolvedTaskConfig,
     'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors' | 'timeout'
   >;
-}) {
+}): Promise<{
+  browser: Browser;
+  page: Page;
+  closeBrowser: () => Promise<void>;
+}> {
   let executableBrowser = browserConfig.executablePath;
   Logger.debug(`Specified browser path: ${executableBrowser}`);
   if (executableBrowser) {

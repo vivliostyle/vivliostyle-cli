@@ -5,6 +5,7 @@ import {
   type InlineOptions,
   type OutputConfig,
   type ParsedVivliostyleConfigSchema,
+  type ParsedVivliostyleInlineConfig,
   VivliostyleInlineConfig,
 } from '../config/schema.js';
 import { EMPTY_DATA_URI } from '../constants.js';
@@ -57,7 +58,7 @@ export function createParserProgram({
   setupProgram: () => Command;
   parseArgs?: (options: CliFlags, args: string[]) => CliFlags;
 }) {
-  return (argv: string[]) => {
+  return (argv: string[]): ParsedVivliostyleInlineConfig => {
     const program = setupProgram();
     program.parse(argv);
     let options = program.opts<CliFlags>();

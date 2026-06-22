@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import type { ViteDevServer } from 'vite';
 
 import { VivliostyleInlineConfig } from './config/schema.js';
 import { build as _build } from './core/build.js';
@@ -38,7 +39,7 @@ export type PublicationManifest = _PublicationManifest;
  * @param options
  * @returns
  */
-export async function build(options: VivliostyleInlineConfig) {
+export async function build(options: VivliostyleInlineConfig): Promise<void> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
   return await _build(parsed);
 }
@@ -49,7 +50,9 @@ export async function build(options: VivliostyleInlineConfig) {
  * @param options
  * @returns
  */
-export async function preview(options: VivliostyleInlineConfig) {
+export async function preview(
+  options: VivliostyleInlineConfig,
+): Promise<ViteDevServer> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
   return await _preview(parsed);
 }
@@ -60,7 +63,7 @@ export async function preview(options: VivliostyleInlineConfig) {
  * @param options
  * @returns
  */
-export async function create(options: VivliostyleInlineConfig) {
+export async function create(options: VivliostyleInlineConfig): Promise<void> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
   return await _create(parsed);
 }

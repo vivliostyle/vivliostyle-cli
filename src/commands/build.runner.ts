@@ -6,7 +6,7 @@ import { Logger } from '../logger.js';
 import { isInContainer } from '../util.js';
 import { parseBuildCommand } from './build.parser.js';
 
-export async function runBuildCli(argv: string[]) {
+export async function runBuildCli(argv: string[]): Promise<void> {
   await runCliCommand(async (cliSignal) => {
     let inlineConfig = parseBuildCommand(argv);
     let containerForkMode = false;

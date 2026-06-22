@@ -71,7 +71,7 @@ export async function runContainer({
   env?: [string, string][];
   workdir?: string;
   signal?: AbortSignal;
-}) {
+}): Promise<void> {
   signal?.throwIfAborted();
   const { default: commandExists } = await importNodeModule('command-exists');
   const dockerExists = await commandExists('docker');

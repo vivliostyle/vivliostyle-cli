@@ -51,7 +51,9 @@ type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
   vivliostyle?: VivliostylePackageMetadata;
 };
 
-export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
+export async function create(
+  inlineConfig: ParsedVivliostyleInlineConfig,
+): Promise<void> {
   Logger.setLogOptions(inlineConfig);
   Logger.debug('create > inlineConfig %O', inlineConfig);
 
@@ -198,10 +200,14 @@ export async function create(inlineConfig: ParsedVivliostyleInlineConfig) {
     using _ = Logger.startLogging(
       useLocalTemplate ? 'Copying a local template' : 'Downloading a template',
     );
+    /* v8 ignore next 3 */
+    if (!template) {
+      throw new Error('No template is set to create a project.');
+    }
     await setupTemplate({
       projectPath,
       cwd,
-      template: template!,
+      template,
       signal: inlineConfig.signal,
       templateVariables: {
         ...inlineConfig,
@@ -539,8 +545,15 @@ async function askThemeTemplate({
     interactiveLogger.logWarn(
       'The chosen theme does not set template settings. Applying the minimal template.',
     );
+    const minimalTemplate = TEMPLATE_SETTINGS.find(
+      (t) => t.value === 'minimal',
+    );
+    /* v8 ignore next 3 */
+    if (!minimalTemplate) {
+      throw new Error('The minimal template setting is not found.');
+    }
     return {
-      template: TEMPLATE_SETTINGS.find((t) => t.value === 'minimal')!.template,
+      template: minimalTemplate.template,
       extraTemplateVariables: {},
     };
   }

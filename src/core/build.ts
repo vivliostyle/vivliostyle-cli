@@ -27,7 +27,7 @@ import { cwd, runCleanupHandlers } from '../util.js';
 export async function build(
   inlineConfig: ParsedVivliostyleInlineConfig,
   { containerForkMode = false }: { containerForkMode?: boolean } = {},
-) {
+): Promise<void> {
   Logger.setLogOptions(inlineConfig);
   if (containerForkMode) {
     Logger.setLogPrefix(gray('[Docker]'));

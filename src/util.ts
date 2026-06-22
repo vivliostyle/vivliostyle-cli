@@ -39,7 +39,7 @@ export async function exec(
   command: string,
   args: string[] = [],
   options: ExecFileOptions = {},
-) {
+): Promise<{ stdout: string; stderr: string }> {
   const subprocess = await execFile(command, args, {
     ...options,
     encoding: 'utf8',
@@ -59,7 +59,7 @@ export const registerCleanupHandler = (
   debugMessage: string,
   handler: () => void | Promise<void>,
   { prepend = false }: { prepend?: boolean } = {},
-) => {
+): (() => (() => void | Promise<void>) | undefined) => {
   const callback = () => {
     Logger.debug(debugMessage);
     return handler();
@@ -81,7 +81,7 @@ export const executeWithCleanupOnInterrupt = <T>(
   debugMessage: string,
   tryTask: () => Promise<T>,
   finallyTask?: (error: unknown | undefined) => void | Promise<void>,
-) => {
+): Promise<T> => {
   let thrownError: unknown | undefined;
   const runPromise = tryTask()
     .catch((error) => {
@@ -104,14 +104,16 @@ export const executeWithCleanupOnInterrupt = <T>(
 };
 
 // Termination hooks notify active work before cleanup starts closing resources.
-export function registerTerminationHook(hook: (exitCode: number) => void) {
+export function registerTerminationHook(
+  hook: (exitCode: number) => void,
+): () => void {
   terminationHooks.add(hook);
   return () => {
     terminationHooks.delete(hook);
   };
 }
 
-export function runCleanupHandlers() {
+export function runCleanupHandlers(): Promise<void> {
   if (cleanupPromise) {
     return cleanupPromise;
   }
@@ -156,7 +158,7 @@ async function handleProcessTermination(exitCode: number) {
   }
 }
 
-export function setupProcessTermination() {
+export function setupProcessTermination(): void {
   if (processTerminationInstalled) {
     return;
   }
@@ -179,13 +181,13 @@ export class DetailError extends Error {
   }
 }
 
-export function getFormattedError(err: Error) {
+export function getFormattedError(err: Error): string {
   return err instanceof DetailError
     ? `${err.message}\n${err.detail}`
     : err.stack || `${err.message}`;
 }
 
-export async function gracefulError(err: Error) {
+export async function gracefulError(err: Error): Promise<void> {
   console.log(`${redBright('ERROR')} ${getFormattedError(err)}
 
 ${gray('If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues')}`);
@@ -193,9 +195,11 @@ ${gray('If you think this is a bug, please report at https://github.com/vivliost
   await runCleanupHandlers();
 }
 
-export function readJSON(path: string) {
+export function readJSON<T = Record<string, unknown>>(
+  path: string,
+): T | undefined {
   try {
-    return JSON.parse(fs.readFileSync(path, 'utf8'));
+    return JSON.parse(fs.readFileSync(path, 'utf8')) as T;
   } catch {
     /* NOOP */
   }
@@ -206,18 +210,21 @@ export function statFileSync(
   {
     errorMessage = 'Specified input does not exist',
   }: { errorMessage?: string } = {},
-) {
+): fs.Stats {
   try {
     return fs.statSync(filePath);
   } catch (err) {
-    if ((err as any).code === 'ENOENT') {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       throw new Error(`${errorMessage}: ${filePath}`, { cause: err });
     }
     throw err;
   }
 }
 
-export async function inflateZip(filePath: string, dest: string) {
+export async function inflateZip(
+  filePath: string,
+  dest: string,
+): Promise<void> {
   return await new Promise<void>((res, rej) => {
     try {
       const zip = new StreamZip({
@@ -315,7 +322,10 @@ export const isRunningOnWSL = cachedFn(function isRunningOnWSL() {
   );
 });
 
-export async function openEpub(epubPath: string, tmpDir: string) {
+export async function openEpub(
+  epubPath: string,
+  tmpDir: string,
+): Promise<() => Promise<void>> {
   const inflation = inflateZip(epubPath, tmpDir);
   const deleteEpub = async () => {
     try {
@@ -334,7 +344,7 @@ export async function openEpub(epubPath: string, tmpDir: string) {
   return deleteEpub;
 }
 
-export function getDefaultEpubOpfPath(epubDir: string) {
+export function getDefaultEpubOpfPath(epubDir: string): string {
   const containerXmlPath = upath.join(epubDir, 'META-INF/container.xml');
   const xmlParser = new XMLParser({
     ignoreAttributes: false,
@@ -348,8 +358,8 @@ export function getDefaultEpubOpfPath(epubDir: string) {
   return epubOpfPath;
 }
 
-export function getEpubRootDir(epubOpfPath: string) {
-  function traverse(dir: string) {
+export function getEpubRootDir(epubOpfPath: string): string | undefined {
+  function traverse(dir: string): string | undefined {
     const files = fs.readdirSync(dir);
     if (
       files.includes('META-INF') &&
@@ -402,7 +412,7 @@ export function parseJsonc(rawJsonc: string): JSONValue {
 export function prettifySchemaError(
   rawJsonc: string,
   issues: BaseIssue<unknown>[],
-) {
+): string {
   const parsed = parse(rawJsonc, {
     mode: 'jsonc',
     ranges: false,
@@ -424,7 +434,12 @@ export function prettifySchemaError(
   }
   const all = traverse(issues, 0);
   const maxDepth = Math.max(...all.map(([, d]) => d));
-  const issuesTraversed = all.find(([, d]) => d === maxDepth)![0];
+  const deepest = all.find(([, d]) => d === maxDepth);
+  /* v8 ignore next 3 */
+  if (!deepest) {
+    throw new Error('Failed to locate the deepest schema issue');
+  }
+  const issuesTraversed = deepest[0];
 
   let jsonValue = parsed.body as JsonValueNode;
   for (const p of issuesTraversed.flatMap((v) => v.path ?? [])) {
@@ -446,7 +461,12 @@ export function prettifySchemaError(
     }
   }
 
-  let message = `${red(issuesTraversed.at(-1)!.message)}`;
+  const deepestIssue = issuesTraversed.at(-1);
+  /* v8 ignore next 3 */
+  if (!deepestIssue) {
+    throw new Error('Failed to locate the deepest schema issue');
+  }
+  let message = `${red(deepestIssue.message)}`;
   if (jsonValue) {
     message += `\n${codeFrameColumns(rawJsonc, jsonValue.loc, {
       highlightCode: true,
@@ -455,7 +475,7 @@ export function prettifySchemaError(
   return message;
 }
 
-export function writeFileIfChanged(filePath: string, content: Buffer) {
+export function writeFileIfChanged(filePath: string, content: Buffer): void {
   if (!fs.existsSync(filePath) || !fs.readFileSync(filePath).equals(content)) {
     fs.mkdirSync(upath.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content);
@@ -490,7 +510,7 @@ export function toTitleCase<T = unknown>(input: T): T {
   ) as T;
 }
 
-export function debounce<T extends (...args: any[]) => unknown>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number,
   options: { leading?: boolean; trailing?: boolean } = {},
@@ -576,9 +596,9 @@ export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
 function isWindows11(version: string): boolean {
   const parts = version.split('.');
   if (parts.length > 2) {
-    const major = parseInt(parts[0] as string, 10);
-    const minor = parseInt(parts[1] as string, 10);
-    const patch = parseInt(parts[2] as string, 10);
+    const major = Number.parseInt(parts[0] as string, 10);
+    const minor = Number.parseInt(parts[1] as string, 10);
+    const patch = Number.parseInt(parts[2] as string, 10);
     return (
       major > 10 ||
       (major === 10 && minor > 0) ||
@@ -588,7 +608,9 @@ function isWindows11(version: string): boolean {
   return false;
 }
 
-export const getDefaultBrowserTag = (browserType: BrowserType) => {
+export const getDefaultBrowserTag = (
+  browserType: BrowserType,
+): string | undefined => {
   if (import.meta.env?.VITEST) {
     return '100.0';
   }

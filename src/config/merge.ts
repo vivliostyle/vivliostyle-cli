@@ -6,12 +6,11 @@ import type {
 } from './schema.js';
 
 const pruneObject = <T extends Record<string, unknown>>(obj: T) => {
-  const ret = { ...obj };
-  for (const key in ret) {
-    if (ret[key] === undefined || ret[key] === null) {
-      delete ret[key];
-    }
-  }
+  const ret = Object.fromEntries(
+    Object.entries(obj).filter(
+      ([, value]) => value !== undefined && value !== null,
+    ),
+  );
   return ret as { [K in keyof T]: NonNullable<T[K]> };
 };
 
