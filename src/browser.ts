@@ -235,6 +235,10 @@ function getPuppeteerCacheDir() {
   return upath.join(getCacheDir(), 'browsers');
 }
 
+interface BuildIdsCache {
+  buildIds: Record<string, Record<string, string>>;
+}
+
 async function resolveBuildId({
   type,
   tag,
@@ -246,21 +250,49 @@ async function resolveBuildId({
   if (!platform) {
     throw new Error('The current platform is not supported.');
   }
+
+  const cacheFilename = upath.join(getPuppeteerCacheDir(), 'build-ids.json');
+  const readCache = (): BuildIdsCache => {
+    try {
+      return JSON.parse(fs.readFileSync(cacheFilename, 'utf-8'));
+    } catch {
+      return { buildIds: {} };
+    }
+  };
+
+  let buildId: string;
   try {
-    return await browsers.resolveBuildId(browserEnumMap[type], platform, tag);
+    buildId = await browsers.resolveBuildId(
+      browserEnumMap[type],
+      platform,
+      tag,
+    );
   } catch (error) {
-    // Non-exact-pin tags (`chrome@129`, `chromium@latest`, ...) query the
-    // browser registry and can fail here on network errors. An invalid tag
-    // is not caught here; it passes through and fails at the browser download.
-    const fallbackTag = getDefaultBrowserTag(type);
-    if (!fallbackTag) {
+    // Non-exact-pin tags query the browser registry and can fail here on
+    // network errors; fall back to the build ID cached on a previous run.
+    // An invalid tag has no entry and falls through to fail at download.
+    const cached = readCache().buildIds[type]?.[tag];
+    if (!cached) {
       throw error;
     }
     Logger.logWarn(
-      `Failed to resolve ${type}@${tag} from the browser registry. Falling back to the bundled default version ${type}@${fallbackTag}.\n${error}`,
+      `Failed to resolve ${type}@${tag} from the browser registry; using the cached build ID ${cached}.\n${error}`,
     );
-    return fallbackTag;
+    return cached;
   }
+
+  // Persist for offline fallback; a write failure must not break the build.
+  const cacheData = readCache();
+  (cacheData.buildIds[type] ??= {})[tag] = buildId;
+  try {
+    fs.mkdirSync(upath.dirname(cacheFilename), { recursive: true });
+    fs.writeFileSync(cacheFilename, JSON.stringify(cacheData));
+  } catch (error) {
+    Logger.logWarn(
+      `Failed to update the build-id cache (${cacheFilename}): ${error}`,
+    );
+  }
+  return buildId;
 }
 
 async function cleanupOutdatedBrowsers() {
