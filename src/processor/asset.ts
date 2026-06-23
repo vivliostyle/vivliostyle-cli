@@ -10,8 +10,9 @@ import { Logger } from '../logger.js';
 import { pathContains, pathEquals } from '../util.js';
 
 export class GlobMatcher {
-  readonly matcherConfig: (Pick<PicomatchOptions, 'dot' | 'ignore' | 'cwd'> & {
+  readonly matcherConfig: (Pick<PicomatchOptions, 'dot' | 'ignore'> & {
     patterns: string[];
+    cwd?: string;
   })[];
 
   #matchers: picomatch.Matcher[];

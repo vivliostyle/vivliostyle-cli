@@ -47,6 +47,7 @@
     "no-inline-comments": ["error", { "ignorePattern": "@vite-ignore" }],
     "no-warning-comments": "warn",
     "require-unicode-regexp": ["error", { "requireFlag": "v" }],
+    "prefer-number-coercion": "off",
     // Perf Rules
     "no-await-in-loop": "off",
     // Suspicious Rules

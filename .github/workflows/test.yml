@@ -26,6 +26,7 @@ jobs:
       - run: pnpm install
       - run: pnpm lint
       - run: pnpm fmt:check
+      - run: pnpm typecheck
       - run: pnpm build
       - name: Check for unclean working tree
         run: |
