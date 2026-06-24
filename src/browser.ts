@@ -240,7 +240,6 @@ function getPuppeteerCacheDir() {
 }
 
 interface BuildIdsCache {
-  createdAt: number;
   buildIds: Record<string, Record<string, string>>;
 }
 
@@ -251,39 +250,56 @@ async function resolveBuildId({
 }: Pick<ResolvedTaskConfig['browser'], 'type' | 'tag'> & {
   browsers: typeof import('@puppeteer/browsers');
 }): Promise<string> {
-  // Return cached data to reduce network requests to browser registry
-  // Cache is valid for 24 hours
-  const cacheDataFilename = upath.join(
-    getPuppeteerCacheDir(),
-    'build-ids.json',
-  );
-  let cacheData: BuildIdsCache;
-  try {
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- locally written build-id cache; malformed contents are caught and rebuilt below
-    cacheData = JSON.parse(fs.readFileSync(cacheDataFilename, 'utf-8'));
-    if (Date.now() - cacheData.createdAt > 24 * 60 * 60 * 1000) {
-      cacheData = { createdAt: Date.now(), buildIds: {} };
-    }
-  } catch (_) {
-    cacheData = { createdAt: Date.now(), buildIds: {} };
-  }
-  if (cacheData.buildIds[type]?.[tag]) {
-    return cacheData.buildIds[type][tag];
-  }
-
   const platform = detectBrowserPlatform();
   if (!platform) {
     throw new Error('The current platform is not supported.');
   }
-  const buildId = await browsers.resolveBuildId(
-    browserEnumMap[type],
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    platform as BrowserPlatform,
-    tag,
-  );
+
+  const cacheFilename = upath.join(getPuppeteerCacheDir(), 'build-ids.json');
+  const readCache = (): BuildIdsCache => {
+    try {
+      // oxlint-disable-next-line typescript/no-unsafe-return -- locally written build-id cache; malformed contents are caught and rebuilt below
+      return JSON.parse(fs.readFileSync(cacheFilename, 'utf-8'));
+    } catch {
+      return { buildIds: {} };
+    }
+  };
+
+  let buildId: string;
+  try {
+    buildId = await browsers.resolveBuildId(
+      browserEnumMap[type],
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      platform as BrowserPlatform,
+      tag,
+    );
+  } catch (error) {
+    const thrownError = toError(error);
+    // Non-exact-pin tags query the browser registry and can fail here on
+    // network errors; fall back to the build ID cached on a previous run.
+    // An invalid tag has no entry and falls through to fail at download.
+    const cached = readCache().buildIds[type]?.[tag];
+    if (!cached) {
+      throw error;
+    }
+    Logger.logWarn(
+      `Failed to resolve ${type}@${tag} from the browser registry; using the cached build ID ${cached}.\n${thrownError}`,
+    );
+    return cached;
+  }
+
+  // Persist for offline fallback; a write failure must not break the build.
+  const cacheData = readCache();
   (cacheData.buildIds[type] ??= {})[tag] = buildId;
-  fs.mkdirSync(upath.dirname(cacheDataFilename), { recursive: true });
-  fs.writeFileSync(cacheDataFilename, JSON.stringify(cacheData));
+  try {
+    fs.mkdirSync(upath.dirname(cacheFilename), { recursive: true });
+    fs.writeFileSync(cacheFilename, JSON.stringify(cacheData));
+  } catch (error) {
+    const thrownError = toError(error);
+    Logger.logWarn(
+      `Failed to update the build-id cache (${cacheFilename}): ${thrownError}`,
+    );
+  }
   return buildId;
 }
 

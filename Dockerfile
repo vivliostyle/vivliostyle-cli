@@ -108,6 +108,12 @@ RUN set -x \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
   fi
 
+# Let arbitrary UIDs (e.g. `docker run --user`) write build-ids.json and
+# download browsers here. build-ids.json sits at the cache root; each
+# browser installs under its own dir (chrome/<buildId>/...).
+RUN mkdir -p /opt/puppeteer \
+  && find /opt/puppeteer -maxdepth 1 -type d -exec chmod 1777 {} +
+
 RUN ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vivliostyle \
   && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vs
 
