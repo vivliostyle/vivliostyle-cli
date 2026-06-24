@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 
 import type {
   BrowserPlatform,
@@ -26,6 +25,7 @@ import {
   isRunningOnWSL,
   registerCleanupHandler,
   toError,
+  useTmpDirectory,
 } from './util.js';
 
 /* oxlint-disable typescript/no-unsafe-type-assertion */
@@ -223,7 +223,7 @@ async function launchBrowser({
   // gets the unwritable HOME `/`, so the browser cannot launch (see #835).
   const env: NodeJS.ProcessEnv = { ...process.env, LANG: 'en.UTF-8' };
   if (process.platform === 'linux' && !isWritableDir(env.HOME)) {
-    env.HOME = os.tmpdir();
+    [env.HOME] = await useTmpDirectory();
   }
   const browserLaunch = puppeteer.launch({
     ...launchOptions,
@@ -246,7 +246,10 @@ function isWritableDir(dir: string | undefined): boolean {
     return false;
   }
   try {
-    fs.accessSync(dir, fs.constants.W_OK);
+    if (!fs.statSync(dir).isDirectory()) {
+      return false;
+    }
+    fs.accessSync(dir, fs.constants.W_OK | fs.constants.X_OK);
     return true;
   } catch {
     return false;
