@@ -25,6 +25,8 @@ import {
   executeWithCleanupOnInterrupt,
   pathContains,
   pathEquals,
+  readPackageJson,
+  toError,
   writeFileIfChanged,
 } from '../util.js';
 import {
@@ -45,6 +47,13 @@ import {
   installThemeDependencies,
 } from './theme.js';
 
+const isContentsEntry = (entry: ParsedEntry): entry is ContentsEntry =>
+  entry.rel === 'contents';
+const isCoverEntry = (entry: ParsedEntry): entry is CoverEntry =>
+  entry.rel === 'cover';
+const isManuscriptEntry = (entry: ParsedEntry): entry is ManuscriptEntry =>
+  'source' in entry;
+
 function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   if (theme.type === 'uri') {
     return theme.location;
@@ -60,16 +69,16 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
         !fs.existsSync(resolvedPath)
       ) {
         throw new Error(
-          `Could not find a style path ${theme.importPath} for the theme: ${theme.name}.`,
+          `Could not find a style path ${locator} for the theme: ${theme.name}.`,
         );
       }
       return upath.relative(from, resolvedPath);
     });
   }
   const pkgJsonPath = upath.join(theme.location, 'package.json');
-  const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+  const packageJson = readPackageJson(pkgJsonPath);
   const maybeStyle =
-    packageJson?.vivliostyle?.theme?.style ??
+    packageJson.vivliostyle?.theme?.style ??
     packageJson.style ??
     packageJson.main;
   if (!maybeStyle) {
@@ -176,9 +185,9 @@ export async function transformManuscript(
   }: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig },
 ): Promise<string | undefined> {
   const source =
-    entry.rel === 'contents' || entry.rel === 'cover'
-      ? (entry as ContentsEntry | CoverEntry).template
-      : (entry as ManuscriptEntry).source;
+    isContentsEntry(entry) || isCoverEntry(entry)
+      ? entry.template
+      : entry.source;
   let content: JSDOM | undefined;
   let resourceLoader: ResourceLoader | undefined;
   let resourceUrl: string | undefined;
@@ -233,7 +242,7 @@ export async function transformManuscript(
         }),
       });
     } catch (error) {
-      const thrownError = error as Error;
+      const thrownError = toError(error);
       throw new DetailError(
         `Failed to fetch the content from ${resourceUrl}`,
         thrownError.stack ?? thrownError.message,
@@ -284,11 +293,10 @@ export async function transformManuscript(
     return;
   }
 
-  if (entry.rel === 'contents') {
-    const contentsEntry = entry as ContentsEntry;
-    const manuscriptEntries = entries.filter(
-      (e): e is ManuscriptEntry => 'source' in e,
-    );
+  if (isContentsEntry(entry)) {
+    const contentsEntry = entry;
+    // oxlint-disable-next-line unicorn/no-array-callback-reference -- pass the type guard directly to narrow the filtered array
+    const manuscriptEntries = entries.filter(isManuscriptEntry);
     content = await processTocHtml(content, {
       entries: manuscriptEntries,
       manifestPath,
@@ -300,8 +308,8 @@ export async function transformManuscript(
     });
   }
 
-  if (entry.rel === 'cover') {
-    const coverEntry = entry as CoverEntry;
+  if (isCoverEntry(entry)) {
+    const coverEntry = entry;
     content = await processCoverHtml(content, {
       imageSrc: upath.relative(
         upath.join(
@@ -337,6 +345,7 @@ export async function transformManuscript(
       throw new Error(`Failed to locate the fetched content: ${resourceUrl}`);
     }
     const { response } = fetcher;
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- jsdom's AbortablePromise is a Promise augmented with abort()/response, assembled below
     const contentFetcher = Promise.resolve(
       htmlBuffer,
     ) as jsdom.AbortablePromise<Buffer>;
@@ -366,9 +375,7 @@ export function generateManifest({
   cover,
 }: ResolvedTaskConfig & { viewerInput: WebPublicationManifestConfig }): void {
   const manifestEntries: ArticleEntryConfig[] = entries.map((entry) => ({
-    title:
-      (entry.rel === 'contents' && (entry as ContentsEntry).tocTitle) ||
-      entry.title,
+    title: (isContentsEntry(entry) && entry.tocTitle) || entry.title,
     path: upath.relative(workspaceDir, entry.target),
     encodingFormat:
       !('contentType' in entry) ||
@@ -411,6 +418,6 @@ export async function compile(
 
   // generate manifest
   if (config.viewerInput.needToGenerateManifest) {
-    await generateManifest(config);
+    generateManifest(config);
   }
 }

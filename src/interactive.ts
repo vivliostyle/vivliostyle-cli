@@ -47,10 +47,7 @@ type AnyObjectSchema =
       v.ErrorMessage<v.ObjectIssue> | undefined
     >;
 
-export async function askQuestion<
-  T extends object,
-  S extends AnyObjectSchema,
->(_: {
+export async function askQuestion<S extends AnyObjectSchema>(_: {
   question: Record<
     keyof v.InferInput<S>,
     DistributiveOmit<PromptOption, 'name'>
@@ -58,7 +55,7 @@ export async function askQuestion<
   interactiveLogger: InteractiveLogger;
   schema: S;
   validateProgressMessage?: string;
-}): Promise<S extends undefined ? T : v.InferOutput<NonNullable<S>>>;
+}): Promise<v.InferOutput<NonNullable<S>>>;
 
 export async function askQuestion<T extends object>(_: {
   question: Record<string, DistributiveOmit<PromptOption, 'name'>>;
@@ -104,6 +101,7 @@ export async function askQuestion<S extends AnyObjectSchema>({
 
       if (import.meta.env?.VITEST) {
         // For testing, safely assign the name property using a type assertion
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         (question as { name?: string }).name = name;
       }
       if (question.type === 'text') {
@@ -233,7 +231,7 @@ function textPrompt(opts: TextOptions) {
           return `${blueBright('║')}\n${blueBright(`${symbol}─`)} ${opts.message}\n   ${userInput}\n`;
       }
     },
-  }).prompt() as Promise<string | symbol>;
+  }).prompt();
 }
 
 function selectPrompt<Value>(opts: SelectOptions<Value>, multiple = false) {
@@ -244,6 +242,7 @@ function selectPrompt<Value>(opts: SelectOptions<Value>, multiple = false) {
     signal: Logger.signal,
     render() {
       const symbol = promptStateSymbol[this.state];
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- @clack stores the multi-select values as an array of Value
       const values = [this.value].flat() as Value[];
       const selected = this.options.filter((o) => values.includes(o.value));
       const label =
@@ -275,11 +274,11 @@ function selectPrompt<Value>(opts: SelectOptions<Value>, multiple = false) {
         }
       }
     },
-  }).prompt() as Promise<Value | symbol>;
+  }).prompt();
 }
 
 function multiSelectPrompt<Value>(opts: MultiSelectOptions<Value>) {
-  return selectPrompt<Value>(opts, true) as Promise<Value[] | symbol>;
+  return selectPrompt<Value>(opts, true);
 }
 
 function autocompletePrompt<Value>(
@@ -373,13 +372,13 @@ function autocompletePrompt<Value>(
         }
       }
     },
-  }).prompt() as Promise<Value | symbol>;
+  }).prompt();
 }
 
 function autocompleteMultiSelectPrompt<Value>(
   opts: AutocompleteOptions<Value>,
 ) {
-  return autocompletePrompt<Value>(opts, true) as Promise<Value[] | symbol>;
+  return autocompletePrompt<Value>(opts, true);
 }
 
 export class InteractiveLogger {
@@ -396,7 +395,7 @@ export class InteractiveLogger {
   ): Promise<T> {
     this.messageHistory.push({ type: 'loading', message });
     if (!Logger.isInteractive || import.meta.env?.VITEST) {
-      return await fn();
+      return fn();
     }
 
     const output = Logger.stdout;

@@ -7,13 +7,13 @@ import { create as _create } from './core/create.js';
 import { preview as _preview } from './core/preview.js';
 import type { PublicationManifest as _PublicationManifest } from './schema/publication.schema.js';
 
-export { defineConfig } from './config/define.js';
 export {
-  VFM,
   readMetadata,
+  VFM,
   type Metadata,
   type StringifyMarkdownOptions,
 } from '@vivliostyle/vfm';
+export { defineConfig } from './config/define.js';
 export type {
   StructuredDocument,
   StructuredDocumentSection,
@@ -39,9 +39,9 @@ export type PublicationManifest = _PublicationManifest;
  * @param options
  * @returns
  */
-export async function build(options: VivliostyleInlineConfig): Promise<void> {
+export function build(options: VivliostyleInlineConfig): Promise<void> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
-  return await _build(parsed);
+  return _build(parsed);
 }
 
 /**
@@ -50,11 +50,11 @@ export async function build(options: VivliostyleInlineConfig): Promise<void> {
  * @param options
  * @returns
  */
-export async function preview(
+export function preview(
   options: VivliostyleInlineConfig,
 ): Promise<ViteDevServer> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
-  return await _preview(parsed);
+  return _preview(parsed);
 }
 
 /**
@@ -63,7 +63,7 @@ export async function preview(
  * @param options
  * @returns
  */
-export async function create(options: VivliostyleInlineConfig): Promise<void> {
+export function create(options: VivliostyleInlineConfig): Promise<void> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
-  return await _create(parsed);
+  return _create(parsed);
 }

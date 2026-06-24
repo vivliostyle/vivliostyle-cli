@@ -148,7 +148,9 @@ export async function replaceImages({
         `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
       );
     } catch (error) {
-      Logger.logWarn(`Failed to load source image: ${source}: ${error}`);
+      Logger.logWarn(
+        `Failed to load source image: ${source}: ${String(error)}`,
+      );
       continue;
     }
 
@@ -160,7 +162,7 @@ export async function replaceImages({
       );
     } catch (error) {
       Logger.logWarn(
-        `Failed to load replacement image: ${replacement}: ${error}`,
+        `Failed to load replacement image: ${replacement}: ${String(error)}`,
       );
       continue;
     }
@@ -178,6 +180,7 @@ export async function replaceImages({
   }
 
   using doc = disposable(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- openDocument returns the Document base type; a PDF input yields a PDFDocument
     mupdf.PDFDocument.openDocument(
       pdf,
       'application/pdf',

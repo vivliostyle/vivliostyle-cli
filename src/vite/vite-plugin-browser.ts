@@ -18,9 +18,11 @@ export function vsBrowserPlugin({
   let server: vite.ViteDevServer | undefined;
   let closeBrowser: (() => Promise<void>) | undefined;
 
-  async function handlePageClose() {
-    await server?.close();
-    await runCleanupHandlers();
+  function handlePageClose() {
+    void (async () => {
+      await server?.close();
+      await runCleanupHandlers();
+    })();
   }
 
   async function openPreviewPage() {
@@ -75,7 +77,7 @@ export function vsBrowserPlugin({
     configureServer(viteServer) {
       server = viteServer;
 
-      const originalListen = viteServer.listen;
+      const originalListen = viteServer.listen.bind(viteServer);
       viteServer.listen = async (...args) => {
         const startedServer = await originalListen(...args);
         config = await reloadConfig(config, inlineConfig, startedServer.config);

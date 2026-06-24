@@ -62,7 +62,7 @@ export function createParserProgram({
     const program = setupProgram();
     program.parse(argv);
     let options = program.opts<CliFlags>();
-    options = parseArgs?.(options, program.args ?? []) || options;
+    options = parseArgs?.(options, program.args ?? []) ?? options;
     options = warnDeprecatedFlags(options);
     return v.parse(VivliostyleInlineConfig, options);
   };

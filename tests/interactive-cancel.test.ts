@@ -30,7 +30,9 @@ vi.mock('@clack/prompts', () => ({
       options: { label?: string; value?: unknown }[];
     }) => string[]
   >(({ options }) =>
-    options.map(({ label, value }) => label ?? String(value ?? '')),
+    options.map(
+      ({ label, value }) => label ?? (typeof value === 'string' ? value : ''),
+    ),
   ),
 }));
 

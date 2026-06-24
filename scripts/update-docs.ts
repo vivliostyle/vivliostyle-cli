@@ -35,7 +35,7 @@ function insertDocs(
   );
 }
 
-async function buildConfigDocs(): Promise<string> {
+function buildConfigDocs(): Promise<string> {
   const visited = Symbol('visited');
   const definition = Symbol('definition');
   const namedDefinitionSet = new Set<string>();
@@ -213,7 +213,7 @@ async function buildConfigDocs(): Promise<string> {
       schema[definition] =
         `{[key: (${getSchema(schema.key)[definition]})]: ${getSchema(schema.value)[definition]}}`;
     } else if (v.isOfType('function', schema)) {
-      const out = await (meta.typeReferences || []).reduce(
+      const out = await (meta.typeReferences ?? []).reduce(
         (acc, type) =>
           acc.then(async (list) => [...list, await traverse(type)]),
         Promise.resolve([] as string[]),
@@ -297,7 +297,7 @@ async function buildConfigDocs(): Promise<string> {
       .filter(Boolean)
       .join('\n\n');
   }
-  return await traverse(VivliostyleConfigSchema);
+  return traverse(VivliostyleConfigSchema);
 }
 
 async function buildApiDocs() {
@@ -320,9 +320,9 @@ async function buildApiDocs() {
     fs.readFileSync(path.join(tmp, 'api.json'), 'utf-8'),
   ) as JSONOutput.ProjectReflection;
   let docs = `## Exported members\n\n`;
-  for (const group of json.groups || []) {
+  for (const group of json.groups ?? []) {
     docs += `### ${group.title}\n\n`;
-    for (const memberId of group.children || []) {
+    for (const memberId of group.children ?? []) {
       const member = json.children?.find((child) => child.id === memberId);
       if (!member) {
         continue;

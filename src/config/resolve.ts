@@ -49,7 +49,7 @@ import {
   isValidUri,
   pathContains,
   pathEquals,
-  readJSON,
+  readPackageJson,
   statFileSync,
   touchTmpFile,
 } from '../util.js';
@@ -409,7 +409,7 @@ function isManuscriptMediaType(
   mediaType: string | false,
 ): mediaType is ManuscriptMediaType {
   return !!(
-    mediaType && manuscriptMediaTypes.includes(mediaType as ManuscriptMediaType)
+    mediaType && (manuscriptMediaTypes as readonly string[]).includes(mediaType)
   );
 }
 
@@ -517,8 +517,7 @@ export function parseTheme({
   if (parsed.type === 'directory' && parsed.fetchSpec) {
     const pkgJsonPath = upath.join(parsed.fetchSpec, 'package.json');
     if (fs.existsSync(pkgJsonPath)) {
-      const packageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-      name = packageJson.name;
+      name = readPackageJson(pkgJsonPath).name ?? null;
       resolvedSpecifier = parsed.fetchSpec;
     }
   }
@@ -530,13 +529,14 @@ export function parseTheme({
     name,
     specifier: resolvedSpecifier,
     location: upath.join(themesDir, 'node_modules', name),
+    // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- npm-package-arg types `registry` as boolean but omits it at runtime for non-registry specs
     registry: Boolean(parsed.registry),
     importPath,
   };
 }
 
 function parsePageSize(size: string): PageSize {
-  const [width, height, ...others] = `${size}`.split(',');
+  const [width, height, ...others] = size.split(',');
   if (!width || others.length > 0) {
     throw new Error(`Cannot parse size: ${size}`);
   } else if (width && height) {
@@ -764,6 +764,7 @@ export function resolveTaskConfig(
         return pp.preflight;
       }
       // Fallback to legacy pressReady only if pdfPostprocess.pressReady is not set
+      // oxlint-disable-next-line typescript/no-deprecated
       if (config.pressReady) {
         return 'press-ready';
       }
@@ -800,6 +801,7 @@ export function resolveTaskConfig(
             const { pdfPostprocess: _, ...targetRest } = target;
 
             // Resolve preflight: output.pdfPostprocess > output.preflight > default
+            /* oxlint-disable typescript/no-deprecated */
             const resolvedPreflight = (() => {
               if (options.preflight) {
                 return options.preflight;
@@ -826,6 +828,7 @@ export function resolveTaskConfig(
               }
               return defaultPdfOptions.preflightOption;
             })();
+            /* oxlint-enable typescript/no-deprecated */
 
             // Resolve cmyk: output.pdfPostprocess > build.pdfPostprocess
             const resolvedCmyk =
@@ -880,6 +883,7 @@ export function resolveTaskConfig(
 
   const { server, rootUrl } = (() => {
     let host = config.server?.host ?? false;
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing
     const allowedHosts = config.server?.allowedHosts || [];
     const port = config.server?.port ?? 13000;
     if (
@@ -919,6 +923,7 @@ export function resolveTaskConfig(
   };
 
   const copyAsset = {
+    // oxlint-disable-next-line typescript/no-deprecated
     includes: config.copyAsset?.includes ?? config.includeAssets ?? [],
     excludes: config.copyAsset?.excludes ?? [],
     fileExtensions: [
@@ -978,6 +983,7 @@ export function resolveTaskConfig(
     (v1, i) => entries.findLastIndex((v2) => v1.target === v2.target) !== i,
   )?.target;
   if (duplicatedTarget) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the find predicate guarantees a file source
     const sourceFile = entries.find(
       (entry) =>
         entry.target === duplicatedTarget && entry.source?.type === 'file',
@@ -1138,7 +1144,9 @@ function resolveSingleInputConfig({
         }),
       ) ??
       [];
-    themes.forEach((t) => themeIndexes.add(t));
+    themes.forEach((t) => {
+      themeIndexes.add(t);
+    });
     entries.push({
       contentType,
       source: {
@@ -1176,7 +1184,7 @@ function resolveSingleInputConfig({
     });
     fallbackTitle =
       entries.length === 1 && entries[0].title
-        ? (entries[0].title as string)
+        ? entries[0].title
         : upath.basename(sourcePath);
     viewerInput = {
       type: 'webpub',
@@ -1258,7 +1266,7 @@ function resolveComposedProjectConfig({
   const themesDir = upath.resolve(workspaceDir, 'themes');
   const pkgJsonPath = upath.resolve(context, 'package.json');
   const pkgJson = fs.existsSync(pkgJsonPath)
-    ? readJSON<{ name?: string; author?: string }>(pkgJsonPath)
+    ? readPackageJson(pkgJsonPath)
     : undefined;
   if (pkgJson) {
     Logger.debug('located package.json path', pkgJsonPath);
@@ -1274,8 +1282,11 @@ function resolveComposedProjectConfig({
         themesDir,
       }),
     ) ?? [];
-  rootThemes.forEach((t) => themeIndexes.add(t));
+  rootThemes.forEach((t) => {
+    themeIndexes.add(t);
+  });
   const tocConfig = {
+    // oxlint-disable-next-line typescript/no-deprecated
     tocTitle: config.toc?.title ?? config?.tocTitle ?? TOC_TITLE,
     target: upath.resolve(workspaceDir, config.toc?.htmlPath ?? TOC_FILENAME),
     sectionDepth: config.toc?.sectionDepth ?? 0,
@@ -1303,8 +1314,10 @@ function resolveComposedProjectConfig({
     return absPath;
   };
 
+  const pkgAuthor = pkgJson?.author;
   const projectTitle: string | undefined = config?.title ?? pkgJson?.name;
-  const projectAuthor: string | undefined = config?.author ?? pkgJson?.author;
+  const projectAuthor: string | undefined =
+    config?.author ?? (typeof pkgAuthor === 'string' ? pkgAuthor : undefined);
 
   const rootDocumentProcessor = {
     processorFactory: config.documentProcessor ?? VFM,
@@ -1350,10 +1363,9 @@ function resolveComposedProjectConfig({
           rootDocumentProcessor.metadataReader,
       } satisfies DocumentProcessor;
       // If custom documentProcessor is provided, allow any text-based content type
-      const hasCustomProcessor = !!(
+      const hasCustomProcessor =
         documentProcessor.processorFactory !== VFM ||
-        documentProcessor.metadataReader !== readMetadata
-      );
+        documentProcessor.metadataReader !== readMetadata;
       const contentType =
         hasCustomProcessor && rawContentType !== 'text/markdown'
           ? 'text/x-vivliostyle-custom'
@@ -1425,7 +1437,7 @@ function resolveComposedProjectConfig({
 
     if (isContentsEntry(entry)) {
       const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
-      const { metadata, ...template } = inputInfo || {};
+      const { metadata, ...template } = inputInfo ?? {};
       let target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
         : inputInfo && getTargetPath(inputInfo);
@@ -1439,7 +1451,9 @@ function resolveComposedProjectConfig({
             }),
           )
         : (metadata?.themes ?? [...rootThemes]);
-      themes.forEach((t) => themeIndexes.add(t));
+      themes.forEach((t) => {
+        themeIndexes.add(t);
+      });
       target ??= tocConfig.target;
       if (
         inputInfo?.type === 'file' &&
@@ -1468,7 +1482,7 @@ function resolveComposedProjectConfig({
 
     if (isCoverEntry(entry)) {
       const inputInfo = entry.path ? getInputInfo(entry.path) : undefined;
-      const { metadata, ...template } = inputInfo || {};
+      const { metadata, ...template } = inputInfo ?? {};
       let target = entry.output
         ? upath.resolve(workspaceDir, entry.output)
         : inputInfo && getTargetPath(inputInfo);
@@ -1483,7 +1497,9 @@ function resolveComposedProjectConfig({
             }),
           )
         : (metadata?.themes ?? []);
-      themes.forEach((t) => themeIndexes.add(t));
+      themes.forEach((t) => {
+        themeIndexes.add(t);
+      });
       const coverImageSrc = ensureCoverImage(entry.imageSrc || cover?.src);
       if (!coverImageSrc) {
         throw new Error(
@@ -1532,7 +1548,9 @@ function resolveComposedProjectConfig({
               parseTheme({ theme, context, workspaceDir, themesDir }),
             )
         : (metadata?.themes ?? [...rootThemes]);
-      themes.forEach((t) => themeIndexes.add(t));
+      themes.forEach((t) => {
+        themeIndexes.add(t);
+      });
 
       const parsedEntry: ManuscriptEntry = {
         contentType:

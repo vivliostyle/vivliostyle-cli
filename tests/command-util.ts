@@ -63,9 +63,9 @@ export const runCommand = async (
     init: parseInitCommand,
   }[command](['vivliostyle', command, ...args]);
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  const server = await { build, preview, create, init: create }[command](
+  const server = (await { build, preview, create, init: create }[command](
     inlineConfig,
-  );
+  )) as ViteDevServer | undefined;
   if (server) {
     runningServers.add(server);
   }
@@ -154,11 +154,11 @@ export const resolveFixture = (p?: string): string =>
 export function assertSingleItem<T = unknown>(
   value: T | T[],
 ): asserts value is T {
-  return assert.ok(!Array.isArray(value));
+  assert.ok(!Array.isArray(value));
 }
 
 export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
-  return assert.ok(Array.isArray(value));
+  assert.ok(Array.isArray(value));
 }
 
 /**

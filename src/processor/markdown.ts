@@ -26,6 +26,7 @@ export async function processMarkdown(
     options,
     documentMetadataReader(markdownString),
   );
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- VFM augments the VFile with the typed VSFile fields
   const processed = (await processor.process(
     vfile({ path: filepath, contents: markdownString }),
   )) as VSFile;

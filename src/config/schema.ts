@@ -95,6 +95,7 @@ export const DocumentProcessorSchema = v.pipe(
 );
 
 export const DocumentMetadataReaderSchema = v.pipe(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   v.function() as v.GenericSchema<(content: string) => Metadata>,
   v.metadata({
     typeString: '(content: string) => import("@vivliostyle/vfm").Metadata',
@@ -541,6 +542,7 @@ export const TocConfig = v.pipe(
         `),
       ),
       transformDocumentList: v.pipe(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         v.function() as v.GenericSchema<
           HastTransformFunction<StructuredDocument>
         >,
@@ -554,6 +556,7 @@ export const TocConfig = v.pipe(
         `),
       ),
       transformSectionList: v.pipe(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         v.function() as v.GenericSchema<
           HastTransformFunction<StructuredDocumentSection>
         >,

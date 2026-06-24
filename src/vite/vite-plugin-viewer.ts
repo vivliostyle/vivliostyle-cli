@@ -37,9 +37,10 @@ export function vsViewerPlugin(_: {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'text/html;charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache');
-      return res.end(cachedIndexHtml);
+      res.end(cachedIndexHtml);
+      return;
     }
-    return serve(req, res, next);
+    serve(req, res, next);
   } satisfies NextHandleFunction;
 
   return {
