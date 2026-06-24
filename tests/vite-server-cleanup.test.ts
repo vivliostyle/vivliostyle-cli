@@ -96,7 +96,7 @@ describe('Vite server cleanup', () => {
         config,
         viteConfig,
         inlineConfig,
-        mode,
+        mode: mode as 'preview',
       });
 
       expect(mockedRegisterCleanupHandler).toHaveBeenCalledWith(

@@ -1,6 +1,5 @@
 {
-  "include": ["src/**/*", "types/**/*"],
-  "exclude": ["dist", "tests"],
+  "exclude": ["dist", "examples"],
   "compilerOptions": {
     "skipLibCheck": true,
     "module": "nodenext",
@@ -11,7 +10,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "noEmit": true,
     "moduleResolution": "nodenext",
     "types": ["node", "vitest/importMeta"],

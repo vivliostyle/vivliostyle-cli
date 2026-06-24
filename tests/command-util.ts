@@ -63,9 +63,9 @@ export const runCommand = async (
     init: parseInitCommand,
   }[command](['vivliostyle', command, ...args]);
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  const server = await { build, preview, create, init: create }[command](
+  const server = (await { build, preview, create, init: create }[command](
     inlineConfig,
-  );
+  )) as ViteDevServer | undefined;
   if (server) {
     runningServers.add(server);
   }
