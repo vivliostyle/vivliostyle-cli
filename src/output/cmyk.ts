@@ -118,6 +118,7 @@ export async function convertCmykColors({
   const processedXObjects = new Set<number>();
 
   using doc = disposable(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- openDocument returns the Document base type; a PDF input yields a PDFDocument
     mupdf.PDFDocument.openDocument(
       pdf,
       'application/pdf',
@@ -126,7 +127,7 @@ export async function convertCmykColors({
 
   const pageCount = doc.countPages();
   for (let i = 0; i < pageCount; i++) {
-    const page = doc.loadPage(i) as mupdfType.PDFPage;
+    const page = doc.loadPage(i);
     const pageObj = page.getObject().resolve();
 
     const contents = pageObj.get('Contents');

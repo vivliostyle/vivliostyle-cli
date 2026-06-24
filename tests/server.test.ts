@@ -11,20 +11,22 @@ import {
 
 const mockedBrowserModule = vi.hoisted(() => ({
   getExecutableBrowserPath: vi.fn<() => string>().mockReturnValue('myBrowser'),
-  launchPreview: vi.fn<() => Promise<unknown>>().mockResolvedValue({
-    page: {
-      on: vi.fn<() => void>(),
-      off: vi.fn<() => void>(),
-      bringToFront: vi.fn<() => void>(),
-      locator: vi.fn<() => { focus: () => void }>().mockReturnValue({
-        focus: vi.fn<() => void>(),
-      }),
-    },
-    browser: {
-      close: vi.fn<() => void>(),
-    },
-    closeBrowser: vi.fn<() => void>(),
-  }),
+  launchPreview: vi
+    .fn<(options: { url: string }) => Promise<unknown>>()
+    .mockResolvedValue({
+      page: {
+        on: vi.fn<() => void>(),
+        off: vi.fn<() => void>(),
+        bringToFront: vi.fn<() => void>(),
+        locator: vi.fn<() => { focus: () => void }>().mockReturnValue({
+          focus: vi.fn<() => void>(),
+        }),
+      },
+      browser: {
+        close: vi.fn<() => void>(),
+      },
+      closeBrowser: vi.fn<() => void>(),
+    }),
 }));
 
 vi.mock('../src/browser', async (importOriginal) => ({

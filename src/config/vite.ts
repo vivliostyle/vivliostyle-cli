@@ -86,7 +86,7 @@ export async function resolveViteConfig({
       ? upath.join(workspaceDir, '.vite')
       : upath.join(root, '.vite');
 
-  const finalUserConfig = mergeViteConfig(viteConfig || {}, {
+  const finalUserConfig = mergeViteConfig(viteConfig ?? {}, {
     server,
     preview: server,
     configFile: viteConfigFile === true ? undefined : viteConfigFile,
@@ -94,7 +94,7 @@ export async function resolveViteConfig({
     customLogger: viteLogger,
     cacheDir,
   } satisfies InlineConfig);
-  return await resolveConfig(
+  return resolveConfig(
     finalUserConfig,
     defaultConfigEnv[mode].command,
     defaultConfigEnv[mode].mode,

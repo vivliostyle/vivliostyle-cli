@@ -19,8 +19,8 @@ function checkValidEpubZip(epub: Buffer) {
   // Check epub file contains uncompressed mimetype file
   expect(epub.readUInt32BE(0)).toBe(0x504b0304);
   expect(epub.readUInt16LE(8)).toBe(0);
-  expect(epub.slice(30, 38).toString()).toBe('mimetype');
-  expect(epub.slice(38, 58).toString()).toBe('application/epub+zip');
+  expect(epub.subarray(30, 38).toString()).toBe('mimetype');
+  expect(epub.subarray(38, 58).toString()).toBe('application/epub+zip');
   // Check the remaining files are compressed
   expect(epub.readUInt32BE(58)).toBe(0x504b0304);
   expect(epub.readUInt16LE(66)).not.toBe(0);

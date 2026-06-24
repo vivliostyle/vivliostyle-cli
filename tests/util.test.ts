@@ -19,7 +19,9 @@ vi.mock('node-stream-zip', async () => {
     default: class extends EventEmitter {
       constructor() {
         super();
-        queueMicrotask(() => this.emit('ready'));
+        queueMicrotask(() => {
+          this.emit('ready');
+        });
       }
 
       extract(_entry: null, destination: string, callback: () => void) {

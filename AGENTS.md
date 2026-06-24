@@ -20,14 +20,14 @@ Key areas:
 
 ## Development Commands
 
-Use pnpm. The repository declares `pnpm@10.25.0` and requires Node `^20.19.0 || >=22.12.0`.
+Use pnpm. The repository declares `pnpm@10.28.2` and requires Node `>=22.12.0`.
 
 - Install dependencies: `pnpm install`
-- Build everything: `pnpm build`
+- Build everything: `pnpm build` (bundles the CLI and create-book with tsdown, then builds docs; it does not type-check)
 - Build the CLI only: `pnpm build:cli`
-- Typecheck: `pnpm build:typecheck`
+- Typecheck: `pnpm typecheck` (uses tsgo, the TypeScript native preview; run it separately because the build no longer type-checks)
 - Run tests: `pnpm test`
-- Watch CLI sources: `pnpm dev`
+- Watch CLI sources and typecheck: `pnpm dev`
 - Build docs generated from the code: `pnpm build:docs`
 - Generate publication schema types: `pnpm generate:schema`
 

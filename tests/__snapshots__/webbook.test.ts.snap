@@ -2,15 +2,15 @@
 
 exports[`copy webpub assets properly 1`] = `
 "output/
+├─ themes/
+│  └─ node_modules/
+│     ├─ @org/
+│     │  └─ themeB/
+│     │     └─ theme.css
+│     └─ themeA/
+│        └─ theme.css
 ├─ doc.html
-├─ publication.json
-└─ themes/
-   └─ node_modules/
-      ├─ @org/
-      │  └─ themeB/
-      │     └─ theme.css
-      └─ themeA/
-         └─ theme.css"
+└─ publication.json"
 `;
 
 exports[`generate webpub from a data URI input > html 1`] = `
@@ -119,12 +119,12 @@ Object {
 
 exports[`generate webpub from a remote HTML document > tree 1`] = `
 "output/
-├─ publication.json
-└─ remote/
-   ├─ foo bar%/
-   │  └─ escape check%.html
-   └─ あ/
-      └─ 日本語.css"
+├─ remote/
+│  ├─ foo bar%/
+│  │  └─ escape check%.html
+│  └─ あ/
+│     └─ 日本語.css
+└─ publication.json"
 `;
 
 exports[`generate webpub from a single-document publication > entry 1`] = `
@@ -156,9 +156,9 @@ exports[`generate webpub from a single-document publication > tree 1`] = `
 ├─ assets/
 │  ├─ subdir.css
 │  └─ 日本語.svg
-├─ escape check%.html
 ├─ subdir/
 │  └─ index.html
+├─ escape check%.html
 └─ webbook.html"
 `;
 
@@ -247,29 +247,29 @@ Object {
 
 exports[`generate webpub from vivliostyle.config.js > tree 1`] = `
 "output/
-├─ cover.html
-├─ cover.png
 ├─ doc/
 │  ├─ escape check%.html
 │  ├─ one.html
 │  └─ two.html
+├─ themes/
+│  └─ node_modules/
+│     └─ mytheme/
+│        └─ %style%.css
+├─ cover.html
+├─ cover.png
 ├─ index.html
 ├─ publication.json
-├─ style sheet.css
-└─ themes/
-   └─ node_modules/
-      └─ mytheme/
-         └─ %style%.css"
+└─ style sheet.css"
 `;
 
 exports[`generate webpub with complex copyAsset settings > tree 1`] = `
 "output/
-├─ assetA.jxl
-├─ doc.html
 ├─ node_modules/
 │  └─ pkgB/
-│     ├─ a.html
-│     └─ bar/
-│        └─ b.html
+│     ├─ bar/
+│     │  └─ b.html
+│     └─ a.html
+├─ assetA.jxl
+├─ doc.html
 └─ publication.json"
 `;

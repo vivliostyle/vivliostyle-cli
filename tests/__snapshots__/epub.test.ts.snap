@@ -66,28 +66,28 @@ exports[`generate EPUB from series of HTML files > tree 1`] = `
 ├─ tmp/
 │  └─ 1/
 │     ├─ EPUB/
-│     │  ├─ content.opf
-│     │  └─ src/
-│     │     ├─ a/
-│     │     │  └─ index.xhtml
-│     │     ├─ b/
-│     │     │  └─ c/
-│     │     │     └─ d.xhtml
-│     │     ├─ escape check%.xhtml
-│     │     └─ index.xhtml
+│     │  ├─ src/
+│     │  │  ├─ a/
+│     │  │  │  └─ index.xhtml
+│     │  │  ├─ b/
+│     │  │  │  └─ c/
+│     │  │  │     └─ d.xhtml
+│     │  │  ├─ escape check%.xhtml
+│     │  │  └─ index.xhtml
+│     │  └─ content.opf
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
    ├─ input/
-   │  ├─ publication.json
-   │  └─ src/
-   │     ├─ a/
-   │     │  └─ index.html
-   │     ├─ b/
-   │     │  └─ c/
-   │     │     └─ d.html
-   │     ├─ escape check%.html
-   │     └─ index.html
+   │  ├─ src/
+   │  │  ├─ a/
+   │  │  │  └─ index.html
+   │  │  ├─ b/
+   │  │  │  └─ c/
+   │  │  │     └─ d.html
+   │  │  ├─ escape check%.html
+   │  │  └─ index.html
+   │  └─ publication.json
    └─ output.epub"
 `;
 
@@ -366,32 +366,32 @@ exports[`generate EPUB from vivliostyle.config.js > tree 1`] = `
 "/
 ├─ tmp/
 │  ├─ 1/
-│  │  ├─ cover image%.png
-│  │  ├─ escape check%.css
 │  │  ├─ gen content%/
 │  │  │  ├─ cover document%.html
 │  │  │  └─ index file%.html
+│  │  ├─ cover image%.png
+│  │  ├─ escape check%.css
 │  │  ├─ publication.json
 │  │  └─ 日本語.html
 │  └─ 2/
 │     ├─ EPUB/
-│     │  ├─ content.opf
-│     │  ├─ cover image%.png
-│     │  ├─ escape check%.css
 │     │  ├─ gen content%/
 │     │  │  ├─ cover document%.xhtml
 │     │  │  └─ index file%.xhtml
+│     │  ├─ content.opf
+│     │  ├─ cover image%.png
+│     │  ├─ escape check%.css
 │     │  └─ 日本語.xhtml
 │     └─ META-INF/
 │        └─ container.xml
 └─ work/
    └─ input/
       ├─ .vivliostyle/
-      │  ├─ cover image%.png
-      │  ├─ escape check%.css
       │  ├─ gen content%/
       │  │  ├─ cover document%.html
       │  │  └─ index file%.html
+      │  ├─ cover image%.png
+      │  ├─ escape check%.css
       │  ├─ publication.json
       │  └─ 日本語.html
       ├─ cover image%.png

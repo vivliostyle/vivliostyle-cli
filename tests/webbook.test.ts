@@ -309,7 +309,7 @@ it('generate webpub with complex copyAsset settings', async () => {
   };
   vol.fromJSON({
     '/work/input/vivliostyle.config.json': JSON.stringify(config),
-    '/work/input/package.json': '',
+    '/work/input/package.json': '{}',
     '/work/input/doc.md': 'yuno',
     '/work/input/cover.png': '',
     '/work/input/assetA.jxl': '',
@@ -346,7 +346,7 @@ it('copy webpub assets properly', async () => {
   };
   vol.fromJSON({
     '/work/input/vivliostyle.config.json': JSON.stringify(config),
-    '/work/input/package.json': '',
+    '/work/input/package.json': '{}',
     '/work/input/doc.md': 'yuno',
     '/work/input/node_modules/pkgA/a.html': '',
     '/work/input/node_modules/pkgA/a.css': '',

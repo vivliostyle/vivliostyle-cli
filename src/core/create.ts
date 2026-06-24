@@ -248,12 +248,12 @@ export async function create(
   }
 }
 
-async function askProjectPath({
+function askProjectPath({
   interactiveLogger,
 }: {
   interactiveLogger: InteractiveLogger;
 }) {
-  return await askQuestion({
+  return askQuestion({
     question: {
       projectPath: {
         type: 'text',
@@ -269,14 +269,14 @@ async function askProjectPath({
   });
 }
 
-async function askTitle({
+function askTitle({
   projectPath,
   interactiveLogger,
 }: {
   projectPath: string;
   interactiveLogger: InteractiveLogger;
 }) {
-  return await askQuestion({
+  return askQuestion({
     question: {
       title: {
         type: 'text',
@@ -290,12 +290,12 @@ async function askTitle({
   });
 }
 
-async function askAuthor({
+function askAuthor({
   interactiveLogger,
 }: {
   interactiveLogger: InteractiveLogger;
 }) {
-  return await askQuestion({
+  return askQuestion({
     question: {
       author: {
         type: 'text',
@@ -311,13 +311,13 @@ async function askAuthor({
   });
 }
 
-async function askLanguage({
+function askLanguage({
   interactiveLogger,
 }: {
   interactiveLogger: InteractiveLogger;
 }) {
   const initialValue = getOsLocale();
-  return await askQuestion({
+  return askQuestion({
     question: {
       language: {
         type: 'autocomplete',
@@ -536,7 +536,7 @@ async function askThemeTemplate({
   }
 > {
   const themeTemplate = themeMetadata?.template;
-  const options = Object.entries(themeTemplate || {}).map(([value, tmpl]) => ({
+  const options = Object.entries(themeTemplate ?? {}).map(([value, tmpl]) => ({
     label: tmpl.name || value,
     value,
     hint: truncateString(tmpl.description || ''),
@@ -587,12 +587,12 @@ async function askThemeTemplate({
   return { template: usingTemplate.source, extraTemplateVariables };
 }
 
-async function askInstallDependencies({
+function askInstallDependencies({
   interactiveLogger,
 }: {
   interactiveLogger: InteractiveLogger;
 }) {
-  return await askQuestion({
+  return askQuestion({
     question: {
       installDependencies: {
         type: 'select',

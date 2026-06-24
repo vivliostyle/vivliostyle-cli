@@ -4,7 +4,6 @@ import {
   StringifyMarkdownOptionsSchema,
 } from '@vivliostyle/vfm';
 import { satisfies as semverSatisfies } from 'semver';
-import type { Processor } from 'unified';
 import upath from 'upath';
 import * as v from 'valibot';
 
@@ -82,7 +81,9 @@ export const ValidString = v.pipe(
 
 export const DocumentProcessorSchema = v.pipe(
   v.function() as v.GenericSchema<
-    (option: StringifyMarkdownOptions, metadata: Metadata) => Processor
+    // tsdown cannot bundle old unified Processor type, so we use any here
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (option: StringifyMarkdownOptions, metadata: Metadata) => any
   >,
   v.metadata({
     typeString:
@@ -94,6 +95,7 @@ export const DocumentProcessorSchema = v.pipe(
 );
 
 export const DocumentMetadataReaderSchema = v.pipe(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   v.function() as v.GenericSchema<(content: string) => Metadata>,
   v.metadata({
     typeString: '(content: string) => import("@vivliostyle/vfm").Metadata',
@@ -540,6 +542,7 @@ export const TocConfig = v.pipe(
         `),
       ),
       transformDocumentList: v.pipe(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         v.function() as v.GenericSchema<
           HastTransformFunction<StructuredDocument>
         >,
@@ -553,6 +556,7 @@ export const TocConfig = v.pipe(
         `),
       ),
       transformSectionList: v.pipe(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         v.function() as v.GenericSchema<
           HastTransformFunction<StructuredDocumentSection>
         >,

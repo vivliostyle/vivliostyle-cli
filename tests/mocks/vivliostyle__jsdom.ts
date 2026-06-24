@@ -33,9 +33,7 @@ const mocked = await vi.hoisted(async () => {
         normalized.contentType = 'application/xhtml+xml';
       }
     }
-    if (normalized.url === undefined) {
-      normalized.url = pathToFileURL(filename) as any;
-    }
+    normalized.url ??= pathToFileURL(filename) as any;
     return normalized;
   }
 

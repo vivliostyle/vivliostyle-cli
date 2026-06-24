@@ -88,7 +88,8 @@ function transformPublicationManifest(
     if (key in ret) {
       ret[key] = Array.isArray(ret[key])
         ? ret[key].map(tr)
-        : tr(ret[key] as string);
+        : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- non-array manifest values handled here are strings
+          tr(ret[key] as string);
     }
   }
   return ret;
@@ -136,10 +137,10 @@ export function writePublicationManifest(
     }),
   }));
   const links: (PublicationURL | PublicationLinks)[] = [
-    options.links || [],
+    options.links ?? [],
   ].flat();
   const resources: (PublicationURL | PublicationLinks)[] = [
-    options.resources || [],
+    options.resources ?? [],
   ].flat();
 
   if (options.cover) {
@@ -153,7 +154,7 @@ export function writePublicationManifest(
       });
     } else {
       Logger.logWarn(
-        `Cover image "${options.cover}" was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.`,
+        `Cover image "${options.cover.url}" was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.`,
       );
     }
   }
@@ -183,6 +184,7 @@ export function writePublicationManifest(
   try {
     assertPubManifestSchema(encodedManifest);
   } catch (error) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ajv may throw a string or an Error; both are handled below
     const thrownError = error as Error | string;
     throw new DetailError(
       `Validation of publication manifest failed. Please check the schema: ${output}`,
@@ -226,7 +228,7 @@ export async function retrieveWebbookEntry({
       dom,
       resourceLoader,
       baseUrl: webbookEntryUrl,
-    })) || {};
+    })) ?? {};
 
   let pathContains: (url: string) => boolean;
   if (webbookEntryUrl.startsWith('data:')) {
@@ -272,9 +274,11 @@ export async function retrieveWebbookEntry({
           Logger.logError(`Failed to fetch webbook resources: ${error.detail}`);
         }),
       });
-      subpathResourceLoader.fetcherMap.forEach(
-        (fetcher, k) => !retriever.has(k) && retriever.set(k, fetcher),
-      );
+      subpathResourceLoader.fetcherMap.forEach((fetcher, k) => {
+        if (!retriever.has(k)) {
+          retriever.set(k, fetcher);
+        }
+      });
     }
   }
 
@@ -463,6 +467,7 @@ export async function copyWebPublicationAssets({
   Logger.debug('webbook publication.json', actualManifestPath);
   // Overwrite copied publication.json
   const manifest = decodePublicationManifest(
+    // oxlint-disable-next-line typescript/no-unsafe-argument
     JSON.parse(fs.readFileSync(actualManifestPath, 'utf8')),
   );
   for (const entry of relExportAliases) {
@@ -564,7 +569,7 @@ export async function buildWebPublication({
     });
     entryHtmlFile = ret.entryHtmlFile;
     manifest =
-      ret.manifest ||
+      ret.manifest ??
       (await supplyWebPublicationManifestForWebbook({
         ...config,
         entryHtmlFile: ret.entryHtmlFile,
