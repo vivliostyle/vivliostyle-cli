@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 
 import type {
   BrowserPlatform,
@@ -216,9 +217,17 @@ async function launchBrowser({
     protocolTimeout,
   } satisfies LaunchOptions;
   Logger.debug('launchOptions %O', launchOptions);
+  // Browsers store transient data that never affects rendering (crash dumps,
+  // profiles.ini) under HOME (chrome_paths_linux.cc, nsXREDirProvider.cpp). A
+  // container UID with no /etc/passwd entry (e.g. `docker run --user`)
+  // gets the unwritable HOME `/`, so the browser cannot launch (see #835).
+  const env: NodeJS.ProcessEnv = { ...process.env, LANG: 'en.UTF-8' };
+  if (process.platform === 'linux' && !isWritableDir(env.HOME)) {
+    env.HOME = os.tmpdir();
+  }
   const browserLaunch = puppeteer.launch({
     ...launchOptions,
-    env: { ...process.env, LANG: 'en.UTF-8' },
+    env,
     handleSIGINT: false,
     handleSIGTERM: false,
     handleSIGHUP: false,
@@ -230,6 +239,18 @@ async function launchBrowser({
   const browser = await browserLaunch;
   const [browserContext] = browser.browserContexts();
   return { browser, browserContext, closeBrowser };
+}
+
+function isWritableDir(dir: string | undefined): boolean {
+  if (!dir) {
+    return false;
+  }
+  try {
+    fs.accessSync(dir, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getPuppeteerCacheDir() {
