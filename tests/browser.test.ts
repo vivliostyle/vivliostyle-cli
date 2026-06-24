@@ -1,10 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import os from 'node:os';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockedLaunch = vi.hoisted(() =>
   vi.fn<(options?: unknown) => Promise<unknown>>(),
 );
 const mockedRegisterCleanupHandler = vi.hoisted(() =>
   vi.fn<(message: string, handler: () => void | Promise<void>) => void>(),
+);
+const mockedUseTmpDirectory = vi.hoisted(() =>
+  vi.fn<() => Promise<[string, () => void]>>(() =>
+    Promise.resolve(['/tmp/vivliostyle-home-test', () => {}]),
+  ),
 );
 
 vi.mock('../src/node-modules.js', () => ({
@@ -20,6 +27,7 @@ vi.mock('../src/util.js', async (importOriginal) => {
   return {
     ...actual,
     registerCleanupHandler: mockedRegisterCleanupHandler,
+    useTmpDirectory: mockedUseTmpDirectory,
   };
 });
 
@@ -173,5 +181,88 @@ describe('launchPreview', () => {
     await cleanup;
     expect(browserClose).toHaveBeenCalledOnce();
     await expect(launching).rejects.toThrow(Error);
+  });
+});
+
+describe('writable HOME fallback', () => {
+  const originalPlatform = process.platform;
+  const setPlatform = (value: NodeJS.Platform) => {
+    Object.defineProperty(process, 'platform', {
+      value,
+      configurable: true,
+    });
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedLaunch.mockResolvedValue({
+      browserContexts: () => [
+        {
+          pages: () => [],
+          newPage: () => ({
+            setViewport: vi.fn<() => void>(),
+            on: vi.fn<() => void>(),
+            authenticate: vi.fn<() => void>(),
+            goto: vi.fn<() => void>(),
+          }),
+        },
+      ],
+      close: vi.fn<() => void>(),
+    });
+  });
+
+  afterEach(() => {
+    setPlatform(originalPlatform);
+    vi.unstubAllEnvs();
+  });
+
+  const launch = () =>
+    launchPreview({
+      mode: 'build',
+      url: 'https://example.com',
+      config: {
+        browser: {
+          type: 'chrome',
+          tag: 'stable',
+          executablePath: process.execPath,
+        },
+        proxy: undefined,
+        sandbox: false,
+        ignoreHttpsErrors: false,
+        timeout: 1000,
+      },
+    });
+
+  const launchedEnv = () =>
+    (mockedLaunch.mock.calls[0][0] as { env: NodeJS.ProcessEnv }).env;
+
+  it('replaces an unwritable HOME with a temp directory on Linux', async () => {
+    setPlatform('linux');
+    vi.stubEnv('HOME', '/__vivliostyle_nonexistent_home__');
+
+    await launch();
+
+    expect(mockedUseTmpDirectory).toHaveBeenCalledOnce();
+    expect(launchedEnv().HOME).toBe('/tmp/vivliostyle-home-test');
+  });
+
+  it('keeps a writable HOME untouched on Linux', async () => {
+    setPlatform('linux');
+    vi.stubEnv('HOME', os.tmpdir());
+
+    await launch();
+
+    expect(mockedUseTmpDirectory).not.toHaveBeenCalled();
+    expect(launchedEnv().HOME).toBe(os.tmpdir());
+  });
+
+  it('does not touch HOME on non-Linux platforms', async () => {
+    setPlatform('darwin');
+    vi.stubEnv('HOME', '/__vivliostyle_nonexistent_home__');
+
+    await launch();
+
+    expect(mockedUseTmpDirectory).not.toHaveBeenCalled();
+    expect(launchedEnv().HOME).toBe('/__vivliostyle_nonexistent_home__');
   });
 });
