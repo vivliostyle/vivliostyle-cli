@@ -1,5 +1,25 @@
 # @vivliostyle/cli
 
+## 11.0.3
+
+### Patch Changes
+
+- Ensure CLI termination waits for active work to abort and cleanup to complete. ([#829](https://github.com/vivliostyle/vivliostyle-cli/pull/829))
+
+- Deprecate the `renderMode: docker` option. Using it now prints a warning that links to https://github.com/vivliostyle/vivliostyle-cli/issues/823, where you can find the background and share your feedback. ([#824](https://github.com/vivliostyle/vivliostyle-cli/pull/824))
+
+- Store the theme resolution cache under the workspace directory instead of the global npm cache. ([#838](https://github.com/vivliostyle/vivliostyle-cli/pull/838))
+
+- Migrate the build tooling from tsup to tsdown. ([#842](https://github.com/vivliostyle/vivliostyle-cli/pull/842))
+
+- Always resolve the build ID for non-pinned browser tags, keeping `build-ids.json` only as a fallback for when the browser registry is unreachable. The Docker image's browser cache directory is now writable by arbitrary UIDs. ([#836](https://github.com/vivliostyle/vivliostyle-cli/pull/836))
+
+- Update default browser versions ([#813](https://github.com/vivliostyle/vivliostyle-cli/pull/813))
+
+  - Chrome: 150.0.7871.24
+  - Chromium: 1651380
+  - Firefox: stable_152.0.2
+
 ## 11.0.2
 
 ### Patch Changes
