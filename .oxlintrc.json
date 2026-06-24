@@ -7,6 +7,9 @@
     "perf": "error",
     "suspicious": "error"
   },
+  "options": {
+    "typeAware": true
+  },
   "rules": {
     // Correctness Rules
     "no-unused-vars": [
@@ -48,11 +51,26 @@
     "no-warning-comments": "warn",
     "require-unicode-regexp": ["error", { "requireFlag": "v" }],
     "prefer-number-coercion": "off",
+    "prefer-readonly-parameter-types": "off",
+    "strict-boolean-expressions": "off",
+    "switch-exhaustiveness-check": [
+      "error",
+      { "considerDefaultExhaustiveForUnions": true }
+    ],
+    "prefer-nullish-coalescing": [
+      "error",
+      {
+        "ignorePrimitives": { "string": true },
+        "ignoreMixedLogicalExpressions": true
+      }
+    ],
+    "no-confusing-void-expression": ["error", { "ignoreArrowShorthand": true }],
     // Perf Rules
     "no-await-in-loop": "off",
     // Suspicious Rules
     "consistent-function-scoping": "off",
     "no-shadow": ["error", { "allow": ["_"] }],
+    "consistent-return": "off",
     // Style Rules
     "consistent-type-imports": ["error", { "disallowTypeAnnotations": false }],
     "curly": "error",
@@ -60,10 +78,19 @@
   },
   "overrides": [
     {
-      "files": ["tests/**"],
+      "files": ["tests/**", "scripts/**"],
       "rules": {
         "no-explicit-any": "off",
-        "no-non-null-assertion": "off"
+        "no-non-null-assertion": "off",
+        "no-unsafe-argument": "off",
+        "no-unsafe-assignment": "off",
+        "no-unsafe-call": "off",
+        "no-unsafe-member-access": "off",
+        "no-unsafe-return": "off",
+        "no-unsafe-type-assertion": "off",
+        "no-unnecessary-type-assertion": "off",
+        "unbound-method": "off",
+        "typescript/require-await": "off"
       }
     }
   ],

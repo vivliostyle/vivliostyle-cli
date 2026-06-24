@@ -37,7 +37,7 @@ import type {
   PublicationManifest,
   ResourceCategorization,
 } from '../schema/publication.schema.js';
-import { DetailError, useTmpDirectory } from '../util.js';
+import { DetailError, toError, useTmpDirectory } from '../util.js';
 
 interface ManifestEntry {
   href: string;
@@ -270,7 +270,7 @@ export async function exportEpub({
         contextDir,
       });
     } catch (error) {
-      const thrownError = error as Error;
+      const thrownError = toError(error);
       throw new DetailError(
         `Failed to transpile document to XHTML: ${htmlFile}`,
         thrownError.stack ?? thrownError.message,
@@ -421,6 +421,7 @@ function replaceWithNavElement(dom: JSDOM, el: Element) {
     nav.append(el.firstChild);
   }
   for (let i = 0; i < el.attributes.length; i++) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- cloning an Attr node yields an Attr
     nav.attributes.setNamedItem(el.attributes[i].cloneNode() as Attr);
   }
   el.parentNode?.replaceChild(nav, el);
@@ -587,6 +588,8 @@ function buildEpubPackageDocument({
   const bookIdentifier = slugger.slug('bookid');
   const normalizeDate = (value: string | number | undefined) =>
     value && `${new Date(value).toISOString().split('.')[0]}Z`;
+  const toText = (value: unknown): string =>
+    typeof value === 'string' || typeof value === 'number' ? `${value}` : '';
 
   const transformToGenericTextNode = <T = Record<string, unknown>>(
     value: unknown,
@@ -595,7 +598,7 @@ function buildEpubPackageDocument({
     [value]
       .flat()
       .filter(Boolean)
-      .map(() => Object.assign({}, attributes, { '#text': `${value}` }));
+      .map(() => Object.assign({}, attributes, { '#text': String(value) }));
   const transformContributor = (
     contributorMap: Record<string, Contributor | undefined>,
   ) =>
@@ -664,9 +667,9 @@ function buildEpubPackageDocument({
         ),
         'dc:rights': transformToGenericTextNode(
           manifest.copyrightHolder &&
-            `© ${manifest.copyrightYear ? `${manifest.copyrightYear} ` : ''}${
-              manifest.copyrightHolder
-            }`,
+            `© ${manifest.copyrightYear ? `${toText(manifest.copyrightYear)} ` : ''}${toText(
+              manifest.copyrightHolder,
+            )}`,
         ),
         'dc:subject': transformToGenericTextNode(
           manifest['dc:subject'] || manifest.subject,
@@ -739,6 +742,6 @@ function compressEpub({
     });
     archive.directory(upath.join(sourceDir, 'META-INF'), 'META-INF');
     archive.directory(upath.join(sourceDir, 'EPUB'), 'EPUB');
-    archive.finalize();
+    void archive.finalize();
   });
 }

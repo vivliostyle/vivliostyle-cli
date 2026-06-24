@@ -23,6 +23,7 @@ import {
   DetailError,
   assertPubManifestSchema,
   isValidUri,
+  toError,
   writeFileIfChanged,
 } from '../util.js';
 
@@ -187,6 +188,7 @@ export async function getJsdomFromUrlOrFile({
     const dummyUrl = `${ResourceLoader.dataUrlOrigin}index.html`;
     if (resourceLoader) {
       let timeoutId: ReturnType<typeof setTimeout>;
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- jsdom's AbortablePromise is a Promise augmented with abort()/response, assembled below
       const promise = new Promise((resolve) => {
         timeoutId = setTimeout(resolve, 0, buffer);
       }) as AbortablePromise<Buffer>;
@@ -659,9 +661,10 @@ export async function fetchLinkedPublicationManifest({
     }
     Logger.debug(`Found embedded publication manifest: ${href}`);
     try {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- validated by assertPubManifestSchema below
       manifest = JSON.parse(scriptEl.innerHTML);
     } catch (error) {
-      const thrownError = error as Error;
+      const thrownError = toError(error);
       throw new DetailError(
         'Failed to parse manifest data',
         typeof thrownError.stack,
@@ -677,9 +680,10 @@ export async function fetchLinkedPublicationManifest({
     }
     const manifestJson = buffer.toString();
     try {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- validated by assertPubManifestSchema below
       manifest = JSON.parse(manifestJson);
     } catch (error) {
-      const thrownError = error as Error;
+      const thrownError = toError(error);
       throw new DetailError(
         'Failed to parse manifest data',
         typeof thrownError.stack,
@@ -691,7 +695,7 @@ export async function fetchLinkedPublicationManifest({
     assertPubManifestSchema(manifest);
   } catch (error) {
     Logger.logWarn(
-      `Publication manifest validation failed. Processing continues, but some problems may occur.\n${error}`,
+      `Publication manifest validation failed. Processing continues, but some problems may occur.\n${String(error)}`,
     );
   }
   return {
@@ -701,13 +705,13 @@ export async function fetchLinkedPublicationManifest({
 }
 
 export type TocResourceTreeItem = {
-  element: HTMLElement;
-  label: HTMLElement;
+  element: Element;
+  label: Element;
   children?: TocResourceTreeItem[];
 };
 export type TocResourceTreeRoot = {
-  element: HTMLElement;
-  heading?: HTMLElement;
+  element: Element;
+  heading?: Element;
   children: TocResourceTreeItem[];
 };
 
@@ -730,7 +734,7 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
       return null;
     }
     if (!ol || ol.tagName !== 'OL') {
-      return { element: element as HTMLElement, label: label as HTMLElement };
+      return { element, label };
     }
     const children = Array.from(ol.children).reduce<
       TocResourceTreeItem[] | null
@@ -747,14 +751,14 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
     }, []);
     return (
       children && {
-        element: element as HTMLElement,
-        label: label as HTMLElement,
+        element,
+        label,
         children,
       }
     );
   };
 
-  let heading: HTMLElement | undefined;
+  let heading: Element | undefined;
   for (const child of Array.from(tocRoot.children)) {
     if (child.tagName === 'OL') {
       const children = Array.from(child.children).reduce<
@@ -770,11 +774,11 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
         acc.push(res);
         return acc;
       }, []);
-      return children && { element: tocRoot as HTMLElement, heading, children };
+      return children && { element: tocRoot, heading, children };
     } else if (
       ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HGROUP'].includes(child.tagName)
     ) {
-      heading = child as HTMLElement;
+      heading = child;
     } else {
       return null;
     }
@@ -783,11 +787,11 @@ export function parseTocDocument(dom: JSDOM): TocResourceTreeRoot | null {
 }
 
 export type PageListResourceTreeItem = {
-  element: HTMLElement;
+  element: Element;
 };
 export type PageListResourceTreeRoot = {
-  element: HTMLElement;
-  heading?: HTMLElement;
+  element: Element;
+  heading?: Element;
   children: PageListResourceTreeItem[];
 };
 
@@ -802,7 +806,7 @@ export function parsePageListDocument(
   }
   const pageListRoot = docPageListEl.item(0);
 
-  let heading: HTMLElement | undefined;
+  let heading: Element | undefined;
   for (const child of Array.from(pageListRoot.children)) {
     if (child.tagName === 'OL') {
       const children = Array.from(child.children).reduce<
@@ -814,16 +818,14 @@ export function parsePageListDocument(
         if (element.tagName !== 'LI') {
           return null;
         }
-        acc.push({ element: element as HTMLElement });
+        acc.push({ element });
         return acc;
       }, []);
-      return (
-        children && { element: pageListRoot as HTMLElement, heading, children }
-      );
+      return children && { element: pageListRoot, heading, children };
     } else if (
       ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HGROUP'].includes(child.tagName)
     ) {
-      heading = child as HTMLElement;
+      heading = child;
     } else {
       return null;
     }

@@ -84,15 +84,16 @@ export class Logger {
   }
 
   static get isInteractive(): boolean {
-    return Boolean(
+    return (
       !this.#customLogger &&
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #stderr is typed Writable; read the tty-only isTTY flag
       (this.#stderr as WriteStream).isTTY &&
       process.env.TERM !== 'dumb' &&
       !('CI' in process.env) &&
       !import.meta.env?.VITEST &&
       !debug.enabled('vs-cli') &&
       // Prevent stream output in docker container so that not to spawn process
-      !isInContainer(),
+      !isInContainer()
     );
   }
 

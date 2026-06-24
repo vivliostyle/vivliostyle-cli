@@ -13,6 +13,7 @@ import {
   DetailError,
   parseJsonc,
   prettifySchemaError,
+  toError,
 } from '../util.js';
 import {
   type InlineOptions,
@@ -63,11 +64,12 @@ export async function loadVivliostyleConfig({
       // Invalidate cache for ESM config files
       // https://github.com/nodejs/node/issues/49442
       url.search = `version=${Date.now()}`;
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- dynamic config import resolves to an untyped module; validated by the schema below
       parsedConfig = (await import(/* @vite-ignore */ url.href)).default;
       jsonRaw = JSON.stringify(parsedConfig, null, 2);
     }
   } catch (error) {
-    const thrownError = error as Error;
+    const thrownError = toError(error);
     throw new DetailError(
       `An error occurred on loading a config file: ${absPath}`,
       thrownError.stack ?? thrownError.message,
@@ -96,6 +98,7 @@ export async function loadVivliostyleConfig({
 export function warnDeprecatedConfig(
   config: ParsedVivliostyleConfigSchema,
 ): void {
+  /* oxlint-disable typescript/no-deprecated -- This function intentionally inspects deprecated config fields to emit migration warnings */
   if (config.tasks.some((task) => task.includeAssets)) {
     Logger.logWarn(
       "'includeAssets' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'copyAsset.includes' property instead.",
@@ -140,6 +143,7 @@ export function warnDeprecatedConfig(
       "'preflightOption' property of output config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflightOption' property instead.",
     );
   }
+  /* oxlint-enable typescript/no-deprecated */
 
   if (
     config.inlineOptions.renderMode === 'docker' ||

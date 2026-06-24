@@ -15,7 +15,7 @@ import type {
 import type { CmykMap, Meta, Payload, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
-import { pathEquals } from '../util.js';
+import { pathEquals, toError } from '../util.js';
 import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
 
 export async function buildPDF({
@@ -86,9 +86,9 @@ export async function buildPDF({
     onBrowserOpen: () => {
       Logger.logUpdate('Building pages');
     },
-    onPageOpen: async (openedPage) => {
+    onPageOpen: (openedPage) => {
       openedPage.on('pageerror', (error) => {
-        Logger.logError(red((error as Error).message));
+        Logger.logError(red(toError(error).message));
       });
 
       openedPage.on('console', (msg) => {
@@ -96,13 +96,15 @@ export async function buildPDF({
           case 'error':
             if (msg.location().url?.endsWith('/vivliostyle-viewer.js')) {
               Logger.logError(msg.text());
-              throw msg.text();
+              throw new Error(msg.text());
             }
             return;
           case 'debug':
             if (/time slice/v.test(msg.text())) {
               return;
             }
+            break;
+          default:
             break;
         }
         if (msg.type() === 'error') {
@@ -132,7 +134,7 @@ export async function buildPDF({
         Logger.logError(red(`${response.status()}`), response.url());
       });
 
-      await openedPage.setDefaultTimeout(config.timeout);
+      openedPage.setDefaultTimeout(config.timeout);
     },
   });
 
@@ -149,6 +151,7 @@ export async function buildPDF({
       await page.waitForNetworkIdle({ signal });
       await page.waitForFunction(() => !!window.coreViewer, { signal });
 
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- read the undocumented `protocol` field puppeteer-core sets on the browser
       const { protocol } = browser as Browser & {
         protocol: 'cdp' | 'webDriverBiDi';
       };
@@ -248,7 +251,7 @@ export async function buildPDF({
     disableCreatorOption: !!config.viewer && !browserResult.viewerCoreVersion,
   });
   await post.toc(browserResult.toc);
-  await post.setPageBoxes(browserResult.pageSizeData);
+  post.setPageBoxes(browserResult.pageSizeData);
   await post.save(target.path, {
     preflight: target.preflight,
     preflightOption: target.preflightOption,
@@ -293,19 +296,19 @@ function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
   /* v8 ignore start */
   return page.evaluate(() => {
     const sizeData: PageSizeData[] = [];
-    const pageContainers = document.querySelectorAll(
+    const pageContainers = document.querySelectorAll<HTMLElement>(
       '#vivliostyle-viewer-viewport > div > div > div[data-vivliostyle-page-container]',
-    ) as NodeListOf<HTMLElement>;
+    );
 
     for (const pageContainer of pageContainers) {
-      const bleedBox = pageContainer.querySelector(
+      const bleedBox = pageContainer.querySelector<HTMLElement>(
         'div[data-vivliostyle-bleed-box]',
-      ) as HTMLElement;
+      );
       sizeData.push({
         mediaWidth: Number.parseFloat(pageContainer.style.width) * 0.75,
         mediaHeight: Number.parseFloat(pageContainer.style.height) * 0.75,
-        bleedOffset: Number.parseFloat(bleedBox?.style.left) * 0.75,
-        bleedSize: Number.parseFloat(bleedBox?.style.paddingLeft) * 0.75,
+        bleedOffset: Number.parseFloat(bleedBox?.style.left ?? '') * 0.75,
+        bleedSize: Number.parseFloat(bleedBox?.style.paddingLeft ?? '') * 0.75,
       });
     }
     return sizeData;

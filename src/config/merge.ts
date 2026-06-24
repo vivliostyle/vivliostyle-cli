@@ -11,6 +11,7 @@ const pruneObject = <T extends Record<string, unknown>>(obj: T) => {
       ([, value]) => value !== undefined && value !== null,
     ),
   );
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- nullish entries were filtered out above
   return ret as { [K in keyof T]: NonNullable<T[K]> };
 };
 

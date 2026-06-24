@@ -154,11 +154,11 @@ export const resolveFixture = (p?: string): string =>
 export function assertSingleItem<T = unknown>(
   value: T | T[],
 ): asserts value is T {
-  return assert.ok(!Array.isArray(value));
+  assert.ok(!Array.isArray(value));
 }
 
 export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
-  return assert.ok(Array.isArray(value));
+  assert.ok(Array.isArray(value));
 }
 
 /**

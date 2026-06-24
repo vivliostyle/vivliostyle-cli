@@ -187,7 +187,9 @@ describeOnPosix('process termination signals', () => {
         markerPath,
         terminationSignal,
       );
-      const timeout = setTimeout(() => child.kill('SIGKILL'), 4_000);
+      const timeout = setTimeout(() => {
+        child.kill('SIGKILL');
+      }, 4_000);
 
       try {
         await ready;

@@ -166,7 +166,7 @@ export function vsDevServerPlugin({
       config.viewerInput.needToGenerateManifest &&
       needToUpdateManifest
     ) {
-      await generateManifest(config);
+      generateManifest(config);
     }
 
     // Write CMYK reserve map if configured
@@ -256,7 +256,7 @@ export function vsDevServerPlugin({
       );
   }
 
-  async function transform(entry: ParsedEntry, host: string | undefined) {
+  function transform(entry: ParsedEntry, host: string | undefined) {
     if (!isWebPubConfig(config)) {
       return;
     }
@@ -287,7 +287,7 @@ export function vsDevServerPlugin({
       }
     })();
     transformCache.set(entry.target, promise);
-    return await promise;
+    return promise;
   }
 
   async function transformAll(host?: string) {
@@ -329,13 +329,15 @@ export function vsDevServerPlugin({
     next,
   ) {
     if (!program || req.url === undefined) {
-      return next();
+      next();
+      return;
     }
     const { entriesLookup, urlMatchRe } = program;
     const [_, pathname, qs] = decodeURI(req.url).match(urlMatchRe) ?? [];
     const match = pathname && entriesLookup(pathname);
     if (!match) {
-      return next();
+      next();
+      return;
     }
     const [entry, expected] = match;
     // Enforce using the actual path to match the full-reload event of the Vite client
@@ -350,7 +352,8 @@ export function vsDevServerPlugin({
     if (cachePromise) {
       const cached = await cachePromise;
       if (!cached) {
-        return next();
+        next();
+        return;
       }
       if (req.headers['if-none-match'] === cached.etag) {
         res.statusCode = 304;
@@ -369,7 +372,8 @@ export function vsDevServerPlugin({
     }
     const result = await transform(entry, host);
     if (!result) {
-      return next();
+      next();
+      return;
     }
 
     res.statusCode = 200;
@@ -385,7 +389,8 @@ export function vsDevServerPlugin({
     next,
   ) {
     if (!config || !program || req.url === undefined) {
-      return next();
+      next();
+      return;
     }
     const requestUrl = req.url;
     const {
@@ -397,18 +402,20 @@ export function vsDevServerPlugin({
     } = program;
     const [_, pathname] = decodeURI(requestUrl).match(urlMatchRe) ?? [];
     if (!pathname) {
-      return next();
+      next();
+      return;
     }
 
     const handleWorkspace = (proceed: () => void) => {
       // oxlint-disable-next-line unicorn/prefer-regexp-test -- `match` is GlobMatcher's method, not String#match
       if (!serveWorkspaceMatcher.match(pathname.slice(1))) {
-        return proceed();
+        proceed();
+        return;
       }
       Logger.debug('dev-server > serveWorkspace %s', pathname);
       const url = requestUrl;
       req.url = requestUrl.slice(config.base.length);
-      return serveWorkspace(req, res, () => {
+      serveWorkspace(req, res, () => {
         req.url = url;
         proceed();
       });
@@ -417,18 +424,21 @@ export function vsDevServerPlugin({
     const handleAssets = (proceed: () => void) => {
       // oxlint-disable-next-line unicorn/prefer-regexp-test -- `match` is GlobMatcher's method, not String#match
       if (!serveAssetsMatcher.match(pathname.slice(1))) {
-        return proceed();
+        proceed();
+        return;
       }
       Logger.debug('dev-server > serveAssets %s', pathname);
       const url = requestUrl;
       req.url = url.slice(config.base.length);
-      return serveAssets(req, res, () => {
+      serveAssets(req, res, () => {
         req.url = url;
         proceed();
       });
     };
 
-    handleWorkspace(() => handleAssets(next));
+    handleWorkspace(() => {
+      handleAssets(next);
+    });
   } satisfies NextHandleFunction;
 
   return {
@@ -455,7 +465,9 @@ export function vsDevServerPlugin({
       viteServer.watcher.on('unlink', handleUpdate);
 
       return () => {
-        viteServer.middlewares.use(devServerMiddleware);
+        viteServer.middlewares.use((req, res, next) => {
+          void devServerMiddleware(req, res, next);
+        });
         viteServer.middlewares.use(serveWorkspaceMiddleware);
       };
     },
@@ -485,14 +497,14 @@ export function vsDevServerPlugin({
       await reload(true);
       await transformAll();
     },
-    async handleHotUpdate(ctx) {
+    handleHotUpdate(ctx) {
       const entry = config?.entries.find(
         (e) =>
           (e.source?.type === 'file' && e.source.pathname === ctx.file) ||
           (!e.source && e.target === ctx.file),
       );
       if (config && entry) {
-        await invalidate(entry);
+        invalidate(entry);
       }
     },
   };

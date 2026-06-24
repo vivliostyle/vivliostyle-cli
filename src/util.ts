@@ -10,7 +10,6 @@ import {
   evaluate,
   parse,
 } from '@humanwhocodes/momoa';
-import type { BrowserPlatform } from '@puppeteer/browsers';
 import { Ajv, type Plugin as AjvPlugin, type Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
@@ -23,9 +22,13 @@ import upath from 'upath';
 import type { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
 
-import type { BrowserType } from './config/schema.js';
+import type {
+  BrowserType,
+  VivliostylePackageMetadata,
+} from './config/schema.js';
 import { DEFAULT_BROWSER_VERSIONS, LANGUAGES } from './constants.js';
 import { Logger } from './logger.js';
+import type { PackageJson } from './npm.js';
 import {
   publicationSchema,
   publicationSchemas,
@@ -34,6 +37,7 @@ import type { PublicationManifest } from './schema/publication.schema.js';
 
 export const cwd = upath.normalize(process.cwd());
 
+// oxlint-disable-next-line typescript/strict-void-return -- promisify accepts execFile despite its ChildProcess return value
 const execFile = util.promisify(childProcess.execFile);
 export async function exec(
   command: string,
@@ -59,7 +63,7 @@ export const registerCleanupHandler = (
   debugMessage: string,
   handler: () => void | Promise<void>,
   { prepend = false }: { prepend?: boolean } = {},
-): (() => (() => void | Promise<void>) | undefined) => {
+): (() => void) => {
   const callback = () => {
     Logger.debug(debugMessage);
     return handler();
@@ -72,7 +76,7 @@ export const registerCleanupHandler = (
   return () => {
     const index = cleanupHandlers.indexOf(callback);
     if (index !== -1) {
-      return cleanupHandlers.splice(index, 1)[0];
+      cleanupHandlers.splice(index, 1);
     }
   };
 };
@@ -80,15 +84,19 @@ export const registerCleanupHandler = (
 export const executeWithCleanupOnInterrupt = <T>(
   debugMessage: string,
   tryTask: () => Promise<T>,
-  finallyTask?: (error: unknown | undefined) => void | Promise<void>,
+  finallyTask?: (error: unknown) => void | Promise<void>,
 ): Promise<T> => {
-  let thrownError: unknown | undefined;
-  const runPromise = tryTask()
-    .catch((error) => {
+  let thrownError: unknown;
+  const runPromise = (async () => {
+    try {
+      return await tryTask();
+    } catch (error) {
       thrownError = error;
       throw error;
-    })
-    .finally(() => finallyTask?.(thrownError));
+    } finally {
+      await finallyTask?.(thrownError);
+    }
+  })();
   const unregister = registerCleanupHandler(
     debugMessage,
     async () => {
@@ -184,7 +192,11 @@ export class DetailError extends Error {
 export function getFormattedError(err: Error): string {
   return err instanceof DetailError
     ? `${err.message}\n${err.detail}`
-    : err.stack || `${err.message}`;
+    : err.stack || err.message;
+}
+
+export function toError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value));
 }
 
 export async function gracefulError(err: Error): Promise<void> {
@@ -195,14 +207,13 @@ ${gray('If you think this is a bug, please report at https://github.com/vivliost
   await runCleanupHandlers();
 }
 
-export function readJSON<T = Record<string, unknown>>(
-  path: string,
-): T | undefined {
-  try {
-    return JSON.parse(fs.readFileSync(path, 'utf8')) as T;
-  } catch {
-    /* NOOP */
-  }
+export type VivliostylePackageJson = PackageJson & {
+  vivliostyle?: VivliostylePackageMetadata;
+};
+
+export function readPackageJson(path: string): VivliostylePackageJson {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- JSON.parse returns `any`; cast to the package.json shape we rely on
+  return JSON.parse(fs.readFileSync(path, 'utf8')) as VivliostylePackageJson;
 }
 
 export function statFileSync(
@@ -214,6 +225,7 @@ export function statFileSync(
   try {
     return fs.statSync(filePath);
   } catch (err) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- inspect the Node.js error code on the caught value
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       throw new Error(`${errorMessage}: ${filePath}`, { cause: err });
     }
@@ -221,27 +233,28 @@ export function statFileSync(
   }
 }
 
-export async function inflateZip(
-  filePath: string,
-  dest: string,
-): Promise<void> {
-  return await new Promise<void>((res, rej) => {
+export function inflateZip(filePath: string, dest: string): Promise<void> {
+  return new Promise<void>((res, rej) => {
     try {
       const zip = new StreamZip({
         file: filePath,
         storeEntries: true,
       });
-      zip.on('error', (err) => {
-        rej(err);
-      });
-      zip.on('ready', async () => {
-        await util.promisify(zip.extract)(null, dest);
-        await util.promisify(zip.close)();
-        Logger.debug(`Unzipped ${filePath} to ${dest}`);
-        res();
+      zip.on('error', rej);
+      zip.on('ready', () => {
+        void (async () => {
+          try {
+            await util.promisify(zip.extract.bind(zip))(null, dest);
+            await util.promisify(zip.close.bind(zip))();
+            Logger.debug(`Unzipped ${filePath} to ${dest}`);
+            res();
+          } catch (err) {
+            rej(toError(err));
+          }
+        })();
       });
     } catch (err) {
-      rej(err);
+      rej(toError(err));
     }
   });
 }
@@ -250,7 +263,8 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
   const directory = new Promise<string>((res, rej) => {
     tmp.dir({ unsafeCleanup: true }, (err, path) => {
       if (err) {
-        return rej(err);
+        rej(err);
+        return;
       }
       Logger.debug(`Created the temporary directory: ${path}`);
       res(path);
@@ -349,9 +363,15 @@ export function getDefaultEpubOpfPath(epubDir: string): string {
   const xmlParser = new XMLParser({
     ignoreAttributes: false,
   });
+  type ContainerRootfile = { '@_full-path': string };
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fast-xml-parser returns `any`; describe the container.xml shape we rely on
   const { container } = xmlParser.parse(
     fs.readFileSync(containerXmlPath, 'utf8'),
-  );
+  ) as {
+    container: {
+      rootfiles: { rootfile: ContainerRootfile | ContainerRootfile[] };
+    };
+  };
   // Only supports a default rendition
   const rootfile = [container.rootfiles.rootfile].flat()[0];
   const epubOpfPath = upath.join(epubDir, rootfile['@_full-path']);
@@ -380,8 +400,8 @@ const getAjvValidatorFunction =
   <T extends Schema>(schema: T, refSchemas?: Schema | Schema[]) =>
   (obj: unknown): obj is T => {
     const ajv = new Ajv({ strict: false });
-    // @ts-expect-error: Invalid type
-    const addFormats = formatsPlugin as AjvPlugin<unknown>;
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ajv-formats' default export has incompatible typings
+    const addFormats = formatsPlugin as unknown as AjvPlugin<unknown>;
     addFormats(ajv);
     if (refSchemas) {
       ajv.addSchema(refSchemas);
@@ -389,13 +409,15 @@ const getAjvValidatorFunction =
     const validate = ajv.compile(schema);
     const valid = validate(obj);
     if (!valid) {
-      throw validate.errors?.[0] || new Error();
+      const [validationError] = validate.errors ?? [];
+      throw new Error(validationError?.message, { cause: validationError });
     }
     return true;
   };
 
 export const assertPubManifestSchema =
   getAjvValidatorFunction<PublicationManifest>(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the JSON Schema is reused as the validator's type parameter
     publicationSchema as unknown as PublicationManifest,
     publicationSchemas,
   );
@@ -422,7 +444,7 @@ export function prettifySchemaError(
   // Traverse to the deepest issue
   function traverse(nodes: BaseIssue<unknown>[], depth: number) {
     return nodes.flatMap((issue): [BaseIssue<unknown>[], number][] => {
-      const p = issue.path?.length || 0;
+      const p = issue.path?.length ?? 0;
       if (!issue.issues) {
         return [[[issue], depth + p]];
       }
@@ -441,7 +463,7 @@ export function prettifySchemaError(
   }
   const issuesTraversed = deepest[0];
 
-  let jsonValue = parsed.body as JsonValueNode;
+  let jsonValue = parsed.body;
   for (const p of issuesTraversed.flatMap((v) => v.path ?? [])) {
     let childValue: JsonValueNode | undefined;
     if (p.type === 'object' && jsonValue.type === 'Object') {
@@ -466,7 +488,7 @@ export function prettifySchemaError(
   if (!deepestIssue) {
     throw new Error('Failed to locate the deepest schema issue');
   }
-  let message = `${red(deepestIssue.message)}`;
+  let message = red(deepestIssue.message);
   if (jsonValue) {
     message += `\n${codeFrameColumns(rawJsonc, jsonValue.loc, {
       highlightCode: true,
@@ -501,13 +523,10 @@ export function getOsLocale(): string {
   return cachedLocale;
 }
 
-export function toTitleCase<T = unknown>(input: T): T {
-  if (typeof input !== 'string') {
-    return input;
-  }
+export function toTitleCase(input: string): string {
   return titleCase(
     input.replaceAll(/[\W_]/gv, ' ').replaceAll(/\s+/gv, ' ').trim(),
-  ) as T;
+  );
 }
 
 export function debounce<T extends (...args: never[]) => unknown>(
@@ -566,6 +585,14 @@ export const getCacheDir = cachedFn(function getCacheDir() {
   return upath.join(osCacheDir, 'vivliostyle');
 });
 
+export type BrowserPlatform =
+  | 'mac'
+  | 'mac_arm'
+  | 'linux'
+  | 'linux_arm'
+  | 'win32'
+  | 'win64';
+
 // Detects the browser platform, similar to detectBrowserPlatform in @puppeteer/browsers
 // Included here to avoid adding @puppeteer/browsers as a dependency
 export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
@@ -575,19 +602,15 @@ export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
   const arch = process.arch;
   switch (platform) {
     case 'darwin':
-      return arch === 'arm64'
-        ? ('mac_arm' as BrowserPlatform)
-        : ('mac' as BrowserPlatform);
+      return arch === 'arm64' ? 'mac_arm' : 'mac';
     case 'linux':
-      return arch === 'arm64'
-        ? ('linux_arm' as BrowserPlatform)
-        : ('linux' as BrowserPlatform);
+      return arch === 'arm64' ? 'linux_arm' : 'linux';
     case 'win32':
       return arch === 'x64' ||
         // Windows 11 for ARM supports x64 emulation
         (arch === 'arm64' && isWindows11(os.release()))
-        ? ('win64' as BrowserPlatform)
-        : ('win32' as BrowserPlatform);
+        ? 'win64'
+        : 'win32';
     default:
       return undefined;
   }
@@ -596,9 +619,9 @@ export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
 function isWindows11(version: string): boolean {
   const parts = version.split('.');
   if (parts.length > 2) {
-    const major = Number.parseInt(parts[0] as string, 10);
-    const minor = Number.parseInt(parts[1] as string, 10);
-    const patch = Number.parseInt(parts[2] as string, 10);
+    const major = Number.parseInt(parts[0], 10);
+    const minor = Number.parseInt(parts[1], 10);
+    const patch = Number.parseInt(parts[2], 10);
     return (
       major > 10 ||
       (major === 10 && minor > 0) ||
@@ -633,6 +656,7 @@ export function whichPm(): PackageManager {
   const separatorPos = pmSpec.lastIndexOf('/');
   const name = pmSpec.slice(0, separatorPos);
 
+  // oxlint-disable-next-line
   return name as PackageManager;
 }
 
@@ -641,10 +665,7 @@ export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {
     return '0.0.1';
   }
-  const pkg = JSON.parse(
-    fs.readFileSync(upath.join(cliRoot, 'package.json'), 'utf8'),
-  );
-  return pkg.version;
+  return readPackageJson(upath.join(cliRoot, 'package.json')).version;
 })();
 
 export const viewerRoot = resolvePkg('@vivliostyle/viewer', { cwd: cliRoot });
@@ -655,10 +676,7 @@ export const coreVersion = (() => {
   if (!viewerRoot) {
     return 'Unknown';
   }
-  const pkg = JSON.parse(
-    fs.readFileSync(upath.join(viewerRoot, 'package.json'), 'utf8'),
-  );
-  return pkg.version;
+  return readPackageJson(upath.join(viewerRoot, 'package.json')).version;
 })();
 
 export const versionForDisplay = `cli: ${cliVersion}

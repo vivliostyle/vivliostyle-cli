@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 
 import type {
+  BrowserPlatform,
   InstalledBrowser,
   Browser as SupportedBrowser,
 } from '@puppeteer/browsers';
@@ -23,8 +24,10 @@ import {
   isInContainer,
   isRunningOnWSL,
   registerCleanupHandler,
+  toError,
 } from './util.js';
 
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 const browserEnumMap = {
   chrome: 'chrome' as SupportedBrowser.CHROME,
   chromium: 'chromium' as SupportedBrowser.CHROMIUM,
@@ -32,14 +35,15 @@ const browserEnumMap = {
 } as const satisfies {
   [key in BrowserType]: SupportedBrowser;
 };
+/* oxlint-enable typescript/no-unsafe-type-assertion */
 
-function getAbortReason(signal: AbortSignal): unknown {
+function getAbortReason(signal: AbortSignal): Error {
   try {
     signal.throwIfAborted();
   } catch (err) {
-    return err;
+    return err instanceof Error ? err : new Error(String(err), { cause: err });
   }
-  return signal.reason;
+  return toError(signal.reason);
 }
 
 export async function runBrowserOperationWithAbort<T>({
@@ -52,7 +56,7 @@ export async function runBrowserOperationWithAbort<T>({
   operation: () => Promise<T>;
 }): Promise<T> {
   if (!signal) {
-    return await operation();
+    return operation();
   }
 
   signal.throwIfAborted();
@@ -255,6 +259,7 @@ async function resolveBuildId({
   );
   let cacheData: BuildIdsCache;
   try {
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- locally written build-id cache; malformed contents are caught and rebuilt below
     cacheData = JSON.parse(fs.readFileSync(cacheDataFilename, 'utf-8'));
     if (Date.now() - cacheData.createdAt > 24 * 60 * 60 * 1000) {
       cacheData = { createdAt: Date.now(), buildIds: {} };
@@ -272,7 +277,8 @@ async function resolveBuildId({
   }
   const buildId = await browsers.resolveBuildId(
     browserEnumMap[type],
-    platform,
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    platform as BrowserPlatform,
     tag,
   );
   (cacheData.buildIds[type] ??= {})[tag] = buildId;

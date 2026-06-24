@@ -27,4 +27,5 @@ export const importNodeModule = <
 >(
   name: T,
 ): Promise<NodeExternalModules[T]> =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- map the dynamic import to its registered module type
   import(name) as Promise<NodeExternalModules[T]>;
