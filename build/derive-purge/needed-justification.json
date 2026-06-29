@@ -339,6 +339,10 @@
     "press-ready is on PATH and runs",
     "press-ready preflight runs end-to-end (gs + poppler)"
   ],
+  "libxtst6": [
+    "preview --browser chromium opens a GUI window",
+    "build --browser chromium"
+  ],
   "libxxhash0": ["derived image repair + install git"],
   "libzstd1": [],
   "nodejs": [],

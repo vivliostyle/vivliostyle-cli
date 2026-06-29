@@ -82,7 +82,6 @@ libxcb-sync1
 libxcb-xfixes0
 libxml2
 libxshmfence1
-libxtst6
 libz3-4
 login.defs
 lsb-base
