@@ -19,7 +19,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "prepare": "husky",
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit && tsgo --project build"
   },
   "lint-staged": {
     "*": [

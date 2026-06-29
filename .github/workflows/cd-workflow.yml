@@ -44,6 +44,8 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --allow-insecure-entitlement security.insecure
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -55,6 +57,7 @@ jobs:
         with:
           context: .
           push: true
+          allow: security.insecure
           platforms: linux/amd64,linux/arm64
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
