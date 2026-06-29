@@ -40,7 +40,10 @@ function dq(...args: string[]): string {
       },
     );
   } catch (e) {
-    const out = (e as { stdout?: unknown }).stdout;
+    const out =
+      typeof e === 'object' && e !== null && 'stdout' in e
+        ? e.stdout
+        : undefined;
     return typeof out === 'string' ? out : '';
   }
 }
@@ -60,7 +63,7 @@ const installed = new Set(
   dq('-W', '--showformat=${db:Status-Abbrev} ${Package}\n')
     .split('\n')
     .filter((l) => l.startsWith('ii '))
-    .map((l) => l.replace(/^ii */, '')),
+    .map((l) => l.replace(/^ii */v, '')),
 );
 
 // Provides -> real installed package, so a dependency named by a virtual package
@@ -75,7 +78,7 @@ for (const line of dq('-W', '--showformat=${Package}\t${Provides}\n').split(
   }
   real.set(pkg, pkg);
   for (const v of prov
-    .replace(/\([^)]*\)/g, '')
+    .replaceAll(/\([^\)]*\)/gv, '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)) {
@@ -86,18 +89,18 @@ for (const line of dq('-W', '--showformat=${Package}\t${Provides}\n').split(
 }
 const declaredDeps = (pkg: string): string[] =>
   dq('-W', '--showformat=${Depends}|${Pre-Depends}\n', pkg)
-    .replace(/\([^)]*\)/g, '')
-    .split(/[,|]/)
+    .replaceAll(/\([^\)]*\)/gv, '')
+    .split(/[,\|]/v)
     .map((s) => s.trim())
     .filter(Boolean)
     .map((d) => real.get(d))
-    .filter((d): d is string => Boolean(d));
+    .filter((d): d is string => d !== undefined);
 
 // Tool-dependency edges "P T" discovered by order.mjs (P's script calls a tool
 // from T), not derivable from the declared dependencies above.
 const extra = new Map<string, string[]>();
 for (const line of read('purge-deps.txt')) {
-  const [p, dep] = line.split(/\s+/);
+  const [p, dep] = line.split(/\s+/v);
   if (p && dep) {
     extra.set(p, [...(extra.get(p) ?? []), dep]);
   }
@@ -138,13 +141,14 @@ const order = post.toReversed();
 const FORCE =
   '--force-depends --force-remove-essential --force-remove-protected';
 const loop = `for p in "$@"; do dpkg --purge ${FORCE} "$p" 1>&2 || echo "AUDITFAIL $p"; done`;
-const out = order.length
-  ? execFileSync('chroot', [ROOTFS, 'sh', '-c', loop, 'sh', ...order], {
-      encoding: 'utf8',
-      maxBuffer: 256 * 1024 * 1024,
-      stdio: ['ignore', 'pipe', 'inherit'],
-    })
-  : '';
+const out =
+  order.length > 0
+    ? execFileSync('chroot', [ROOTFS, 'sh', '-c', loop, 'sh', ...order], {
+        encoding: 'utf8',
+        maxBuffer: 256 * 1024 * 1024,
+        stdio: ['ignore', 'pipe', 'inherit'],
+      })
+    : '';
 const failed = out
   .split('\n')
   .filter((l) => l.startsWith('AUDITFAIL '))
@@ -153,7 +157,7 @@ const failed = out
 process.stdout.write(
   `audit: purged ${order.length} packages (${extra.size} with discovered tool-edges); script failures ${failed.length}\n`,
 );
-if (failed.length) {
+if (failed.length > 0) {
   process.stderr.write(
     `audit: maintainer-script failures: ${failed.join(' ')}\n`,
   );

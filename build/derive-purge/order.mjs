@@ -1,3 +1,4 @@
+/// <reference types="node" />
 // Execution loop that discovers build/purge-deps.txt -- the tool-dependency edges
 // "P T" meaning package P's maintainer script calls a tool from package T, so P
 // must be purged before T. build/audit.ts runs a real purge (scripts execute) and
@@ -12,9 +13,8 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
+const HERE = import.meta.dirname;
 const BUILD = path.dirname(HERE);
 const BASE = process.env.BASE || 'vsslim:base';
 const CLI_DIR = process.env.CLI_DIR;
@@ -24,9 +24,18 @@ if (!CLI_DIR) {
 }
 const DEPS = `${BUILD}/purge-deps.txt`;
 
+/** @param {string} m */
 const log = (m) => process.stdout.write(`${m}\n`);
+/**
+ * @param {string} f
+ * @returns {string[]}
+ */
 const lines = (f) =>
   (fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '').split('\n');
+/**
+ * @param {string} f
+ * @returns {string[]}
+ */
 const items = (f) =>
   lines(f)
     .map((s) => s.trim())
@@ -39,9 +48,14 @@ const purgeSet = new Set(items(`${BUILD}/purge.txt`));
 // script's name either way -- so resolve through alternatives symlinks
 // (readlink -f) and, if the target is a #! script, also return its interpreter's
 // package. Returns token -> [package, ...].
+/**
+ * @param {string[]} tokens
+ * @returns {Map<string, string[]>}
+ */
 const resolve = (tokens) => {
+  /** @type {Map<string, string[]>} */
   const map = new Map();
-  if (!tokens.length) {
+  if (tokens.length === 0) {
     return map;
   }
   const sh = [
@@ -66,7 +80,7 @@ const resolve = (tokens) => {
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
   );
   for (const l of out.split('\n')) {
-    const [t, ...pkgs] = l.trim().split(/\s+/);
+    const [t, ...pkgs] = l.trim().split(/\s+/v);
     if (t) {
       map.set(t, pkgs.filter(Boolean));
     }
@@ -75,7 +89,7 @@ const resolve = (tokens) => {
 };
 
 const FAIL =
-  /\/var\/lib\/dpkg\/info\/([^:\s/]+)(?::\w+)?\.(?:prerm|postrm|preinst|postinst):\s*\d+:\s*(?:exec:\s*)?([^\s:]+):\s*not found/g;
+  /\/var\/lib\/dpkg\/info\/([^:\s\/]+)(?::\w+)?\.(?:prerm|postrm|preinst|postinst):\s*\d+:\s*(?:exec:\s*)?([^\s:]+):\s*not found/gv;
 
 for (let round = 1; round <= 40; round++) {
   const ctx = fs.mkdtempSync('/tmp/order-');
@@ -94,7 +108,21 @@ for (let round = 1; round <= 40; round++) {
     });
     clean = true;
   } catch (e) {
-    out = `${e.stdout || ''}${e.stderr || ''}`;
+    const stdout =
+      typeof e === 'object' &&
+      e !== null &&
+      'stdout' in e &&
+      typeof e.stdout === 'string'
+        ? e.stdout
+        : '';
+    const stderr =
+      typeof e === 'object' &&
+      e !== null &&
+      'stderr' in e &&
+      typeof e.stderr === 'string'
+        ? e.stderr
+        : '';
+    out = `${stdout}${stderr}`;
   }
   fs.rmSync(ctx, { recursive: true, force: true });
   try {
@@ -106,7 +134,7 @@ for (let round = 1; round <= 40; round++) {
     process.exit(0);
   }
   const needs = [...out.matchAll(FAIL)].map((m) => [m[1], m[2]]);
-  if (!needs.length) {
+  if (needs.length === 0) {
     log(
       `round ${round}: build failed with no "not found" maintainer-script error`,
     );
@@ -115,10 +143,11 @@ for (let round = 1; round <= 40; round++) {
   }
   const tok2pkgs = resolve([...new Set(needs.map(([, t]) => t))]);
   const have = new Set(items(DEPS));
+  /** @type {string[]} */
   const add = [];
   for (const [p, t] of needs) {
     const deps = tok2pkgs.get(t) ?? [];
-    if (!deps.length) {
+    if (deps.length === 0) {
       log(`  warn: "${t}" (needed by ${p}) resolved to no package`);
       continue;
     }
@@ -132,13 +161,13 @@ for (let round = 1; round <= 40; round++) {
       }
     }
   }
-  if (!add.length) {
+  if (add.length === 0) {
     log(
       `round ${round}: failures but no new edges (cycle/unresolved) -- stopping`,
     );
-    needs.forEach(([p, t]) =>
-      log(`  ${p} needs ${t} -> ${(tok2pkgs.get(t) ?? []).join(',') || '?'}`),
-    );
+    needs.forEach(([p, t]) => {
+      log(`  ${p} needs ${t} -> ${(tok2pkgs.get(t) ?? []).join(',') || '?'}`);
+    });
     process.exit(1);
   }
   log(`round ${round}: +${add.length} edges -> ${add.join(', ')}`);

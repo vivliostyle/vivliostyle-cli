@@ -13,6 +13,7 @@
     "examples/**",
     "templates/**",
     "tests/fixtures/**",
+    "build/fixtures/**",
     "pnpm-lock.yaml",
     "CHANGELOG.md",
     "**/*.astro"
