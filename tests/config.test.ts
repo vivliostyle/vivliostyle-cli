@@ -1,5 +1,6 @@
 import { VFM, readMetadata } from '@vivliostyle/vfm';
 import * as v from 'valibot';
+import { ValiError } from 'valibot';
 import { expect, it, onTestFinished, vi } from 'vitest';
 
 import { warnDeprecatedConfig } from '../src/config/load.js';
@@ -7,6 +8,14 @@ import { UseTemporaryServerRoot } from '../src/config/resolve.js';
 import { VivliostyleConfigSchema } from '../src/config/schema.js';
 import { Logger } from '../src/logger.js';
 import { getTaskConfig, maskConfig, resolveFixture } from './command-util.js';
+
+const findFileEntry = (entries: any[], pathnameSuffix: string) =>
+  entries.find(
+    (e) =>
+      'source' in e &&
+      e.source?.type === 'file' &&
+      e.source.pathname.endsWith(pathnameSuffix),
+  );
 
 const validConfigData = {
   title: 'title',
@@ -155,7 +164,7 @@ it('deny invalid config', async () => {
     getTaskConfig(
       ['build'],
       resolveFixture('config'),
-      // @ts-expect-error
+      // @ts-expect-error -- intentionally invalid output format for testing
       {
         output: {
           path: 'output',
@@ -163,19 +172,21 @@ it('deny invalid config', async () => {
         },
       },
     ),
-  ).rejects.toThrow();
+  ).rejects.toThrow(ValiError);
 });
 
 it('deny config which has no entry', async () => {
   await expect(
     getTaskConfig(['build'], resolveFixture('config'), { entry: [] }),
-  ).rejects.toThrow();
+  ).rejects.toThrow(ValiError);
 });
 
 it('deny if any config file or input file is not set', async () => {
   await expect(
-    getTaskConfig(['build'], resolveFixture('config')),
-  ).rejects.toThrow();
+    getTaskConfig(['build'], resolveFixture('config/empty-dir')),
+  ).rejects.toThrow(
+    'No input is set. Please set an appropriate entry or a Vivliostyle config file.',
+  );
 });
 
 it('deny if duplicate entry is set', async () => {
@@ -184,7 +195,9 @@ it('deny if duplicate entry is set', async () => {
       entry: ['index.md'],
       toc: true,
     }),
-  ).rejects.toThrow();
+  ).rejects.toThrow(
+    'The output path "index.html" will overwrite existing content. Please choose a different name for the source file:',
+  );
 });
 
 it('yields a config with single markdown', async () => {
@@ -427,7 +440,9 @@ it('deny config which has incompatible image', async () => {
       ...validConfigData,
       image: 'ghcr.io/vivliostyle/cli:0.0.0',
     }),
-  ).rejects.toThrow();
+  ).rejects.toThrow(
+    'The specified image is not compatible with the CLI version',
+  );
 });
 
 it('allows per-entry documentProcessor and documentMetadataReader', async () => {
@@ -448,12 +463,7 @@ it('allows per-entry documentProcessor and documentMetadataReader', async () => 
   });
 
   // frontmatter.md should have per-entry settings
-  const frontmatterEntry = config.entries.find(
-    (e) =>
-      'source' in e &&
-      e.source?.type === 'file' &&
-      e.source.pathname.endsWith('frontmatter.md'),
-  );
+  const frontmatterEntry = findFileEntry(config.entries, 'frontmatter.md');
   expect(frontmatterEntry).toBeDefined();
   expect(
     (frontmatterEntry as any).source.documentProcessor.processorFactory,
@@ -465,12 +475,7 @@ it('allows per-entry documentProcessor and documentMetadataReader', async () => 
   expect(frontmatterEntry?.title).toBe('Custom Title');
 
   // manuscript.md should have global settings (VFM and readMetadata)
-  const manuscriptEntry = config.entries.find(
-    (e) =>
-      'source' in e &&
-      e.source?.type === 'file' &&
-      e.source.pathname.endsWith('manuscript.md'),
-  );
+  const manuscriptEntry = findFileEntry(config.entries, 'manuscript.md');
   expect(manuscriptEntry).toBeDefined();
   expect(
     (manuscriptEntry as any).source.documentProcessor.processorFactory,
@@ -497,17 +502,12 @@ it('allows non-markdown extensions when documentProcessor is provided', async ()
   });
 
   // sample.xyz should be accepted with custom processor
-  const xyzEntry = config.entries.find(
-    (e) =>
-      'source' in e &&
-      e.source?.type === 'file' &&
-      e.source.pathname.endsWith('sample.xyz'),
-  );
+  const xyzEntry = findFileEntry(config.entries, 'sample.xyz');
   expect(xyzEntry).toBeDefined();
   // contentType should be 'text/x-vivliostyle-custom' for unknown extensions
   expect((xyzEntry as any).contentType).toBe('text/x-vivliostyle-custom');
   // Target should have .html extension
-  expect((xyzEntry as any).target).toMatch(/sample\.html$/);
+  expect((xyzEntry as any).target).toMatch(/sample\.html$/v);
   // Title should be extracted using custom metadata reader
   expect(xyzEntry?.title).toBe('Custom Format Title');
 });
@@ -518,7 +518,7 @@ it('rejects text/plain files without documentProcessor', async () => {
     getTaskConfig(['build'], resolveFixture('config'), {
       entry: ['sample.txt'],
     }),
-  ).rejects.toThrow(/Invalid manuscript type/);
+  ).rejects.toThrow('Invalid manuscript type');
 });
 
 it('rejects unknown extensions without documentProcessor', async () => {
@@ -526,7 +526,7 @@ it('rejects unknown extensions without documentProcessor', async () => {
     getTaskConfig(['build'], resolveFixture('config'), {
       entry: ['sample.xyz'],
     }),
-  ).rejects.toThrow(/Invalid manuscript type/);
+  ).rejects.toThrow('Invalid manuscript type');
 });
 
 it('supports pdfPostprocess configuration', async () => {
@@ -559,9 +559,11 @@ it('supports pdfPostprocess configuration', async () => {
 it('pdfPostprocess takes precedence over legacy pressReady option', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',
-    pressReady: true, // legacy option (fallback)
+    // legacy option (fallback)
+    pressReady: true,
     pdfPostprocess: {
-      preflight: undefined, // this takes precedence
+      // this takes precedence
+      preflight: undefined,
     },
   });
   expect(config.outputs[0]).toMatchObject({
@@ -573,7 +575,8 @@ it('pdfPostprocess takes precedence over legacy pressReady option', async () => 
 it('legacy pressReady works as fallback when pdfPostprocess not specified', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',
-    pressReady: true, // used since pdfPostprocess.pressReady is not specified
+    // used since pdfPostprocess.pressReady is not specified
+    pressReady: true,
   });
   expect(config.outputs[0]).toMatchObject({
     format: 'pdf',
@@ -689,9 +692,11 @@ it('output-level pdfPostprocess.preflight overrides output.preflight', async () 
     output: [
       {
         path: 'output.pdf',
-        preflight: 'press-ready', // legacy option (fallback)
+        // legacy option (fallback)
+        preflight: 'press-ready',
         pdfPostprocess: {
-          preflight: 'press-ready-local', // this takes precedence
+          // this takes precedence
+          preflight: 'press-ready-local',
         },
       },
     ],

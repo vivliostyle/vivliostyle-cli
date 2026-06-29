@@ -10,7 +10,7 @@ const tmpFilePatterns = [
   'tests/fixtures/toc/publication.json',
 ];
 
-export default function clean() {
+export default function clean(): () => Promise<void> {
   return async () => {
     const files = await glob(tmpFilePatterns, {
       onlyFiles: false,

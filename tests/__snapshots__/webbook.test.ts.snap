@@ -2,24 +2,18 @@
 
 exports[`copy webpub assets properly 1`] = `
 "output/
+├─ themes/
+│  └─ node_modules/
+│     ├─ @org/
+│     │  └─ themeB/
+│     │     └─ theme.css
+│     └─ themeA/
+│        └─ theme.css
 ├─ doc.html
-├─ publication.json
-└─ themes/
-   └─ node_modules/
-      ├─ @org/
-      │  └─ themeB/
-      │     └─ theme.css
-      └─ themeA/
-         └─ theme.css"
-`;
-
-exports[`generate webpub from a data URI input 1`] = `
-"output/
-├─ index.html
 └─ publication.json"
 `;
 
-exports[`generate webpub from a data URI input 2`] = `
+exports[`generate webpub from a data URI input > html 1`] = `
 "<!doctype html>
 <html lang=\\"en\\"
   ><head
@@ -35,14 +29,26 @@ exports[`generate webpub from a data URI input 2`] = `
 "
 `;
 
-exports[`generate webpub from a plain HTML 1`] = `
+exports[`generate webpub from a data URI input > tree 1`] = `
 "output/
-├─ publication.json
-├─ style.css
-└─ webbook.html"
+├─ index.html
+└─ publication.json"
 `;
 
-exports[`generate webpub from a plain HTML 2`] = `
+exports[`generate webpub from a plain HTML > entry 1`] = `
+"<!doctype html>
+<html lang=\\"ja\\"
+  ><head>
+    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style.css\\" />
+    <title>Doc title</title>
+    <link rel=\\"publication\\" type=\\"application/ld+json\\" href=\\"publication.json\\"
+  /></head>
+  <body> </body
+></html>
+"
+`;
+
+exports[`generate webpub from a plain HTML > manifest 1`] = `
 Object {
   "@context": Array [
     "https://schema.org",
@@ -64,30 +70,32 @@ Object {
 }
 `;
 
-exports[`generate webpub from a plain HTML 3`] = `
-"<!doctype html>
-<html lang=\\"ja\\"
+exports[`generate webpub from a plain HTML > tree 1`] = `
+"output/
+├─ publication.json
+├─ style.css
+└─ webbook.html"
+`;
+
+exports[`generate webpub from a remote HTML document > entry 1`] = `
+"<html lang=\\"en\\"
   ><head>
-    <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style.css\\" />
-    <title>Doc title</title>
-    <link rel=\\"publication\\" type=\\"application/ld+json\\" href=\\"publication.json\\"
+    <title>Document</title>
+    <link
+      rel=\\"stylesheet\\"
+      type=\\"text/css\\"
+      href=\\"../%E3%81%82/%E6%97%A5%E6%9C%AC%E8%AA%9E.css\\" />
+    <link
+      rel=\\"publication\\"
+      type=\\"application/ld+json\\"
+      href=\\"../../publication.json\\"
   /></head>
   <body> </body
 ></html>
 "
 `;
 
-exports[`generate webpub from a remote HTML document 1`] = `
-"output/
-├─ publication.json
-└─ remote/
-   ├─ foo bar%/
-   │  └─ escape check%.html
-   └─ あ/
-      └─ 日本語.css"
-`;
-
-exports[`generate webpub from a remote HTML document 2`] = `
+exports[`generate webpub from a remote HTML document > manifest 1`] = `
 Object {
   "@context": Array [
     "https://schema.org",
@@ -109,36 +117,17 @@ Object {
 }
 `;
 
-exports[`generate webpub from a remote HTML document 3`] = `
-"<html lang=\\"en\\"
-  ><head>
-    <title>Document</title>
-    <link
-      rel=\\"stylesheet\\"
-      type=\\"text/css\\"
-      href=\\"../%E3%81%82/%E6%97%A5%E6%9C%AC%E8%AA%9E.css\\" />
-    <link
-      rel=\\"publication\\"
-      type=\\"application/ld+json\\"
-      href=\\"../../publication.json\\"
-  /></head>
-  <body> </body
-></html>
-"
-`;
-
-exports[`generate webpub from a single-document publication 1`] = `
+exports[`generate webpub from a remote HTML document > tree 1`] = `
 "output/
-├─ assets/
-│  ├─ subdir.css
-│  └─ 日本語.svg
-├─ escape check%.html
-├─ subdir/
-│  └─ index.html
-└─ webbook.html"
+├─ remote/
+│  ├─ foo bar%/
+│  │  └─ escape check%.html
+│  └─ あ/
+│     └─ 日本語.css
+└─ publication.json"
 `;
 
-exports[`generate webpub from a single-document publication 2`] = `
+exports[`generate webpub from a single-document publication > entry 1`] = `
 "<html lang=\\"en\\">
   <head>
     <title>Document with toc</title>
@@ -162,7 +151,18 @@ exports[`generate webpub from a single-document publication 2`] = `
 "
 `;
 
-exports[`generate webpub from remote HTML documents with publication manifest 1`] = `
+exports[`generate webpub from a single-document publication > tree 1`] = `
+"output/
+├─ assets/
+│  ├─ subdir.css
+│  └─ 日本語.svg
+├─ subdir/
+│  └─ index.html
+├─ escape check%.html
+└─ webbook.html"
+`;
+
+exports[`generate webpub from remote HTML documents with publication manifest > tree 1`] = `
 "output/
 ├─ assets/
 │  └─ 日本語.png
@@ -173,13 +173,7 @@ exports[`generate webpub from remote HTML documents with publication manifest 1`
    └─ publication.json"
 `;
 
-exports[`generate webpub from single markdown file 1`] = `
-"output/
-├─ foo.html
-└─ publication.json"
-`;
-
-exports[`generate webpub from single markdown file 2`] = `
+exports[`generate webpub from single markdown file > manifest 1`] = `
 Object {
   "@context": Array [
     "https://schema.org",
@@ -199,24 +193,13 @@ Object {
 }
 `;
 
-exports[`generate webpub from vivliostyle.config.js 1`] = `
+exports[`generate webpub from single markdown file > tree 1`] = `
 "output/
-├─ cover.html
-├─ cover.png
-├─ doc/
-│  ├─ escape check%.html
-│  ├─ one.html
-│  └─ two.html
-├─ index.html
-├─ publication.json
-├─ style sheet.css
-└─ themes/
-   └─ node_modules/
-      └─ mytheme/
-         └─ %style%.css"
+├─ foo.html
+└─ publication.json"
 `;
 
-exports[`generate webpub from vivliostyle.config.js 2`] = `
+exports[`generate webpub from vivliostyle.config.js > manifest 1`] = `
 Object {
   "@context": Array [
     "https://schema.org",
@@ -262,14 +245,31 @@ Object {
 }
 `;
 
-exports[`generate webpub with complex copyAsset settings 1`] = `
+exports[`generate webpub from vivliostyle.config.js > tree 1`] = `
 "output/
-├─ assetA.jxl
-├─ doc.html
+├─ doc/
+│  ├─ escape check%.html
+│  ├─ one.html
+│  └─ two.html
+├─ themes/
+│  └─ node_modules/
+│     └─ mytheme/
+│        └─ %style%.css
+├─ cover.html
+├─ cover.png
+├─ index.html
+├─ publication.json
+└─ style sheet.css"
+`;
+
+exports[`generate webpub with complex copyAsset settings > tree 1`] = `
+"output/
 ├─ node_modules/
 │  └─ pkgB/
-│     ├─ a.html
-│     └─ bar/
-│        └─ b.html
+│     ├─ bar/
+│     │  └─ b.html
+│     └─ a.html
+├─ assetA.jxl
+├─ doc.html
 └─ publication.json"
 `;

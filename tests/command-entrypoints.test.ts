@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const mockedCommands = vi.hoisted(() => ({
-  runBuildCli: vi.fn(),
-  runCreateCli: vi.fn(),
-  runInitCli: vi.fn(),
-  runPreviewCli: vi.fn(),
+  runBuildCli: vi.fn<(...args: any[]) => unknown>(),
+  runCreateCli: vi.fn<(...args: any[]) => unknown>(),
+  runInitCli: vi.fn<(...args: any[]) => unknown>(),
+  runPreviewCli: vi.fn<(...args: any[]) => unknown>(),
 }));
 
 vi.mock('../src/commands/build.runner.js', () => ({

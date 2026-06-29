@@ -7,7 +7,7 @@ import {
   setupProcessTermination,
 } from './util.js';
 
-export function isDirectExecution(importMetaUrl: string) {
+export function isDirectExecution(importMetaUrl: string): boolean {
   const entryPath = process.argv[1];
   if (!entryPath) {
     return false;
@@ -45,7 +45,7 @@ export class PromptCancelError extends Error {
 
 export async function runCliCommand(
   command: (signal: AbortSignal) => Promise<void>,
-) {
+): Promise<void> {
   setupProcessTermination();
 
   const controller = new AbortController();

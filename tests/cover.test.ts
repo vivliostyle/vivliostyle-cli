@@ -189,7 +189,7 @@ it('customize cover page', async () => {
   expect(backDocument.querySelector('title')!.text).toBe('Back cover');
   expect(
     backDocument.querySelector('style[data-vv-style]')!.textContent,
-  ).toMatch(/:root\s*{\s*break-before: right;\s*}/);
+  ).toMatch(/:root\s*\{\s*break-before: right;\s*\}/v);
   expect(
     backDocument.querySelector('link[rel="stylesheet"]')!.getAttribute('href'),
   ).toBe('../sample-theme.css');

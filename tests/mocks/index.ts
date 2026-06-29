@@ -1,3 +1,4 @@
+/* oxlint-disable no-underscore-dangle -- patches Node's internal Module._load */
 declare module 'module' {
   let _load_stubs: any;
   let _load_original: any;
@@ -6,8 +7,11 @@ declare module 'module' {
 
 // Mock modules loaded by require() statements
 // https://github.com/vitest-dev/vitest/discussions/3134
-export async function mockRequire(mockedUri: string, stub: unknown) {
-  const { Module } = await import('module');
+export async function mockRequire(
+  mockedUri: string,
+  stub: unknown,
+): Promise<void> {
+  const { Module } = await import('node:module');
 
   Module._load_original ||= Module._load;
   Module._load_stubs ||= {};

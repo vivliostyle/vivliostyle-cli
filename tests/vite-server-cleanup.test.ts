@@ -82,13 +82,13 @@ describe('Vite server cleanup', () => {
       launchServer.mockReturnValueOnce(
         new Promise<ViteDevServer | PreviewServer>((resolve) => {
           resolveServer = resolve;
-        }),
+        }) as any,
       );
       let cleanupHandler: (() => Promise<void>) | undefined;
       mockedRegisterCleanupHandler.mockImplementationOnce(
         (_message, handler) => {
           cleanupHandler = handler;
-          return () => undefined;
+          return () => {};
         },
       );
 
@@ -96,7 +96,7 @@ describe('Vite server cleanup', () => {
         config,
         viteConfig,
         inlineConfig,
-        mode,
+        mode: mode as 'preview',
       });
 
       expect(mockedRegisterCleanupHandler).toHaveBeenCalledWith(

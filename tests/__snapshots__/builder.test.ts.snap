@@ -1,18 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`generate files with multiple cover pages 1`] = `
-"
-:root {
-  break-before: recto;
-}
-@page :nth(1) {
-  --vs-document-first-page-counter-reset: page 0;
-  counter-reset: var(--vs-document-first-page-counter-reset);
-}
-"
-`;
-
-exports[`generate files with multiple cover pages 2`] = `
+exports[`generate files with multiple cover pages > another-cover-style 1`] = `
 "
 :root {
   break-before: left;
@@ -28,6 +16,18 @@ body {
 }
 @page {
   margin: 0;
+}
+"
+`;
+
+exports[`generate files with multiple cover pages > toc-style 1`] = `
+"
+:root {
+  break-before: recto;
+}
+@page :nth(1) {
+  --vs-document-first-page-counter-reset: page 0;
+  counter-reset: var(--vs-document-first-page-counter-reset);
 }
 "
 `;

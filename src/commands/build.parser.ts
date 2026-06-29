@@ -18,23 +18,25 @@ function setupBuildParserProgram(): Command {
     value: string,
     previous?: string[],
   ): string[] => {
-    if (targets.length === 0 || 'path' in targets[targets.length - 1]) {
+    const last = targets.at(-1);
+    if (!last || 'path' in last) {
       targets.push({ path: value });
     } else {
-      targets[targets.length - 1].path = value;
+      last.path = value;
     }
-    return [...(previous || []), value];
+    return [...(previous ?? []), value];
   };
   const formatOptionProcessor = (
     value: string,
     previous?: string[],
   ): string[] => {
-    if (targets.length === 0 || 'format' in targets[targets.length - 1]) {
+    const last = targets.at(-1);
+    if (!last || 'format' in last) {
       targets.push({ format: value });
     } else {
-      targets[targets.length - 1].format = value;
+      last.format = value;
     }
-    return [...(previous || []), value];
+    return [...(previous ?? []), value];
   };
 
   const program = new Command();
@@ -202,6 +204,7 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
           `Couldn't find the output option corresponding --format ${invalid.format} option. Please check the command options.`,
         );
       }
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- commander's action option object is untyped
       option.output = targets;
     });
 

@@ -113,9 +113,9 @@ describe('theme installation cancellation', () => {
     const installedPath = path.join(themesDir, 'node_modules', 'example-theme');
     fs.mkdirSync(sourcePath);
     fs.mkdirSync(installedPath, { recursive: true });
-    mockedArborist.reify.mockImplementation(async () => {
+    mockedArborist.reify.mockImplementation(() => {
       controller.abort(abortReason);
-      return {
+      return Promise.resolve({
         children: new Map([
           [
             'example-theme',
@@ -125,7 +125,7 @@ describe('theme installation cancellation', () => {
             },
           ],
         ]),
-      };
+      });
     });
 
     await expect(

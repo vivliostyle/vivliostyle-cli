@@ -93,23 +93,24 @@ function replaceImagesInDocument(
       const resolved = value.resolve();
       const subtype = resolved.get('Subtype');
 
-      if (subtype && subtype.toString() === '/Image') {
-        total++;
+      if (!subtype || subtype.toString() !== '/Image') {
+        continue;
+      }
+      total++;
 
-        // Extract image from PDF
-        const pdfImage = doc.loadImage(value);
+      // Extract image from PDF
+      const pdfImage = doc.loadImage(value);
 
-        // Find matching source image
-        for (const pair of imagePairs) {
-          if (imagesEqual(pdfImage, pair.srcImage)) {
-            const newImageRef = doc.addImage(pair.destImage);
-            xobjects.put(key, newImageRef);
-            replaced++;
-            Logger.debug(
-              `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
-            );
-            break;
-          }
+      // Find matching source image
+      for (const pair of imagePairs) {
+        if (imagesEqual(pdfImage, pair.srcImage)) {
+          const newImageRef = doc.addImage(pair.destImage);
+          xobjects.put(key, newImageRef);
+          replaced++;
+          Logger.debug(
+            `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
+          );
+          break;
         }
       }
     }
@@ -147,7 +148,9 @@ export async function replaceImages({
         `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
       );
     } catch (error) {
-      Logger.logWarn(`Failed to load source image: ${source}: ${error}`);
+      Logger.logWarn(
+        `Failed to load source image: ${source}: ${String(error)}`,
+      );
       continue;
     }
 
@@ -159,7 +162,7 @@ export async function replaceImages({
       );
     } catch (error) {
       Logger.logWarn(
-        `Failed to load replacement image: ${replacement}: ${error}`,
+        `Failed to load replacement image: ${replacement}: ${String(error)}`,
       );
       continue;
     }
@@ -177,6 +180,7 @@ export async function replaceImages({
   }
 
   using doc = disposable(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- openDocument returns the Document base type; a PDF input yields a PDFDocument
     mupdf.PDFDocument.openDocument(
       pdf,
       'application/pdf',

@@ -13,6 +13,7 @@ import {
   DetailError,
   parseJsonc,
   prettifySchemaError,
+  toError,
 } from '../util.js';
 import {
   type InlineOptions,
@@ -25,7 +26,7 @@ const require = createRequire(import.meta.url);
 export function locateVivliostyleConfig({
   config,
   cwd = defaultRoot,
-}: Pick<InlineOptions, 'config' | 'cwd'>) {
+}: Pick<InlineOptions, 'config' | 'cwd'>): string | undefined {
   if (config) {
     return upath.resolve(cwd, config);
   }
@@ -58,16 +59,17 @@ export async function loadVivliostyleConfig({
       parsedConfig = parseJsonc(jsonRaw);
     } else {
       // Clear require cache to reload CJS config files
-      delete require.cache[require.resolve(absPath)];
+      Reflect.deleteProperty(require.cache, require.resolve(absPath));
       const url = pathToFileURL(absPath);
       // Invalidate cache for ESM config files
       // https://github.com/nodejs/node/issues/49442
       url.search = `version=${Date.now()}`;
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- dynamic config import resolves to an untyped module; validated by the schema below
       parsedConfig = (await import(/* @vite-ignore */ url.href)).default;
       jsonRaw = JSON.stringify(parsedConfig, null, 2);
     }
   } catch (error) {
-    const thrownError = error as Error;
+    const thrownError = toError(error);
     throw new DetailError(
       `An error occurred on loading a config file: ${absPath}`,
       thrownError.stack ?? thrownError.message,
@@ -85,16 +87,18 @@ export async function loadVivliostyleConfig({
         config: absPath,
       },
     };
-  } else {
-    const errorString = prettifySchemaError(jsonRaw, result.issues);
-    throw new DetailError(
-      `Validation of vivliostyle config failed. Please check the schema: ${config}`,
-      errorString,
-    );
   }
+  const errorString = prettifySchemaError(jsonRaw, result.issues);
+  throw new DetailError(
+    `Validation of vivliostyle config failed. Please check the schema: ${config}`,
+    errorString,
+  );
 }
 
-export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
+export function warnDeprecatedConfig(
+  config: ParsedVivliostyleConfigSchema,
+): void {
+  /* oxlint-disable typescript/no-deprecated -- This function intentionally inspects deprecated config fields to emit migration warnings */
   if (config.tasks.some((task) => task.includeAssets)) {
     Logger.logWarn(
       "'includeAssets' property of Vivliostyle config was deprecated and will be removed in a future release. Please use 'copyAsset.includes' property instead.",
@@ -139,6 +143,7 @@ export function warnDeprecatedConfig(config: ParsedVivliostyleConfigSchema) {
       "'preflightOption' property of output config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflightOption' property instead.",
     );
   }
+  /* oxlint-enable typescript/no-deprecated */
 
   if (
     config.inlineOptions.renderMode === 'docker' ||

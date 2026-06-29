@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import type { ViteDevServer } from 'vite';
 
 import { VivliostyleInlineConfig } from './config/schema.js';
 import { build as _build } from './core/build.js';
@@ -6,13 +7,13 @@ import { create as _create } from './core/create.js';
 import { preview as _preview } from './core/preview.js';
 import type { PublicationManifest as _PublicationManifest } from './schema/publication.schema.js';
 
-export { defineConfig } from './config/define.js';
 export {
-  VFM,
   readMetadata,
+  VFM,
   type Metadata,
   type StringifyMarkdownOptions,
 } from '@vivliostyle/vfm';
+export { defineConfig } from './config/define.js';
 export type {
   StructuredDocument,
   StructuredDocumentSection,
@@ -38,9 +39,9 @@ export type PublicationManifest = _PublicationManifest;
  * @param options
  * @returns
  */
-export async function build(options: VivliostyleInlineConfig) {
+export function build(options: VivliostyleInlineConfig): Promise<void> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
-  return await _build(parsed);
+  return _build(parsed);
 }
 
 /**
@@ -49,9 +50,11 @@ export async function build(options: VivliostyleInlineConfig) {
  * @param options
  * @returns
  */
-export async function preview(options: VivliostyleInlineConfig) {
+export function preview(
+  options: VivliostyleInlineConfig,
+): Promise<ViteDevServer> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
-  return await _preview(parsed);
+  return _preview(parsed);
 }
 
 /**
@@ -60,7 +63,7 @@ export async function preview(options: VivliostyleInlineConfig) {
  * @param options
  * @returns
  */
-export async function create(options: VivliostyleInlineConfig) {
+export function create(options: VivliostyleInlineConfig): Promise<void> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
-  return await _create(parsed);
+  return _create(parsed);
 }

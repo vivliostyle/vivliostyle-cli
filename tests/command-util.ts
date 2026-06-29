@@ -1,7 +1,6 @@
 import assert from 'node:assert';
-import { fileURLToPath } from 'node:url';
 
-import { toTreeSync } from 'memfs/lib/print/index.js';
+import { toTreeSync } from '@jsonjoy.com/fs-print';
 import { format } from 'oxfmt';
 import upath from 'upath';
 import * as v from 'valibot';
@@ -25,7 +24,7 @@ import {
   VivliostyleInlineConfig,
 } from './../src/config/schema.js';
 
-export const rootPath = upath.join(fileURLToPath(import.meta.url), '../..');
+export const rootPath = upath.join(import.meta.filename, '../..');
 
 export const formatHtml = async (content: string): Promise<string> => {
   const { code } = await format('snippet.html', content, {
@@ -56,7 +55,7 @@ export const runCommand = async (
     logLevel?: LogLevel;
     port?: number;
   },
-): Promise<ViteDevServer | void> => {
+): Promise<ViteDevServer | undefined> => {
   let inlineConfig = {
     build: parseBuildCommand,
     preview: parsePreviewCommand,
@@ -64,9 +63,9 @@ export const runCommand = async (
     init: parseInitCommand,
   }[command](['vivliostyle', command, ...args]);
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  const server = await { build, preview, create, init: create }[command](
+  const server = (await { build, preview, create, init: create }[command](
     inlineConfig,
-  );
+  )) as ViteDevServer | undefined;
   if (server) {
     runningServers.add(server);
   }
@@ -81,7 +80,7 @@ export const createServerMiddleware = async ({
   cwd: string;
   input?: string;
   config?: BuildTask;
-}) => {
+}): Promise<ViteDevServer['middlewares']> => {
   const inlineConfig = v.parse(VivliostyleInlineConfig, {
     cwd,
     input,
@@ -98,6 +97,7 @@ export const createServerMiddleware = async ({
   return server.middlewares;
 };
 
+// oxlint-disable-next-line require-await -- callers use `await expect(...).rejects`, so synchronous throws must surface as a rejected Promise
 export const getTaskConfig = async (
   args: string[],
   cwd: string,
@@ -120,10 +120,10 @@ export const getTaskConfig = async (
   return resolvedConfig;
 };
 
-export const maskConfig = (obj: any) => {
-  Object.entries(obj).forEach(([k, v]) => {
-    if (v && typeof v === 'object') {
-      maskConfig(v);
+export const maskConfig = (obj: Record<string, unknown>): void => {
+  Object.entries(obj).forEach(([k, value]) => {
+    if (value && typeof value === 'object') {
+      maskConfig(value as Record<string, unknown>);
     } else if (k === 'executableBrowser' || k === 'executableChromium') {
       obj[k] = '__EXECUTABLE_CHROMIUM_PATH__';
     } else if (k === 'image') {
@@ -135,35 +135,39 @@ export const maskConfig = (obj: any) => {
       k === 'documentMetadataReader'
     ) {
       // These are function references that cannot be meaningfully compared in snapshots
-      delete obj[k];
-    } else if (typeof v === 'string') {
-      const normalized = v.match(/^(https?|file):\/{2}/) ? v : upath.toUnix(v);
+      Reflect.deleteProperty(obj, k);
+    } else if (typeof value === 'string') {
+      const normalized = /^(https?|file):\/{2}/v.test(value)
+        ? value
+        : upath.toUnix(value);
       obj[k] = normalized
         .replace(rootPath, '__WORKSPACE__')
-        .replace(/\.vs-\d+\./g, '__TEMPORARY_FILE_PREFIX__')
-        .replace(/^(https?|file):\/+/, '$1://');
+        .replaceAll(/\.vs-\d+\./gv, '__TEMPORARY_FILE_PREFIX__')
+        .replace(/^(https?|file):\/+/v, '$1://');
     }
   });
 };
 
-export const resolveFixture = (p?: string) =>
+export const resolveFixture = (p?: string): string =>
   upath.resolve(rootPath, 'tests/fixtures', p || '');
 
 export function assertSingleItem<T = unknown>(
   value: T | T[],
 ): asserts value is T {
-  return assert(!Array.isArray(value));
+  assert.ok(!Array.isArray(value));
 }
 
 export function assertArray<T = unknown>(value: T | T[]): asserts value is T[] {
-  return assert(Array.isArray(value));
+  assert.ok(Array.isArray(value));
 }
 
 /**
  * Modified version of memfs's `toTreeSync` function that sorts by directory item names
  * source: https://github.com/streamich/memfs/blob/cd6c25698536aab8845774c4a0036376a0fd599f/src/print/index.ts#L6-L30
  */
-export function toTree(...[fs, opts]: Parameters<typeof toTreeSync>) {
+export function toTree(
+  ...[fs, opts]: Parameters<typeof toTreeSync>
+): ReturnType<typeof toTreeSync> {
   const modFs = new Proxy(fs, {
     get(target, prop) {
       if (prop === 'readdirSync') {

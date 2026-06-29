@@ -4,7 +4,11 @@ import Arborist from '@npmcli/arborist';
 import upath from 'upath';
 
 import type { ResolvedTaskConfig } from '../config/resolve.js';
-import { DetailError, executeWithCleanupOnInterrupt } from '../util.js';
+import {
+  DetailError,
+  executeWithCleanupOnInterrupt,
+  toError,
+} from '../util.js';
 
 function getThemeInstallCacheDir(themesDir: string): string {
   // Layout follows Arborist's default cache location:
@@ -64,9 +68,9 @@ export async function checkThemeInstallationNecessity({
   };
   const arb = new Arborist(commonOpt);
   const tree = await arb.loadActual();
-  const pkgs = Array.from(tree.children.keys());
+  const pkgs = new Set(Array.from(tree.children.keys()));
   return [...themeIndexes].some(
-    (theme) => theme.type === 'package' && !pkgs.includes(theme.name),
+    (theme) => theme.type === 'package' && !pkgs.has(theme.name),
   );
 }
 
@@ -130,7 +134,7 @@ export async function installThemeDependencies({
     signal?.throwIfAborted();
   } catch (error) {
     signal?.throwIfAborted();
-    const thrownError = error as Error;
+    const thrownError = toError(error);
     throw new DetailError(
       'An error occurred during the installation of the theme',
       thrownError.stack ?? thrownError.message,

@@ -1,7 +1,6 @@
 import childProcess, { type ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
-import { fileURLToPath } from 'node:url';
 import util from 'node:util';
 
 import { codeFrameColumns } from '@babel/code-frame';
@@ -11,7 +10,6 @@ import {
   evaluate,
   parse,
 } from '@humanwhocodes/momoa';
-import type { BrowserPlatform } from '@puppeteer/browsers';
 import { Ajv, type Plugin as AjvPlugin, type Schema } from 'ajv';
 import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
@@ -24,9 +22,13 @@ import upath from 'upath';
 import type { BaseIssue } from 'valibot';
 import { gray, red, redBright } from 'yoctocolors';
 
-import type { BrowserType } from './config/schema.js';
+import type {
+  BrowserType,
+  VivliostylePackageMetadata,
+} from './config/schema.js';
 import { DEFAULT_BROWSER_VERSIONS, LANGUAGES } from './constants.js';
 import { Logger } from './logger.js';
+import type { PackageJson } from './npm.js';
 import {
   publicationSchema,
   publicationSchemas,
@@ -35,12 +37,13 @@ import type { PublicationManifest } from './schema/publication.schema.js';
 
 export const cwd = upath.normalize(process.cwd());
 
+// oxlint-disable-next-line typescript/strict-void-return -- promisify accepts execFile despite its ChildProcess return value
 const execFile = util.promisify(childProcess.execFile);
 export async function exec(
   command: string,
   args: string[] = [],
   options: ExecFileOptions = {},
-) {
+): Promise<{ stdout: string; stderr: string }> {
   const subprocess = await execFile(command, args, {
     ...options,
     encoding: 'utf8',
@@ -60,7 +63,7 @@ export const registerCleanupHandler = (
   debugMessage: string,
   handler: () => void | Promise<void>,
   { prepend = false }: { prepend?: boolean } = {},
-) => {
+): (() => void) => {
   const callback = () => {
     Logger.debug(debugMessage);
     return handler();
@@ -73,7 +76,7 @@ export const registerCleanupHandler = (
   return () => {
     const index = cleanupHandlers.indexOf(callback);
     if (index !== -1) {
-      return cleanupHandlers.splice(index, 1)[0];
+      cleanupHandlers.splice(index, 1);
     }
   };
 };
@@ -81,15 +84,19 @@ export const registerCleanupHandler = (
 export const executeWithCleanupOnInterrupt = <T>(
   debugMessage: string,
   tryTask: () => Promise<T>,
-  finallyTask?: (error: unknown | undefined) => void | Promise<void>,
-) => {
-  let thrownError: unknown | undefined;
-  const runPromise = tryTask()
-    .catch((error) => {
+  finallyTask?: (error: unknown) => void | Promise<void>,
+): Promise<T> => {
+  let thrownError: unknown;
+  const runPromise = (async () => {
+    try {
+      return await tryTask();
+    } catch (error) {
       thrownError = error;
       throw error;
-    })
-    .finally(() => finallyTask?.(thrownError));
+    } finally {
+      await finallyTask?.(thrownError);
+    }
+  })();
   const unregister = registerCleanupHandler(
     debugMessage,
     async () => {
@@ -105,14 +112,16 @@ export const executeWithCleanupOnInterrupt = <T>(
 };
 
 // Termination hooks notify active work before cleanup starts closing resources.
-export function registerTerminationHook(hook: (exitCode: number) => void) {
+export function registerTerminationHook(
+  hook: (exitCode: number) => void,
+): () => void {
   terminationHooks.add(hook);
   return () => {
     terminationHooks.delete(hook);
   };
 }
 
-export function runCleanupHandlers() {
+export function runCleanupHandlers(): Promise<void> {
   if (cleanupPromise) {
     return cleanupPromise;
   }
@@ -123,7 +132,7 @@ export function runCleanupHandlers() {
   cleanupPromise = currentCleanupPromise;
   void (async () => {
     try {
-      while (cleanupHandlers.length) {
+      while (cleanupHandlers.length > 0) {
         try {
           await cleanupHandlers.shift()?.();
         } catch (e) {
@@ -157,7 +166,7 @@ async function handleProcessTermination(exitCode: number) {
   }
 }
 
-export function setupProcessTermination() {
+export function setupProcessTermination(): void {
   if (processTerminationInstalled) {
     return;
   }
@@ -180,13 +189,17 @@ export class DetailError extends Error {
   }
 }
 
-export function getFormattedError(err: Error) {
+export function getFormattedError(err: Error): string {
   return err instanceof DetailError
     ? `${err.message}\n${err.detail}`
-    : err.stack || `${err.message}`;
+    : err.stack || err.message;
 }
 
-export async function gracefulError(err: Error) {
+export function toError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value));
+}
+
+export async function gracefulError(err: Error): Promise<void> {
   console.log(`${redBright('ERROR')} ${getFormattedError(err)}
 
 ${gray('If you think this is a bug, please report at https://github.com/vivliostyle/vivliostyle-cli/issues')}`);
@@ -194,12 +207,13 @@ ${gray('If you think this is a bug, please report at https://github.com/vivliost
   await runCleanupHandlers();
 }
 
-export function readJSON(path: string) {
-  try {
-    return JSON.parse(fs.readFileSync(path, 'utf8'));
-  } catch (err) {
-    return undefined;
-  }
+export type VivliostylePackageJson = PackageJson & {
+  vivliostyle?: VivliostylePackageMetadata;
+};
+
+export function readPackageJson(path: string): VivliostylePackageJson {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- JSON.parse returns `any`; cast to the package.json shape we rely on
+  return JSON.parse(fs.readFileSync(path, 'utf8')) as VivliostylePackageJson;
 }
 
 export function statFileSync(
@@ -207,35 +221,40 @@ export function statFileSync(
   {
     errorMessage = 'Specified input does not exist',
   }: { errorMessage?: string } = {},
-) {
+): fs.Stats {
   try {
     return fs.statSync(filePath);
   } catch (err) {
-    if ((err as any).code === 'ENOENT') {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- inspect the Node.js error code on the caught value
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       throw new Error(`${errorMessage}: ${filePath}`, { cause: err });
     }
     throw err;
   }
 }
 
-export async function inflateZip(filePath: string, dest: string) {
-  return await new Promise<void>((res, rej) => {
+export function inflateZip(filePath: string, dest: string): Promise<void> {
+  return new Promise<void>((res, rej) => {
     try {
       const zip = new StreamZip({
         file: filePath,
         storeEntries: true,
       });
-      zip.on('error', (err) => {
-        rej(err);
-      });
-      zip.on('ready', async () => {
-        await util.promisify(zip.extract)(null, dest);
-        await util.promisify(zip.close)();
-        Logger.debug(`Unzipped ${filePath} to ${dest}`);
-        res();
+      zip.on('error', rej);
+      zip.on('ready', () => {
+        void (async () => {
+          try {
+            await util.promisify(zip.extract.bind(zip))(null, dest);
+            await util.promisify(zip.close.bind(zip))();
+            Logger.debug(`Unzipped ${filePath} to ${dest}`);
+            res();
+          } catch (err) {
+            rej(toError(err));
+          }
+        })();
       });
     } catch (err) {
-      rej(err);
+      rej(toError(err));
     }
   });
 }
@@ -244,7 +263,8 @@ export function useTmpDirectory(): Promise<[string, () => void]> {
   const directory = new Promise<string>((res, rej) => {
     tmp.dir({ unsafeCleanup: true }, (err, path) => {
       if (err) {
-        return rej(err);
+        rej(err);
+        return;
       }
       Logger.debug(`Created the temporary directory: ${path}`);
       res(path);
@@ -296,7 +316,7 @@ export function pathContains(parentPath: string, childPath: string): boolean {
 }
 
 export function isValidUri(str: string): boolean {
-  return /^(https?|file|data):/i.test(str);
+  return /^(https?|file|data):/iv.test(str);
 }
 
 function cachedFn<T>(fn: () => T): () => T {
@@ -316,7 +336,10 @@ export const isRunningOnWSL = cachedFn(function isRunningOnWSL() {
   );
 });
 
-export async function openEpub(epubPath: string, tmpDir: string) {
+export async function openEpub(
+  epubPath: string,
+  tmpDir: string,
+): Promise<() => Promise<void>> {
   const inflation = inflateZip(epubPath, tmpDir);
   const deleteEpub = async () => {
     try {
@@ -335,21 +358,28 @@ export async function openEpub(epubPath: string, tmpDir: string) {
   return deleteEpub;
 }
 
-export function getDefaultEpubOpfPath(epubDir: string) {
+export function getDefaultEpubOpfPath(epubDir: string): string {
   const containerXmlPath = upath.join(epubDir, 'META-INF/container.xml');
   const xmlParser = new XMLParser({
     ignoreAttributes: false,
   });
+  type ContainerRootfile = { '@_full-path': string };
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fast-xml-parser returns `any`; describe the container.xml shape we rely on
   const { container } = xmlParser.parse(
     fs.readFileSync(containerXmlPath, 'utf8'),
-  );
-  const rootfile = [container.rootfiles.rootfile].flat()[0]; // Only supports a default rendition
+  ) as {
+    container: {
+      rootfiles: { rootfile: ContainerRootfile | ContainerRootfile[] };
+    };
+  };
+  // Only supports a default rendition
+  const rootfile = [container.rootfiles.rootfile].flat()[0];
   const epubOpfPath = upath.join(epubDir, rootfile['@_full-path']);
   return epubOpfPath;
 }
 
-export function getEpubRootDir(epubOpfPath: string) {
-  function traverse(dir: string) {
+export function getEpubRootDir(epubOpfPath: string): string | undefined {
+  function traverse(dir: string): string | undefined {
     const files = fs.readdirSync(dir);
     if (
       files.includes('META-INF') &&
@@ -370,8 +400,8 @@ const getAjvValidatorFunction =
   <T extends Schema>(schema: T, refSchemas?: Schema | Schema[]) =>
   (obj: unknown): obj is T => {
     const ajv = new Ajv({ strict: false });
-    // @ts-expect-error: Invalid type
-    const addFormats = formatsPlugin as AjvPlugin<unknown>;
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ajv-formats' default export has incompatible typings
+    const addFormats = formatsPlugin as unknown as AjvPlugin<unknown>;
     addFormats(ajv);
     if (refSchemas) {
       ajv.addSchema(refSchemas);
@@ -379,13 +409,15 @@ const getAjvValidatorFunction =
     const validate = ajv.compile(schema);
     const valid = validate(obj);
     if (!valid) {
-      throw validate.errors?.[0] || new Error();
+      const [validationError] = validate.errors ?? [];
+      throw new Error(validationError?.message, { cause: validationError });
     }
     return true;
   };
 
 export const assertPubManifestSchema =
   getAjvValidatorFunction<PublicationManifest>(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the JSON Schema is reused as the validator's type parameter
     publicationSchema as unknown as PublicationManifest,
     publicationSchemas,
   );
@@ -402,7 +434,7 @@ export function parseJsonc(rawJsonc: string): JSONValue {
 export function prettifySchemaError(
   rawJsonc: string,
   issues: BaseIssue<unknown>[],
-) {
+): string {
   const parsed = parse(rawJsonc, {
     mode: 'jsonc',
     ranges: false,
@@ -410,9 +442,9 @@ export function prettifySchemaError(
   });
 
   // Traverse to the deepest issue
-  function traverse(issues: BaseIssue<unknown>[], depth: number) {
-    return issues.flatMap((issue): [BaseIssue<unknown>[], number][] => {
-      const p = issue.path?.length || 0;
+  function traverse(nodes: BaseIssue<unknown>[], depth: number) {
+    return nodes.flatMap((issue): [BaseIssue<unknown>[], number][] => {
+      const p = issue.path?.length ?? 0;
       if (!issue.issues) {
         return [[[issue], depth + p]];
       }
@@ -424,9 +456,14 @@ export function prettifySchemaError(
   }
   const all = traverse(issues, 0);
   const maxDepth = Math.max(...all.map(([, d]) => d));
-  const issuesTraversed = all.find(([, d]) => d === maxDepth)![0];
+  const deepest = all.find(([, d]) => d === maxDepth);
+  /* v8 ignore next 3 */
+  if (!deepest) {
+    throw new Error('Failed to locate the deepest schema issue');
+  }
+  const issuesTraversed = deepest[0];
 
-  let jsonValue = parsed.body as JsonValueNode;
+  let jsonValue = parsed.body;
   for (const p of issuesTraversed.flatMap((v) => v.path ?? [])) {
     let childValue: JsonValueNode | undefined;
     if (p.type === 'object' && jsonValue.type === 'Object') {
@@ -446,7 +483,12 @@ export function prettifySchemaError(
     }
   }
 
-  let message = `${red(issuesTraversed.at(-1)!.message)}`;
+  const deepestIssue = issuesTraversed.at(-1);
+  /* v8 ignore next 3 */
+  if (!deepestIssue) {
+    throw new Error('Failed to locate the deepest schema issue');
+  }
+  let message = red(deepestIssue.message);
   if (jsonValue) {
     message += `\n${codeFrameColumns(rawJsonc, jsonValue.loc, {
       highlightCode: true,
@@ -455,7 +497,7 @@ export function prettifySchemaError(
   return message;
 }
 
-export function writeFileIfChanged(filePath: string, content: Buffer) {
+export function writeFileIfChanged(filePath: string, content: Buffer): void {
   if (!fs.existsSync(filePath) || !fs.readFileSync(filePath).equals(content)) {
     fs.mkdirSync(upath.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content);
@@ -463,7 +505,7 @@ export function writeFileIfChanged(filePath: string, content: Buffer) {
 }
 
 let cachedLocale: string | undefined;
-export async function getOsLocale(): Promise<string> {
+export function getOsLocale(): string {
   if (import.meta.env?.VITEST) {
     return process.env.TEST_LOCALE || 'en';
   }
@@ -481,16 +523,13 @@ export async function getOsLocale(): Promise<string> {
   return cachedLocale;
 }
 
-export function toTitleCase<T = unknown>(input: T): T {
-  if (typeof input !== 'string') {
-    return input;
-  }
+export function toTitleCase(input: string): string {
   return titleCase(
-    input.replace(/[\W_]/g, ' ').replace(/\s+/g, ' ').trim(),
-  ) as T;
+    input.replaceAll(/[\W_]/gv, ' ').replaceAll(/\s+/gv, ' ').trim(),
+  );
 }
 
-export function debounce<T extends (...args: any[]) => unknown>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number,
   options: { leading?: boolean; trailing?: boolean } = {},
@@ -546,6 +585,14 @@ export const getCacheDir = cachedFn(function getCacheDir() {
   return upath.join(osCacheDir, 'vivliostyle');
 });
 
+export type BrowserPlatform =
+  | 'mac'
+  | 'mac_arm'
+  | 'linux'
+  | 'linux_arm'
+  | 'win32'
+  | 'win64';
+
 // Detects the browser platform, similar to detectBrowserPlatform in @puppeteer/browsers
 // Included here to avoid adding @puppeteer/browsers as a dependency
 export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
@@ -555,19 +602,15 @@ export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
   const arch = process.arch;
   switch (platform) {
     case 'darwin':
-      return arch === 'arm64'
-        ? ('mac_arm' as BrowserPlatform)
-        : ('mac' as BrowserPlatform);
+      return arch === 'arm64' ? 'mac_arm' : 'mac';
     case 'linux':
-      return arch === 'arm64'
-        ? ('linux_arm' as BrowserPlatform)
-        : ('linux' as BrowserPlatform);
+      return arch === 'arm64' ? 'linux_arm' : 'linux';
     case 'win32':
       return arch === 'x64' ||
         // Windows 11 for ARM supports x64 emulation
         (arch === 'arm64' && isWindows11(os.release()))
-        ? ('win64' as BrowserPlatform)
-        : ('win32' as BrowserPlatform);
+        ? 'win64'
+        : 'win32';
     default:
       return undefined;
   }
@@ -576,9 +619,9 @@ export const detectBrowserPlatform = cachedFn(function detectBrowserPlatform():
 function isWindows11(version: string): boolean {
   const parts = version.split('.');
   if (parts.length > 2) {
-    const major = parseInt(parts[0] as string, 10);
-    const minor = parseInt(parts[1] as string, 10);
-    const patch = parseInt(parts[2] as string, 10);
+    const major = Number.parseInt(parts[0], 10);
+    const minor = Number.parseInt(parts[1], 10);
+    const patch = Number.parseInt(parts[2], 10);
     return (
       major > 10 ||
       (major === 10 && minor > 0) ||
@@ -588,7 +631,9 @@ function isWindows11(version: string): boolean {
   return false;
 }
 
-export const getDefaultBrowserTag = (browserType: BrowserType) => {
+export const getDefaultBrowserTag = (
+  browserType: BrowserType,
+): string | undefined => {
   if (import.meta.env?.VITEST) {
     return '100.0';
   }
@@ -609,20 +654,18 @@ export function whichPm(): PackageManager {
 
   const pmSpec = process.env.npm_config_user_agent.split(' ')[0];
   const separatorPos = pmSpec.lastIndexOf('/');
-  const name = pmSpec.substring(0, separatorPos);
+  const name = pmSpec.slice(0, separatorPos);
 
+  // oxlint-disable-next-line
   return name as PackageManager;
 }
 
-export const cliRoot = upath.join(fileURLToPath(import.meta.url), '../..');
+export const cliRoot = upath.join(import.meta.filename, '../..');
 export const cliVersion = (() => {
   if (import.meta.env?.VITEST) {
     return '0.0.1';
   }
-  const pkg = JSON.parse(
-    fs.readFileSync(upath.join(cliRoot, 'package.json'), 'utf8'),
-  );
-  return pkg.version;
+  return readPackageJson(upath.join(cliRoot, 'package.json')).version;
 })();
 
 export const viewerRoot = resolvePkg('@vivliostyle/viewer', { cwd: cliRoot });
@@ -633,10 +676,7 @@ export const coreVersion = (() => {
   if (!viewerRoot) {
     return 'Unknown';
   }
-  const pkg = JSON.parse(
-    fs.readFileSync(upath.join(viewerRoot, 'package.json'), 'utf8'),
-  );
-  return pkg.version;
+  return readPackageJson(upath.join(viewerRoot, 'package.json')).version;
 })();
 
 export const versionForDisplay = `cli: ${cliVersion}

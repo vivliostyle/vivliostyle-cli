@@ -4,6 +4,7 @@ import { createProxy } from 'node-fetch-native/proxy';
 export interface PackageJson {
   name: string;
   version: string;
+  author?: string | { name?: string; email?: string; url?: string };
   description?: string;
   dependencies?: Record<string, string>;
   dist?: {
@@ -17,6 +18,9 @@ export interface PackageJson {
     tarball: string;
     unpackedSize: number;
   };
+  keywords?: string[];
+  main?: string;
+  style?: string;
   vivliostyle?: unknown;
 }
 
@@ -61,11 +65,13 @@ export function createFetch(options: {
       (symbol) => symbol.description === 'proxy headers',
     );
     if (proxyHeadersKey) {
+      /* oxlint-disable typescript/no-unsafe-type-assertion -- reach into the proxy dispatcher's internal symbol-keyed headers */
       (
         proxy.dispatcher as unknown as {
           [key: typeof proxyHeadersKey]: Record<string, string>;
         }
       )[proxyHeadersKey]['proxy-authorization'] = token;
+      /* oxlint-enable typescript/no-unsafe-type-assertion */
     }
   }
   return (url, fetchOptions) => {
@@ -82,7 +88,7 @@ export function createFetch(options: {
       .then((response) => {
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
+            `Failed to fetch ${response.url}: ${response.status} ${response.statusText}`,
           );
         }
         return response;
@@ -90,18 +96,18 @@ export function createFetch(options: {
   };
 }
 
-export async function listVivliostyleThemes({
+export function listVivliostyleThemes({
   fetch,
 }: {
   fetch: typeof globalThis.fetch;
 }): Promise<PackageSearchResult> {
   const keyword = 'vivliostyle-theme';
-  return await fetch(
+  return fetch(
     `https://registry.npmjs.org/-/v1/search?text=keywords:${keyword}&size=250`,
   ).then((response) => response.json());
 }
 
-export async function fetchPackageMetadata({
+export function fetchPackageMetadata({
   fetch,
   packageName,
   version,

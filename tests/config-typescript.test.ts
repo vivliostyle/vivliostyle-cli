@@ -18,7 +18,7 @@ describe('TypeScript configuration files', () => {
       const configPath = locateVivliostyleConfig({
         cwd: resolveFixture('ts-config'),
       });
-      expect(configPath).toMatch(/vivliostyle\.config\.ts$/);
+      expect(configPath).toMatch(/vivliostyle\.config\.ts$/v);
     });
 
     it('should locate vivliostyle.config.mts when specified explicitly', () => {
@@ -26,7 +26,7 @@ describe('TypeScript configuration files', () => {
         cwd: resolveFixture('ts-config'),
         config: 'vivliostyle.config.mts',
       });
-      expect(configPath).toMatch(/vivliostyle\.config\.mts$/);
+      expect(configPath).toMatch(/vivliostyle\.config\.mts$/v);
     });
 
     it('should locate vivliostyle.config.cts when specified explicitly', () => {
@@ -34,7 +34,7 @@ describe('TypeScript configuration files', () => {
         cwd: resolveFixture('ts-config'),
         config: 'vivliostyle.config.cts',
       });
-      expect(configPath).toMatch(/vivliostyle\.config\.cts$/);
+      expect(configPath).toMatch(/vivliostyle\.config\.cts$/v);
     });
   });
 
@@ -59,6 +59,7 @@ describe('TypeScript configuration files', () => {
     // See: https://github.com/vitest-dev/vitest/issues/3987
     // This only affects the test environment (Vitest); the distributed CLI
     // uses Node.js directly and .cts files work correctly there.
+    // eslint-disable-next-line vitest/no-disabled-tests
     it.skip('should load vivliostyle.config.cts', async () => {
       const config = await loadVivliostyleConfig({
         cwd: resolveFixture('ts-config'),

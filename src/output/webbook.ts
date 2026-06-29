@@ -74,8 +74,7 @@ function transformPublicationManifest(
     if (typeof e === 'string') {
       return transformUrl(e);
     }
-    const ret = { ...e };
-    ret.url = transformUrl(e.url);
+    const ret = { ...e, url: transformUrl(e.url) };
     return ret;
   };
   const ret = { ...entity };
@@ -89,13 +88,16 @@ function transformPublicationManifest(
     if (key in ret) {
       ret[key] = Array.isArray(ret[key])
         ? ret[key].map(tr)
-        : tr(ret[key] as string);
+        : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- non-array manifest values handled here are strings
+          tr(ret[key] as string);
     }
   }
   return ret;
 }
 
-export function decodePublicationManifest(input: PublicationManifest) {
+export function decodePublicationManifest(
+  input: PublicationManifest,
+): PublicationManifest {
   return transformPublicationManifest(input, {
     url: decodeURI,
   });
@@ -135,10 +137,10 @@ export function writePublicationManifest(
     }),
   }));
   const links: (PublicationURL | PublicationLinks)[] = [
-    options.links || [],
+    options.links ?? [],
   ].flat();
   const resources: (PublicationURL | PublicationLinks)[] = [
-    options.resources || [],
+    options.resources ?? [],
   ].flat();
 
   if (options.cover) {
@@ -152,7 +154,7 @@ export function writePublicationManifest(
       });
     } else {
       Logger.logWarn(
-        `Cover image "${options.cover}" was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.`,
+        `Cover image "${options.cover.url}" was set in your configuration but couldn’t detect the image metadata. Please check a valid cover file is placed.`,
       );
     }
   }
@@ -182,6 +184,7 @@ export function writePublicationManifest(
   try {
     assertPubManifestSchema(encodedManifest);
   } catch (error) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ajv may throw a string or an Error; both are handled below
     const thrownError = error as Error | string;
     throw new DetailError(
       `Validation of publication manifest failed. Please check the schema: ${output}`,
@@ -208,7 +211,7 @@ export async function retrieveWebbookEntry({
   const webbookEntryUrl = viewerInput.webbookPath
     ? pathToFileURL(viewerInput.webbookPath).href
     : viewerInput.webbookEntryUrl;
-  if (/^https?:/i.test(webbookEntryUrl)) {
+  if (/^https?:/iv.test(webbookEntryUrl)) {
     Logger.logUpdate('Fetching remote contents');
   }
   const resourceLoader = new ResourceLoader();
@@ -225,13 +228,13 @@ export async function retrieveWebbookEntry({
       dom,
       resourceLoader,
       baseUrl: webbookEntryUrl,
-    })) || {};
+    })) ?? {};
 
   let pathContains: (url: string) => boolean;
   if (webbookEntryUrl.startsWith('data:')) {
     pathContains = () => false;
   } else {
-    const rootUrl = /^https?:/i.test(webbookEntryUrl)
+    const rootUrl = /^https?:/iv.test(webbookEntryUrl)
       ? new URL('/', webbookEntryUrl).href
       : new URL('.', webbookEntryUrl).href;
     pathContains = (url: string) =>
@@ -254,7 +257,7 @@ export async function retrieveWebbookEntry({
     for (const v of [manifest.readingOrder || []].flat()) {
       const url = typeof v === 'string' ? v : v.url;
       if (
-        !/\.html?$/.test(url) &&
+        !/\.html?$/v.test(url) &&
         !(typeof v === 'string' || v.encodingFormat === 'text/html')
       ) {
         continue;
@@ -271,9 +274,11 @@ export async function retrieveWebbookEntry({
           Logger.logError(`Failed to fetch webbook resources: ${error.detail}`);
         }),
       });
-      subpathResourceLoader.fetcherMap.forEach(
-        (v, k) => !retriever.has(k) && retriever.set(k, v),
-      );
+      subpathResourceLoader.fetcherMap.forEach((fetcher, k) => {
+        if (!retriever.has(k)) {
+          retriever.set(k, fetcher);
+        }
+      });
     }
   }
 
@@ -289,15 +294,15 @@ export async function retrieveWebbookEntry({
   });
 
   if (manifest) {
-    const referencedContents = [
-      ...[manifest.readingOrder || []].flat(),
-      ...[manifest.resources || []].flat(),
-    ].map((v) => (typeof v === 'string' ? v : v.url));
+    const referencedContents = new Set(
+      [
+        ...[manifest.readingOrder || []].flat(),
+        ...[manifest.resources || []].flat(),
+      ].map((v) => (typeof v === 'string' ? v : v.url)),
+    );
     manifest.resources = [
       ...[manifest.resources || []].flat(),
-      ...fetchedResources.filter(
-        ({ url }) => !referencedContents.includes(url),
-      ),
+      ...fetchedResources.filter(({ url }) => !referencedContents.has(url)),
     ];
     sortManifestResources(manifest);
   }
@@ -371,7 +376,7 @@ export async function supplyWebPublicationManifestForWebbook({
       upath.join(outputDir, MANIFEST_FILENAME),
     ),
   );
-  document.head.appendChild(link);
+  document.head.append(link);
   await fs.promises.writeFile(entryHtmlFile, dom.serialize(), 'utf8');
 
   Logger.debug(
@@ -462,6 +467,7 @@ export async function copyWebPublicationAssets({
   Logger.debug('webbook publication.json', actualManifestPath);
   // Overwrite copied publication.json
   const manifest = decodePublicationManifest(
+    // oxlint-disable-next-line typescript/no-unsafe-argument
     JSON.parse(fs.readFileSync(actualManifestPath, 'utf8')),
   );
   for (const entry of relExportAliases) {
@@ -494,16 +500,16 @@ export async function copyWebPublicationAssets({
   // List copied files to resources field
   const normalizeToUrl = (val?: ResourceCategorization) =>
     [val || []].flat().map((e) => (typeof e === 'string' ? e : e.url));
-  const preDefinedResources = [
+  const preDefinedResources = new Set([
     ...normalizeToUrl(manifest.links),
     ...normalizeToUrl(manifest.readingOrder),
     ...normalizeToUrl(manifest.resources),
-  ];
+  ]);
   manifest.resources = [
     ...[manifest.resources || []].flat(),
     ...resources.flatMap((file) => {
       if (
-        preDefinedResources.includes(file) ||
+        preDefinedResources.has(file) ||
         // Omit publication.json itself
         pathEquals(file, upath.relative(outputDir, actualManifestPath))
       ) {
@@ -563,7 +569,7 @@ export async function buildWebPublication({
     });
     entryHtmlFile = ret.entryHtmlFile;
     manifest =
-      ret.manifest ||
+      ret.manifest ??
       (await supplyWebPublicationManifestForWebbook({
         ...config,
         entryHtmlFile: ret.entryHtmlFile,

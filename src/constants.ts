@@ -32,9 +32,9 @@ export const CONTAINER_LOCAL_HOSTNAME = 'host.docker.internal';
 // START DEFAULT_BROWSER_VERSIONS
 // prettier-ignore
 export const DEFAULT_BROWSER_VERSIONS = {
-  chrome: {"linux":"149.0.7827.22","linux_arm":"149.0.7827.22","mac":"149.0.7827.22","mac_arm":"149.0.7827.22","win32":"149.0.7827.22","win64":"149.0.7827.22"},
-  chromium: {"linux":"1634600","linux_arm":"1634568","mac":"1634568","mac_arm":"1634568","win32":"1634554","win64":"1634573"},
-  firefox: {"linux":"stable_151.0.1","linux_arm":"stable_151.0.1","mac":"stable_151.0.1","mac_arm":"stable_151.0.1","win32":"stable_151.0.1","win64":"stable_151.0.1"},
+  chrome: {"linux":"150.0.7871.24","linux_arm":"150.0.7871.24","mac":"150.0.7871.24","mac_arm":"150.0.7871.24","win32":"150.0.7871.24","win64":"150.0.7871.24"},
+  chromium: {"linux":"1651380","linux_arm":"1651380","mac":"1651385","mac_arm":"1651385","win32":"1651280","win64":"1651309"},
+  firefox: {"linux":"stable_152.0.2","linux_arm":"stable_152.0.2","mac":"stable_152.0.2","mac_arm":"stable_152.0.2","win32":"stable_152.0.2","win64":"stable_152.0.2"},
 } as const;
 // END DEFAULT_BROWSER_VERSIONS
 
@@ -63,7 +63,7 @@ export const TEMPLATE_SETTINGS = [
   },
 ] as const;
 
-export const TEMPLATE_DEFAULT_PACKAGE_JSON = /* json */ `{
+export const TEMPLATE_DEFAULT_PACKAGE_JSON = `{
   "name": "{{kebab title}}",
   "description": "{{proper title}}",
   "author": "{{author}}",
@@ -80,7 +80,7 @@ export const TEMPLATE_DEFAULT_PACKAGE_JSON = /* json */ `{
 }
 `;
 
-export const TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS = /* js */ `// @ts-check
+export const TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS = `// @ts-check
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({

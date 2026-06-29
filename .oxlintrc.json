@@ -3,10 +3,17 @@
   "plugins": ["typescript", "unicorn", "oxc", "vitest"],
   "categories": {
     "correctness": "error",
-    "suspicious": "warn"
+    "pedantic": "error",
+    "perf": "error",
+    "suspicious": "error"
+  },
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
   },
   "rules": {
-    "eslint/no-unused-vars": [
+    // Correctness Rules
+    "no-unused-vars": [
       "error",
       {
         "args": "after-used",
@@ -16,15 +23,78 @@
         "destructuredArrayIgnorePattern": "^_"
       }
     ],
-    "typescript/consistent-type-imports": "warn",
-    "eslint/prefer-const": "warn",
-    "eslint/curly": "warn",
-    "vitest/require-mock-type-parameters": "warn",
-    "vitest/prefer-snapshot-hint": "warn",
-    "vitest/hoisted-apis-on-top": "warn",
-    "vitest/require-to-throw-message": "warn",
-    "vitest/no-disabled-tests": "warn"
+    // Restriction Rules
+    "no-explicit-any": "error",
+    "explicit-module-boundary-types": "error",
+    "no-non-null-assertion": "error",
+    "no-dynamic-delete": "error",
+    "no-import-type-side-effects": "error",
+    "no-invalid-void-type": "error",
+    "prefer-number-properties": "error",
+    "prefer-node-protocol": "error",
+    "no-param-reassign": "error",
+    "vitest/expect-expect": [
+      "error",
+      {
+        "assertFunctionNames": [
+          "expect",
+          "expectTypeOf",
+          "**.expect",
+          "**.expectTypeOf"
+        ]
+      }
+    ],
+    // Pedantic Rules
+    "max-classes-per-file": "off",
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "no-inline-comments": ["error", { "ignorePattern": "@vite-ignore" }],
+    "no-warning-comments": "warn",
+    "require-unicode-regexp": ["error", { "requireFlag": "v" }],
+    "prefer-number-coercion": "off",
+    "prefer-readonly-parameter-types": "off",
+    "strict-boolean-expressions": "off",
+    "switch-exhaustiveness-check": [
+      "error",
+      { "considerDefaultExhaustiveForUnions": true }
+    ],
+    "prefer-nullish-coalescing": [
+      "error",
+      {
+        "ignorePrimitives": { "string": true },
+        "ignoreMixedLogicalExpressions": true
+      }
+    ],
+    "no-confusing-void-expression": ["error", { "ignoreArrowShorthand": true }],
+    // Perf Rules
+    "no-await-in-loop": "off",
+    // Suspicious Rules
+    "consistent-function-scoping": "off",
+    "no-shadow": ["error", { "allow": ["_"] }],
+    "consistent-return": "off",
+    // Style Rules
+    "consistent-type-imports": ["error", { "disallowTypeAnnotations": false }],
+    "curly": "error",
+    "prefer-const": ["error", { "destructuring": "all" }]
   },
+  "overrides": [
+    {
+      "files": ["tests/**", "scripts/**"],
+      "rules": {
+        "no-explicit-any": "off",
+        "no-non-null-assertion": "off",
+        "no-unsafe-argument": "off",
+        "no-unsafe-assignment": "off",
+        "no-unsafe-call": "off",
+        "no-unsafe-member-access": "off",
+        "no-unsafe-return": "off",
+        "no-unsafe-type-assertion": "off",
+        "no-unnecessary-type-assertion": "off",
+        "unbound-method": "off",
+        "typescript/require-await": "off"
+      }
+    }
+  ],
   "ignorePatterns": [
     "dist",
     "tmp",

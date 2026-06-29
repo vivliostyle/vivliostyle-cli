@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -32,7 +32,7 @@ describe('process termination', () => {
     vi.spyOn(process, 'once').mockImplementation(() => process);
     const exit = vi
       .spyOn(process, 'exit')
-      .mockImplementation((() => undefined) as never);
+      .mockImplementation((() => {}) as never);
 
     let resolveCleanup: (() => void) | undefined;
     const cleanup = vi.fn<() => Promise<void>>(
@@ -90,6 +90,83 @@ describe('process termination', () => {
   });
 });
 
+function isRunning(child: ChildProcess): boolean {
+  return child.exitCode === null && child.signalCode === null;
+}
+
+function spawnSignalFixture(
+  markerPath: string,
+  terminationSignal: NodeJS.Signals,
+) {
+  const child = spawn(
+    process.execPath,
+    ['--import', 'tsx', fixturePath, markerPath],
+    {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  );
+
+  let output = '';
+  let signalSent = false;
+  let repeatedSignalTimeout: NodeJS.Timeout | undefined;
+  const ready = new Promise<void>((resolve, reject) => {
+    const handleOutput = (chunk: Buffer) => {
+      output += chunk.toString();
+      // Send the termination signal exactly once when the child reports READY.
+      if (signalSent || !output.includes('READY\n')) {
+        return;
+      }
+      signalSent = true;
+      child.kill(terminationSignal);
+      repeatedSignalTimeout = setTimeout(() => {
+        if (isRunning(child)) {
+          child.kill(terminationSignal);
+        }
+      }, 20);
+      resolve();
+    };
+    child.stdout.on('data', handleOutput);
+    child.stderr.on('data', handleOutput);
+    child.once('error', reject);
+    child.once('close', (code, signal) => {
+      // The child exited before becoming ready, which is a failure.
+      if (signalSent) {
+        return;
+      }
+      reject(
+        new Error(
+          `Fixture exited before it was ready (code: ${code}, signal: ${signal})\n${output}`,
+        ),
+      );
+    });
+  });
+  const closed = new Promise<{
+    code: number | null;
+    signal: NodeJS.Signals | null;
+  }>((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', (code, signal) => resolve({ code, signal }));
+  });
+
+  return {
+    child,
+    ready,
+    closed,
+    clearRepeatedSignal: () => clearTimeout(repeatedSignalTimeout),
+  };
+}
+
+async function forceKillIfRunning(
+  child: ChildProcess,
+  closed: Promise<unknown>,
+) {
+  if (!isRunning(child)) {
+    return;
+  }
+  child.kill('SIGKILL');
+  await closed;
+}
+
 // Node.js cannot generate catchable CTRL_C_EVENT or CTRL_BREAK_EVENT for a
 // child process on win32 using its public APIs. subprocess.kill() forcefully
 // terminates the process there, so Windows needs a native/PTY-based or manual
@@ -106,52 +183,13 @@ describeOnPosix('process termination signals', () => {
         join(tmpdir(), 'vivliostyle-cli-signal-'),
       );
       const markerPath = join(temporaryDirectory, 'cleaned');
-      const child = spawn(
-        process.execPath,
-        ['--import', 'tsx', fixturePath, markerPath],
-        {
-          stdio: ['ignore', 'pipe', 'pipe'],
-        },
+      const { child, ready, closed, clearRepeatedSignal } = spawnSignalFixture(
+        markerPath,
+        terminationSignal,
       );
-
-      let output = '';
-      let signalSent = false;
-      let repeatedSignalTimeout: NodeJS.Timeout | undefined;
-      const ready = new Promise<void>((resolve, reject) => {
-        const handleOutput = (chunk: Buffer) => {
-          output += chunk.toString();
-          if (!signalSent && output.includes('READY\n')) {
-            signalSent = true;
-            child.kill(terminationSignal);
-            repeatedSignalTimeout = setTimeout(() => {
-              if (child.exitCode === null && child.signalCode === null) {
-                child.kill(terminationSignal);
-              }
-            }, 20);
-            resolve();
-          }
-        };
-        child.stdout.on('data', handleOutput);
-        child.stderr.on('data', handleOutput);
-        child.once('error', reject);
-        child.once('close', (code, signal) => {
-          if (!signalSent) {
-            reject(
-              new Error(
-                `Fixture exited before it was ready (code: ${code}, signal: ${signal})\n${output}`,
-              ),
-            );
-          }
-        });
-      });
-      const closed = new Promise<{
-        code: number | null;
-        signal: NodeJS.Signals | null;
-      }>((resolve, reject) => {
-        child.once('error', reject);
-        child.once('close', (code, signal) => resolve({ code, signal }));
-      });
-      const timeout = setTimeout(() => child.kill('SIGKILL'), 4_000);
+      const timeout = setTimeout(() => {
+        child.kill('SIGKILL');
+      }, 4_000);
 
       try {
         await ready;
@@ -163,11 +201,8 @@ describeOnPosix('process termination signals', () => {
         );
       } finally {
         clearTimeout(timeout);
-        clearTimeout(repeatedSignalTimeout);
-        if (child.exitCode === null && child.signalCode === null) {
-          child.kill('SIGKILL');
-          await closed;
-        }
+        clearRepeatedSignal();
+        await forceKillIfRunning(child, closed);
         await rm(temporaryDirectory, { recursive: true, force: true });
       }
     },

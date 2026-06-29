@@ -14,8 +14,8 @@ const mocked = await vi.hoisted(async () => {
     ) {
       const repo = 'vivliostyle/vivliostyle-cli/';
       const loc = input
-        .replace(/^.+:/, '')
-        .replace(/#.+$/, '')
+        .replace(/^.+:/v, '')
+        .replace(/#.+$/v, '')
         .split('/')
         .filter(Boolean)
         .join('/');

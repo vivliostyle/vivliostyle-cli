@@ -3,15 +3,10 @@ import Handlebars from 'handlebars';
 import { titleCase } from 'title-case';
 
 import type {
+  ParsedVivliostyleInlineConfig,
   ThemeSpecifier,
-  VivliostylePackageMetadata,
 } from './config/schema.js';
-import { type ParsedVivliostyleInlineConfig } from './config/schema.js';
-import type { PackageJson } from './npm.js';
-
-export type VivliostylePackageJson = Pick<PackageJson, 'name' | 'version'> & {
-  vivliostyle?: VivliostylePackageMetadata;
-};
+import type { VivliostylePackageJson } from './util.js';
 
 export interface TemplateVariable extends Omit<
   ParsedVivliostyleInlineConfig,
@@ -72,7 +67,7 @@ function json(data: unknown) {
 }
 Handlebars.registerHelper('json', json);
 
-export function format(text: string, context: unknown) {
-  const template = Handlebars.compile(text.toString(), { noEscape: true });
+export function format(text: string, context: unknown): string {
+  const template = Handlebars.compile(text, { noEscape: true });
   return template(context);
 }

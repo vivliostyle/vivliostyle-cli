@@ -33,9 +33,7 @@ const mocked = await vi.hoisted(async () => {
         normalized.contentType = 'application/xhtml+xml';
       }
     }
-    if (normalized.url === undefined) {
-      normalized.url = pathToFileURL(filename) as any;
-    }
+    normalized.url ??= pathToFileURL(filename) as any;
     return normalized;
   }
 
@@ -79,8 +77,9 @@ const mocked = await vi.hoisted(async () => {
       return memfs.promises.readFile(filePath) as AbortablePromise<Buffer>;
     }
     fetch(urlString: string, options: FetchOptions = {}) {
-      if (/^https?:/.test(urlString)) {
+      if (/^https?:/v.test(urlString)) {
         const url = new URL(urlString);
+        // oxlint-disable-next-line no-underscore-dangle -- jsdom ResourceLoader API
         const fetcher = this._readFile(
           mapToLocalPath(urlString),
         ) as AbortablePromise<Buffer>;

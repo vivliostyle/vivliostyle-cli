@@ -37,7 +37,9 @@ beforeEach(() => {
 it('passes the signal to press-ready Docker preflight', async () => {
   const controller = new AbortController();
   const post = createPostProcess({
-    save: vi.fn<() => Promise<Uint8Array>>(async () => new Uint8Array([1])),
+    save: vi.fn<() => Promise<Uint8Array>>(() =>
+      Promise.resolve(new Uint8Array([1])),
+    ),
   });
 
   await post.save('output.pdf', {
@@ -65,7 +67,9 @@ it('waits for press-ready before removing the temporary preflight input', async 
     }),
   );
   const post = createPostProcess({
-    save: vi.fn<() => Promise<Uint8Array>>(async () => new Uint8Array([1])),
+    save: vi.fn<() => Promise<Uint8Array>>(() =>
+      Promise.resolve(new Uint8Array([1])),
+    ),
   });
 
   const saving = post.save('output.pdf', {

@@ -10,21 +10,23 @@ import {
 } from './command-util.js';
 
 const mockedBrowserModule = vi.hoisted(() => ({
-  getExecutableBrowserPath: vi.fn().mockReturnValue('myBrowser'),
-  launchPreview: vi.fn().mockResolvedValue({
-    page: {
-      on: vi.fn(),
-      off: vi.fn(),
-      bringToFront: vi.fn(),
-      locator: vi.fn().mockReturnValue({
-        focus: vi.fn(),
-      }),
-    },
-    browser: {
-      close: vi.fn(),
-    },
-    closeBrowser: vi.fn(),
-  }),
+  getExecutableBrowserPath: vi.fn<() => string>().mockReturnValue('myBrowser'),
+  launchPreview: vi
+    .fn<(options: { url: string }) => Promise<unknown>>()
+    .mockResolvedValue({
+      page: {
+        on: vi.fn<() => void>(),
+        off: vi.fn<() => void>(),
+        bringToFront: vi.fn<() => void>(),
+        locator: vi.fn<() => { focus: () => void }>().mockReturnValue({
+          focus: vi.fn<() => void>(),
+        }),
+      },
+      browser: {
+        close: vi.fn<() => void>(),
+      },
+      closeBrowser: vi.fn<() => void>(),
+    }),
 }));
 
 vi.mock('../src/browser', async (importOriginal) => ({
@@ -378,6 +380,7 @@ describe('vite-plugin-browser', () => {
     expect(src).toMatch(
       new RegExp(
         `^${server.resolvedUrls.local[0].replace('/', '\\/')}vivliostyle\\/.+adaptive\\.epub\\/OPS\\/content\\.opf$`,
+        'v',
       ),
     );
 

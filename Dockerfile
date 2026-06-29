@@ -188,6 +188,10 @@ RUN --security=insecure \
     --customize-hook="chown --recursive ${USER_UID}:${USER_GID} \"\$1/data\" \"\$1/opt/vivliostyle-cli\" \"\$1/home/vivliostyle\"" \
     --customize-hook='copy-in /tmp/puppeteer /opt/' \
     --customize-hook="chown --recursive ${USER_UID}:${USER_GID} \"\$1/opt/puppeteer\"" \
+    # Let arbitrary UIDs (e.g. `docker run --user`) write build-ids.json and
+    # download browsers here. build-ids.json sits at the cache root; each
+    # browser installs under its own dir (chrome/<buildId>/...).
+    --customize-hook='find "$1/opt/puppeteer" -maxdepth 1 -type d -exec chmod 1777 {} +' \
     # ---- install-time-only package purge ---------------------------------
     # audit.ts applies build/purge.txt -- the DERIVED maximal set of packages that
     # can be removed while image-contract.sh still passes (see build/derive-purge/

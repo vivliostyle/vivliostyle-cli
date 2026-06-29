@@ -24,9 +24,9 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install
+      - run: pnpm build:cli
       - run: pnpm lint
       - run: pnpm fmt:check
-      - run: pnpm build
       - name: Check for unclean working tree
         run: |
           if [ -n "$(git status --porcelain)" ]; then

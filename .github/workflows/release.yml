@@ -171,6 +171,7 @@ jobs:
         with:
           token: ${{ steps.decrypt-secret.outputs.decrypted-token }}
           persist-credentials: false
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
@@ -194,6 +195,12 @@ jobs:
             touch release_notes.txt
           fi
           cat release_notes.txt
+      - name: Determine previous release tag
+        id: previous-tag
+        if: ${{ matrix.package.name != 'create-book' }}
+        run: |
+          prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD 2>/dev/null || true)
+          echo "name=$prev" >> "$GITHUB_OUTPUT"
       - name: Create tag
         id: create-tag
         run: |
@@ -208,9 +215,10 @@ jobs:
           git push origin $name
       - name: Release to GitHub
         if: ${{ matrix.package.name != 'create-book' }}
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ steps.create-tag.outputs.name }}
           body_path: release_notes.txt
           generate_release_notes: true
+          previous_tag: ${{ steps.previous-tag.outputs.name }}
           token: ${{ steps.decrypt-secret.outputs.decrypted-token }}

@@ -11,19 +11,22 @@ const streamZipMock = vi.hoisted(() => ({
 
 vi.mock('node-stream-zip', async () => {
   const { EventEmitter } = await import('node:events');
-  const fs = await import('node:fs');
-  const { join } = await import('node:path');
+  const nodeFs = await import('node:fs');
+  const { join: joinPath } = await import('node:path');
 
   return {
+    // oxlint-disable-next-line prefer-event-target -- mocks node-stream-zip's Node.js EventEmitter-based API
     default: class extends EventEmitter {
       constructor() {
         super();
-        queueMicrotask(() => this.emit('ready'));
+        queueMicrotask(() => {
+          this.emit('ready');
+        });
       }
 
       extract(_entry: null, destination: string, callback: () => void) {
-        fs.mkdirSync(destination, { recursive: true });
-        fs.writeFileSync(join(destination, 'partial'), '');
+        nodeFs.mkdirSync(destination, { recursive: true });
+        nodeFs.writeFileSync(joinPath(destination, 'partial'), '');
         streamZipMock.finishExtraction = callback;
       }
 
