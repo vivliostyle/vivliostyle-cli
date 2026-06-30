@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 11.0.4
+
+### Patch Changes
+
+- Down-level the build to the `engines.node` floor (>=22.12.0) so the CLI no longer crashes with `SyntaxError: Unexpected identifier '_'` on Node 22. ([#848](https://github.com/vivliostyle/vivliostyle-cli/pull/848))
+
 ## 11.0.3
 
 ### Patch Changes
