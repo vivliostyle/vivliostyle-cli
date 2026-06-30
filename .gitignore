@@ -1,6 +1,8 @@
 dist/
 tmp/
 *.pdf
+# the docker-image preview test saves its render captures here for a human to inspect
+/tests/docker-image-screenshots/
 .vscode
 .vs-*
 .vivliostyle
