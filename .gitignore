@@ -2,7 +2,9 @@ dist/
 tmp/
 *.pdf
 # contract fixtures
-!/build/fixtures/**/*.pdf
+!/tests/docker/fixtures/**/*.pdf
+# GUI preview screenshots captured by the Docker contract suite
+/tests/docker/screenshots/
 .vscode
 .vs-*
 .vivliostyle

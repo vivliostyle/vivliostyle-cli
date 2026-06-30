@@ -1,0 +1,3 @@
+# Hello
+
+Contract test document.

@@ -1,12 +1,13 @@
 #!/bin/bash
 # oracle.sh <purgeset-file> <suffix>
 # Build the pre-purge base ($BASE, default vsslim:base) with the given purge set
-# applied, run image-contract.sh from $CLI_DIR, and print "PASS" or
-# "FAIL\n<failed test names>". Exit 0=pass, 1=fail, 2=build error.
+# applied, run the contract suite (tests/docker, via testcontainers) from
+# $CLI_DIR against it, and print "PASS" or "FAIL\n<failed test names>".
+# Exit 0=pass, 1=fail, 2=build error.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 BASE="${BASE:-vsslim:base}"
-CLI_DIR="${CLI_DIR:?set CLI_DIR to the vivliostyle-cli checkout holding image-contract.sh}"
+CLI_DIR="${CLI_DIR:?set CLI_DIR to the vivliostyle-cli checkout (node_modules installed) holding the contract suite}"
 PURGESET="$1"
 SUF="${2:-trial}"
 
@@ -21,12 +22,30 @@ if ! docker build --build-arg "BASE=$BASE" --tag "oracle:$SUF" "$ctx" \
 fi
 rm -rf "$ctx"
 
-( cd "$CLI_DIR" && IMAGE="oracle:$SUF" ./build/image-contract.sh >"$HERE/contract-$SUF.log" 2>&1 )
+# Run the contract suite against the freshly built oracle image. The JSON report
+# yields the names of any failed checks, which derive.mjs records as the
+# justification for keeping a package.
+RESULT="$HERE/result-$SUF.json"
+rm -f "$RESULT"
+( cd "$CLI_DIR" && VIVLIOSTYLE_CLI_IMAGE="oracle:$SUF" \
+    pnpm exec vitest run --config vite.docker.config.ts \
+      --reporter=default --reporter=json --outputFile="$RESULT" \
+    >"$HERE/contract-$SUF.log" 2>&1 )
 rc=$?
 if [ "$rc" -eq 0 ]; then
   echo "PASS"
 else
   echo "FAIL"
-  grep -E '^  FAIL-' "$HERE/contract-$SUF.log" | sed 's/^  FAIL- *//'
+  # Failed-check names from the JSON report (empty if vitest crashed before
+  # writing one, e.g. the purged image will not start at all).
+  node -e '
+    const fs = require("node:fs");
+    try {
+      const r = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      for (const s of r.testResults || [])
+        for (const t of s.assertionResults || [])
+          if (t.status === "failed") console.log(t.fullName || t.title);
+    } catch {}
+  ' "$RESULT"
 fi
 exit "$rc"

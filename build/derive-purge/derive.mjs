@@ -1,8 +1,9 @@
 /// <reference lib="es2023" />
 /// <reference types="node" />
 // Derive the maximal purge set: the largest set of installed packages that can be
-// force-purged while image-contract.sh still passes (reverse of minimal-Essential).
-// See README.md. Env: CLI_DIR (required, holds image-contract.sh), BASE
+// force-purged while the contract suite (pnpm test:docker) still passes (reverse
+// of minimal-Essential).
+// See README.md. Env: CLI_DIR (required, holds the contract suite), BASE
 // (pre-purge image, default vsslim:base), CONCURRENCY (default 8), WARM (optional
 // file of known-removable packages to skip re-testing).
 //

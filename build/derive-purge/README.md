@@ -2,13 +2,14 @@
 
 `build/purge.txt` is **not hand-written**. It is _derived_: the maximal set of
 installed packages that can be force-purged from the assembled rootfs while
-`image-contract.sh` still passes. This directory holds the tooling that derives
+the contract suite (`pnpm test:docker`) still passes. This directory holds the
+tooling that derives
 it, so the list can be regenerated and re-verified instead of curated by guesswork.
 
 ## Principle
 
 A package is **removable** if, and only if, the slim image still satisfies
-`image-contract.sh` after that package is purged. The contract is the oracle of
+the contract suite after that package is purged. The contract is the oracle of
 "the image works"; the purge list is the largest set of packages for which the
 oracle still passes.
 
@@ -35,7 +36,8 @@ contract fails".
    (the full `--include` closure). `derive.mjs` reads it from the base image.
 
 2. **Oracle** (`oracle.sh` + `oracle.Dockerfile`) — given a candidate purge set,
-   apply it to the cached pre-purge base image and run `image-contract.sh`:
+   apply it to the cached pre-purge base image and run the contract suite
+   (`pnpm test:docker`):
    - maintainer scripts (`*.prerm/*.postrm/*.preinst/*.postinst`) are deleted
      first and the purge uses `dpkg --purge --force-all`, so this _search_ is
      **order-independent** -- it never fails on maintainer-script ordering, which
@@ -77,8 +79,8 @@ $ cp build/derive-purge/derived-purge.txt build/purge.txt
 $ CLI_DIR=/path/to/vivliostyle-cli node build/derive-purge/order.mjs
 ```
 
-Re-run on a Debian major bump, a dependency change, or whenever `image-contract.sh`
-changes. A `WARM` file of already-known-removable packages may be supplied to skip
+Re-run on a Debian major bump, a dependency change, or whenever the contract
+suite changes. A `WARM` file of already-known-removable packages may be supplied to skip
 re-testing them (an optimisation only; the result is the same).
 
 ## Ordering the real purge
@@ -111,7 +113,7 @@ on (`perl-base`, `debconf`, `init-system-helpers`, `mawk`, `findutils`,
 
 ## Soundness and coverage
 
-The derivation is maximal **with respect to `image-contract.sh`** — the contract's
+The derivation is maximal **with respect to the contract suite** — the contract's
 coverage _is_ the definition of "works". The contract exercises the whole
 system-package surface the CLI uses: the three browsers (GUI preview + headless
 build, including a download via `chrome@130`), the bundled fonts, `press-ready`

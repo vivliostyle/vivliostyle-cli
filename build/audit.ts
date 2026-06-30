@@ -2,7 +2,8 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 
 // Apply build/purge.txt -- the DERIVED maximal set of install-time-only packages
-// removable while image-contract.sh still passes (see build/derive-purge/ for how
+// removable while the contract suite (pnpm test:docker) still passes (see
+// build/derive-purge/ for how
 // the list is derived and verified).
 //
 // This is a real purge: maintainer scripts RUN (conffiles removed, alternatives
