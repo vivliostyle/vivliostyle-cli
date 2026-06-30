@@ -64,6 +64,9 @@ jobs:
           cache: pnpm
       - run: pnpm install
       - run: pnpm build:cli
+      - name: Check the built CLI has no syntax errors on Node ${{ matrix.node }}
+        shell: bash
+        run: find dist -name '*.js' -print0 | xargs -0 -n1 node --check
       - run: pnpm test
   build-and-push-image:
     runs-on: ubuntu-latest
