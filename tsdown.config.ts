@@ -13,7 +13,7 @@ export default defineConfig({
     'src/commands/init.ts',
     'src/commands/preview.ts',
   ],
-  target: false,
+  target: 'node22.12',
   fixedExtension: false,
   deps: {
     onlyBundle: [/^@types\/.*/v],
