@@ -555,11 +555,11 @@ describe('document production', () => {
 });
 
 describe('extensibility', () => {
-  // A derived image can apt-install a package the base lacks and run it. git is the
-  // probe: absent, and it Depends on perl, so installing it first needs the dpkg
-  // repair (the perl-base step).
+  // A derived image can apt-install and run an extra package. rename is the probe:
+  // it is not in the base image and it Depends on perl, so a future slim base that
+  // drops perl would break this install.
   it(
-    'installs git via apt and runs it',
+    'installs a package via apt and runs it',
     () =>
       withShell(async (container) => {
         const { exitCode, output } = await sh(
@@ -567,18 +567,12 @@ describe('extensibility', () => {
           [
             'set -e',
             'apt-get update',
-            // Reinstall perl-base by hand and --fix-broken first, so the git install
-            // resolves even on an image whose dpkg was left deliberately broken.
-            'apt-get download perl-base',
-            'dpkg --install --force-depends perl-base_*.deb',
-            'rm --force perl-base_*.deb',
-            'apt-get install --fix-broken --yes --no-install-recommends',
-            'apt-get install --yes --no-install-recommends git',
+            'apt-get install --yes --no-install-recommends rename',
             'rm --recursive --force /var/lib/apt/lists/*',
             'cd "$(mktemp -d)"',
-            'git init',
-            'git -c user.email=probe@example.com -c user.name=probe commit --allow-empty -m probe',
-            'git log --oneline',
+            ': > probe.txt',
+            "rename 's/probe/renamed/' probe.txt",
+            'test -f renamed.txt',
           ].join('\n'),
           { user: 'root' },
         );
