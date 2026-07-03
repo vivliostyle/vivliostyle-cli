@@ -1,6 +1,11 @@
 declare global {
   export interface Window {
     coreViewer: CoreViewer;
+    __vsCliReportPaginationProgress?: (
+      pages: number,
+      fraction: number,
+      href?: string,
+    ) => void;
   }
 }
 
@@ -26,6 +31,11 @@ export interface CoreViewer {
 export interface Payload {
   t: string;
   a?: string;
+
+  // paginationprogress
+  fraction?: number;
+  pages?: number;
+  href?: string;
 }
 
 export interface Meta {

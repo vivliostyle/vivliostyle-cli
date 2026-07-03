@@ -161,6 +161,19 @@ export class Logger {
     this.#nonBlockingLogPrinted = false;
   }
 
+  /**
+   * Update the text of the running spinner in place without printing a
+   * checkpoint line. Unlike `logUpdate`, this method does nothing when the
+   * output is not interactive, so it is safe to call at a high frequency.
+   */
+  static logUpdateProgress(...messages: unknown[]): void {
+    if (this.#logLevel < 1 || !this.#spinner || !this.isInteractive) {
+      return;
+    }
+    this.#spinner.text = messages.join(' ');
+    this.#nonBlockingLogPrinted = true;
+  }
+
   static getMessage(message: string, symbol?: string): string {
     return !this.#customLogger && symbol ? `${symbol} ${message}` : message;
   }

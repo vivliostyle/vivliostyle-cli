@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { URL } from 'node:url';
 
-import type { Browser, HTTPResponse, Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
@@ -17,6 +17,7 @@ import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { pathEquals, toError } from '../util.js';
 import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
+import { createEtaEstimator, formatEta } from './progress-eta.js';
 
 export async function buildPDF({
   target,
@@ -33,6 +34,9 @@ export async function buildPDF({
   Logger.debug('viewerFullUrl', viewerFullUrl);
 
   let lastEntry: ManuscriptEntry | undefined;
+  let paginationProgress: { pages: number; fraction: number } | undefined;
+  let typesettingFinished = false;
+  const etaEstimator = createEtaEstimator({ now: Date.now });
 
   function stringifyEntry(entry: ManuscriptEntry) {
     const formattedSourcePath = cyan(
@@ -51,31 +55,77 @@ export async function buildPDF({
     )} ${entry.title ? gray(entry.title) : ''}`;
   }
 
-  function handleEntry(response: HTTPResponse) {
-    const entry = config.entries.find(
-      (candidate): candidate is ManuscriptEntry => {
-        if (!('source' in candidate)) {
-          return false;
-        }
-        const url = new URL(response.url());
-        return url.protocol === 'file:'
-          ? pathEquals(candidate.target, url.pathname)
-          : pathEquals(
-              upath.relative(config.workspaceDir, candidate.target),
-              url.pathname.slice(1),
-            );
-      },
-    );
-    if (entry) {
-      if (!lastEntry) {
-        lastEntry = entry;
-        Logger.logUpdate(stringifyEntry(entry));
-        return;
-      }
-      Logger.logSuccess(stringifyEntry(lastEntry));
-      Logger.startLogging(stringifyEntry(entry));
-      lastEntry = entry;
+  function entryText() {
+    return lastEntry ? stringifyEntry(lastEntry) : 'Building pages';
+  }
+
+  function renderBuildingText() {
+    const base = entryText();
+    if (!paginationProgress) {
+      return base;
     }
+    const percent = Math.min(
+      100,
+      Math.round(paginationProgress.fraction * 100),
+    );
+    const eta = percent >= 100 ? undefined : etaEstimator.estimate();
+    const suffix =
+      eta === undefined
+        ? `(${paginationProgress.pages} pages, ${percent}%)`
+        : `(${paginationProgress.pages} pages, ${percent}%, ETA ${formatEta(eta)})`;
+    return `${base} ${gray(suffix)}`;
+  }
+
+  function findEntryByHref(href: string): ManuscriptEntry | undefined {
+    return config.entries.find((candidate): candidate is ManuscriptEntry => {
+      if (!('source' in candidate)) {
+        return false;
+      }
+      const url = new URL(href);
+      if (url.protocol === 'file:') {
+        return pathEquals(candidate.target, decodeURI(url.pathname));
+      }
+      // Served documents are mounted under the base path (default: /vivliostyle)
+      const basePrefix = `${config.base}/`;
+      return (
+        url.pathname.startsWith(basePrefix) &&
+        pathEquals(
+          upath.relative(config.workspaceDir, candidate.target),
+          decodeURI(url.pathname.slice(basePrefix.length)),
+        )
+      );
+    });
+  }
+
+  function handlePaginationProgress(
+    pages: number,
+    fraction: number,
+    href?: string,
+  ) {
+    if (
+      typesettingFinished ||
+      !Number.isFinite(pages) ||
+      !Number.isFinite(fraction)
+    ) {
+      return;
+    }
+    paginationProgress = { pages, fraction };
+    etaEstimator.update(fraction);
+
+    const entry = href ? findEntryByHref(href) : undefined;
+    if (entry && entry !== lastEntry) {
+      if (lastEntry) {
+        Logger.logInfo(stringifyEntry(lastEntry));
+        lastEntry = entry;
+        Logger.startLogging(renderBuildingText());
+      } else {
+        lastEntry = entry;
+        Logger.logUpdate(renderBuildingText());
+      }
+      return;
+    }
+
+    Logger.logUpdateProgress(renderBuildingText());
   }
 
   const { browser, page, closeBrowser } = await launchPreview({
@@ -84,9 +134,10 @@ export async function buildPDF({
     signal,
     config,
     onBrowserOpen: () => {
-      Logger.logUpdate('Building pages');
+      Logger.logInfo('Building pages');
+      Logger.logUpdateProgress('Building pages');
     },
-    onPageOpen: (openedPage) => {
+    onPageOpen: async (openedPage) => {
       openedPage.on('pageerror', (error) => {
         Logger.logError(red(toError(error).message));
       });
@@ -121,8 +172,6 @@ export async function buildPDF({
           response.url(),
         );
 
-        handleEntry(response);
-
         if (400 > response.status() && 200 <= response.status()) {
           return;
         }
@@ -133,6 +182,38 @@ export async function buildPDF({
 
         Logger.logError(red(`${response.status()}`), response.url());
       });
+
+      try {
+        await openedPage.exposeFunction(
+          '__vsCliReportPaginationProgress',
+          handlePaginationProgress,
+        );
+        await openedPage.evaluateOnNewDocument(() => {
+          /* v8 ignore start */
+          let tick = 0;
+          const timer = setInterval(() => {
+            if (!window.coreViewer) {
+              // Give up if the viewer never appears
+              if (++tick > 600) {
+                clearInterval(timer);
+              }
+              return;
+            }
+            clearInterval(timer);
+            window.coreViewer.addListener('paginationprogress', (payload) => {
+              // oxlint-disable-next-line no-underscore-dangle -- exposed function name prefixed to avoid page global collisions
+              window.__vsCliReportPaginationProgress?.(
+                payload.pages ?? 0,
+                payload.fraction ?? 0,
+                payload.href,
+              );
+            });
+          }, 100);
+          /* v8 ignore stop */
+        });
+      } catch (error) {
+        Logger.debug('Failed to set up pagination progress reporting', error);
+      }
 
       openedPage.setDefaultTimeout(config.timeout);
     },
@@ -164,9 +245,11 @@ export async function buildPDF({
         () => window.coreViewer.readyState === 'complete',
         { polling: 1000, signal },
       );
+      // Ignore progress dispatched after this point
+      typesettingFinished = true;
 
       if (lastEntry) {
-        Logger.logSuccess(stringifyEntry(lastEntry));
+        Logger.logInfo(stringifyEntry(lastEntry));
       }
 
       const pageProgression = await page.evaluate((): 'ltr' | 'rtl' =>
