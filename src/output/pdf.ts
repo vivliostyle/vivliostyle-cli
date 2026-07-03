@@ -77,11 +77,14 @@ export async function buildPDF({
   }
 
   function findEntryByHref(href: string): ManuscriptEntry | undefined {
+    if (!URL.canParse(href)) {
+      return;
+    }
+    const url = new URL(href);
     return config.entries.find((candidate): candidate is ManuscriptEntry => {
       if (!('source' in candidate)) {
         return false;
       }
-      const url = new URL(href);
       if (url.protocol === 'file:') {
         return pathEquals(candidate.target, decodeURI(url.pathname));
       }
