@@ -276,8 +276,8 @@ export class Logger {
     if (signal) {
       this.#signal = signal;
     }
-    if (containerForkMode) {
-      this.#containerForkMode = true;
+    if (containerForkMode !== undefined) {
+      this.#containerForkMode = containerForkMode;
     }
   }
 
