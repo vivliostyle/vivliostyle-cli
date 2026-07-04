@@ -102,8 +102,8 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       mupdf:
-        specifier: npm:@u1f992/mupdf@1.27.0-patched.1
-        version: '@u1f992/mupdf@1.27.0-patched.1'
+        specifier: 1.28.0
+        version: 1.28.0
       node-fetch-native:
         specifier: 1.6.7
         version: 1.6.7
@@ -2839,9 +2839,6 @@ packages:
     engines: {node: '>=16.20.0'}
     hasBin: true
 
-  '@u1f992/mupdf@1.27.0-patched.1':
-    resolution: {integrity: sha512-8M/9OteTc2ISddCin0VMojlHC3GJqnfjVm7A9HscyyTgO2jmE8aGRaSEe9pF/rJidoJ5mJR10sniouYGfgSvOQ==}
-
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
     deprecated: Potential CWE-502 - Update to 1.3.1 or higher
@@ -5096,6 +5093,9 @@ packages:
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
+
+  mupdf@1.28.0:
+    resolution: {integrity: sha512-ACUnbpECaQ5JLq04pwd89lS+0IGMest5qL5tb08g9TAR7bDtfqflHEkb2Xm3o4rvC/szguLiV+WEbW9kstj8Sg==}
 
   mustache@4.1.0:
     resolution: {integrity: sha512-0FsgP/WVq4mKyjolIyX+Z9Bd+3WS8GOwoUTyKXT5cTYMGeauNTi2HPCwERqseC1IHAy0Z7MDZnJBfjabd4O8GQ==}
@@ -9208,8 +9208,6 @@ snapshots:
       '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260622.1
       '@typescript/native-preview-win32-x64': 7.0.0-dev.20260622.1
 
-  '@u1f992/mupdf@1.27.0-patched.1': {}
-
   '@ungap/structured-clone@1.2.0': {}
 
   '@ungap/structured-clone@1.3.0': {}
@@ -12047,6 +12045,8 @@ snapshots:
   ms@2.0.0: {}
 
   ms@2.1.3: {}
+
+  mupdf@1.28.0: {}
 
   mustache@4.1.0: {}
 
