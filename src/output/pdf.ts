@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import { URL } from 'node:url';
 
 import type { Browser, Page } from 'puppeteer-core';
-import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
 
@@ -44,15 +43,18 @@ export async function buildPDF({
         ? upath.relative(config.entryContextDir, entry.source.pathname)
         : entry.source.href,
     );
-    return `${terminalLink(
-      formattedSourcePath,
-      entry.source.type === 'file'
-        ? `file://${entry.source.pathname}`
-        : entry.source.href,
-      {
-        fallback: () => formattedSourcePath,
-      },
-    )} ${entry.title ? gray(entry.title) : ''}`;
+    // TODO: yocto-spinner over-counts hyperlink text and erases unrelated log
+    // lines (sindresorhus/yocto-spinner#18).
+    // return `${terminalLink(
+    //   formattedSourcePath,
+    //   entry.source.type === 'file'
+    //     ? pathToFileURL(entry.source.pathname).href
+    //     : entry.source.href,
+    //   {
+    //     fallback: () => formattedSourcePath,
+    //   },
+    // )} ${entry.title ? gray(entry.title) : ''}`;
+    return `${formattedSourcePath} ${entry.title ? gray(entry.title) : ''}`;
   }
 
   function entryText() {
