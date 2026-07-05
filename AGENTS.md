@@ -20,7 +20,7 @@ Key areas:
 
 ## Development Commands
 
-Use pnpm. The repository declares `pnpm@10.28.2` and requires Node `>=22.12.0`.
+Use pnpm. The repository declares `pnpm@11.10.0` and requires Node `>=22.12.0`.
 
 - Install dependencies: `pnpm install`
 - Build everything: `pnpm build` (bundles the CLI and create-book with tsdown, then builds docs; it does not type-check)
