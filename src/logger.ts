@@ -6,7 +6,7 @@ import debug from 'debug';
 import yoctoSpinner, { type Spinner } from 'yocto-spinner';
 import { blueBright, greenBright, redBright, yellowBright } from 'yoctocolors';
 
-import { isInContainer, registerCleanupHandler } from './util.js';
+import { registerCleanupHandler } from './util.js';
 
 export const isUnicodeSupported =
   process.platform !== 'win32' || Boolean(process.env.WT_SESSION);
@@ -45,6 +45,11 @@ export class Logger {
   static #stdout: Writable = process.stdout;
   static #stderr: Writable = process.stderr;
   static #signal: AbortSignal | undefined;
+  /**
+   * True in the forked build subprocess (renderMode: docker),
+   * which logs non-interactively.
+   */
+  static #containerForkMode = false;
 
   static debug = debug('vs-cli');
 
@@ -92,8 +97,7 @@ export class Logger {
       !('CI' in process.env) &&
       !import.meta.env?.VITEST &&
       !debug.enabled('vs-cli') &&
-      // Prevent stream output in docker container so that not to spawn process
-      !isInContainer()
+      !this.#containerForkMode
     );
   }
 
@@ -234,6 +238,7 @@ export class Logger {
     stdout,
     stderr,
     signal,
+    containerForkMode,
   }: {
     logLevel?: 'silent' | 'info' | 'verbose' | 'debug';
     logger?: LoggerInterface;
@@ -241,6 +246,7 @@ export class Logger {
     stdout?: Writable;
     stderr?: Writable;
     signal?: AbortSignal;
+    containerForkMode?: boolean;
   }): void {
     if (logLevel) {
       this.#logLevel = (
@@ -269,6 +275,9 @@ export class Logger {
     }
     if (signal) {
       this.#signal = signal;
+    }
+    if (containerForkMode !== undefined) {
+      this.#containerForkMode = containerForkMode;
     }
   }
 
