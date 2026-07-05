@@ -217,11 +217,12 @@ async function launchBrowser({
     protocolTimeout,
   } satisfies LaunchOptions;
   Logger.debug('launchOptions %O', launchOptions);
+  // #416: set Chromium language to English to avoid locale-dependent issues
+  const env: NodeJS.ProcessEnv = { ...process.env, LANG: 'en.UTF-8' };
   // Browsers store transient data that never affects rendering (crash dumps,
   // profiles.ini) under HOME (chrome_paths_linux.cc, nsXREDirProvider.cpp). A
   // container UID with no /etc/passwd entry (e.g. `docker run --user`)
   // gets the unwritable HOME `/`, so the browser cannot launch (see #835).
-  const env: NodeJS.ProcessEnv = { ...process.env, LANG: 'en.UTF-8' };
   if (process.platform === 'linux' && !isWritableDir(env.HOME)) {
     [env.HOME] = await useTmpDirectory();
   }
