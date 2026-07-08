@@ -45,15 +45,11 @@ export function createEtaEstimator({
 }
 
 export function formatEta(ms: number): string {
-  const sec = Math.ceil(ms / 1000);
-  if (sec < 60) {
-    return `${sec}s`;
-  }
-  const min = Math.ceil(sec / 60);
-  if (min < 60) {
-    return `${min}m`;
-  }
-  const hour = Math.floor(min / 60);
-  const restMin = min % 60;
-  return restMin ? `${hour}h${restMin}m` : `${hour}h`;
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const hh = Math.floor(total / 3600);
+  const mm = Math.floor((total % 3600) / 60);
+  const ss = total % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  // hh is not capped at 24h so runaway estimates stay visible (e.g. 27:14:03)
+  return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
 }

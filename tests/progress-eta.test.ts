@@ -39,19 +39,20 @@ describe('createEtaEstimator', () => {
 });
 
 describe('formatEta', () => {
-  it('shows seconds under a minute', () => {
-    expect(formatEta(1000)).toBe('1s');
-    expect(formatEta(34000)).toBe('34s');
+  it('shows a zero-padded hh:mm:ss under a minute', () => {
+    expect(formatEta(1000)).toBe('00:00:01');
+    expect(formatEta(34000)).toBe('00:00:34');
   });
 
-  it('rounds up to minutes under an hour', () => {
-    expect(formatEta(59999)).toBe('1m');
-    expect(formatEta(61000)).toBe('2m');
-    expect(formatEta(600000)).toBe('10m');
+  it('rounds up to whole seconds and carries into minutes', () => {
+    expect(formatEta(59999)).toBe('00:01:00');
+    expect(formatEta(61000)).toBe('00:01:01');
+    expect(formatEta(600000)).toBe('00:10:00');
   });
 
-  it('formats hours with the remaining minutes', () => {
-    expect(formatEta(3600000)).toBe('1h');
-    expect(formatEta(3900000)).toBe('1h5m');
+  it('never caps the hours field at 24h', () => {
+    expect(formatEta(3600000)).toBe('01:00:00');
+    expect(formatEta(3900000)).toBe('01:05:00');
+    expect(formatEta(90061000)).toBe('25:01:01');
   });
 });

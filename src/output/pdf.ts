@@ -37,6 +37,9 @@ export async function buildPDF({
   let paginationProgress: { pages: number; fraction: number } | undefined;
   let typesettingFinished = false;
   const etaEstimator = createEtaEstimator({ now: Date.now });
+  let etaEstimateMs: number | undefined;
+  let etaEstimateTime = Date.now();
+  let etaCountdownTimer: ReturnType<typeof setInterval> | undefined;
 
   function stringifyEntry(entry: ManuscriptEntry) {
     const formattedSourcePath = cyan(
@@ -66,7 +69,12 @@ export async function buildPDF({
       100,
       Math.round(paginationProgress.fraction * 100),
     );
-    const eta = percent >= 100 ? undefined : etaEstimator.estimate();
+    // Count down from the last estimate every second so the ETA keeps ticking
+    // toward zero between progress reports.
+    const eta =
+      percent >= 100 || etaEstimateMs === undefined
+        ? undefined
+        : Math.max(0, etaEstimateMs - (Date.now() - etaEstimateTime));
     const suffix =
       eta === undefined
         ? `(${paginationProgress.pages} pages, ${percent}%)`
@@ -112,6 +120,14 @@ export async function buildPDF({
     }
     paginationProgress = { pages, fraction };
     etaEstimator.update(fraction);
+    etaEstimateMs = etaEstimator.estimate();
+    etaEstimateTime = Date.now();
+    if (!etaCountdownTimer) {
+      etaCountdownTimer = setInterval(() => {
+        Logger.logUpdateProgress(renderBuildingText());
+      }, 1000);
+      etaCountdownTimer.unref?.();
+    }
 
     const entry = href ? findEntryByHref(href) : undefined;
     if (entry && entry !== lastEntry) {
@@ -248,6 +264,10 @@ export async function buildPDF({
       );
       // Ignore progress dispatched after this point
       typesettingFinished = true;
+      if (etaCountdownTimer) {
+        clearInterval(etaCountdownTimer);
+        etaCountdownTimer = undefined;
+      }
 
       if (lastEntry) {
         Logger.logInfo(stringifyEntry(lastEntry));
