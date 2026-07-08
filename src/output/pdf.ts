@@ -17,7 +17,6 @@ import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { pathEquals, toError } from '../util.js';
 import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
-import { createEtaEstimator, formatEta } from './progress-eta.js';
 
 export async function buildPDF({
   target,
@@ -36,10 +35,6 @@ export async function buildPDF({
   let lastEntry: ManuscriptEntry | undefined;
   let paginationProgress: { pages: number; fraction: number } | undefined;
   let typesettingFinished = false;
-  const etaEstimator = createEtaEstimator({ now: Date.now });
-  let etaEstimateMs: number | undefined;
-  let etaEstimateTime = Date.now();
-  let etaCountdownTimer: ReturnType<typeof setInterval> | undefined;
 
   function stringifyEntry(entry: ManuscriptEntry) {
     const formattedSourcePath = cyan(
@@ -69,16 +64,7 @@ export async function buildPDF({
       100,
       Math.round(paginationProgress.fraction * 100),
     );
-    // Count down from the last estimate every second so the ETA keeps ticking
-    // toward zero between progress reports.
-    const eta =
-      percent >= 100 || etaEstimateMs === undefined
-        ? undefined
-        : Math.max(0, etaEstimateMs - (Date.now() - etaEstimateTime));
-    const suffix =
-      eta === undefined
-        ? `(${paginationProgress.pages} pages, ${percent}%)`
-        : `(${paginationProgress.pages} pages, ${percent}%, ETA ${formatEta(eta)})`;
+    const suffix = `(${paginationProgress.pages} pages, ${percent}%)`;
     return `${base} ${gray(suffix)}`;
   }
 
@@ -119,15 +105,6 @@ export async function buildPDF({
       return;
     }
     paginationProgress = { pages, fraction };
-    etaEstimator.update(fraction);
-    etaEstimateMs = etaEstimator.estimate();
-    etaEstimateTime = Date.now();
-    if (!etaCountdownTimer) {
-      etaCountdownTimer = setInterval(() => {
-        Logger.logUpdateProgress(renderBuildingText());
-      }, 1000);
-      etaCountdownTimer.unref?.();
-    }
 
     const entry = href ? findEntryByHref(href) : undefined;
     if (entry && entry !== lastEntry) {
@@ -264,10 +241,6 @@ export async function buildPDF({
       );
       // Ignore progress dispatched after this point
       typesettingFinished = true;
-      if (etaCountdownTimer) {
-        clearInterval(etaCountdownTimer);
-        etaCountdownTimer = undefined;
-      }
 
       if (lastEntry) {
         Logger.logInfo(stringifyEntry(lastEntry));
