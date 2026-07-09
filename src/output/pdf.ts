@@ -114,7 +114,7 @@ export async function buildPDF({
         Logger.startLogging(renderBuildingText());
       } else {
         lastEntry = entry;
-        Logger.logUpdate(renderBuildingText());
+        Logger.logUpdateProgress(renderBuildingText());
       }
       return;
     }
