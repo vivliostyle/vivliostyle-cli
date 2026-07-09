@@ -115,6 +115,7 @@ export async function buildPDF({
       } else {
         lastEntry = entry;
         Logger.logUpdateProgress(renderBuildingText());
+        Logger.logInfo('Building pages');
       }
       return;
     }
@@ -128,8 +129,7 @@ export async function buildPDF({
     signal,
     config,
     onBrowserOpen: () => {
-      Logger.logInfo('Building pages');
-      Logger.logUpdateProgress('Building pages');
+      Logger.logUpdate('Building pages');
     },
     onPageOpen: async (openedPage) => {
       openedPage.on('pageerror', (error) => {
