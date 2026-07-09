@@ -8,7 +8,7 @@ import { cyan, gray, green, red } from 'yoctocolors';
 
 import { launchPreview, runBrowserOperationWithAbort } from '../browser.js';
 import type {
-  ManuscriptEntry,
+  ParsedEntry,
   PdfOutput,
   ResolvedTaskConfig,
 } from '../config/resolve.js';
@@ -32,23 +32,33 @@ export async function buildPDF({
   const viewerFullUrl = await getViewerFullUrl(config);
   Logger.debug('viewerFullUrl', viewerFullUrl);
 
-  let lastEntry: ManuscriptEntry | undefined;
+  let lastEntry: ParsedEntry | undefined;
   let paginationProgress: { pages: number; fraction: number } | undefined;
   let typesettingFinished = false;
 
-  function stringifyEntry(entry: ManuscriptEntry) {
-    const formattedSourcePath = cyan(
-      entry.source.type === 'file'
-        ? upath.relative(config.entryContextDir, entry.source.pathname)
-        : entry.source.href,
-    );
-    return `${terminalLink(
-      formattedSourcePath,
-      entry.source.type === 'file'
-        ? pathToFileURL(entry.source.pathname).href
-        : entry.source.href,
-      { fallback: () => formattedSourcePath },
-    )} ${entry.title ? gray(entry.title) : ''}`;
+  function stringifyEntry(entry: ParsedEntry) {
+    const title = entry.title ? gray(entry.title) : '';
+    const source = entry.source ?? entry.template;
+    const fileLink = (file: string) => ({
+      path: upath.relative(config.entryContextDir, file),
+      href: pathToFileURL(file).href,
+    });
+    let input: { path: string; href: string } | undefined;
+    if (source?.type === 'file') {
+      input = fileLink(source.pathname);
+    } else if (source) {
+      // remote (uri) source
+      input = { path: source.href, href: source.href };
+    } else if ('coverImageSrc' in entry) {
+      input = fileLink(entry.coverImageSrc);
+    }
+    if (!input) {
+      // generated entry with no input (auto-generated TOC)
+      return title;
+    }
+    const label = cyan(input.path);
+    const link = terminalLink(label, input.href, { fallback: () => label });
+    return title ? `${link} ${title}` : link;
   }
 
   function entryText() {
@@ -68,15 +78,12 @@ export async function buildPDF({
     return `${base} ${gray(suffix)}`;
   }
 
-  function findEntryByHref(href: string): ManuscriptEntry | undefined {
+  function findEntryByHref(href: string): ParsedEntry | undefined {
     if (!URL.canParse(href)) {
       return;
     }
     const url = new URL(href);
-    return config.entries.find((candidate): candidate is ManuscriptEntry => {
-      if (!('source' in candidate)) {
-        return false;
-      }
+    return config.entries.find((candidate) => {
       if (url.protocol === 'file:') {
         return pathEquals(candidate.target, decodeURI(url.pathname));
       }
