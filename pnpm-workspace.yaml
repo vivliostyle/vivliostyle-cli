@@ -3,6 +3,22 @@ packages:
   - examples/*
   - packages/*
 
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+saveExact: true
+ignoreWorkspaceRootCheck: true
+
+# Exempt from pnpm 11's 1-day supply-chain embargo the packages whose version
+# this repo pins deliberately and adopts the same day they ship: the
+# @vivliostyle/* scope (this repo tracks Vivliostyle.js) and pnpm itself (the
+# devDep mirrors the pinned packageManager). The embargo stays on for the rest.
+minimumReleaseAgeExclude:
+  - '@vivliostyle/*'
+  - 'pnpm'
+
+# pnpm 11 defaults this to "install", which makes the pre-commit hook
+# (`pnpm exec lint-staged`) try to purge and reinstall node_modules and abort
+# with no TTY when the modules dir drifts (e.g. right after pulling this bump).
+verifyDepsBeforeRun: false

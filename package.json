@@ -124,7 +124,7 @@
     "oxfmt": "0.56.0",
     "oxlint": "1.71.0",
     "oxlint-tsgolint": "0.23.0",
-    "pnpm": "10.28.2",
+    "pnpm": "11.10.0",
     "shx": "0.4.0",
     "supertest": "7.2.2",
     "tsdown": "0.22.3",
@@ -191,5 +191,5 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@11.10.0"
 }
