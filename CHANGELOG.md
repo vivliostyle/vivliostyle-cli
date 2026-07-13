@@ -1,5 +1,29 @@
 # @vivliostyle/cli
 
+## 11.1.0
+
+### Minor Changes
+
+- Update Vivliostyle.js to 2.44.0: Pagination progress event, Bug Fixes ([#855](https://github.com/vivliostyle/vivliostyle-cli/pull/855))
+
+- Show pagination progress (current document, page count, and percentage) during PDF builds. ([#853](https://github.com/vivliostyle/vivliostyle-cli/pull/853))
+
+### Patch Changes
+
+- Update Vivliostyle.js to 2.44.1: Bug Fixes ([#861](https://github.com/vivliostyle/vivliostyle-cli/pull/861))
+
+- Give the browser a writable `HOME` for UIDs missing from `/etc/passwd`. ([#846](https://github.com/vivliostyle/vivliostyle-cli/pull/846))
+
+- Show the interactive spinner when running the CLI inside the container image on an interactive terminal instead of falling back to plain logs. ([#854](https://github.com/vivliostyle/vivliostyle-cli/pull/854))
+
+- Restore upstream mupdf (1.28.0) ([#856](https://github.com/vivliostyle/vivliostyle-cli/pull/856))
+
+- Update default browser versions ([#847](https://github.com/vivliostyle/vivliostyle-cli/pull/847))
+
+  - Chrome: 150.0.7871.115
+  - Chromium: 1660895
+  - Firefox: stable_152.0.5
+
 ## 11.0.4
 
 ### Patch Changes
