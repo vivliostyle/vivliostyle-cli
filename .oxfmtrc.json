@@ -9,6 +9,7 @@
   "sortImports": true,
   "sortPackageJson": false,
   "ignorePatterns": [
+    ".changeset/**",
     "docs/**",
     "examples/**",
     "templates/**",
