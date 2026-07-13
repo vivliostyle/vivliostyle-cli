@@ -1,14 +1,14 @@
 import fs from 'node:fs';
-import { URL } from 'node:url';
+import { pathToFileURL, URL } from 'node:url';
 
-import type { Browser, HTTPResponse, Page } from 'puppeteer-core';
+import type { Browser, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
 
 import { launchPreview, runBrowserOperationWithAbort } from '../browser.js';
 import type {
-  ManuscriptEntry,
+  ParsedEntry,
   PdfOutput,
   ResolvedTaskConfig,
 } from '../config/resolve.js';
@@ -32,50 +32,102 @@ export async function buildPDF({
   const viewerFullUrl = await getViewerFullUrl(config);
   Logger.debug('viewerFullUrl', viewerFullUrl);
 
-  let lastEntry: ManuscriptEntry | undefined;
+  let lastEntry: ParsedEntry | undefined;
+  let paginationProgress: { pages: number; fraction: number } | undefined;
+  let typesettingFinished = false;
 
-  function stringifyEntry(entry: ManuscriptEntry) {
-    const formattedSourcePath = cyan(
-      entry.source.type === 'file'
-        ? upath.relative(config.entryContextDir, entry.source.pathname)
-        : entry.source.href,
-    );
-    return `${terminalLink(
-      formattedSourcePath,
-      entry.source.type === 'file'
-        ? `file://${entry.source.pathname}`
-        : entry.source.href,
-      {
-        fallback: () => formattedSourcePath,
-      },
-    )} ${entry.title ? gray(entry.title) : ''}`;
+  function stringifyEntry(entry: ParsedEntry) {
+    const title = entry.title ? gray(entry.title) : '';
+    const source = entry.source ?? entry.template;
+    const fileLink = (file: string) => ({
+      path: upath.relative(config.entryContextDir, file),
+      href: pathToFileURL(file).href,
+    });
+    let input: { path: string; href: string } | undefined;
+    if (source?.type === 'file') {
+      input = fileLink(source.pathname);
+    } else if (source) {
+      // remote (uri) source
+      input = { path: source.href, href: source.href };
+    } else if ('coverImageSrc' in entry) {
+      input = fileLink(entry.coverImageSrc);
+    }
+    if (!input) {
+      // generated entry with no input (auto-generated TOC)
+      return title;
+    }
+    const label = cyan(input.path);
+    const link = terminalLink(label, input.href, { fallback: () => label });
+    return title ? `${link} ${title}` : link;
   }
 
-  function handleEntry(response: HTTPResponse) {
-    const entry = config.entries.find(
-      (candidate): candidate is ManuscriptEntry => {
-        if (!('source' in candidate)) {
-          return false;
-        }
-        const url = new URL(response.url());
-        return url.protocol === 'file:'
-          ? pathEquals(candidate.target, url.pathname)
-          : pathEquals(
-              upath.relative(config.workspaceDir, candidate.target),
-              url.pathname.slice(1),
-            );
-      },
-    );
-    if (entry) {
-      if (!lastEntry) {
-        lastEntry = entry;
-        Logger.logUpdate(stringifyEntry(entry));
-        return;
-      }
-      Logger.logSuccess(stringifyEntry(lastEntry));
-      Logger.startLogging(stringifyEntry(entry));
-      lastEntry = entry;
+  function entryText() {
+    return lastEntry ? stringifyEntry(lastEntry) : 'Building pages';
+  }
+
+  function renderBuildingText() {
+    const base = entryText();
+    if (!paginationProgress) {
+      return base;
     }
+    const percent = Math.min(
+      100,
+      Math.round(paginationProgress.fraction * 100),
+    );
+    const suffix = `(${paginationProgress.pages} pages, ${percent}%)`;
+    return `${base} ${gray(suffix)}`;
+  }
+
+  function findEntryByHref(href: string): ParsedEntry | undefined {
+    if (!URL.canParse(href)) {
+      return;
+    }
+    const url = new URL(href);
+    return config.entries.find((candidate) => {
+      if (url.protocol === 'file:') {
+        return pathEquals(candidate.target, decodeURI(url.pathname));
+      }
+      // Served documents are mounted under the base path (default: /vivliostyle)
+      const basePrefix = `${config.base}/`;
+      return (
+        url.pathname.startsWith(basePrefix) &&
+        pathEquals(
+          upath.relative(config.workspaceDir, candidate.target),
+          decodeURI(url.pathname.slice(basePrefix.length)),
+        )
+      );
+    });
+  }
+
+  function handlePaginationProgress(
+    pages: number,
+    fraction: number,
+    href?: string,
+  ) {
+    if (
+      typesettingFinished ||
+      !Number.isFinite(pages) ||
+      !Number.isFinite(fraction)
+    ) {
+      return;
+    }
+    paginationProgress = { pages, fraction };
+
+    const entry = href ? findEntryByHref(href) : undefined;
+    if (entry && entry !== lastEntry) {
+      if (lastEntry) {
+        Logger.logInfo(stringifyEntry(lastEntry));
+        lastEntry = entry;
+        Logger.startLogging(renderBuildingText());
+      } else {
+        lastEntry = entry;
+        Logger.logUpdateProgress(renderBuildingText());
+        Logger.logInfo('Building pages');
+      }
+      return;
+    }
+
+    Logger.logUpdateProgress(renderBuildingText());
   }
 
   const { browser, page, closeBrowser } = await launchPreview({
@@ -86,7 +138,7 @@ export async function buildPDF({
     onBrowserOpen: () => {
       Logger.logUpdate('Building pages');
     },
-    onPageOpen: (openedPage) => {
+    onPageOpen: async (openedPage) => {
       openedPage.on('pageerror', (error) => {
         Logger.logError(red(toError(error).message));
       });
@@ -121,8 +173,6 @@ export async function buildPDF({
           response.url(),
         );
 
-        handleEntry(response);
-
         if (400 > response.status() && 200 <= response.status()) {
           return;
         }
@@ -133,6 +183,38 @@ export async function buildPDF({
 
         Logger.logError(red(`${response.status()}`), response.url());
       });
+
+      try {
+        await openedPage.exposeFunction(
+          '__vsCliReportPaginationProgress',
+          handlePaginationProgress,
+        );
+        await openedPage.evaluateOnNewDocument(() => {
+          /* v8 ignore start */
+          let tick = 0;
+          const timer = setInterval(() => {
+            if (!window.coreViewer) {
+              // Give up if the viewer never appears
+              if (++tick > 600) {
+                clearInterval(timer);
+              }
+              return;
+            }
+            clearInterval(timer);
+            window.coreViewer.addListener('paginationprogress', (payload) => {
+              // oxlint-disable-next-line no-underscore-dangle -- exposed function name prefixed to avoid page global collisions
+              window.__vsCliReportPaginationProgress?.(
+                payload.pages ?? 0,
+                payload.fraction ?? 0,
+                payload.href,
+              );
+            });
+          }, 100);
+          /* v8 ignore stop */
+        });
+      } catch (error) {
+        Logger.debug('Failed to set up pagination progress reporting', error);
+      }
 
       openedPage.setDefaultTimeout(config.timeout);
     },
@@ -164,9 +246,11 @@ export async function buildPDF({
         () => window.coreViewer.readyState === 'complete',
         { polling: 1000, signal },
       );
+      // Ignore progress dispatched after this point
+      typesettingFinished = true;
 
       if (lastEntry) {
-        Logger.logSuccess(stringifyEntry(lastEntry));
+        Logger.logInfo(stringifyEntry(lastEntry));
       }
 
       const pageProgression = await page.evaluate((): 'ltr' | 'rtl' =>
