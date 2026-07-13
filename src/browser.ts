@@ -25,6 +25,7 @@ import {
   isRunningOnWSL,
   registerCleanupHandler,
   toError,
+  useTmpDirectory,
 } from './util.js';
 
 /* oxlint-disable typescript/no-unsafe-type-assertion */
@@ -216,9 +217,18 @@ async function launchBrowser({
     protocolTimeout,
   } satisfies LaunchOptions;
   Logger.debug('launchOptions %O', launchOptions);
+  // #416: set Chromium language to English to avoid locale-dependent issues
+  const env: NodeJS.ProcessEnv = { ...process.env, LANG: 'en.UTF-8' };
+  // Browsers store transient data that never affects rendering (crash dumps,
+  // profiles.ini) under HOME (chrome_paths_linux.cc, nsXREDirProvider.cpp). A
+  // container UID with no /etc/passwd entry (e.g. `docker run --user`)
+  // gets the unwritable HOME `/`, so the browser cannot launch (see #835).
+  if (process.platform === 'linux' && !isWritableDir(env.HOME)) {
+    [env.HOME] = await useTmpDirectory();
+  }
   const browserLaunch = puppeteer.launch({
     ...launchOptions,
-    env: { ...process.env, LANG: 'en.UTF-8' },
+    env,
     handleSIGINT: false,
     handleSIGTERM: false,
     handleSIGHUP: false,
@@ -230,6 +240,21 @@ async function launchBrowser({
   const browser = await browserLaunch;
   const [browserContext] = browser.browserContexts();
   return { browser, browserContext, closeBrowser };
+}
+
+function isWritableDir(dir: string | undefined): boolean {
+  if (!dir) {
+    return false;
+  }
+  try {
+    if (!fs.statSync(dir).isDirectory()) {
+      return false;
+    }
+    fs.accessSync(dir, fs.constants.W_OK | fs.constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getPuppeteerCacheDir() {
