@@ -645,14 +645,23 @@ describe('mounted system fonts', () => {
 });
 
 describe('extensibility', () => {
-  // For now this test looks trivial; it runs as a probe and as self-documentation
-  // with a future aggressively slimmed, distroless-like base in mind.
+  // perl-base (Essential) was purged, so /usr/bin/perl is gone and the package DB
+  // is left with unmet dependencies. Restoring it through apt is circular: apt
+  // refuses a broken system, and the --fix-broken repair it would run relies on
+  // perl (maintainer scripts, dpkg triggers), which is exactly what is missing.
+  // dpkg breaks the cycle by unpacking perl-base directly (--force-depends past
+  // the unmet deps), putting the interpreter back; only then can apt --fix-broken
+  // repair the remaining purged deps so the target package installs.
   it(
     'installs a package via apt and runs it',
     async () => {
       const { exitCode, output } = await runOneShot(
         `set -e
         apt-get update
+        apt-get download perl-base
+        dpkg --install --force-depends perl-base_*.deb
+        rm --force perl-base_*.deb
+        apt-get install --fix-broken --yes --no-install-recommends
         apt-get install --yes --no-install-recommends rename
         rm --recursive --force /var/lib/apt/lists/*
         cd "$(mktemp -d)"
@@ -667,13 +676,22 @@ describe('extensibility', () => {
     Timeout.MEDIUM,
   );
 
+  // The image build strips node-gyp; reinstalling nodejs restores it. openssl
+  // must return first or apt cannot verify the NodeSource TLS certificate.
   it(
     'installs a native module with node-gyp and runs it',
     async () => {
       const { exitCode, output } = await runOneShot(
         `set -e
         apt-get update
-        apt-get install --yes --no-install-recommends make g++
+        apt-get download perl-base
+        dpkg --install --force-depends perl-base_*.deb
+        rm --force perl-base_*.deb
+        apt-get install --fix-broken --yes --no-install-recommends
+        apt-get install --yes --no-install-recommends openssl
+        apt-get update
+        apt-get install --yes --no-install-recommends --reinstall nodejs
+        apt-get install --yes --no-install-recommends python3 make g++
         rm --recursive --force /var/lib/apt/lists/*
         cd "$(mktemp -d)"
         npm init -y
