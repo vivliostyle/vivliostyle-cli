@@ -1039,9 +1039,14 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-imgfigcaptionorder"></a> `imgFigcaptionOrder?` | `"img-figcaption"` \| `"figcaption-img"` |
 | <a id="property-language"></a> `language?` | `string` |
 | <a id="property-math"></a> `math?` | `boolean` |
+| <a id="property-mathrenderer"></a> `mathRenderer?` | `"mathjax"` \| `"mathml"` |
+| <a id="property-parsefigcaptionasinline"></a> `parseFigcaptionAsInline?` | `boolean` |
 | <a id="property-partial"></a> `partial?` | `boolean` |
 | <a id="property-replace"></a> `replace?` | `ReplaceRule`[] |
+| <a id="property-rewriterelativehrefextensions"></a> `rewriteRelativeHrefExtensions?` | `boolean` \| readonly `string`[] |
 | <a id="property-style"></a> `style?` | `string` \| `string`[] |
+| <a id="property-table"></a> `table?` | `object` |
+| `table.cell?` | `"align-attribute"` \| `"align-class"` \| `"align-style"` \| `TableCellHook` |
 | <a id="property-title"></a> `title?` | `string` |
 
 ***
