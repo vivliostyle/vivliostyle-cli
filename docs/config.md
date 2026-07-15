@@ -670,13 +670,16 @@ type CoverConfig = {
     Document language (ignored in partial mode).
 
   - `editPlugins`: (plugins: BuiltinPlugins) => EditedPlugins  
-    Edit the plugin lists assembled by VFM before they are used.
+    Edit the plugin lists assembled by VFM before they are used. Only head-prepend and tail-append to the built-in lists are behaviorally stable across minor releases.
 
   - `hardLineBreaks`: boolean  
     Add `<br>` at the position of hard line breaks, without needing spaces.
 
   - `math`: boolean  
     Enable math syntax.
+
+  - `mathRenderer`: "mathjax" | "mathml"  
+    Renderer used when `math` is enabled. `'mathjax'` (default): keep the LaTeX source and load MathJax for runtime rendering. `'mathml'`: convert LaTeX to MathML at build time via temml, with no runtime script.
 
   - `partial`: boolean  
     Output markdown fragments.
@@ -693,7 +696,15 @@ type CoverConfig = {
   - `captionlessImagePolicy`: "paragraph" | "figure" | "figure-with-figcaption"  
     How to render an image-only paragraph whose `alt` is empty.
 
+  - `parseFigcaptionAsInline`: boolean  
+    Re-parse figcaption text as inline markdown (math, ruby, emphasis, footnotes, etc.).
+
   - `footnote`: "pandoc" | "dpub" | "gcpm" | {mode: "pandoc"} | {mode: "dpub"; call?: import("hast").Properties | DpubCallFactory; body?: import("hast").Properties | DpubBodyFactory} | {mode: "gcpm"; body?: import("hast").Properties | GcpmBodyFactory; duplicatedCall?: import("hast").Properties | GcpmDuplicatedCallFactory}
+
+  - `rewriteRelativeHrefExtensions`: boolean | (string)[]  
+    Rewrite the trailing extension of relative hyperlink hrefs to *.html. `true` is shorthand for `["md"]`; pass an array (e.g. `["md", "adoc"]`) to broaden the set of source extensions whose links get rewritten. Only `<a>` and `<area>` elements are touched (the elements that unconditionally create hyperlinks per HTML Standard §4.6); `<base>` and `<link>` are left alone because their `href` is not an author-specified navigation target. Only relative references (no scheme, no host, and the path does not start with `/`) are touched; remote URLs and rooted paths are left untouched. The rewrite is purely syntactic. The file system is not consulted, so producing the target `*.html` is the embedder's responsibility.
+
+  - `table`: {cell?: "align-attribute" | "align-class" | "align-style" | TableCellHook}
 
   - `replace`: ({test: RegExp; match: (result: RegExpMatchArray, h: typeof import("hastscript").h) => import("unist").Node | string})[]
 
@@ -709,6 +720,7 @@ type VfmConfig = {
   ) => EditedPlugins;
   hardLineBreaks?: boolean;
   math?: boolean;
+  mathRenderer?: "mathjax" | "mathml";
   partial?: boolean;
   disableFormatHtml?: boolean;
   imgFigcaptionOrder?:
@@ -719,6 +731,7 @@ type VfmConfig = {
     | "paragraph"
     | "figure"
     | "figure-with-figcaption";
+  parseFigcaptionAsInline?: boolean;
   footnote?:
     | "pandoc"
     | "dpub"
@@ -742,6 +755,16 @@ type VfmConfig = {
           | import("hast").Properties
           | GcpmDuplicatedCallFactory;
       };
+  rewriteRelativeHrefExtensions?:
+    | boolean
+    | string[];
+  table?: {
+    cell?:
+      | "align-attribute"
+      | "align-class"
+      | "align-style"
+      | TableCellHook;
+  };
   replace?: {
     test: RegExp;
     match: (

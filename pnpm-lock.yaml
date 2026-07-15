@@ -36,8 +36,8 @@ importers:
         specifier: 25.0.1-vivliostyle-cli.2
         version: 25.0.1-vivliostyle-cli.2(@napi-rs/canvas@0.1.69)
       '@vivliostyle/vfm':
-        specifier: 2.7.0
-        version: 2.7.0(typescript@6.0.3)
+        specifier: 2.7.2
+        version: 2.7.2(typescript@6.0.3)
       '@vivliostyle/viewer':
         specifier: 2.44.1
         version: 2.44.1
@@ -2669,9 +2669,6 @@ packages:
   '@types/mdast@3.0.15':
     resolution: {integrity: sha512-LnwD+mUEfxWMa1QpDraczIn6k0Ee3SMicuYSSzS6ZYl2gKS09EClnJYGd8Du6rfc5r/GZEk5o1mRb8TaTj03sQ==}
 
-  '@types/mdast@4.0.3':
-    resolution: {integrity: sha512-LsjtqsyF+d2/yFOYaN22dHZI1Cpwkrj+g06G8+qtUKlhovPW89YhqSnfKtMbkgmEtYpH2gydRNULd6y8mciAFg==}
-
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
@@ -2898,9 +2895,33 @@ packages:
       '@napi-rs/canvas':
         optional: true
 
-  '@vivliostyle/vfm@2.7.0':
-    resolution: {integrity: sha512-IR3xRCkXO1PQn+JwOItVaUMbwFD1qQmaqQm/fbD2+30jdG6PsQ2xjdFIARacfOKJip++ASmdnqCOUQ5pnOJfdA==}
-    engines: {node: '>= 20'}
+  '@vivliostyle/remark-footnote-dpub@1.0.1':
+    resolution: {integrity: sha512-4t7d5oja27QCmm3xUFkTcVOxwrj209M8zD7wNXu5S6k4719T2yRJpBh4RBorz2EHL9B2b5Eyc+MiVUtCIdTPXQ==}
+    engines: {node: '>= 22'}
+
+  '@vivliostyle/remark-footnote-gcpm@1.0.1':
+    resolution: {integrity: sha512-VQtkN7gPMxDmeW3kdrIjfuS265fUYiRuC70MYxNeAIgAu5+r0BdpLOJzGsSutq44XrMXhKQsiCigoo/Kkfb/YQ==}
+    engines: {node: '>= 22'}
+
+  '@vivliostyle/remark-footnote-pandoc@1.0.1':
+    resolution: {integrity: sha512-lSCCKiHAHPwIyKvlER/bwwc/MS8eSjuKVwn30AVkk1AXz9mJgM4iwmk5vmvqV+r1xgvZ9gHyyTKU/MHQ9aGFoQ==}
+    engines: {node: '>= 22'}
+
+  '@vivliostyle/remark-ruby@1.0.1':
+    resolution: {integrity: sha512-aTxQtLJFPEiftbSjfH19b3RVLrAjzoAcfBvGfFKggZ9f3l+FCm9eToOdC3R5CDffnrE1Cy5rmbQTg1sKekVkHA==}
+    engines: {node: '>= 22'}
+
+  '@vivliostyle/remark-sectionize@1.0.1':
+    resolution: {integrity: sha512-aWcBD9BC0Ya8BU55CfIUo0G6uIqoKfOeOGshe/58h8r+Nsih/D7jre7POHtE9xWxysAxbcyY+EEBVSHfu6np6g==}
+    engines: {node: '>= 22'}
+
+  '@vivliostyle/vfm-internal-utils@1.0.1':
+    resolution: {integrity: sha512-0ceDTos/St3Ft/ahhcTTKjm5uogDj7/uiAF/zwYbJPry6y+vqPLrurUnvPjr5qQlnbiAO6lpLJJuaj2SfGP/eA==}
+    engines: {node: '>= 22'}
+
+  '@vivliostyle/vfm@2.7.2':
+    resolution: {integrity: sha512-VHHhriZQGSis9z4Jd+E4IqqWlm+lC0IgeVSliVYDK/IfgIwyyeUKAKidc4En94U0Uf1BtuicvEu1Gv3s94KNJA==}
+    engines: {node: '>= 22'}
     hasBin: true
 
   '@vivliostyle/viewer@2.44.1':
@@ -4494,6 +4515,10 @@ packages:
 
   js-yaml@4.1.1:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
+    hasBin: true
+
+  js-yaml@4.3.0:
+    resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
     hasBin: true
 
   jsbn@1.1.0:
@@ -6225,6 +6250,10 @@ packages:
     engines: {node: '>=18'}
     deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
+  temml@0.13.3:
+    resolution: {integrity: sha512-GLNEdf5qBWux3adbOxFus4jlds8nCdEIkkKq99m/4GGTfqnsjlVlK/i371Ux7yYSg/WNmOyAkNT/GJlZoJ0v+w==}
+    engines: {node: '>=18.13.0'}
+
   term-size@2.2.1:
     resolution: {integrity: sha512-wK0Ri4fOGjv/XPy8SBHZChl8CM7uMc5VML7SqiQ0zG7+J5Vr+RMQDoHa2CNT6KHUnTGIXH34UDMkPzAUyapBZg==}
     engines: {node: '>=8'}
@@ -6507,9 +6536,6 @@ packages:
   unist-util-is@5.2.1:
     resolution: {integrity: sha512-u9njyyfEh43npf1M+yGKDGVPbY/JWEemg5nH05ncKPfi+kBbKBJoTdsogMu33uhytuLlv9y0O7GH7fEdwLdLQw==}
 
-  unist-util-is@6.0.0:
-    resolution: {integrity: sha512-2qCTHimwdxLfz+YzdGfkqNlH0tLi9xjTnHddPmJwtIG9MGsdbutfTc4P+haPD7l7Cjxf/WZj+we5qfVPvvxfYw==}
-
   unist-util-is@6.0.1:
     resolution: {integrity: sha512-LsiILbtBETkDz8I9p1dQ0uyRUWuaQzd/cuEeS1hoRSyW5E5XGmTzlwY1OrNzzakGowI9Dr/I8HVaw4hTtnxy8g==}
 
@@ -6557,9 +6583,6 @@ packages:
 
   unist-util-visit-parents@5.1.3:
     resolution: {integrity: sha512-x6+y8g7wWMyQhL1iZfhIPhDAs7Xwbn9nRosDXl7qoPTSCy0yNxnKc+hWokFifWQIDGi154rdUqKvbCa4+1kLhg==}
-
-  unist-util-visit-parents@6.0.1:
-    resolution: {integrity: sha512-L/PqWzfTP9lzzEa6CKs0k2nARxTdZduw3zyh8d2NVBnsyvHjSX4TWse388YrrQKbvI8w20fGjGlhgT96WwKykw==}
 
   unist-util-visit-parents@6.0.2:
     resolution: {integrity: sha512-goh1s1TBrqSqukSc8wrjwWhL0hiJxgA8m4kFxGlQ+8FYQ3C/m11FcTs4YYem7V664AhHVvgoQLk890Ssdsr2IQ==}
@@ -6658,6 +6681,9 @@ packages:
   upath@2.0.1:
     resolution: {integrity: sha512-1uEe95xksV1O0CYKXo8vQvN1JEbtJp7lb7C5U9HMsIp6IVwntkH/oNUzyVNQSd4S1sYk2FpSSW44FqMc8qee5w==}
     engines: {node: '>=4'}
+
+  uri-js@4.4.1:
+    resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
   urlpattern-polyfill@10.0.0:
     resolution: {integrity: sha512-H/A06tKD7sS1O1X2SshBVeA5FLycRpjqiBeqGKmBwBDBy28EnRjORxTNe269KSSr5un5qyWi1iL61wLxpd+ZOg==}
@@ -7088,7 +7114,7 @@ snapshots:
     dependencies:
       '@11ty/eleventy-utils': 2.0.7
       chokidar: 3.6.0
-      debug: 4.4.1
+      debug: 4.4.0
       finalhandler: 1.3.1
       mime: 3.0.0
       minimist: 1.2.8
@@ -7133,7 +7159,7 @@ snapshots:
   '@11ty/eleventy-plugin-bundle@3.0.6(posthtml@0.16.6)':
     dependencies:
       '@11ty/eleventy-utils': 2.0.7
-      debug: 4.4.1
+      debug: 4.4.0
       posthtml-match-helper: 2.0.3(posthtml@0.16.6)
     transitivePeerDependencies:
       - posthtml
@@ -7826,7 +7852,7 @@ snapshots:
       postcss: 8.5.3
       postcss-nested: 6.2.0(postcss@8.5.3)
       unist-util-visit: 5.1.0
-      unist-util-visit-parents: 6.0.1
+      unist-util-visit-parents: 6.0.2
 
   '@expressive-code/plugin-frames@0.37.1':
     dependencies:
@@ -9045,10 +9071,6 @@ snapshots:
     dependencies:
       '@types/unist': 2.0.11
 
-  '@types/mdast@4.0.3':
-    dependencies:
-      '@types/unist': 3.0.3
-
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -9301,18 +9323,89 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@vivliostyle/vfm@2.7.0(typescript@6.0.3)':
+  '@vivliostyle/remark-footnote-dpub@1.0.1(typescript@6.0.3)':
+    dependencies:
+      '@types/hast': 2.3.10
+      '@types/unist': 2.0.11
+      '@vivliostyle/vfm-internal-utils': 1.0.1(typescript@6.0.3)
+      hast-util-select: 5.0.5
+      hastscript: 7.2.0
+      mdast-util-to-hast: 11.3.0
+      unified: 9.2.2
+      unist-builder: 3.0.1
+      valibot: 1.2.0(typescript@6.0.3)
+    transitivePeerDependencies:
+      - typescript
+
+  '@vivliostyle/remark-footnote-gcpm@1.0.1(typescript@6.0.3)':
+    dependencies:
+      '@types/hast': 2.3.10
+      '@vivliostyle/vfm-internal-utils': 1.0.1(typescript@6.0.3)
+      hastscript: 7.2.0
+      mdast-util-to-hast: 11.3.0
+      unified: 9.2.2
+      valibot: 1.2.0(typescript@6.0.3)
+    transitivePeerDependencies:
+      - typescript
+
+  '@vivliostyle/remark-footnote-pandoc@1.0.1(typescript@6.0.3)':
+    dependencies:
+      '@types/hast': 2.3.10
+      '@types/unist': 2.0.11
+      hast-util-select: 5.0.5
+      hastscript: 7.2.0
+      unified: 9.2.2
+      unist-builder: 3.0.1
+      valibot: 1.2.0(typescript@6.0.3)
+    transitivePeerDependencies:
+      - typescript
+
+  '@vivliostyle/remark-ruby@1.0.1':
+    dependencies:
+      '@types/mdast': 3.0.15
+      '@types/unist': 2.0.11
+      mdast-util-to-hast: 11.3.0
+      unified: 9.2.2
+      unist-builder: 3.0.1
+
+  '@vivliostyle/remark-sectionize@1.0.1':
     dependencies:
       '@types/hast': 2.3.10
       '@types/mdast': 3.0.15
+      '@types/unist': 2.0.11
+      unist-util-find-after: 4.0.1
+      unist-util-visit-parents: 5.1.3
+      vfile: 4.2.1
+
+  '@vivliostyle/vfm-internal-utils@1.0.1(typescript@6.0.3)':
+    dependencies:
+      '@types/hast': 2.3.10
+      hastscript: 7.2.0
+      valibot: 1.2.0(typescript@6.0.3)
+    transitivePeerDependencies:
+      - typescript
+
+  '@vivliostyle/vfm@2.7.2(typescript@6.0.3)':
+    dependencies:
+      '@types/hast': 2.3.10
+      '@types/mdast': 3.0.15
+      '@types/unist': 2.0.11
+      '@vivliostyle/remark-footnote-dpub': 1.0.1(typescript@6.0.3)
+      '@vivliostyle/remark-footnote-gcpm': 1.0.1(typescript@6.0.3)
+      '@vivliostyle/remark-footnote-pandoc': 1.0.1(typescript@6.0.3)
+      '@vivliostyle/remark-ruby': 1.0.1
+      '@vivliostyle/remark-sectionize': 1.0.1
+      '@vivliostyle/vfm-internal-utils': 1.0.1(typescript@6.0.3)
       debug: 4.4.3
       doctype: 3.0.1
       github-slugger: 2.0.0
       hast-util-find-and-replace: 3.2.1
+      hast-util-from-html: 1.0.2
       hast-util-is-element: 2.1.3
+      hast-util-raw: 6.1.0
       hast-util-select: 5.0.5
       hastscript: 7.2.0
-      js-yaml: 4.1.1
+      js-yaml: 4.3.0
       md-attr-parser: 1.3.0
       mdast-util-find-and-replace: 2.2.2
       mdast-util-to-hast: 11.3.0
@@ -9329,6 +9422,7 @@ snapshots:
       remark-parse: 8.0.3
       remark-rehype: 8.1.0
       remark-shortcodes: 0.3.1(remark-parse@8.0.3)
+      temml: 0.13.3
       to-vfile: 6.1.0
       unified: 9.2.2
       unist-builder: 3.0.1
@@ -9339,7 +9433,9 @@ snapshots:
       unist-util-select: 4.0.3
       unist-util-visit: 4.1.2
       unist-util-visit-parents: 5.1.3
+      uri-js: 4.4.1
       valibot: 1.2.0(typescript@6.0.3)
+      vfile: 4.2.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -11160,6 +11256,10 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
+  js-yaml@4.3.0:
+    dependencies:
+      argparse: 2.0.1
+
   jsbn@1.1.0: {}
 
   jsesc@3.1.0: {}
@@ -11417,7 +11517,7 @@ snapshots:
 
   mdast-util-from-markdown@0.8.5:
     dependencies:
-      '@types/mdast': 3.0.10
+      '@types/mdast': 3.0.15
       mdast-util-to-string: 2.0.0
       micromark: 2.11.4
       parse-entities: 2.0.0
@@ -11579,7 +11679,7 @@ snapshots:
   mdast-util-to-hast@13.1.0:
     dependencies:
       '@types/hast': 3.0.4
-      '@types/mdast': 4.0.3
+      '@types/mdast': 4.0.4
       '@ungap/structured-clone': 1.2.0
       devlop: 1.1.0
       micromark-util-sanitize-uri: 2.0.0
@@ -13074,7 +13174,7 @@ snapshots:
 
   send@1.2.0:
     dependencies:
-      debug: 4.4.1
+      debug: 4.4.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
@@ -13505,6 +13605,8 @@ snapshots:
       minizlib: 3.1.0
       yallist: 5.0.0
 
+  temml@0.13.3: {}
+
   term-size@2.2.1: {}
 
   terminal-link@4.0.0:
@@ -13774,10 +13876,6 @@ snapshots:
     dependencies:
       '@types/unist': 2.0.11
 
-  unist-util-is@6.0.0:
-    dependencies:
-      '@types/unist': 3.0.3
-
   unist-util-is@6.0.1:
     dependencies:
       '@types/unist': 3.0.3
@@ -13849,11 +13947,6 @@ snapshots:
       '@types/unist': 2.0.11
       unist-util-is: 5.2.1
 
-  unist-util-visit-parents@6.0.1:
-    dependencies:
-      '@types/unist': 3.0.3
-      unist-util-is: 6.0.0
-
   unist-util-visit-parents@6.0.2:
     dependencies:
       '@types/unist': 3.0.3
@@ -13899,6 +13992,10 @@ snapshots:
   upath@1.2.0: {}
 
   upath@2.0.1: {}
+
+  uri-js@4.4.1:
+    dependencies:
+      punycode: 2.3.1
 
   urlpattern-polyfill@10.0.0: {}
 
