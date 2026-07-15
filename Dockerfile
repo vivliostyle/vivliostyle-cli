@@ -33,13 +33,10 @@ RUN set -x \
     unzip \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* `npm config get cache`/_npx
 
-# Install fonts
-RUN set -x \
-  && apt-get update -qq \
-  && apt-get upgrade -yqq \
-  # install all Noto fonts
-  && apt-get install -y fonts-noto \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Tofu fallback (#832)
+# https://github.com/adobe-fonts/adobe-notdef/releases/tag/1.001
+COPY build/adobe-notdef/AND-Regular.otf /usr/share/fonts/opentype/adobe-notdef/
+COPY build/adobe-notdef/LICENSE.md /usr/share/doc/adobe-notdef/
 
 # Install Node.js
 RUN set -x \
@@ -63,9 +60,6 @@ RUN set -x \
     && chromium --version \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
   fi
-
-# Font aliases for Noto CJK fonts
-COPY build/fonts.conf /etc/fonts/local.conf
 
 RUN set -x \
   && mkdir -p /opt \
@@ -116,6 +110,20 @@ RUN mkdir -p /opt/puppeteer \
 
 RUN ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vivliostyle \
   && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vs
+
+# Install Noto fonts
+COPY build/fonts.conf /tmp/fonts.conf
+ARG BUNDLE_NOTO=1
+RUN set -x \
+  && if [ "$BUNDLE_NOTO" = 1 ]; then \
+    apt-get update -qq \
+    && apt-get install -y -qq fonts-noto \
+    && mkdir -p /etc/fonts \
+    && cp /tmp/fonts.conf /etc/fonts/local.conf \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
+  else \
+    rm -f /tmp/fonts.conf; \
+  fi
 
 USER vivliostyle
 WORKDIR /data
