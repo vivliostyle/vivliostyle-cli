@@ -108,3 +108,14 @@ jobs:
       - name: Inspect
         run: |
           docker buildx imagetools inspect localhost:5000/vivliostyle/cli:latest
+      - name: Pull the built image into the Docker daemon
+        run: docker pull localhost:5000/vivliostyle/cli:latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install
+      - name: Run the image tests
+        run: pnpm test:docker
+        env:
+          VIVLIOSTYLE_CLI_IMAGE: localhost:5000/vivliostyle/cli:latest
