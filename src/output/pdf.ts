@@ -117,14 +117,8 @@ export async function buildPDF({
     if (entry && entry !== lastEntry) {
       if (lastEntry) {
         Logger.logInfo(stringifyEntry(lastEntry));
-        lastEntry = entry;
-        Logger.startLogging(renderBuildingText());
-      } else {
-        lastEntry = entry;
-        Logger.logUpdateProgress(renderBuildingText());
-        Logger.logInfo('Building pages');
       }
-      return;
+      lastEntry = entry;
     }
 
     Logger.logUpdateProgress(renderBuildingText());

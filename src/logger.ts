@@ -110,7 +110,7 @@ export class Logger {
       return;
     }
     if (this.#loggerInstance) {
-      this.#loggerInstance.#spinnerInstance.text = text;
+      this.#loggerInstance.#setCheckpointText(text);
       return this.#loggerInstance;
     }
     this.#loggerInstance = new Logger(this.#stderr);
@@ -122,19 +122,25 @@ export class Logger {
     if (this.#logLevel === 0) {
       return;
     }
-    if (!this.#spinner || !this.isInteractive) {
+    const instance = this.#loggerInstance;
+    if (!instance || !this.isInteractive) {
       this.logInfo(text);
       return;
     }
-    const currentMsg = this.#spinner?.text;
-    this.logUpdate(currentMsg);
-    this.#spinner.stop(`${infoSymbol} ${text}\n`);
+    const spinner = instance.#spinnerInstance;
+    spinner.stop(
+      this.#nonBlockingLogPrinted
+        ? undefined
+        : `${infoSymbol} ${instance.#checkpointText}`,
+    );
+    this.#nonBlockingLogPrinted = true;
+    spinner.start();
+    spinner.stop(`${infoSymbol} ${text}\n`);
     return {
       [Symbol.dispose](): void {
         if (Logger.isInteractive) {
           Logger.#console.log('');
-          Logger.#spinner?.start(currentMsg);
-          Logger.#nonBlockingLogPrinted = true;
+          Logger.#spinner?.start();
         }
       },
     };
@@ -148,16 +154,19 @@ export class Logger {
   }
 
   static logUpdate(...messages: unknown[]): void {
-    if (!this.#spinner || !this.isInteractive) {
+    const instance = this.#loggerInstance;
+    if (!instance || !this.isInteractive) {
       this.logInfo(...messages);
       return;
     }
-    this.#spinner.stop(
+    instance.#spinnerInstance.stop(
       this.#nonBlockingLogPrinted
         ? undefined
-        : `${infoSymbol} ${this.#spinner.text}`,
+        : `${infoSymbol} ${instance.#checkpointText}`,
     );
-    this.#spinner.start(messages.join(' '));
+    const text = messages.join(' ');
+    instance.#setCheckpointText(text);
+    instance.#spinnerInstance.start();
     this.#nonBlockingLogPrinted = false;
   }
 
@@ -171,7 +180,6 @@ export class Logger {
       return;
     }
     this.#spinner.text = messages.join(' ');
-    this.#nonBlockingLogPrinted = true;
   }
 
   static getMessage(message: string, symbol?: string): string {
@@ -182,7 +190,8 @@ export class Logger {
     logMethod: 'warn' | 'error' | 'info',
     message: string,
   ) {
-    if (!this.#spinner || !this.isInteractive) {
+    const instance = this.#loggerInstance;
+    if (!instance || !this.isInteractive) {
       const line = this.#logPrefix ? `${this.#logPrefix} ${message}` : message;
       if (this.#logLevel >= 3) {
         this.debug(line);
@@ -191,10 +200,16 @@ export class Logger {
       }
       return;
     }
-    this.logUpdate(this.#spinner.text);
+    const spinner = instance.#spinnerInstance;
+    spinner.stop(
+      this.#nonBlockingLogPrinted
+        ? undefined
+        : `${infoSymbol} ${instance.#checkpointText}`,
+    );
     this.#nonBlockingLogPrinted = true;
-    this.#spinner.stop(message);
-    this.#spinner.start();
+    spinner.start();
+    spinner.stop(message);
+    spinner.start();
   }
 
   static logSuccess(...messages: unknown[]): void {
@@ -299,6 +314,7 @@ export class Logger {
   }
 
   #spinnerInstance: Spinner;
+  #checkpointText = '';
   #disposeSpinnerCleanupHandler: (() => void) | undefined;
 
   constructor(stream: Writable) {
@@ -313,8 +329,14 @@ export class Logger {
     });
   }
 
+  #setCheckpointText(text: string) {
+    this.#checkpointText = text;
+    this.#spinnerInstance.text = text;
+  }
+
   #start(text: string) {
-    this.#spinnerInstance.start(text);
+    this.#setCheckpointText(text);
+    this.#spinnerInstance.start();
     this.#disposeSpinnerCleanupHandler = registerCleanupHandler(
       'Stopping spinner',
       () => {
@@ -328,7 +350,7 @@ export class Logger {
     this.#spinnerInstance.stop(
       Logger.#nonBlockingLogPrinted
         ? undefined
-        : `${infoSymbol} ${this.#spinnerInstance.text}`,
+        : `${infoSymbol} ${this.#checkpointText}`,
     );
     Logger.#loggerInstance = undefined;
   }
