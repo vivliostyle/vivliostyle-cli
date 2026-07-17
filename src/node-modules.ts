@@ -12,13 +12,17 @@ export const nodeExternalModules = [
   'puppeteer-core',
 ] as const;
 
-type NodeExternalModules = {
-  '@napi-rs/canvas': typeof import('@napi-rs/canvas');
+// The namespace object that dynamic import() returns for a CommonJS
+// module; `typeof import(...)` alone yields what require() returns.
+type CjsNamespace<M> = { default: M } & Pick<M, keyof M>;
+
+export type NodeExternalModules = {
+  '@napi-rs/canvas': CjsNamespace<typeof import('@napi-rs/canvas')>;
   '@puppeteer/browsers': typeof import('@puppeteer/browsers');
-  'command-exists': typeof import('command-exists');
+  'command-exists': CjsNamespace<typeof import('command-exists')>;
   mupdf: typeof import('mupdf');
-  'press-ready': typeof import('press-ready');
-  'pdf-lib': typeof import('pdf-lib');
+  'press-ready': CjsNamespace<typeof import('press-ready')>;
+  'pdf-lib': CjsNamespace<typeof import('pdf-lib')>;
   'puppeteer-core': typeof import('puppeteer-core');
 };
 
