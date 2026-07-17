@@ -174,8 +174,7 @@
     "vs": "dist/cli.js"
   },
   "files": [
-    "dist",
-    "types"
+    "dist"
   ],
   "publishConfig": {
     "access": "public",
