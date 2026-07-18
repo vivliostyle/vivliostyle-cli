@@ -114,6 +114,10 @@ RUN set -x \
 RUN mkdir -p /opt/puppeteer \
   && find /opt/puppeteer -maxdepth 1 -type d -exec chmod 1777 {} +
 
+# Disable font hinting (#866)
+RUN rm /etc/fonts/conf.d/10-hinting-slight.conf \
+  && ln -s /usr/share/fontconfig/conf.avail/10-hinting-none.conf /etc/fonts/conf.d/10-hinting-none.conf
+
 RUN ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vivliostyle \
   && ln -s /opt/vivliostyle-cli/dist/cli.js /usr/local/bin/vs
 
