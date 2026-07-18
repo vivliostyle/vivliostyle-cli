@@ -10,6 +10,7 @@
   "sortPackageJson": false,
   "ignorePatterns": [
     ".changeset/**",
+    "build/adobe-notdef/**",
     "docs/**",
     "examples/**",
     "templates/**",
