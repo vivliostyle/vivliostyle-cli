@@ -115,7 +115,7 @@
     "@types/whatwg-mimetype": "3.0.2",
     "@typescript/native-preview": "7.0.0-dev.20260622.1",
     "@vitest/coverage-v8": "4.1.9",
-    "adm-zip": "0.5.17",
+    "adm-zip": "0.6.0",
     "file-type": "22.0.1",
     "husky": "9.1.7",
     "json-schema-to-typescript": "15.0.4",
