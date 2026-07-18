@@ -261,7 +261,7 @@ export async function exportEpub({
   }
 
   const contextDir = upath.join(tmpDir, 'EPUB');
-  type XhtmlEntry = Resolved<ReturnType<typeof transpileHtmlToXhtml>>;
+  type XhtmlEntry = Awaited<ReturnType<typeof transpileHtmlToXhtml>>;
   const processHtml = async (htmlFile: string) => {
     let parseResult: XhtmlEntry;
     try {

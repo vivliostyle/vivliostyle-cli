@@ -39,6 +39,7 @@
     "@napi-rs/canvas": "0.1.69",
     "@npmcli/arborist": "9.1.7",
     "@puppeteer/browsers": "3.0.4",
+    "@types/command-exists": "1.2.3",
     "@vivliostyle/jsdom": "25.0.1-vivliostyle-cli.2",
     "@vivliostyle/vfm": "2.7.2",
     "@vivliostyle/viewer": "2.44.1",
@@ -174,8 +175,7 @@
     "vs": "dist/cli.js"
   },
   "files": [
-    "dist",
-    "types"
+    "dist"
   ],
   "publishConfig": {
     "access": "public",
