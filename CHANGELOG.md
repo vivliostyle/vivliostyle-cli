@@ -1,5 +1,17 @@
 # @vivliostyle/cli
 
+## 11.2.0
+
+### Minor Changes
+
+- change: Bundle the Adobe NotDef font in the Docker image as a fallback font ([#859](https://github.com/vivliostyle/vivliostyle-cli/pull/859))
+
+### Patch Changes
+
+- feat: Update VFM to 2.7.2 ([#864](https://github.com/vivliostyle/vivliostyle-cli/pull/864))
+
+- Update yocto-spinner to 1.2.2 ([#873](https://github.com/vivliostyle/vivliostyle-cli/pull/873))
+
 ## 11.1.0
 
 ### Minor Changes
