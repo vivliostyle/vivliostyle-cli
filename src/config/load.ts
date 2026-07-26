@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { createRequire, registerHooks } from 'node:module';
+import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
 import terminalLink from 'terminal-link';
@@ -34,7 +34,11 @@ let importFallbackRegistered = false;
 // `registerHooks` requires Node.js >= 22.15; on older versions the import
 // fails as before.
 function registerConfigImportFallback(): void {
-  if (importFallbackRegistered || typeof registerHooks !== 'function') {
+  if (importFallbackRegistered) {
+    return;
+  }
+  const { registerHooks } = process.getBuiltinModule('node:module');
+  if (typeof registerHooks !== 'function') {
     return;
   }
   importFallbackRegistered = true;
