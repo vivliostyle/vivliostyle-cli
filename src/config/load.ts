@@ -9,10 +9,12 @@ import { cyan, underline } from 'yoctocolors';
 
 import { Logger } from '../logger.js';
 import {
+  cliRoot,
   cwd as defaultRoot,
   DetailError,
   parseJsonc,
   prettifySchemaError,
+  readPackageJson,
   toError,
 } from '../util.js';
 import {
@@ -22,6 +24,58 @@ import {
 } from './schema.js';
 
 const require = createRequire(import.meta.url);
+
+let importFallbackRegistered = false;
+
+// Config files import `@vivliostyle/cli` to use `defineConfig`, but the
+// package may not be installed in the user's project (e.g. when the CLI is
+// invoked via a global install or npx). Resolve such imports to the running
+// CLI package itself so that loading the config file does not fail.
+// `registerHooks` requires Node.js >= 22.15; on older versions the import
+// fails as before.
+function registerConfigImportFallback(): void {
+  if (importFallbackRegistered) {
+    return;
+  }
+  const { registerHooks } = process.getBuiltinModule('node:module');
+  if (typeof registerHooks !== 'function') {
+    return;
+  }
+  importFallbackRegistered = true;
+  const selfPackageName = readPackageJson(
+    upath.join(cliRoot, 'package.json'),
+  ).name;
+  if (!selfPackageName) {
+    return;
+  }
+  registerHooks({
+    resolve(specifier, context, nextResolve) {
+      if (
+        specifier !== selfPackageName &&
+        !specifier.startsWith(`${selfPackageName}/`)
+      ) {
+        return nextResolve(specifier, context);
+      }
+      try {
+        return nextResolve(specifier, context);
+      } catch (error) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- inspect the Node.js error code on the caught value
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== 'ERR_MODULE_NOT_FOUND' && code !== 'MODULE_NOT_FOUND') {
+          throw error;
+        }
+        try {
+          return nextResolve(specifier, {
+            ...context,
+            parentURL: import.meta.url,
+          });
+        } catch {
+          throw error;
+        }
+      }
+    },
+  });
+}
 
 export function locateVivliostyleConfig({
   config,
@@ -58,6 +112,7 @@ export async function loadVivliostyleConfig({
       jsonRaw = fs.readFileSync(absPath, 'utf8');
       parsedConfig = parseJsonc(jsonRaw);
     } else {
+      registerConfigImportFallback();
       // Clear require cache to reload CJS config files
       Reflect.deleteProperty(require.cache, require.resolve(absPath));
       const url = pathToFileURL(absPath);
