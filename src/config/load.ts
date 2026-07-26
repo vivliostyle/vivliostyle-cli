@@ -59,6 +59,11 @@ function registerConfigImportFallback(): void {
       try {
         return nextResolve(specifier, context);
       } catch (error) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- inspect the Node.js error code on the caught value
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== 'ERR_MODULE_NOT_FOUND' && code !== 'MODULE_NOT_FOUND') {
+          throw error;
+        }
         try {
           return nextResolve(specifier, {
             ...context,
