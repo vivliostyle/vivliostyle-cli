@@ -34,6 +34,7 @@ it('generates ToC html', async () => {
   assert(isWebPubConfig(config));
   const content = await transformManuscript(config.entries[0], config);
   assert(content);
+  expect(content).toMatch(/^<!DOCTYPE html>/v);
   expect(await formatHtml(content)).toMatchSnapshot('toc.html');
 });
 

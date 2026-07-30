@@ -385,7 +385,7 @@ export function generateDefaultTocHtml({
       </body>
     </html>
   );
-  return toHtml(toc);
+  return `<!DOCTYPE html>\n${toHtml(toc)}`;
 }
 
 export async function generateTocListSection({
