@@ -31,7 +31,10 @@ export const formatHtml = async (content: string): Promise<string> => {
     printWidth: 80,
     htmlWhitespaceSensitivity: 'strict',
   });
-  return code;
+  // oxfmt lowercases the doctype; keep the original casing so snapshots
+  // reflect the actual output (XHTML requires an uppercase `<!DOCTYPE`).
+  const doctype = content.match(/<!doctype\b[^>]*>/iv)?.[0];
+  return doctype ? code.replace(/<!doctype\b[^>]*>/iv, doctype) : code;
 };
 
 const runningServers = new Set<ViteDevServer>();

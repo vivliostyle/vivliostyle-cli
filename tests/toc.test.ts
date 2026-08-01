@@ -214,7 +214,7 @@ it('customize ToC document', async () => {
 });
 
 describe('sectionized document', () => {
-  const sectionHtml = `<!doctype html>
+  const sectionHtml = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <title>Section Example</title>
