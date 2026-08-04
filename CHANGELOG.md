@@ -1,5 +1,25 @@
 # @vivliostyle/cli
 
+## 11.2.0
+
+### Minor Changes
+
+- change: Bundle the Adobe NotDef font in the Docker image as a fallback font ([#859](https://github.com/vivliostyle/vivliostyle-cli/pull/859))
+
+### Patch Changes
+
+- feat: Update VFM to 2.7.2 ([#864](https://github.com/vivliostyle/vivliostyle-cli/pull/864))
+
+- Fix the progress logs during PDF builds, which printed transient pagination progress repeatedly when no TTY is attached and could drop the `Building pages` line. ([#867](https://github.com/vivliostyle/vivliostyle-cli/pull/867))
+
+- Remove the `types` directory from the published npm package. The type declarations for `command-exists` are now provided through a dependency on `@types/command-exists`. ([#871](https://github.com/vivliostyle/vivliostyle-cli/pull/871))
+
+- Add `<!DOCTYPE html>` to the generated table of contents and cover documents ([#879](https://github.com/vivliostyle/vivliostyle-cli/pull/879))
+
+- Load config files importing `@vivliostyle/cli` even when the package is not installed in the user's project (e.g. when the CLI is invoked via a global install or npx), by resolving such imports to the running CLI package itself. ([#877](https://github.com/vivliostyle/vivliostyle-cli/pull/877))
+
+- Update yocto-spinner to 1.2.2 ([#873](https://github.com/vivliostyle/vivliostyle-cli/pull/873))
+
 ## 11.1.0
 
 ### Minor Changes
