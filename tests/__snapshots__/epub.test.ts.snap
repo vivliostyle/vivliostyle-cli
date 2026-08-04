@@ -285,6 +285,7 @@ exports[`generate EPUB from vivliostyle.config.js > content.opf 1`] = `
 
 exports[`generate EPUB from vivliostyle.config.js > cover document%.xhtml 1`] = `
 "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<!DOCTYPE html>
 <html
   xmlns=\\"http://www.w3.org/1999/xhtml\\"
   xmlns:epub=\\"http://www.idpf.org/2007/ops\\"
@@ -316,6 +317,7 @@ exports[`generate EPUB from vivliostyle.config.js > cover document%.xhtml 1`] = 
 
 exports[`generate EPUB from vivliostyle.config.js > index file%.xhtml 1`] = `
 "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
+<!DOCTYPE html>
 <html
   xmlns=\\"http://www.w3.org/1999/xhtml\\"
   xmlns:epub=\\"http://www.idpf.org/2007/ops\\"

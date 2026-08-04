@@ -7,6 +7,7 @@ import jsdom, {
   JSDOM,
 } from '@vivliostyle/jsdom';
 import DOMPurify, { type WindowLike } from 'dompurify';
+import type { RootContent } from 'hast';
 import { toHtml } from 'hast-util-to-html';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
@@ -372,6 +373,7 @@ export function generateDefaultTocHtml({
   language?: string;
   title?: string;
 }): string {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const toc = (
     <html lang={language}>
       <head>
@@ -384,8 +386,8 @@ export function generateDefaultTocHtml({
         <nav id="toc" role="doc-toc" />
       </body>
     </html>
-  );
-  return toHtml(toc);
+  ) as RootContent;
+  return toHtml([{ type: 'doctype' }, toc], { upperDoctype: true });
 }
 
 export async function generateTocListSection({
@@ -536,6 +538,7 @@ export function generateDefaultCoverHtml({
   language?: string;
   title?: string;
 }): string {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const toc = (
     <html lang={language}>
       <head>
@@ -549,8 +552,8 @@ export function generateDefaultCoverHtml({
         </section>
       </body>
     </html>
-  );
-  return toHtml(toc);
+  ) as RootContent;
+  return toHtml([{ type: 'doctype' }, toc], { upperDoctype: true });
 }
 
 // oxlint-disable-next-line require-await -- Keep the Promise return type for the await-based call sites

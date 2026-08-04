@@ -14,7 +14,7 @@ exports[`copy webpub assets properly 1`] = `
 `;
 
 exports[`generate webpub from a data URI input > html 1`] = `
-"<!doctype html>
+"<!DOCTYPE html>
 <html lang=\\"en\\"
   ><head
     ><meta charset=\\"UTF-8\\" /><title></title
@@ -36,7 +36,7 @@ exports[`generate webpub from a data URI input > tree 1`] = `
 `;
 
 exports[`generate webpub from a plain HTML > entry 1`] = `
-"<!doctype html>
+"<!DOCTYPE html>
 <html lang=\\"ja\\"
   ><head>
     <link rel=\\"stylesheet\\" type=\\"text/css\\" href=\\"style.css\\" />

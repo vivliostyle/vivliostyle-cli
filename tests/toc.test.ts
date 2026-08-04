@@ -34,6 +34,7 @@ it('generates ToC html', async () => {
   assert(isWebPubConfig(config));
   const content = await transformManuscript(config.entries[0], config);
   assert(content);
+  expect(content).toMatch(/^<!DOCTYPE html>/v);
   expect(await formatHtml(content)).toMatchSnapshot('toc.html');
 });
 
@@ -213,7 +214,7 @@ it('customize ToC document', async () => {
 });
 
 describe('sectionized document', () => {
-  const sectionHtml = `<!doctype html>
+  const sectionHtml = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <title>Section Example</title>
