@@ -4,8 +4,11 @@ packages:
   - packages/*
 
 allowBuilds:
+  cpu-features: true
   esbuild: true
+  protobufjs: true
   sharp: true
+  ssh2: true
 
 saveExact: true
 ignoreWorkspaceRootCheck: true
