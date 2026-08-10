@@ -512,6 +512,23 @@ it('allows non-markdown extensions when documentProcessor is provided', async ()
   expect(xyzEntry?.title).toBe('Custom Format Title');
 });
 
+it('preserves HTML processing when a root documentProcessor is provided', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called for HTML');
+  };
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: ['sample.html'],
+    documentProcessor: customProcessor,
+  });
+
+  const htmlEntry = findFileEntry(config.entries, 'sample.html');
+  expect(htmlEntry).toBeDefined();
+  expect((htmlEntry as any).source.contentType).toBe('text/html');
+  expect((htmlEntry as any).source.documentProcessor).toBeUndefined();
+  expect(htmlEntry?.title).toBe('Miyako');
+});
+
 it('rejects text/plain files without documentProcessor', async () => {
   // .txt files are recognized as text/plain, which requires documentProcessor
   await expect(
