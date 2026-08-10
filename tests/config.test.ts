@@ -529,6 +529,23 @@ it('preserves HTML processing when a root documentProcessor is provided', async 
   expect(htmlEntry?.title).toBe('Miyako');
 });
 
+it('preserves XHTML processing when a root documentProcessor is provided', async () => {
+  const customProcessor = () => {
+    throw new Error('should not be called for XHTML');
+  };
+
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: ['sample.xhtml'],
+    documentProcessor: customProcessor,
+  });
+
+  const xhtmlEntry = findFileEntry(config.entries, 'sample.xhtml');
+  expect(xhtmlEntry).toBeDefined();
+  expect((xhtmlEntry as any).source.contentType).toBe('application/xhtml+xml');
+  expect((xhtmlEntry as any).source.documentProcessor).toBeUndefined();
+  expect(xhtmlEntry?.title).toBe('Sample XHTML');
+});
+
 it('rejects text/plain files without documentProcessor', async () => {
   // .txt files are recognized as text/plain, which requires documentProcessor
   await expect(
