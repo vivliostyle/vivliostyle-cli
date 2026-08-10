@@ -1374,11 +1374,7 @@ function resolveComposedProjectConfig({
       const contentType = needsCustomContentType
         ? 'text/x-vivliostyle-custom'
         : rawContentType;
-      if (
-        !isManuscriptMediaType(contentType) ||
-        // disallow text/plain (for now)
-        contentType === 'text/plain'
-      ) {
+      if (!isManuscriptMediaType(contentType) || contentType === 'text/plain') {
         throw new Error(
           `Invalid manuscript type ${rawContentType} detected: ${entryPath}`,
         );
