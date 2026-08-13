@@ -8,7 +8,6 @@ to NLnet's
 This document is the public disclosure of our stance on generative AI use that
 the policy asks funded projects to provide.
 
-
 ## Our stance
 
 We use generative AI tools in the development of our projects, and we disclose
@@ -59,7 +58,7 @@ The pull request body also carries the `Assisted-by:` line. Because the
 collaboration description tends to be long, wrap it in a `<details>` block so
 the body stays readable. For example:
 
-````markdown
+```markdown
 Fixes the print preview failing to load on Safari.
 
 Assisted-by: Claude Code:claude-fable-5
@@ -76,7 +75,7 @@ Assisted-by: Claude Code:claude-fable-5
   verified the fix in Safari and Chrome before requesting review.
 
 </details>
-````
+```
 
 ## Human responsibility
 
