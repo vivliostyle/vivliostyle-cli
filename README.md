@@ -223,6 +223,8 @@ Options:
 
 See [Contribution Guide](CONTRIBUTING.md).
 
+This project uses generative AI tools in its development and discloses that use in [AI_POLICY.md](AI_POLICY.md), following NLnet's generative AI policy.
+
 ## License
 
 Licensed under [AGPL Version 3](http://www.gnu.org/licenses/agpl.html).
