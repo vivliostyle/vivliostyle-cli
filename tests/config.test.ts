@@ -563,6 +563,18 @@ it('rejects unknown extensions without documentProcessor', async () => {
   ).rejects.toThrow('Invalid manuscript type');
 });
 
+const countReplaceImageEntries = async (source: RegExp): Promise<number> => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [{ source, replacement: 'img_cmyk.tiff' }],
+    },
+  });
+  const output = config.outputs[0] as unknown as { replaceImage: unknown[] };
+  return output.replaceImage.length;
+};
+
 it('supports pdfPostprocess configuration', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',
@@ -588,6 +600,15 @@ it('supports pdfPostprocess configuration', async () => {
       },
     ],
   });
+});
+
+it('matches RegExp sources regardless of global and sticky flags', async () => {
+  const plain = await countReplaceImageEntries(/\.md$/v);
+  expect(plain).toBeGreaterThan(1);
+  const globalSource = /\.md$/gv;
+  expect(await countReplaceImageEntries(globalSource)).toBe(plain);
+  expect(await countReplaceImageEntries(globalSource)).toBe(plain);
+  expect(await countReplaceImageEntries(/\.md$/vy)).toBe(plain);
 });
 
 it('pdfPostprocess takes precedence over legacy pressReady option', async () => {

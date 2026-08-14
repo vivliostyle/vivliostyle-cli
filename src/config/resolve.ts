@@ -733,13 +733,26 @@ export function resolveTaskConfig(
       });
       return replaceImageOption.flatMap(({ source, replacement }) => {
         if (source instanceof RegExp) {
+          let matcher = source;
+          if (matcher.flags.includes('y')) {
+            Logger.debug(
+              `Ignoring the sticky (y) flag of replaceImage source: ${source}`,
+            );
+            matcher = new RegExp(
+              matcher.source,
+              matcher.flags.replace('y', ''),
+            );
+          }
           return allFiles
-            .filter((file) => source.test(file))
+            .filter((file) => {
+              matcher.lastIndex = 0;
+              return matcher.test(file);
+            })
             .map((file) => ({
               source: upath.resolve(entryContextDir, file),
               replacement: upath.resolve(
                 entryContextDir,
-                file.replace(source, replacement),
+                file.replace(matcher, replacement),
               ),
             }));
         }
