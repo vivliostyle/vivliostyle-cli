@@ -60,13 +60,82 @@ interface ReplaceStats {
   total: number;
 }
 
+function replaceImagesInResources(
+  doc: mupdfType.PDFDocument,
+  resources: mupdfType.PDFObject,
+  imagePairs: ImagePair[],
+  pageIndex: number,
+  processedForms: Set<number>,
+  stats: ReplaceStats,
+): void {
+  const xobjects = resources.get('XObject');
+  if (!xobjects || !xobjects.isDictionary()) {
+    return;
+  }
+
+  // Collect keys first to avoid modification during iteration
+  const entries: { key: string | number; value: mupdfType.PDFObject }[] = [];
+  xobjects.forEach((value, key) => {
+    entries.push({ key, value });
+  });
+
+  for (const { key, value } of entries) {
+    const resolved = value.resolve();
+    const subtype = resolved.get('Subtype');
+
+    if (subtype && subtype.toString() === '/Form') {
+      const objNum = value.asIndirect();
+      if (objNum && processedForms.has(objNum)) {
+        continue;
+      }
+      if (objNum) {
+        processedForms.add(objNum);
+      }
+      const nestedResources = resolved.get('Resources');
+      if (nestedResources && nestedResources.isDictionary()) {
+        replaceImagesInResources(
+          doc,
+          nestedResources,
+          imagePairs,
+          pageIndex,
+          processedForms,
+          stats,
+        );
+      }
+      continue;
+    }
+
+    if (!subtype || subtype.toString() !== '/Image') {
+      continue;
+    }
+    stats.total++;
+
+    // Extract image from PDF
+    const pdfImage = doc.loadImage(value);
+
+    // Find matching source image
+    for (const pair of imagePairs) {
+      if (imagesEqual(pdfImage, pair.srcImage)) {
+        const newImageRef = doc.addImage(pair.destImage);
+        xobjects.put(key, newImageRef);
+        stats.replaced++;
+        Logger.debug(
+          `  Page ${pageIndex + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
+        );
+        break;
+      }
+    }
+  }
+
+  resources.put('XObject', xobjects);
+}
+
 function replaceImagesInDocument(
   doc: mupdfType.PDFDocument,
   imagePairs: ImagePair[],
 ): ReplaceStats {
-  let replaced = 0;
-  let total = 0;
-
+  const stats: ReplaceStats = { replaced: 0, total: 0 };
+  const processedForms = new Set<number>();
   const pageCount = doc.countPages();
 
   for (let i = 0; i < pageCount; i++) {
@@ -78,48 +147,11 @@ function replaceImagesInDocument(
       continue;
     }
 
-    const xobjects = res.get('XObject');
-    if (!xobjects || !xobjects.isDictionary()) {
-      continue;
-    }
-
-    // Collect keys first to avoid modification during iteration
-    const entries: { key: string | number; value: mupdfType.PDFObject }[] = [];
-    xobjects.forEach((value, key) => {
-      entries.push({ key, value });
-    });
-
-    for (const { key, value } of entries) {
-      const resolved = value.resolve();
-      const subtype = resolved.get('Subtype');
-
-      if (!subtype || subtype.toString() !== '/Image') {
-        continue;
-      }
-      total++;
-
-      // Extract image from PDF
-      const pdfImage = doc.loadImage(value);
-
-      // Find matching source image
-      for (const pair of imagePairs) {
-        if (imagesEqual(pdfImage, pair.srcImage)) {
-          const newImageRef = doc.addImage(pair.destImage);
-          xobjects.put(key, newImageRef);
-          replaced++;
-          Logger.debug(
-            `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
-          );
-          break;
-        }
-      }
-    }
-
-    res.put('XObject', xobjects);
+    replaceImagesInResources(doc, res, imagePairs, i, processedForms, stats);
     pageObj.put('Resources', res);
   }
 
-  return { replaced, total };
+  return stats;
 }
 
 export async function replaceImages({
