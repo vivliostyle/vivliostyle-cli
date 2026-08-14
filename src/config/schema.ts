@@ -316,6 +316,14 @@ const CmykConfigSchema = v.pipe(
           log a warning, fail the build, or do nothing. (default: warn)
         `),
       ),
+      ifUnreplacedImagesFound: v.pipe(
+        v.picklist(['warn', 'error', 'ignore']),
+        v.metadata({ typeString: '"warn" | "error" | "ignore"' }),
+        v.description($`
+          What to do when non-CMYK-compatible images remain in the PDF after
+          image replacement: log a warning, fail the build, or do nothing. (default: warn)
+        `),
+      ),
       mapOutput: v.pipe(
         ValidString,
         v.description($`
@@ -331,8 +339,8 @@ const CmykSchema = v.pipe(
   v.union([v.boolean(), CmykConfigSchema]),
   v.description($`
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object with options such as overrideMap and
-    ifUnmappedColorsFound.
+    Can be a boolean or a config object with options such as overrideMap,
+    ifUnmappedColorsFound, and ifUnreplacedImagesFound.
   `),
 );
 

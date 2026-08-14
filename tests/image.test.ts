@@ -11,6 +11,7 @@ import { Logger } from '../src/logger.js';
 import {
   builtinCmykReplacement,
   builtinGrayReplacement,
+  findNonCmykImages,
   iccReplacement,
   replaceImages,
 } from '../src/output/image.js';
@@ -332,6 +333,47 @@ async function duplicateFirstImageObject(pdf: Uint8Array): Promise<Uint8Array> {
     }
   }
   xobjects.put('ImDup', doc.addRawStream(value.readRawStream(), dict));
+  return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
+}
+
+async function convertFirstImageToIndexed(
+  pdf: Uint8Array,
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const xobjects = doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const resolved = value.resolve();
+  const width = resolved.get('Width').asNumber();
+  const height = resolved.get('Height').asNumber();
+  const palette = doc.addRawStream(
+    new Uint8Array([255, 0, 0, 0, 0, 255]),
+    doc.newDictionary(),
+  );
+  const colorSpace = doc.newArray();
+  for (const element of [
+    doc.newName('Indexed'),
+    doc.newName('DeviceRGB'),
+    doc.newInteger(1),
+    palette,
+  ]) {
+    colorSpace.push(element);
+  }
+  resolved.put('ColorSpace', colorSpace);
+  resolved.put('BitsPerComponent', doc.newInteger(8));
+  resolved.delete('Filter');
+  resolved.delete('DecodeParms');
+  value.writeRawStream(
+    new Uint8Array(width * height).map((_, index) => index % 2),
+  );
   return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
 }
 
@@ -942,5 +984,110 @@ describe('replaceImages', () => {
       Buffer.compare(Buffer.from(builtinPixels), Buffer.from(iccPixels)),
     ).not.toBe(0);
     spy.mockRestore();
+  });
+});
+
+describe('findNonCmykImages', () => {
+  it('reports RGB images in PDF', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const found = await findNonCmykImages(srcPdf);
+
+    expect(found).toEqual([
+      {
+        key: expect.anything(),
+        width: expect.any(Number),
+        height: expect.any(Number),
+        pageIndex: 0,
+      },
+    ]);
+  });
+
+  it('reports images whose color space requires decoding to inspect', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const indexedPdf = await convertFirstImageToIndexed(srcPdf);
+
+    const found = await findNonCmykImages(indexedPdf);
+
+    expect(found).toEqual([
+      {
+        key: expect.anything(),
+        width: expect.any(Number),
+        height: expect.any(Number),
+        pageIndex: 0,
+      },
+    ]);
+  });
+
+  it('reports RGB images nested in Form XObjects', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const nestedPdf = await wrapFirstImageInForm(srcPdf);
+
+    const found = await findNonCmykImages(nestedPdf);
+
+    expect(found).toEqual([
+      {
+        key: 'NestedIm',
+        width: expect.any(Number),
+        height: expect.any(Number),
+        pageIndex: 0,
+      },
+    ]);
+  });
+
+  it('reports images nested in circular Form XObjects', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const circularPdf = await wrapFirstImageInCircularForms(srcPdf);
+
+    const found = await findNonCmykImages(circularPdf);
+
+    expect(found).toEqual([
+      {
+        key: 'NestedIm',
+        width: expect.any(Number),
+        height: expect.any(Number),
+        pageIndex: 0,
+      },
+    ]);
+  });
+
+  it('warns and continues when an image cannot be inspected', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const corruptPdf = await corruptFirstImageColorSpace(srcPdf);
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const found = await findNonCmykImages(corruptPdf);
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to inspect image'),
+    );
+    expect(found).toEqual([]);
+    spy.mockRestore();
+  });
+
+  it('reports nothing when all images are CMYK', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const cmykPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement()],
+    });
+
+    expect(await findNonCmykImages(cmykPdf)).toEqual([]);
+  });
+
+  it('reports nothing when all images are Gray', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const grayPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    expect(await findNonCmykImages(grayPdf)).toEqual([]);
+  });
+
+  it('reports nothing for PDF with no images', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    expect(await findNonCmykImages(srcPdf)).toEqual([]);
   });
 });

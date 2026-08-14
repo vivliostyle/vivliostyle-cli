@@ -593,6 +593,7 @@ it('supports pdfPostprocess configuration', async () => {
     format: 'pdf',
     cmyk: {
       ifUnmappedColorsFound: 'warn',
+      ifUnreplacedImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
       mapOutput: undefined,
@@ -736,6 +737,26 @@ it('warns when output config uses deprecated cmyk.warnUnmapped', () => {
   );
 });
 
+it('resolves ifUnreplacedImagesFound with default and explicit values', async () => {
+  const defaulted = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: {} },
+  });
+  expect(defaulted.outputs[0]).toMatchObject({
+    cmyk: { ifUnreplacedImagesFound: 'warn' },
+  });
+
+  const disabled = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: { ifUnreplacedImagesFound: 'ignore' } },
+  });
+  expect(disabled.outputs[0]).toMatchObject({
+    cmyk: { ifUnreplacedImagesFound: 'ignore' },
+  });
+});
+
 it('pdfPostprocess takes precedence over legacy pressReady option', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',
@@ -779,6 +800,7 @@ it('output-level pdfPostprocess overrides build-level', async () => {
     format: 'pdf',
     cmyk: {
       ifUnmappedColorsFound: 'warn',
+      ifUnreplacedImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
       mapOutput: undefined,

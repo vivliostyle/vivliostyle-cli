@@ -228,6 +228,135 @@ export function iccReplacement(outputProfile: Uint8Array): ReplaceFunction {
   return (image) => convertWithICC(image.asPNG(), outputProfile);
 }
 
+export interface NonCmykImage {
+  key: string | number;
+  width: number;
+  height: number;
+  pageIndex: number;
+}
+
+/**
+ * Scan PDF for images with non-CMYK-compatible color spaces.
+ */
+export async function findNonCmykImages(
+  pdf: Uint8Array,
+): Promise<NonCmykImage[]> {
+  const mupdf = await importNodeModule('mupdf');
+  using doc = disposable(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- openDocument returns the Document base type; a PDF input yields a PDFDocument
+    mupdf.PDFDocument.openDocument(
+      pdf,
+      'application/pdf',
+    ) as import('mupdf').PDFDocument,
+  );
+
+  const found: NonCmykImage[] = [];
+  const checkedImages = new Set<string>();
+  const processedForms = new Set<number>();
+  const pageCount = doc.countPages();
+
+  for (let i = 0; i < pageCount; i++) {
+    using page = disposable(doc.loadPage(i));
+    const pageObj = page.getObject().resolve();
+    const res = pageObj.get('Resources');
+    if (!res?.isDictionary()) {
+      continue;
+    }
+    findNonCmykImagesInResources(
+      doc,
+      res,
+      i,
+      processedForms,
+      checkedImages,
+      found,
+    );
+  }
+  return found;
+}
+
+function findNonCmykImagesInResources(
+  doc: mupdfType.PDFDocument,
+  resources: mupdfType.PDFObject,
+  pageIndex: number,
+  processedForms: Set<number>,
+  checkedImages: Set<string>,
+  found: NonCmykImage[],
+): void {
+  const xobjects = resources.get('XObject');
+  if (!xobjects?.isDictionary()) {
+    return;
+  }
+
+  xobjects.forEach((value, key) => {
+    const resolved = value.resolve();
+    const subtype = resolved.get('Subtype');
+
+    if (subtype && subtype.toString() === '/Form') {
+      const objNum = value.asIndirect();
+      if (objNum && processedForms.has(objNum)) {
+        return;
+      }
+      if (objNum) {
+        processedForms.add(objNum);
+      }
+      const nestedResources = resolved.get('Resources');
+      if (nestedResources && nestedResources.isDictionary()) {
+        findNonCmykImagesInResources(
+          doc,
+          nestedResources,
+          pageIndex,
+          processedForms,
+          checkedImages,
+          found,
+        );
+      }
+      return;
+    }
+
+    if (!subtype || subtype.toString() !== '/Image') {
+      return;
+    }
+
+    const objNum = value.asIndirect();
+    const imageId = objNum ? `#${objNum}` : `${pageIndex}/${String(key)}`;
+    if (checkedImages.has(imageId)) {
+      return;
+    }
+    checkedImages.add(imageId);
+
+    try {
+      using img = disposable(doc.loadImage(value));
+      const imageCs = img.getColorSpace();
+      if (imageCs?.isCMYK() || imageCs?.isGray()) {
+        return;
+      }
+      if (imageCs?.isRGB()) {
+        found.push({
+          key,
+          width: img.getWidth(),
+          height: img.getHeight(),
+          pageIndex,
+        });
+        return;
+      }
+      using pixmap = disposable(img.toPixmap());
+      const cs = pixmap.getColorSpace();
+      if (cs && !cs.isCMYK() && !cs.isGray()) {
+        found.push({
+          key,
+          width: img.getWidth(),
+          height: img.getHeight(),
+          pageIndex,
+        });
+      }
+    } catch (error) {
+      Logger.logWarn(
+        `Failed to inspect image: ref "${key}" on page ${pageIndex + 1}: ${String(error)}`,
+      );
+    }
+  });
+}
+
 function applyReplaceFunction(
   fn: ReplaceFunction,
   pdfPixmap: mupdfType.Pixmap,

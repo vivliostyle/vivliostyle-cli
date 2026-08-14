@@ -428,8 +428,8 @@ pdfPostprocess takes precedence.
 
   - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object with options such as overrideMap and
-    ifUnmappedColorsFound.
+    Can be a boolean or a config object with options such as overrideMap,
+    ifUnmappedColorsFound, and ifUnreplacedImagesFound.
 
   - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | ((image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>))[]  
     Replace images in the output PDF.
@@ -481,6 +481,10 @@ type PdfPostprocessConfig = {
     What to do when RGB colors not mapped to CMYK are encountered:
     log a warning, fail the build, or do nothing. (default: warn)
 
+  - `ifUnreplacedImagesFound`: "warn" | "error" | "ignore"  
+    What to do when non-CMYK-compatible images remain in the PDF after
+    image replacement: log a warning, fail the build, or do nothing. (default: warn)
+
   - `mapOutput`: string  
     Output the CMYK color map to a JSON file at the specified path.
 
@@ -492,6 +496,10 @@ type CmykConfig = {
   reserveMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
   ifUnmappedColorsFound?:
+    | "warn"
+    | "error"
+    | "ignore";
+  ifUnreplacedImagesFound?:
     | "warn"
     | "error"
     | "ignore";

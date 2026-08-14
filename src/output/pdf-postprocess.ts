@@ -21,7 +21,7 @@ import {
   isInContainer,
 } from '../util.js';
 import { convertCmykColors } from './cmyk.js';
-import { replaceImages } from './image.js';
+import { findNonCmykImages, replaceImages } from './image.js';
 
 export type SaveOption = Pick<
   PdfOutput,
@@ -169,6 +169,24 @@ export class PostProcess {
         pdf,
         replaceImageConfig: replaceImage,
       });
+      signal?.throwIfAborted();
+    }
+
+    if (cmyk && cmyk.ifUnreplacedImagesFound !== 'ignore') {
+      const remainingImages = await findNonCmykImages(pdf);
+      for (const img of remainingImages) {
+        Logger.logWarn(
+          `Non-CMYK image remaining in PDF: ref "${img.key}" (${img.width}x${img.height}) on page ${img.pageIndex + 1}`,
+        );
+      }
+      if (
+        cmyk.ifUnreplacedImagesFound === 'error' &&
+        remainingImages.length > 0
+      ) {
+        failures.push(
+          `${remainingImages.length} non-CMYK image(s) remaining in the PDF`,
+        );
+      }
       signal?.throwIfAborted();
     }
 
