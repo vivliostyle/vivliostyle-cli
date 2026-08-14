@@ -266,7 +266,7 @@ function resolveMapEntries(
 }
 
 export interface CmykConfig {
-  warnUnmapped: boolean;
+  ifUnmappedColorsFound: 'warn' | 'error' | 'ignore';
   overrideMap: CmykMapEntry[];
   reserveMap: CmykMapEntry[];
   mapOutput: string | undefined;
@@ -696,7 +696,10 @@ export function resolveTaskConfig(
       // Config file object format takes priority
       if (cmykOption && typeof cmykOption === 'object') {
         return {
-          warnUnmapped: cmykOption.warnUnmapped ?? true,
+          ifUnmappedColorsFound:
+            cmykOption.ifUnmappedColorsFound ??
+            // oxlint-disable-next-line typescript/no-deprecated -- fall back to the deprecated warnUnmapped option
+            (cmykOption.warnUnmapped === false ? 'ignore' : 'warn'),
           overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
           reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
           mapOutput: cmykOption.mapOutput
@@ -707,7 +710,7 @@ export function resolveTaskConfig(
       // CLI --cmyk flag or cmykOption: true
       if (options.cmyk || cmykOption === true) {
         return {
-          warnUnmapped: true,
+          ifUnmappedColorsFound: 'warn',
           overrideMap: [],
           reserveMap: [],
           mapOutput: undefined,

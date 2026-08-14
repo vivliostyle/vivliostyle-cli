@@ -198,6 +198,24 @@ export function warnDeprecatedConfig(
       "'preflightOption' property of output config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflightOption' property instead.",
     );
   }
+
+  if (
+    config.tasks.some((task) => {
+      const cmykOptions = [
+        task.pdfPostprocess?.cmyk,
+        ...(task.output
+          ? [task.output].flat().map((o) => o.pdfPostprocess?.cmyk)
+          : []),
+      ];
+      return cmykOptions.some(
+        (cmyk) => typeof cmyk === 'object' && cmyk.warnUnmapped !== undefined,
+      );
+    })
+  ) {
+    Logger.logWarn(
+      "'warnUnmapped' property of pdfPostprocess.cmyk was deprecated and will be removed in a future release. Please use 'ifUnmappedColorsFound' property instead.",
+    );
+  }
   /* oxlint-enable typescript/no-deprecated */
 
   if (

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import type { CmykMap } from '../src/global-viewer.js';
 import { convertStreamColors } from '../src/output/pdf-stream.js';
@@ -29,12 +29,7 @@ describe('convertStreamColors', () => {
         const colorMap = createColorMap([
           [0, 0, 0, { c: 0, m: 0, y: 0, k: 10000 }],
         ]);
-        const result = convertStreamColors(
-          '0 0 0 rg',
-          colorMap,
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('0 0 0 rg', colorMap, null);
         expect(result).toBe('0 0 0 1 k');
       });
 
@@ -42,22 +37,12 @@ describe('convertStreamColors', () => {
         const colorMap = createColorMap([
           [5000, 5000, 5000, { c: 0, m: 0, y: 0, k: 5000 }],
         ]);
-        const result = convertStreamColors(
-          '0.5 0.5 0.5 rg',
-          colorMap,
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('0.5 0.5 0.5 rg', colorMap, null);
         expect(result).toBe('0 0 0 0.5 k');
       });
 
       it('preserves unmapped RGB colors', () => {
-        const result = convertStreamColors(
-          '0.1 0.2 0.3 rg',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('0.1 0.2 0.3 rg', {}, null);
         expect(result).toBe('0.1 0.2 0.3 rg');
       });
 
@@ -65,17 +50,12 @@ describe('convertStreamColors', () => {
         const colorMap = createColorMap([
           [5000, 3000, 2000, { c: 1234, m: 5678, y: 9012, k: 3456 }],
         ]);
-        const result = convertStreamColors(
-          '0.5 0.3 0.2 rg',
-          colorMap,
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('0.5 0.3 0.2 rg', colorMap, null);
         expect(result).toBe('0.1234 0.5678 0.9012 0.3456 k');
       });
 
       it('handles insufficient arguments gracefully', () => {
-        const result = convertStreamColors('0.5 0.5 rg', {}, false, new Set());
+        const result = convertStreamColors('0.5 0.5 rg', {}, null);
         expect(result).toBe('0.5 0.5 rg');
       });
     });
@@ -85,27 +65,17 @@ describe('convertStreamColors', () => {
         const colorMap = createColorMap([
           [10000, 0, 0, { c: 0, m: 10000, y: 10000, k: 0 }],
         ]);
-        const result = convertStreamColors(
-          '1 0 0 RG',
-          colorMap,
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('1 0 0 RG', colorMap, null);
         expect(result).toBe('0 1 1 0 K');
       });
 
       it('preserves unmapped RGB stroking colors', () => {
-        const result = convertStreamColors(
-          '0.9 0.8 0.7 RG',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('0.9 0.8 0.7 RG', {}, null);
         expect(result).toBe('0.9 0.8 0.7 RG');
       });
 
       it('handles insufficient arguments gracefully', () => {
-        const result = convertStreamColors('0.5 RG', {}, false, new Set());
+        const result = convertStreamColors('0.5 RG', {}, null);
         expect(result).toBe('0.5 RG');
       });
     });
@@ -115,12 +85,7 @@ describe('convertStreamColors', () => {
         const colorMap = createColorMap([
           [0, 0, 0, { c: 0, m: 0, y: 0, k: 10000 }],
         ]);
-        const result = convertStreamColors(
-          '0 0 0 rg 0 0 0 RG',
-          colorMap,
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('0 0 0 rg 0 0 0 RG', colorMap, null);
         expect(result).toBe('0 0 0 1 k 0 0 0 1 K');
       });
 
@@ -129,12 +94,7 @@ describe('convertStreamColors', () => {
           [0, 0, 0, { c: 0, m: 0, y: 0, k: 10000 }],
           [10000, 10000, 10000, { c: 0, m: 0, y: 0, k: 0 }],
         ]);
-        const result = convertStreamColors(
-          '0 0 0 rg 1 1 1 rg',
-          colorMap,
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('0 0 0 rg 1 1 1 rg', colorMap, null);
         expect(result).toBe('0 0 0 1 k 0 0 0 0 k');
       });
     });
@@ -143,66 +103,46 @@ describe('convertStreamColors', () => {
   describe('content preservation', () => {
     describe('existing CMYK and gray colors', () => {
       it('preserves k operator', () => {
-        const result = convertStreamColors('0 0 0 1 k', {}, false, new Set());
+        const result = convertStreamColors('0 0 0 1 k', {}, null);
         expect(result).toBe('0 0 0 1 k');
       });
 
       it('preserves K operator', () => {
-        const result = convertStreamColors('1 0 0 0 K', {}, false, new Set());
+        const result = convertStreamColors('1 0 0 0 K', {}, null);
         expect(result).toBe('1 0 0 0 K');
       });
 
       it('preserves g operator', () => {
-        const result = convertStreamColors('0.5 g', {}, false, new Set());
+        const result = convertStreamColors('0.5 g', {}, null);
         expect(result).toBe('0.5 g');
       });
 
       it('preserves G operator', () => {
-        const result = convertStreamColors('0.5 G', {}, false, new Set());
+        const result = convertStreamColors('0.5 G', {}, null);
         expect(result).toBe('0.5 G');
       });
     });
 
     describe('PDF operators', () => {
       it('preserves text operators', () => {
-        const result = convertStreamColors(
-          'BT /F1 12 Tf ET',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('BT /F1 12 Tf ET', {}, null);
         expect(result).toBe('BT /F1 12 Tf ET');
       });
 
       it('preserves path operators', () => {
-        const result = convertStreamColors(
-          '100 200 m 300 400 l S',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('100 200 m 300 400 l S', {}, null);
         expect(result).toBe('100 200 m 300 400 l S');
       });
 
       it('preserves graphics state operators', () => {
-        const result = convertStreamColors(
-          'q 1 0 0 1 50 50 cm Q',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('q 1 0 0 1 50 50 cm Q', {}, null);
         expect(result).toBe('q 1 0 0 1 50 50 cm Q');
       });
     });
 
     describe('PDF syntax elements', () => {
       it('preserves string literals', () => {
-        const result = convertStreamColors(
-          '(Hello World) Tj',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('(Hello World) Tj', {}, null);
         expect(result).toBe('(Hello World) Tj');
       });
 
@@ -210,19 +150,13 @@ describe('convertStreamColors', () => {
         const result = convertStreamColors(
           '(test (nested) string) Tj',
           {},
-          false,
-          new Set(),
+          null,
         );
         expect(result).toBe('(test (nested) string) Tj');
       });
 
       it('preserves escaped characters in strings', () => {
-        const result = convertStreamColors(
-          '(line1\\nline2) Tj',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('(line1\\nline2) Tj', {}, null);
         expect(result).toBe('(line1\\nline2) Tj');
       });
 
@@ -230,148 +164,107 @@ describe('convertStreamColors', () => {
         const result = convertStreamColors(
           '(test\\(escaped\\)parens) Tj',
           {},
-          false,
-          new Set(),
+          null,
         );
         expect(result).toBe('(test\\(escaped\\)parens) Tj');
       });
 
       it('preserves empty strings', () => {
-        const result = convertStreamColors('() Tj', {}, false, new Set());
+        const result = convertStreamColors('() Tj', {}, null);
         expect(result).toBe('() Tj');
       });
 
       it('preserves hex strings', () => {
-        const result = convertStreamColors(
-          '<48454C4C4F> Tj',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('<48454C4C4F> Tj', {}, null);
         expect(result).toBe('<48454C4C4F> Tj');
       });
 
       it('preserves hex strings with spaces', () => {
-        const result = convertStreamColors(
-          '<48 65 6C 6C 6F> Tj',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('<48 65 6C 6C 6F> Tj', {}, null);
         expect(result).toBe('<48 65 6C 6C 6F> Tj');
       });
 
       it('preserves empty hex strings', () => {
-        const result = convertStreamColors('<> Tj', {}, false, new Set());
+        const result = convertStreamColors('<> Tj', {}, null);
         expect(result).toBe('<> Tj');
       });
 
       it('preserves names', () => {
-        const result = convertStreamColors(
-          '/DeviceCMYK cs',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('/DeviceCMYK cs', {}, null);
         expect(result).toBe('/DeviceCMYK cs');
       });
 
       it('preserves names with special characters', () => {
-        const result = convertStreamColors(
-          '/sRGB-IEC61966-2.1 cs',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('/sRGB-IEC61966-2.1 cs', {}, null);
         expect(result).toBe('/sRGB-IEC61966-2.1 cs');
       });
 
       it('preserves inline dictionaries', () => {
-        const result = convertStreamColors(
-          '/Span << /MCID 0 >> BDC',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('/Span << /MCID 0 >> BDC', {}, null);
         expect(result).toBe('/Span << /MCID 0 >> BDC');
       });
 
       it('distinguishes hex strings from dictionary markers', () => {
-        const result = convertStreamColors(
-          '<< /Key <ABCD> >>',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('<< /Key <ABCD> >>', {}, null);
         expect(result).toBe('<< /Key <ABCD> >>');
       });
 
       it('preserves arrays', () => {
-        const result = convertStreamColors('[1 2 3] TJ', {}, false, new Set());
+        const result = convertStreamColors('[1 2 3] TJ', {}, null);
         expect(result).toBe('[ 1 2 3 ] TJ');
       });
 
       it('preserves comments', () => {
-        const result = convertStreamColors(
-          '% comment\n0.5 g',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('% comment\n0.5 g', {}, null);
         expect(result).toBe('% comment 0.5 g');
       });
     });
 
     describe('number formats', () => {
       it('handles integers', () => {
-        const result = convertStreamColors('42 g', {}, false, new Set());
+        const result = convertStreamColors('42 g', {}, null);
         expect(result).toBe('42 g');
       });
 
       it('handles floating point numbers', () => {
-        const result = convertStreamColors('3.14159 g', {}, false, new Set());
+        const result = convertStreamColors('3.14159 g', {}, null);
         expect(result).toBe('3.14159 g');
       });
 
       it('handles negative numbers', () => {
-        const result = convertStreamColors('-123 0 m', {}, false, new Set());
+        const result = convertStreamColors('-123 0 m', {}, null);
         expect(result).toBe('-123 0 m');
       });
 
       it('handles positive numbers with explicit sign', () => {
-        const result = convertStreamColors('+456 0 m', {}, false, new Set());
+        const result = convertStreamColors('+456 0 m', {}, null);
         expect(result).toBe('+456 0 m');
       });
 
       it('handles numbers starting with decimal point', () => {
-        const result = convertStreamColors('.5 g', {}, false, new Set());
+        const result = convertStreamColors('.5 g', {}, null);
         expect(result).toBe('.5 g');
       });
 
       it('handles numbers ending with decimal point', () => {
-        const result = convertStreamColors('5. g', {}, false, new Set());
+        const result = convertStreamColors('5. g', {}, null);
         expect(result).toBe('5. g');
       });
     });
 
     describe('whitespace handling', () => {
       it('handles various whitespace characters', () => {
-        const result = convertStreamColors(
-          '1\t2\n3\r4 re',
-          {},
-          false,
-          new Set(),
-        );
+        const result = convertStreamColors('1\t2\n3\r4 re', {}, null);
         expect(result).toBe('1 2 3 4 re');
       });
 
       it('handles empty input', () => {
-        const result = convertStreamColors('', {}, false, new Set());
+        const result = convertStreamColors('', {}, null);
         expect(result).toBe('');
       });
 
       it('handles whitespace-only input', () => {
-        const result = convertStreamColors('   \t\n   ', {}, false, new Set());
+        const result = convertStreamColors('   \t\n   ', {}, null);
         expect(result).toBe('');
       });
     });
@@ -383,7 +276,7 @@ describe('convertStreamColors', () => {
         [0, 0, 0, { c: 0, m: 0, y: 0, k: 10000 }],
       ]);
       const input = 'BT 0 0 0 rg /F1 12 Tf (Hello) Tj ET';
-      const result = convertStreamColors(input, colorMap, false, new Set());
+      const result = convertStreamColors(input, colorMap, null);
       expect(result).toBe('BT 0 0 0 1 k /F1 12 Tf (Hello) Tj ET');
     });
 
@@ -392,7 +285,7 @@ describe('convertStreamColors', () => {
         [10000, 0, 0, { c: 0, m: 10000, y: 10000, k: 0 }],
       ]);
       const input = 'q 1 0 0 RG 100 100 200 200 re S Q';
-      const result = convertStreamColors(input, colorMap, false, new Set());
+      const result = convertStreamColors(input, colorMap, null);
       expect(result).toBe('q 0 1 1 0 K 100 100 200 200 re S Q');
     });
 
@@ -403,7 +296,7 @@ describe('convertStreamColors', () => {
       ]);
       const input =
         '0 0 0 rg 50 50 m 100 100 l S 1 0 0 rg 150 150 m 200 200 l S';
-      const result = convertStreamColors(input, colorMap, false, new Set());
+      const result = convertStreamColors(input, colorMap, null);
       expect(result).toBe(
         '0 0 0 1 k 50 50 m 100 100 l S 0 1 1 0 k 150 150 m 200 200 l S',
       );
@@ -415,7 +308,7 @@ describe('convertStreamColors', () => {
       ]);
       const input =
         '/NonStruct << /MCID 0 >> BDC BT 0 0 0 rg /F4 127 Tf ET EMC';
-      const result = convertStreamColors(input, colorMap, false, new Set());
+      const result = convertStreamColors(input, colorMap, null);
       expect(result).toBe(
         '/NonStruct << /MCID 0 >> BDC BT 0 0 0 1 k /F4 127 Tf ET EMC',
       );
@@ -423,7 +316,7 @@ describe('convertStreamColors', () => {
 
     it('handles crop marks with CMYK colors (no conversion needed)', () => {
       const input = 'q 1 0 0 1 K 0 49.133858 m 37.795277 49.133858 l S Q';
-      const result = convertStreamColors(input, {}, false, new Set());
+      const result = convertStreamColors(input, {}, null);
       expect(result).toBe(
         'q 1 0 0 1 K 0 49.133858 m 37.795277 49.133858 l S Q',
       );
@@ -434,66 +327,52 @@ describe('convertStreamColors', () => {
         [0, 0, 0, { c: 0, m: 0, y: 0, k: 10000 }],
       ]);
       const input = '/G3 gs 0 0 0 rg';
-      const result = convertStreamColors(input, colorMap, false, new Set());
+      const result = convertStreamColors(input, colorMap, null);
       expect(result).toBe('/G3 gs 0 0 0 1 k');
     });
   });
 
-  describe('warning for unmapped colors', () => {
-    let logWarnMock: ReturnType<typeof vi.fn>;
-    let originalLogWarn: typeof import('../src/logger.js').Logger.logWarn;
-
-    beforeEach(async () => {
-      const Logger = (await import('../src/logger.js')).Logger;
-      originalLogWarn = Logger.logWarn;
-      logWarnMock = vi.fn<(...messages: any[]) => void>();
-      Logger.logWarn = logWarnMock as typeof Logger.logWarn;
+  describe('collecting unmapped colors', () => {
+    it('collects unmapped rg colors', () => {
+      const unmappedColors = new Set<string>();
+      convertStreamColors('0.1 0.2 0.3 rg', {}, unmappedColors);
+      expect([...unmappedColors]).toEqual(['{"r":1000,"g":2000,"b":3000}']);
     });
 
-    afterEach(async () => {
-      const Logger = (await import('../src/logger.js')).Logger;
-      Logger.logWarn = originalLogWarn;
+    it('collects unmapped RG colors', () => {
+      const unmappedColors = new Set<string>();
+      convertStreamColors('0.1 0.2 0.3 RG', {}, unmappedColors);
+      expect([...unmappedColors]).toEqual(['{"r":1000,"g":2000,"b":3000}']);
     });
 
-    it('warns for unmapped rg colors when warnUnmapped is true', () => {
-      convertStreamColors('0.1 0.2 0.3 rg', {}, true, new Set());
-      expect(logWarnMock).toHaveBeenCalledWith(
-        'RGB color not mapped to CMYK: {"r":1000,"g":2000,"b":3000}',
-      );
+    it('does not collect when unmappedColors is null', () => {
+      const result = convertStreamColors('0.1 0.2 0.3 rg', {}, null);
+      expect(result).toBe('0.1 0.2 0.3 rg');
     });
 
-    it('warns for unmapped RG colors when warnUnmapped is true', () => {
-      convertStreamColors('0.1 0.2 0.3 RG', {}, true, new Set());
-      expect(logWarnMock).toHaveBeenCalledWith(
-        'RGB color not mapped to CMYK: {"r":1000,"g":2000,"b":3000}',
-      );
+    it('collects each color once', () => {
+      const unmappedColors = new Set<string>();
+      convertStreamColors('0.1 0.2 0.3 rg 0.1 0.2 0.3 rg', {}, unmappedColors);
+      expect(unmappedColors.size).toBe(1);
     });
 
-    it('does not warn when warnUnmapped is false', () => {
-      convertStreamColors('0.1 0.2 0.3 rg', {}, false, new Set());
-      expect(logWarnMock).not.toHaveBeenCalled();
+    it('collects different colors separately', () => {
+      const unmappedColors = new Set<string>();
+      convertStreamColors('0.1 0.2 0.3 rg 0.4 0.5 0.6 rg', {}, unmappedColors);
+      expect(unmappedColors.size).toBe(2);
     });
 
-    it('warns only once for duplicate colors in same stream', () => {
-      convertStreamColors('0.1 0.2 0.3 rg 0.1 0.2 0.3 rg', {}, true, new Set());
-      expect(logWarnMock).toHaveBeenCalledTimes(1);
+    it('deduplicates colors across multiple calls', () => {
+      const unmappedColors = new Set<string>();
+      convertStreamColors('0.1 0.2 0.3 rg', {}, unmappedColors);
+      convertStreamColors('0.1 0.2 0.3 rg', {}, unmappedColors);
+      expect(unmappedColors.size).toBe(1);
     });
 
-    it('warns separately for different colors', () => {
-      convertStreamColors('0.1 0.2 0.3 rg 0.4 0.5 0.6 rg', {}, true, new Set());
-      expect(logWarnMock).toHaveBeenCalledTimes(2);
-    });
-
-    it('tracks warned colors across multiple calls', () => {
-      const warnedColors = new Set<string>();
-      convertStreamColors('0.1 0.2 0.3 rg', {}, true, warnedColors);
-      convertStreamColors('0.1 0.2 0.3 rg', {}, true, warnedColors);
-      expect(logWarnMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('shares warned colors between rg and RG operators', () => {
-      convertStreamColors('0.1 0.2 0.3 rg 0.1 0.2 0.3 RG', {}, true, new Set());
-      expect(logWarnMock).toHaveBeenCalledTimes(1);
+    it('shares the collection between rg and RG operators', () => {
+      const unmappedColors = new Set<string>();
+      convertStreamColors('0.1 0.2 0.3 rg 0.1 0.2 0.3 RG', {}, unmappedColors);
+      expect(unmappedColors.size).toBe(1);
     });
   });
 
@@ -501,7 +380,7 @@ describe('convertStreamColors', () => {
     it('skips binary data between ID and EI', () => {
       // Binary data could contain byte sequences that look like "0.5 0.5 0.5 rg"
       const input = 'BI /W 10 /H 10 ID binary0.5 0.5 0.5 rgdata EI';
-      const result = convertStreamColors(input, {}, false, new Set());
+      const result = convertStreamColors(input, {}, null);
       // The binary data should pass through unchanged
       expect(result).toContain('ID');
       expect(result).toContain('EI');
@@ -514,36 +393,26 @@ describe('convertStreamColors', () => {
         [5000, 5000, 5000, { c: 0, m: 0, y: 0, k: 5000 }],
       ]);
       const input = 'BI /W 1 /H 1 ID x EI 0.5 0.5 0.5 rg';
-      const result = convertStreamColors(input, colorMap, false, new Set());
+      const result = convertStreamColors(input, colorMap, null);
       expect(result).toContain('0 0 0 0.5 k');
     });
 
     it('handles inline image with EI-like bytes in data', () => {
       // "EI" without proper whitespace context should not end the image
       const input = 'BI /W 1 /H 1 ID xEIy EI';
-      const result = convertStreamColors(input, {}, false, new Set());
+      const result = convertStreamColors(input, {}, null);
       expect(result).toContain('EI');
     });
   });
 
   describe('edge cases', () => {
     it('handles negative color values (out of range)', () => {
-      const result = convertStreamColors(
-        '-0.1 0.2 0.3 rg',
-        {},
-        false,
-        new Set(),
-      );
+      const result = convertStreamColors('-0.1 0.2 0.3 rg', {}, null);
       expect(result).toBe('-0.1 0.2 0.3 rg');
     });
 
     it('handles color values > 1 (out of range)', () => {
-      const result = convertStreamColors(
-        '1.5 0.5 0.5 rg',
-        {},
-        false,
-        new Set(),
-      );
+      const result = convertStreamColors('1.5 0.5 0.5 rg', {}, null);
       expect(result).toBe('1.5 0.5 0.5 rg');
     });
 
@@ -555,8 +424,7 @@ describe('convertStreamColors', () => {
       const result = convertStreamColors(
         '0.12345 0.6789 0.99999 rg',
         colorMap,
-        false,
-        new Set(),
+        null,
       );
       expect(result).toBe('0.1 0.2 0.3 0.4 k');
     });

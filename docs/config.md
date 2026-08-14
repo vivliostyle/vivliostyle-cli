@@ -428,7 +428,8 @@ pdfPostprocess takes precedence.
 
   - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+    Can be a boolean or a config object with options such as overrideMap and
+    ifUnmappedColorsFound.
 
   - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | ((image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>))[]  
     Replace images in the output PDF.
@@ -471,8 +472,14 @@ type PdfPostprocessConfig = {
     Each entry is a tuple of [rgb, {c, m, y, k}].
     RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
 
-  - `warnUnmapped`: boolean  
-    Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+  - ~~`warnUnmapped`~~ _Deprecated_  
+    Use `ifUnmappedColorsFound` instead.
+    `true` corresponds to `"warn"` and `false` to `"ignore"`.
+    When both are specified, `ifUnmappedColorsFound` takes precedence.
+
+  - `ifUnmappedColorsFound`: "warn" | "error" | "ignore"  
+    What to do when RGB colors not mapped to CMYK are encountered:
+    log a warning, fail the build, or do nothing. (default: warn)
 
   - `mapOutput`: string  
     Output the CMYK color map to a JSON file at the specified path.
@@ -484,6 +491,10 @@ type CmykConfig = {
   overrideMap?: "{tuple(Array)}"[];
   reserveMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
+  ifUnmappedColorsFound?:
+    | "warn"
+    | "error"
+    | "ignore";
   mapOutput?: string;
 };
 ```

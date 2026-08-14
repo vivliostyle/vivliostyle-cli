@@ -124,6 +124,7 @@ export class PostProcess {
     let pdf = await this.document.save();
     signal?.throwIfAborted();
 
+    const failures: string[] = [];
     if (cmyk) {
       const mergedMap: CmykMap = { ...cmykMap };
       for (const [rgb, cmykValue] of cmyk.overrideMap) {
@@ -132,11 +133,23 @@ export class PostProcess {
       }
 
       Logger.logInfo('Converting CMYK colors');
+      const unmappedColors =
+        cmyk.ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
       pdf = await convertCmykColors({
         pdf,
         colorMap: mergedMap,
-        warnUnmapped: cmyk.warnUnmapped,
+        unmappedColors,
       });
+      if (unmappedColors) {
+        for (const color of unmappedColors) {
+          Logger.logWarn(`RGB color not mapped to CMYK: ${color}`);
+        }
+        if (cmyk.ifUnmappedColorsFound === 'error' && unmappedColors.size > 0) {
+          failures.push(
+            `${unmappedColors.size} RGB color(s) not mapped to CMYK`,
+          );
+        }
+      }
       signal?.throwIfAborted();
 
       if (cmyk.mapOutput) {
@@ -157,6 +170,10 @@ export class PostProcess {
         replaceImageConfig: replaceImage,
       });
       signal?.throwIfAborted();
+    }
+
+    if (failures.length > 0) {
+      throw new Error(failures.join('; '));
     }
 
     if (preflight) {
