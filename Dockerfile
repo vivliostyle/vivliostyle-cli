@@ -49,18 +49,6 @@ RUN set -x \
   && npm install -g pnpm \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install Chromium (for arm64 build, use the official Debian package)
-RUN set -x \
-  && if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
-    echo "Skipping Chromium installation on amd64 architecture"; \
-  else \
-    apt-get update -qq \
-    && apt-get upgrade -yqq \
-    && apt-get install -y -qq --no-install-recommends chromium \
-    && chromium --version \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
-  fi
-
 RUN set -x \
   && mkdir -p /opt \
   && mkdir -p /data \
@@ -87,20 +75,15 @@ RUN pnpm install --prod --ignore-scripts \
 COPY --from=builder --chown=vivliostyle:vivliostyle /opt/vivliostyle-cli/dist/ /opt/vivliostyle-cli/dist/
 ENV PATH="/opt/vivliostyle-cli/node_modules/.bin:${PATH}"
 
-# Install Puppeteer browsers (for amd64 build, use the @puppeteer/browsers locked by Vivliostyle CLI)
+# Install Puppeteer browsers (use the @puppeteer/browsers locked by Vivliostyle CLI)
 USER root
-RUN set -x \
-  && if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
-    echo "Skipping Puppeteer browser installation on arm64 architecture"; \
-  else \
-    apt-get update -qq \
-    && apt-get upgrade -yqq \
-    && mkdir -p /opt/puppeteer \
-    && /opt/vivliostyle-cli/node_modules/.bin/browsers install "$BROWSER" \
-      --path /opt/puppeteer --install-deps \
-    && chown -R vivliostyle: /opt/puppeteer \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
-  fi
+RUN apt-get update -qq \
+  && apt-get upgrade -yqq \
+  && mkdir -p /opt/puppeteer \
+  && /opt/vivliostyle-cli/node_modules/.bin/browsers install "$BROWSER" \
+    --path /opt/puppeteer --install-deps \
+  && chown -R vivliostyle: /opt/puppeteer \
+  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Let arbitrary UIDs (e.g. `docker run --user`) write build-ids.json and
 # download browsers here. build-ids.json sits at the cache root; each
