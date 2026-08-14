@@ -538,7 +538,10 @@ type CopyAssetConfig = {
 - `TocConfig`
 
   - `title`: string  
-    Title of the generated ToC document.
+    Title used for the generated ToC heading and publication manifest entry.
+
+  - `compose`: ({ h }: { h: typeof import("hastscript").h }) => ({ heading, content }: { heading: import("hast").Element & { tagName: "h2"; children: [import("hast").Text] }; content: import("hast").Element }) => import("hast").ElementContent[]  
+    Function to compose the contents of the ToC navigation element.
 
   - `htmlPath`: string  
     Location where the generated ToC document will be saved. (default: `index.html`)
@@ -557,6 +560,20 @@ type CopyAssetConfig = {
 ```ts
 type TocConfig = {
   title?: string;
+  compose?: ({
+    h,
+  }: {
+    h: typeof import("hastscript").h;
+  }) => ({
+    heading,
+    content,
+  }: {
+    heading: import("hast").Element & {
+      tagName: "h2";
+      children: [import("hast").Text];
+    };
+    content: import("hast").Element;
+  }) => import("hast").ElementContent[];
   htmlPath?: string;
   sectionDepth?: number;
   transformDocumentList?: (

@@ -17,6 +17,7 @@ export { defineConfig } from './config/define.js';
 export type {
   StructuredDocument,
   StructuredDocumentSection,
+  TocCompose,
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';

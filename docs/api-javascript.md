@@ -22,6 +22,7 @@
 - [`Metadata`](#metadata)
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
+- [`TocCompose`](#toccompose)
 - [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
 - [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
 - [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
@@ -1293,6 +1294,30 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 ##### level
 
 > **level**: `number`
+
+***
+
+### TocCompose
+
+> **TocCompose** = (`{ h }`) => (`{
+  heading,
+  content,
+}`) => `ElementContent`[]
+
+#### Parameters
+
+##### \{ h \}
+
+###### h
+
+`h`
+
+#### Returns
+
+(`{
+  heading,
+  content,
+}`) => `ElementContent`[]
 
 ***
 

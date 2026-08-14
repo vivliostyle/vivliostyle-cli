@@ -72,6 +72,16 @@ type HastElement = import('hast').ElementContent | import('hast').Root;
 export type HastTransformFunction<T> = (
   nodeList: T[],
 ) => (propsList: { children: HastElement | HastElement[] }[]) => HastElement;
+export type TocCompose = ({ h }: { h: typeof import('hastscript').h }) => ({
+  heading,
+  content,
+}: {
+  heading: import('hast').Element & {
+    tagName: 'h2';
+    children: [import('hast').Text];
+  };
+  content: import('hast').Element;
+}) => import('hast').ElementContent[];
 
 export const ValidString = v.pipe(
   v.string(),
@@ -523,7 +533,17 @@ export const TocConfig = v.pipe(
       title: v.pipe(
         ValidString,
         v.description($`
-          Title of the generated ToC document.
+          Title used for the generated ToC heading and publication manifest entry.
+        `),
+      ),
+      compose: v.pipe(
+        v.custom<TocCompose>((input) => typeof input === 'function'),
+        v.metadata({
+          typeString:
+            '({ h }: { h: typeof import("hastscript").h }) => ({ heading, content }: { heading: import("hast").Element & { tagName: "h2"; children: [import("hast").Text] }; content: import("hast").Element }) => import("hast").ElementContent[]',
+        }),
+        v.description($`
+          Function to compose the contents of the ToC navigation element.
         `),
       ),
       htmlPath: v.pipe(

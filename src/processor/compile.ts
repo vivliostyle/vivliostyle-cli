@@ -302,6 +302,7 @@ export async function transformManuscript(
       manifestPath,
       distDir: upath.dirname(contentsEntry.target),
       tocTitle: contentsEntry.tocTitle,
+      compose: contentsEntry.compose,
       sectionDepth: contentsEntry.sectionDepth,
       styleOptions: contentsEntry,
       transform: contentsEntry.transform,

@@ -84,6 +84,79 @@ it('supports boolean toc config', async () => {
   expect(li.item(2).innerHTML).toBe('<a href="c.html">C</a>');
 });
 
+it('composes generated ToC navigation', async () => {
+  vol.fromJSON({
+    '/work/chapter.md': '# Chapter',
+  });
+  await runCommand(['build'], {
+    cwd: '/work',
+    config: {
+      title: 'Publication title',
+      entry: ['chapter.md'],
+      output: [],
+      toc: {
+        title: 'Contents',
+        compose:
+          ({ h }) =>
+          ({ heading, content }) => [
+            h(
+              'h1',
+              { ...heading.properties, id: 'toc-heading' },
+              ...heading.children,
+            ),
+            h('p', { className: ['toc-description'] }, 'Select a chapter'),
+            content,
+            h('p', { className: ['toc-note'] }, 'End of contents'),
+          ],
+      },
+    },
+  });
+
+  const workDir = vol.toJSON('/work/.vivliostyle', {}, true);
+  const document = new JSDOM(workDir['index.html']!).window.document;
+  const nav = document.querySelector('nav[role="doc-toc"]')!;
+  expect(nav.children[0].outerHTML).toBe('<h1 id="toc-heading">Contents</h1>');
+  expect(nav.children[1].outerHTML).toBe(
+    '<p class="toc-description">Select a chapter</p>',
+  );
+  expect(nav.children[2].tagName).toBe('OL');
+  expect(nav.children[3].outerHTML).toBe(
+    '<p class="toc-note">End of contents</p>',
+  );
+
+  const manifest = JSON.parse(workDir['publication.json']!);
+  expect(manifest.readingOrder[0].name).toBe('Contents');
+});
+
+it('omits generated ToC heading', async () => {
+  vol.fromJSON({
+    '/work/chapter.md': '# Chapter',
+  });
+  await runCommand(['build'], {
+    cwd: '/work',
+    config: {
+      title: 'Publication title',
+      entry: ['chapter.md'],
+      output: [],
+      toc: {
+        title: 'Contents',
+        compose:
+          () =>
+          ({ content }) => [content],
+      },
+    },
+  });
+
+  const workDir = vol.toJSON('/work/.vivliostyle', {}, true);
+  const document = new JSDOM(workDir['index.html']!).window.document;
+  const nav = document.querySelector('nav[role="doc-toc"]')!;
+  expect(nav.children).toHaveLength(1);
+  expect(nav.firstElementChild!.tagName).toBe('OL');
+
+  const manifest = JSON.parse(workDir['publication.json']!);
+  expect(manifest.readingOrder[0].name).toBe('Contents');
+});
+
 it('supports object toc config', async () => {
   vol.fromJSON({
     '/work/manuscript/a.md': '# A',
