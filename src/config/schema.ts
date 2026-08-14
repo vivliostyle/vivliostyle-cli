@@ -323,6 +323,20 @@ const CmykSchema = v.pipe(
   `),
 );
 
+const ReplaceFunctionSchema = v.pipe(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- valibot's v.function() cannot express the ReplaceFunction signature
+  v.function() as v.GenericSchema<
+    (image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>
+  >,
+  v.metadata({
+    typeString:
+      '((image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>)',
+  }),
+  v.description(
+    'Function that receives an image context and returns replacement image bytes.',
+  ),
+);
+
 const ReplaceImageEntrySchema = v.pipe(
   v.object({
     source: v.pipe(
@@ -332,9 +346,9 @@ const ReplaceImageEntrySchema = v.pipe(
       ),
     ),
     replacement: v.pipe(
-      ValidString,
+      v.union([ValidString, ReplaceFunctionSchema]),
       v.description(
-        'Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.',
+        'Path to the replacement image file, a function that processes the image, or when source is a RegExp with a string replacement, supports $1, $2, etc.',
       ),
     ),
   }),
@@ -342,11 +356,11 @@ const ReplaceImageEntrySchema = v.pipe(
 );
 
 const ReplaceImageSchema = v.pipe(
-  v.array(ReplaceImageEntrySchema),
+  v.array(v.union([ReplaceImageEntrySchema, ReplaceFunctionSchema])),
   v.description($`
     Replace images in the output PDF.
-    Each entry specifies a source image path and its replacement image path.
-    Useful for replacing RGB images with CMYK versions.
+    Each entry can be an object with source/replacement paths, an object with a source path
+    and a replacement function, or a bare function that processes all RGB images.
   `),
 );
 

@@ -6,20 +6,25 @@
 ### Functions
 
 - [`build`](#build)
+- [`builtinCmykReplacement`](#builtincmykreplacement)
+- [`builtinGrayReplacement`](#builtingrayreplacement)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
+- [`iccReplacement`](#iccreplacement)
 - [`preview`](#preview)
 - [`VFM`](#vfm)
 
 ### Interfaces
 
+- [`ImageContext`](#imagecontext)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
 
 ### Type Aliases
 
 - [`Metadata`](#metadata)
+- [`ReplaceFunction`](#replacefunction)
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
 - [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
@@ -269,6 +274,32 @@ build({
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### builtinCmykReplacement()
+
+> **builtinCmykReplacement**(): [`ReplaceFunction`](#replacefunction)
+
+Returns a ReplaceFunction that converts RGB images to CMYK
+using mupdf's DeviceCMYK color space.
+
+#### Returns
+
+[`ReplaceFunction`](#replacefunction)
+
+***
+
+### builtinGrayReplacement()
+
+> **builtinGrayReplacement**(): [`ReplaceFunction`](#replacefunction)
+
+Returns a ReplaceFunction that converts RGB images to grayscale
+using mupdf's DeviceGray color space.
+
+#### Returns
+
+[`ReplaceFunction`](#replacefunction)
 
 ***
 
@@ -752,6 +783,29 @@ Define the configuration for Vivliostyle CLI.
 
 ***
 
+### iccReplacement()
+
+> **iccReplacement**(`outputProfile`): [`ReplaceFunction`](#replacefunction)
+
+Returns a ReplaceFunction that converts RGB images to the color space
+of the given ICC profile. The profile alone determines the output color
+space; the profile data is passed to mupdf without inspection.
+The conversion applies to pixel values only. The replaced image is stored
+with mupdf's default profile for the resulting color space, not with the
+given profile.
+
+#### Parameters
+
+##### outputProfile
+
+`Uint8Array`
+
+#### Returns
+
+[`ReplaceFunction`](#replacefunction)
+
+***
+
 ### preview()
 
 > **preview**(`options`): `Promise`\<`ViteDevServer`\>
@@ -1010,6 +1064,23 @@ Unified processor.
 
 ## Interfaces
 
+### ImageContext
+
+Access to the image being replaced. Only valid while the ReplaceFunction
+invocation is running; do not retain it beyond the callback.
+
+#### Methods
+
+##### asPNG()
+
+> **asPNG**(): `Uint8Array`
+
+###### Returns
+
+`Uint8Array`
+
+***
+
 ### StringifyMarkdownOptions
 
 Option for convert Markdown to a stringify (HTML).
@@ -1229,6 +1300,22 @@ Value of `<title>...</title>`.
 > `optional` **vfm?**: `VFMSettings`
 
 VFM settings.
+
+***
+
+### ReplaceFunction
+
+> **ReplaceFunction** = (`image`) => `Uint8Array` \| `Promise`\<`Uint8Array`\>
+
+#### Parameters
+
+##### image
+
+[`ImageContext`](#imagecontext)
+
+#### Returns
+
+`Uint8Array` \| `Promise`\<`Uint8Array`\>
 
 ***
 

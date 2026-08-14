@@ -1,9 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { replaceImages } from '../src/output/image.js';
+import type {
+  ImageContext,
+  ReplaceFunction,
+} from '../src/config/replace-image.js';
+import { Logger } from '../src/logger.js';
+import {
+  builtinCmykReplacement,
+  builtinGrayReplacement,
+  iccReplacement,
+  replaceImages,
+} from '../src/output/image.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 
@@ -19,44 +29,51 @@ async function getImageColorSpace(
     'application/pdf',
   ) as import('mupdf').PDFDocument;
 
-  const page = doc.loadPage(0) as import('mupdf').PDFPage;
-  const pageObj = page.getObject().resolve();
-  const res = pageObj.get('Resources');
-
-  if (!res?.isDictionary()) {
-    doc.destroy();
-    return 'Unknown';
-  }
-
-  const xobjects = res.get('XObject');
-  if (!xobjects?.isDictionary()) {
-    doc.destroy();
-    return 'Unknown';
-  }
-
-  let colorSpace: 'RGB' | 'CMYK' | 'Gray' | 'Unknown' = 'Unknown';
-
-  xobjects.forEach((value) => {
-    const resolved = value.resolve();
-    const subtype = resolved.get('Subtype');
-
-    if (subtype?.toString() === '/Image') {
-      const pdfImage = doc.loadImage(value);
-      const pixmap = pdfImage.toPixmap();
-      const cs = pixmap.getColorSpace();
-
-      if (cs?.isRGB()) {
-        colorSpace = 'RGB';
-      } else if (cs?.isCMYK()) {
-        colorSpace = 'CMYK';
-      } else if (cs?.isGray()) {
-        colorSpace = 'Gray';
+  try {
+    const page = doc.loadPage(0) as import('mupdf').PDFPage;
+    try {
+      const pageObj = page.getObject().resolve();
+      const res = pageObj.get('Resources');
+      if (!res?.isDictionary()) {
+        return 'Unknown';
       }
-    }
-  });
 
-  doc.destroy();
-  return colorSpace;
+      const xobjects = res.get('XObject');
+      if (!xobjects?.isDictionary()) {
+        return 'Unknown';
+      }
+
+      let colorSpace: 'RGB' | 'CMYK' | 'Gray' | 'Unknown' = 'Unknown';
+
+      xobjects.forEach((value) => {
+        const resolved = value.resolve();
+        if (resolved.get('Subtype')?.toString() !== '/Image') {
+          return;
+        }
+
+        const pdfImage = doc.loadImage(value);
+        const pixmap = pdfImage.toPixmap();
+        const cs = pixmap.getColorSpace();
+
+        if (cs?.isRGB()) {
+          colorSpace = 'RGB';
+        } else if (cs?.isCMYK()) {
+          colorSpace = 'CMYK';
+        } else if (cs?.isGray()) {
+          colorSpace = 'Gray';
+        }
+
+        pixmap.destroy();
+        pdfImage.destroy();
+      });
+
+      return colorSpace;
+    } finally {
+      page.destroy();
+    }
+  } finally {
+    doc.destroy();
+  }
 }
 
 type ColorSpaceLabel = 'RGB' | 'CMYK' | 'Gray' | 'Other';
@@ -98,7 +115,7 @@ function findFirstImageXObject(xobjects: import('mupdf').PDFObject): {
 }
 
 async function collectImageColorSpaces(pdf: Uint8Array): Promise<{
-  page: Record<string, ColorSpaceLabel>;
+  page: Record<string, { colorSpace: ColorSpaceLabel; hasSMask: boolean }>;
   nested: ColorSpaceLabel[];
 }> {
   const mupdf = await import('mupdf');
@@ -106,7 +123,10 @@ async function collectImageColorSpaces(pdf: Uint8Array): Promise<{
     pdf,
     'application/pdf',
   ) as import('mupdf').PDFDocument;
-  const page: Record<string, ColorSpaceLabel> = {};
+  const page: Record<
+    string,
+    { colorSpace: ColorSpaceLabel; hasSMask: boolean }
+  > = {};
   const nested: ColorSpaceLabel[] = [];
   doc
     .loadPage(0)
@@ -118,9 +138,19 @@ async function collectImageColorSpaces(pdf: Uint8Array): Promise<{
       const resolved = value.resolve();
       const subtype = resolved.get('Subtype')?.toString();
       if (subtype === '/Image') {
-        page[String(key)] = toColorSpaceLabel(
-          doc.loadImage(value).toPixmap().getColorSpace(),
-        );
+        const smask = resolved.get('SMask');
+        let colorSpace: ColorSpaceLabel = 'Other';
+        try {
+          colorSpace = toColorSpaceLabel(
+            doc.loadImage(value).toPixmap().getColorSpace(),
+          );
+        } catch {
+          colorSpace = 'Other';
+        }
+        page[String(key)] = {
+          colorSpace,
+          hasSMask: !!smask && !smask.isNull(),
+        };
       } else if (subtype === '/Form') {
         resolved
           .get('Resources')
@@ -168,6 +198,162 @@ async function wrapFirstImageInForm(pdf: Uint8Array): Promise<Uint8Array> {
   const content = new mupdf.Buffer();
   content.writeLine('/NestedIm Do');
   xobjects.put(imageKey, doc.addStream(content, formDict));
+  return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
+}
+
+async function getFirstImagePixels(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const xobjects = doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  return new Uint8Array(doc.loadImage(value).toPixmap().getPixels());
+}
+
+async function attachSMaskToFirstImage(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const xobjects = doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const img = doc.loadImage(value);
+  const maskPixmap = new mupdf.Pixmap(
+    mupdf.ColorSpace.DeviceGray,
+    [0, 0, img.getWidth(), img.getHeight()],
+    false,
+  );
+  maskPixmap.clear(128);
+  const maskRef = doc.addImage(new mupdf.Image(maskPixmap));
+  value.resolve().put('SMask', maskRef);
+  return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
+}
+
+async function getFirstImageSMaskPixel(pdf: Uint8Array): Promise<number> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const xobjects = doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const smask = value.resolve().get('SMask');
+  return doc.loadImage(smask).toPixmap().getPixels()[0];
+}
+
+async function corruptFirstImageColorSpace(
+  pdf: Uint8Array,
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const xobjects = doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  value.resolve().put('ColorSpace', doc.newName('DeviceBogus'));
+  return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
+}
+
+async function attachCorruptSMaskToFirstImage(
+  pdf: Uint8Array,
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const xobjects = doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  // A reference to an undefined object is not strictly dangling: PDF treats it
+  // as the null object, not as an error (ISO 32000-1 §7.3.10). This test
+  // relies on mupdf tolerating the reference as "no mask" while loading the
+  // parent image, then throwing from the explicit loadImage call on the SMask.
+  value.resolve().put('SMask', doc.newIndirect(99999));
+  return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
+}
+
+async function duplicateFirstImageObject(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const xobjects = doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const resolved = value.resolve();
+  const dict = doc.newDictionary();
+  for (const name of [
+    'Type',
+    'Subtype',
+    'Width',
+    'Height',
+    'ColorSpace',
+    'BitsPerComponent',
+    'Filter',
+    'DecodeParms',
+  ]) {
+    const entry = resolved.get(name);
+    if (entry && !entry.isNull()) {
+      dict.put(name, entry);
+    }
+  }
+  xobjects.put('ImDup', doc.addRawStream(value.readRawStream(), dict));
+  return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
+}
+
+async function addOpaqueImageToFirstPage(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const { createCanvas } = await import('@napi-rs/canvas');
+  const canvas = createCanvas(8, 8);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgb(255, 0, 0)';
+  ctx.fillRect(0, 0, 8, 8);
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const imgRef = doc.addImage(new mupdf.Image(canvas.toBuffer('image/png')));
+  doc
+    .loadPage(0)
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject')
+    .put('ExtraIm', imgRef);
   return new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
 }
 
@@ -262,6 +448,171 @@ describe('replaceImages', () => {
     expect(destPdf).toEqual(srcPdf);
   });
 
+  it('replaces RGB image using a bare ReplaceFunction', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const srcColorSpace = await getImageColorSpace(srcPdf);
+    expect(srcColorSpace).toBe('RGB');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        async (image: ImageContext) => {
+          const mupdf = await import('mupdf');
+          const img = new mupdf.Image(image.asPNG());
+          const pixmap = img.toPixmap();
+          const cmykPixmap = pixmap.convertToColorSpace(
+            mupdf.ColorSpace.DeviceCMYK,
+          );
+          return cmykPixmap.asPAM();
+        },
+      ],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('replaces image using file-to-function entry', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        {
+          source: srcImagePath,
+          replacement: async (image: ImageContext) => {
+            const mupdf = await import('mupdf');
+            const img = new mupdf.Image(image.asPNG());
+            const pixmap = img.toPixmap();
+            const cmykPixmap = pixmap.convertToColorSpace(
+              mupdf.ColorSpace.DeviceCMYK,
+            );
+            return cmykPixmap.asPAM();
+          },
+        },
+      ],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('file entry takes precedence over bare function (first match wins)', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+    const destImagePath = path.join(fixturesDir, 'ck_cmyk.tiff');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        { source: srcImagePath, replacement: destImagePath },
+        builtinGrayReplacement(),
+      ],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('skips entries with nonexistent source file', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        { source: '/nonexistent/source.png', replacement: 'any.tiff' },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to load source image'),
+    );
+    expect(destPdf).toEqual(srcPdf);
+    spy.mockRestore();
+  });
+
+  it('skips entries with nonexistent replacement file', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        { source: srcImagePath, replacement: '/nonexistent/dest.tiff' },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to load replacement image'),
+    );
+    expect(destPdf).toEqual(srcPdf);
+    spy.mockRestore();
+  });
+
+  it('catches and warns on ReplaceFunction errors', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        () => {
+          throw new Error('test error');
+        },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to apply replacement function'),
+    );
+    expect(destPdf).toBeInstanceOf(Uint8Array);
+    spy.mockRestore();
+  });
+
+  it('catches and warns on file-to-function ReplaceFunction errors', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        {
+          source: srcImagePath,
+          replacement: () => {
+            throw new Error('test error');
+          },
+        },
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to apply replacement function'),
+    );
+    expect(destPdf).toBeInstanceOf(Uint8Array);
+    spy.mockRestore();
+  });
+
+  it('warns when ReplaceFunction does not return a Uint8Array', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [(() => 'not bytes') as unknown as ReplaceFunction],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('must return a Uint8Array'),
+    );
+    expect(await getImageColorSpace(destPdf)).toBe('RGB');
+    spy.mockRestore();
+  });
+
   it('replaces images nested in Form XObjects', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
     const nestedPdf = await wrapFirstImageInForm(srcPdf);
@@ -296,5 +647,300 @@ describe('replaceImages', () => {
 
     const { nested } = await collectImageColorSpaces(destPdf);
     expect(nested).toEqual(['CMYK']);
+  });
+
+  it('preserves soft mask when a replacement function converts the image', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const smaskPdf = await attachSMaskToFirstImage(srcPdf);
+
+    const spy = vi.spyOn(Logger, 'logWarn');
+    const destPdf = await replaceImages({
+      pdf: smaskPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    const { page } = await collectImageColorSpaces(destPdf);
+    expect(Object.values(page)).toEqual([
+      { colorSpace: 'Gray', hasSMask: true },
+    ]);
+    expect(await getFirstImageSMaskPixel(destPdf)).toBe(128);
+    spy.mockRestore();
+  });
+
+  it('preserves soft mask when a file entry replaces the image', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const smaskPdf = await attachSMaskToFirstImage(srcPdf);
+
+    const spy = vi.spyOn(Logger, 'logWarn');
+    const destPdf = await replaceImages({
+      pdf: smaskPdf,
+      replaceImageConfig: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    const { page } = await collectImageColorSpaces(destPdf);
+    expect(Object.values(page)).toEqual([
+      { colorSpace: 'CMYK', hasSMask: true },
+    ]);
+    expect(await getFirstImageSMaskPixel(destPdf)).toBe(128);
+    spy.mockRestore();
+  });
+
+  it('skips images with /Mask when an entry matches and warns', async () => {
+    const mupdf = await import('mupdf');
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const doc = mupdf.PDFDocument.openDocument(
+      srcPdf,
+      'application/pdf',
+    ) as import('mupdf').PDFDocument;
+    const xobjects = doc
+      .loadPage(0)
+      .getObject()
+      .resolve()
+      .get('Resources')
+      .get('XObject');
+    const { value } = findFirstImageXObject(xobjects);
+    const maskArray = doc.newArray();
+    for (const v of [250, 255, 250, 255, 250, 255]) {
+      maskArray.push(doc.newInteger(v));
+    }
+    value.resolve().put('Mask', maskArray);
+    const maskPdf = new Uint8Array(doc.saveToBuffer('compress').asUint8Array());
+
+    const spy = vi.spyOn(Logger, 'logWarn');
+    const destPdf = await replaceImages({
+      pdf: maskPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Cannot replace image with /Mask'),
+    );
+    const { page } = await collectImageColorSpaces(destPdf);
+    expect(Object.values(page).map((v) => v.colorSpace)).toEqual(['RGB']);
+    spy.mockRestore();
+
+    const noMatchSpy = vi.spyOn(Logger, 'logWarn');
+    await replaceImages({
+      pdf: maskPdf,
+      replaceImageConfig: [
+        {
+          source: path.join(fixturesDir, 'ck_cmyk.tiff'),
+          replacement: path.join(fixturesDir, 'ck_rgb.png'),
+        },
+      ],
+    });
+    expect(noMatchSpy).not.toHaveBeenCalled();
+    noMatchSpy.mockRestore();
+  });
+
+  it('warns and continues when the soft mask cannot be loaded', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const corruptPdf = await attachCorruptSMaskToFirstImage(srcPdf);
+    const spy = vi.spyOn(Logger, 'logWarn');
+    const debugSpy = vi.spyOn(Logger, 'debug');
+
+    const destPdf = await replaceImages({
+      pdf: corruptPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    expect(debugSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[all RGB] -> [function]'),
+    );
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to replace image: ref'),
+    );
+    expect(destPdf).toBeInstanceOf(Uint8Array);
+    debugSpy.mockRestore();
+    spy.mockRestore();
+  });
+
+  it('continues replacing other images after a corrupt one', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const twoImagePdf = await addOpaqueImageToFirstPage(srcPdf);
+    const corruptPdf = await corruptFirstImageColorSpace(twoImagePdf);
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: corruptPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to replace image: ref'),
+    );
+    const { page } = await collectImageColorSpaces(destPdf);
+    expect(page.ExtraIm?.colorSpace).toBe('Gray');
+    spy.mockRestore();
+  });
+
+  it('does not fall back to later entries when the matched entry fails', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: () => {
+            throw new Error('conversion failed');
+          },
+        },
+        builtinGrayReplacement(),
+      ],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to apply replacement function'),
+    );
+    expect(await getImageColorSpace(destPdf)).toBe('RGB');
+    spy.mockRestore();
+  });
+
+  it('replaces every image matching the same file entry', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const dupPdf = await duplicateFirstImageObject(srcPdf);
+
+    const destPdf = await replaceImages({
+      pdf: dupPdf,
+      replaceImageConfig: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+    });
+
+    const { page } = await collectImageColorSpaces(destPdf);
+    expect(Object.keys(page)).toContain('ImDup');
+    expect(Object.values(page).map((image) => image.colorSpace)).toEqual([
+      'CMYK',
+      'CMYK',
+    ]);
+  });
+
+  it('warns and continues when an image cannot be replaced', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const corruptPdf = await corruptFirstImageColorSpace(srcPdf);
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: corruptPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to replace image: ref'),
+    );
+    expect(destPdf).toBeInstanceOf(Uint8Array);
+    spy.mockRestore();
+  });
+
+  it('builtinCmykReplacement converts RGB image to CMYK', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const srcColorSpace = await getImageColorSpace(srcPdf);
+    expect(srcColorSpace).toBe('RGB');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement()],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('CMYK');
+  });
+
+  it('iccReplacement converts RGB image using a CMYK ICC profile', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const cmykProfile = fs.readFileSync(path.join(fixturesDir, 'ps_cmyk.icc'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const builtinPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement()],
+    });
+    const iccPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [iccReplacement(cmykProfile)],
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(await getImageColorSpace(iccPdf)).toBe('CMYK');
+    const builtinPixels = await getFirstImagePixels(builtinPdf);
+    const iccPixels = await getFirstImagePixels(iccPdf);
+    expect(iccPixels.length).toBe(builtinPixels.length);
+    expect(
+      Buffer.compare(Buffer.from(builtinPixels), Buffer.from(iccPixels)),
+    ).not.toBe(0);
+    spy.mockRestore();
+  });
+
+  it('iccReplacement does not affect subsequent builtin conversions', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const cmykProfile = fs.readFileSync(path.join(fixturesDir, 'ps_cmyk.icc'));
+
+    const pdf1 = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement()],
+    });
+    await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [iccReplacement(cmykProfile)],
+    });
+    const pdf3 = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinCmykReplacement()],
+    });
+
+    expect(Buffer.compare(Buffer.from(pdf1), Buffer.from(pdf3))).toBe(0);
+  });
+
+  it('builtinGrayReplacement converts RGB image to Gray', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const srcColorSpace = await getImageColorSpace(srcPdf);
+    expect(srcColorSpace).toBe('RGB');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+
+    const destColorSpace = await getImageColorSpace(destPdf);
+    expect(destColorSpace).toBe('Gray');
+  });
+
+  it('iccReplacement converts RGB image using a Gray ICC profile', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const grayProfile = fs.readFileSync(path.join(fixturesDir, 'ps_gray.icc'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const builtinPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [builtinGrayReplacement()],
+    });
+    const iccPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [iccReplacement(grayProfile)],
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(await getImageColorSpace(iccPdf)).toBe('Gray');
+    const builtinPixels = await getFirstImagePixels(builtinPdf);
+    const iccPixels = await getFirstImagePixels(iccPdf);
+    expect(iccPixels.length).toBe(builtinPixels.length);
+    expect(
+      Buffer.compare(Buffer.from(builtinPixels), Buffer.from(iccPixels)),
+    ).not.toBe(0);
+    spy.mockRestore();
   });
 });
