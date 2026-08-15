@@ -1366,15 +1366,15 @@ function resolveComposedProjectConfig({
       const hasCustomProcessor =
         documentProcessor.processorFactory !== VFM ||
         documentProcessor.metadataReader !== readMetadata;
-      const contentType =
-        hasCustomProcessor && rawContentType !== 'text/markdown'
-          ? 'text/x-vivliostyle-custom'
-          : rawContentType;
-      if (
-        !isManuscriptMediaType(contentType) ||
-        // disallow text/plain (for now)
-        contentType === 'text/plain'
-      ) {
+      const needsCustomContentType =
+        hasCustomProcessor &&
+        rawContentType !== 'text/markdown' &&
+        rawContentType !== 'text/html' &&
+        rawContentType !== 'application/xhtml+xml';
+      const contentType = needsCustomContentType
+        ? 'text/x-vivliostyle-custom'
+        : rawContentType;
+      if (!isManuscriptMediaType(contentType) || contentType === 'text/plain') {
         throw new Error(
           `Invalid manuscript type ${rawContentType} detected: ${entryPath}`,
         );
