@@ -607,6 +607,42 @@ it('supports pdfPostprocess configuration', async () => {
   });
 });
 
+it('resolves overrideMap function entries preserving order', async () => {
+  const convert = () => ({ c: 0, m: 0, y: 0, k: 10000 });
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      cmyk: {
+        overrideMap: [
+          ['#ff0000', { c: 0, m: 10000, y: 10000, k: 0 }],
+          convert,
+          [
+            { r: 0, g: 0, b: 0 },
+            { c: 0, m: 0, y: 0, k: 10000 },
+          ],
+        ],
+      },
+    },
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    cmyk: {
+      overrideMap: [
+        [
+          { r: 10000, g: 0, b: 0 },
+          { c: 0, m: 10000, y: 10000, k: 0 },
+        ],
+        convert,
+        [
+          { r: 0, g: 0, b: 0 },
+          { c: 0, m: 0, y: 0, k: 10000 },
+        ],
+      ],
+    },
+  });
+});
+
 it('excludes node_modules files from replaceImage RegExp matching', async () => {
   const config = await getTaskConfig(
     ['build'],

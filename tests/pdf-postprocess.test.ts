@@ -103,6 +103,23 @@ it('fails the build without writing output when ifUnmappedColorsFound is error',
   );
 });
 
+it('does not treat colors converted by an overrideMap function as unmapped', async () => {
+  const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+  const { thrown, written, warns } = await runSave(
+    pdf,
+    cmykConfig({
+      ifUnmappedColorsFound: 'error',
+      ifUnreplacedImagesFound: 'ignore',
+      overrideMap: [() => ({ c: 0, m: 0, y: 0, k: 10000 })],
+    }),
+  );
+
+  expect(thrown).toBeNull();
+  expect(written).toBe(true);
+  expect(warns).toEqual([]);
+});
+
 it('combines failures from both categories into a single error', async () => {
   const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 

@@ -279,14 +279,32 @@ const CMYKValueSchema = v.pipe(
 
 const CmykMapEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
 
+const CmykConvertFunctionSchema = v.pipe(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- valibot's v.function() cannot express the CmykConvertFunction signature
+  v.function() as v.GenericSchema<
+    (rgb: {
+      r: number;
+      g: number;
+      b: number;
+    }) =>
+      | { c: number; m: number; y: number; k: number }
+      | Promise<{ c: number; m: number; y: number; k: number }>
+  >,
+  v.metadata({
+    typeString:
+      '((rgb: { r: number; g: number; b: number }) => { c: number; m: number; y: number; k: number } | Promise<{ c: number; m: number; y: number; k: number }>)',
+  }),
+  v.description('Function that converts any unmapped RGB color to CMYK.'),
+);
+
 const CmykConfigSchema = v.pipe(
   v.partial(
     v.object({
       overrideMap: v.pipe(
-        v.array(CmykMapEntrySchema),
+        v.array(v.union([CmykMapEntrySchema, CmykConvertFunctionSchema])),
         v.description($`
           Custom RGB to CMYK color mapping.
-          Each entry is a tuple of [rgb, {c, m, y, k}].
+          Each entry is either a tuple of [rgb, {c, m, y, k}] or a function that converts unmapped RGB colors to CMYK (used as a fallback).
           RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
         `),
       ),

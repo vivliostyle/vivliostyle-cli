@@ -54,10 +54,13 @@ import {
   touchTmpFile,
 } from '../util.js';
 import type {
+  CmykConvertFunction,
   ReplaceFunction,
   ReplaceImageConfig,
   ReplaceImageConfigItem,
 } from './replace-image.js';
+
+export type { CmykConvertFunction } from './replace-image.js';
 import type { InlineOptions, ParsedBuildTask } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
@@ -268,7 +271,7 @@ function resolveMapEntries(
 export interface CmykConfig {
   ifUnmappedColorsFound: 'warn' | 'error' | 'ignore';
   ifUnreplacedImagesFound: 'warn' | 'error' | 'ignore';
-  overrideMap: CmykMapEntry[];
+  overrideMap: (CmykMapEntry | CmykConvertFunction)[];
   reserveMap: CmykMapEntry[];
   mapOutput: string | undefined;
 }
@@ -702,7 +705,10 @@ export function resolveTaskConfig(
             // oxlint-disable-next-line typescript/no-deprecated -- fall back to the deprecated warnUnmapped option
             (cmykOption.warnUnmapped === false ? 'ignore' : 'warn'),
           ifUnreplacedImagesFound: cmykOption.ifUnreplacedImagesFound ?? 'warn',
-          overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
+          overrideMap: (cmykOption.overrideMap ?? []).flatMap(
+            (item): (CmykMapEntry | CmykConvertFunction)[] =>
+              typeof item === 'function' ? [item] : resolveMapEntries([item]),
+          ),
           reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
           mapOutput: cmykOption.mapOutput
             ? upath.resolve(context, cmykOption.mapOutput)

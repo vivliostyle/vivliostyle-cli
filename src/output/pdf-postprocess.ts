@@ -22,6 +22,12 @@ import {
 } from '../util.js';
 import { convertCmykColors } from './cmyk.js';
 import { findNonCmykImages, replaceImages } from './image.js';
+import {
+  type InternalColorConverter,
+  composeColorConverters,
+  guardConvertFunction,
+  mapToConverter,
+} from './pdf-stream.js';
 
 export type SaveOption = Pick<
   PdfOutput,
@@ -126,18 +132,25 @@ export class PostProcess {
 
     const failures: string[] = [];
     if (cmyk) {
+      const converters: InternalColorConverter[] = [];
       const mergedMap: CmykMap = { ...cmykMap };
-      for (const [rgb, cmykValue] of cmyk.overrideMap) {
+      for (const item of cmyk.overrideMap) {
+        if (typeof item === 'function') {
+          converters.push(guardConvertFunction(item));
+          continue;
+        }
+        const [rgb, cmykValue] = item;
         const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
         mergedMap[key] = cmykValue;
       }
+      converters.unshift(mapToConverter(mergedMap));
 
       Logger.logInfo('Converting CMYK colors');
       const unmappedColors =
         cmyk.ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
       pdf = await convertCmykColors({
         pdf,
-        colorMap: mergedMap,
+        convert: composeColorConverters(converters),
         unmappedColors,
       });
       if (unmappedColors) {
