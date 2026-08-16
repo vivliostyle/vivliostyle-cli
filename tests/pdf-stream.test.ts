@@ -614,6 +614,21 @@ describe('converter chain in convertStreamColors', () => {
     expect(unmappedColors.size).toBe(0);
   });
 
+  it('does not pass out-of-range colors to the fallback', async () => {
+    const fallback = vi
+      .fn<CmykConvertFunction>()
+      .mockReturnValue({ c: 0, m: 0, y: 0, k: 10000 });
+    const unmappedColors = new Set<string>();
+    const result = await convertStreamColors(
+      '-0.1 0.2 0.3 rg 1.5 0.5 0.5 RG',
+      composeColorConverters([mapToConverter({}), fallback]),
+      unmappedColors,
+    );
+    expect(result).toBe('-0.1 0.2 0.3 rg 1.5 0.5 0.5 RG');
+    expect(fallback).not.toHaveBeenCalled();
+    expect(unmappedColors.size).toBe(2);
+  });
+
   it('collects colors as unmapped when every converter declines', async () => {
     const unmappedColors = new Set<string>();
     const result = await convertStreamColors(

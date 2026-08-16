@@ -269,6 +269,13 @@ export async function convertStreamColors(
       g: Math.round(g.value * SRGB_MAX),
       b: Math.round(b.value * SRGB_MAX),
     };
+    if (
+      [rgb.r, rgb.g, rgb.b].some((channel) => channel < 0 || channel > SRGB_MAX)
+    ) {
+      result.push(r.raw, g.raw, b.raw, token.raw);
+      unmappedColors?.add(JSON.stringify(rgb));
+      return;
+    }
     const cmyk = await convert(rgb);
 
     if (cmyk) {
