@@ -9,6 +9,7 @@ import jsdom, {
 import DOMPurify, { type WindowLike } from 'dompurify';
 import type { RootContent } from 'hast';
 import { toHtml } from 'hast-util-to-html';
+import { h } from 'hastscript';
 import upath from 'upath';
 import MIMEType from 'whatwg-mimetype';
 
@@ -16,6 +17,7 @@ import type { ManuscriptEntry } from '../config/resolve.js';
 import type {
   StructuredDocument,
   StructuredDocumentSection,
+  TocCompose,
 } from '../config/schema.js';
 import { Logger } from '../logger.js';
 import { decodePublicationManifest } from '../output/webbook.js';
@@ -366,6 +368,10 @@ export const defaultTocTransform = {
     },
 };
 
+export const defaultTocCompose: TocCompose =
+  () =>
+  ({ heading, content }) => [heading, content];
+
 export function generateDefaultTocHtml({
   language,
   title,
@@ -390,7 +396,7 @@ export function generateDefaultTocHtml({
   return toHtml([{ type: 'doctype' }, toc], { upperDoctype: true });
 }
 
-export async function generateTocListSection({
+export async function generateTocListElement({
   entries,
   distDir,
   sectionDepth,
@@ -400,7 +406,7 @@ export async function generateTocListSection({
   distDir: string;
   sectionDepth: number;
   transform?: Partial<typeof defaultTocTransform>;
-}): Promise<string> {
+}): Promise<import('hast').Element> {
   const {
     transformDocumentList = defaultTocTransform.transformDocumentList,
     transformSectionList = defaultTocTransform.transformSectionList,
@@ -448,7 +454,8 @@ export async function generateTocListSection({
     }),
   );
 
-  return toHtml(docToc, { allowDangerousHtml: true });
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return docToc as import('hast').Element;
 }
 
 export async function processTocHtml(
@@ -461,9 +468,11 @@ export async function processTocHtml(
     distDir,
     sectionDepth,
     transform,
-  }: Parameters<typeof generateTocListSection>[0] & {
+    compose = defaultTocCompose,
+  }: Parameters<typeof generateTocListElement>[0] & {
     manifestPath: string;
     tocTitle: string;
+    compose?: TocCompose;
     styleOptions?: Parameters<typeof getTocHtmlStyle>[0];
   },
 ): Promise<JSDOM> {
@@ -492,15 +501,19 @@ export async function processTocHtml(
 
   const nav = document.querySelector('nav, [role="doc-toc"]');
   if (nav && !nav.hasChildNodes()) {
-    const h2 = document.createElement('h2');
-    h2.textContent = tocTitle;
-    nav.append(h2);
-    nav.innerHTML += await generateTocListSection({
-      entries,
-      distDir,
-      sectionDepth,
-      transform,
+    const composed = compose({ h })({
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      heading: h('h2', tocTitle) as Parameters<
+        ReturnType<TocCompose>
+      >[0]['heading'],
+      content: await generateTocListElement({
+        entries,
+        distDir,
+        sectionDepth,
+        transform,
+      }),
     });
+    nav.innerHTML = toHtml(composed, { allowDangerousHtml: true });
   }
   return dom;
 }

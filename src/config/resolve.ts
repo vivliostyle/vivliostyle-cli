@@ -25,6 +25,7 @@ import type {
   StructuredDocument,
   StructuredDocumentSection,
   ThemeConfig,
+  TocCompose,
 } from '../config/schema.js';
 import {
   CONTAINER_LOCAL_HOSTNAME,
@@ -127,6 +128,7 @@ export interface ContentsEntry {
   template?: EntrySource;
   target: string;
   tocTitle: string;
+  compose?: TocCompose;
   sectionDepth: number;
   transform: {
     transformDocumentList:
@@ -1288,6 +1290,9 @@ function resolveComposedProjectConfig({
   const tocConfig = {
     // oxlint-disable-next-line typescript/no-deprecated
     tocTitle: config.toc?.title ?? config?.tocTitle ?? TOC_TITLE,
+    ...(config.toc?.compose && {
+      compose: config.toc.compose,
+    }),
     target: upath.resolve(workspaceDir, config.toc?.htmlPath ?? TOC_FILENAME),
     sectionDepth: config.toc?.sectionDepth ?? 0,
     transform: {
