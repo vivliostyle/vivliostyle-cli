@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import type * as mupdfType from 'mupdf';
 
 import type {
+  CmykConvertFunction,
   ImageContext,
   ReplaceFunction,
   ReplaceImageConfig,
@@ -226,6 +227,74 @@ export function builtinGrayReplacement(): ReplaceFunction {
  */
 export function iccReplacement(outputProfile: Uint8Array): ReplaceFunction {
   return (image) => convertWithICC(image.asPNG(), outputProfile);
+}
+
+function createColorConversion(
+  replaceFn: ReplaceFunction,
+): CmykConvertFunction {
+  return async (rgb) => {
+    const mupdf = await importNodeModule('mupdf');
+    using pixmap = disposable(
+      new mupdf.Pixmap(mupdf.ColorSpace.DeviceRGB, [0, 0, 1, 1], false),
+    );
+    const pixels = pixmap.getPixels();
+    pixels[0] = Math.round((rgb.r / 10000) * 255);
+    pixels[1] = Math.round((rgb.g / 10000) * 255);
+    pixels[2] = Math.round((rgb.b / 10000) * 255);
+
+    const resultBytes = await replaceFn(createImageContext(pixmap));
+
+    using resultImage = disposable(new mupdf.Image(resultBytes));
+    using resultPixmap = disposable(resultImage.toPixmap());
+    const colorSpace = resultPixmap.getColorSpace();
+    const resultPixels = resultPixmap.getPixels();
+    if (colorSpace?.isCMYK()) {
+      return {
+        c: Math.round((resultPixels[0] / 255) * 10000),
+        m: Math.round((resultPixels[1] / 255) * 10000),
+        y: Math.round((resultPixels[2] / 255) * 10000),
+        k: Math.round((resultPixels[3] / 255) * 10000),
+      };
+    }
+    if (colorSpace?.isGray()) {
+      return {
+        c: 0,
+        m: 0,
+        y: 0,
+        k: Math.round(((255 - resultPixels[0]) / 255) * 10000),
+      };
+    }
+    throw new Error(
+      `Cannot derive CMYK values from a ${String(colorSpace)} image`,
+    );
+  };
+}
+
+/**
+ * Returns a CmykConvertFunction for cmyk.overrideMap that converts RGB colors
+ * to CMYK using mupdf's DeviceCMYK color space.
+ */
+export function builtinCmykConversion(): CmykConvertFunction {
+  return createColorConversion(builtinCmykReplacement());
+}
+
+/**
+ * Returns a CmykConvertFunction for cmyk.overrideMap that converts RGB colors
+ * to grayscale, mapped to the K channel.
+ */
+export function builtinGrayConversion(): CmykConvertFunction {
+  return createColorConversion(builtinGrayReplacement());
+}
+
+/**
+ * Returns a CmykConvertFunction for cmyk.overrideMap that converts RGB colors
+ * through the given ICC profile. The profile alone determines the conversion;
+ * the profile data is passed to mupdf without inspection. Profiles whose data
+ * color space is CMYK yield full CMYK values, and grayscale profiles are
+ * mapped to the K channel.
+ */
+export function iccConversion(outputProfile: Uint8Array): CmykConvertFunction {
+  return createColorConversion(iccReplacement(outputProfile));
 }
 
 export interface NonCmykImage {

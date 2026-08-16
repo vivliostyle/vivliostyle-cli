@@ -9,9 +9,12 @@ import type {
 } from '../src/config/replace-image.js';
 import { Logger } from '../src/logger.js';
 import {
+  builtinCmykConversion,
   builtinCmykReplacement,
+  builtinGrayConversion,
   builtinGrayReplacement,
   findNonCmykImages,
+  iccConversion,
   iccReplacement,
   replaceImages,
 } from '../src/output/image.js';
@@ -984,6 +987,61 @@ describe('replaceImages', () => {
       Buffer.compare(Buffer.from(builtinPixels), Buffer.from(iccPixels)),
     ).not.toBe(0);
     spy.mockRestore();
+  });
+});
+
+describe('builtinCmykConversion', () => {
+  it('converts black to mostly K', async () => {
+    const convert = builtinCmykConversion();
+    const result = await convert({ r: 0, g: 0, b: 0 });
+    expect(result.k).toBeGreaterThan(5000);
+  });
+
+  it('converts white to near-zero CMYK', async () => {
+    const convert = builtinCmykConversion();
+    const result = await convert({ r: 10000, g: 10000, b: 10000 });
+    expect(result.c).toBeLessThan(500);
+    expect(result.m).toBeLessThan(500);
+    expect(result.y).toBeLessThan(500);
+    expect(result.k).toBeLessThan(500);
+  });
+});
+
+describe('builtinGrayConversion', () => {
+  it('converts black to high K', async () => {
+    const convert = builtinGrayConversion();
+    const result = await convert({ r: 0, g: 0, b: 0 });
+    expect(result).toMatchObject({ c: 0, m: 0, y: 0 });
+    expect(result.k).toBeGreaterThan(5000);
+  });
+
+  it('converts white to near-zero K', async () => {
+    const convert = builtinGrayConversion();
+    const result = await convert({ r: 10000, g: 10000, b: 10000 });
+    expect(result).toMatchObject({ c: 0, m: 0, y: 0 });
+    expect(result.k).toBeLessThan(500);
+  });
+});
+
+describe('iccConversion', () => {
+  it('converts colors through a CMYK profile', async () => {
+    const profile = fs.readFileSync(path.join(fixturesDir, 'ps_cmyk.icc'));
+    const convert = iccConversion(profile);
+    const black = await convert({ r: 0, g: 0, b: 0 });
+    expect(black.c + black.m + black.y + black.k).toBeGreaterThan(10000);
+    const white = await convert({ r: 10000, g: 10000, b: 10000 });
+    expect(white.c).toBeLessThan(500);
+    expect(white.m).toBeLessThan(500);
+    expect(white.y).toBeLessThan(500);
+    expect(white.k).toBeLessThan(500);
+  });
+
+  it('maps grayscale profiles to the K channel', async () => {
+    const profile = fs.readFileSync(path.join(fixturesDir, 'ps_gray.icc'));
+    const convert = iccConversion(profile);
+    const black = await convert({ r: 0, g: 0, b: 0 });
+    expect(black).toMatchObject({ c: 0, m: 0, y: 0 });
+    expect(black.k).toBeGreaterThan(5000);
   });
 });
 
