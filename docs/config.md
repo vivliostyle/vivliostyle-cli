@@ -428,8 +428,8 @@ pdfPostprocess takes precedence.
 
   - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object with options such as overrideMap,
-    ifUnmappedColorsFound, and ifUnreplacedImagesFound.
+    Can be a boolean or a config object with options such as reserveMap,
+    fallback, ifUnmappedColorsFound, and ifUnreplacedImagesFound.
 
   - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | ((image: { asPNG(): Uint8Array }) => Uint8Array | null | Promise<Uint8Array | null>))[]  
     Replace images in the output PDF.
@@ -463,10 +463,15 @@ type PdfPostprocessConfig = {
 
 - `CmykConfig`
 
-  - `overrideMap`: ("{tuple(Array)}")[]  
-    Custom RGB to CMYK color mapping.
-    Each entry is a tuple of [rgb, {c, m, y, k}].
+  - ~~`overrideMap`~~ _Deprecated_  
+    Use `fallback` instead; a static color table can be written inside the fallback function.
+    Each entry is a tuple of [rgb, {c, m, y, k}] that overrides the color mapping.
     RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
+
+  - `fallback`: ((rgb: { r: number; g: number; b: number }) => { c: number; m: number; y: number; k: number } | null | Promise<{ c: number; m: number; y: number; k: number } | null>)  
+    Fallback conversion for RGB colors that the color mapping does not cover.
+    RGB values and CMYK values are integers on a 0-10000 scale.
+    Return null to leave the color unmapped. Results may be cached per color.
 
   - `reserveMap`: ("{tuple(Array)}")[]  
     Pre-register RGB to CMYK color mappings for use in SVG or other non-CSS contexts.
@@ -488,12 +493,31 @@ type PdfPostprocessConfig = {
 
   - `mapOutput`: string  
     Output the CMYK color map to a JSON file at the specified path.
+    Colors converted by the fallback function are not included.
 
 #### Type definition
 
 ```ts
 type CmykConfig = {
   overrideMap?: "{tuple(Array)}"[];
+  fallback?: (rgb: {
+    r: number;
+    g: number;
+    b: number;
+  }) =>
+    | {
+        c: number;
+        m: number;
+        y: number;
+        k: number;
+      }
+    | null
+    | Promise<{
+        c: number;
+        m: number;
+        y: number;
+        k: number;
+      } | null>;
   reserveMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
   ifUnmappedColorsFound?:

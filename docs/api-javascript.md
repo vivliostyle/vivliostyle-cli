@@ -23,6 +23,7 @@
 
 ### Type Aliases
 
+- [`CmykConvertFunction`](#cmykconvertfunction)
 - [`Metadata`](#metadata)
 - [`ReplaceFunction`](#replacefunction)
 - [`StructuredDocument`](#structureddocument)
@@ -69,7 +70,7 @@ build({
 
 ###### cmyk?
 
-`boolean` \| \{ `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `null`\> \| `null`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -327,7 +328,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `null`\> \| `null`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -557,7 +558,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `null`\> \| `null`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -830,7 +831,7 @@ Open a browser for previewing the publication.
 
 ###### cmyk?
 
-`boolean` \| \{ `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `null`\> \| `null`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -1138,7 +1139,7 @@ interface to the schema, so a drift in either direction is rejected.
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="property-cliversion"></a> `cliVersion` | `string` |
-| <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
+| <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `fallback?`: (`rgb`) => \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `Promise`\<\{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \} \| `null`\> \| `null`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnreplacedImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
 | <a id="property-config"></a> `config?` | `string` |
 | <a id="property-configdata"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
 | <a id="property-coreversion"></a> `coreVersion` | `string` |
@@ -1195,6 +1196,32 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
+
+### CmykConvertFunction
+
+> **CmykConvertFunction** = (`rgb`) => `CMYKValue` \| `null` \| `Promise`\<`CMYKValue` \| `null`\>
+
+#### Parameters
+
+##### rgb
+
+###### b
+
+`number`
+
+###### g
+
+`number`
+
+###### r
+
+`number`
+
+#### Returns
+
+`CMYKValue` \| `null` \| `Promise`\<`CMYKValue` \| `null`\>
+
+***
 
 ### Metadata
 

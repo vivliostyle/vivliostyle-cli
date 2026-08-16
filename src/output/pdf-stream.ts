@@ -1,4 +1,7 @@
-import type { CmykMap } from '../global-viewer.js';
+import type { CmykConvertFunction, RGBValue } from '../config/resolve.js';
+import { isValidCMYKValue } from '../config/schema.js';
+import type { CMYKValue, CmykMap } from '../global-viewer.js';
+import { Logger } from '../logger.js';
 
 /**
  * `SRGBValue.MAX`
@@ -174,28 +177,70 @@ function* tokenize(content: string): Generator<Token> {
   }
 }
 
-function formatRgbKey(r: number, g: number, b: number): string {
-  const ri = Math.round(r * SRGB_MAX);
-  const gi = Math.round(g * SRGB_MAX);
-  const bi = Math.round(b * SRGB_MAX);
-  return JSON.stringify([ri, gi, bi]);
+export function mapToConverter(map: CmykMap): CmykConvertFunction {
+  return (rgb) => map[JSON.stringify([rgb.r, rgb.g, rgb.b])] ?? null;
 }
 
-function formatUnmappedRgbKey(r: number, g: number, b: number): string {
-  const ri = Math.round(r * SRGB_MAX);
-  const gi = Math.round(g * SRGB_MAX);
-  const bi = Math.round(b * SRGB_MAX);
-  return JSON.stringify({ r: ri, g: gi, b: bi });
+export function guardConvertFunction(
+  fn: CmykConvertFunction,
+): CmykConvertFunction {
+  const warnedErrors = new Set<string>();
+  const warnOnce = (message: string) => {
+    if (!warnedErrors.has(message)) {
+      warnedErrors.add(message);
+      Logger.logWarn(message);
+    }
+  };
+  return async (rgb) => {
+    try {
+      const value = await fn(rgb);
+      if (value === null) {
+        return null;
+      }
+      if (!isValidCMYKValue(value)) {
+        warnOnce(
+          `Invalid fallback conversion result: ${JSON.stringify(value)}`,
+        );
+        return null;
+      }
+      return value;
+    } catch (error) {
+      warnOnce(`Failed to apply fallback conversion: ${String(error)}`);
+      return null;
+    }
+  };
+}
+
+export function composeColorConverters(
+  converters: CmykConvertFunction[],
+): CmykConvertFunction {
+  const cache = new Map<string, CMYKValue | null>();
+  return async (rgb) => {
+    const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
+    const cached = cache.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    let result: CMYKValue | null = null;
+    for (const convert of converters) {
+      result = await convert(rgb);
+      if (result !== null) {
+        break;
+      }
+    }
+    cache.set(key, result);
+    return result;
+  };
 }
 
 /**
  * Convert RGB color operators to CMYK in a content stream
  */
-export function convertStreamColors(
+export async function convertStreamColors(
   content: string,
-  colorMap: CmykMap,
+  convert: CmykConvertFunction,
   unmappedColors: Set<string> | null,
-): string {
+): Promise<string> {
   const result: string[] = [];
   const pendingNumbers: { value: number; raw: string }[] = [];
 
@@ -206,10 +251,10 @@ export function convertStreamColors(
     pendingNumbers.length = 0;
   };
 
-  const convertRgbOperator = (
+  const convertRgbOperator = async (
     cmykOp: 'k' | 'K',
     token: OperatorToken,
-  ): void => {
+  ): Promise<void> => {
     const b = pendingNumbers.pop();
     const g = pendingNumbers.pop();
     const r = pendingNumbers.pop();
@@ -219,8 +264,12 @@ export function convertStreamColors(
     }
     flushPendingNumbers();
 
-    const key = formatRgbKey(r.value, g.value, b.value);
-    const cmyk = colorMap[key];
+    const rgb: RGBValue = {
+      r: Math.round(r.value * SRGB_MAX),
+      g: Math.round(g.value * SRGB_MAX),
+      b: Math.round(b.value * SRGB_MAX),
+    };
+    const cmyk = await convert(rgb);
 
     if (cmyk) {
       const c = (cmyk.c / CMYK_MAX).toString();
@@ -231,7 +280,7 @@ export function convertStreamColors(
       return;
     }
     result.push(r.raw, g.raw, b.raw, token.raw);
-    unmappedColors?.add(formatUnmappedRgbKey(r.value, g.value, b.value));
+    unmappedColors?.add(JSON.stringify(rgb));
   };
 
   for (const token of tokenize(content)) {
@@ -243,7 +292,7 @@ export function convertStreamColors(
       // RGB color: r g b rg (non-stroking) or r g b RG (stroking)
       const cmykOp = op === 'rg' ? 'k' : op === 'RG' ? 'K' : null;
       if (cmykOp && pendingNumbers.length >= 3) {
-        convertRgbOperator(cmykOp, token);
+        await convertRgbOperator(cmykOp, token);
       } else {
         flushPendingNumbers();
         result.push(token.raw);

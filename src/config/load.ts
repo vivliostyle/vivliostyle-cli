@@ -216,6 +216,24 @@ export function warnDeprecatedConfig(
       "'warnUnmapped' property of pdfPostprocess.cmyk was deprecated and will be removed in a future release. Please use 'ifUnmappedColorsFound' property instead.",
     );
   }
+
+  if (
+    config.tasks.some((task) => {
+      const cmykOptions = [
+        task.pdfPostprocess?.cmyk,
+        ...(task.output
+          ? [task.output].flat().map((o) => o.pdfPostprocess?.cmyk)
+          : []),
+      ];
+      return cmykOptions.some(
+        (cmyk) => typeof cmyk === 'object' && cmyk.overrideMap !== undefined,
+      );
+    })
+  ) {
+    Logger.logWarn(
+      "'overrideMap' property of pdfPostprocess.cmyk was deprecated and will be removed in a future release. Please use 'fallback' property instead.",
+    );
+  }
   /* oxlint-enable typescript/no-deprecated */
 
   if (

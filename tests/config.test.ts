@@ -706,6 +706,50 @@ it('resolves ifUnmappedColorsFound with default, explicit, and deprecated values
   });
 });
 
+it('resolves cmyk.fallback', async () => {
+  const fallback = () => null;
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: { fallback } },
+  });
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    cmyk: { fallback },
+  });
+});
+
+it('warns when config uses deprecated cmyk.overrideMap', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    pdfPostprocess: {
+      cmyk: { overrideMap: [['#2b2b2b', { c: 0, m: 0, y: 0, k: 8300 }]] },
+    },
+  });
+  warnDeprecatedConfig(config);
+  expect(warn).toHaveBeenCalledWith(expect.stringContaining("'fallback'"));
+});
+
+it('warns when output config uses deprecated cmyk.overrideMap', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    output: [
+      {
+        path: 'output.pdf',
+        pdfPostprocess: {
+          cmyk: { overrideMap: [['#2b2b2b', { c: 0, m: 0, y: 0, k: 8300 }]] },
+        },
+      },
+    ],
+  });
+  warnDeprecatedConfig(config);
+  expect(warn).toHaveBeenCalledWith(expect.stringContaining("'fallback'"));
+});
+
 it('warns when config uses deprecated cmyk.warnUnmapped', () => {
   const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
   onTestFinished(() => warn.mockRestore());

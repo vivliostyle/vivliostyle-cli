@@ -20,7 +20,11 @@ export type {
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';
-export type { ImageContext, ReplaceFunction } from './config/replace-image.js';
+export type {
+  CmykConvertFunction,
+  ImageContext,
+  ReplaceFunction,
+} from './config/replace-image.js';
 export type { TemplateVariable } from './create-template.js';
 export {
   builtinCmykReplacement,

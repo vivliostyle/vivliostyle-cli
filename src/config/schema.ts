@@ -279,17 +279,49 @@ const CMYKValueSchema = v.pipe(
 
 const CmykMapEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
 
+export function isValidCMYKValue(
+  value: unknown,
+): value is v.InferOutput<typeof CMYKValueSchema> {
+  return v.is(CMYKValueSchema, value);
+}
+
+const CmykConvertFunctionSchema = v.pipe(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- valibot's v.function() cannot express the CmykConvertFunction signature
+  v.function() as v.GenericSchema<
+    (rgb: {
+      r: number;
+      g: number;
+      b: number;
+    }) =>
+      | { c: number; m: number; y: number; k: number }
+      | null
+      | Promise<{ c: number; m: number; y: number; k: number } | null>
+  >,
+  v.metadata({
+    typeString:
+      '((rgb: { r: number; g: number; b: number }) => { c: number; m: number; y: number; k: number } | null | Promise<{ c: number; m: number; y: number; k: number } | null>)',
+  }),
+  v.description($`
+    Fallback conversion for RGB colors that the color mapping does not cover.
+    RGB values and CMYK values are integers on a 0-10000 scale.
+    Return null to leave the color unmapped. Results may be cached per color.
+  `),
+);
+
 const CmykConfigSchema = v.pipe(
   v.partial(
     v.object({
+      /** @deprecated */
       overrideMap: v.pipe(
         v.array(CmykMapEntrySchema),
+        v.metadata({ deprecated: true }),
         v.description($`
-          Custom RGB to CMYK color mapping.
-          Each entry is a tuple of [rgb, {c, m, y, k}].
+          Use \`fallback\` instead; a static color table can be written inside the fallback function.
+          Each entry is a tuple of [rgb, {c, m, y, k}] that overrides the color mapping.
           RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
         `),
       ),
+      fallback: CmykConvertFunctionSchema,
       reserveMap: v.pipe(
         v.array(CmykMapEntrySchema),
         v.description($`
@@ -328,6 +360,7 @@ const CmykConfigSchema = v.pipe(
         ValidString,
         v.description($`
           Output the CMYK color map to a JSON file at the specified path.
+          Colors converted by the fallback function are not included.
         `),
       ),
     }),
@@ -339,8 +372,8 @@ const CmykSchema = v.pipe(
   v.union([v.boolean(), CmykConfigSchema]),
   v.description($`
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object with options such as overrideMap,
-    ifUnmappedColorsFound, and ifUnreplacedImagesFound.
+    Can be a boolean or a config object with options such as reserveMap,
+    fallback, ifUnmappedColorsFound, and ifUnreplacedImagesFound.
   `),
 );
 

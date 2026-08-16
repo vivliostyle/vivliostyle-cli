@@ -1,6 +1,6 @@
 import type * as mupdfType from 'mupdf';
 
-import type { CmykMap } from '../global-viewer.js';
+import type { CmykConvertFunction } from '../config/resolve.js';
 import { importNodeModule } from '../node-modules.js';
 import { convertStreamColors } from './pdf-stream.js';
 
@@ -16,40 +16,46 @@ function disposable<T extends Destroyable>(obj: T): T & Disposable {
   });
 }
 
-function processStream(
+async function processStream(
   stream: mupdfType.PDFObject,
-  colorMap: CmykMap,
+  convert: CmykConvertFunction,
   unmappedColors: Set<string> | null,
   mupdf: typeof import('mupdf'),
-): void {
+): Promise<void> {
   const buffer = stream.readStream();
   const content = buffer.asString();
-  const converted = convertStreamColors(content, colorMap, unmappedColors);
+  const converted = await convertStreamColors(content, convert, unmappedColors);
   stream.writeStream(new mupdf.Buffer(converted));
 }
 
-function processFormXObjects(
+async function processFormXObjects(
   resources: mupdfType.PDFObject,
-  colorMap: CmykMap,
+  convert: CmykConvertFunction,
   unmappedColors: Set<string> | null,
   mupdf: typeof import('mupdf'),
   processed: Set<number>,
-): void {
+): Promise<void> {
   const xobjects = resources.get('XObject');
   if (!xobjects || !xobjects.isDictionary()) {
     return;
   }
 
+  // Collect entries first because forEach callbacks cannot await
+  const entries: mupdfType.PDFObject[] = [];
   xobjects.forEach((xobj) => {
+    entries.push(xobj);
+  });
+
+  for (const xobj of entries) {
     if (!xobj || !xobj.isStream()) {
-      return;
+      continue;
     }
 
     // Use original indirect reference for stream operations (see #735)
     const objNum = xobj.asIndirect();
     if (objNum && processed.has(objNum)) {
       // Avoid circular references
-      return;
+      continue;
     }
     if (objNum) {
       processed.add(objNum);
@@ -57,51 +63,77 @@ function processFormXObjects(
 
     const subtype = xobj.get('Subtype');
     if (!subtype || subtype.toString() !== '/Form') {
-      return;
+      continue;
     }
 
-    processStream(xobj, colorMap, unmappedColors, mupdf);
+    await processStream(xobj, convert, unmappedColors, mupdf);
     const nestedResources = xobj.get('Resources');
     if (nestedResources && nestedResources.isDictionary()) {
-      processFormXObjects(
+      await processFormXObjects(
         nestedResources,
-        colorMap,
+        convert,
         unmappedColors,
         mupdf,
         processed,
       );
     }
-  });
+  }
 }
 
-function processContents(
+async function processContents(
   contents: mupdfType.PDFObject,
-  colorMap: CmykMap,
+  convert: CmykConvertFunction,
   unmappedColors: Set<string> | null,
   mupdf: typeof import('mupdf'),
-): void {
+): Promise<void> {
   if (contents.isArray()) {
     // Multiple content streams
     for (let i = 0; i < contents.length; i++) {
       const streamObj = contents.get(i);
       // Use original indirect reference for stream operations (see #735)
       if (streamObj && streamObj.isStream()) {
-        processStream(streamObj, colorMap, unmappedColors, mupdf);
+        await processStream(streamObj, convert, unmappedColors, mupdf);
       }
     }
   } else if (contents.isStream()) {
     // Single content stream
-    processStream(contents, colorMap, unmappedColors, mupdf);
+    await processStream(contents, convert, unmappedColors, mupdf);
+  }
+}
+
+async function processAppearanceStreams(
+  appearance: mupdfType.PDFObject,
+  convert: CmykConvertFunction,
+  unmappedColors: Set<string> | null,
+  mupdf: typeof import('mupdf'),
+): Promise<void> {
+  if (appearance.isStream()) {
+    await processStream(appearance, convert, unmappedColors, mupdf);
+    return;
+  }
+  if (!appearance.isDictionary()) {
+    return;
+  }
+  // Multiple appearance states
+  // Collect entries first because forEach callbacks cannot await
+  const states: mupdfType.PDFObject[] = [];
+  appearance.forEach((val) => {
+    states.push(val);
+  });
+  for (const val of states) {
+    if (val?.isStream()) {
+      await processStream(val, convert, unmappedColors, mupdf);
+    }
   }
 }
 
 export async function convertCmykColors({
   pdf,
-  colorMap,
+  convert,
   unmappedColors,
 }: {
   pdf: Uint8Array;
-  colorMap: CmykMap;
+  convert: CmykConvertFunction;
   unmappedColors: Set<string> | null;
 }): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
@@ -122,14 +154,14 @@ export async function convertCmykColors({
 
     const contents = pageObj.get('Contents');
     if (contents) {
-      processContents(contents, colorMap, unmappedColors, mupdf);
+      await processContents(contents, convert, unmappedColors, mupdf);
     }
 
     const resources = pageObj.get('Resources');
     if (resources && resources.isDictionary()) {
-      processFormXObjects(
+      await processFormXObjects(
         resources,
-        colorMap,
+        convert,
         unmappedColors,
         mupdf,
         processedXObjects,
@@ -155,16 +187,7 @@ export async function convertCmykColors({
       if (!n) {
         continue;
       }
-      if (n.isStream()) {
-        processStream(n, colorMap, unmappedColors, mupdf);
-      } else if (n.isDictionary()) {
-        // Multiple appearance states
-        n.forEach((val) => {
-          if (val?.isStream()) {
-            processStream(val, colorMap, unmappedColors, mupdf);
-          }
-        });
-      }
+      await processAppearanceStreams(n, convert, unmappedColors, mupdf);
     }
   }
 
