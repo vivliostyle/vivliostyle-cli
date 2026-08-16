@@ -8,7 +8,7 @@ export interface ImageContext {
 
 export type ReplaceFunction = (
   image: ImageContext,
-) => Uint8Array | Promise<Uint8Array>;
+) => Uint8Array | null | Promise<Uint8Array | null>;
 
 export interface ReplaceImageEntry {
   source: string;

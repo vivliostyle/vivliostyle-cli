@@ -431,7 +431,7 @@ pdfPostprocess takes precedence.
     Can be a boolean or a config object with options such as overrideMap,
     ifUnmappedColorsFound, and ifUnreplacedImagesFound.
 
-  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | ((image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>))[]  
+  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | ((image: { asPNG(): Uint8Array }) => Uint8Array | null | Promise<Uint8Array | null>))[]  
     Replace images in the output PDF.
     Each entry can be an object with source/replacement paths, an object with a source path
     and a replacement function, or a bare function that processes all RGB images.
@@ -451,7 +451,8 @@ type PdfPostprocessConfig = {
         asPNG(): Uint8Array;
       }) =>
         | Uint8Array
-        | Promise<Uint8Array>)
+        | null
+        | Promise<Uint8Array | null>)
   )[];
 };
 ```
@@ -516,7 +517,7 @@ type CmykConfig = {
   - `source`: string | RegExp  
     Path to the source image file, or a RegExp pattern to match multiple files.
 
-  - `replacement`: string | ((image: { asPNG(): Uint8Array }) => Uint8Array | Promise<Uint8Array>)  
+  - `replacement`: string | ((image: { asPNG(): Uint8Array }) => Uint8Array | null | Promise<Uint8Array | null>)  
     Path to the replacement image file, a function that processes the image, or when source is a RegExp with a string replacement, supports $1, $2, etc.
 
 #### Type definition
@@ -530,7 +531,8 @@ type ReplaceImageEntry = {
         asPNG(): Uint8Array;
       }) =>
         | Uint8Array
-        | Promise<Uint8Array>);
+        | null
+        | Promise<Uint8Array | null>);
 };
 ```
 

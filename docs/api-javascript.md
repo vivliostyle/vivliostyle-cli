@@ -1305,7 +1305,7 @@ VFM settings.
 
 ### ReplaceFunction
 
-> **ReplaceFunction** = (`image`) => `Uint8Array` \| `Promise`\<`Uint8Array`\>
+> **ReplaceFunction** = (`image`) => `Uint8Array` \| `null` \| `Promise`\<`Uint8Array` \| `null`\>
 
 #### Parameters
 
@@ -1315,7 +1315,7 @@ VFM settings.
 
 #### Returns
 
-`Uint8Array` \| `Promise`\<`Uint8Array`\>
+`Uint8Array` \| `null` \| `Promise`\<`Uint8Array` \| `null`\>
 
 ***
 

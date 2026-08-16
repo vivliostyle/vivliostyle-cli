@@ -823,6 +823,51 @@ describe('replaceImages', () => {
     spy.mockRestore();
   });
 
+  it('falls back to later entries when a function declines with null', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [() => null, builtinGrayReplacement()],
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(await getImageColorSpace(destPdf)).toBe('Gray');
+    spy.mockRestore();
+  });
+
+  it('falls back to later entries when a source entry function declines', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: () => null,
+        },
+        builtinGrayReplacement(),
+      ],
+    });
+
+    expect(await getImageColorSpace(destPdf)).toBe('Gray');
+  });
+
+  it('leaves the image unreplaced when every entry declines', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const spy = vi.spyOn(Logger, 'logWarn');
+
+    const destPdf = await replaceImages({
+      pdf: srcPdf,
+      replaceImageConfig: [() => null],
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(await getImageColorSpace(destPdf)).toBe('RGB');
+    spy.mockRestore();
+  });
+
   it('does not fall back to later entries when the matched entry fails', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
     const spy = vi.spyOn(Logger, 'logWarn');

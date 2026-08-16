@@ -361,7 +361,7 @@ function applyReplaceFunction(
   fn: ReplaceFunction,
   pdfPixmap: mupdfType.Pixmap,
   mupdf: typeof import('mupdf'),
-): Promise<DisposableImage> | DisposableImage {
+): Promise<DisposableImage | null> | DisposableImage {
   const builtinType = getBuiltinType(fn);
   if (builtinType) {
     return convertPixmapColorSpace(
@@ -374,8 +374,11 @@ function applyReplaceFunction(
   }
   return (async () => {
     const resultBytes = await fn(createImageContext(pdfPixmap));
+    if (resultBytes === null) {
+      return null;
+    }
     if (!(resultBytes instanceof Uint8Array)) {
-      throw new Error('ReplaceFunction must return a Uint8Array');
+      throw new Error('ReplaceFunction must return a Uint8Array or null');
     }
     return disposable(new mupdf.Image(resultBytes));
   })();
@@ -387,7 +390,7 @@ interface PreparedEntry {
     pdfPixmap: mupdfType.Pixmap,
     pageIndex: number,
     key: string | number,
-  ): Promise<DisposableImage | null>;
+  ): Promise<DisposableImage | 'declined' | null>;
 }
 
 function prepareFileEntry(
@@ -419,6 +422,12 @@ function prepareFnWithSourceEntry(
     replace: async (pdfPixmap, pageIndex, key) => {
       try {
         const newImage = await applyReplaceFunction(fn, pdfPixmap, mupdf);
+        if (newImage === null) {
+          Logger.debug(
+            `  Page ${pageIndex + 1}, ref "${key}": ${sourcePath} -> declined`,
+          );
+          return 'declined';
+        }
         Logger.debug(
           `  Page ${pageIndex + 1}, ref "${key}": ${sourcePath} -> [function]`,
         );
@@ -442,6 +451,12 @@ function prepareBareFnEntry(
     replace: async (pdfPixmap, pageIndex, key) => {
       try {
         const newImage = await applyReplaceFunction(fn, pdfPixmap, mupdf);
+        if (newImage === null) {
+          Logger.debug(
+            `  Page ${pageIndex + 1}, ref "${key}": [all RGB] -> declined`,
+          );
+          return 'declined';
+        }
         Logger.debug(
           `  Page ${pageIndex + 1}, ref "${key}": [all RGB] -> [function]`,
         );
@@ -478,21 +493,11 @@ function releaseUnlessShared(
   }
 }
 
-async function replaceSingleImage(
-  doc: mupdfType.PDFDocument,
-  value: mupdfType.PDFObject,
+function hasColorKeyMask(
   resolved: mupdfType.PDFObject,
   key: string | number,
   pageIndex: number,
-  preparedEntries: PreparedEntry[],
-  state: ReplaceState,
-): Promise<mupdfType.PDFObject | null> {
-  using pdfImage = disposable(doc.loadImage(value));
-  using pdfPixmap = disposable(pdfImage.toPixmap());
-  const entry = preparedEntries.find((e) => e.matches(pdfPixmap));
-  if (!entry) {
-    return null;
-  }
+): boolean {
   // A color-key /Mask defines its masked color ranges against the original
   // image's sample values (ISO 32000-1 §8.9.6.4), so replacing the samples
   // would invalidate the mask.
@@ -501,12 +506,18 @@ async function replaceSingleImage(
     Logger.logWarn(
       `Cannot replace image with /Mask: ref "${key}" on page ${pageIndex + 1}`,
     );
-    return null;
+    return true;
   }
-  let result = await entry.replace(pdfPixmap, pageIndex, key);
-  if (!result) {
-    return null;
-  }
+  return false;
+}
+
+function finalizeReplacement(
+  doc: mupdfType.PDFDocument,
+  resolved: mupdfType.PDFObject,
+  replacement: DisposableImage,
+  state: ReplaceState,
+): mupdfType.PDFObject {
+  let result = replacement;
   try {
     // PDFDocument.addImage does not carry the original object's /SMask over to
     // a pixmap-derived image, so the soft mask is recomposed onto the
@@ -523,6 +534,40 @@ async function replaceSingleImage(
   } finally {
     releaseUnlessShared(result, state.disposables);
   }
+}
+
+async function replaceSingleImage(
+  doc: mupdfType.PDFDocument,
+  value: mupdfType.PDFObject,
+  resolved: mupdfType.PDFObject,
+  key: string | number,
+  pageIndex: number,
+  preparedEntries: PreparedEntry[],
+  state: ReplaceState,
+): Promise<mupdfType.PDFObject | null> {
+  using pdfImage = disposable(doc.loadImage(value));
+  using pdfPixmap = disposable(pdfImage.toPixmap());
+  let maskChecked = false;
+  for (const entry of preparedEntries) {
+    if (!entry.matches(pdfPixmap)) {
+      continue;
+    }
+    if (!maskChecked) {
+      maskChecked = true;
+      if (hasColorKeyMask(resolved, key, pageIndex)) {
+        return null;
+      }
+    }
+    const result = await entry.replace(pdfPixmap, pageIndex, key);
+    if (result === 'declined') {
+      continue;
+    }
+    if (!result) {
+      return null;
+    }
+    return finalizeReplacement(doc, resolved, result, state);
+  }
+  return null;
 }
 
 async function replaceImagesInResources(
