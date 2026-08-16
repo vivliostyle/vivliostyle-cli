@@ -117,7 +117,7 @@ export async function convertCmykColors({
 
   const pageCount = doc.countPages();
   for (let i = 0; i < pageCount; i++) {
-    const page = doc.loadPage(i);
+    using page = disposable(doc.loadPage(i));
     const pageObj = page.getObject().resolve();
 
     const contents = pageObj.get('Contents');
