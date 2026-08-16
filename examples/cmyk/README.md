@@ -48,17 +48,31 @@ A `ReplaceFunction` can also be used as the `replacement` in a `{ source, replac
 
 `builtinCmykReplacement()` and `builtinGrayReplacement()` return `ReplaceFunction` implementations that convert RGB images to CMYK or grayscale using mupdf's built-in color spaces. For profile-based conversion, `iccReplacement()` takes ICC profile data (as `Uint8Array`) and converts RGB images to the color space of that profile. The conversion applies to pixel values only; the replaced image is stored with mupdf's default profile for the resulting color space, not with the given profile.
 
+## `cmyk.fallback`
+
+This CMYK feature assumes that you are aware of and in control of every colored element in your document. For complex documents, that may not always be the case. `cmyk.fallback` is a last resort for keeping the output fully CMYK: a function that receives each RGB color the color mapping does not cover (as integers on a 0-10000 scale) and returns the CMYK values to use, or `null` to leave the color unmapped.
+
+Without it, building this example produces unmapped color warnings from the `<hr>` element in the footnote section (`#2b2b2b`, `#9a9a9a`, `#eeeeee`):
+
+```
+WARN RGB color not mapped to CMYK: {"r":1686,"g":1686,"b":1686}
+WARN RGB color not mapped to CMYK: {"r":6039,"g":6039,"b":6039}
+WARN RGB color not mapped to CMYK: {"r":9333,"g":9333,"b":9333}
+```
+
+The correct fix would be to style `hr` with `device-cmyk()`, but here the fallback replaces these grays through a static table, as shown in the example config. The deprecated `cmyk.overrideMap` served the same purpose; a table inside the fallback replaces it.
+
+`builtinCmykConversion()` and `builtinGrayConversion()` are provided for automatic conversion, and `iccConversion()` converts colors through an ICC profile.
+
+These functions make it possible to produce a CMYK PDF without any explicit `device-cmyk()` declarations, but you should not do this. What print actually requires is a PDF with an output intent (which is why PDF/X-4 can accept RGB PDFs in the first place). If you are going to run automatic CMYK conversion, you would cause fewer problems by submitting the RGB PDF directly to the print shop. Chromium's PDFs do not carry an output intent, but treating them as sRGB is good enough. In any case, `cmyk.fallback` is a tool for assisting intentional CMYK workflows, not for converting everything automatically.
+
 ## Other options
 
 By design, this feature cannot produce PDFs that freely mix RGB and CMYK colors (more precisely, it can produce a PDF with unconverted RGB values left in place, but it cannot guarantee that arbitrary RGB and CMYK values will coexist correctly). Since stray RGB elements are usually undesirable in a CMYK workflow, `cmyk.ifUnmappedColorsFound` (default: `'warn'`) logs a warning for RGB colors in content streams that have not been mapped to CMYK; set it to `'error'` to fail the build instead, or `'ignore'` to do nothing.
 
 Similarly, `cmyk.ifUnreplacedImagesFound` (default: `'warn'`) reports any non-CMYK image remaining in the PDF after image replacement.
 
-Building this example produces unmapped color warnings from the `<hr>` element in the footnote section (`#2b2b2b`, `#9a9a9a`, `#eeeeee`). The correct fix would be to style `hr` with `device-cmyk()`, but here we use `cmyk.overrideMap` to demonstrate how to forcibly replace unmapped RGB colors with CMYK values and keep the output fully CMYK.
-
-This CMYK feature assumes that you are aware of and in control of every colored element in your document. For complex documents, that may not always be the case. `cmyk.overrideMap` is a last resort for silencing unmapped color warnings: it forcibly replaces any remaining RGB values in the PDF with the specified CMYK values.
-
-`mapOutput` is primarily a debugging tool. It writes the internal color mapping table to a file.
+`cmyk.mapOutput` is primarily a debugging tool. It writes the internal color mapping table to a file. Colors converted by the fallback function are not included.
 
 ```shellsession
 $ npm run build && gs -dQUIET -dBATCH -dNOPAUSE -sOutputFile=- -sDEVICE=ink_cov output.pdf

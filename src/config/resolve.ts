@@ -54,6 +54,7 @@ import {
   touchTmpFile,
 } from '../util.js';
 import type {
+  CmykConvertFunction,
   ReplaceFunction,
   ReplaceImageConfig,
   ReplaceImageConfigItem,
@@ -265,11 +266,14 @@ function resolveMapEntries(
   });
 }
 
+export type { CmykConvertFunction } from './replace-image.js';
+
 export interface CmykConfig {
   ifUnmappedColorsFound: 'warn' | 'error' | 'ignore';
   ifUnreplacedImagesFound: 'warn' | 'error' | 'ignore';
   overrideMap: CmykMapEntry[];
   reserveMap: CmykMapEntry[];
+  fallback: CmykConvertFunction | undefined;
   mapOutput: string | undefined;
 }
 
@@ -702,8 +706,10 @@ export function resolveTaskConfig(
             // oxlint-disable-next-line typescript/no-deprecated -- fall back to the deprecated warnUnmapped option
             (cmykOption.warnUnmapped === false ? 'ignore' : 'warn'),
           ifUnreplacedImagesFound: cmykOption.ifUnreplacedImagesFound ?? 'warn',
+          // oxlint-disable-next-line typescript/no-deprecated -- keep resolving the deprecated overrideMap option
           overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
           reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
+          fallback: cmykOption.fallback,
           mapOutput: cmykOption.mapOutput
             ? upath.resolve(context, cmykOption.mapOutput)
             : undefined,
@@ -716,6 +722,7 @@ export function resolveTaskConfig(
           ifUnreplacedImagesFound: 'warn',
           overrideMap: [],
           reserveMap: [],
+          fallback: undefined,
           mapOutput: undefined,
         };
       }

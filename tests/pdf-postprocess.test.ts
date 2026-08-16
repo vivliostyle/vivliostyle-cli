@@ -24,6 +24,7 @@ function cmykConfig(overrides: Partial<CmykConfig> = {}): CmykConfig {
     ifUnreplacedImagesFound: 'warn',
     overrideMap: [],
     reserveMap: [],
+    fallback: undefined,
     mapOutput: undefined,
     ...overrides,
   };
@@ -101,6 +102,39 @@ it('fails the build without writing output when ifUnmappedColorsFound is error',
   expect(warns).toContainEqual(
     expect.stringContaining('RGB color not mapped to CMYK'),
   );
+});
+
+it('does not treat colors converted by the fallback as unmapped', async () => {
+  const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+  const { thrown, written, warns } = await runSave(
+    pdf,
+    cmykConfig({
+      ifUnmappedColorsFound: 'error',
+      ifUnreplacedImagesFound: 'ignore',
+      fallback: () => ({ c: 0, m: 0, y: 0, k: 10000 }),
+    }),
+  );
+
+  expect(thrown).toBeNull();
+  expect(written).toBe(true);
+  expect(warns).toEqual([]);
+});
+
+it('leaves colors unmapped when the fallback declines', async () => {
+  const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+  const { thrown, written } = await runSave(
+    pdf,
+    cmykConfig({
+      ifUnmappedColorsFound: 'error',
+      ifUnreplacedImagesFound: 'ignore',
+      fallback: () => null,
+    }),
+  );
+
+  expect(thrown).toContain('RGB color(s) not mapped to CMYK');
+  expect(written).toBe(false);
 });
 
 it('combines failures from both categories into a single error', async () => {

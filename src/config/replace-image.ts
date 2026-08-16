@@ -17,3 +17,12 @@ export interface ReplaceImageEntry {
 
 export type ReplaceImageConfigItem = ReplaceImageEntry | ReplaceFunction;
 export type ReplaceImageConfig = ReplaceImageConfigItem[];
+
+export type CmykConvertFunction = (rgb: {
+  r: number;
+  g: number;
+  b: number;
+}) =>
+  | import('../global-viewer.js').CMYKValue
+  | null
+  | Promise<import('../global-viewer.js').CMYKValue | null>;

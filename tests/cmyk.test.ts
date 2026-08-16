@@ -5,6 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { CmykMap } from '../src/global-viewer.js';
 import { convertCmykColors } from '../src/output/cmyk.js';
+import {
+  composeColorConverters,
+  mapToConverter,
+} from '../src/output/pdf-stream.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 
@@ -90,7 +94,7 @@ describe('convertCmykColors', () => {
 
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
-      colorMap,
+      convert: mapToConverter(colorMap),
       unmappedColors: null,
     });
 
@@ -116,7 +120,7 @@ describe('convertCmykColors', () => {
     // This should not throw "object is not a stream" error
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
-      colorMap,
+      convert: mapToConverter(colorMap),
       unmappedColors: null,
     });
 
@@ -130,7 +134,7 @@ describe('convertCmykColors', () => {
     const unmappedColors = new Set<string>();
     await convertCmykColors({
       pdf: srcPdf,
-      colorMap: {},
+      convert: mapToConverter({}),
       unmappedColors,
     });
 
@@ -144,13 +148,64 @@ describe('convertCmykColors', () => {
     }
   });
 
+  it('converts colors using a converter function fallback', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    const srcContents = await extractPdfContentStream(srcPdf);
+    expect(srcContents.some((content) => containsRgbOperators(content))).toBe(
+      true,
+    );
+
+    const destPdf = await convertCmykColors({
+      pdf: srcPdf,
+      convert: () => ({ c: 0, m: 0, y: 0, k: 10000 }),
+      unmappedColors: null,
+    });
+
+    const destContents = await extractPdfContentStream(destPdf);
+    expect(destContents.some((content) => containsCmykOperators(content))).toBe(
+      true,
+    );
+    expect(destContents.some((content) => containsRgbOperators(content))).toBe(
+      false,
+    );
+  });
+
+  it('lets static map entries take priority over function fallback', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    const staticCmyk = { c: 0, m: 0, y: 0, k: 10000 };
+    const fallbackCmyk = { c: 5000, m: 5000, y: 5000, k: 0 };
+    const seenByFallback: string[] = [];
+    const destPdf = await convertCmykColors({
+      pdf: srcPdf,
+      convert: composeColorConverters([
+        mapToConverter({ '[0,0,0]': staticCmyk }),
+        (rgb) => {
+          seenByFallback.push(JSON.stringify([rgb.r, rgb.g, rgb.b]));
+          return fallbackCmyk;
+        },
+      ]),
+      unmappedColors: null,
+    });
+
+    expect(seenByFallback).not.toContain('[0,0,0]');
+    const destContents = await extractPdfContentStream(destPdf);
+    expect(destContents.some((content) => containsRgbOperators(content))).toBe(
+      false,
+    );
+    expect(destContents.some((content) => containsCmykOperators(content))).toBe(
+      true,
+    );
+  });
+
   it('preserves unmapped RGB colors', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
 
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
       // no colors will be converted
-      colorMap: {},
+      convert: mapToConverter({}),
       unmappedColors: null,
     });
 
