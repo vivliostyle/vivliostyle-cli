@@ -602,6 +602,32 @@ it('supports pdfPostprocess configuration', async () => {
   });
 });
 
+it('excludes node_modules files from replaceImage RegExp matching', async () => {
+  const config = await getTaskConfig(
+    ['build'],
+    resolveFixture('replace-image'),
+    {
+      entry: 'manuscript.md',
+      output: 'output.pdf',
+      pdfPostprocess: {
+        replaceImage: [
+          { source: /^(.*)_rgb\.png$/v, replacement: '$1_cmyk.tiff' },
+        ],
+      },
+    },
+  );
+  maskConfig(config);
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    replaceImage: [
+      {
+        source: '__WORKSPACE__/tests/fixtures/replace-image/img_rgb.png',
+        replacement: '__WORKSPACE__/tests/fixtures/replace-image/img_cmyk.tiff',
+      },
+    ],
+  });
+});
+
 it('matches RegExp sources regardless of global and sticky flags', async () => {
   const plain = await countReplaceImageEntries(/\.md$/v);
   expect(plain).toBeGreaterThan(1);

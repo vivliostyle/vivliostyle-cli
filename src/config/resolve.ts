@@ -730,6 +730,9 @@ export function resolveTaskConfig(
       const allFiles = globSync('**/*', {
         cwd: entryContextDir,
         onlyFiles: true,
+        // The same ignore rule as the manuscript update detection
+        // (getWorkspaceMatcher in vite-plugin-dev-server.ts)
+        ignore: ['node_modules/**'],
       });
       return replaceImageOption.flatMap(({ source, replacement }) => {
         if (source instanceof RegExp) {
