@@ -6,11 +6,14 @@
 ### Functions
 
 - [`build`](#build)
+- [`builtinCmykConversion`](#builtincmykconversion)
 - [`builtinCmykReplacement`](#builtincmykreplacement)
+- [`builtinGrayConversion`](#builtingrayconversion)
 - [`builtinGrayReplacement`](#builtingrayreplacement)
 - [`create`](#create)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
+- [`iccConversion`](#iccconversion)
 - [`iccReplacement`](#iccreplacement)
 - [`preview`](#preview)
 - [`VFM`](#vfm)
@@ -278,6 +281,19 @@ build({
 
 ***
 
+### builtinCmykConversion()
+
+> **builtinCmykConversion**(): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Returns a CmykConvertFunction for cmyk.fallback that converts RGB colors
+to CMYK using mupdf's DeviceCMYK color space.
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
+
+***
+
 ### builtinCmykReplacement()
 
 > **builtinCmykReplacement**(): [`ReplaceFunction`](#replacefunction)
@@ -288,6 +304,19 @@ using mupdf's DeviceCMYK color space.
 #### Returns
 
 [`ReplaceFunction`](#replacefunction)
+
+***
+
+### builtinGrayConversion()
+
+> **builtinGrayConversion**(): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Returns a CmykConvertFunction for cmyk.fallback that converts RGB colors
+to grayscale, mapped to the K channel.
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
 
 ***
 
@@ -781,6 +810,28 @@ Define the configuration for Vivliostyle CLI.
 #### Returns
 
 [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
+
+***
+
+### iccConversion()
+
+> **iccConversion**(`outputProfile`): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Returns a CmykConvertFunction for cmyk.fallback that converts RGB colors
+through the given ICC profile. The profile alone determines the conversion;
+the profile data is passed to mupdf without inspection. Profiles whose data
+color space is CMYK yield full CMYK values, and grayscale profiles are
+mapped to the K channel.
+
+#### Parameters
+
+##### outputProfile
+
+`Uint8Array`
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
 
 ***
 

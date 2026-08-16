@@ -27,8 +27,11 @@ export type {
 } from './config/replace-image.js';
 export type { TemplateVariable } from './create-template.js';
 export {
+  builtinCmykConversion,
   builtinCmykReplacement,
+  builtinGrayConversion,
   builtinGrayReplacement,
+  iccConversion,
   iccReplacement,
 } from './output/image.js';
 export { createVitePlugin } from './vite-adapter.js';
