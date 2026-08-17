@@ -76,6 +76,9 @@
    * Page Layout (for PDF output)
    * =================================== */
 
+  /* Page size */
+  /* --vs-page--size: A4; */
+
   /* Page margins */
   /* --vs-page--margin-top: 20mm; */
   /* --vs-page--margin-bottom: 20mm; */
@@ -130,6 +133,9 @@
   /* --vs-toc--page-counter-style: roman; */
   /* --vs-toc--page-leader-content: leader(' ✻ ') ' '; */
 
+  /* TOC numbering */
+  /* --vs-toc--marker-display: inline; */
+
   /* ===================================
    * Section Numbering
    * =================================== */
@@ -137,12 +143,16 @@
   /* Show section numbers in headings */
   /* --vs-section--marker-display: inline; */
 
-  /* Show section numbers in h2 headings */
-  /* --vs-section--h2-marker-display: inline; */
-  /* --vs-section--h2-marker-content: counter(vs-counter-sec-h2) ". "; */
+  /* Section numbering format */
+  /* --vs-section--h1-marker-content: counter(vs-counter-doc); */
+  /* --vs-section--h2-marker-content: var(--vs-section--h1-marker-content) '.' counter(vs-counter-sec-h2); */
+  /* --vs-section--h3-marker-content: var(--vs-section--h2-marker-content) '.' counter(vs-counter-sec-h3); */
+  /* --vs-section--h4-marker-content: var(--vs-section--h3-marker-content) '.' counter(vs-counter-sec-h4); */
+  /* --vs-section--h5-marker-content: var(--vs-section--h4-marker-content) '.' counter(vs-counter-sec-h5); */
+  /* --vs-section--h6-marker-content: var(--vs-section--h5-marker-content) '.' counter(vs-counter-sec-h6); */
 
   /* Section reference format */
-  /* --vs-section--call-content: '†' target-counters(attr(href), vs-counter-sections,'.', decimal); */
+  /* --vs-section--call-content: '§' target-text(attr(href), before); */
 
   /* ===================================
    * Cross-References

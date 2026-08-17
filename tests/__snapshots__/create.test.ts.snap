@@ -226,6 +226,9 @@ Object {
    * ページレイアウト（PDF 出力用）
    * =================================== */
 
+  /* ページサイズ */
+  /* --vs-page--size: A4; */
+
   /* ページマージン */
   /* --vs-page--margin-top: 20mm; */
   /* --vs-page--margin-bottom: 20mm; */
@@ -247,7 +250,164 @@ Object {
    * 注: Prism.js CSS モジュールを追加でインクルードするか、
    * それを含むテーマを使用する必要があります（例: @vivliostyle/theme-techbook）
    * =================================== */
+
+  /* コードブロックのスタイル */
+  /* --vs-prism--background: #101842; */
+  /* --vs-prism--color: #eff4b8; */
+  /* --vs-prism--color-comment: #869db7; */
+  /* --vs-prism--block-code-padding: 0.5em 1.5em; */
+
+  /* ===================================
+   * 脚注
+   * =================================== */
+
+  /* 脚注参照マーカー */
+  /* --vs-footnote--call-content: \\"[\\" counter(footnote) \\"]\\"; */
+
+  /* 脚注テキストサイズ */
+  /* --vs-footnote--call-font-size: 0.8em; */
+
+  /* 脚注エリアの余白 */
+  /* --vs-footnote--area-before-margin-inline: 2em; */
+
+  /* ===================================
+   * 目次
+   * =================================== */
+
+  /* 目次のインデント */
+  /* --vs-toc--indent-level-1: 0; */
+  /* --vs-toc--indent-level-2: 1em; */
+  /* --vs-toc--indent-level-3: 2em; */
+
+  /* 目次ページ内容のスタイル */
+  /* --vs-toc--page-counter-style: roman; */
+  /* --vs-toc--page-leader-content: leader(' ✻ ') ' '; */
+
+  /* 目次の番号 */
+  /* --vs-toc--marker-display: inline; */
+
+  /* ===================================
+   * セクション番号
+   * =================================== */
+
+  /* 見出しにセクション番号を表示 */
+  /* --vs-section--marker-display: inline; */
+
+  /* セクション番号の形式 */
+  /* --vs-section--h1-marker-content: counter(vs-counter-doc); */
+  /* --vs-section--h2-marker-content: var(--vs-section--h1-marker-content) '.' counter(vs-counter-sec-h2); */
+  /* --vs-section--h3-marker-content: var(--vs-section--h2-marker-content) '.' counter(vs-counter-sec-h3); */
+  /* --vs-section--h4-marker-content: var(--vs-section--h3-marker-content) '.' counter(vs-counter-sec-h4); */
+  /* --vs-section--h5-marker-content: var(--vs-section--h4-marker-content) '.' counter(vs-counter-sec-h5); */
+  /* --vs-section--h6-marker-content: var(--vs-section--h5-marker-content) '.' counter(vs-counter-sec-h6); */
+
+  /* セクション参照の形式 */
+  /* --vs-section--call-content: '§' target-text(attr(href), before); */
+
+  /* ===================================
+   * 相互参照
+   * =================================== */
+
+  /* 図表参照の形式 */
+  /* --vs-crossref--counter-style: decimal; */
+  /* --vs-crossref--marker-cite-content: \\"[\\" target-counter(attr(href), citation) \\"]\\"; */
+
+  /* ===================================
+   * 表
+   * =================================== */
+
+  /* 表の罫線 */
+  /* --vs--table-border-width-column: 2px; */
+  /* --vs--table-border-color: #cccccc; */
+
+  /* 表セルのパディング */
+  /* --vs--table-cell-padding-block: 1em; */
+
+  /* ===================================
+   * 引用ブロック
+   * =================================== */
+
+  /* --vs--blockquote-font-size: 0.95em; */
+  /* --vs--blockquote-margin-inline: 2em 0; */
+
+  /* ===================================
+   * リスト
+   * =================================== */
+
+  /* --vs--ul-list-style-type: \\"▶︎\\"; */
+  /* --vs--ul-minimum-inline-indent-size: 3rem; */
+  /* --vs--ol-list-style-type: lower-roman; */
+  /* --vs--ol-padding-inline-start: 2.5em; */
+
+  /* ===================================
+   * 段組みレイアウト
+   * =================================== */
+  /* column-count: 2; */
+  /* column-gap: 2em; */
+  /* column-rule: 1px solid var(--vs-border-color); */
 }
+
+/* ===================================
+ * カスタムページレイアウト
+ * =================================== */
+
+/* 先頭ページのヘッダーを非表示 */
+
+/* @page :first {
+  @top-left { content: none; }
+  @top-right { content: none; }
+} */
+
+/* 左右ページで異なるレイアウト */
+
+/* @page :left {
+  --vs-page--mbox-content-bottom-left: counter(page);
+}
+
+@page :right {
+  --vs-page--mbox-content-bottom-right: counter(page);
+} */
+
+/* ===================================
+ * カスタム要素スタイル
+ * =================================== */
+
+/* 例: 最初の段落を強調 */
+
+/* p:first-of-type {
+  font-style: italic;
+  font-size: 1.1em;
+  font-weight: 500;
+} */
+
+/* 例: 表紙ページのスタイル */
+/*
+.cover {
+  text-align: center;
+  page-break-after: always;
+}
+
+.cover h1 {
+  font-size: 3rem;
+  margin-top: 5em;
+}
+*/
+
+/* 例: カスタムコンテナのスタイル */
+
+/* .note {
+  padding: 1em;
+  margin-block: var(--vs-spacing-rlh);
+  border-left: 4px solid #4a90e2;
+  background-color: #f0f8ff;
+}
+
+.warning {
+  padding: 1em;
+  margin-block: var(--vs-spacing-rlh);
+  border-left: 4px solid #e24a4a;
+  background-color: #fff0f0;
+} */
 ",
   "/work/project-name/draft/01_cover.md": "---
 class: cover-page
