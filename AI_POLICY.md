@@ -19,8 +19,9 @@ whether or not AI tools were used.
 
 ## Tools we use
 
-- Claude Code (Anthropic): writing and refactoring code, writing tests,
-  debugging, documentation, and translation. The specific model is recorded
+- Generative AI coding assistants (e.g. "Claude Code", and other AI coding
+  agents): writing and refactoring code, writing tests, debugging,
+  documentation, and translation. The specific tool and model are recorded
   per commit (see below).
 - GitHub Copilot: code review suggestions and automated fixes (Copilot
   Autofix).
