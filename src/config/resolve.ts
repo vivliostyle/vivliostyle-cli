@@ -54,6 +54,11 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
+import type {
+  ReplaceFunction,
+  ReplaceImageConfig,
+  ReplaceImageConfigItem,
+} from './replace-image.js';
 import type { InlineOptions, ParsedBuildTask } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
@@ -263,18 +268,12 @@ function resolveMapEntries(
 }
 
 export interface CmykConfig {
-  warnUnmapped: boolean;
+  ifUnmappedColorsFound: 'warn' | 'error' | 'ignore';
+  ifUnreplacedImagesFound: 'warn' | 'error' | 'ignore';
   overrideMap: CmykMapEntry[];
   reserveMap: CmykMapEntry[];
   mapOutput: string | undefined;
 }
-
-export interface ReplaceImageEntry {
-  source: string;
-  replacement: string;
-}
-
-export type ReplaceImageConfig = ReplaceImageEntry[];
 
 export interface PdfOutput {
   format: 'pdf';
@@ -700,7 +699,11 @@ export function resolveTaskConfig(
       // Config file object format takes priority
       if (cmykOption && typeof cmykOption === 'object') {
         return {
-          warnUnmapped: cmykOption.warnUnmapped ?? true,
+          ifUnmappedColorsFound:
+            cmykOption.ifUnmappedColorsFound ??
+            // oxlint-disable-next-line typescript/no-deprecated -- fall back to the deprecated warnUnmapped option
+            (cmykOption.warnUnmapped === false ? 'ignore' : 'warn'),
+          ifUnreplacedImagesFound: cmykOption.ifUnreplacedImagesFound ?? 'warn',
           overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
           reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
           mapOutput: cmykOption.mapOutput
@@ -711,7 +714,8 @@ export function resolveTaskConfig(
       // CLI --cmyk flag or cmykOption: true
       if (options.cmyk || cmykOption === true) {
         return {
-          warnUnmapped: true,
+          ifUnmappedColorsFound: 'warn',
+          ifUnreplacedImagesFound: 'warn',
           overrideMap: [],
           reserveMap: [],
           mapOutput: undefined,
@@ -732,24 +736,60 @@ export function resolveTaskConfig(
       const allFiles = globSync('**/*', {
         cwd: entryContextDir,
         onlyFiles: true,
+        // The same ignore rule as the manuscript update detection
+        // (getWorkspaceMatcher in vite-plugin-dev-server.ts)
+        ignore: ['node_modules/**'],
       });
-      return replaceImageOption.flatMap(({ source, replacement }) => {
-        if (source instanceof RegExp) {
-          return allFiles
-            .filter((file) => source.test(file))
-            .map((file) => ({
-              source: upath.resolve(entryContextDir, file),
-              replacement: upath.resolve(
-                entryContextDir,
-                file.replace(source, replacement),
-              ),
-            }));
-        }
-        return {
-          source: upath.resolve(entryContextDir, source),
-          replacement: upath.resolve(entryContextDir, replacement),
-        };
-      });
+      return replaceImageOption.flatMap(
+        (item): ReplaceImageConfigItem | ReplaceImageConfigItem[] => {
+          if (typeof item === 'function') {
+            return item as ReplaceFunction;
+          }
+          const { source, replacement } = item;
+          const isFnReplacement = typeof replacement === 'function';
+
+          if (source instanceof RegExp) {
+            let matcher = source;
+            if (matcher.flags.includes('y')) {
+              Logger.debug(
+                `Ignoring the sticky (y) flag of replaceImage source: ${source}`,
+              );
+              matcher = new RegExp(
+                matcher.source,
+                matcher.flags.replace('y', ''),
+              );
+            }
+            const matchesSource = (file: string): boolean => {
+              matcher.lastIndex = 0;
+              return matcher.test(file);
+            };
+            if (isFnReplacement) {
+              return allFiles
+                .filter((file) => matchesSource(file))
+                .map((file) => ({
+                  source: upath.resolve(entryContextDir, file),
+                  replacement,
+                }));
+            }
+            return allFiles
+              .filter((file) => matchesSource(file))
+              .map((file) => ({
+                source: upath.resolve(entryContextDir, file),
+                replacement: upath.resolve(
+                  entryContextDir,
+                  file.replace(matcher, replacement),
+                ),
+              }));
+          }
+
+          return {
+            source: upath.resolve(entryContextDir, source),
+            replacement: isFnReplacement
+              ? replacement
+              : upath.resolve(entryContextDir, replacement),
+          };
+        },
+      );
     };
 
     // Resolve preflight with priority:

@@ -1,5 +1,4 @@
 import type { CmykMap } from '../global-viewer.js';
-import { Logger } from '../logger.js';
 
 /**
  * `SRGBValue.MAX`
@@ -182,24 +181,11 @@ function formatRgbKey(r: number, g: number, b: number): string {
   return JSON.stringify([ri, gi, bi]);
 }
 
-function formatRgbKeyForWarning(r: number, g: number, b: number): string {
+function formatUnmappedRgbKey(r: number, g: number, b: number): string {
   const ri = Math.round(r * SRGB_MAX);
   const gi = Math.round(g * SRGB_MAX);
   const bi = Math.round(b * SRGB_MAX);
   return JSON.stringify({ r: ri, g: gi, b: bi });
-}
-
-function warnUnmappedColor(
-  r: number,
-  g: number,
-  b: number,
-  warnedColors: Set<string>,
-): void {
-  const warnKey = formatRgbKeyForWarning(r, g, b);
-  if (!warnedColors.has(warnKey)) {
-    warnedColors.add(warnKey);
-    Logger.logWarn(`RGB color not mapped to CMYK: ${warnKey}`);
-  }
 }
 
 /**
@@ -208,8 +194,7 @@ function warnUnmappedColor(
 export function convertStreamColors(
   content: string,
   colorMap: CmykMap,
-  warnUnmapped: boolean,
-  warnedColors: Set<string>,
+  unmappedColors: Set<string> | null,
 ): string {
   const result: string[] = [];
   const pendingNumbers: { value: number; raw: string }[] = [];
@@ -246,9 +231,7 @@ export function convertStreamColors(
       return;
     }
     result.push(r.raw, g.raw, b.raw, token.raw);
-    if (warnUnmapped) {
-      warnUnmappedColor(r.value, g.value, b.value, warnedColors);
-    }
+    unmappedColors?.add(formatUnmappedRgbKey(r.value, g.value, b.value));
   };
 
   for (const token of tokenize(content)) {

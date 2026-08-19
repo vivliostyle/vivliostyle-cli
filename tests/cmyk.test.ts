@@ -91,7 +91,7 @@ describe('convertCmykColors', () => {
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
       colorMap,
-      warnUnmapped: false,
+      unmappedColors: null,
     });
 
     // Verify destination PDF contains CMYK operators
@@ -117,11 +117,31 @@ describe('convertCmykColors', () => {
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
       colorMap,
-      warnUnmapped: false,
+      unmappedColors: null,
     });
 
     expect(destPdf).toBeInstanceOf(Uint8Array);
     expect(destPdf.length).toBeGreaterThan(0);
+  });
+
+  it('collects unmapped colors', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    const unmappedColors = new Set<string>();
+    await convertCmykColors({
+      pdf: srcPdf,
+      colorMap: {},
+      unmappedColors,
+    });
+
+    expect(unmappedColors.size).toBeGreaterThan(0);
+    for (const color of unmappedColors) {
+      expect(JSON.parse(color)).toMatchObject({
+        r: expect.any(Number),
+        g: expect.any(Number),
+        b: expect.any(Number),
+      });
+    }
   });
 
   it('preserves unmapped RGB colors', async () => {
@@ -131,7 +151,7 @@ describe('convertCmykColors', () => {
       pdf: srcPdf,
       // no colors will be converted
       colorMap: {},
-      warnUnmapped: false,
+      unmappedColors: null,
     });
 
     // Verify destination PDF still contains RGB operators

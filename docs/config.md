@@ -428,12 +428,13 @@ pdfPostprocess takes precedence.
 
   - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+    Can be a boolean or a config object with options such as overrideMap,
+    ifUnmappedColorsFound, and ifUnreplacedImagesFound.
 
-  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry))[]  
+  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | ((image: { asPNG(): Uint8Array }) => Uint8Array | null | Promise<Uint8Array | null>))[]  
     Replace images in the output PDF.
-    Each entry specifies a source image path and its replacement image path.
-    Useful for replacing RGB images with CMYK versions.
+    Each entry can be an object with source/replacement paths, an object with a source path
+    and a replacement function, or a bare function that processes all RGB images.
 
 #### Type definition
 
@@ -444,7 +445,15 @@ type PdfPostprocessConfig = {
     | "press-ready-local";
   preflightOption?: string[];
   cmyk?: boolean | CmykConfig;
-  replaceImage?: ReplaceImageEntry[];
+  replaceImage?: (
+    | ReplaceImageEntry
+    | ((image: {
+        asPNG(): Uint8Array;
+      }) =>
+        | Uint8Array
+        | null
+        | Promise<Uint8Array | null>)
+  )[];
 };
 ```
 
@@ -464,8 +473,18 @@ type PdfPostprocessConfig = {
     Each entry is a tuple of [rgb, {c, m, y, k}].
     RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
 
-  - `warnUnmapped`: boolean  
-    Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+  - ~~`warnUnmapped`~~ _Deprecated_  
+    Use `ifUnmappedColorsFound` instead.
+    `true` corresponds to `"warn"` and `false` to `"ignore"`.
+    When both are specified, `ifUnmappedColorsFound` takes precedence.
+
+  - `ifUnmappedColorsFound`: "warn" | "error" | "ignore"  
+    What to do when RGB colors not mapped to CMYK are encountered:
+    log a warning, fail the build, or do nothing. (default: warn)
+
+  - `ifUnreplacedImagesFound`: "warn" | "error" | "ignore"  
+    What to do when non-CMYK-compatible images remain in the PDF after
+    image replacement: log a warning, fail the build, or do nothing. (default: warn)
 
   - `mapOutput`: string  
     Output the CMYK color map to a JSON file at the specified path.
@@ -477,6 +496,14 @@ type CmykConfig = {
   overrideMap?: "{tuple(Array)}"[];
   reserveMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
+  ifUnmappedColorsFound?:
+    | "warn"
+    | "error"
+    | "ignore";
+  ifUnreplacedImagesFound?:
+    | "warn"
+    | "error"
+    | "ignore";
   mapOutput?: string;
 };
 ```
@@ -490,15 +517,22 @@ type CmykConfig = {
   - `source`: string | RegExp  
     Path to the source image file, or a RegExp pattern to match multiple files.
 
-  - `replacement`: string  
-    Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.
+  - `replacement`: string | ((image: { asPNG(): Uint8Array }) => Uint8Array | null | Promise<Uint8Array | null>)  
+    Path to the replacement image file, a function that processes the image, or when source is a RegExp with a string replacement, supports $1, $2, etc.
 
 #### Type definition
 
 ```ts
 type ReplaceImageEntry = {
   source: string | RegExp;
-  replacement: string;
+  replacement:
+    | string
+    | ((image: {
+        asPNG(): Uint8Array;
+      }) =>
+        | Uint8Array
+        | null
+        | Promise<Uint8Array | null>);
 };
 ```
 

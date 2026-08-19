@@ -4,7 +4,11 @@ import { ValiError } from 'valibot';
 import { expect, it, onTestFinished, vi } from 'vitest';
 
 import { warnDeprecatedConfig } from '../src/config/load.js';
-import { UseTemporaryServerRoot } from '../src/config/resolve.js';
+import type { ReplaceFunction } from '../src/config/replace-image.js';
+import {
+  type PdfOutput,
+  UseTemporaryServerRoot,
+} from '../src/config/resolve.js';
 import { VivliostyleConfigSchema } from '../src/config/schema.js';
 import { Logger } from '../src/logger.js';
 import { getTaskConfig, maskConfig, resolveFixture } from './command-util.js';
@@ -563,6 +567,18 @@ it('rejects unknown extensions without documentProcessor', async () => {
   ).rejects.toThrow('Invalid manuscript type');
 });
 
+const countReplaceImageEntries = async (source: RegExp): Promise<number> => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [{ source, replacement: 'img_cmyk.tiff' }],
+    },
+  });
+  const output = config.outputs[0] as unknown as { replaceImage: unknown[] };
+  return output.replaceImage.length;
+};
+
 it('supports pdfPostprocess configuration', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',
@@ -576,7 +592,8 @@ it('supports pdfPostprocess configuration', async () => {
   expect(config.outputs[0]).toMatchObject({
     format: 'pdf',
     cmyk: {
-      warnUnmapped: true,
+      ifUnmappedColorsFound: 'warn',
+      ifUnreplacedImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
       mapOutput: undefined,
@@ -587,6 +604,156 @@ it('supports pdfPostprocess configuration', async () => {
         replacement: '__WORKSPACE__/tests/fixtures/config/img_cmyk.tiff',
       },
     ],
+  });
+});
+
+it('excludes node_modules files from replaceImage RegExp matching', async () => {
+  const config = await getTaskConfig(
+    ['build'],
+    resolveFixture('replace-image'),
+    {
+      entry: 'manuscript.md',
+      output: 'output.pdf',
+      pdfPostprocess: {
+        replaceImage: [
+          { source: /^(.*)_rgb\.png$/v, replacement: '$1_cmyk.tiff' },
+        ],
+      },
+    },
+  );
+  maskConfig(config);
+  expect(config.outputs[0]).toMatchObject({
+    format: 'pdf',
+    replaceImage: [
+      {
+        source: '__WORKSPACE__/tests/fixtures/replace-image/img_rgb.png',
+        replacement: '__WORKSPACE__/tests/fixtures/replace-image/img_cmyk.tiff',
+      },
+    ],
+  });
+});
+
+it('matches RegExp sources regardless of global and sticky flags', async () => {
+  const plain = await countReplaceImageEntries(/\.md$/v);
+  expect(plain).toBeGreaterThan(1);
+  const globalSource = /\.md$/gv;
+  expect(await countReplaceImageEntries(globalSource)).toBe(plain);
+  expect(await countReplaceImageEntries(globalSource)).toBe(plain);
+  expect(await countReplaceImageEntries(/\.md$/vy)).toBe(plain);
+});
+
+it('resolves function forms of replaceImage', async () => {
+  const entryFn: ReplaceFunction = () => new Uint8Array();
+  const regExpFn: ReplaceFunction = () => new Uint8Array();
+  const bareFn: ReplaceFunction = () => new Uint8Array();
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        { source: 'img.png', replacement: entryFn },
+        { source: /cover\.png$/v, replacement: regExpFn },
+        bareFn,
+      ],
+    },
+  });
+  const output = config.outputs[0] as PdfOutput;
+  expect(output.format).toBe('pdf');
+  expect(output.replaceImage).toEqual([
+    { source: expect.stringMatching(/img\.png$/v), replacement: entryFn },
+    { source: expect.stringMatching(/cover\.png$/v), replacement: regExpFn },
+    bareFn,
+  ]);
+});
+
+it('resolves ifUnmappedColorsFound with default, explicit, and deprecated values', async () => {
+  const defaulted = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: {} },
+  });
+  expect(defaulted.outputs[0]).toMatchObject({
+    cmyk: { ifUnmappedColorsFound: 'warn' },
+  });
+
+  const explicit = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: { ifUnmappedColorsFound: 'error' } },
+  });
+  expect(explicit.outputs[0]).toMatchObject({
+    cmyk: { ifUnmappedColorsFound: 'error' },
+  });
+
+  const legacy = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: { warnUnmapped: false } },
+  });
+  expect(legacy.outputs[0]).toMatchObject({
+    cmyk: { ifUnmappedColorsFound: 'ignore' },
+  });
+
+  const both = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      cmyk: { warnUnmapped: false, ifUnmappedColorsFound: 'error' },
+    },
+  });
+  expect(both.outputs[0]).toMatchObject({
+    cmyk: { ifUnmappedColorsFound: 'error' },
+  });
+});
+
+it('warns when config uses deprecated cmyk.warnUnmapped', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    pdfPostprocess: { cmyk: { warnUnmapped: true } },
+  });
+  warnDeprecatedConfig(config);
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining('ifUnmappedColorsFound'),
+  );
+});
+
+it('warns when output config uses deprecated cmyk.warnUnmapped', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    output: [
+      {
+        path: 'output.pdf',
+        pdfPostprocess: { cmyk: { warnUnmapped: false } },
+      },
+    ],
+  });
+  warnDeprecatedConfig(config);
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining('ifUnmappedColorsFound'),
+  );
+});
+
+it('resolves ifUnreplacedImagesFound with default and explicit values', async () => {
+  const defaulted = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: {} },
+  });
+  expect(defaulted.outputs[0]).toMatchObject({
+    cmyk: { ifUnreplacedImagesFound: 'warn' },
+  });
+
+  const disabled = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: { ifUnreplacedImagesFound: 'ignore' } },
+  });
+  expect(disabled.outputs[0]).toMatchObject({
+    cmyk: { ifUnreplacedImagesFound: 'ignore' },
   });
 });
 
@@ -632,7 +799,8 @@ it('output-level pdfPostprocess overrides build-level', async () => {
   expect(config.outputs[0]).toMatchObject({
     format: 'pdf',
     cmyk: {
-      warnUnmapped: true,
+      ifUnmappedColorsFound: 'warn',
+      ifUnreplacedImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
       mapOutput: undefined,
