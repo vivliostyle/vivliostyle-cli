@@ -42,7 +42,7 @@
     "@types/command-exists": "1.2.3",
     "@vivliostyle/jsdom": "25.0.1-vivliostyle-cli.2",
     "@vivliostyle/vfm": "2.7.2",
-    "@vivliostyle/viewer": "2.44.1",
+    "@vivliostyle/viewer": "2.45.0",
     "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
     "archiver": "7.0.1",
