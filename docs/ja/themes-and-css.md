@@ -92,6 +92,35 @@ vivliostyle build manuscript.md --theme ./my-theme/style.css -o paper.pdf
 vivliostyle build manuscript.md --theme ./my-theme -o paper.pdf
 ```
 
+### CSS からのテーマの読み込み
+
+`themes` ディレクトリへの相対パスを書く代わりに、CSS ファイルから npm パッケージ名でテーマを直接読み込むことができます:
+
+```css
+@import '@vivliostyle/theme-base';
+@import '@vivliostyle/theme-base/css/partial/footnote.css';
+
+h1 {
+  /* 独自のカスタマイズ */
+}
+```
+
+パッケージ名のみを指定した場合、そのパッケージの package.json の `vivliostyle.theme.style`、`style`、`exports`（`style` コンディション）、`main` フィールドをこの順で参照し、既定のスタイルファイルを読み込みます。サブパスを指定した場合は指定したファイルを読み込みます。パッケージが `exports` フィールドを宣言している場合、サブパスは `exports` を通して解決されます。
+
+読み込むパッケージは事前にインストールされている必要があります。Vivliostyle CLI が CSS から参照されたパッケージを自動でインストールすることはありません。以下のいずれかの方法でインストールしてください。
+
+- プロジェクトにパッケージをインストールする: `npm install @vivliostyle/theme-base`
+- `theme` フィールドに空の `import` リストとともに宣言する。この場合、パッケージは `themes` ディレクトリにインストールされますが、それ自体がスタイルシートとして適用されることはありません:
+
+```js
+theme: [
+  { specifier: '@vivliostyle/theme-base', import: [] },
+  './my-style.css',
+],
+```
+
+`.css` 拡張子を持つ既存のファイルを指す指定子は、相対 URL として標準の CSS の扱いが保たれます。例えば `@import 'foo.css'` は、読み込み元のスタイルシートの隣に foo.css が存在する場合、その相対パスのファイルを参照します。それ以外の指定子は npm パッケージとして解決されます。同じパッケージがプロジェクトと `themes` ディレクトリの両方にインストールされている場合、`themes` ディレクトリのものが優先されます。
+
 ### Create Book の利用
 
 Create Book を使用すると、あらかじめテーマが設定された状態のプロジェクトを簡単に作成できます。[Create Book](https://docs.vivliostyle.org/ja/cli/getting-started/) を参照してください。

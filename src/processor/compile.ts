@@ -25,10 +25,10 @@ import {
   executeWithCleanupOnInterrupt,
   pathContains,
   pathEquals,
-  readPackageJson,
   toError,
   writeFileIfChanged,
 } from '../util.js';
+import { resolvePackageCssEntry, resolvePackageCssSubpath } from './css.js';
 import {
   createVirtualConsole,
   generateDefaultCoverHtml,
@@ -63,31 +63,19 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   }
   if (theme.importPath) {
     return [theme.importPath].flat().map((locator) => {
-      const resolvedPath = upath.resolve(theme.location, locator);
-      if (
-        !pathContains(theme.location, resolvedPath) ||
-        !fs.existsSync(resolvedPath)
-      ) {
+      let resolvedPath;
+      try {
+        resolvedPath = resolvePackageCssSubpath(theme.location, locator);
+      } catch (error) {
         throw new Error(
           `Could not find a style path ${locator} for the theme: ${theme.name}.`,
+          { cause: error },
         );
       }
       return upath.relative(from, resolvedPath);
     });
   }
-  const pkgJsonPath = upath.join(theme.location, 'package.json');
-  const packageJson = readPackageJson(pkgJsonPath);
-  const maybeStyle =
-    packageJson.vivliostyle?.theme?.style ??
-    packageJson.style ??
-    packageJson.main;
-  if (!maybeStyle) {
-    throw new DetailError(
-      `Could not find a style file for the theme: ${theme.name}.`,
-      'Please ensure this package satisfies a `vivliostyle.theme.style` property.',
-    );
-  }
-  return upath.relative(from, upath.join(theme.location, maybeStyle));
+  return upath.relative(from, resolvePackageCssEntry(theme.location));
 }
 
 export async function cleanupWorkspace({

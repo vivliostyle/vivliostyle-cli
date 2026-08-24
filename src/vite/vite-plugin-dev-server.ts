@@ -1,7 +1,9 @@
+import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 import type { NextHandleFunction } from 'connect';
 import escapeRe from 'escape-string-regexp';
+import { lookup as mime } from 'mime-types';
 import sirv, { type RequestHandler } from 'sirv';
 import upath from 'upath';
 import type * as vite from 'vite';
@@ -26,12 +28,19 @@ import {
   prepareThemeDirectory,
   transformManuscript,
 } from '../processor/compile.js';
+import {
+  collectThemeCssEntryFiles,
+  scanCssDependencies,
+  ThemeCssResolver,
+  transformCssImports,
+} from '../processor/css.js';
 import { generateCmykReserveMap } from '../server.js';
 import {
   debounce,
   getFormattedError,
   pathContains,
   pathEquals,
+  toError,
 } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
@@ -151,6 +160,9 @@ export function vsDevServerPlugin({
     Promise<{ content: string; etag: string } | undefined>
   > = new Map();
   let matchProjectDep: (pathname: string) => boolean;
+  // Initialize with the given config so that the resolver is available on
+  // preview servers, which never run `reload`
+  let cssResolver = new ThemeCssResolver(_config);
 
   async function reload(forceUpdate = false) {
     const prevConfig = config;
@@ -250,6 +262,26 @@ export function vsDevServerPlugin({
     server?.watcher.add(themeFiles);
     server?.watcher.add(localThemePaths);
     projectDeps.push(...themeFiles, ...localThemePaths);
+
+    cssResolver = new ThemeCssResolver(config);
+    const cssEntries = collectThemeCssEntryFiles(config.themeIndexes, {
+      preferSource: true,
+    });
+    const cssScan = scanCssDependencies({
+      entryFiles: cssEntries.files,
+      resolver: cssResolver,
+    });
+    for (const error of [...cssEntries.errors, ...cssScan.errors]) {
+      Logger.logError(getFormattedError(toError(error)));
+    }
+    const cssWatchFiles = cssScan.files.filter(
+      (file) =>
+        !pathContains(config.themesDir, file) &&
+        !file.includes('/node_modules/'),
+    );
+    server?.watcher.add(cssWatchFiles);
+    projectDeps.push(...cssWatchFiles);
+
     matchProjectDep = (pathname: string) =>
       projectDeps.some(
         (dep) => pathEquals(dep, pathname) || pathContains(dep, pathname),
@@ -441,6 +473,89 @@ export function vsDevServerPlugin({
     });
   } satisfies NextHandleFunction;
 
+  const serveCssMiddleware = function vivliostyleServeCssMiddleware(
+    req,
+    res,
+    next,
+  ) {
+    if (req.url === undefined) {
+      next();
+      return;
+    }
+    const urlMatchRe = new RegExp(
+      `^${escapeRe(config.base)}(/[^?#]*)([?#].*)?$`,
+      'v',
+    );
+    const [_, pathname] = decodeURI(req.url).match(urlMatchRe) ?? [];
+    if (!pathname) {
+      next();
+      return;
+    }
+
+    const sendFile = (content: string | Buffer, contentType: string) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'no-cache');
+      res.end(content);
+    };
+    const serveTransformedCss = (file: string) => {
+      const { code, errors } = transformCssImports({
+        code: fs.readFileSync(file, 'utf8'),
+        importer: file,
+        importerUrlPath: pathname,
+        resolver: cssResolver,
+      });
+      for (const error of errors) {
+        Logger.logError(getFormattedError(toError(error)));
+      }
+      sendFile(code, 'text/css; charset=utf-8');
+    };
+
+    // Serve files of theme packages resolved outside of the workspace
+    const mountedFile = cssResolver.resolveMountedFile(pathname);
+    if (mountedFile) {
+      Logger.debug('dev-server > serveMountedThemeFile %s', pathname);
+      if (mountedFile.endsWith('.css')) {
+        serveTransformedCss(mountedFile);
+      } else {
+        sendFile(
+          fs.readFileSync(mountedFile),
+          mime(mountedFile) || 'application/octet-stream',
+        );
+      }
+      return;
+    }
+
+    if (!pathname.endsWith('.css')) {
+      next();
+      return;
+    }
+    // The matchers restrict servable files on dev servers; preview servers
+    // expose the whole directories and need no restriction
+    const roots = [
+      { root: config.workspaceDir, matcher: program?.serveWorkspaceMatcher },
+      { root: config.entryContextDir, matcher: program?.serveAssetsMatcher },
+    ];
+    for (const { root, matcher } of roots) {
+      // oxlint-disable-next-line unicorn/prefer-regexp-test -- `match` is GlobMatcher's method, not String#match
+      if (matcher && !matcher.match(pathname.slice(1))) {
+        continue;
+      }
+      const file = upath.join(root, pathname.slice(1));
+      if (
+        !pathContains(root, file) ||
+        !fs.existsSync(file) ||
+        !fs.statSync(file).isFile()
+      ) {
+        continue;
+      }
+      Logger.debug('dev-server > serveTransformedCss %s', pathname);
+      serveTransformedCss(file);
+      return;
+    }
+    next();
+  } satisfies NextHandleFunction;
+
   return {
     name: 'vivliostyle:dev-server',
     enforce: 'pre',
@@ -468,11 +583,13 @@ export function vsDevServerPlugin({
         viteServer.middlewares.use((req, res, next) => {
           void devServerMiddleware(req, res, next);
         });
+        viteServer.middlewares.use(serveCssMiddleware);
         viteServer.middlewares.use(serveWorkspaceMiddleware);
       };
     },
     configurePreviewServer(viteServer) {
       return () => {
+        viteServer.middlewares.use(serveCssMiddleware);
         viteServer.middlewares.use(
           config.base,
           sirv(config.workspaceDir, {

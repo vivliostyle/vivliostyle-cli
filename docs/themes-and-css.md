@@ -92,6 +92,35 @@ If there is a `package.json` file that conforms to npm in your local environment
 vivliostyle build manuscript.md --theme ./my-theme -o paper.pdf
 ```
 
+### Importing Themes from CSS
+
+You can import a theme package directly from your CSS file with its npm package name, instead of writing a relative path into the `themes` directory:
+
+```css
+@import '@vivliostyle/theme-base';
+@import '@vivliostyle/theme-base/css/partial/footnote.css';
+
+h1 {
+  /* your customization */
+}
+```
+
+An import with the package name alone loads the default style entry of the package, resolved from the `vivliostyle.theme.style`, `style`, `exports` (with the `style` condition), and `main` fields of its package.json, in this order. An import with a subpath loads the specified file; when the package declares the `exports` field, the subpath is resolved through it.
+
+The imported package must be installed beforehand; Vivliostyle CLI does not install packages referred from CSS automatically. Either:
+
+- install the package in your project: `npm install @vivliostyle/theme-base`, or
+- declare it in the `theme` field with an empty `import` list, so that it is installed into the `themes` directory without being applied as a stylesheet by itself:
+
+```js
+theme: [
+  { specifier: '@vivliostyle/theme-base', import: [] },
+  './my-style.css',
+],
+```
+
+A specifier is treated as a relative URL and keeps the standard CSS semantics when it points to an existing file with the `.css` extension; for example, `@import 'foo.css'` refers to the relative file when it exists next to the importing stylesheet. Any other specifier is resolved as an npm package. When the same package is installed both in the project and in the `themes` directory, the one in the `themes` directory takes precedence.
+
 ### Using Create Book
 
 By using Create Book, you can easily create a project with a theme already set. Refer to [Create Book](https://docs.vivliostyle.org/en/cli/getting-started/).

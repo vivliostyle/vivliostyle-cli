@@ -20,6 +20,7 @@ import {
   getAssetMatcher,
   getWebPubResourceMatcher,
 } from '../processor/asset.js';
+import { ThemeCssResolver, transformCssImports } from '../processor/css.js';
 import {
   createVirtualConsole,
   fetchLinkedPublicationManifest,
@@ -39,6 +40,90 @@ import {
   useTmpDirectory,
 } from '../util.js';
 import { exportEpub } from './epub.js';
+
+function transformAndWriteCss({
+  source,
+  target,
+  urlPath,
+  resolver,
+}: {
+  source: string;
+  target: string;
+  urlPath: string;
+  resolver: ThemeCssResolver;
+}): void {
+  const { code, errors } = transformCssImports({
+    code: fs.readFileSync(source, 'utf8'),
+    importer: source,
+    importerUrlPath: urlPath,
+    resolver,
+  });
+  if (errors.length > 0) {
+    throw new DetailError(
+      `Failed to resolve the CSS imports: ${source}`,
+      errors
+        .map((error) =>
+          error instanceof DetailError
+            ? `${error.message}\n${error.detail}`
+            : error.message,
+        )
+        .join('\n\n'),
+    );
+  }
+  fs.mkdirSync(upath.dirname(target), { recursive: true });
+  fs.writeFileSync(target, code);
+}
+
+/**
+ * Copy theme packages resolved outside of the workspace (e.g. from the
+ * project's node_modules) into the output themes directory so that the
+ * rewritten CSS imports keep working in the published output.
+ */
+async function copyMountedThemePackages({
+  resolver,
+  outputDir,
+  fileExtensions,
+  resources,
+}: {
+  resolver: ThemeCssResolver;
+  outputDir: string;
+  fileExtensions: string[];
+  resources: string[];
+}): Promise<void> {
+  const copied = new Set<string>();
+  // Copying may transform CSS files that register new mounts; keep draining
+  // until no new package appears
+  while (true) {
+    const pending = [...resolver.mounts].filter(([name]) => !copied.has(name));
+    if (pending.length === 0) {
+      return;
+    }
+    for (const [name, pkgDir] of pending) {
+      copied.add(name);
+      const files = await glob(
+        ['**/*.{html,htm,xhtml,xht}', `**/*.{${fileExtensions.join(',')}}`],
+        { cwd: pkgDir, ignore: ['node_modules/**', 'example/**'] },
+      );
+      for (const file of files) {
+        const source = upath.join(pkgDir, file);
+        const relTarget = upath.join('themes/node_modules', name, file);
+        const target = upath.join(outputDir, relTarget);
+        if (file.endsWith('.css')) {
+          transformAndWriteCss({
+            source,
+            target,
+            urlPath: `/${relTarget}`,
+            resolver,
+          });
+        } else {
+          fs.mkdirSync(upath.dirname(target), { recursive: true });
+          await copy(source, target);
+        }
+        resources.push(relTarget);
+      }
+    }
+  }
+}
 
 function sortManifestResources(manifest: PublicationManifest) {
   if (!Array.isArray(manifest.resources)) {
@@ -452,17 +537,37 @@ export async function copyWebPublicationAssets({
     outputDir,
     upath.relative(input, manifestPath),
   );
+  const cssResolver = new ThemeCssResolver({
+    workspaceDir: input,
+    themesDir,
+  });
   for (const file of allFiles) {
     const alias = relExportAliases.find(({ source }) => source === file);
     const relTarget = alias?.target || file;
     resources.push(relTarget);
+    const source = upath.join(input, file);
     const target = upath.join(outputDir, relTarget);
-    fs.mkdirSync(upath.dirname(target), { recursive: true });
-    await copy(upath.join(input, file), target);
+    if (file.endsWith('.css')) {
+      transformAndWriteCss({
+        source,
+        target,
+        urlPath: `/${relTarget}`,
+        resolver: cssResolver,
+      });
+    } else {
+      fs.mkdirSync(upath.dirname(target), { recursive: true });
+      await copy(source, target);
+    }
     if (alias && pathEquals(upath.join(input, alias.source), manifestPath)) {
       actualManifestPath = target;
     }
   }
+  await copyMountedThemePackages({
+    resolver: cssResolver,
+    outputDir,
+    fileExtensions: copyAsset.fileExtensions,
+    resources,
+  });
 
   Logger.debug('webbook publication.json', actualManifestPath);
   // Overwrite copied publication.json

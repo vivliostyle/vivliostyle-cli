@@ -40,6 +40,7 @@ import {
 } from '../constants.js';
 import type { CMYKValue } from '../global-viewer.js';
 import { Logger } from '../logger.js';
+import { resolveLocalStyleFile } from '../processor/css.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import {
   cliVersion,
@@ -492,8 +493,8 @@ export function parseTheme({
   }
 
   // bare .css file
-  const stylePath = upath.resolve(context, specifier);
-  if (fs.existsSync(stylePath) && stylePath.endsWith('.css')) {
+  const stylePath = resolveLocalStyleFile(specifier, context);
+  if (stylePath) {
     const sourceRelPath = upath.relative(context, stylePath);
     return {
       type: 'file',
