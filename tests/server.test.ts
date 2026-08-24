@@ -134,8 +134,39 @@ describe('vite-plugin-dev-server', () => {
       const response = await supertest(middleware)
         .get(`/vivliostyle${content}`)
         .expect(200);
-      expect(response.headers['content-type']).toBe('text/css');
+      expect(response.headers['content-type']).toBe('text/css; charset=utf-8');
     }
+  });
+
+  it('serves CSS with bare package imports rewritten', async () => {
+    const middleware = await createServerMiddleware({
+      cwd: resolveFixture('server'),
+      config: {
+        entry: 'main.md',
+        workspaceDir: '.vs-dev-server-css-import',
+        theme: [
+          'import-theme.css',
+          { specifier: '../themes/debug-theme', import: [] },
+        ],
+      },
+    });
+    const contentResponse = await supertest(middleware)
+      .get('/vivliostyle/main.html')
+      .expect(200);
+    const { document } = new JSDOM(contentResponse.text).window;
+    // A theme declared with an empty import list is installed but not linked
+    expect(
+      [...document.querySelectorAll('link[rel="stylesheet"]')].map((link) =>
+        link.getAttribute('href'),
+      ),
+    ).toEqual(['import-theme.css']);
+
+    const cssResponse = await supertest(middleware)
+      .get('/vivliostyle/import-theme.css')
+      .expect(200);
+    expect(cssResponse.text).toContain(
+      "@import 'themes/node_modules/debug-theme/theme.css';",
+    );
   });
 
   it('serves CSS files in entryContext', async () => {
