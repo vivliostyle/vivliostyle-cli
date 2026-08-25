@@ -268,9 +268,7 @@ export class ThemeCssResolver {
         [
           'The specifier was not found as a file relative to the importing stylesheet,',
           `and the package is not installed: ${pkgName}`,
-          'To fix this, either:',
-          `  - install the package in your project: npm install ${pkgName}`,
-          `  - or add it to the theme field in the Vivliostyle config file: { specifier: '${pkgName}', import: [] }`,
+          `To fix this, install the package in your project: npm install ${pkgName}`,
         ].join('\n'),
       );
     }
