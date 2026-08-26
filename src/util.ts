@@ -15,7 +15,6 @@ import formatsPlugin from 'ajv-formats';
 import { XMLParser } from 'fast-xml-parser';
 import StreamZip from 'node-stream-zip';
 import osLocale from 'os-locale';
-import resolvePkg from 'resolve-pkg';
 import { titleCase } from 'title-case';
 import tmp from 'tmp';
 import upath from 'upath';
@@ -231,6 +230,44 @@ export function statFileSync(
     }
     throw err;
   }
+}
+
+export function isFileSync(filePath: string): boolean {
+  try {
+    return fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Locate the root directory of an installed package, walking up the
+ * `node_modules` chain from the given directory. Unlike the Node.js module
+ * resolution, this only checks that the package.json file physically exists,
+ * so it also finds packages whose `exports` field does not expose
+ * `./package.json`. With `boundary`, the walk never leaves the boundary
+ * directory.
+ */
+export function findPackageDir(
+  pkgName: string,
+  fromDir: string,
+  { boundary }: { boundary?: string } = {},
+): string | undefined {
+  const withinBoundary = (dir: string) =>
+    !boundary || pathEquals(boundary, dir) || pathContains(boundary, dir);
+  let dir = fromDir;
+  while (withinBoundary(dir)) {
+    const candidate = upath.join(dir, 'node_modules', pkgName);
+    if (fs.existsSync(upath.join(candidate, 'package.json'))) {
+      return candidate;
+    }
+    const parent = upath.dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+    dir = parent;
+  }
+  return undefined;
 }
 
 export function inflateZip(filePath: string, dest: string): Promise<void> {
@@ -668,7 +705,7 @@ export const cliVersion = (() => {
   return readPackageJson(upath.join(cliRoot, 'package.json')).version;
 })();
 
-export const viewerRoot = resolvePkg('@vivliostyle/viewer', { cwd: cliRoot });
+export const viewerRoot = findPackageDir('@vivliostyle/viewer', cliRoot);
 export const coreVersion = (() => {
   if (import.meta.env?.VITEST) {
     return '0.0.1';

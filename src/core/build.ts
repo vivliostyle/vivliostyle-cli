@@ -97,7 +97,7 @@ export async function build(
       if (isWebPubConfig(config)) {
         await cleanupWorkspace(config);
         await prepareThemeDirectory(config, inlineConfig.signal);
-        validateThemeCssDependencies(config);
+        await validateThemeCssDependencies(config);
         await compile(config);
         await copyAssets(config);
       }

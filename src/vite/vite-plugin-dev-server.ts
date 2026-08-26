@@ -29,7 +29,10 @@ import {
   transformManuscript,
 } from '../processor/compile.js';
 import {
+  clearPostcssConfigCache,
   collectThemeCssEntryFiles,
+  loadPostcssConfig,
+  type PostcssConfig,
   scanCssDependencies,
   ThemeCssResolver,
   transformCssImports,
@@ -38,6 +41,7 @@ import { generateCmykReserveMap } from '../server.js';
 import {
   debounce,
   getFormattedError,
+  isFileSync,
   pathContains,
   pathEquals,
   toError,
@@ -164,8 +168,20 @@ export function vsDevServerPlugin({
   // preview servers, which never run `reload`
   let cssResolver = new ThemeCssResolver(_config);
 
+  async function getPostcssConfig(): Promise<PostcssConfig | undefined> {
+    if (typeof config.serverRootDir !== 'string') {
+      return undefined;
+    }
+    try {
+      return await loadPostcssConfig(config.serverRootDir);
+    } catch (error) {
+      Logger.logError(getFormattedError(toError(error)));
+    }
+  }
+
   async function reload(forceUpdate = false) {
     const prevConfig = config;
+    clearPostcssConfigCache();
     config = await reloadConfig(prevConfig, inlineConfig, server?.config);
 
     transformCache.clear();
@@ -264,12 +280,18 @@ export function vsDevServerPlugin({
     projectDeps.push(...themeFiles, ...localThemePaths);
 
     cssResolver = new ThemeCssResolver(config);
+    const postcssConfig = await getPostcssConfig();
+    if (postcssConfig?.file) {
+      server?.watcher.add(postcssConfig.file);
+      projectDeps.push(postcssConfig.file);
+    }
     const cssEntries = collectThemeCssEntryFiles(config.themeIndexes, {
       preferSource: true,
     });
-    const cssScan = scanCssDependencies({
+    const cssScan = await scanCssDependencies({
       entryFiles: cssEntries.files,
       resolver: cssResolver,
+      postcssConfig,
     });
     for (const error of [...cssEntries.errors, ...cssScan.errors]) {
       Logger.logError(getFormattedError(toError(error)));
@@ -473,7 +495,7 @@ export function vsDevServerPlugin({
     });
   } satisfies NextHandleFunction;
 
-  const serveCssMiddleware = function vivliostyleServeCssMiddleware(
+  const serveCssMiddleware = async function vivliostyleServeCssMiddleware(
     req,
     res,
     next,
@@ -498,12 +520,14 @@ export function vsDevServerPlugin({
       res.setHeader('Cache-Control', 'no-cache');
       res.end(content);
     };
-    const serveTransformedCss = (file: string) => {
-      const { code, errors } = transformCssImports({
+    const serveTransformedCss = async (file: string) => {
+      const { code, errors } = await transformCssImports({
         code: fs.readFileSync(file, 'utf8'),
         importer: file,
         importerUrlPath: pathname,
         resolver: cssResolver,
+        // Preview servers never run `reload`; the cached config makes this cheap
+        postcssConfig: await getPostcssConfig(),
       });
       for (const error of errors) {
         Logger.logError(getFormattedError(toError(error)));
@@ -516,7 +540,7 @@ export function vsDevServerPlugin({
     if (mountedFile) {
       Logger.debug('dev-server > serveMountedThemeFile %s', pathname);
       if (mountedFile.endsWith('.css')) {
-        serveTransformedCss(mountedFile);
+        await serveTransformedCss(mountedFile);
       } else {
         sendFile(
           fs.readFileSync(mountedFile),
@@ -542,15 +566,11 @@ export function vsDevServerPlugin({
         continue;
       }
       const file = upath.join(root, pathname.slice(1));
-      if (
-        !pathContains(root, file) ||
-        !fs.existsSync(file) ||
-        !fs.statSync(file).isFile()
-      ) {
+      if (!pathContains(root, file) || !isFileSync(file)) {
         continue;
       }
       Logger.debug('dev-server > serveTransformedCss %s', pathname);
-      serveTransformedCss(file);
+      await serveTransformedCss(file);
       return;
     }
     next();
@@ -583,13 +603,17 @@ export function vsDevServerPlugin({
         viteServer.middlewares.use((req, res, next) => {
           void devServerMiddleware(req, res, next);
         });
-        viteServer.middlewares.use(serveCssMiddleware);
+        viteServer.middlewares.use((req, res, next) => {
+          void serveCssMiddleware(req, res, next);
+        });
         viteServer.middlewares.use(serveWorkspaceMiddleware);
       };
     },
     configurePreviewServer(viteServer) {
       return () => {
-        viteServer.middlewares.use(serveCssMiddleware);
+        viteServer.middlewares.use((req, res, next) => {
+          void serveCssMiddleware(req, res, next);
+        });
         viteServer.middlewares.use(
           config.base,
           sirv(config.workspaceDir, {

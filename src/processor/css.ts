@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 
 import postcss from 'postcss';
+import postcssrc from 'postcss-load-config';
 import valueParser from 'postcss-value-parser';
 import { exports as resolvePackageExports } from 'resolve.exports';
 import upath from 'upath';
@@ -9,13 +10,14 @@ import type { ParsedTheme, ResolvedTaskConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import {
   DetailError,
+  findPackageDir,
+  getFormattedError,
+  isFileSync,
+  isValidUri,
   pathContains,
-  pathEquals,
   readPackageJson,
   toError,
 } from '../util.js';
-
-const urlSchemeRe = /^[a-z][a-z0-9+.\-]*:/iv;
 
 export interface CssBareImportResolution {
   file: string;
@@ -24,14 +26,13 @@ export interface CssBareImportResolution {
 }
 
 /**
- * Parse a CSS import specifier as an npm-style bare specifier. Returns
- * undefined for specifiers that must keep the standard CSS URL semantics
- * (relative or absolute URLs).
+ * Returns undefined for specifiers that must keep the standard CSS URL
+ * semantics (relative or absolute URLs).
  */
 export function parseBareImportSpecifier(
   specifier: string,
 ): { pkgName: string; subpath: string } | undefined {
-  if (!specifier || urlSchemeRe.test(specifier) || /^[.\/]/v.test(specifier)) {
+  if (!specifier || isValidUri(specifier) || /^[.\/]/v.test(specifier)) {
     return undefined;
   }
   const matched = specifier.match(
@@ -47,68 +48,28 @@ function stripUrlQuery(specifier: string): string {
   return specifier.split(/[?#]/v)[0];
 }
 
-function isFile(file: string): boolean {
-  try {
-    return fs.statSync(file).isFile();
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Resolve a specifier as a local stylesheet path. A specifier qualifies only
- * when it points to an existing file with the `.css` extension; this is the
- * shared criterion distinguishing local files from npm package names, used
- * both for the `theme` config field and for CSS `@import` rules.
- */
 export function resolveLocalStyleFile(
   pathCandidate: string,
   contextDir: string,
 ): string | undefined {
   const file = upath.resolve(contextDir, pathCandidate);
-  return file.endsWith('.css') && isFile(file) ? file : undefined;
+  return file.endsWith('.css') && isFileSync(file) ? file : undefined;
 }
 
-function findPackageDir(
+function findThemePackageDir(
   pkgName: string,
   importerDir: string,
   themesDir: string,
 ): string | undefined {
-  const findInNodeModules = (dir: string) => {
-    const candidate = upath.join(dir, 'node_modules', pkgName);
-    return fs.existsSync(upath.join(candidate, 'package.json'))
-      ? candidate
-      : undefined;
-  };
-  // Importers inside the themes directory resolve against their own tree
-  // first so that nested node_modules layouts are respected
-  let dir = importerDir;
-  while (pathEquals(themesDir, dir) || pathContains(themesDir, dir)) {
-    const found = findInNodeModules(dir);
-    if (found) {
-      return found;
-    }
-    dir = upath.dirname(dir);
-  }
-  // The themes directory takes precedence over the project node_modules
-  const fromThemes = findInNodeModules(themesDir);
-  if (fromThemes) {
-    return fromThemes;
-  }
-  // Fall back to the Node.js module resolution walking up from the importer
-  dir = importerDir;
-  while (true) {
-    const found = findInNodeModules(dir);
-    if (found) {
-      return found;
-    }
-    const parent = upath.dirname(dir);
-    if (parent === dir) {
-      break;
-    }
-    dir = parent;
-  }
-  return undefined;
+  return (
+    // Importers inside the themes directory resolve against their own tree
+    // first so that nested node_modules layouts are respected
+    findPackageDir(pkgName, importerDir, { boundary: themesDir }) ??
+    // The themes directory takes precedence over the project node_modules
+    findPackageDir(pkgName, themesDir, { boundary: themesDir }) ??
+    // Fall back to the Node.js style resolution walking up from the importer
+    findPackageDir(pkgName, importerDir)
+  );
 }
 
 function resolveExportsSubpath(
@@ -152,11 +113,6 @@ function resolveExportsSubpath(
   return file;
 }
 
-/**
- * Locate the default style entry of a theme package:
- * `vivliostyle.theme.style` -> `style` -> `exports["."]` (with the `style`
- * condition) -> `main`.
- */
 export function resolvePackageCssEntry(pkgDir: string): string {
   const pkgJson = readPackageJson(upath.join(pkgDir, 'package.json'));
   const declaredStyle = pkgJson.vivliostyle?.theme?.style ?? pkgJson.style;
@@ -193,11 +149,6 @@ export function resolvePackageCssEntry(pkgDir: string): string {
   );
 }
 
-/**
- * Locate a file inside a theme package specified by a subpath. When the
- * package declares the `exports` field, the subpath is resolved through it
- * with the `style` condition; otherwise it is resolved as a plain file path.
- */
 export function resolvePackageCssSubpath(
   pkgDir: string,
   subpath: string,
@@ -214,7 +165,7 @@ export function resolvePackageCssSubpath(
       `Resolved to ${file}`,
     );
   }
-  if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+  if (!isFileSync(file)) {
     throw new DetailError(
       `Could not find the imported path in the package: ${subpath}`,
       `Expected file location: ${file}`,
@@ -223,13 +174,6 @@ export function resolvePackageCssSubpath(
   return file;
 }
 
-/**
- * Resolves npm-style bare specifiers appearing in CSS `@import` rules.
- * Resolution never installs anything; it only looks up packages already
- * installed either in the project or in the themes directory. Packages
- * resolved outside the workspace are registered as "mounts" so that servers
- * and copy steps can expose them under the `themes/node_modules` URL space.
- */
 export class ThemeCssResolver {
   #workspaceDir: string;
   #themesDir: string;
@@ -257,7 +201,7 @@ export class ThemeCssResolver {
       throw new Error(`Invalid import specifier: ${specifier}`);
     }
     const { pkgName, subpath } = parsed;
-    const pkgDir = findPackageDir(
+    const pkgDir = findThemePackageDir(
       pkgName,
       upath.dirname(importer),
       this.#themesDir,
@@ -298,8 +242,7 @@ export class ThemeCssResolver {
 
   /**
    * Map a requested URL pathname under `/themes/node_modules/` back to a file
-   * of a registered mount. Returns undefined when the pathname does not
-   * belong to any mount.
+   * of a registered mount.
    */
   resolveMountedFile(pathname: string): string | undefined {
     const prefix = '/themes/node_modules/';
@@ -317,15 +260,62 @@ export class ThemeCssResolver {
       return undefined;
     }
     const file = upath.join(pkgDir, upath.normalize(subpath));
-    if (
-      !pathContains(pkgDir, file) ||
-      !fs.existsSync(file) ||
-      !fs.statSync(file).isFile()
-    ) {
+    if (!pathContains(pkgDir, file) || !isFileSync(file)) {
       return undefined;
     }
     return file;
   }
+}
+
+export type PostcssConfig = Awaited<ReturnType<typeof postcssrc>>;
+
+const postcssConfigCache = new Map<
+  string,
+  Promise<PostcssConfig | undefined>
+>();
+
+export function loadPostcssConfig(
+  searchDir: string,
+): Promise<PostcssConfig | undefined> {
+  const dir = upath.normalize(searchDir);
+  let loading = postcssConfigCache.get(dir);
+  if (!loading) {
+    loading = (async (): Promise<PostcssConfig | undefined> => {
+      try {
+        const config = await postcssrc({ cwd: dir }, dir);
+        Logger.debug('css > postcss config %s', config.file);
+        return config;
+      } catch (error) {
+        const { message } = toError(error);
+        if (!message.startsWith('No PostCSS Config found')) {
+          throw new DetailError('Failed to load the PostCSS config', message);
+        }
+      }
+    })();
+    postcssConfigCache.set(dir, loading);
+  }
+  return loading;
+}
+
+export function clearPostcssConfigCache(): void {
+  postcssConfigCache.clear();
+}
+
+function processCss({
+  code,
+  file,
+  postcssConfig,
+  plugins = [],
+}: {
+  code: string;
+  file: string;
+  postcssConfig: PostcssConfig | undefined;
+  plugins?: postcss.AcceptedPlugin[];
+}): Promise<postcss.Result> {
+  return postcss([...(postcssConfig?.plugins ?? []), ...plugins]).process(
+    code,
+    { ...postcssConfig?.options, from: file, to: file },
+  );
 }
 
 interface CssImportRef {
@@ -333,7 +323,9 @@ interface CssImportRef {
   setSpecifier: (value: string) => void;
 }
 
-function collectImportRules(root: postcss.Root): CssImportRef[] {
+function collectImportRules(
+  root: postcss.Root | postcss.Document,
+): CssImportRef[] {
   const refs: CssImportRef[] = [];
   root.walkAtRules((atRule) => {
     if (atRule.name.toLowerCase() !== 'import') {
@@ -371,74 +363,89 @@ function collectImportRules(root: postcss.Root): CssImportRef[] {
 /**
  * Rewrite npm-style bare specifiers in `@import` rules into relative URLs
  * that work on the server URL space. Specifiers that resolve as relative
- * files keep the standard CSS semantics and are left untouched.
+ * files keep the standard CSS semantics and are left untouched. The plugins
+ * of the project's PostCSS config run before the rewriting, so that the
+ * `@import` rules they emit are rewritten as well.
  */
-export function transformCssImports({
+export async function transformCssImports({
   code,
   importer,
   importerUrlPath,
   resolver,
+  postcssConfig,
 }: {
   code: string;
   importer: string;
   importerUrlPath: string;
   resolver: ThemeCssResolver;
-}): { code: string; modified: boolean; errors: Error[] } {
-  let root: postcss.Root;
+  postcssConfig?: PostcssConfig | undefined;
+}): Promise<{ code: string; modified: boolean; errors: Error[] }> {
+  const errors: Error[] = [];
+  let modified = false;
+  const rewriteImports: postcss.Plugin = {
+    postcssPlugin: 'vivliostyle:rewrite-css-imports',
+    OnceExit(root) {
+      for (const ref of collectImportRules(root)) {
+        const { specifier } = ref;
+        if (!specifier || isValidUri(specifier) || specifier.startsWith('/')) {
+          continue;
+        }
+        // Prefer the standard CSS semantics: a specifier pointing to an
+        // existing .css file relative to the importing stylesheet is kept as is
+        if (
+          resolveLocalStyleFile(
+            stripUrlQuery(specifier),
+            upath.dirname(importer),
+          )
+        ) {
+          continue;
+        }
+        if (!parseBareImportSpecifier(specifier)) {
+          continue;
+        }
+        try {
+          const resolution = resolver.resolveBareImport(specifier, importer);
+          const targetUrlPath = resolver.urlPathOf(resolution);
+          ref.setSpecifier(
+            upath.relative(upath.dirname(importerUrlPath), targetUrlPath),
+          );
+          modified = true;
+        } catch (error) {
+          errors.push(toError(error));
+        }
+      }
+    },
+  };
+
+  let result: postcss.Result;
   try {
-    root = postcss.parse(code, { from: importer });
+    result = await processCss({
+      code,
+      file: importer,
+      postcssConfig,
+      plugins: [rewriteImports],
+    });
   } catch (error) {
     return { code, modified: false, errors: [toError(error)] };
   }
-  const errors: Error[] = [];
-  let modified = false;
-  for (const ref of collectImportRules(root)) {
-    const { specifier } = ref;
-    if (
-      !specifier ||
-      urlSchemeRe.test(specifier) ||
-      specifier.startsWith('/')
-    ) {
-      continue;
-    }
-    // Prefer the standard CSS semantics: a specifier pointing to an existing
-    // .css file relative to the importing stylesheet is kept as is
-    if (
-      resolveLocalStyleFile(stripUrlQuery(specifier), upath.dirname(importer))
-    ) {
-      continue;
-    }
-    if (!parseBareImportSpecifier(specifier)) {
-      continue;
-    }
-    try {
-      const resolution = resolver.resolveBareImport(specifier, importer);
-      const targetUrlPath = resolver.urlPathOf(resolution);
-      ref.setSpecifier(
-        upath.relative(upath.dirname(importerUrlPath), targetUrlPath),
-      );
-      modified = true;
-    } catch (error) {
-      errors.push(toError(error));
-    }
+  for (const warning of result.warnings()) {
+    Logger.logWarn(warning.toString());
   }
-  return { code: modified ? root.toString() : code, modified, errors };
+  const processed = (postcssConfig?.plugins.length ?? 0) > 0;
+  return { code: modified || processed ? result.css : code, modified, errors };
 }
 
-/**
- * Walk the CSS import graph starting from the given entry files, resolving
- * both relative and bare imports. Returns all visited files and the errors
- * found on the way. This never installs anything; it is used to validate the
- * graph ahead of the build and to collect files to watch.
- */
-export function scanCssDependencies({
+export async function scanCssDependencies({
   entryFiles,
   resolver,
+  postcssConfig,
 }: {
   entryFiles: string[];
   resolver: ThemeCssResolver;
-}): { files: string[]; errors: Error[] } {
+  postcssConfig?: PostcssConfig | undefined;
+}): Promise<{ files: string[]; errors: Error[] }> {
   const visited = new Set<string>();
+  const dependencies = new Set<string>();
   const errors: Error[] = [];
   const queue = entryFiles.map((file) => upath.normalize(file));
   let file: string | undefined;
@@ -450,20 +457,26 @@ export function scanCssDependencies({
     if (!file.endsWith('.css')) {
       continue;
     }
-    let root: postcss.Root;
+    let result: postcss.Result;
     try {
-      root = postcss.parse(fs.readFileSync(file, 'utf8'), { from: file });
+      result = await processCss({
+        code: fs.readFileSync(file, 'utf8'),
+        file,
+        postcssConfig,
+      });
     } catch (error) {
       errors.push(toError(error));
       continue;
     }
-    for (const ref of collectImportRules(root)) {
+    // Plugins report the extra files they read, which also need watching
+    for (const message of result.messages) {
+      if (message.type === 'dependency' && typeof message.file === 'string') {
+        dependencies.add(upath.normalize(message.file));
+      }
+    }
+    for (const ref of collectImportRules(result.root)) {
       const { specifier } = ref;
-      if (
-        !specifier ||
-        urlSchemeRe.test(specifier) ||
-        specifier.startsWith('/')
-      ) {
+      if (!specifier || isValidUri(specifier) || specifier.startsWith('/')) {
         continue;
       }
       const relFile = resolveLocalStyleFile(
@@ -485,14 +498,13 @@ export function scanCssDependencies({
       }
     }
   }
-  return { files: [...visited], errors };
+  return { files: [...new Set([...visited, ...dependencies])], errors };
 }
 
 /**
- * Collect the CSS files where the import graph of the configured themes
- * starts. With `preferSource`, file themes are read from their source
- * locations rather than the workspace copies, which is suitable for watching
- * the files the author edits.
+ * With `preferSource`, file themes are read from their source locations
+ * rather than the workspace copies, which is suitable for watching the files
+ * the author edits.
  */
 export function collectThemeCssEntryFiles(
   themeIndexes: Set<ParsedTheme>,
@@ -537,21 +549,25 @@ export function collectThemeCssEntryFiles(
 }
 
 /**
- * Validate the CSS import graph of the configured themes. Throws a
- * DetailError when an import cannot be resolved so that builds fail fast
- * instead of generating outputs referring to missing stylesheets.
+ * Throws when an import of the configured themes cannot be resolved, so that
+ * builds fail fast instead of generating outputs referring to missing
+ * stylesheets.
  */
-export function validateThemeCssDependencies(
+export async function validateThemeCssDependencies(
   config: Pick<
     ResolvedTaskConfig,
-    'workspaceDir' | 'themesDir' | 'themeIndexes'
+    'workspaceDir' | 'themesDir' | 'themeIndexes' | 'serverRootDir'
   >,
-): void {
+): Promise<void> {
   const resolver = new ThemeCssResolver(config);
   const entries = collectThemeCssEntryFiles(config.themeIndexes);
-  const { errors } = scanCssDependencies({
+  const { errors } = await scanCssDependencies({
     entryFiles: entries.files,
     resolver,
+    postcssConfig:
+      typeof config.serverRootDir === 'string'
+        ? await loadPostcssConfig(config.serverRootDir)
+        : undefined,
   });
   const allErrors = [...entries.errors, ...errors];
   if (allErrors.length === 1) {
@@ -560,13 +576,7 @@ export function validateThemeCssDependencies(
   if (allErrors.length > 0) {
     throw new DetailError(
       'Failed to resolve the CSS imports of the configured themes',
-      allErrors
-        .map((error) =>
-          error instanceof DetailError
-            ? `${error.message}\n${error.detail}`
-            : error.message,
-        )
-        .join('\n\n'),
+      allErrors.map((error) => getFormattedError(error)).join('\n\n'),
     );
   }
 }

@@ -125,3 +125,9 @@ A specifier is treated as a relative URL and keeps the standard CSS semantics wh
 ### Using Create Book
 
 By using Create Book, you can easily create a project with a theme already set. Refer to [Create Book](https://docs.vivliostyle.org/en/cli/getting-started/).
+
+## Using PostCSS
+
+If your project has a [PostCSS](https://postcss.org/) configuration file, Vivliostyle CLI applies its plugins to every CSS file it processes.
+
+Place the PostCSS config in the same directory as the [configuration file](./using-config-file.md). Any config format supported by [postcss-load-config](https://github.com/postcss/postcss-load-config) (e.g. `postcss.config.js`) can be loaded. The config is also applied to the CSS files of the theme packages you use.
