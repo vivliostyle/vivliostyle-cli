@@ -131,3 +131,52 @@ Create Book を使用すると、あらかじめテーマが設定された状�
 プロジェクトに [PostCSS](https://postcss.org/) の設定ファイルがある場合、Vivliostyle CLI が処理するすべての CSS ファイルにそのプラグインが適用されます。
 
 PostCSS の設定ファイルは、[構成ファイル](./using-config-file.md) と同じディレクトリに配置してください。[postcss-load-config](https://github.com/postcss/postcss-load-config) がサポートする形式の設定（例: `postcss.config.js`）を読み込めます。この設定は、利用しているテーマパッケージの CSS ファイルにも適用されます。
+
+## Tailwind CSS
+
+- [Example: with-tailwindcss](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-tailwindcss)
+
+PostCSS のプラグインを通して、[Tailwind CSS](https://tailwindcss.com/) などの CSS フレームワークを利用することもできます。
+
+Tailwind CSS 公式ドキュメントの [Using PostCSS](https://tailwindcss.com/docs/installation/using-postcss) のセクションに従ってセットアップしてください。
+
+> [!NOTE]
+> 現時点の Vivliostyle.js には、Tailwind CSS が出力する一部のセレクター（`:host` など）を含むスタイルを正しく読み込めないバグがあるため、当面は以下のような小さなプラグインを併用する必要があります。この問題は近日中に解決される見込みです。
+>
+> ```js
+> import tailwindcss from '@tailwindcss/postcss';
+>
+> const unsupportedSelector = /:host|::backdrop|::file-selector-button/;
+> const stripUnsupportedSelectors = {
+>   postcssPlugin: 'strip-unsupported-selectors',
+>   OnceExit(root) {
+>     root.walkRules(unsupportedSelector, (rule) => {
+>       const selectors = rule.selectors.filter(
+>         (s) => !unsupportedSelector.test(s),
+>       );
+>       if (selectors.length > 0) {
+>         rule.selectors = selectors;
+>       } else {
+>         rule.remove();
+>       }
+>     });
+>   },
+> };
+>
+> export default {
+>   plugins: [tailwindcss(), stripUnsupportedSelectors],
+> };
+> ```
+
+Tailwind CSS は、ユーティリティクラスと呼ばれるクラスを要素に指定して、クラス名に応じたスタイルを適用するフレームワークです。VFM と組み合わせる場合は、以下のように [VFM の属性記法](https://vivliostyle.github.io/vfm/#/vfm) でクラスを指定できます。Tailwind が原稿ファイルをスキャンし、使われているクラスに対応するスタイルを生成します。
+
+```md
+# Vivliostyle meets Tailwind CSS {.text-4xl .font-extrabold .tracking-tight .text-accent}
+
+This document is styled with [Tailwind CSS](https://tailwindcss.com/) utility classes.
+Tailwind scans this Markdown file for class names, so you can attach utilities to
+inline elements with the **VFM attribute syntax**{.bg-accent/15 .px-1 .rounded} like
+`**text**{.underline}`.
+```
+
+Tailwind CSS は強力なツールですが、Vivliostyle が主な対象とする文章中心のドキュメントは Web ページと異なる点も多く、ユーティリティクラスによる指定が文章の制作に合うかどうかはあなたの執筆スタイルによります。とはいえ、本文中でアドホックなスタイルを多用したい場合には、有力な選択肢となるでしょう。

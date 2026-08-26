@@ -131,3 +131,52 @@ By using Create Book, you can easily create a project with a theme already set. 
 If your project has a [PostCSS](https://postcss.org/) configuration file, Vivliostyle CLI applies its plugins to every CSS file it processes.
 
 Place the PostCSS config in the same directory as the [configuration file](./using-config-file.md). Any config format supported by [postcss-load-config](https://github.com/postcss/postcss-load-config) (e.g. `postcss.config.js`) can be loaded. The config is also applied to the CSS files of the theme packages you use.
+
+## Tailwind CSS
+
+- [Example: with-tailwindcss](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-tailwindcss)
+
+Through PostCSS plugins, you can also use CSS frameworks such as [Tailwind CSS](https://tailwindcss.com/).
+
+Follow the [Using PostCSS](https://tailwindcss.com/docs/installation/using-postcss) section of the Tailwind CSS documentation to set it up.
+
+> [!NOTE]
+> Vivliostyle.js currently has a bug that prevents it from loading styles correctly when they contain some of the selectors Tailwind CSS emits, such as `:host`. For the time being, you need to add a small plugin like the following. This issue is expected to be resolved soon.
+>
+> ```js
+> import tailwindcss from '@tailwindcss/postcss';
+>
+> const unsupportedSelector = /:host|::backdrop|::file-selector-button/;
+> const stripUnsupportedSelectors = {
+>   postcssPlugin: 'strip-unsupported-selectors',
+>   OnceExit(root) {
+>     root.walkRules(unsupportedSelector, (rule) => {
+>       const selectors = rule.selectors.filter(
+>         (s) => !unsupportedSelector.test(s),
+>       );
+>       if (selectors.length > 0) {
+>         rule.selectors = selectors;
+>       } else {
+>         rule.remove();
+>       }
+>     });
+>   },
+> };
+>
+> export default {
+>   plugins: [tailwindcss(), stripUnsupportedSelectors],
+> };
+> ```
+
+Tailwind CSS is a framework that styles elements through classes called utility classes, applying the styles that correspond to each class name. When combined with VFM, you can specify the classes with the [VFM attribute syntax](https://vivliostyle.github.io/vfm/#/vfm) as follows; Tailwind scans the manuscript files and generates the styles for the classes in use.
+
+```md
+# Vivliostyle meets Tailwind CSS {.text-4xl .font-extrabold .tracking-tight .text-accent}
+
+This document is styled with [Tailwind CSS](https://tailwindcss.com/) utility classes.
+Tailwind scans this Markdown file for class names, so you can attach utilities to
+inline elements with the **VFM attribute syntax**{.bg-accent/15 .px-1 .rounded} like
+`**text**{.underline}`.
+```
+
+Tailwind CSS is a powerful tool, but the text-centric documents Vivliostyle mainly targets differ from web pages in many ways, and whether styling with utility classes fits your writing process depends on your authoring style. Still, it can be a strong option when you want plenty of ad hoc styles in your text.
