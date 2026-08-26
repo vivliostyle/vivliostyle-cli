@@ -125,3 +125,9 @@ h1 {
 ### Create Book の利用
 
 Create Book を使用すると、あらかじめテーマが設定された状態のプロジェクトを簡単に作成できます。[Create Book](https://docs.vivliostyle.org/ja/cli/getting-started/) を参照してください。
+
+## PostCSS の利用
+
+プロジェクトに [PostCSS](https://postcss.org/) の設定ファイルがある場合、Vivliostyle CLI が処理するすべての CSS ファイルにそのプラグインが適用されます。
+
+PostCSS の設定ファイルは、[構成ファイル](./using-config-file.md) と同じディレクトリに配置してください。[postcss-load-config](https://github.com/postcss/postcss-load-config) がサポートする形式の設定（例: `postcss.config.js`）を読み込めます。この設定は、利用しているテーマパッケージの CSS ファイルにも適用されます。

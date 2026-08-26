@@ -355,3 +355,54 @@ it('copy webpub assets properly', async () => {
 
   expect(toTree(vol, { dir: '/work/input/output' })).toMatchSnapshot();
 });
+
+it('copies theme packages mounted from the project node_modules', async () => {
+  const config: VivliostyleConfigSchema = {
+    entry: ['doc.md'],
+    output: ['/work/output'],
+    theme: './style.css',
+  };
+  vol.fromJSON({
+    '/work/input/vivliostyle.config.json': JSON.stringify(config),
+    '/work/input/doc.md': 'yuno',
+    '/work/input/style.css': "@import 'theme-x';\nh1 { color: red; }\n",
+    '/work/input/node_modules/theme-x/package.json': JSON.stringify({
+      name: 'theme-x',
+      main: 'theme.css',
+    }),
+    // Importing another mounted package exercises the drain loop of
+    // copyMountedThemePackages
+    '/work/input/node_modules/theme-x/theme.css':
+      "@import 'theme-y';\nbody { color: blue; }\n",
+    '/work/input/node_modules/theme-x/logo.png': '',
+    '/work/input/node_modules/theme-y/package.json': JSON.stringify({
+      name: 'theme-y',
+      main: 'theme.css',
+    }),
+    '/work/input/node_modules/theme-y/theme.css': 'p { color: green; }\n',
+  });
+  await runCommand(['build'], { cwd: '/work/input' });
+
+  const file = vol.toJSON();
+  expect(file['/work/output/style.css']).toContain(
+    "@import 'themes/node_modules/theme-x/theme.css';",
+  );
+  expect(file['/work/output/themes/node_modules/theme-x/theme.css']).toContain(
+    "@import '../theme-y/theme.css';",
+  );
+  expect(file['/work/output/themes/node_modules/theme-y/theme.css']).toContain(
+    'color: green',
+  );
+  expect(file).toHaveProperty([
+    '/work/output/themes/node_modules/theme-x/logo.png',
+  ]);
+  const manifest = JSON.parse(file['/work/output/publication.json'] as string);
+  expect(manifest.resources).toEqual(
+    expect.arrayContaining([
+      'style.css',
+      'themes/node_modules/theme-x/theme.css',
+      'themes/node_modules/theme-x/logo.png',
+      'themes/node_modules/theme-y/theme.css',
+    ]),
+  );
+});

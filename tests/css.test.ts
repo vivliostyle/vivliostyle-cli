@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ParsedTheme } from '../src/config/resolve.js';
 import {
+  clearPostcssConfigCache,
+  loadPostcssConfig,
   parseBareImportSpecifier,
   resolveLocalStyleFile,
   resolvePackageCssEntry,
@@ -25,6 +27,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  clearPostcssConfigCache();
   await rm(projectDir, { recursive: true, force: true });
 });
 
@@ -228,7 +231,7 @@ describe('resolvePackageCssSubpath', () => {
 });
 
 describe('transformCssImports', () => {
-  it('rewrites bare imports resolved from the themes directory', () => {
+  it('rewrites bare imports resolved from the themes directory', async () => {
     writeFiles({
       '.vivliostyle/themes/node_modules/@vivliostyle/theme-a/package.json':
         JSON.stringify({
@@ -239,7 +242,7 @@ describe('transformCssImports', () => {
       '.vivliostyle/themes/node_modules/@vivliostyle/theme-a/theme.css': '',
       '.vivliostyle/style.css': '',
     });
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code: "@import '@vivliostyle/theme-a';\nh1 { color: red; }",
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -251,7 +254,7 @@ describe('transformCssImports', () => {
     );
   });
 
-  it('preserves import conditions and the url() notation', () => {
+  it('preserves import conditions and the url() notation', async () => {
     writeFiles({
       '.vivliostyle/themes/node_modules/theme-a/package.json': JSON.stringify({
         name: 'theme-a',
@@ -260,7 +263,7 @@ describe('transformCssImports', () => {
       '.vivliostyle/themes/node_modules/theme-a/theme.css': '',
       '.vivliostyle/style.css': '',
     });
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code: '@import url(theme-a) layer(base) screen;',
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -272,13 +275,13 @@ describe('transformCssImports', () => {
     );
   });
 
-  it('keeps relative imports pointing to existing files untouched', () => {
+  it('keeps relative imports pointing to existing files untouched', async () => {
     writeFiles({
       '.vivliostyle/style.css': '',
       '.vivliostyle/css/base.css': '',
     });
     const code = "@import url(css/base.css);\n@import './css/base.css' print;";
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code,
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -289,13 +292,13 @@ describe('transformCssImports', () => {
     expect(result.code).toBe(code);
   });
 
-  it('keeps absolute URLs and other schemes untouched', () => {
+  it('keeps absolute URLs and other schemes untouched', async () => {
     const code = [
       "@import 'https://example.com/theme.css';",
       "@import '/root.css';",
       "@import 'data:text/css,body{}';",
     ].join('\n');
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code,
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -305,7 +308,7 @@ describe('transformCssImports', () => {
     expect(result.code).toBe(code);
   });
 
-  it('mounts packages resolved from the project node_modules', () => {
+  it('mounts packages resolved from the project node_modules', async () => {
     writeFiles({
       'node_modules/theme-b/package.json': JSON.stringify({
         name: 'theme-b',
@@ -315,7 +318,7 @@ describe('transformCssImports', () => {
       '.vivliostyle/style.css': '',
     });
     const resolver = createResolver();
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code: "@import 'theme-b';",
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -331,7 +334,7 @@ describe('transformCssImports', () => {
     ).toBe(abs('node_modules/theme-b/theme.css'));
   });
 
-  it('prefers packages in the themes directory over the project node_modules', () => {
+  it('prefers packages in the themes directory over the project node_modules', async () => {
     writeFiles({
       '.vivliostyle/themes/node_modules/theme-b/package.json': JSON.stringify({
         name: 'theme-b',
@@ -346,7 +349,7 @@ describe('transformCssImports', () => {
       '.vivliostyle/style.css': '',
     });
     const resolver = createResolver();
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code: "@import 'theme-b';",
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -359,7 +362,7 @@ describe('transformCssImports', () => {
     expect(resolver.mounts.size).toBe(0);
   });
 
-  it('respects nested node_modules inside the themes directory', () => {
+  it('respects nested node_modules inside the themes directory', async () => {
     writeFiles({
       '.vivliostyle/themes/node_modules/theme-b/package.json': JSON.stringify({
         name: 'theme-b',
@@ -376,7 +379,7 @@ describe('transformCssImports', () => {
       }),
       '.vivliostyle/themes/node_modules/theme-c/index.css': '',
     });
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code: "@import 'theme-c';",
       importer: abs('.vivliostyle/themes/node_modules/theme-b/theme.css'),
       importerUrlPath: '/themes/node_modules/theme-b/theme.css',
@@ -386,7 +389,7 @@ describe('transformCssImports', () => {
     expect(result.code).toBe("@import 'node_modules/theme-c/index.css';");
   });
 
-  it('does not let files without the .css extension shadow package names', () => {
+  it('does not let files without the .css extension shadow package names', async () => {
     writeFiles({
       '.vivliostyle/theme-b': '',
       '.vivliostyle/themes/node_modules/theme-b/package.json': JSON.stringify({
@@ -396,7 +399,7 @@ describe('transformCssImports', () => {
       '.vivliostyle/themes/node_modules/theme-b/theme.css': '',
       '.vivliostyle/style.css': '',
     });
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code: "@import 'theme-b';",
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -408,7 +411,7 @@ describe('transformCssImports', () => {
     );
   });
 
-  it('rewrites imports between mounted packages', () => {
+  it('rewrites imports between mounted packages', async () => {
     writeFiles({
       'node_modules/theme-b/package.json': JSON.stringify({
         name: 'theme-b',
@@ -422,7 +425,7 @@ describe('transformCssImports', () => {
       'node_modules/theme-c/index.css': '',
     });
     const resolver = createResolver();
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code: fs.readFileSync(abs('node_modules/theme-b/theme.css'), 'utf8'),
       importer: abs('node_modules/theme-b/theme.css'),
       importerUrlPath: '/themes/node_modules/theme-b/theme.css',
@@ -433,12 +436,12 @@ describe('transformCssImports', () => {
     expect(resolver.mounts.get('theme-c')).toBe(abs('node_modules/theme-c'));
   });
 
-  it('reports unresolved bare imports without changing the code', () => {
+  it('reports unresolved bare imports without changing the code', async () => {
     writeFiles({
       '.vivliostyle/style.css': '',
     });
     const code = "@import 'missing-theme';";
-    const result = transformCssImports({
+    const result = await transformCssImports({
       code,
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -453,7 +456,7 @@ describe('transformCssImports', () => {
 });
 
 describe('ThemeCssResolver.resolveMountedFile', () => {
-  it('rejects paths traversing outside of the mounted package', () => {
+  it('rejects paths traversing outside of the mounted package', async () => {
     writeFiles({
       'node_modules/theme-b/package.json': JSON.stringify({
         name: 'theme-b',
@@ -464,7 +467,7 @@ describe('ThemeCssResolver.resolveMountedFile', () => {
       '.vivliostyle/style.css': '',
     });
     const resolver = createResolver();
-    transformCssImports({
+    await transformCssImports({
       code: "@import 'theme-b';",
       importer: abs('.vivliostyle/style.css'),
       importerUrlPath: '/style.css',
@@ -482,7 +485,7 @@ describe('ThemeCssResolver.resolveMountedFile', () => {
 });
 
 describe('scanCssDependencies', () => {
-  it('walks relative and bare imports and reports unresolved packages', () => {
+  it('walks relative and bare imports and reports unresolved packages', async () => {
     writeFiles({
       '.vivliostyle/themes/node_modules/theme-a/package.json': JSON.stringify({
         name: 'theme-a',
@@ -495,7 +498,7 @@ describe('scanCssDependencies', () => {
         "@import './local.css';\n@import 'theme-a';\n@import 'missing-theme';",
       '.vivliostyle/local.css': '',
     });
-    const { files, errors } = scanCssDependencies({
+    const { files, errors } = await scanCssDependencies({
       entryFiles: [abs('.vivliostyle/style.css')],
       resolver: createResolver(),
     });
@@ -512,10 +515,165 @@ describe('scanCssDependencies', () => {
       'Could not resolve the CSS import: missing-theme',
     );
   });
+
+  it('collects the files reported as dependencies by PostCSS plugins', async () => {
+    writeFiles({
+      '.vivliostyle/style.css': '',
+      'src/input.txt': '',
+      'postcss.config.cjs':
+        "module.exports = { plugins: [require('./postcss-plugin.cjs')] };",
+      'postcss-plugin.cjs': `
+        const { dirname, join } = require('node:path');
+        module.exports = {
+          postcssPlugin: 'test-plugin',
+          Once(root, { result }) {
+            result.messages.push({
+              type: 'dependency',
+              plugin: 'test-plugin',
+              file: join(dirname(result.opts.from), '..', 'src/input.txt'),
+            });
+          },
+        };
+      `,
+    });
+    const { files, errors } = await scanCssDependencies({
+      entryFiles: [abs('.vivliostyle/style.css')],
+      resolver: createResolver(),
+      postcssConfig: await loadPostcssConfig(projectDir),
+    });
+    expect(errors).toEqual([]);
+    expect(files).toContain(abs('src/input.txt'));
+  });
+
+  it('walks the import graph transformed by PostCSS plugins', async () => {
+    writeFiles({
+      '.vivliostyle/style.css': "@import 'virtual-styles';",
+      'postcss.config.cjs':
+        "module.exports = { plugins: [require('./postcss-plugin.cjs')] };",
+      'postcss-plugin.cjs': `
+        module.exports = {
+          postcssPlugin: 'test-plugin',
+          AtRule: {
+            import: (rule) => {
+              if (rule.params.includes('virtual-styles')) {
+                rule.remove();
+              }
+            },
+          },
+        };
+      `,
+    });
+    const { errors } = await scanCssDependencies({
+      entryFiles: [abs('.vivliostyle/style.css')],
+      resolver: createResolver(),
+      postcssConfig: await loadPostcssConfig(projectDir),
+    });
+    expect(errors).toEqual([]);
+  });
+});
+
+describe('loadPostcssConfig', () => {
+  it('returns undefined when the project has no PostCSS config', async () => {
+    await expect(loadPostcssConfig(projectDir)).resolves.toBeUndefined();
+  });
+
+  it('reports an invalid PostCSS config', async () => {
+    writeFiles({
+      'postcss.config.cjs': 'module.exports = { plugins: [42] };',
+    });
+    await expect(loadPostcssConfig(projectDir)).rejects.toThrow(
+      'Failed to load the PostCSS config',
+    );
+  });
+
+  it('applies the plugins to the transformed CSS', async () => {
+    writeFiles({
+      '.vivliostyle/style.css': '',
+      'postcss.config.cjs':
+        "module.exports = { plugins: [require('./postcss-plugin.cjs')] };",
+      'postcss-plugin.cjs': `
+        module.exports = {
+          postcssPlugin: 'test-plugin',
+          Declaration: {
+            color: (decl) => {
+              decl.value = 'blue';
+            },
+          },
+        };
+      `,
+    });
+    const result = await transformCssImports({
+      code: 'h1 { color: red; }',
+      importer: abs('.vivliostyle/style.css'),
+      importerUrlPath: '/style.css',
+      resolver: createResolver(),
+      postcssConfig: await loadPostcssConfig(projectDir),
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe('h1 { color: blue; }');
+  });
+
+  it('rewrites the bare imports emitted by the plugins', async () => {
+    writeFiles({
+      '.vivliostyle/themes/node_modules/theme-a/package.json': JSON.stringify({
+        name: 'theme-a',
+        main: 'theme.css',
+      }),
+      '.vivliostyle/themes/node_modules/theme-a/theme.css': '',
+      '.vivliostyle/style.css': '',
+      'postcss.config.cjs':
+        "module.exports = { plugins: [require('./postcss-plugin.cjs')] };",
+      'postcss-plugin.cjs': `
+        module.exports = {
+          postcssPlugin: 'test-plugin',
+          Once(root, { AtRule }) {
+            root.prepend(new AtRule({ name: 'import', params: "'theme-a'" }));
+          },
+        };
+      `,
+    });
+    const result = await transformCssImports({
+      code: 'h1 { color: red; }',
+      importer: abs('.vivliostyle/style.css'),
+      importerUrlPath: '/style.css',
+      resolver: createResolver(),
+      postcssConfig: await loadPostcssConfig(projectDir),
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain(
+      "@import 'themes/node_modules/theme-a/theme.css';",
+    );
+  });
+
+  it('reports the errors thrown by the plugins without changing the code', async () => {
+    writeFiles({
+      '.vivliostyle/style.css': '',
+      'postcss.config.cjs':
+        "module.exports = { plugins: [require('./postcss-plugin.cjs')] };",
+      'postcss-plugin.cjs': `
+        module.exports = {
+          postcssPlugin: 'test-plugin',
+          Once() {
+            throw new Error('plugin failure');
+          },
+        };
+      `,
+    });
+    const result = await transformCssImports({
+      code: 'h1 { color: red; }',
+      importer: abs('.vivliostyle/style.css'),
+      importerUrlPath: '/style.css',
+      resolver: createResolver(),
+      postcssConfig: await loadPostcssConfig(projectDir),
+    });
+    expect(result.code).toBe('h1 { color: red; }');
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toMatch('plugin failure');
+  });
 });
 
 describe('validateThemeCssDependencies', () => {
-  it('rejects file themes with unresolved imports', () => {
+  it('rejects file themes with unresolved imports', async () => {
     writeFiles({
       'style.css': "@import 'missing-theme';",
     });
@@ -525,16 +683,17 @@ describe('validateThemeCssDependencies', () => {
       source: abs('style.css'),
       location: abs('style.css'),
     };
-    expect(() =>
+    await expect(
       validateThemeCssDependencies({
         workspaceDir: projectDir,
+        serverRootDir: projectDir,
         themesDir: abs('themes'),
         themeIndexes: new Set([theme]),
       }),
-    ).toThrow('Could not resolve the CSS import: missing-theme');
+    ).rejects.toThrow('Could not resolve the CSS import: missing-theme');
   });
 
-  it('accepts themes whose import graphs are fully resolvable', () => {
+  it('accepts themes whose import graphs are fully resolvable', async () => {
     writeFiles({
       'themes/node_modules/theme-a/package.json': JSON.stringify({
         name: 'theme-a',
@@ -549,12 +708,13 @@ describe('validateThemeCssDependencies', () => {
       source: abs('style.css'),
       location: abs('style.css'),
     };
-    expect(() =>
+    await expect(
       validateThemeCssDependencies({
         workspaceDir: projectDir,
+        serverRootDir: projectDir,
         themesDir: abs('themes'),
         themeIndexes: new Set([theme]),
       }),
-    ).not.toThrow();
+    ).resolves.toBeUndefined();
   });
 });

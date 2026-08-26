@@ -1,7 +1,11 @@
+import fs from 'node:fs';
+import { tmpdir } from 'node:os';
+
 import { JSDOM } from '@vivliostyle/jsdom';
 import supertest from 'supertest';
+import upath from 'upath';
 import type { ViteDevServer } from 'vite';
-import { assert, describe, expect, it, vi } from 'vitest';
+import { afterAll, assert, describe, expect, it, vi } from 'vitest';
 
 import {
   createServerMiddleware,
@@ -35,6 +39,13 @@ vi.mock('../src/browser', async (importOriginal) => ({
 }));
 
 const launchPreviewSpy = vi.spyOn(mockedBrowserModule, 'launchPreview');
+
+const tmpProjectDirs: string[] = [];
+afterAll(() => {
+  for (const dir of tmpProjectDirs) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 const parseUrlParams = (url: string) =>
   Object.fromEntries(
@@ -167,6 +178,71 @@ describe('vite-plugin-dev-server', () => {
     expect(cssResponse.text).toContain(
       "@import 'themes/node_modules/debug-theme/theme.css';",
     );
+  });
+
+  it('serves files of theme packages mounted from the project node_modules', async () => {
+    const projectDir = upath.normalize(
+      fs.mkdtempSync(upath.join(tmpdir(), 'vs-css-mount-')),
+    );
+    tmpProjectDirs.push(projectDir);
+    const write = (rel: string, content: string) => {
+      const file = upath.join(projectDir, rel);
+      fs.mkdirSync(upath.dirname(file), { recursive: true });
+      fs.writeFileSync(file, content);
+    };
+    write('main.md', '# yuno');
+    write('mount-import.css', "@import 'mount-theme';\n");
+    write(
+      'node_modules/mount-theme/package.json',
+      JSON.stringify({ name: 'mount-theme', main: 'theme.css' }),
+    );
+    write('node_modules/mount-theme/theme.css', 'body { color: red; }\n');
+    write(
+      'node_modules/mount-theme/logo.svg',
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>\n',
+    );
+
+    const middleware = await createServerMiddleware({
+      cwd: projectDir,
+      config: {
+        entry: 'main.md',
+        workspaceDir: '.vs-dev-server-mount',
+        theme: 'mount-import.css',
+      },
+    });
+    // Requesting the importing stylesheet registers the mount
+    const importerResponse = await supertest(middleware)
+      .get('/vivliostyle/mount-import.css')
+      .expect(200);
+    expect(importerResponse.text).toContain(
+      "@import 'themes/node_modules/mount-theme/theme.css';",
+    );
+
+    const cssResponse = await supertest(middleware)
+      .get('/vivliostyle/themes/node_modules/mount-theme/theme.css')
+      .expect(200);
+    expect(cssResponse.headers['content-type']).toBe('text/css; charset=utf-8');
+    expect(cssResponse.text).toContain('color: red');
+
+    const assetResponse = await supertest(middleware)
+      .get('/vivliostyle/themes/node_modules/mount-theme/logo.svg')
+      .expect(200);
+    expect(assetResponse.headers['content-type']).toBe('image/svg+xml');
+  });
+
+  it('serves CSS processed with the PostCSS config of the project', async () => {
+    const middleware = await createServerMiddleware({
+      cwd: resolveFixture('postcss'),
+      config: {
+        entry: 'main.md',
+        workspaceDir: '.vs-dev-server-postcss',
+        theme: 'style.css',
+      },
+    });
+    const cssResponse = await supertest(middleware)
+      .get('/vivliostyle/style.css')
+      .expect(200);
+    expect(cssResponse.text).toContain('color: blue');
   });
 
   it('serves CSS files in entryContext', async () => {

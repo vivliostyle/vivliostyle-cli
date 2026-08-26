@@ -20,7 +20,12 @@ import {
   getAssetMatcher,
   getWebPubResourceMatcher,
 } from '../processor/asset.js';
-import { ThemeCssResolver, transformCssImports } from '../processor/css.js';
+import {
+  loadPostcssConfig,
+  type PostcssConfig,
+  ThemeCssResolver,
+  transformCssImports,
+} from '../processor/css.js';
 import {
   createVirtualConsole,
   fetchLinkedPublicationManifest,
@@ -36,42 +41,40 @@ import type {
 import {
   assertPubManifestSchema,
   DetailError,
+  getFormattedError,
   pathEquals,
   useTmpDirectory,
+  writeFileIfChanged,
 } from '../util.js';
 import { exportEpub } from './epub.js';
 
-function transformAndWriteCss({
+async function transformAndWriteCss({
   source,
   target,
   urlPath,
   resolver,
+  postcssConfig,
 }: {
   source: string;
   target: string;
   urlPath: string;
   resolver: ThemeCssResolver;
-}): void {
-  const { code, errors } = transformCssImports({
+  postcssConfig: PostcssConfig | undefined;
+}): Promise<void> {
+  const { code, errors } = await transformCssImports({
     code: fs.readFileSync(source, 'utf8'),
     importer: source,
     importerUrlPath: urlPath,
     resolver,
+    postcssConfig,
   });
   if (errors.length > 0) {
     throw new DetailError(
       `Failed to resolve the CSS imports: ${source}`,
-      errors
-        .map((error) =>
-          error instanceof DetailError
-            ? `${error.message}\n${error.detail}`
-            : error.message,
-        )
-        .join('\n\n'),
+      errors.map((error) => getFormattedError(error)).join('\n\n'),
     );
   }
-  fs.mkdirSync(upath.dirname(target), { recursive: true });
-  fs.writeFileSync(target, code);
+  writeFileIfChanged(target, Buffer.from(code));
 }
 
 /**
@@ -84,11 +87,13 @@ async function copyMountedThemePackages({
   outputDir,
   fileExtensions,
   resources,
+  postcssConfig,
 }: {
   resolver: ThemeCssResolver;
   outputDir: string;
   fileExtensions: string[];
   resources: string[];
+  postcssConfig: PostcssConfig | undefined;
 }): Promise<void> {
   const copied = new Set<string>();
   // Copying may transform CSS files that register new mounts; keep draining
@@ -109,11 +114,12 @@ async function copyMountedThemePackages({
         const relTarget = upath.join('themes/node_modules', name, file);
         const target = upath.join(outputDir, relTarget);
         if (file.endsWith('.css')) {
-          transformAndWriteCss({
+          await transformAndWriteCss({
             source,
             target,
             urlPath: `/${relTarget}`,
             resolver,
+            postcssConfig,
           });
         } else {
           fs.mkdirSync(upath.dirname(target), { recursive: true });
@@ -476,13 +482,19 @@ export async function copyWebPublicationAssets({
   outputs,
   copyAsset,
   themesDir,
+  serverRootDir,
   manifestPath,
   input,
   outputDir,
   entries,
 }: Pick<
   ResolvedTaskConfig,
-  'exportAliases' | 'outputs' | 'copyAsset' | 'themesDir' | 'entries'
+  | 'exportAliases'
+  | 'outputs'
+  | 'copyAsset'
+  | 'themesDir'
+  | 'entries'
+  | 'serverRootDir'
 > & {
   input: string;
   outputDir: string;
@@ -541,6 +553,10 @@ export async function copyWebPublicationAssets({
     workspaceDir: input,
     themesDir,
   });
+  const postcssConfig =
+    typeof serverRootDir === 'string'
+      ? await loadPostcssConfig(serverRootDir)
+      : undefined;
   for (const file of allFiles) {
     const alias = relExportAliases.find(({ source }) => source === file);
     const relTarget = alias?.target || file;
@@ -548,11 +564,12 @@ export async function copyWebPublicationAssets({
     const source = upath.join(input, file);
     const target = upath.join(outputDir, relTarget);
     if (file.endsWith('.css')) {
-      transformAndWriteCss({
+      await transformAndWriteCss({
         source,
         target,
         urlPath: `/${relTarget}`,
         resolver: cssResolver,
+        postcssConfig,
       });
     } else {
       fs.mkdirSync(upath.dirname(target), { recursive: true });
@@ -567,6 +584,7 @@ export async function copyWebPublicationAssets({
     outputDir,
     fileExtensions: copyAsset.fileExtensions,
     resources,
+    postcssConfig,
   });
 
   Logger.debug('webbook publication.json', actualManifestPath);
