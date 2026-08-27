@@ -12,7 +12,7 @@ const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
  */
 async function getImageColorSpace(
   pdf: Uint8Array,
-): Promise<'RGB' | 'CMYK' | 'Gray' | 'Unknown'> {
+): Promise<{ object: string; image: string } | undefined> {
   const mupdf = await import('mupdf');
   const doc = mupdf.PDFDocument.openDocument(
     pdf,
@@ -25,33 +25,31 @@ async function getImageColorSpace(
 
   if (!res?.isDictionary()) {
     doc.destroy();
-    return 'Unknown';
+    return undefined;
   }
 
   const xobjects = res.get('XObject');
   if (!xobjects?.isDictionary()) {
     doc.destroy();
-    return 'Unknown';
+    return undefined;
   }
 
-  let colorSpace: 'RGB' | 'CMYK' | 'Gray' | 'Unknown' = 'Unknown';
+  let colorSpace: { object: string; image: string } | undefined;
 
   xobjects.forEach((value) => {
     const resolved = value.resolve();
     const subtype = resolved.get('Subtype');
 
     if (subtype?.toString() === '/Image') {
+      const objectColorSpace = resolved.get('ColorSpace').resolve();
       const pdfImage = doc.loadImage(value);
-      const pixmap = pdfImage.toPixmap();
-      const cs = pixmap.getColorSpace();
-
-      if (cs?.isRGB()) {
-        colorSpace = 'RGB';
-      } else if (cs?.isCMYK()) {
-        colorSpace = 'CMYK';
-      } else if (cs?.isGray()) {
-        colorSpace = 'Gray';
-      }
+      const imageColorSpace = pdfImage.getColorSpace();
+      colorSpace = {
+        object: objectColorSpace.isArray()
+          ? objectColorSpace.get(0).toString()
+          : objectColorSpace.toString(),
+        image: imageColorSpace?.getName() ?? 'Unknown',
+      };
     }
   });
 
@@ -60,28 +58,47 @@ async function getImageColorSpace(
 }
 
 describe('replaceImages', () => {
-  it('replaces RGB image with CMYK image in PDF', async () => {
+  it.each([
+    ['Gray', 'ck_gray.pgm', '/DeviceGray', 'DeviceGray'],
+    ['RGB', 'ck_rgb.png', '/DeviceRGB', 'DeviceRGB'],
+    ['CMYK', 'ck_cmyk.tiff', '/DeviceCMYK', 'DeviceCMYK'],
+  ])(
+    'embeds a Device%s replacement using the direct device color space',
+    async (_, replacement, objectColorSpace, imageColorSpace) => {
+      const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+      const destPdf = await replaceImages({
+        pdf: srcPdf,
+        replaceImageConfig: [
+          {
+            source: path.join(fixturesDir, 'ck_rgb.png'),
+            replacement: path.join(fixturesDir, replacement),
+          },
+        ],
+      });
+
+      expect(await getImageColorSpace(destPdf)).toEqual({
+        object: objectColorSpace,
+        image: imageColorSpace,
+      });
+    },
+  );
+
+  it('preserves an ICCBased replacement color space', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
-    const srcImagePath = path.join(fixturesDir, 'ck_rgb.png');
-    const destImagePath = path.join(fixturesDir, 'ck_cmyk.tiff');
-
-    // Verify source PDF has RGB image
-    const srcColorSpace = await getImageColorSpace(srcPdf);
-    expect(srcColorSpace).toBe('RGB');
-
     const destPdf = await replaceImages({
       pdf: srcPdf,
       replaceImageConfig: [
         {
-          source: srcImagePath,
-          replacement: destImagePath,
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, '..', 'cover', 'arch.jpg'),
         },
       ],
     });
 
-    // Verify destination PDF has CMYK image
-    const destColorSpace = await getImageColorSpace(destPdf);
-    expect(destColorSpace).toBe('CMYK');
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/ICCBased',
+      image: 'ICCBased(RGB,sRGB IEC61966-2.1)',
+    });
   });
 
   it('returns original PDF when replaceImageConfig is empty', async () => {
