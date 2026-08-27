@@ -3,6 +3,7 @@ import type * as vite from 'vite';
 import { launchPreview, runBrowserOperationWithAbort } from '../browser.js';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { getOsLocale, runCleanupHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
@@ -49,23 +50,34 @@ export function vsBrowserPlugin({
       signal: inlineConfig.signal,
       closeBrowser,
       operation: async () => {
-        // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
-        if (!import.meta.env?.VITEST) {
-          /* v8 ignore next 4 */
-          await page.evaluate((lng) => {
-            window.localStorage.setItem('i18nextLng', lng);
-          }, locale);
-        }
-        // Move focus from the address bar to the page
-        await page.bringToFront();
-        // Focus to the URL input box if available
-        if (!import.meta.env?.VITEST) {
-          /* v8 ignore next 6 */
-          await page.evaluate(() => {
-            document
-              .querySelector<HTMLInputElement>('#vivliostyle-input-url')
-              ?.focus();
-          });
+        try {
+          // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
+          if (!import.meta.env?.VITEST) {
+            /* v8 ignore next 4 */
+            await page.evaluate((lng) => {
+              window.localStorage.setItem('i18nextLng', lng);
+            }, locale);
+          }
+          // Move focus from the address bar to the page
+          await page.bringToFront();
+          // Focus to the URL input box if available
+          if (!import.meta.env?.VITEST) {
+            /* v8 ignore next 6 */
+            await page.evaluate(() => {
+              document
+                .querySelector<HTMLInputElement>('#vivliostyle-input-url')
+                ?.focus();
+            });
+          }
+        } catch (error) {
+          if (inlineConfig.signal?.aborted) {
+            throw error;
+          }
+          // A Vite full-reload can navigate the viewer while the page is
+          // being set up, which destroys the execution context of the
+          // running `page.evaluate` calls. These steps are cosmetic, so
+          // keep the preview running.
+          Logger.debug('Failed to set up the preview page', error);
         }
       },
     });

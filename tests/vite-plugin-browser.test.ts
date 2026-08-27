@@ -81,3 +81,47 @@ describe('vsBrowserPlugin cancellation', () => {
     expect(closeBrowser).toHaveBeenCalledOnce();
   });
 });
+
+describe('vsBrowserPlugin page setup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedGetViewerFullUrl.mockResolvedValue('http://localhost:13000/viewer');
+    mockedReloadConfig.mockResolvedValue(config);
+  });
+
+  it('keeps the preview running when the viewer navigates during the page setup', async () => {
+    const closeBrowser = vi.fn<() => Promise<void>>(async () => {});
+    const page = {
+      on: vi.fn<() => void>(),
+      off: vi.fn<() => void>(),
+      bringToFront: vi.fn<() => Promise<void>>(() => {
+        throw new Error(
+          'Execution context was destroyed, most likely because of a navigation.',
+        );
+      }),
+    } as unknown as Page;
+    mockedLaunchPreview.mockResolvedValue({
+      page,
+      closeBrowser,
+    });
+
+    const plugin = vsBrowserPlugin({
+      config,
+      inlineConfig: {
+        openViewer: true,
+        signal: new AbortController().signal,
+      } as ParsedVivliostyleInlineConfig,
+    });
+    const server = {
+      // oxlint-disable-next-line require-await -- mock must return a Promise to match listen's signature
+      listen: vi.fn<() => Promise<unknown>>(async () => server),
+      close: vi.fn<() => Promise<void>>(async () => {}),
+      config: {},
+    } as unknown as ViteDevServer;
+    (plugin.configureServer as (server: ViteDevServer) => void)(server);
+
+    await expect(server.listen()).resolves.toBe(server);
+    expect(page.bringToFront).toHaveBeenCalledOnce();
+    expect(closeBrowser).not.toHaveBeenCalled();
+  });
+});
