@@ -17,12 +17,15 @@ const mockedBrowserModule = vi.hoisted(() => ({
       page: {
         on: vi.fn<() => void>(),
         off: vi.fn<() => void>(),
+        isClosed: vi.fn<() => boolean>().mockReturnValue(false),
         bringToFront: vi.fn<() => void>(),
+        waitForFunction: vi.fn<() => void>(),
         locator: vi.fn<() => { focus: () => void }>().mockReturnValue({
           focus: vi.fn<() => void>(),
         }),
       },
       browser: {
+        connected: true,
         close: vi.fn<() => void>(),
       },
       closeBrowser: vi.fn<() => void>(),

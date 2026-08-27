@@ -136,6 +136,51 @@ describe('launchPreview', () => {
     await Promise.all([directClose, cleanupClose]);
   });
 
+  it('runs onPageOpen to completion before navigating', async () => {
+    const calls: string[] = [];
+    mockedLaunch.mockResolvedValue({
+      browserContexts: () => [
+        {
+          pages: () => [],
+          newPage: () => ({
+            setViewport: vi.fn<() => void>(),
+            on: vi.fn<() => void>(),
+            authenticate: vi.fn<() => void>(),
+            goto: vi.fn<() => void>(() => {
+              calls.push('goto');
+            }),
+          }),
+        },
+      ],
+      close: vi.fn<() => void>(),
+    });
+
+    await launchPreview({
+      mode: 'preview',
+      url: 'https://example.com',
+      config: {
+        browser: {
+          type: 'chrome',
+          tag: 'stable',
+          executablePath: process.execPath,
+        },
+        proxy: undefined,
+        sandbox: false,
+        ignoreHttpsErrors: false,
+        timeout: 1000,
+      },
+      onPageOpen: async () => {
+        calls.push('onPageOpen:start');
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+        });
+        calls.push('onPageOpen:end');
+      },
+    });
+
+    expect(calls).toEqual(['onPageOpen:start', 'onPageOpen:end', 'goto']);
+  });
+
   it('registers cleanup before browser launch completes', async () => {
     let resolveLaunch:
       | ((browser: {
