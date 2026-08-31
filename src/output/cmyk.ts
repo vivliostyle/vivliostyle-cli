@@ -1,198 +1,134 @@
-import type * as mupdfType from 'mupdf';
+import type { CmykConfig } from '../config/resolve.js';
+import type { CMYKValue } from '../global-viewer.js';
+import { Logger } from '../logger.js';
+import { tokenize, type OperatorToken } from './pdf-stream.js';
+import type { PdfEditHook } from './pdf-visitor.js';
 
-import type { CmykMap } from '../global-viewer.js';
-import { importNodeModule } from '../node-modules.js';
-import { convertStreamColors } from './pdf-stream.js';
+/**
+ * `SRGBValue.MAX`
+ * @see https://github.com/vivliostyle/vivliostyle.js/blob/master/packages/core/src/vivliostyle/cmyk-store.ts
+ */
+const SRGB_MAX = 10000;
+/**
+ * `CMYKValue.MAX`
+ * @see https://github.com/vivliostyle/vivliostyle.js/blob/master/packages/core/src/vivliostyle/cmyk-store.ts
+ */
+const CMYK_MAX = 10000;
 
-interface Destroyable {
-  destroy(): void;
+function formatRgbKey(r: number, g: number, b: number): string {
+  const ri = Math.round(r * SRGB_MAX);
+  const gi = Math.round(g * SRGB_MAX);
+  const bi = Math.round(b * SRGB_MAX);
+  return JSON.stringify([ri, gi, bi]);
 }
 
-function disposable<T extends Destroyable>(obj: T): T & Disposable {
-  return Object.assign(obj, {
-    [Symbol.dispose]() {
-      obj.destroy();
+function formatUnmappedRgbKey(r: number, g: number, b: number): string {
+  const ri = Math.round(r * SRGB_MAX);
+  const gi = Math.round(g * SRGB_MAX);
+  const bi = Math.round(b * SRGB_MAX);
+  return JSON.stringify({ r: ri, g: gi, b: bi });
+}
+
+/**
+ * Convert RGB color operators to CMYK in a content stream
+ */
+function convertColors(
+  content: string,
+  colorMap: ReadonlyMap<string, CMYKValue>,
+  unmappedColors: Set<string> | null,
+): string {
+  const result: string[] = [];
+  const pendingNumbers: { value: number; raw: string }[] = [];
+
+  const flushPendingNumbers = () => {
+    for (const num of pendingNumbers) {
+      result.push(num.raw);
+    }
+    pendingNumbers.length = 0;
+  };
+
+  const convertRgbOperator = (
+    cmykOp: 'k' | 'K',
+    token: OperatorToken,
+  ): void => {
+    const b = pendingNumbers.pop();
+    const g = pendingNumbers.pop();
+    const r = pendingNumbers.pop();
+    /* v8 ignore next 3 */
+    if (!b || !g || !r) {
+      throw new Error('Expected at least three pending numbers for RGB color');
+    }
+    flushPendingNumbers();
+
+    const key = formatRgbKey(r.value, g.value, b.value);
+    const cmyk = colorMap.get(key);
+
+    if (!cmyk) {
+      result.push(r.raw, g.raw, b.raw, token.raw);
+      if (unmappedColors !== null) {
+        unmappedColors.add(formatUnmappedRgbKey(r.value, g.value, b.value));
+      }
+      return;
+    }
+    const c = (cmyk.c / CMYK_MAX).toString();
+    const m = (cmyk.m / CMYK_MAX).toString();
+    const y = (cmyk.y / CMYK_MAX).toString();
+    const k = (cmyk.k / CMYK_MAX).toString();
+    result.push(`${c} ${m} ${y} ${k} ${cmykOp}`);
+  };
+
+  for (const token of tokenize(content)) {
+    if (token.type === 'number') {
+      pendingNumbers.push({ value: token.value, raw: token.raw });
+    } else if (token.type === 'operator') {
+      const op = token.value;
+
+      // RGB color: r g b rg (non-stroking) or r g b RG (stroking)
+      const cmykOp = op === 'rg' ? 'k' : op === 'RG' ? 'K' : null;
+      if (cmykOp && pendingNumbers.length >= 3) {
+        convertRgbOperator(cmykOp, token);
+      } else {
+        flushPendingNumbers();
+        result.push(token.raw);
+      }
+    } else {
+      // Other token types - flush pending numbers and pass through
+      flushPendingNumbers();
+      result.push(token.raw);
+    }
+  }
+
+  // Flush any remaining pending numbers
+  flushPendingNumbers();
+
+  return result.join(' ');
+}
+
+export function createCmykColorHook(
+  colorMap: ReadonlyMap<string, CMYKValue>,
+  ifUnmappedColorsFound: CmykConfig['ifUnmappedColorsFound'],
+  failures: string[],
+): PdfEditHook {
+  const unmappedColors =
+    ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
+  return {
+    visit(node) {
+      if (node.kind !== 'content-stream') {
+        return;
+      }
+      const converted = convertColors(node.read(), colorMap, unmappedColors);
+      node.write(converted);
     },
-  });
-}
-
-function processStream(
-  stream: mupdfType.PDFObject,
-  colorMap: CmykMap,
-  warnUnmapped: boolean,
-  warnedColors: Set<string>,
-  mupdf: typeof import('mupdf'),
-): void {
-  const buffer = stream.readStream();
-  const content = buffer.asString();
-  const converted = convertStreamColors(
-    content,
-    colorMap,
-    warnUnmapped,
-    warnedColors,
-  );
-  stream.writeStream(new mupdf.Buffer(converted));
-}
-
-function processFormXObjects(
-  resources: mupdfType.PDFObject,
-  colorMap: CmykMap,
-  warnUnmapped: boolean,
-  warnedColors: Set<string>,
-  mupdf: typeof import('mupdf'),
-  processed: Set<number>,
-): void {
-  const xobjects = resources.get('XObject');
-  if (!xobjects || !xobjects.isDictionary()) {
-    return;
-  }
-
-  xobjects.forEach((xobj) => {
-    if (!xobj || !xobj.isStream()) {
-      return;
-    }
-
-    // Use original indirect reference for stream operations (see #735)
-    const objNum = xobj.asIndirect();
-    if (objNum && processed.has(objNum)) {
-      // Avoid circular references
-      return;
-    }
-    if (objNum) {
-      processed.add(objNum);
-    }
-
-    const subtype = xobj.get('Subtype');
-    if (!subtype || subtype.toString() !== '/Form') {
-      return;
-    }
-
-    processStream(xobj, colorMap, warnUnmapped, warnedColors, mupdf);
-    const nestedResources = xobj.get('Resources');
-    if (nestedResources && nestedResources.isDictionary()) {
-      processFormXObjects(
-        nestedResources,
-        colorMap,
-        warnUnmapped,
-        warnedColors,
-        mupdf,
-        processed,
-      );
-    }
-  });
-}
-
-function processContents(
-  contents: mupdfType.PDFObject,
-  colorMap: CmykMap,
-  warnUnmapped: boolean,
-  warnedColors: Set<string>,
-  mupdf: typeof import('mupdf'),
-): void {
-  if (contents.isArray()) {
-    // Multiple content streams
-    for (let i = 0; i < contents.length; i++) {
-      const streamObj = contents.get(i);
-      // Use original indirect reference for stream operations (see #735)
-      if (streamObj && streamObj.isStream()) {
-        processStream(streamObj, colorMap, warnUnmapped, warnedColors, mupdf);
+    complete() {
+      if (!unmappedColors) {
+        return;
       }
-    }
-  } else if (contents.isStream()) {
-    // Single content stream
-    processStream(contents, colorMap, warnUnmapped, warnedColors, mupdf);
-  }
-}
-
-export async function convertCmykColors({
-  pdf,
-  colorMap,
-  unmappedColors,
-}: {
-  pdf: Uint8Array;
-  colorMap: CmykMap;
-  unmappedColors: Set<string> | null;
-}): Promise<Uint8Array> {
-  const mupdf = await importNodeModule('mupdf');
-  const foundUnmappedColors = unmappedColors ?? new Set<string>();
-  const warnUnmapped = unmappedColors !== null;
-  const processedXObjects = new Set<number>();
-
-  using doc = disposable(
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- openDocument returns the Document base type; a PDF input yields a PDFDocument
-    mupdf.PDFDocument.openDocument(
-      pdf,
-      'application/pdf',
-    ) as mupdfType.PDFDocument,
-  );
-
-  const pageCount = doc.countPages();
-  for (let i = 0; i < pageCount; i++) {
-    const page = doc.loadPage(i);
-    const pageObj = page.getObject().resolve();
-
-    const contents = pageObj.get('Contents');
-    if (contents) {
-      processContents(
-        contents,
-        colorMap,
-        warnUnmapped,
-        foundUnmappedColors,
-        mupdf,
-      );
-    }
-
-    const resources = pageObj.get('Resources');
-    if (resources && resources.isDictionary()) {
-      processFormXObjects(
-        resources,
-        colorMap,
-        warnUnmapped,
-        foundUnmappedColors,
-        mupdf,
-        processedXObjects,
-      );
-    }
-
-    // Annotations may have appearance streams with colors
-    const annots = pageObj.get('Annots');
-    if (!annots?.isArray()) {
-      continue;
-    }
-    for (let j = 0; j < annots.length; j++) {
-      const annot = annots.get(j);
-      if (!annot) {
-        continue;
+      for (const color of unmappedColors) {
+        Logger.logWarn(`RGB color not mapped to CMYK: ${color}`);
       }
-      const ap = annot.resolve().get('AP');
-      if (!ap?.isDictionary()) {
-        continue;
+      if (unmappedColors.size > 0 && ifUnmappedColorsFound === 'error') {
+        failures.push(`${unmappedColors.size} RGB color(s) not mapped to CMYK`);
       }
-      // Normal appearance
-      const n = ap.get('N');
-      if (!n) {
-        continue;
-      }
-      if (n.isStream()) {
-        processStream(n, colorMap, warnUnmapped, foundUnmappedColors, mupdf);
-      } else if (n.isDictionary()) {
-        // Multiple appearance states
-        n.forEach((val) => {
-          if (val?.isStream()) {
-            processStream(
-              val,
-              colorMap,
-              warnUnmapped,
-              foundUnmappedColors,
-              mupdf,
-            );
-          }
-        });
-      }
-    }
-  }
-
-  using outputBuffer = disposable(doc.saveToBuffer('compress'));
-  // Create a copy to ensure the data remains valid after the buffer is destroyed
-  return new Uint8Array(outputBuffer.asUint8Array());
+    },
+  };
 }

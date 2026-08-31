@@ -132,6 +132,36 @@ it('skips both checks when configured to ignore them', async () => {
   expect(result.warnings).toEqual([]);
 });
 
+it('writes the color map before reporting unmapped color errors', async () => {
+  const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+  fs.mkdirSync(temporaryDir, { recursive: true });
+  const mapOutput = path.join(temporaryDir, `cmyk-map-${randomUUID()}.json`);
+
+  try {
+    const result = await runSave(
+      pdf,
+      cmykConfig({
+        ifUnmappedColorsFound: 'error',
+        ifIncompatibleImagesFound: 'ignore',
+        overrideMap: [
+          [
+            { r: 10000, g: 0, b: 0 },
+            { c: 0, m: 10000, y: 10000, k: 0 },
+          ],
+        ],
+        mapOutput,
+      }),
+    );
+
+    expect(result.error?.message).toContain('RGB color(s) not mapped to CMYK');
+    expect(JSON.parse(fs.readFileSync(mapOutput, 'utf8'))).toEqual({
+      '[10000,0,0]': { c: 0, m: 10000, y: 10000, k: 0 },
+    });
+  } finally {
+    fs.rmSync(mapOutput, { force: true });
+  }
+});
+
 it('skips image compatibility checks when CMYK processing is disabled', async () => {
   const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
