@@ -263,7 +263,8 @@ function resolveMapEntries(
 }
 
 export interface CmykConfig {
-  warnUnmapped: boolean;
+  ifUnmappedColorsFound: 'warn' | 'error' | 'ignore';
+  ifIncompatibleImagesFound: 'warn' | 'error' | 'ignore';
   overrideMap: CmykMapEntry[];
   reserveMap: CmykMapEntry[];
   mapOutput: string | undefined;
@@ -697,21 +698,31 @@ export function resolveTaskConfig(
   const outputs = ((): OutputConfig[] => {
     type CmykOption = NonNullable<typeof config.pdfPostprocess>['cmyk'];
     const resolveCmykConfig = (cmykOption: CmykOption): CmykConfig | false => {
-      // Config file object format takes priority
-      if (cmykOption && typeof cmykOption === 'object') {
+      const cmykObject =
+        cmykOption && typeof cmykOption === 'object'
+          ? cmykOption
+          : options.cmyk && typeof options.cmyk === 'object'
+            ? options.cmyk
+            : undefined;
+      if (cmykObject) {
         return {
-          warnUnmapped: cmykOption.warnUnmapped ?? true,
-          overrideMap: resolveMapEntries(cmykOption.overrideMap ?? []),
-          reserveMap: resolveMapEntries(cmykOption.reserveMap ?? []),
-          mapOutput: cmykOption.mapOutput
-            ? upath.resolve(context, cmykOption.mapOutput)
+          ifUnmappedColorsFound:
+            cmykObject.ifUnmappedColorsFound ??
+            // oxlint-disable-next-line typescript/no-deprecated -- preserve warnUnmapped behavior for existing configurations
+            (cmykObject.warnUnmapped === false ? 'ignore' : 'warn'),
+          ifIncompatibleImagesFound:
+            cmykObject.ifIncompatibleImagesFound ?? 'warn',
+          overrideMap: resolveMapEntries(cmykObject.overrideMap ?? []),
+          reserveMap: resolveMapEntries(cmykObject.reserveMap ?? []),
+          mapOutput: cmykObject.mapOutput
+            ? upath.resolve(context, cmykObject.mapOutput)
             : undefined,
         };
       }
-      // CLI --cmyk flag or cmykOption: true
       if (options.cmyk || cmykOption === true) {
         return {
-          warnUnmapped: true,
+          ifUnmappedColorsFound: 'warn',
+          ifIncompatibleImagesFound: 'warn',
           overrideMap: [],
           reserveMap: [],
           mapOutput: undefined,
