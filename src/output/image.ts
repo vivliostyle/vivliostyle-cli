@@ -60,6 +60,26 @@ interface ReplaceStats {
   total: number;
 }
 
+function addImagePreservingColorSpace(
+  doc: mupdfType.PDFDocument,
+  image: mupdfType.Image,
+): mupdfType.PDFObject {
+  const ref = doc.addImage(image);
+  const colorSpaceName = image.getColorSpace()?.getName();
+
+  if (
+    colorSpaceName === 'DeviceGray' ||
+    colorSpaceName === 'DeviceCMYK' ||
+    // This intentionally differs from Chromium/Skia, which attaches a Skia ICC profile even to unprofiled images.
+    // Preserving DeviceRGB here is the only way to represent an unprofiled RGB replacement as such.
+    colorSpaceName === 'DeviceRGB'
+  ) {
+    ref.resolve().put('ColorSpace', colorSpaceName);
+  }
+
+  return ref;
+}
+
 function replaceImagesInDocument(
   doc: mupdfType.PDFDocument,
   imagePairs: ImagePair[],
@@ -104,7 +124,7 @@ function replaceImagesInDocument(
       // Find matching source image
       for (const pair of imagePairs) {
         if (imagesEqual(pdfImage, pair.srcImage)) {
-          const newImageRef = doc.addImage(pair.destImage);
+          const newImageRef = addImagePreservingColorSpace(doc, pair.destImage);
           xobjects.put(key, newImageRef);
           replaced++;
           Logger.debug(
