@@ -37,7 +37,7 @@ export async function build(
   let vivliostyleConfig =
     (await loadVivliostyleConfig(inlineConfig)) ??
     setupConfigFromFlags(inlineConfig);
-  warnDeprecatedConfig(vivliostyleConfig);
+  warnDeprecatedConfig(vivliostyleConfig, inlineConfig);
   vivliostyleConfig = mergeInlineConfig(vivliostyleConfig, {
     ...inlineConfig,
     quick: false,

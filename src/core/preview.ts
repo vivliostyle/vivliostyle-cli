@@ -21,7 +21,7 @@ export async function preview(
   let vivliostyleConfig =
     (await loadVivliostyleConfig(inlineConfig)) ??
     setupConfigFromFlags(inlineConfig);
-  warnDeprecatedConfig(vivliostyleConfig);
+  warnDeprecatedConfig(vivliostyleConfig, inlineConfig);
   vivliostyleConfig = mergeInlineConfig(vivliostyleConfig, inlineConfig);
   const { tasks, inlineOptions } = vivliostyleConfig;
   Logger.debug('preview > vivliostyleConfig %O', vivliostyleConfig);

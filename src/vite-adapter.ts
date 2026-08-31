@@ -31,7 +31,7 @@ export async function createVitePlugin(
   const vivliostyleConfig =
     (await loadVivliostyleConfig(parsedInlineConfig)) ??
     setupConfigFromFlags(parsedInlineConfig);
-  warnDeprecatedConfig(vivliostyleConfig);
+  warnDeprecatedConfig(vivliostyleConfig, parsedInlineConfig);
   const { tasks, inlineOptions } = mergeInlineConfig(
     vivliostyleConfig,
     parsedInlineConfig,
