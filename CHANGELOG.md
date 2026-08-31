@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 11.2.1
+
+### Patch Changes
+
+- Preserve DeviceGray, DeviceRGB, and DeviceCMYK color spaces when embedding replacement images during PDF post-processing. ([#893](https://github.com/vivliostyle/vivliostyle-cli/pull/893))
+
 ## 11.2.0
 
 ### Minor Changes
