@@ -5,10 +5,19 @@ import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import type {
+  ImageConversionReplacement,
   ReplaceFunction,
+  ResolvedImageConversionReplacement,
   ResolvedReplaceFunction,
 } from '../src/config/replace-image.js';
 import type { CmykConfig } from '../src/config/resolve.js';
+import {
+  createBuiltinCmykConversionReplacement,
+  createBuiltinGrayConversionReplacement,
+  createBuiltinRgbConversionReplacement,
+  createImageConversionReplaceFunction,
+  createIccConversionReplacement,
+} from '../src/image-replacement.js';
 import { Logger } from '../src/logger.js';
 import { createCmykColorHook } from '../src/output/cmyk.js';
 import { createReplaceImageHook } from '../src/output/image.js';
@@ -101,6 +110,36 @@ function resolveReplaceFunction(
   };
 }
 
+function resolveImageConversion(
+  imageConversion: ImageConversionReplacement,
+  index = 0,
+  entryContextDir = process.cwd(),
+): ResolvedImageConversionReplacement {
+  return {
+    imageConversion:
+      imageConversion.kind === 'builtin'
+        ? {
+            ...imageConversion,
+            inputProfile:
+              imageConversion.inputProfile === undefined
+                ? undefined
+                : path.resolve(entryContextDir, imageConversion.inputProfile),
+          }
+        : {
+            ...imageConversion,
+            inputProfile:
+              imageConversion.inputProfile === undefined
+                ? undefined
+                : path.resolve(entryContextDir, imageConversion.inputProfile),
+            outputProfile: path.resolve(
+              entryContextDir,
+              imageConversion.outputProfile,
+            ),
+          },
+    label: `[function#${index}]`,
+  };
+}
+
 async function replaceImages(
   pdf: Uint8Array,
   options: {
@@ -180,6 +219,48 @@ async function getImageColorSpace(
 
   doc.destroy();
   return colorSpace;
+}
+
+async function getFirstImageIccProfile(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const colorSpace = value.resolve().get('ColorSpace').resolve();
+  if (!colorSpace.isArray() || colorSpace.get(0).toString() !== '/ICCBased') {
+    page.destroy();
+    doc.destroy();
+    throw new Error('First image does not use an ICCBased color space');
+  }
+  const profile = colorSpace.get(1).readStream();
+  const result = new Uint8Array(profile.asUint8Array());
+  profile.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
+async function getFirstImagePixels(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const image = doc.loadImage(value);
+  const pixmap = image.toPixmap();
+  const result = new Uint8Array(pixmap.getPixels());
+  pixmap.destroy();
+  image.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
 }
 
 async function getXrefImageColorSpaces(pdf: Uint8Array): Promise<string[]> {
@@ -1496,6 +1577,371 @@ describe('replaceImages', () => {
     ).rejects.toThrow(
       '[function#0] must return a mupdf.Image created by context.mupdf or null',
     );
+  });
+
+  it.each([
+    {
+      name: 'DeviceGray',
+      replacement: createBuiltinGrayConversionReplacement(),
+      components: 2,
+    },
+    {
+      name: 'DeviceRGB',
+      replacement: createBuiltinRgbConversionReplacement(),
+      components: 4,
+    },
+    {
+      name: 'DeviceCMYK',
+      replacement: createBuiltinCmykConversionReplacement(),
+      components: 5,
+    },
+  ])('preserves inline alpha when converting to $name', async (testCase) => {
+    const mupdf = await import('mupdf');
+    const source = new mupdf.Image(
+      Buffer.concat([
+        Buffer.from(
+          'P7\nWIDTH 2\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n',
+        ),
+        new Uint8Array([200, 100, 50, 128, 10, 20, 30, 255]),
+      ]),
+    );
+
+    try {
+      const { replaceFunction } = createImageConversionReplaceFunction(
+        testCase.replacement,
+      );
+      const replacement = await replaceFunction({ image: source, mupdf });
+      expect(replacement).toBeInstanceOf(mupdf.Image);
+      const convertedImage = replacement as import('mupdf').Image;
+      const convertedPixmap = convertedImage.toPixmap();
+      try {
+        const pixels = convertedPixmap.getPixels();
+        expect(convertedPixmap.getAlpha()).toBe(1);
+        expect(convertedPixmap.getNumberOfComponents()).toBe(
+          testCase.components,
+        );
+        expect([
+          pixels[testCase.components - 1],
+          pixels[testCase.components * 2 - 1],
+        ]).toEqual([128, 255]);
+      } finally {
+        convertedPixmap.destroy();
+        convertedImage.destroy();
+      }
+    } finally {
+      source.destroy();
+    }
+  });
+
+  it('does not inherit an external soft mask through a built-in conversion', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      3,
+      1,
+      chromiumTransparentRgb,
+      chromiumTransparentAlpha,
+    );
+    const unreachableBefore = await countUnreachableObjects(maskedPdf);
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: resolveImageConversion(
+            createBuiltinCmykConversionReplacement(),
+          ),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getFirstPageImageTransparencyState(destPdf)).toMatchObject({
+      softMaskObjectNumber: null,
+      softMaskDimensions: null,
+      smaskInData: null,
+    });
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceCMYK',
+      image: 'DeviceCMYK',
+    });
+    expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
+  });
+
+  it('converts a matching image to DeviceGray with the built-in replacement', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: resolveImageConversion(
+            createBuiltinGrayConversionReplacement(),
+          ),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('converts images to DeviceCMYK with the built-in replacement', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        resolveImageConversion(createBuiltinCmykConversionReplacement()),
+      ],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceCMYK',
+      image: 'DeviceCMYK',
+    });
+  });
+
+  it('converts images to DeviceRGB with the built-in replacement', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        resolveImageConversion(createBuiltinRgbConversionReplacement()),
+      ],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceRGB',
+      image: 'DeviceRGB',
+    });
+  });
+
+  it('does not rewrite an image already using the built-in destination', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = fs.readFileSync(
+      path.join(fixturesDir, 'device-rgb.jpg'),
+    );
+    const replacement = writeTemporaryImage('jpg', replacementBytes);
+
+    try {
+      const { pdf: deviceRgbPdf } = await replaceImages(srcPdf, {
+        replacements: [
+          {
+            source: path.join(fixturesDir, 'ck_rgb.png'),
+            replacement,
+          },
+        ],
+        ifIncompatibleImagesFound: 'ignore',
+      });
+      const originalStream = await getFirstPageImageStreamState(deviceRgbPdf);
+      const fallback = vi.fn<ReplaceFunction>(
+        ({ mupdf }) =>
+          new mupdf.Image(
+            fs.readFileSync(path.join(fixturesDir, 'ck_gray.pgm')),
+          ),
+      );
+      const { pdf: destPdf } = await replaceImages(deviceRgbPdf, {
+        replacements: [
+          resolveImageConversion(createBuiltinRgbConversionReplacement()),
+          resolveReplaceFunction(fallback, 1),
+        ],
+        ifIncompatibleImagesFound: 'ignore',
+      });
+
+      expect(originalStream.filter).toBe('/DCTDecode');
+      expect(await getFirstPageImageStreamState(destPdf)).toEqual(
+        originalStream,
+      );
+      expect(fallback).not.toHaveBeenCalled();
+      expect(await getImageColorSpace(destPdf)).toEqual({
+        object: '/DeviceRGB',
+        image: 'DeviceRGB',
+      });
+    } finally {
+      fs.rmSync(replacement, { force: true });
+    }
+  });
+
+  it('converts images through a destination ICC profile', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const outputProfile = writeTemporaryImage(
+      'icc',
+      await getFirstImageIccProfile(srcPdf),
+    );
+
+    try {
+      const replacement = createIccConversionReplacement({
+        outputProfile: path.basename(outputProfile),
+      });
+      const { pdf: destPdf } = await replaceImages(srcPdf, {
+        replacements: [
+          resolveImageConversion(replacement, 0, path.dirname(outputProfile)),
+        ],
+        ifIncompatibleImagesFound: 'warn',
+      });
+
+      expect(await getImageColorSpace(destPdf)).toEqual({
+        object: '/DeviceRGB',
+        image: 'DeviceRGB',
+      });
+    } finally {
+      fs.rmSync(outputProfile, { force: true });
+    }
+  });
+
+  it('uses a conversion created by another module instance', async () => {
+    const moduleUrl = new URL('../src/image-replacement.ts', import.meta.url);
+    moduleUrl.searchParams.set('instance', randomUUID());
+    const otherModule: typeof import('../src/image-replacement.js') =
+      await import(moduleUrl.href);
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const outputProfile = writeTemporaryImage(
+      'icc',
+      await getFirstImageIccProfile(srcPdf),
+    );
+
+    try {
+      const replacement = otherModule.createIccConversionReplacement({
+        outputProfile: path.basename(outputProfile),
+      });
+      const { pdf: destPdf } = await replaceImages(srcPdf, {
+        replacements: [
+          resolveImageConversion(replacement, 0, path.dirname(outputProfile)),
+        ],
+        ifIncompatibleImagesFound: 'warn',
+      });
+
+      expect(await getImageColorSpace(destPdf)).toEqual({
+        object: '/DeviceRGB',
+        image: 'DeviceRGB',
+      });
+    } finally {
+      fs.rmSync(outputProfile, { force: true });
+    }
+  });
+
+  it('loads a relative profile path once for repeated replacements', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const duplicatePdf = await duplicateFirstImageObject(srcPdf);
+    const outputProfile = writeTemporaryImage(
+      'icc',
+      await getFirstImageIccProfile(srcPdf),
+    );
+    const readFile = vi.spyOn(fs, 'readFileSync');
+
+    try {
+      await replaceImages(duplicatePdf, {
+        replacements: [
+          resolveImageConversion(
+            createIccConversionReplacement({
+              outputProfile: path.basename(outputProfile),
+            }),
+            0,
+            path.dirname(outputProfile),
+          ),
+        ],
+        ifIncompatibleImagesFound: 'warn',
+      });
+
+      expect(
+        readFile.mock.calls.filter(([filename]) => filename === outputProfile),
+      ).toHaveLength(1);
+    } finally {
+      readFile.mockRestore();
+      fs.rmSync(outputProfile, { force: true });
+    }
+  });
+
+  it('uses an input profile to interpret a matching Device color space', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const inputProfile = writeTemporaryImage(
+      'icc',
+      await getFirstImageIccProfile(srcPdf),
+    );
+    const { pdf: deviceRgbPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_rgb.png'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+    const { pdf: builtinPdf } = await replaceImages(deviceRgbPdf, {
+      replacements: [
+        resolveImageConversion(createBuiltinCmykConversionReplacement()),
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+    try {
+      const { pdf: profiledPdf } = await replaceImages(deviceRgbPdf, {
+        replacements: [
+          resolveImageConversion(
+            createBuiltinCmykConversionReplacement({
+              inputProfile: path.basename(inputProfile),
+            }),
+            0,
+            path.dirname(inputProfile),
+          ),
+        ],
+        ifIncompatibleImagesFound: 'ignore',
+      });
+
+      expect(await getImageColorSpace(profiledPdf)).toEqual({
+        object: '/DeviceCMYK',
+        image: 'DeviceCMYK',
+      });
+      expect(
+        Buffer.compare(
+          Buffer.from(await getFirstImagePixels(profiledPdf)),
+          Buffer.from(await getFirstImagePixels(builtinPdf)),
+        ),
+      ).not.toBe(0);
+    } finally {
+      fs.rmSync(inputProfile, { force: true });
+    }
+  });
+
+  it('rejects an input profile for a different Device color space', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const inputProfile = writeTemporaryImage(
+      'icc',
+      await getFirstImageIccProfile(srcPdf),
+    );
+    const { pdf: deviceGrayPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    try {
+      await expect(
+        replaceImages(deviceGrayPdf, {
+          replacements: [
+            resolveImageConversion(
+              createBuiltinCmykConversionReplacement({
+                inputProfile: path.basename(inputProfile),
+              }),
+              0,
+              path.dirname(inputProfile),
+            ),
+          ],
+          ifIncompatibleImagesFound: 'ignore',
+        }),
+      ).rejects.toThrow(
+        'inputProfile uses RGB, but the input image uses DeviceGray',
+      );
+    } finally {
+      fs.rmSync(inputProfile, { force: true });
+    }
   });
 
   it('accepts separately owned images for repeated replacements', async () => {

@@ -55,11 +55,15 @@ import {
   touchTmpFile,
 } from '../util.js';
 import type {
+  ImageConversionReplacement,
   ReplaceFunction,
+  ResolvedImageConversionReplacement,
   ResolvedReplaceImageConfig,
   ResolvedReplaceImageEntry,
   ResolvedReplaceFunction,
+  ResolvedReplacement,
 } from './replace-image.js';
+import { isImageConversionReplacement } from './replace-image.js';
 import type { InlineOptions, ParsedBuildTask } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
@@ -746,28 +750,65 @@ export function resolveTaskConfig(
         replaceFunction,
         label: `[function#${index}]`,
       });
-      let allFiles: string[] | undefined;
+      const resolveImageConversionReplacement = (
+        replacement: ImageConversionReplacement,
+        index: number,
+      ): ResolvedImageConversionReplacement => ({
+        imageConversion:
+          replacement.kind === 'builtin'
+            ? {
+                ...replacement,
+                inputProfile:
+                  replacement.inputProfile === undefined
+                    ? undefined
+                    : upath.resolve(
+                        entryContextDir,
+                        replacement.inputProfile.trim(),
+                      ),
+              }
+            : {
+                ...replacement,
+                inputProfile:
+                  replacement.inputProfile === undefined
+                    ? undefined
+                    : upath.resolve(
+                        entryContextDir,
+                        replacement.inputProfile.trim(),
+                      ),
+                outputProfile: upath.resolve(
+                  entryContextDir,
+                  replacement.outputProfile.trim(),
+                ),
+              },
+        label: `[function#${index}]`,
+      });
+      const resolveReplacement = (
+        replacement: ReplaceFunction | ImageConversionReplacement,
+        index: number,
+      ): ResolvedReplacement =>
+        typeof replacement === 'function'
+          ? resolveReplaceFunction(replacement, index)
+          : resolveImageConversionReplacement(replacement, index);
       return replaceImageOption.flatMap(
         (
           item,
           index,
         ):
-          | ResolvedReplaceFunction
+          | ResolvedReplacement
           | ResolvedReplaceImageEntry
           | ResolvedReplaceImageEntry[] => {
-          if (typeof item === 'function') {
-            return resolveReplaceFunction(item, index);
+          if (
+            typeof item === 'function' ||
+            isImageConversionReplacement(item)
+          ) {
+            return resolveReplacement(item, index);
           }
           const { source, replacement } = item;
           const resolvedReplacement =
-            typeof replacement === 'function'
-              ? resolveReplaceFunction(replacement, index)
-              : replacement;
+            typeof replacement === 'string'
+              ? replacement
+              : resolveReplacement(replacement, index);
           if (source instanceof RegExp) {
-            allFiles ??= globSync('**/*', {
-              cwd: entryContextDir,
-              onlyFiles: true,
-            });
             const matcher = new RegExp(source.source, source.flags);
             // NOTE: If multiple matched files contain pixel-identical images,
             // the same replacement function may be called once per match. This
@@ -775,7 +816,10 @@ export function resolveTaskConfig(
             // return the same result, but a stateful function can make the
             // result depend on the matched-file order. Whether replacement
             // functions should instead run once per PDF image remains unsettled.
-            return allFiles
+            return globSync('**/*', {
+              cwd: entryContextDir,
+              onlyFiles: true,
+            })
               .filter((file) => {
                 matcher.lastIndex = 0;
                 return matcher.test(file);

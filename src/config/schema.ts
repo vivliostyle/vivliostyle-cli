@@ -10,7 +10,11 @@ import * as v from 'valibot';
 import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
-import type { ReplaceFunction } from './replace-image.js';
+import { isImageConversionReplacement } from './replace-image.js';
+import type {
+  BareImageConversionReplacement,
+  ReplaceFunction,
+} from './replace-image.js';
 
 const $ = (strings: TemplateStringsArray, ...values: unknown[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
@@ -365,6 +369,14 @@ const ReplaceFunctionSchema = v.pipe(
   ),
 );
 
+const ImageConversionReplacementSchema = v.pipe(
+  v.custom<BareImageConversionReplacement>(isImageConversionReplacement),
+  v.metadata({
+    typeString: 'import("@vivliostyle/cli").ImageConversionReplacement',
+  }),
+  v.description('Image color conversion created by a replacement factory.'),
+);
+
 const ReplaceImageEntrySchema = v.pipe(
   v.object({
     source: v.pipe(
@@ -374,9 +386,13 @@ const ReplaceImageEntrySchema = v.pipe(
       ),
     ),
     replacement: v.pipe(
-      v.union([ValidString, ReplaceFunctionSchema]),
+      v.union([
+        ValidString,
+        ReplaceFunctionSchema,
+        ImageConversionReplacementSchema,
+      ]),
       v.description(
-        'Path to the replacement image file, a replacement function, or when source is a RegExp with a string replacement, a pattern supporting $1, $2, etc. for captured groups.',
+        'Path to the replacement image file, a replacement function or color conversion, or when source is a RegExp with a string replacement, a pattern supporting $1, $2, etc. for captured groups.',
       ),
     ),
   }),
@@ -384,11 +400,17 @@ const ReplaceImageEntrySchema = v.pipe(
 );
 
 const ReplaceImageSchema = v.pipe(
-  v.array(v.union([ReplaceImageEntrySchema, ReplaceFunctionSchema])),
+  v.array(
+    v.union([
+      ReplaceImageEntrySchema,
+      ReplaceFunctionSchema,
+      ImageConversionReplacementSchema,
+    ]),
+  ),
   v.description($`
     Replace images in the output PDF.
     Each entry specifies source and replacement paths, combines a source path
-    with a replacement function, or applies a replacement function to every
+    with a replacement function or color conversion, or applies one to every
     replaceable image.
   `),
 );

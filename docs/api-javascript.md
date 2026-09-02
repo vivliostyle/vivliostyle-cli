@@ -7,6 +7,10 @@
 
 - [`build`](#build)
 - [`create`](#create)
+- [`createBuiltinCmykConversionReplacement`](#createbuiltincmykconversionreplacement)
+- [`createBuiltinGrayConversionReplacement`](#createbuiltingrayconversionreplacement)
+- [`createBuiltinRgbConversionReplacement`](#createbuiltinrgbconversionreplacement)
+- [`createIccConversionReplacement`](#createiccconversionreplacement)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
 - [`preview`](#preview)
@@ -14,12 +18,15 @@
 
 ### Interfaces
 
+- [`ColorConversionOptions`](#colorconversionoptions)
+- [`IccConversionOptions`](#iccconversionoptions)
 - [`ReplaceFunctionContext`](#replacefunctioncontext)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
 
 ### Type Aliases
 
+- [`ImageConversionReplacement`](#imageconversionreplacement)
 - [`Metadata`](#metadata)
 - [`ReplaceFunction`](#replacefunction)
 - [`StructuredDocument`](#structureddocument)
@@ -504,6 +511,79 @@ Scaffold a new Vivliostyle project.
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### createBuiltinCmykConversionReplacement()
+
+> **createBuiltinCmykConversionReplacement**(`options?`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images to DeviceCMYK.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createBuiltinGrayConversionReplacement()
+
+> **createBuiltinGrayConversionReplacement**(`options?`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images to DeviceGray.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createBuiltinRgbConversionReplacement()
+
+> **createBuiltinRgbConversionReplacement**(`options?`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images to DeviceRGB.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createIccConversionReplacement()
+
+> **createIccConversionReplacement**(`options`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images using a destination ICC
+profile and returns an image in the corresponding Device color space.
+
+#### Parameters
+
+##### options
+
+[`IccConversionOptions`](#iccconversionoptions)
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
 
 ***
 
@@ -1013,6 +1093,39 @@ Unified processor.
 
 ## Interfaces
 
+### ColorConversionOptions
+
+Options shared by image color conversion replacements.
+
+#### Extended by
+
+- [`IccConversionOptions`](#iccconversionoptions)
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="property-inputprofile"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input image. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
+
+***
+
+### IccConversionOptions
+
+Options for conversion using a caller-provided destination ICC profile.
+
+#### Extends
+
+- [`ColorConversionOptions`](#colorconversionoptions)
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="property-inputprofile-1"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input image. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
+| <a id="property-outputprofile"></a> `outputProfile` | `string` | Path to the destination ICC profile. Relative paths use the same entry context as `replaceImage` source and replacement paths. The converted image uses the corresponding Device color space; the profile itself is not embedded in the image. |
+
+***
+
 ### ReplaceFunctionContext
 
 Values available while a replacement function is running.
@@ -1140,6 +1253,12 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
+
+### ImageConversionReplacement
+
+> **ImageConversionReplacement** = `Readonly`\<\{ `destination`: `"DeviceGray"` \| `"DeviceRGB"` \| `"DeviceCMYK"`; `inputProfile?`: `string`; `kind`: `"builtin"`; \}\> \| `Readonly`\<\{ `inputProfile?`: `string`; `kind`: `"icc"`; `outputProfile`: `string`; \}\>
+
+***
 
 ### Metadata
 

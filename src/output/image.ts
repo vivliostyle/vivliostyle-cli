@@ -4,9 +4,10 @@ import type * as mupdfType from 'mupdf';
 
 import type {
   ResolvedReplaceImageConfig,
-  ResolvedReplaceFunction,
+  ResolvedReplacement,
 } from '../config/replace-image.js';
 import type { CmykConfig } from '../config/resolve.js';
+import { createImageConversionReplaceFunction } from '../image-replacement.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import type { PdfEditHook, PdfImageXObjectNode } from './pdf-visitor.js';
@@ -194,9 +195,15 @@ interface Replacement {
   replacementLabel: string;
 }
 
+const NO_REPLACEMENT_NEEDED = Symbol('no-replacement-needed');
+
 type ReplaceFn = (
   context: ReplaceContext,
-) => Replacement | null | Promise<Replacement | null>;
+) =>
+  | Replacement
+  | typeof NO_REPLACEMENT_NEEDED
+  | null
+  | Promise<Replacement | typeof NO_REPLACEMENT_NEEDED | null>;
 
 function disposeImages(
   images: readonly (mupdfType.Image & Disposable)[],
@@ -221,13 +228,51 @@ async function createReplaceFn(
   const mupdf = await importNodeModule('mupdf');
   const replaceFns: ReplaceFn[] = [];
   const loadedImages: (mupdfType.Image & Disposable)[] = [];
+  type PreparedReplaceFunction = ReturnType<
+    typeof createImageConversionReplaceFunction
+  >;
+  const conversionFunctions = new WeakMap<object, PreparedReplaceFunction>();
+
+  const getReplaceFunction = (
+    replacement: ResolvedReplacement,
+  ): PreparedReplaceFunction => {
+    if ('replaceFunction' in replacement) {
+      return {
+        replaceFunction: replacement.replaceFunction,
+        builtinDestination: null,
+      };
+    }
+    const cached = conversionFunctions.get(replacement.imageConversion);
+    if (cached) {
+      return cached;
+    }
+    const created = createImageConversionReplaceFunction(
+      replacement.imageConversion,
+    );
+    conversionFunctions.set(replacement.imageConversion, created);
+    return created;
+  };
 
   const wrapReplaceFunction = (
-    replacement: ResolvedReplaceFunction,
+    replacement: ResolvedReplacement,
     sourceLabel: string,
   ): ReplaceFn => {
+    const { replaceFunction, builtinDestination } =
+      getReplaceFunction(replacement);
     return async (context) => {
-      const replacementImage = await replacement.replaceFunction({
+      if (builtinDestination !== null) {
+        using colorSpace = disposableOrNull(context.image.getColorSpace());
+        // MuPDF exposes built-in Device color spaces as canonical native objects,
+        // so pointer equality distinguishes them from ICCBased and calibrated
+        // spaces. Preserve an exact match without re-encoding it; null would
+        // continue to the next replacement candidate.
+        if (
+          colorSpace?.pointer === mupdf.ColorSpace[builtinDestination].pointer
+        ) {
+          return NO_REPLACEMENT_NEEDED;
+        }
+      }
+      const replacementImage = await replaceFunction({
         image: context.image,
         mupdf,
       });
@@ -249,7 +294,7 @@ async function createReplaceFn(
 
   try {
     for (const rule of replacements) {
-      if ('replaceFunction' in rule) {
+      if (!('source' in rule)) {
         replaceFns.push(wrapReplaceFunction(rule, '[*]'));
         continue;
       }
@@ -325,7 +370,9 @@ async function createReplaceFn(
             try {
               const replacement = await replace({ image: inputImage });
               if (replacement !== null) {
-                inputMoved = replacement.image === inputImage;
+                inputMoved =
+                  replacement !== NO_REPLACEMENT_NEEDED &&
+                  replacement.image === inputImage;
                 return replacement;
               }
             } finally {
@@ -687,7 +734,7 @@ async function replaceImage(
     const replacement = await replaceFn({
       image: pdfImage,
     });
-    if (replacement !== null) {
+    if (replacement !== null && replacement !== NO_REPLACEMENT_NEEDED) {
       using replacementImage = disposable(replacement.image);
       const addedImage = addReplacementImage(
         node.document,

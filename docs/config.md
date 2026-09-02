@@ -430,10 +430,11 @@ pdfPostprocess takes precedence.
     Convert device-cmyk() colors to CMYK in the output PDF.
     Can be a boolean or a config object.
 
-  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry))[]  
+  - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | import("@vivliostyle/cli").ReplaceFunction | import("@vivliostyle/cli").ImageConversionReplacement)[]  
     Replace images in the output PDF.
-    Each entry specifies a source image path and its replacement image path.
-    Useful for replacing RGB images with CMYK versions.
+    Each entry specifies source and replacement paths, combines a source path
+    with a replacement function or color conversion, or applies one to every
+    replaceable image.
 
 #### Type definition
 
@@ -444,7 +445,11 @@ type PdfPostprocessConfig = {
     | "press-ready-local";
   preflightOption?: string[];
   cmyk?: boolean | CmykConfig;
-  replaceImage?: ReplaceImageEntry[];
+  replaceImage?: (
+    | ReplaceImageEntry
+    | import("@vivliostyle/cli").ReplaceFunction
+    | import("@vivliostyle/cli").ImageConversionReplacement
+  )[];
 };
 ```
 
@@ -509,15 +514,18 @@ type CmykConfig = {
   - `source`: string | RegExp  
     Path to the source image file, or a RegExp pattern to match multiple files.
 
-  - `replacement`: string  
-    Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.
+  - `replacement`: string | import("@vivliostyle/cli").ReplaceFunction | import("@vivliostyle/cli").ImageConversionReplacement  
+    Path to the replacement image file, a replacement function or color conversion, or when source is a RegExp with a string replacement, a pattern supporting $1, $2, etc. for captured groups.
 
 #### Type definition
 
 ```ts
 type ReplaceImageEntry = {
   source: string | RegExp;
-  replacement: string;
+  replacement:
+    | string
+    | import("@vivliostyle/cli").ReplaceFunction
+    | import("@vivliostyle/cli").ImageConversionReplacement;
 };
 ```
 
