@@ -245,6 +245,36 @@ describe('vite-plugin-dev-server', () => {
     expect(cssResponse.text).toContain('color: blue');
   });
 
+  it('serves CSS processed with the inline PostCSS config', async () => {
+    const middleware = await createServerMiddleware({
+      cwd: resolveFixture('postcss'),
+      config: {
+        entry: 'main.md',
+        workspaceDir: '.vs-dev-server-postcss-inline',
+        theme: 'style.css',
+        css: {
+          postcss: {
+            plugins: [
+              {
+                postcssPlugin: 'test-inline-plugin',
+                Declaration: {
+                  color: (decl) => {
+                    decl.value = 'green';
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+    const cssResponse = await supertest(middleware)
+      .get('/vivliostyle/style.css')
+      .expect(200);
+    // The inline config replaces the PostCSS config file of the project
+    expect(cssResponse.text).toContain('color: green');
+  });
+
   it('serves CSS files in entryContext', async () => {
     const middleware = await createServerMiddleware({
       cwd: resolveFixture('server'),

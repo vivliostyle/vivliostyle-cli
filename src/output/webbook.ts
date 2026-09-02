@@ -21,8 +21,8 @@ import {
   getWebPubResourceMatcher,
 } from '../processor/asset.js';
 import {
-  loadPostcssConfig,
   type PostcssConfig,
+  resolvePostcssConfig,
   ThemeCssResolver,
   transformCssImports,
 } from '../processor/css.js';
@@ -482,7 +482,7 @@ export async function copyWebPublicationAssets({
   outputs,
   copyAsset,
   themesDir,
-  serverRootDir,
+  postcss,
   manifestPath,
   input,
   outputDir,
@@ -494,7 +494,7 @@ export async function copyWebPublicationAssets({
   | 'copyAsset'
   | 'themesDir'
   | 'entries'
-  | 'serverRootDir'
+  | 'postcss'
 > & {
   input: string;
   outputDir: string;
@@ -553,10 +553,7 @@ export async function copyWebPublicationAssets({
     workspaceDir: input,
     themesDir,
   });
-  const postcssConfig =
-    typeof serverRootDir === 'string'
-      ? await loadPostcssConfig(serverRootDir)
-      : undefined;
+  const postcssConfig = await resolvePostcssConfig({ postcss });
   for (const file of allFiles) {
     const alias = relExportAliases.find(({ source }) => source === file);
     const relTarget = alias?.target || file;

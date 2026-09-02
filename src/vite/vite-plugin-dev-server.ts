@@ -31,8 +31,8 @@ import {
 import {
   clearPostcssConfigCache,
   collectThemeCssEntryFiles,
-  loadPostcssConfig,
   type PostcssConfig,
+  resolvePostcssConfig,
   scanCssDependencies,
   ThemeCssResolver,
   transformCssImports,
@@ -169,11 +169,8 @@ export function vsDevServerPlugin({
   let cssResolver = new ThemeCssResolver(_config);
 
   async function getPostcssConfig(): Promise<PostcssConfig | undefined> {
-    if (typeof config.serverRootDir !== 'string') {
-      return undefined;
-    }
     try {
-      return await loadPostcssConfig(config.serverRootDir);
+      return await resolvePostcssConfig(config);
     } catch (error) {
       Logger.logError(getFormattedError(toError(error)));
     }
