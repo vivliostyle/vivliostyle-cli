@@ -10,6 +10,7 @@ import * as v from 'valibot';
 import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
+import type { ReplaceFunction } from './replace-image.js';
 
 const $ = (strings: TemplateStringsArray, ...values: unknown[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
@@ -354,6 +355,16 @@ const CmykSchema = v.pipe(
   `),
 );
 
+const ReplaceFunctionSchema = v.pipe(
+  v.custom<ReplaceFunction>((input) => typeof input === 'function'),
+  v.metadata({
+    typeString: 'import("@vivliostyle/cli").ReplaceFunction',
+  }),
+  v.description(
+    'Function that receives the current image and its MuPDF module, then returns an owned replacement image or null to decline the current match and continue to the next replacement candidate.',
+  ),
+);
+
 const ReplaceImageEntrySchema = v.pipe(
   v.object({
     source: v.pipe(
@@ -363,9 +374,9 @@ const ReplaceImageEntrySchema = v.pipe(
       ),
     ),
     replacement: v.pipe(
-      ValidString,
+      v.union([ValidString, ReplaceFunctionSchema]),
       v.description(
-        'Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.',
+        'Path to the replacement image file, a replacement function, or when source is a RegExp with a string replacement, a pattern supporting $1, $2, etc. for captured groups.',
       ),
     ),
   }),
@@ -373,11 +384,12 @@ const ReplaceImageEntrySchema = v.pipe(
 );
 
 const ReplaceImageSchema = v.pipe(
-  v.array(ReplaceImageEntrySchema),
+  v.array(v.union([ReplaceImageEntrySchema, ReplaceFunctionSchema])),
   v.description($`
     Replace images in the output PDF.
-    Each entry specifies a source image path and its replacement image path.
-    Useful for replacing RGB images with CMYK versions.
+    Each entry specifies source and replacement paths, combines a source path
+    with a replacement function, or applies a replacement function to every
+    replaceable image.
   `),
 );
 

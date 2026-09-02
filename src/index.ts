@@ -21,6 +21,10 @@ export type {
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';
+export type {
+  ReplaceFunction,
+  ReplaceFunctionContext,
+} from './config/replace-image.js';
 export type { TemplateVariable } from './create-template.js';
 export { createVitePlugin } from './vite-adapter.js';
 /** @hidden */

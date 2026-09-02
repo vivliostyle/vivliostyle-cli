@@ -5,6 +5,7 @@ import { expect, it, onTestFinished, vi } from 'vitest';
 
 import { warnDeprecatedConfig } from '../src/config/load.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
+import type { ReplaceFunction } from '../src/config/replace-image.js';
 import {
   resolveTaskConfig,
   UseTemporaryServerRoot,
@@ -612,6 +613,79 @@ it('supports pdfPostprocess configuration', async () => {
       },
     ],
   });
+});
+
+it('resolves replaceImage function entries', async () => {
+  const bareFunction: ReplaceFunction = () => null;
+  const replacementFunction: ReplaceFunction = () => null;
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        bareFunction,
+        { source: 'img.png', replacement: replacementFunction },
+        {
+          source: /^manuscript\.md$/v,
+          replacement: replacementFunction,
+        },
+      ],
+    },
+  });
+  maskConfig(config);
+  const output = config.outputs[0] as unknown as {
+    replaceImage: unknown[];
+  };
+
+  expect(output.replaceImage).toEqual([
+    {
+      replaceFunction: bareFunction,
+      label: '[function#0]',
+    },
+    {
+      source: '__WORKSPACE__/tests/fixtures/config/img.png',
+      replacement: {
+        replaceFunction: replacementFunction,
+        label: '[function#1]',
+      },
+    },
+    {
+      source: '__WORKSPACE__/tests/fixtures/config/manuscript.md',
+      replacement: {
+        replaceFunction: replacementFunction,
+        label: '[function#2]',
+      },
+    },
+  ]);
+});
+
+it('preserves a function entry index across RegExp expansion', async () => {
+  const replacementFunction: ReplaceFunction = () => null;
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        { source: 'img.png', replacement: 'img_cmyk.tiff' },
+        { source: /\.md$/v, replacement: replacementFunction },
+      ],
+    },
+  });
+  const output = config.outputs[0] as unknown as {
+    replaceImage: {
+      source: string;
+      replacement: string | { replaceFunction: ReplaceFunction; label: string };
+    }[];
+  };
+  const expandedEntries = output.replaceImage.slice(1);
+
+  expect(expandedEntries.length).toBeGreaterThan(1);
+  expect(expandedEntries.map(({ replacement }) => replacement)).toEqual(
+    Array.from({ length: expandedEntries.length }, () => ({
+      replaceFunction: replacementFunction,
+      label: '[function#1]',
+    })),
+  );
 });
 
 it('matches every replaceImage source with a global RegExp', async () => {

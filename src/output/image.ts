@@ -2,7 +2,11 @@ import fs from 'node:fs';
 
 import type * as mupdfType from 'mupdf';
 
-import type { CmykConfig, ReplaceImageConfig } from '../config/resolve.js';
+import type {
+  ResolvedReplaceImageConfig,
+  ResolvedReplaceFunction,
+} from '../config/replace-image.js';
+import type { CmykConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import type { PdfEditHook, PdfImageXObjectNode } from './pdf-visitor.js';
@@ -202,7 +206,9 @@ function disposeImages(
   }
 }
 
-async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
+async function createReplaceFn(
+  replacements: ResolvedReplaceImageConfig,
+): Promise<{
   replaceFn: ReplaceFn | null;
   loadedImages: (mupdfType.Image & Disposable)[];
 }> {
@@ -215,10 +221,42 @@ async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
   const mupdf = await importNodeModule('mupdf');
   const replaceFns: ReplaceFn[] = [];
   const loadedImages: (mupdfType.Image & Disposable)[] = [];
+
+  const wrapReplaceFunction = (
+    replacement: ResolvedReplaceFunction,
+    sourceLabel: string,
+  ): ReplaceFn => {
+    return async (context) => {
+      const replacementImage = await replacement.replaceFunction({
+        image: context.image,
+        mupdf,
+      });
+      if (replacementImage === null) {
+        return null;
+      }
+      if (!(replacementImage instanceof mupdf.Image)) {
+        throw new TypeError(
+          `${replacement.label} must return a mupdf.Image created by context.mupdf or null`,
+        );
+      }
+      return {
+        image: replacementImage,
+        sourceLabel,
+        replacementLabel: replacement.label,
+      };
+    };
+  };
+
   try {
-    for (const { source, replacement } of replacements) {
+    for (const rule of replacements) {
+      if ('replaceFunction' in rule) {
+        replaceFns.push(wrapReplaceFunction(rule, '[*]'));
+        continue;
+      }
+      const { source, replacement } = rule;
+      const replacementLabel =
+        typeof replacement === 'string' ? replacement : replacement.label;
       let sourceImage: mupdfType.Image & Disposable;
-      let replacementImage: (mupdfType.Image & Disposable) | undefined;
 
       try {
         const srcBuffer = fs.readFileSync(source);
@@ -233,6 +271,19 @@ async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
         continue;
       }
 
+      if (typeof replacement !== 'string') {
+        loadedImages.push(sourceImage);
+        const replace = wrapReplaceFunction(replacement, source);
+        replaceFns.push((context) => {
+          if (!imagesEqual(context.image, sourceImage)) {
+            return null;
+          }
+          return replace(context);
+        });
+        continue;
+      }
+
+      let replacementImage: (mupdfType.Image & Disposable) | undefined;
       try {
         const replacementBytes = fs.readFileSync(replacement);
         replacementImage = disposable(new mupdf.Image(replacementBytes));
@@ -256,7 +307,7 @@ async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
         return {
           image: new mupdf.Image(replacementImage.pointer),
           sourceLabel: source,
-          replacementLabel: replacement,
+          replacementLabel,
         };
       });
     }
@@ -681,7 +732,7 @@ async function replaceImage(
 }
 
 export async function createReplaceImageHook(
-  replacements: ReplaceImageConfig,
+  replacements: ResolvedReplaceImageConfig,
   ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'],
   failures: string[],
 ): Promise<PdfEditHook & Disposable> {

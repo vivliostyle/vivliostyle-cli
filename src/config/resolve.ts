@@ -54,6 +54,12 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
+import type {
+  ReplaceFunction,
+  ResolvedReplaceImageConfig,
+  ResolvedReplaceImageEntry,
+  ResolvedReplaceFunction,
+} from './replace-image.js';
 import type { InlineOptions, ParsedBuildTask } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
@@ -270,13 +276,6 @@ export interface CmykConfig {
   mapOutput: string | undefined;
 }
 
-export interface ReplaceImageEntry {
-  source: string;
-  replacement: string;
-}
-
-export type ReplaceImageConfig = ReplaceImageEntry[];
-
 export interface PdfOutput {
   format: 'pdf';
   path: string;
@@ -284,7 +283,7 @@ export interface PdfOutput {
   preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
   cmyk: CmykConfig | false;
-  replaceImage: ReplaceImageConfig;
+  replaceImage: ResolvedReplaceImageConfig;
 }
 
 export interface WebPublicationOutput {
@@ -736,38 +735,74 @@ export function resolveTaskConfig(
     >['replaceImage'];
     const resolveReplaceImageConfig = (
       replaceImageOption: ReplaceImageOption,
-    ): ReplaceImageConfig => {
+    ): ResolvedReplaceImageConfig => {
       if (!replaceImageOption) {
         return [];
       }
-      const allFiles = globSync('**/*', {
-        cwd: entryContextDir,
-        onlyFiles: true,
+      const resolveReplaceFunction = (
+        replaceFunction: ReplaceFunction,
+        index: number,
+      ): ResolvedReplaceFunction => ({
+        replaceFunction,
+        label: `[function#${index}]`,
       });
-      return replaceImageOption.flatMap(({ source, replacement }) => {
-        if (source instanceof RegExp) {
-          const matcher = new RegExp(source.source, source.flags);
-          return allFiles
-            .filter((file) => {
-              matcher.lastIndex = 0;
-              return matcher.test(file);
-            })
-            .map((file) => {
-              matcher.lastIndex = 0;
-              return {
-                source: upath.resolve(entryContextDir, file),
-                replacement: upath.resolve(
-                  entryContextDir,
-                  file.replace(matcher, replacement),
-                ),
-              };
+      let allFiles: string[] | undefined;
+      return replaceImageOption.flatMap(
+        (
+          item,
+          index,
+        ):
+          | ResolvedReplaceFunction
+          | ResolvedReplaceImageEntry
+          | ResolvedReplaceImageEntry[] => {
+          if (typeof item === 'function') {
+            return resolveReplaceFunction(item, index);
+          }
+          const { source, replacement } = item;
+          const resolvedReplacement =
+            typeof replacement === 'function'
+              ? resolveReplaceFunction(replacement, index)
+              : replacement;
+          if (source instanceof RegExp) {
+            allFiles ??= globSync('**/*', {
+              cwd: entryContextDir,
+              onlyFiles: true,
             });
-        }
-        return {
-          source: upath.resolve(entryContextDir, source),
-          replacement: upath.resolve(entryContextDir, replacement),
-        };
-      });
+            const matcher = new RegExp(source.source, source.flags);
+            // NOTE: If multiple matched files contain pixel-identical images,
+            // the same replacement function may be called once per match. This
+            // is only a small overhead when repeated calls with the same input
+            // return the same result, but a stateful function can make the
+            // result depend on the matched-file order. Whether replacement
+            // functions should instead run once per PDF image remains unsettled.
+            return allFiles
+              .filter((file) => {
+                matcher.lastIndex = 0;
+                return matcher.test(file);
+              })
+              .map((file) => {
+                matcher.lastIndex = 0;
+                return {
+                  source: upath.resolve(entryContextDir, file),
+                  replacement:
+                    typeof resolvedReplacement === 'string'
+                      ? upath.resolve(
+                          entryContextDir,
+                          file.replace(matcher, resolvedReplacement),
+                        )
+                      : resolvedReplacement,
+                };
+              });
+          }
+          return {
+            source: upath.resolve(entryContextDir, source),
+            replacement:
+              typeof resolvedReplacement === 'string'
+                ? upath.resolve(entryContextDir, resolvedReplacement)
+                : resolvedReplacement,
+          };
+        },
+      );
     };
 
     // Resolve preflight with priority:

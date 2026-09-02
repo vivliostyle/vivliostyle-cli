@@ -4,6 +4,10 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import type {
+  ReplaceFunction,
+  ResolvedReplaceFunction,
+} from '../src/config/replace-image.js';
 import type { CmykConfig } from '../src/config/resolve.js';
 import { Logger } from '../src/logger.js';
 import { createCmykColorHook } from '../src/output/cmyk.js';
@@ -85,6 +89,16 @@ function insertTopLevelJp2ChannelDefinition(bytes: Uint8Array): Uint8Array {
       buffer.subarray(headerStart),
     ]),
   );
+}
+
+function resolveReplaceFunction(
+  replaceFunction: ReplaceFunction,
+  index = 0,
+): ResolvedReplaceFunction {
+  return {
+    replaceFunction,
+    label: `[function#${index}]`,
+  };
 }
 
 async function replaceImages(
@@ -1352,6 +1366,331 @@ describe('replaceImages', () => {
     } finally {
       fs.rmSync(replacement, { force: true });
     }
+  });
+
+  it('replaces an image with a bare function', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const expectedMupdf = await import('mupdf');
+    const replacementBytes = fs.readFileSync(
+      path.join(fixturesDir, 'ck_cmyk.tiff'),
+    );
+    const replace = vi.fn<ReplaceFunction>(({ image, mupdf }) => {
+      expect(mupdf).toBe(expectedMupdf);
+      expect(image).toBeInstanceOf(mupdf.Image);
+      expect(image.getWidth()).toBeGreaterThan(0);
+      return new mupdf.Image(replacementBytes);
+    });
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [resolveReplaceFunction(replace)],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(replace).toHaveBeenCalledOnce();
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceCMYK',
+      image: 'DeviceCMYK',
+    });
+  });
+
+  it('destroys an owned image returned by a replacement function', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = fs.readFileSync(
+      path.join(fixturesDir, 'ck_gray.pgm'),
+    );
+    let returnedImage: import('mupdf').Image | undefined;
+    const replace = vi.fn<ReplaceFunction>(({ mupdf }) => {
+      returnedImage = new mupdf.Image(replacementBytes);
+      vi.spyOn(returnedImage, 'destroy');
+      return returnedImage;
+    });
+
+    await replaceImages(srcPdf, {
+      replacements: [resolveReplaceFunction(replace)],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(returnedImage?.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('accepts a separately retained reference to the input image', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const sourceColorSpace = await getImageColorSpace(srcPdf);
+    const replace = vi.fn<ReplaceFunction>(
+      ({ image, mupdf }) => new mupdf.Image(image.pointer),
+    );
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [resolveReplaceFunction(replace)],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(replace).toHaveBeenCalledOnce();
+    expect(await getImageColorSpace(destPdf)).toEqual(sourceColorSpace);
+  });
+
+  it('accepts the input image as a replacement and destroys it once', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const sourceColorSpace = await getImageColorSpace(srcPdf);
+    let movedImage: import('mupdf').Image | undefined;
+    const replace = vi.fn<ReplaceFunction>(({ image }) => {
+      movedImage = image;
+      vi.spyOn(image, 'destroy');
+      return image;
+    });
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [resolveReplaceFunction(replace)],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(replace).toHaveBeenCalledOnce();
+    expect(movedImage?.destroy).toHaveBeenCalledOnce();
+    expect(await getImageColorSpace(destPdf)).toEqual(sourceColorSpace);
+  });
+
+  it('accepts an owned image obtained from the input as a replacement', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      3,
+      1,
+      chromiumTransparentRgb,
+      chromiumTransparentAlpha,
+    );
+    let returnedMask: import('mupdf').Image | undefined;
+    const replace = vi.fn<ReplaceFunction>(({ image }) => {
+      returnedMask = image.getMask()!;
+      vi.spyOn(returnedMask, 'destroy');
+      return returnedMask;
+    });
+
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [resolveReplaceFunction(replace)],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(replace).toHaveBeenCalledOnce();
+    expect(returnedMask?.destroy).toHaveBeenCalledOnce();
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('rejects a non-Image replacement value', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = fs.readFileSync(
+      path.join(fixturesDir, 'ck_gray.pgm'),
+    );
+
+    await expect(
+      replaceImages(srcPdf, {
+        replacements: [
+          resolveReplaceFunction(
+            () => replacementBytes as unknown as import('mupdf').Image,
+          ),
+        ],
+        ifIncompatibleImagesFound: 'ignore',
+      }),
+    ).rejects.toThrow(
+      '[function#0] must return a mupdf.Image created by context.mupdf or null',
+    );
+  });
+
+  it('accepts separately owned images for repeated replacements', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const duplicatePdf = await duplicateFirstImageObject(srcPdf);
+    const replacementBytes = fs.readFileSync(
+      path.join(fixturesDir, 'ck_gray.pgm'),
+    );
+    const replace = vi.fn<ReplaceFunction>(
+      ({ mupdf }) => new mupdf.Image(replacementBytes),
+    );
+
+    const { pdf: destPdf } = await replaceImages(duplicatePdf, {
+      replacements: [resolveReplaceFunction(replace)],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(replace).toHaveBeenCalledTimes(2);
+    expect(await getXrefImageColorSpaces(destPdf)).toEqual(['DeviceGray']);
+  });
+
+  it('provides separately owned inputs to replacement functions', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = fs.readFileSync(
+      path.join(fixturesDir, 'ck_gray.pgm'),
+    );
+    let declinedImage: import('mupdf').Image | undefined;
+    const decline = vi.fn<ReplaceFunction>(({ image }) => {
+      declinedImage = image;
+      vi.spyOn(image, 'destroy');
+      return null;
+    });
+    const replace = vi.fn<ReplaceFunction>(({ image, mupdf }) => {
+      expect(image).not.toBe(declinedImage);
+      expect(declinedImage?.destroy).toHaveBeenCalledOnce();
+      return new mupdf.Image(replacementBytes);
+    });
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        resolveReplaceFunction(decline),
+        resolveReplaceFunction(replace, 1),
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(decline).toHaveBeenCalledOnce();
+    expect(replace).toHaveBeenCalledOnce();
+    expect(declinedImage?.destroy).toHaveBeenCalledOnce();
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('provides CMYK image data to a replacement function', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const { pdf: cmykPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+    const inspect = vi.fn<ReplaceFunction>(({ image }) => {
+      const colorSpace = image.getColorSpace();
+      const mask = image.getMask();
+      const pixmap = image.toPixmap();
+      try {
+        expect(image.getWidth()).toBeGreaterThan(0);
+        expect(image.getHeight()).toBeGreaterThan(0);
+        expect(image.getNumberOfComponents()).toBe(4);
+        expect(image.getBitsPerComponent()).toBeGreaterThan(0);
+        expect(image.getXResolution()).toBeGreaterThan(0);
+        expect(image.getYResolution()).toBeGreaterThan(0);
+        expect(image.getImageMask()).toBe(false);
+        expect(colorSpace?.isCMYK()).toBe(true);
+        expect(mask).toBeNull();
+        expect(pixmap.getNumberOfComponents()).toBe(4);
+      } finally {
+        colorSpace?.destroy();
+        mask?.destroy();
+        pixmap.destroy();
+      }
+      return null;
+    });
+
+    await replaceImages(cmykPdf, {
+      replacements: [resolveReplaceFunction(inspect)],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(inspect).toHaveBeenCalledOnce();
+  });
+
+  it('replaces a matching source image with a function', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = fs.readFileSync(
+      path.join(fixturesDir, 'ck_gray.pgm'),
+    );
+    const replace = vi.fn<ReplaceFunction>(
+      ({ mupdf }) => new mupdf.Image(replacementBytes),
+    );
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: resolveReplaceFunction(replace),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(replace).toHaveBeenCalledOnce();
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('uses only the alpha returned by a replacement function', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      3,
+      1,
+      chromiumTransparentRgb,
+      chromiumTransparentAlpha,
+    );
+    const unreachableBefore = await countUnreachableObjects(maskedPdf);
+    const replacementBytes = fs.readFileSync(unassociatedAlphaJp2);
+    const replace = vi.fn<ReplaceFunction>(
+      ({ mupdf }) => new mupdf.Image(replacementBytes),
+    );
+
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: resolveReplaceFunction(replace),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(replace).toHaveBeenCalledOnce();
+    expect(await getFirstPageImageTransparencyState(destPdf)).toMatchObject({
+      softMaskObjectNumber: null,
+      smaskInData: 1,
+    });
+    expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
+  });
+
+  it('tries a later replacement when a function returns null', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const decline = vi.fn<ReplaceFunction>(() => null);
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        resolveReplaceFunction(decline),
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(decline).toHaveBeenCalledOnce();
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('propagates replacement function errors', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    let inputImage: import('mupdf').Image | undefined;
+
+    await expect(
+      replaceImages(srcPdf, {
+        replacements: [
+          resolveReplaceFunction(({ image }) => {
+            inputImage = image;
+            vi.spyOn(image, 'destroy');
+            throw new Error('replacement failed');
+          }),
+        ],
+        ifIncompatibleImagesFound: 'ignore',
+      }),
+    ).rejects.toThrow('replacement failed');
+    expect(inputImage?.destroy).toHaveBeenCalledOnce();
   });
 
   it('removes replaced image objects that are no longer referenced', async () => {
