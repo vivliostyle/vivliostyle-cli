@@ -405,6 +405,43 @@ function findFirstImageXObject(xobjects: import('mupdf').PDFObject): {
   return found;
 }
 
+async function duplicateFirstImageObject(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const resolved = value.resolve();
+  const dict = doc.newDictionary();
+  for (const name of [
+    'Type',
+    'Subtype',
+    'Width',
+    'Height',
+    'ColorSpace',
+    'BitsPerComponent',
+    'Filter',
+    'DecodeParms',
+  ]) {
+    const entry = resolved.get(name);
+    if (entry && !entry.isNull()) {
+      dict.put(name, entry);
+    }
+  }
+  const buffer = value.readRawStream();
+  xobjects.put('ImDup', doc.addRawStream(buffer, dict));
+  const output = doc.saveToBuffer('compress');
+  const result = new Uint8Array(output.asUint8Array());
+  output.destroy();
+  buffer.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
 async function convertFirstImageToIndexed(
   pdf: Uint8Array,
 ): Promise<Uint8Array> {
@@ -705,6 +742,46 @@ describe('replaceImages', () => {
     expect(warnings).toEqual([]);
   });
 
+  it('uses the first matching replacement', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('reuses a loaded replacement image across matching XObjects', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const duplicatePdf = await duplicateFirstImageObject(srcPdf);
+
+    const { pdf: destPdf } = await replaceImages(duplicatePdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getXrefImageColorSpaces(destPdf)).toEqual(['DeviceGray']);
+  });
+
   it('removes replaced image objects that are no longer referenced', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
     const { pdf: destPdf } = await replaceImages(srcPdf, {
@@ -829,7 +906,7 @@ describe('replaceImages', () => {
     expect(result).toEqual({ pdf: srcPdf, warnings: [], failures: [] });
   });
 
-  it('returns an empty hook when no replacement pairs can be loaded and the policy is ignore', async () => {
+  it('returns an empty hook when no replacement functions can be prepared and the policy is ignore', async () => {
     const warning = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
 
     try {
