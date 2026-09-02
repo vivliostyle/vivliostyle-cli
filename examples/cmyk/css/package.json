@@ -1,0 +1,8 @@
+{
+  "name": "css",
+  "vivliostyle": {
+    "theme": {
+      "style": "style.css"
+    }
+  }
+}
