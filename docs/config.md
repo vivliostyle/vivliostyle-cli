@@ -102,6 +102,9 @@ type VivliostyleConfigSchema =
   - `vfm`: [VfmConfig](#vfmconfig)  
     Options for converting Markdown into a stringified format (HTML).
 
+  - `css`: [CssConfig](#cssconfig)  
+    Options for CSS processing.
+
   - `image`: string  
     Docker image used for rendering.
 
@@ -189,6 +192,7 @@ type BuildTask = {
     content: string,
   ) => import("@vivliostyle/vfm").Metadata;
   vfm?: VfmConfig;
+  css?: CssConfig;
   image?: string;
   http?: boolean;
   viewer?: string;
@@ -789,6 +793,29 @@ type VfmConfig = {
       h: typeof import("hastscript").h,
     ) => import("unist").Node | string;
   }[];
+};
+```
+
+### CssConfig
+
+#### Properties
+
+- `CssConfig`
+
+  - `postcss`: string | import("postcss").ProcessOptions & { plugins?: import("postcss").AcceptedPlugin[] }  
+    Inline PostCSS config, or a directory to search for the PostCSS config file from.
+    (default: the directory of the Vivliostyle config file)
+    If an inline config is provided, the PostCSS config file is not searched.
+
+#### Type definition
+
+```ts
+type CssConfig = {
+  postcss?:
+    | string
+    | (import("postcss").ProcessOptions & {
+        plugins?: import("postcss").AcceptedPlugin[];
+      });
 };
 ```
 

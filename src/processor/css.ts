@@ -267,7 +267,11 @@ export class ThemeCssResolver {
   }
 }
 
-export type PostcssConfig = Awaited<ReturnType<typeof postcssrc>>;
+export interface PostcssConfig {
+  plugins: postcss.AcceptedPlugin[];
+  options: postcss.ProcessOptions;
+  file?: string;
+}
 
 const postcssConfigCache = new Map<
   string,
@@ -299,6 +303,26 @@ export function loadPostcssConfig(
 
 export function clearPostcssConfigCache(): void {
   postcssConfigCache.clear();
+}
+
+/**
+ * Resolve the `postcss` option in the same way as Vite: an object is used as
+ * the inline PostCSS config without searching for a config file, and a string
+ * specifies the directory to search for the config file from. Temporary
+ * server roots have no directory to search, so no config is loaded.
+ */
+export async function resolvePostcssConfig({
+  postcss: postcssOption,
+}: Pick<ResolvedTaskConfig, 'postcss'>): Promise<PostcssConfig | undefined> {
+  if (typeof postcssOption === 'object') {
+    const { plugins = [], ...options } = postcssOption;
+    return { plugins, options };
+  }
+  const loaded =
+    typeof postcssOption === 'string'
+      ? await loadPostcssConfig(postcssOption)
+      : undefined;
+  return loaded;
 }
 
 function processCss({
@@ -556,7 +580,7 @@ export function collectThemeCssEntryFiles(
 export async function validateThemeCssDependencies(
   config: Pick<
     ResolvedTaskConfig,
-    'workspaceDir' | 'themesDir' | 'themeIndexes' | 'serverRootDir'
+    'workspaceDir' | 'themesDir' | 'themeIndexes' | 'postcss'
   >,
 ): Promise<void> {
   const resolver = new ThemeCssResolver(config);
@@ -564,10 +588,7 @@ export async function validateThemeCssDependencies(
   const { errors } = await scanCssDependencies({
     entryFiles: entries.files,
     resolver,
-    postcssConfig:
-      typeof config.serverRootDir === 'string'
-        ? await loadPostcssConfig(config.serverRootDir)
-        : undefined,
+    postcssConfig: await resolvePostcssConfig(config),
   });
   const allErrors = [...entries.errors, ...errors];
   if (allErrors.length === 1) {

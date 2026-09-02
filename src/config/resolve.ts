@@ -55,7 +55,11 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
-import type { InlineOptions, ParsedBuildTask } from './schema.js';
+import type {
+  InlineOptions,
+  ParsedBuildTask,
+  PostcssInlineConfig,
+} from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -353,6 +357,7 @@ export type ResolvedTaskConfig = {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
   };
+  postcss: string | PostcssInlineConfig | UseTemporaryServerRoot;
   cover:
     | {
         src: string;
@@ -981,6 +986,11 @@ export function resolveTaskConfig(
       );
     }
   }
+  const postcss =
+    (typeof config.css?.postcss === 'string'
+      ? upath.resolve(context, config.css.postcss)
+      : config.css?.postcss) ?? projectConfig.serverRootDir;
+
   const { entries, workspaceDir } = projectConfig;
   const duplicatedTarget = entries.find(
     (v1, i) => entries.findLastIndex((v2) => v1.target === v2.target) !== i,
@@ -1018,6 +1028,7 @@ export function resolveTaskConfig(
     language,
     readingProgression,
     vfmOptions,
+    postcss,
     cover,
     timeout,
     sandbox,

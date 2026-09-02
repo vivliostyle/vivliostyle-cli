@@ -132,6 +132,21 @@ If your project has a [PostCSS](https://postcss.org/) configuration file, Vivlio
 
 Place the PostCSS config in the same directory as the [configuration file](./using-config-file.md). Any config format supported by [postcss-load-config](https://github.com/postcss/postcss-load-config) (e.g. `postcss.config.js`) can be loaded. The config is also applied to the CSS files of the theme packages you use.
 
+The [`css.postcss` option](./config.md#cssconfig) of the configuration file accepts an inline PostCSS config, or a directory to search for the PostCSS config file from. If an inline config is provided, the PostCSS config file is not searched.
+
+```js
+import autoprefixer from 'autoprefixer';
+
+export default {
+  entry: ['manuscript.md'],
+  css: {
+    postcss: {
+      plugins: [autoprefixer()],
+    },
+  },
+};
+```
+
 ## Tailwind CSS
 
 - [Example: with-tailwindcss](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-tailwindcss)

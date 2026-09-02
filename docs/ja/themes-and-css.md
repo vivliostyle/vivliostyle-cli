@@ -132,6 +132,21 @@ Create Book を使用すると、あらかじめテーマが設定された状�
 
 PostCSS の設定ファイルは、[構成ファイル](./using-config-file.md) と同じディレクトリに配置してください。[postcss-load-config](https://github.com/postcss/postcss-load-config) がサポートする形式の設定（例: `postcss.config.js`）を読み込めます。この設定は、利用しているテーマパッケージの CSS ファイルにも適用されます。
 
+構成ファイルの [`css.postcss` オプション](../config.md#cssconfig)には、インラインの PostCSS 設定、または PostCSS 設定ファイルを探索するディレクトリを指定できます。インライン設定を指定した場合、PostCSS 設定ファイルの探索は行われません。
+
+```js
+import autoprefixer from 'autoprefixer';
+
+export default {
+  entry: ['manuscript.md'],
+  css: {
+    postcss: {
+      plugins: [autoprefixer()],
+    },
+  },
+};
+```
+
 ## Tailwind CSS
 
 - [Example: with-tailwindcss](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-tailwindcss)

@@ -6,7 +6,10 @@ import { join } from 'node:path';
 import upath from 'upath';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { ParsedTheme } from '../src/config/resolve.js';
+import {
+  type ParsedTheme,
+  UseTemporaryServerRoot,
+} from '../src/config/resolve.js';
 import {
   clearPostcssConfigCache,
   loadPostcssConfig,
@@ -14,6 +17,7 @@ import {
   resolveLocalStyleFile,
   resolvePackageCssEntry,
   resolvePackageCssSubpath,
+  resolvePostcssConfig,
   scanCssDependencies,
   ThemeCssResolver,
   transformCssImports,
@@ -672,6 +676,56 @@ describe('loadPostcssConfig', () => {
   });
 });
 
+describe('resolvePostcssConfig', () => {
+  it('returns undefined for a temporary server root', async () => {
+    await expect(
+      resolvePostcssConfig({ postcss: UseTemporaryServerRoot }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('searches the config file from the specified directory', async () => {
+    writeFiles({
+      'sub/postcss.config.cjs': 'module.exports = { plugins: [] };',
+    });
+    const config = await resolvePostcssConfig({ postcss: abs('sub') });
+    expect(config?.file).toBe(abs('sub/postcss.config.cjs'));
+  });
+
+  it('uses the inline config without searching for a config file', async () => {
+    writeFiles({
+      '.vivliostyle/style.css': '',
+      // Would fail to load if the config file was searched
+      'postcss.config.cjs': 'module.exports = { plugins: [42] };',
+    });
+    const postcssConfig = await resolvePostcssConfig({
+      postcss: {
+        map: false,
+        plugins: [
+          {
+            postcssPlugin: 'test-plugin',
+            Declaration: {
+              color: (decl) => {
+                decl.value = 'blue';
+              },
+            },
+          },
+        ],
+      },
+    });
+    expect(postcssConfig?.file).toBeUndefined();
+    expect(postcssConfig?.options).toEqual({ map: false });
+    const result = await transformCssImports({
+      code: 'h1 { color: red; }',
+      importer: abs('.vivliostyle/style.css'),
+      importerUrlPath: '/style.css',
+      resolver: createResolver(),
+      postcssConfig,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe('h1 { color: blue; }');
+  });
+});
+
 describe('validateThemeCssDependencies', () => {
   it('rejects file themes with unresolved imports', async () => {
     writeFiles({
@@ -686,9 +740,9 @@ describe('validateThemeCssDependencies', () => {
     await expect(
       validateThemeCssDependencies({
         workspaceDir: projectDir,
-        serverRootDir: projectDir,
         themesDir: abs('themes'),
         themeIndexes: new Set([theme]),
+        postcss: projectDir,
       }),
     ).rejects.toThrow('Could not resolve the CSS import: missing-theme');
   });
@@ -711,9 +765,9 @@ describe('validateThemeCssDependencies', () => {
     await expect(
       validateThemeCssDependencies({
         workspaceDir: projectDir,
-        serverRootDir: projectDir,
         themesDir: abs('themes'),
         themeIndexes: new Set([theme]),
+        postcss: projectDir,
       }),
     ).resolves.toBeUndefined();
   });
