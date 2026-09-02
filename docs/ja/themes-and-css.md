@@ -155,34 +155,6 @@ PostCSS のプラグインを通して、[Tailwind CSS](https://tailwindcss.com/
 
 Tailwind CSS 公式ドキュメントの [Using PostCSS](https://tailwindcss.com/docs/installation/using-postcss) のセクションに従ってセットアップしてください。
 
-> [!NOTE]
-> 現時点の Vivliostyle.js には、Tailwind CSS が出力する一部のセレクター（`:host` など）を含むスタイルを正しく読み込めないバグがあるため、当面は以下のような小さなプラグインを併用する必要があります。この問題は近日中に解決される見込みです。
->
-> ```js
-> import tailwindcss from '@tailwindcss/postcss';
->
-> const unsupportedSelector = /:host|::backdrop|::file-selector-button/;
-> const stripUnsupportedSelectors = {
->   postcssPlugin: 'strip-unsupported-selectors',
->   OnceExit(root) {
->     root.walkRules(unsupportedSelector, (rule) => {
->       const selectors = rule.selectors.filter(
->         (s) => !unsupportedSelector.test(s),
->       );
->       if (selectors.length > 0) {
->         rule.selectors = selectors;
->       } else {
->         rule.remove();
->       }
->     });
->   },
-> };
->
-> export default {
->   plugins: [tailwindcss(), stripUnsupportedSelectors],
-> };
-> ```
-
 Tailwind CSS は、ユーティリティクラスと呼ばれるクラスを要素に指定して、クラス名に応じたスタイルを適用するフレームワークです。VFM と組み合わせる場合は、以下のように [VFM の属性記法](https://vivliostyle.github.io/vfm/#/vfm) でクラスを指定できます。Tailwind が原稿ファイルをスキャンし、使われているクラスに対応するスタイルを生成します。
 
 ```md
