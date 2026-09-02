@@ -155,34 +155,6 @@ Through PostCSS plugins, you can also use CSS frameworks such as [Tailwind CSS](
 
 Follow the [Using PostCSS](https://tailwindcss.com/docs/installation/using-postcss) section of the Tailwind CSS documentation to set it up.
 
-> [!NOTE]
-> Vivliostyle.js currently has a bug that prevents it from loading styles correctly when they contain some of the selectors Tailwind CSS emits, such as `:host`. For the time being, you need to add a small plugin like the following. This issue is expected to be resolved soon.
->
-> ```js
-> import tailwindcss from '@tailwindcss/postcss';
->
-> const unsupportedSelector = /:host|::backdrop|::file-selector-button/;
-> const stripUnsupportedSelectors = {
->   postcssPlugin: 'strip-unsupported-selectors',
->   OnceExit(root) {
->     root.walkRules(unsupportedSelector, (rule) => {
->       const selectors = rule.selectors.filter(
->         (s) => !unsupportedSelector.test(s),
->       );
->       if (selectors.length > 0) {
->         rule.selectors = selectors;
->       } else {
->         rule.remove();
->       }
->     });
->   },
-> };
->
-> export default {
->   plugins: [tailwindcss(), stripUnsupportedSelectors],
-> };
-> ```
-
 Tailwind CSS is a framework that styles elements through classes called utility classes, applying the styles that correspond to each class name. When combined with VFM, you can specify the classes with the [VFM attribute syntax](https://vivliostyle.github.io/vfm/#/vfm) as follows; Tailwind scans the manuscript files and generates the styles for the classes in use.
 
 ```md
