@@ -11,6 +11,7 @@ import * as v from 'valibot';
 import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
+import type { CmykConvertFunction } from './cmyk.js';
 
 const $ = (strings: TemplateStringsArray, ...values: unknown[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
@@ -290,17 +291,39 @@ const CMYKValueSchema = v.pipe(
 
 const CmykMapEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
 
+export function isValidCMYKValue(
+  value: unknown,
+): value is v.InferOutput<typeof CMYKValueSchema> {
+  return v.is(CMYKValueSchema, value);
+}
+
+const CmykConvertFunctionSchema = v.pipe(
+  v.custom<CmykConvertFunction>((input) => typeof input === 'function'),
+  v.metadata({
+    typeString: 'import("@vivliostyle/cli").CmykConvertFunction',
+  }),
+  v.description($`
+    Custom conversion applied to RGB colors not covered by the regular mapping.
+    RGB and CMYK channel values are integers on a 0-10000 scale.
+    Return null to leave the color unmapped.
+    Exceptions and invalid return values fail the build.
+  `),
+);
+
 const CmykConfigSchema = v.pipe(
   v.partial(
     v.object({
+      /** @deprecated */
       overrideMap: v.pipe(
         v.array(CmykMapEntrySchema),
+        v.metadata({ deprecated: true }),
         v.description($`
-          Custom RGB to CMYK color mapping.
-          Each entry is a tuple of [rgb, {c, m, y, k}].
+          Use fallback instead.
+          Each entry is a tuple of [rgb, {c, m, y, k}] that overrides the color mapping.
           RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
         `),
       ),
+      fallback: CmykConvertFunctionSchema,
       reserveMap: v.pipe(
         v.array(CmykMapEntrySchema),
         v.description($`
@@ -340,6 +363,7 @@ const CmykConfigSchema = v.pipe(
         ValidString,
         v.description($`
           Output the CMYK color map to a JSON file at the specified path.
+          Colors converted by the fallback function are not included.
         `),
       ),
     }),
@@ -351,7 +375,8 @@ const CmykSchema = v.pipe(
   v.union([v.boolean(), CmykConfigSchema]),
   v.description($`
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object.
+    Can be a boolean or a config object with options such as reserveMap,
+    fallback, ifUnmappedColorsFound, and ifIncompatibleImagesFound.
   `),
 );
 

@@ -13,6 +13,8 @@ export {
   type Metadata,
   type StringifyMarkdownOptions,
 } from '@vivliostyle/vfm';
+export type { CmykConvertFunction } from './config/cmyk.js';
+export type { CMYKValue } from './global-viewer.js';
 export { defineConfig } from './config/define.js';
 export type {
   ImageConversionReplacement,

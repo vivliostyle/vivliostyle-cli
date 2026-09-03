@@ -141,7 +141,8 @@ export class PostProcess {
       Logger.logInfo(`CMYK color map saved to ${cmykConfig.mapOutput}`);
     }
 
-    const replacesColors = cmykConfig && mergedMap.size > 0;
+    const replacesColors =
+      cmykConfig && (mergedMap.size > 0 || cmykConfig.fallback !== undefined);
     const replacesImages = replaceImageConfig.length > 0;
     if (replacesColors && replacesImages) {
       Logger.logInfo('Converting CMYK colors and replacing images');
@@ -156,6 +157,7 @@ export class PostProcess {
     const cmykColorHook = cmykConfig
       ? createCmykColorHook(
           mergedMap,
+          cmykConfig.fallback,
           cmykConfig ? cmykConfig.ifUnmappedColorsFound : 'ignore',
           failures,
         )

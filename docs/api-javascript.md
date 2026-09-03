@@ -18,6 +18,7 @@
 
 ### Interfaces
 
+- [`CMYKValue`](#cmykvalue)
 - [`ColorConversionOptions`](#colorconversionoptions)
 - [`IccConversionOptions`](#iccconversionoptions)
 - [`ReplaceFunctionContext`](#replacefunctioncontext)
@@ -26,6 +27,7 @@
 
 ### Type Aliases
 
+- [`CmykConvertFunction`](#cmykconvertfunction)
 - [`ImageConversionReplacement`](#imageconversionreplacement)
 - [`Metadata`](#metadata)
 - [`ReplaceFunction`](#replacefunction)
@@ -74,7 +76,7 @@ build({
 
 ###### cmyk?
 
-`boolean` \| \{ `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -306,7 +308,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -609,7 +611,7 @@ profile and returns an image in the corresponding Device color space.
 
 ###### cmyk?
 
-`boolean` \| \{ `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -859,7 +861,7 @@ Open a browser for previewing the publication.
 
 ###### cmyk?
 
-`boolean` \| \{ `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -1093,6 +1095,19 @@ Unified processor.
 
 ## Interfaces
 
+### CMYKValue
+
+#### Properties
+
+| Property | Type |
+| ------ | ------ |
+| <a id="property-c"></a> `c` | `number` |
+| <a id="property-k"></a> `k` | `number` |
+| <a id="property-m"></a> `m` | `number` |
+| <a id="property-y"></a> `y` | `number` |
+
+***
+
 ### ColorConversionOptions
 
 Options shared by image color conversion replacements.
@@ -1196,7 +1211,7 @@ interface to the schema, so a drift in either direction is rejected.
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="property-cliversion"></a> `cliVersion` | `string` |
-| <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
+| <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
 | <a id="property-config"></a> `config?` | `string` |
 | <a id="property-configdata"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
 | <a id="property-coreversion"></a> `coreVersion` | `string` |
@@ -1253,6 +1268,35 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
+
+### CmykConvertFunction
+
+> **CmykConvertFunction** = (`rgb`) => [`CMYKValue`](#cmykvalue) \| `null` \| `Promise`\<[`CMYKValue`](#cmykvalue) \| `null`\>
+
+Converts an unmapped RGB color on a 0-10000 scale to CMYK, or returns `null`
+to leave it unmapped.
+
+#### Parameters
+
+##### rgb
+
+###### b
+
+`number`
+
+###### g
+
+`number`
+
+###### r
+
+`number`
+
+#### Returns
+
+[`CMYKValue`](#cmykvalue) \| `null` \| `Promise`\<[`CMYKValue`](#cmykvalue) \| `null`\>
+
+***
 
 ### ImageConversionReplacement
 

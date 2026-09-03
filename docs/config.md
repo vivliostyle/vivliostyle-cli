@@ -428,7 +428,8 @@ pdfPostprocess takes precedence.
 
   - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object.
+    Can be a boolean or a config object with options such as reserveMap,
+    fallback, ifUnmappedColorsFound, and ifIncompatibleImagesFound.
 
   - `replaceImage`: ([ReplaceImageEntry](#replaceimageentry) | [ReplaceFunction](#replacefunction) | [ImageConversionReplacement](#imageconversionreplacement))[]  
     Replace images in the output PDF.
@@ -459,10 +460,16 @@ type PdfPostprocessConfig = {
 
 - `CmykConfig`
 
-  - `overrideMap`: ("{tuple(Array)}")[]  
-    Custom RGB to CMYK color mapping.
-    Each entry is a tuple of [rgb, {c, m, y, k}].
+  - ~~`overrideMap`~~ _Deprecated_  
+    Use fallback instead.
+    Each entry is a tuple of [rgb, {c, m, y, k}] that overrides the color mapping.
     RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
+
+  - `fallback`: import("@vivliostyle/cli").CmykConvertFunction  
+    Custom conversion applied to RGB colors not covered by the regular mapping.
+    RGB and CMYK channel values are integers on a 0-10000 scale.
+    Return null to leave the color unmapped.
+    Exceptions and invalid return values fail the build.
 
   - `reserveMap`: ("{tuple(Array)}")[]  
     Pre-register RGB to CMYK color mappings for use in SVG or other non-CSS contexts.
@@ -485,12 +492,14 @@ type PdfPostprocessConfig = {
 
   - `mapOutput`: string  
     Output the CMYK color map to a JSON file at the specified path.
+    Colors converted by the fallback function are not included.
 
 #### Type definition
 
 ```ts
 type CmykConfig = {
   overrideMap?: "{tuple(Array)}"[];
+  fallback?: import("@vivliostyle/cli").CmykConvertFunction;
   reserveMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
   ifUnmappedColorsFound?:

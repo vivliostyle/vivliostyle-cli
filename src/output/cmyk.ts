@@ -1,4 +1,6 @@
-import type { CmykConfig } from '../config/resolve.js';
+import type { CmykConvertFunction } from '../config/cmyk.js';
+import type { CmykConfig, RGBValue } from '../config/resolve.js';
+import { isValidCMYKValue } from '../config/schema.js';
 import type { CMYKValue } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { tokenize, type OperatorToken } from './pdf-stream.js';
@@ -15,28 +17,39 @@ const SRGB_MAX = 10000;
  */
 const CMYK_MAX = 10000;
 
-function formatRgbKey(r: number, g: number, b: number): string {
-  const ri = Math.round(r * SRGB_MAX);
-  const gi = Math.round(g * SRGB_MAX);
-  const bi = Math.round(b * SRGB_MAX);
-  return JSON.stringify([ri, gi, bi]);
-}
+function createColorConverter(
+  colorMap: ReadonlyMap<string, CMYKValue>,
+  fallback: CmykConvertFunction | undefined,
+): CmykConvertFunction {
+  if (!fallback) {
+    return (rgb) => colorMap.get(JSON.stringify([rgb.r, rgb.g, rgb.b])) ?? null;
+  }
 
-function formatUnmappedRgbKey(r: number, g: number, b: number): string {
-  const ri = Math.round(r * SRGB_MAX);
-  const gi = Math.round(g * SRGB_MAX);
-  const bi = Math.round(b * SRGB_MAX);
-  return JSON.stringify({ r: ri, g: gi, b: bi });
+  return async (rgb) => {
+    const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
+    const mapped = colorMap.get(key);
+    if (mapped !== undefined) {
+      return mapped;
+    }
+
+    const converted = await fallback(rgb);
+    if (converted !== null && !isValidCMYKValue(converted)) {
+      throw new TypeError(
+        `Invalid fallback conversion result: ${JSON.stringify(converted)}`,
+      );
+    }
+    return converted;
+  };
 }
 
 /**
  * Convert RGB color operators to CMYK in a content stream
  */
-function convertColors(
+async function convertColors(
   content: string,
-  colorMap: ReadonlyMap<string, CMYKValue>,
+  convert: CmykConvertFunction,
   unmappedColors: Set<string> | null,
-): string {
+): Promise<string> {
   const result: string[] = [];
   const pendingNumbers: { value: number; raw: string }[] = [];
 
@@ -47,10 +60,10 @@ function convertColors(
     pendingNumbers.length = 0;
   };
 
-  const convertRgbOperator = (
+  const convertRgbOperator = async (
     cmykOp: 'k' | 'K',
     token: OperatorToken,
-  ): void => {
+  ): Promise<void> => {
     const b = pendingNumbers.pop();
     const g = pendingNumbers.pop();
     const r = pendingNumbers.pop();
@@ -60,13 +73,20 @@ function convertColors(
     }
     flushPendingNumbers();
 
-    const key = formatRgbKey(r.value, g.value, b.value);
-    const cmyk = colorMap.get(key);
+    const rgb: RGBValue = {
+      r: Math.round(r.value * SRGB_MAX),
+      g: Math.round(g.value * SRGB_MAX),
+      b: Math.round(b.value * SRGB_MAX),
+    };
+    const isOutOfRange = [rgb.r, rgb.g, rgb.b].some(
+      (channel) => channel < 0 || channel > SRGB_MAX,
+    );
+    const cmyk = isOutOfRange ? null : await convert(rgb);
 
     if (!cmyk) {
       result.push(r.raw, g.raw, b.raw, token.raw);
       if (unmappedColors !== null) {
-        unmappedColors.add(formatUnmappedRgbKey(r.value, g.value, b.value));
+        unmappedColors.add(JSON.stringify(rgb));
       }
       return;
     }
@@ -86,7 +106,7 @@ function convertColors(
       // RGB color: r g b rg (non-stroking) or r g b RG (stroking)
       const cmykOp = op === 'rg' ? 'k' : op === 'RG' ? 'K' : null;
       if (cmykOp && pendingNumbers.length >= 3) {
-        convertRgbOperator(cmykOp, token);
+        await convertRgbOperator(cmykOp, token);
       } else {
         flushPendingNumbers();
         result.push(token.raw);
@@ -106,17 +126,23 @@ function convertColors(
 
 export function createCmykColorHook(
   colorMap: ReadonlyMap<string, CMYKValue>,
+  fallback: CmykConvertFunction | undefined,
   ifUnmappedColorsFound: CmykConfig['ifUnmappedColorsFound'],
   failures: string[],
 ): PdfEditHook {
+  const convert = createColorConverter(colorMap, fallback);
   const unmappedColors =
     ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
   return {
-    visit(node) {
+    async visit(node) {
       if (node.kind !== 'content-stream') {
         return;
       }
-      const converted = convertColors(node.read(), colorMap, unmappedColors);
+      const converted = await convertColors(
+        node.read(),
+        convert,
+        unmappedColors,
+      );
       node.write(converted);
     },
     complete() {

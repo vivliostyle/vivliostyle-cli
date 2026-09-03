@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import type { CmykConvertFunction } from '../src/config/cmyk.js';
 import type { CmykConfig } from '../src/config/resolve.js';
 import type { CmykMap } from '../src/global-viewer.js';
 import { createCmykColorHook } from '../src/output/cmyk.js';
@@ -14,16 +15,19 @@ const signal = AbortSignal.any([]);
 function convertCmykColors({
   pdf,
   colorMap,
+  fallback,
   ifUnmappedColorsFound,
   failures,
 }: {
   pdf: Uint8Array;
   colorMap: CmykMap;
+  fallback?: CmykConvertFunction;
   ifUnmappedColorsFound: CmykConfig['ifUnmappedColorsFound'];
   failures: string[];
 }): Promise<Uint8Array> {
   const hook = createCmykColorHook(
     new Map(Object.entries(colorMap)),
+    fallback,
     ifUnmappedColorsFound,
     failures,
   );
@@ -265,7 +269,7 @@ describe('convertCmykColors', () => {
       64,
     );
     const failures: string[] = [];
-    const hook = createCmykColorHook(new Map(), 'error', failures);
+    const hook = createCmykColorHook(new Map(), undefined, 'error', failures);
     await editPdf(repeatedColorPdf, [hook], { signal });
 
     expect(failures).toEqual(['1 RGB color(s) not mapped to CMYK']);
