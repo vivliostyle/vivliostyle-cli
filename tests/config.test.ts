@@ -3,6 +3,16 @@ import * as v from 'valibot';
 import { ValiError } from 'valibot';
 import { expect, expectTypeOf, it, onTestFinished, vi } from 'vitest';
 
+const mockedGlobSync = vi.hoisted(() =>
+  vi.fn<typeof import('tinyglobby').globSync>(),
+);
+
+vi.mock('tinyglobby', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('tinyglobby')>();
+  mockedGlobSync.mockImplementation(actual.globSync);
+  return { ...actual, globSync: mockedGlobSync };
+});
+
 import { warnDeprecatedConfig } from '../src/config/load.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
 import type {
@@ -699,6 +709,30 @@ it('preserves a function entry index across RegExp expansion', async () => {
       label: '[function#1]',
     })),
   );
+});
+
+it('enumerates the entry context only once when RegExp sources exist', async () => {
+  await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [{ source: 'img.png', replacement: 'img_cmyk.tiff' }],
+    },
+  });
+  expect(mockedGlobSync).not.toHaveBeenCalled();
+
+  await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        { source: /\.md$/v, replacement: 'img_cmyk.tiff' },
+        { source: /\.png$/v, replacement: 'img_cmyk.tiff' },
+      ],
+    },
+  });
+
+  expect(mockedGlobSync).toHaveBeenCalledTimes(1);
 });
 
 it('resolves image conversion profile paths from the entry context', async () => {

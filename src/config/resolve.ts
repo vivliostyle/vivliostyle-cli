@@ -789,6 +789,17 @@ export function resolveTaskConfig(
         typeof replacement === 'function'
           ? resolveReplaceFunction(replacement, index)
           : resolveImageConversionReplacement(replacement, index);
+      const filesInEntryContext = replaceImageOption.some(
+        (item) =>
+          typeof item !== 'function' &&
+          !isImageConversionReplacement(item) &&
+          item.source instanceof RegExp,
+      )
+        ? globSync('**/*', {
+            cwd: entryContextDir,
+            onlyFiles: true,
+          })
+        : [];
       return replaceImageOption.flatMap(
         (
           item,
@@ -816,10 +827,7 @@ export function resolveTaskConfig(
             // return the same result, but a stateful function can make the
             // result depend on the matched-file order. Whether replacement
             // functions should instead run once per PDF image remains unsettled.
-            return globSync('**/*', {
-              cwd: entryContextDir,
-              onlyFiles: true,
-            })
+            return filesInEntryContext
               .filter((file) => {
                 matcher.lastIndex = 0;
                 return matcher.test(file);
