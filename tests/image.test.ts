@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -11,6 +12,73 @@ import { editPdf } from '../src/output/pdf-visitor.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 const signal = AbortSignal.any([]);
+const unassociatedAlphaJp2 = path.join(fixturesDir, 'alpha-unassociated.jp2');
+const premultipliedAlphaJp2 = path.join(fixturesDir, 'alpha-premultiplied.jp2');
+
+function writeTemporaryImage(extension: string, bytes: Uint8Array): string {
+  const temporaryDir = path.join(import.meta.dirname, '..', '.tmp');
+  const imagePath = path.join(
+    temporaryDir,
+    `replace-image-${randomUUID()}.${extension}`,
+  );
+  fs.mkdirSync(temporaryDir, { recursive: true });
+  fs.writeFileSync(imagePath, bytes);
+  return imagePath;
+}
+
+function changeJp2ChannelDefinition(
+  bytes: Uint8Array,
+  definitionIndex: number,
+  type: number,
+  association: number,
+  occurrence = 0,
+): Uint8Array {
+  const result = new Uint8Array(bytes);
+  const buffer = Buffer.from(result);
+  let channelDefinitionTypeOffset = -1;
+  for (let index = 0; index <= occurrence; index++) {
+    channelDefinitionTypeOffset = buffer.indexOf(
+      'cdef',
+      channelDefinitionTypeOffset + 1,
+    );
+  }
+  if (channelDefinitionTypeOffset === -1) {
+    throw new Error('JP2 channel definition box not found');
+  }
+  const definitionOffset =
+    channelDefinitionTypeOffset + 4 + 2 + definitionIndex * 6;
+  const view = new DataView(
+    result.buffer,
+    result.byteOffset,
+    result.byteLength,
+  );
+  view.setUint16(definitionOffset + 2, type);
+  view.setUint16(definitionOffset + 4, association);
+  return result;
+}
+
+function insertTopLevelJp2ChannelDefinition(bytes: Uint8Array): Uint8Array {
+  const buffer = Buffer.from(bytes);
+  const channelDefinitionTypeOffset = buffer.indexOf('cdef');
+  const headerTypeOffset = buffer.indexOf('jp2h');
+  if (channelDefinitionTypeOffset < 4 || headerTypeOffset < 4) {
+    throw new Error('Required JP2 boxes not found');
+  }
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const channelDefinitionStart = channelDefinitionTypeOffset - 4;
+  const channelDefinitionLength = view.getUint32(channelDefinitionStart);
+  const headerStart = headerTypeOffset - 4;
+  return new Uint8Array(
+    Buffer.concat([
+      buffer.subarray(0, headerStart),
+      buffer.subarray(
+        channelDefinitionStart,
+        channelDefinitionStart + channelDefinitionLength,
+      ),
+      buffer.subarray(headerStart),
+    ]),
+  );
+}
 
 async function replaceImages(
   pdf: Uint8Array,
@@ -123,6 +191,54 @@ async function getXrefImageColorSpaces(pdf: Uint8Array): Promise<string[]> {
 
   doc.destroy();
   return colorSpaces;
+}
+
+async function getFirstPageImageStreamState(pdf: Uint8Array): Promise<{
+  filter: string;
+  hasSoftMask: boolean;
+  smaskInData: number | null;
+  bytes: Uint8Array;
+}> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const imageObject = value.resolve();
+  const data = value.readRawStream();
+  const smaskInData = imageObject.get('SMaskInData');
+  const state = {
+    filter: imageObject.get('Filter').toString(),
+    hasSoftMask: !imageObject.get('SMask').isNull(),
+    smaskInData: smaskInData.isNumber() ? smaskInData.asNumber() : null,
+    bytes: new Uint8Array(data.asUint8Array()),
+  };
+  data.destroy();
+  page.destroy();
+  doc.destroy();
+  return state;
+}
+
+async function getFirstPageImagePixels(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const image = doc.loadImage(value);
+  const pixmap = image.toPixmap();
+  const pixels = new Uint8Array(pixmap.getPixels());
+  pixmap.destroy();
+  image.destroy();
+  page.destroy();
+  doc.destroy();
+  return pixels;
 }
 
 async function addUnreferencedObject(
@@ -780,6 +896,185 @@ describe('replaceImages', () => {
     });
 
     expect(await getXrefImageColorSpaces(destPdf)).toEqual(['DeviceGray']);
+  });
+
+  it('preserves unassociated alpha embedded in a JPX replacement', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = new Uint8Array(
+      fs.readFileSync(unassociatedAlphaJp2),
+    );
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: unassociatedAlphaJp2,
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getFirstPageImageStreamState(destPdf)).toEqual({
+      filter: '/JPXDecode',
+      hasSoftMask: false,
+      smaskInData: 1,
+      bytes: replacementBytes,
+    });
+    expect(await getFirstPageImagePixels(destPdf)).toEqual(
+      new Uint8Array([127, 0, 0, 127, 127, 0, 0, 127]),
+    );
+    expect(await countUnreachableObjects(destPdf)).toBe(0);
+  });
+
+  it('preserves premultiplied alpha embedded in a JPX replacement', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = new Uint8Array(
+      fs.readFileSync(premultipliedAlphaJp2),
+    );
+
+    const { pdf: destPdf } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: premultipliedAlphaJp2,
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getFirstPageImageStreamState(destPdf)).toEqual({
+      filter: '/JPXDecode',
+      hasSoftMask: false,
+      smaskInData: 2,
+      bytes: replacementBytes,
+    });
+    expect(await getFirstPageImagePixels(destPdf)).toEqual(
+      new Uint8Array([64, 0, 0, 128, 64, 0, 0, 128]),
+    );
+    expect(await countUnreachableObjects(destPdf)).toBe(0);
+  });
+
+  it('does not treat an unspecified JPX auxiliary channel as alpha', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = changeJp2ChannelDefinition(
+      fs.readFileSync(unassociatedAlphaJp2),
+      3,
+      0xffff,
+      0xffff,
+    );
+    const replacement = writeTemporaryImage('jp2', replacementBytes);
+
+    try {
+      const { pdf: destPdf } = await replaceImages(srcPdf, {
+        replacements: [
+          {
+            source: path.join(fixturesDir, 'ck_rgb.png'),
+            replacement,
+          },
+        ],
+        ifIncompatibleImagesFound: 'ignore',
+      });
+
+      expect(await getFirstPageImageStreamState(destPdf)).toEqual({
+        filter: '/JPXDecode',
+        hasSoftMask: false,
+        smaskInData: null,
+        bytes: replacementBytes,
+      });
+    } finally {
+      fs.rmSync(replacement, { force: true });
+    }
+  });
+
+  it('rejects JPX alpha that does not apply to every color channel', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = changeJp2ChannelDefinition(
+      fs.readFileSync(unassociatedAlphaJp2),
+      3,
+      1,
+      1,
+    );
+    const replacement = writeTemporaryImage('jp2', replacementBytes);
+
+    try {
+      await expect(
+        replaceImages(srcPdf, {
+          replacements: [
+            {
+              source: path.join(fixturesDir, 'ck_rgb.png'),
+              replacement,
+            },
+          ],
+          ifIncompatibleImagesFound: 'ignore',
+        }),
+      ).rejects.toThrow(
+        'JPX replacement alpha must use one opacity channel that applies to all color channels',
+      );
+    } finally {
+      fs.rmSync(replacement, { force: true });
+    }
+  });
+
+  it('rejects JPX replacements with multiple opacity channels', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = changeJp2ChannelDefinition(
+      fs.readFileSync(unassociatedAlphaJp2),
+      2,
+      1,
+      0,
+    );
+    const replacement = writeTemporaryImage('jp2', replacementBytes);
+
+    try {
+      await expect(
+        replaceImages(srcPdf, {
+          replacements: [
+            {
+              source: path.join(fixturesDir, 'ck_rgb.png'),
+              replacement,
+            },
+          ],
+          ifIncompatibleImagesFound: 'ignore',
+        }),
+      ).rejects.toThrow(
+        'JPX replacement alpha must use one opacity channel that applies to all color channels',
+      );
+    } finally {
+      fs.rmSync(replacement, { force: true });
+    }
+  });
+
+  it('ignores a channel definition outside the JP2 header box', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const replacementBytes = changeJp2ChannelDefinition(
+      insertTopLevelJp2ChannelDefinition(fs.readFileSync(unassociatedAlphaJp2)),
+      3,
+      0xffff,
+      0xffff,
+      1,
+    );
+    const replacement = writeTemporaryImage('jp2', replacementBytes);
+
+    try {
+      const { pdf: destPdf } = await replaceImages(srcPdf, {
+        replacements: [
+          {
+            source: path.join(fixturesDir, 'ck_rgb.png'),
+            replacement,
+          },
+        ],
+        ifIncompatibleImagesFound: 'ignore',
+      });
+
+      expect(await getFirstPageImageStreamState(destPdf)).toEqual({
+        filter: '/JPXDecode',
+        hasSoftMask: false,
+        smaskInData: null,
+        bytes: replacementBytes,
+      });
+    } finally {
+      fs.rmSync(replacement, { force: true });
+    }
   });
 
   it('removes replaced image objects that are no longer referenced', async () => {
