@@ -14,6 +14,13 @@ const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 const signal = AbortSignal.any([]);
 const unassociatedAlphaJp2 = path.join(fixturesDir, 'alpha-unassociated.jp2');
 const premultipliedAlphaJp2 = path.join(fixturesDir, 'alpha-premultiplied.jp2');
+const opaqueAlphaPng = path.join(fixturesDir, 'alpha-opaque.png');
+const transparentRgbPng = path.join(fixturesDir, 'transparent-rgb.png');
+const transparentGrayPng = path.join(fixturesDir, 'transparent-gray.png');
+const chromiumTransparentRgb = new Uint8Array([
+  1, 2, 3, 187, 33, 91, 77, 88, 99,
+]);
+const chromiumTransparentAlpha = new Uint8Array([128, 176, 0]);
 
 function writeTemporaryImage(extension: string, bytes: Uint8Array): string {
   const temporaryDir = path.join(import.meta.dirname, '..', '.tmp');
@@ -432,6 +439,110 @@ async function createPdfWithSharedSoftMask(
   return result;
 }
 
+async function replaceFirstPageImage(
+  pdf: Uint8Array,
+  width: number,
+  height: number,
+  rgb: Uint8Array,
+  alpha: Uint8Array | null,
+  maskDimensions: readonly [number, number] = [width, height],
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { key } = findFirstImageXObject(xobjects);
+  const createImageDictionary = (
+    colorSpace: string,
+    imageWidth = width,
+    imageHeight = height,
+  ) => {
+    const dictionary = doc.newDictionary();
+    dictionary.put('Type', doc.newName('XObject'));
+    dictionary.put('Subtype', doc.newName('Image'));
+    dictionary.put('Width', doc.newInteger(imageWidth));
+    dictionary.put('Height', doc.newInteger(imageHeight));
+    dictionary.put('ColorSpace', doc.newName(colorSpace));
+    dictionary.put('BitsPerComponent', doc.newInteger(8));
+    return dictionary;
+  };
+  const imageDictionary = createImageDictionary('DeviceRGB');
+  if (alpha !== null) {
+    imageDictionary.put(
+      'SMask',
+      doc.addRawStream(
+        alpha,
+        createImageDictionary(
+          'DeviceGray',
+          maskDimensions[0],
+          maskDimensions[1],
+        ),
+      ),
+    );
+  }
+  xobjects.put(key, doc.addRawStream(rgb, imageDictionary));
+  const output = doc.saveToBuffer('compress');
+  const result = new Uint8Array(output.asUint8Array());
+  output.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
+async function getFirstPageImageTransparencyState(pdf: Uint8Array): Promise<{
+  softMaskObjectNumber: number | null;
+  softMaskOpaque: boolean | null;
+  softMaskDimensions: readonly [number, number] | null;
+  smaskInData: number | null;
+}> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { value } = findFirstImageXObject(xobjects);
+  const imageObject = value.resolve();
+  const softMask = imageObject.get('SMask');
+  const smaskInData = imageObject.get('SMaskInData');
+  let softMaskOpaque: boolean | null = null;
+  if (!softMask.isNull()) {
+    const maskImage = doc.loadImage(softMask);
+    const maskPixmap = maskImage.toPixmap();
+    const pixels = maskPixmap.getPixels();
+    const stride = maskPixmap.getStride();
+    const components = maskPixmap.getNumberOfComponents();
+    softMaskOpaque = true;
+    for (let y = 0; y < maskPixmap.getHeight(); y++) {
+      for (let x = 0; x < maskPixmap.getWidth(); x++) {
+        if (pixels[y * stride + x * components] !== 255) {
+          softMaskOpaque = false;
+        }
+      }
+    }
+    maskPixmap.destroy();
+    maskImage.destroy();
+  }
+  const softMaskObject = softMask.isNull() ? null : softMask.resolve();
+  const state = {
+    softMaskObjectNumber: softMask.isIndirect() ? softMask.asIndirect() : null,
+    softMaskOpaque,
+    softMaskDimensions: softMaskObject?.isDictionary()
+      ? ([
+          softMaskObject.get('Width').asNumber(),
+          softMaskObject.get('Height').asNumber(),
+        ] as const)
+      : null,
+    smaskInData: smaskInData.isNumber() ? smaskInData.asNumber() : null,
+  };
+  page.destroy();
+  doc.destroy();
+  return state;
+}
 async function getSoftMaskColorSpace(pdf: Uint8Array): Promise<string> {
   const mupdf = await import('mupdf');
   const doc = mupdf.PDFDocument.openDocument(
@@ -898,6 +1009,172 @@ describe('replaceImages', () => {
     expect(await getXrefImageColorSpaces(destPdf)).toEqual(['DeviceGray']);
   });
 
+  it('does not match a transparent source when mask dimensions differ', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      3,
+      1,
+      chromiumTransparentRgb,
+      new Uint8Array([128]),
+      [1, 1],
+    );
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+    expect(await getFirstPageImageTransparencyState(destPdf)).toMatchObject({
+      softMaskObjectNumber: expect.any(Number),
+      softMaskDimensions: [1, 1],
+    });
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceRGB',
+      image: 'DeviceRGB',
+    });
+  });
+
+  it('matches a semi-transparent RGB source using its soft mask', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      3,
+      1,
+      chromiumTransparentRgb,
+      chromiumTransparentAlpha,
+    );
+    const unreachableBefore = await countUnreachableObjects(maskedPdf);
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+    expect(await getFirstPageImageTransparencyState(destPdf)).toMatchObject({
+      softMaskObjectNumber: null,
+      softMaskDimensions: null,
+      smaskInData: null,
+    });
+    expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
+  });
+
+  it('does not match a semi-transparent source when its soft mask differs', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      3,
+      1,
+      new Uint8Array([1, 2, 3, 187, 33, 91, 77, 88, 99]),
+      new Uint8Array([128, 175, 0]),
+    );
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceRGB',
+      image: 'DeviceRGB',
+    });
+  });
+
+  it('does not match a semi-transparent source when visible color differs', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      3,
+      1,
+      new Uint8Array([1, 2, 3, 186, 33, 91, 77, 88, 99]),
+      new Uint8Array([128, 176, 0]),
+    );
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceRGB',
+      image: 'DeviceRGB',
+    });
+  });
+
+  it('matches an opaque RGBA source without a soft mask', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const opaquePdf = await replaceFirstPageImage(
+      srcPdf,
+      2,
+      1,
+      new Uint8Array([128, 64, 32, 128, 64, 32]),
+      null,
+    );
+    const { pdf: destPdf } = await replaceImages(opaquePdf, {
+      replacements: [
+        {
+          source: opaqueAlphaPng,
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('matches a semi-transparent grayscale source expanded to RGB', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const maskedPdf = await replaceFirstPageImage(
+      srcPdf,
+      2,
+      1,
+      new Uint8Array([200, 200, 200, 50, 50, 50]),
+      new Uint8Array([128, 255]),
+    );
+    const unreachableBefore = await countUnreachableObjects(maskedPdf);
+    const { pdf: destPdf } = await replaceImages(maskedPdf, {
+      replacements: [
+        {
+          source: transparentGrayPng,
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+    expect(await getFirstPageImageTransparencyState(destPdf)).toMatchObject({
+      softMaskObjectNumber: null,
+      softMaskDimensions: null,
+      smaskInData: null,
+    });
+    expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
+  });
   it('preserves unassociated alpha embedded in a JPX replacement', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
     const replacementBytes = new Uint8Array(
