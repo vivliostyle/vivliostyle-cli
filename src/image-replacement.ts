@@ -254,8 +254,9 @@ function createIccConversionReplaceFunction(
 function createColorConversion(
   replaceFunction: ReplaceFunction,
 ): CmykConvertFunction {
+  let mupdfPromise: Promise<typeof import('mupdf')> | undefined;
   return async (rgb) => {
-    const mupdf = await importNodeModule('mupdf');
+    const mupdf = await (mupdfPromise ??= importNodeModule('mupdf'));
     using pixmap = disposable(
       new mupdf.Pixmap(mupdf.ColorSpace.DeviceRGB, [0, 0, 1, 1], false),
     );
