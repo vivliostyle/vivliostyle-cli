@@ -12,6 +12,14 @@ SVG vector elements can be converted to CMYK, but `device-cmyk()` values within 
 
 shapes.svg is an SVG file designed to use C50, K50, and C50+K50 — colors not used elsewhere in the CSS. The chosen RGB placeholders are `#80ffff` for C50, `#808080` for K50, and `#408080` for C50+K50. These particular values are arbitrary; any values that don't collide with other colors in the document will work. They are then registered in `cmyk.reserveMap` as shown in the example config, enabling CMYK colors for vector elements inside SVG.
 
+## `cmyk.fallback`
+
+Colors that do not originate in `device-cmyk()` or `reserveMap` can remain RGB. A fallback function receives each such PDF RGB color as integers on a 0–10000 scale. It either returns a CMYK replacement or returns `null` to leave the color unmapped.
+
+The generated footnote rule in this example introduces three grays. The config maps only those known values through a small fallback table, so `ifUnmappedColorsFound: "error"` still catches any unexpected RGB color. Static mappings previously written in `overrideMap` can be moved into a fallback function; `overrideMap` is deprecated.
+
+Vivliostyle CLI also provides `builtinCmykConversion()`, `builtinGrayConversion()`, and `iccConversion()` for automatic fallback conversion. Automatic color conversion is not a substitute for a print workflow with an appropriate output intent, so a targeted fallback is preferable when the intended CMYK values are known.
+
 ## `replaceImage`
 
 Raster images are not covered by the color conversion described above. `replaceImage` lets you substitute raster images with CMYK-ready versions. Since this feature is not specific to CMYK, it is placed outside the `cmyk` configuration.
@@ -28,7 +36,7 @@ By design, this feature cannot produce PDFs that freely mix RGB and CMYK colors 
 
 Raster images require a separate check because replacing color operators does not change image data. During the same scan used by `replaceImage`, `cmyk.ifIncompatibleImagesFound` checks every encountered image, including images that do not match a replacement. It applies the same `"warn"`, `"error"`, and `"ignore"` policies when an image's color space is not DeviceCMYK or DeviceGray. The scan runs for `"warn"` and `"error"` even when no replacements are configured. The default is `"warn"`; disabling `cmyk` disables this check.
 
-The example config sets both policies to `"error"`, so the build fails if either an unmapped RGB color or an incompatible image remains. For complex documents where every color cannot be controlled at the source, `cmyk.overrideMap` can forcibly replace remaining RGB values with specified CMYK values.
+The example config sets both policies to `"error"`, so the build fails if either an unmapped RGB color or an incompatible image remains. Its fallback converts the three RGB colors introduced by the generated footnote rule.
 
 `mapOutput` is primarily a debugging tool. It writes the internal color mapping table to a file.
 
