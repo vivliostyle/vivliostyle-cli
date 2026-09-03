@@ -28,10 +28,13 @@ export type {
 } from './config/schema.js';
 export type { TemplateVariable } from './create-template.js';
 export {
+  builtinCmykConversion,
+  builtinGrayConversion,
   createBuiltinCmykConversionReplacement,
   createBuiltinGrayConversionReplacement,
   createBuiltinRgbConversionReplacement,
   createIccConversionReplacement,
+  iccConversion,
 } from './image-replacement.js';
 export type {
   ColorConversionOptions,

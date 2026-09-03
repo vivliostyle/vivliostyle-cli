@@ -6,6 +6,8 @@
 ### Functions
 
 - [`build`](#build)
+- [`builtinCmykConversion`](#builtincmykconversion)
+- [`builtinGrayConversion`](#builtingrayconversion)
 - [`create`](#create)
 - [`createBuiltinCmykConversionReplacement`](#createbuiltincmykconversionreplacement)
 - [`createBuiltinGrayConversionReplacement`](#createbuiltingrayconversionreplacement)
@@ -13,6 +15,7 @@
 - [`createIccConversionReplacement`](#createiccconversionreplacement)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
+- [`iccConversion`](#iccconversion)
 - [`preview`](#preview)
 - [`VFM`](#vfm)
 
@@ -281,6 +284,32 @@ build({
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### builtinCmykConversion()
+
+> **builtinCmykConversion**(): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Creates a function for cmyk.fallback that converts RGB colors to CMYK using
+MuPDF's DeviceCMYK color space.
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
+
+***
+
+### builtinGrayConversion()
+
+> **builtinGrayConversion**(): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Creates a function for cmyk.fallback that converts RGB colors to grayscale
+and maps the result to the K channel.
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
 
 ***
 
@@ -834,6 +863,26 @@ Define the configuration for Vivliostyle CLI.
 #### Returns
 
 [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
+
+***
+
+### iccConversion()
+
+> **iccConversion**(`outputProfile`): [`CmykConvertFunction`](#cmykconvertfunction)
+
+Creates a function for cmyk.fallback that converts RGB colors through an ICC
+profile. CMYK profiles return all four channels; grayscale profiles map to
+the K channel.
+
+#### Parameters
+
+##### outputProfile
+
+`Uint8Array`
+
+#### Returns
+
+[`CmykConvertFunction`](#cmykconvertfunction)
 
 ***
 
