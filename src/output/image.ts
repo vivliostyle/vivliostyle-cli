@@ -95,9 +95,11 @@ function pixmapsEqual(
   const pdfComponents = pdfPixmap.getNumberOfComponents();
   const sourceComponents = sourcePixmap.getNumberOfComponents();
   const maskComponents = maskPixmap?.getNumberOfComponents() ?? 0;
+  const width = pdfPixmap.getWidth();
+  const height = pdfPixmap.getHeight();
 
-  for (let y = 0; y < pdfPixmap.getHeight(); y++) {
-    for (let x = 0; x < pdfPixmap.getWidth(); x++) {
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
       const pdfOffset = y * pdfStride + x * pdfComponents;
       const sourceOffset = y * sourceStride + x * sourceComponents;
       const maskOffset = y * maskStride + x * maskComponents;
