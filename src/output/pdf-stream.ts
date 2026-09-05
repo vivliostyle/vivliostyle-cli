@@ -1,35 +1,21 @@
-import type { CmykMap } from '../global-viewer.js';
-import { Logger } from '../logger.js';
-
-/**
- * `SRGBValue.MAX`
- * @see https://github.com/vivliostyle/vivliostyle.js/blob/master/packages/core/src/vivliostyle/cmyk-store.ts
- */
-const SRGB_MAX = 10000;
-/**
- * `CMYKValue.MAX`
- * @see https://github.com/vivliostyle/vivliostyle.js/blob/master/packages/core/src/vivliostyle/cmyk-store.ts
- */
-const CMYK_MAX = 10000;
-
-interface NumberToken {
+export interface NumberToken {
   type: 'number';
   value: number;
   raw: string;
 }
 
-interface OperatorToken {
+export interface OperatorToken {
   type: 'operator';
   value: string;
   raw: string;
 }
 
-interface OtherToken {
+export interface OtherToken {
   type: 'other';
   raw: string;
 }
 
-type Token = NumberToken | OperatorToken | OtherToken;
+export type Token = NumberToken | OperatorToken | OtherToken;
 
 function scanStringLiteral(
   content: string,
@@ -59,7 +45,7 @@ function scanStringLiteral(
 /**
  * Tokenize PDF content stream
  */
-function* tokenize(content: string): Generator<Token> {
+export function* tokenize(content: string): Generator<Token> {
   let i = 0;
   const len = content.length;
 
@@ -173,107 +159,4 @@ function* tokenize(content: string): Generator<Token> {
       yield { type: 'operator', value: token, raw: token };
     }
   }
-}
-
-function formatRgbKey(r: number, g: number, b: number): string {
-  const ri = Math.round(r * SRGB_MAX);
-  const gi = Math.round(g * SRGB_MAX);
-  const bi = Math.round(b * SRGB_MAX);
-  return JSON.stringify([ri, gi, bi]);
-}
-
-function formatRgbKeyForWarning(r: number, g: number, b: number): string {
-  const ri = Math.round(r * SRGB_MAX);
-  const gi = Math.round(g * SRGB_MAX);
-  const bi = Math.round(b * SRGB_MAX);
-  return JSON.stringify({ r: ri, g: gi, b: bi });
-}
-
-function warnUnmappedColor(
-  r: number,
-  g: number,
-  b: number,
-  warnedColors: Set<string>,
-): void {
-  const warnKey = formatRgbKeyForWarning(r, g, b);
-  if (!warnedColors.has(warnKey)) {
-    warnedColors.add(warnKey);
-    Logger.logWarn(`RGB color not mapped to CMYK: ${warnKey}`);
-  }
-}
-
-/**
- * Convert RGB color operators to CMYK in a content stream
- */
-export function convertStreamColors(
-  content: string,
-  colorMap: CmykMap,
-  warnUnmapped: boolean,
-  warnedColors: Set<string>,
-): string {
-  const result: string[] = [];
-  const pendingNumbers: { value: number; raw: string }[] = [];
-
-  const flushPendingNumbers = () => {
-    for (const num of pendingNumbers) {
-      result.push(num.raw);
-    }
-    pendingNumbers.length = 0;
-  };
-
-  const convertRgbOperator = (
-    cmykOp: 'k' | 'K',
-    token: OperatorToken,
-  ): void => {
-    const b = pendingNumbers.pop();
-    const g = pendingNumbers.pop();
-    const r = pendingNumbers.pop();
-    /* v8 ignore next 3 */
-    if (!b || !g || !r) {
-      throw new Error('Expected at least three pending numbers for RGB color');
-    }
-    flushPendingNumbers();
-
-    const key = formatRgbKey(r.value, g.value, b.value);
-    const cmyk = colorMap[key];
-
-    if (cmyk) {
-      const c = (cmyk.c / CMYK_MAX).toString();
-      const m = (cmyk.m / CMYK_MAX).toString();
-      const y = (cmyk.y / CMYK_MAX).toString();
-      const k = (cmyk.k / CMYK_MAX).toString();
-      result.push(`${c} ${m} ${y} ${k} ${cmykOp}`);
-      return;
-    }
-    result.push(r.raw, g.raw, b.raw, token.raw);
-    if (warnUnmapped) {
-      warnUnmappedColor(r.value, g.value, b.value, warnedColors);
-    }
-  };
-
-  for (const token of tokenize(content)) {
-    if (token.type === 'number') {
-      pendingNumbers.push({ value: token.value, raw: token.raw });
-    } else if (token.type === 'operator') {
-      const op = token.value;
-
-      // RGB color: r g b rg (non-stroking) or r g b RG (stroking)
-      const cmykOp = op === 'rg' ? 'k' : op === 'RG' ? 'K' : null;
-      if (cmykOp && pendingNumbers.length >= 3) {
-        convertRgbOperator(cmykOp, token);
-      } else {
-        flushPendingNumbers();
-        result.push(token.raw);
-      }
-    } else {
-      // Other token types - flush pending numbers and pass through
-      flushPendingNumbers();
-      result.push(token.raw);
-    }
-  }
-
-  // Flush any remaining pending numbers
-  flushPendingNumbers();
-
-  return result.join(' ');
 }
