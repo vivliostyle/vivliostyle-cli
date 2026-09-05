@@ -326,6 +326,32 @@ const postcssConfigCache = new Map<
   Promise<PostcssConfig | undefined>
 >();
 
+const warnedExternalMapOptions = new WeakSet<object>();
+
+function coerceInlineSourceMap(
+  options: postcss.ProcessOptions,
+  warnKey: object,
+): postcss.ProcessOptions {
+  const { map } = options;
+  if (!map) {
+    return options;
+  }
+  if (
+    typeof map === 'object' &&
+    map.inline === false &&
+    !warnedExternalMapOptions.has(warnKey)
+  ) {
+    warnedExternalMapOptions.add(warnKey);
+    Logger.logWarn(
+      'The PostCSS source map option `inline: false` is not supported; the source map is inlined into the processed CSS instead.',
+    );
+  }
+  return {
+    ...options,
+    map: { ...(typeof map === 'object' ? map : {}), inline: true },
+  };
+}
+
 export function loadPostcssConfig(
   searchDir: string,
 ): Promise<PostcssConfig | undefined> {
@@ -336,7 +362,11 @@ export function loadPostcssConfig(
       try {
         const config = await postcssrc({ cwd: dir }, dir);
         Logger.debug('css > postcss config %s', config.file);
-        return { ...config, file: upath.normalize(config.file) };
+        return {
+          ...config,
+          options: coerceInlineSourceMap(config.options, config),
+          file: upath.normalize(config.file),
+        };
       } catch (error) {
         const { message } = toError(error);
         if (!message.startsWith('No PostCSS Config found')) {
@@ -364,7 +394,7 @@ export async function resolvePostcssConfig({
 }: Pick<ResolvedTaskConfig, 'postcss'>): Promise<PostcssConfig | undefined> {
   if (typeof postcssOption === 'object') {
     const { plugins = [], ...options } = postcssOption;
-    return { plugins, options };
+    return { plugins, options: coerceInlineSourceMap(options, postcssOption) };
   }
   const loaded =
     typeof postcssOption === 'string'

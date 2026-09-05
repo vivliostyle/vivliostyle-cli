@@ -4,12 +4,21 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import upath from 'upath';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from 'vitest';
 
 import {
   type ParsedTheme,
   UseTemporaryServerRoot,
 } from '../src/config/resolve.js';
+import { Logger } from '../src/logger.js';
 import {
   clearPostcssConfigCache,
   collectCssPackageImports,
@@ -868,6 +877,38 @@ describe('loadPostcssConfig', () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].message).toMatch('plugin failure');
   });
+
+  it('inlines the external source map requested by the config file', async () => {
+    const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+    onTestFinished(() => warn.mockRestore());
+    writeFiles({
+      '.vivliostyle/style.css': '',
+      'postcss.config.cjs':
+        "module.exports = { map: { inline: false }, plugins: [require('./postcss-plugin.cjs')] };",
+      'postcss-plugin.cjs': `
+        module.exports = {
+          postcssPlugin: 'test-plugin',
+          Declaration: {
+            color: (decl) => {
+              decl.value = 'blue';
+            },
+          },
+        };
+      `,
+    });
+    const result = await transformCssImports({
+      code: 'h1 { color: red; }',
+      importer: abs('.vivliostyle/style.css'),
+      importerUrlPath: '/style.css',
+      resolver: createResolver(),
+      postcssConfig: await loadPostcssConfig(projectDir),
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain(
+      'sourceMappingURL=data:application/json;base64',
+    );
+    expect(warn).toHaveBeenCalledOnce();
+  });
 });
 
 describe('resolvePostcssConfig', () => {
@@ -917,6 +958,19 @@ describe('resolvePostcssConfig', () => {
     });
     expect(result.errors).toEqual([]);
     expect(result.code).toBe('h1 { color: blue; }');
+  });
+
+  it('coerces the external source map option into an inline map with a warning', async () => {
+    const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+    onTestFinished(() => warn.mockRestore());
+    const postcss = { map: { inline: false } };
+    const postcssConfig = await resolvePostcssConfig({ postcss });
+    expect(postcssConfig?.options.map).toEqual({ inline: true });
+    expect(warn).toHaveBeenCalledOnce();
+    // The dev server resolves the config on every transform request; the
+    // warning must not repeat for the same config object
+    await resolvePostcssConfig({ postcss });
+    expect(warn).toHaveBeenCalledOnce();
   });
 });
 
