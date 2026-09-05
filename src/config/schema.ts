@@ -3,6 +3,7 @@ import {
   type StringifyMarkdownOptions,
   StringifyMarkdownOptionsSchema,
 } from '@vivliostyle/vfm';
+import type * as mupdfType from 'mupdf';
 import { satisfies as semverSatisfies } from 'semver';
 import upath from 'upath';
 import * as v from 'valibot';
@@ -354,6 +355,71 @@ const CmykSchema = v.pipe(
   `),
 );
 
+/** Values available while a replacement function is running. */
+export interface ReplaceFunctionContext {
+  /**
+   * The current PDF image as an owned reference scoped to this invocation.
+   * Its ownership is moved into the replacement function and Vivliostyle CLI
+   * destroys it when the function settles unless it is returned as the
+   * replacement. It must not be destroyed manually or retained after the
+   * function settles. Native objects returned by its methods are owned by the
+   * replacement function and must be destroyed before it settles unless that
+   * object is an image returned as the replacement.
+   */
+  image: mupdfType.Image;
+  /** The MuPDF module that owns the current image. */
+  mupdf: typeof import('mupdf');
+}
+
+/**
+ * Returns an owned replacement image, transferring its ownership to
+ * Vivliostyle CLI, or `null` to decline the current match and continue to the
+ * next replacement candidate. The returned image must be created with the
+ * supplied `mupdf` module and must not be used or destroyed after it is
+ * returned. The current `image` may be returned directly to use it as the
+ * replacement.
+ */
+export type ReplaceFunction = (
+  context: ReplaceFunctionContext,
+) => mupdfType.Image | null | Promise<mupdfType.Image | null>;
+
+const ReplaceFunctionSchema = v.pipe(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  v.function() as v.GenericSchema<ReplaceFunction>,
+  v.title('ReplaceFunction'),
+  v.description(
+    'Function that receives the current image and its MuPDF module, then returns an owned replacement image or null to decline the current match and continue to the next replacement candidate.',
+  ),
+);
+
+export const ImageConversionReplacementSchema = v.pipe(
+  v.variant('kind', [
+    v.object({
+      kind: v.literal('builtin'),
+      destination: v.union([
+        v.literal('DeviceGray'),
+        v.literal('DeviceRGB'),
+        v.literal('DeviceCMYK'),
+      ]),
+      inputProfile: v.optional(ValidString),
+      source: v.exactOptional(v.never()),
+      replacement: v.exactOptional(v.never()),
+    }),
+    v.object({
+      kind: v.literal('icc'),
+      inputProfile: v.optional(ValidString),
+      outputProfile: ValidString,
+      source: v.exactOptional(v.never()),
+      replacement: v.exactOptional(v.never()),
+    }),
+  ]),
+  v.title('ImageConversionReplacement'),
+  v.description('Image color conversion created by a replacement factory.'),
+);
+export type ImageConversionReplacement = Readonly<
+  v.InferInput<typeof ImageConversionReplacementSchema>
+>;
+
 const ReplaceImageEntrySchema = v.pipe(
   v.object({
     source: v.pipe(
@@ -363,23 +429,60 @@ const ReplaceImageEntrySchema = v.pipe(
       ),
     ),
     replacement: v.pipe(
-      ValidString,
+      v.union([
+        ValidString,
+        ReplaceFunctionSchema,
+        ImageConversionReplacementSchema,
+      ]),
       v.description(
-        'Path to the replacement image file. When source is a RegExp, supports $1, $2, etc. for captured groups.',
+        'Path to the replacement image file, a replacement function or color conversion, or when source is a RegExp with a string replacement, a pattern supporting $1, $2, etc. for captured groups.',
       ),
     ),
   }),
   v.title('ReplaceImageEntry'),
 );
+export type ReplaceImageEntry = v.InferInput<typeof ReplaceImageEntrySchema>;
 
 const ReplaceImageSchema = v.pipe(
-  v.array(ReplaceImageEntrySchema),
+  v.array(
+    v.union([
+      ReplaceImageEntrySchema,
+      ReplaceFunctionSchema,
+      ImageConversionReplacementSchema,
+    ]),
+  ),
   v.description($`
     Replace images in the output PDF.
-    Each entry specifies a source image path and its replacement image path.
-    Useful for replacing RGB images with CMYK versions.
+    Each entry specifies source and replacement paths, combines a source path
+    with a replacement function or color conversion, or applies one to every
+    replaceable image.
   `),
 );
+export type ReplaceImageConfig = v.InferInput<typeof ReplaceImageSchema>;
+
+export interface ResolvedReplaceFunction {
+  replaceFunction: ReplaceFunction;
+  label: string;
+}
+
+export interface ResolvedImageConversionReplacement {
+  imageConversion: ImageConversionReplacement;
+  label: string;
+}
+
+export type ResolvedReplacement =
+  | ResolvedReplaceFunction
+  | ResolvedImageConversionReplacement;
+
+export interface ResolvedReplaceImageEntry {
+  source: string;
+  replacement: string | ResolvedReplacement;
+}
+
+export type ResolvedReplaceImageConfig = (
+  | ResolvedReplaceImageEntry
+  | ResolvedReplacement
+)[];
 
 const PdfPostprocessConfigSchema = v.pipe(
   v.partial(

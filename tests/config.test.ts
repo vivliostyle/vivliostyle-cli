@@ -1,7 +1,17 @@
 import { VFM, readMetadata } from '@vivliostyle/vfm';
 import * as v from 'valibot';
 import { ValiError } from 'valibot';
-import { expect, it, onTestFinished, vi } from 'vitest';
+import { expect, expectTypeOf, it, onTestFinished, vi } from 'vitest';
+
+const mockedGlobSync = vi.hoisted(() =>
+  vi.fn<typeof import('tinyglobby').globSync>(),
+);
+
+vi.mock('tinyglobby', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('tinyglobby')>();
+  mockedGlobSync.mockImplementation(actual.globSync);
+  return { ...actual, globSync: mockedGlobSync };
+});
 
 import { warnDeprecatedConfig } from '../src/config/load.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
@@ -9,10 +19,19 @@ import {
   resolveTaskConfig,
   UseTemporaryServerRoot,
 } from '../src/config/resolve.js';
+import type {
+  ReplaceFunction,
+  ReplaceImageConfig,
+} from '../src/config/schema.js';
 import {
+  ImageConversionReplacementSchema,
   VivliostyleConfigSchema,
   VivliostyleInlineConfig,
 } from '../src/config/schema.js';
+import {
+  createBuiltinCmykConversionReplacement,
+  createIccConversionReplacement,
+} from '../src/image-replacement.js';
 import { Logger } from '../src/logger.js';
 import { getTaskConfig, maskConfig, resolveFixture } from './command-util.js';
 
@@ -612,6 +631,174 @@ it('supports pdfPostprocess configuration', async () => {
       },
     ],
   });
+});
+
+it('resolves replaceImage function entries', async () => {
+  const bareFunction: ReplaceFunction = () => null;
+  const replacementFunction: ReplaceFunction = () => null;
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        bareFunction,
+        { source: 'img.png', replacement: replacementFunction },
+        {
+          source: /^manuscript\.md$/v,
+          replacement: replacementFunction,
+        },
+      ],
+    },
+  });
+  maskConfig(config);
+  const output = config.outputs[0] as unknown as {
+    replaceImage: unknown[];
+  };
+
+  expect(output.replaceImage).toEqual([
+    {
+      replaceFunction: bareFunction,
+      label: '[function#0]',
+    },
+    {
+      source: '__WORKSPACE__/tests/fixtures/config/img.png',
+      replacement: {
+        replaceFunction: replacementFunction,
+        label: '[function#1]',
+      },
+    },
+    {
+      source: '__WORKSPACE__/tests/fixtures/config/manuscript.md',
+      replacement: {
+        replaceFunction: replacementFunction,
+        label: '[function#2]',
+      },
+    },
+  ]);
+});
+
+it('preserves a function entry index across RegExp expansion', async () => {
+  const replacementFunction: ReplaceFunction = () => null;
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        { source: 'img.png', replacement: 'img_cmyk.tiff' },
+        { source: /\.md$/v, replacement: replacementFunction },
+      ],
+    },
+  });
+  const output = config.outputs[0] as unknown as {
+    replaceImage: {
+      source: string;
+      replacement:
+        | string
+        | {
+            replaceFunction: ReplaceFunction;
+            label: string;
+          };
+    }[];
+  };
+  const expandedEntries = output.replaceImage.slice(1);
+
+  expect(expandedEntries.length).toBeGreaterThan(1);
+  expect(expandedEntries.map(({ replacement }) => replacement)).toEqual(
+    Array.from({ length: expandedEntries.length }, () => ({
+      replaceFunction: replacementFunction,
+      label: '[function#1]',
+    })),
+  );
+});
+
+it('enumerates the entry context only once when RegExp sources exist', async () => {
+  await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [{ source: 'img.png', replacement: 'img_cmyk.tiff' }],
+    },
+  });
+  expect(mockedGlobSync).not.toHaveBeenCalled();
+
+  await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        { source: /\.md$/v, replacement: 'img_cmyk.tiff' },
+        { source: /\.png$/v, replacement: 'img_cmyk.tiff' },
+      ],
+    },
+  });
+
+  expect(mockedGlobSync).toHaveBeenCalledTimes(1);
+});
+
+it('resolves image conversion profile paths from the entry context', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [
+        createIccConversionReplacement({
+          inputProfile: ' profiles/input.icc ',
+          outputProfile: ' profiles/output.icc ',
+        }),
+        {
+          source: 'img.png',
+          replacement: createBuiltinCmykConversionReplacement({
+            inputProfile: 'profiles/input.icc',
+          }),
+        },
+      ],
+    },
+  });
+  maskConfig(config);
+
+  expect(config.outputs[0]).toMatchObject({
+    replaceImage: [
+      {
+        imageConversion: {
+          kind: 'icc',
+          inputProfile:
+            '__WORKSPACE__/tests/fixtures/config/profiles/input.icc',
+          outputProfile:
+            '__WORKSPACE__/tests/fixtures/config/profiles/output.icc',
+        },
+        label: '[function#0]',
+      },
+      {
+        source: '__WORKSPACE__/tests/fixtures/config/img.png',
+        replacement: {
+          imageConversion: {
+            kind: 'builtin',
+            destination: 'DeviceCMYK',
+            inputProfile:
+              '__WORKSPACE__/tests/fixtures/config/profiles/input.icc',
+          },
+          label: '[function#1]',
+        },
+      },
+    ],
+  });
+});
+
+it('rejects entry fields mixed into a bare image conversion', () => {
+  const mixedReplacement = {
+    source: 'only.png',
+    ...createBuiltinCmykConversionReplacement(),
+  };
+
+  type MixedReplacementIsAccepted =
+    typeof mixedReplacement extends ReplaceImageConfig[number] ? true : false;
+  expectTypeOf<MixedReplacementIsAccepted>().toEqualTypeOf<false>();
+  expect(v.is(ImageConversionReplacementSchema, mixedReplacement)).toBe(false);
+  expect(
+    v.safeParse(VivliostyleConfigSchema, {
+      pdfPostprocess: { replaceImage: [mixedReplacement] },
+    }).success,
+  ).toBe(false);
 });
 
 it('matches every replaceImage source with a global RegExp', async () => {

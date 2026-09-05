@@ -16,7 +16,15 @@ vi.mock('../src/core/build', () => ({ build: mockedBuild }));
 vi.mock('../src/core/create', () => ({ create: mockedCreate }));
 vi.mock('../src/core/preview', () => ({ preview: mockedPreview }));
 
-import { build, create, preview } from '../src/index.js';
+import {
+  build,
+  create,
+  createBuiltinCmykConversionReplacement,
+  createBuiltinGrayConversionReplacement,
+  createBuiltinRgbConversionReplacement,
+  createIccConversionReplacement,
+  preview,
+} from '../src/index.js';
 
 it('provides build function', async () => {
   await build({
@@ -55,4 +63,29 @@ it('provides preview function', async () => {
       input: { entry: 'index.html', format: 'webbook' },
     }),
   );
+});
+
+it('provides image conversion replacement factories', () => {
+  expect(createBuiltinGrayConversionReplacement()).toEqual({
+    kind: 'builtin',
+    destination: 'DeviceGray',
+    inputProfile: undefined,
+  });
+  expect(createBuiltinRgbConversionReplacement()).toEqual({
+    kind: 'builtin',
+    destination: 'DeviceRGB',
+    inputProfile: undefined,
+  });
+  expect(createBuiltinCmykConversionReplacement()).toEqual({
+    kind: 'builtin',
+    destination: 'DeviceCMYK',
+    inputProfile: undefined,
+  });
+  expect(
+    createIccConversionReplacement({ outputProfile: 'output.icc' }),
+  ).toEqual({
+    kind: 'icc',
+    inputProfile: undefined,
+    outputProfile: 'output.icc',
+  });
 });
