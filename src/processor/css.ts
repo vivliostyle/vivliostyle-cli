@@ -755,23 +755,20 @@ export async function collectCssPackageImports({
 }
 
 /**
- * With `preferSource`, file themes are read from their source locations
- * rather than the workspace copies, which is suitable for watching the files
- * the author edits.
+ * File themes are read from their source locations rather than the workspace
+ * copies: the build-time validation runs before `copyAssets` places sibling
+ * files next to the workspace copy, and the dev server watches the files the
+ * author edits.
  */
-export function collectThemeCssEntryFiles(
-  themeIndexes: Set<ParsedTheme>,
-  { preferSource = false }: { preferSource?: boolean } = {},
-): { files: string[]; errors: Error[] } {
+export function collectThemeCssEntryFiles(themeIndexes: Set<ParsedTheme>): {
+  files: string[];
+  errors: Error[];
+} {
   const files: string[] = [];
   const errors: Error[] = [];
   for (const theme of themeIndexes) {
     if (theme.type === 'file') {
-      files.push(
-        preferSource || !fs.existsSync(theme.location)
-          ? theme.source
-          : theme.location,
-      );
+      files.push(theme.source);
       continue;
     }
     if (theme.type !== 'package' || !fs.existsSync(theme.location)) {

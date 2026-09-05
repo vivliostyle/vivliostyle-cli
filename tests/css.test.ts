@@ -1019,4 +1019,28 @@ describe('validateThemeCssDependencies', () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  it('validates file themes at their source locations', async () => {
+    // The workspace copy of the theme exists but its sibling does not,
+    // as copyAssets runs after the validation
+    writeFiles({
+      'theme.css': "@import 'base.css';",
+      'base.css': '',
+      '.vivliostyle/theme.css': "@import 'base.css';",
+    });
+    const theme: ParsedTheme = {
+      type: 'file',
+      name: 'theme.css',
+      source: abs('theme.css'),
+      location: abs('.vivliostyle/theme.css'),
+    };
+    await expect(
+      validateThemeCssDependencies({
+        workspaceDir: abs('.vivliostyle'),
+        themesDir: abs('.vivliostyle/themes'),
+        themeIndexes: new Set([theme]),
+        postcss: projectDir,
+      }),
+    ).resolves.toBeUndefined();
+  });
 });
