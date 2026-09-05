@@ -4,6 +4,10 @@ import postcss from 'postcss';
 import postcssrc from 'postcss-load-config';
 import valueParser from 'postcss-value-parser';
 import { exports as resolvePackageExports } from 'resolve.exports';
+import {
+  satisfies as semverSatisfies,
+  validRange as semverValidRange,
+} from 'semver';
 import upath from 'upath';
 
 import type { ParsedTheme, ResolvedTaskConfig } from '../config/resolve.js';
@@ -25,23 +29,34 @@ export interface CssBareImportResolution {
   pkgDir: string;
 }
 
+export interface BareImportSpecifier {
+  pkgName: string;
+  version: string | undefined;
+  subpath: string;
+}
+
 /**
  * Returns undefined for specifiers that must keep the standard CSS URL
- * semantics (relative or absolute URLs).
+ * semantics (relative or absolute URLs). The package name may carry an
+ * npm-style version specifier, e.g. `@scope/pkg@^1.0.0/theme.css`.
  */
 export function parseBareImportSpecifier(
   specifier: string,
-): { pkgName: string; subpath: string } | undefined {
+): BareImportSpecifier | undefined {
   if (!specifier || isValidUri(specifier) || /^[.\/]/v.test(specifier)) {
     return undefined;
   }
   const matched = specifier.match(
-    /^(@[^\/]+\/[^\/]+|[^@\/][^\/]*)(?:\/(.*))?$/v,
+    /^(@[^\/@]+\/[^\/@]+|[^@\/][^\/@]*)(?:@([^\/]+))?(?:\/(.*))?$/v,
   );
   if (!matched) {
     return undefined;
   }
-  return { pkgName: matched[1], subpath: matched[2] ?? '' };
+  return {
+    pkgName: matched[1],
+    version: matched[2],
+    subpath: matched[3] ?? '',
+  };
 }
 
 function stripUrlQuery(specifier: string): string {
@@ -178,6 +193,7 @@ export class ThemeCssResolver {
   #workspaceDir: string;
   #themesDir: string;
   #mounts = new Map<string, string>();
+  #checkedVersions = new Set<string>();
 
   constructor({
     workspaceDir,
@@ -200,7 +216,7 @@ export class ThemeCssResolver {
     if (!parsed) {
       throw new Error(`Invalid import specifier: ${specifier}`);
     }
-    const { pkgName, subpath } = parsed;
+    const { pkgName, version, subpath } = parsed;
     const pkgDir = findThemePackageDir(
       pkgName,
       upath.dirname(importer),
@@ -212,14 +228,41 @@ export class ThemeCssResolver {
         [
           'The specifier was not found as a file relative to the importing stylesheet,',
           `and the package is not installed: ${pkgName}`,
-          `To fix this, install the package in your project: npm install ${pkgName}`,
+          `To fix this, install the package in your project: npm install ${version ? `${pkgName}@${version}` : pkgName}`,
         ].join('\n'),
       );
+    }
+    if (version) {
+      this.#warnUnsatisfiedVersion(pkgName, version, pkgDir);
     }
     const file = subpath
       ? resolvePackageCssSubpath(pkgDir, stripUrlQuery(subpath))
       : resolvePackageCssEntry(pkgDir);
     return { file, pkgName, pkgDir };
+  }
+
+  #warnUnsatisfiedVersion(
+    pkgName: string,
+    version: string,
+    pkgDir: string,
+  ): void {
+    const requested = `${pkgName}@${version}`;
+    if (this.#checkedVersions.has(requested) || !semverValidRange(version)) {
+      return;
+    }
+    this.#checkedVersions.add(requested);
+    const installed = readPackageJson(
+      upath.join(pkgDir, 'package.json'),
+    ).version;
+    if (
+      !installed ||
+      semverSatisfies(installed, version, { includePrerelease: true })
+    ) {
+      return;
+    }
+    Logger.logWarn(
+      `The installed theme package ${pkgName}@${installed} does not satisfy the requested version: ${requested}`,
+    );
   }
 
   /**
@@ -459,15 +502,23 @@ export async function transformCssImports({
   return { code: modified || processed ? result.css : code, modified, errors };
 }
 
-export async function scanCssDependencies({
+async function walkCssImports({
   entryFiles,
-  resolver,
   postcssConfig,
+  resolveBareImport,
 }: {
   entryFiles: string[];
-  resolver: ThemeCssResolver;
   postcssConfig?: PostcssConfig | undefined;
-}): Promise<{ files: string[]; errors: Error[] }> {
+  resolveBareImport: (
+    parsed: BareImportSpecifier,
+    specifier: string,
+    importer: string,
+  ) => string | undefined;
+}): Promise<{
+  visited: Set<string>;
+  dependencies: Set<string>;
+  errors: Error[];
+}> {
   const visited = new Set<string>();
   const dependencies = new Set<string>();
   const errors: Error[] = [];
@@ -511,18 +562,161 @@ export async function scanCssDependencies({
         queue.push(upath.normalize(relFile));
         continue;
       }
-      if (!parseBareImportSpecifier(specifier)) {
+      const parsed = parseBareImportSpecifier(specifier);
+      if (!parsed) {
         continue;
       }
       try {
-        const resolution = resolver.resolveBareImport(specifier, file);
-        queue.push(upath.normalize(resolution.file));
+        const resolved = resolveBareImport(parsed, specifier, file);
+        if (resolved) {
+          queue.push(upath.normalize(resolved));
+        }
       } catch (error) {
         errors.push(toError(error));
       }
     }
   }
+  return { visited, dependencies, errors };
+}
+
+export async function scanCssDependencies({
+  entryFiles,
+  resolver,
+  postcssConfig,
+}: {
+  entryFiles: string[];
+  resolver: ThemeCssResolver;
+  postcssConfig?: PostcssConfig | undefined;
+}): Promise<{ files: string[]; errors: Error[] }> {
+  const { visited, dependencies, errors } = await walkCssImports({
+    entryFiles,
+    postcssConfig,
+    resolveBareImport: (_parsed, specifier, importer) =>
+      resolver.resolveBareImport(specifier, importer).file,
+  });
   return { files: [...new Set([...visited, ...dependencies])], errors };
+}
+
+/**
+ * Discover the theme packages referred from `@import` rules that need to be
+ * installed into the themes directory, before running the installation. Only
+ * the stylesheets readable at this point are scanned: the CSS files and the
+ * local packages configured as themes, and the files they import. Packages
+ * fetched from the npm registry are not traversed. Packages already
+ * resolvable from the project are omitted, unless the import requests a
+ * version that the resolved package does not satisfy.
+ */
+export async function collectCssPackageImports({
+  themeIndexes,
+  postcssConfig,
+}: {
+  themeIndexes: Set<ParsedTheme>;
+  postcssConfig?: PostcssConfig | undefined;
+}): Promise<Map<string, string>> {
+  const entryFiles: string[] = [];
+  const localPackageDirs = new Map<string, string>();
+  const configuredSpecifiers = new Map<string, string>();
+  const resolvePackageFile = (
+    pkgDir: string,
+    subpath: string | undefined,
+  ): string | undefined => {
+    try {
+      return subpath
+        ? resolvePackageCssSubpath(pkgDir, subpath)
+        : resolvePackageCssEntry(pkgDir);
+    } catch (error) {
+      // The resolution failure is reported by the scan after the installation
+      Logger.debug('css > skipped scanning a theme import %o', error);
+    }
+  };
+  for (const theme of themeIndexes) {
+    if (theme.type === 'file') {
+      entryFiles.push(theme.source);
+      continue;
+    }
+    if (theme.type !== 'package') {
+      continue;
+    }
+    configuredSpecifiers.set(theme.name, theme.specifier);
+    if (theme.registry) {
+      continue;
+    }
+    // Scan local packages at their source locations, which are available
+    // regardless of the installation state
+    localPackageDirs.set(theme.name, theme.specifier);
+    for (const locator of theme.importPath
+      ? [theme.importPath].flat()
+      : [undefined]) {
+      const entry = resolvePackageFile(theme.specifier, locator);
+      if (entry) {
+        entryFiles.push(entry);
+      }
+    }
+  }
+
+  const discovered = new Map<string, string>();
+  await walkCssImports({
+    entryFiles,
+    postcssConfig,
+    resolveBareImport: (
+      { pkgName, version, subpath },
+      _specifier,
+      importer,
+    ) => {
+      const localPackageDir = localPackageDirs.get(pkgName);
+      if (localPackageDir) {
+        if (version) {
+          Logger.logWarn(
+            `The requested version ${pkgName}@${version} is ignored because the theme is configured as a local package: ${localPackageDir}`,
+          );
+        }
+        return resolvePackageFile(
+          localPackageDir,
+          subpath ? stripUrlQuery(subpath) : undefined,
+        );
+      }
+      const configured = configuredSpecifiers.get(pkgName);
+      if (configured !== undefined) {
+        if (version && configured !== `${pkgName}@${version}`) {
+          Logger.logWarn(
+            `The requested version ${pkgName}@${version} conflicts with the configured theme ${configured}. The configured theme takes precedence.`,
+          );
+        }
+        return;
+      }
+      const projectPackageDir = findPackageDir(
+        pkgName,
+        upath.dirname(importer),
+      );
+      if (projectPackageDir) {
+        if (!version) {
+          return;
+        }
+        const installed = readPackageJson(
+          upath.join(projectPackageDir, 'package.json'),
+        ).version;
+        if (
+          installed &&
+          semverValidRange(version) &&
+          semverSatisfies(installed, version, { includePrerelease: true })
+        ) {
+          return;
+        }
+      }
+      const specifier = version ? `${pkgName}@${version}` : pkgName;
+      const existing = discovered.get(pkgName);
+      if (existing !== undefined) {
+        if (existing !== specifier) {
+          Logger.logWarn(
+            `The theme package ${pkgName} is imported with conflicting versions: ${existing}, ${specifier}. Using ${existing}.`,
+          );
+        }
+        return;
+      }
+      discovered.set(pkgName, specifier);
+    },
+  });
+  return discovered;
 }
 
 /**

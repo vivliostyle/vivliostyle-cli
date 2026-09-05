@@ -580,7 +580,14 @@ export function vsDevServerPlugin({
     configureServer(viteServer) {
       server = viteServer;
       const requestReload = debounce(async () => {
-        await reload();
+        try {
+          await reload();
+        } catch (error) {
+          // An error inside the watcher callback leads to an unhandled
+          // rejection, which kills the whole preview process
+          Logger.logError(getFormattedError(toError(error)));
+          return;
+        }
         viteServer.ws.send({
           type: 'full-reload',
           path: '*',

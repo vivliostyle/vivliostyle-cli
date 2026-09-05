@@ -12,6 +12,7 @@ import {
 } from '../src/config/resolve.js';
 import {
   clearPostcssConfigCache,
+  collectCssPackageImports,
   loadPostcssConfig,
   parseBareImportSpecifier,
   resolveLocalStyleFile,
@@ -72,6 +73,32 @@ describe('parseBareImportSpecifier', () => {
       pkgName: '@scope/pkg',
       subpath: 'css/partial/foo.css',
     });
+  });
+
+  it('parses version specifiers', () => {
+    expect(parseBareImportSpecifier('foo@^1.0.0')).toEqual({
+      pkgName: 'foo',
+      version: '^1.0.0',
+      subpath: '',
+    });
+    expect(parseBareImportSpecifier('foo@1.2.3/theme.css')).toEqual({
+      pkgName: 'foo',
+      version: '1.2.3',
+      subpath: 'theme.css',
+    });
+    expect(
+      parseBareImportSpecifier('@vivliostyle/theme-base@^3.0.0/theme-all.css'),
+    ).toEqual({
+      pkgName: '@vivliostyle/theme-base',
+      version: '^3.0.0',
+      subpath: 'theme-all.css',
+    });
+    expect(parseBareImportSpecifier('@scope/pkg@latest')).toEqual({
+      pkgName: '@scope/pkg',
+      version: 'latest',
+      subpath: '',
+    });
+    expect(parseBareImportSpecifier('foo@')).toBeUndefined();
   });
 
   it('keeps the CSS URL semantics for relative and absolute specifiers', () => {
@@ -255,6 +282,30 @@ describe('transformCssImports', () => {
     expect(result.errors).toEqual([]);
     expect(result.code).toBe(
       "@import 'themes/node_modules/@vivliostyle/theme-a/theme.css';\nh1 { color: red; }",
+    );
+  });
+
+  it('rewrites versioned bare imports ignoring the version', async () => {
+    writeFiles({
+      '.vivliostyle/themes/node_modules/@vivliostyle/theme-a/package.json':
+        JSON.stringify({
+          name: '@vivliostyle/theme-a',
+          version: '3.1.0',
+          vivliostyle: { theme: { style: 'theme.css' } },
+        }),
+      '.vivliostyle/themes/node_modules/@vivliostyle/theme-a/theme.css': '',
+      '.vivliostyle/themes/node_modules/@vivliostyle/theme-a/theme-all.css': '',
+      '.vivliostyle/style.css': '',
+    });
+    const result = await transformCssImports({
+      code: "@import '@vivliostyle/theme-a@^3.0.0/theme-all.css';",
+      importer: abs('.vivliostyle/style.css'),
+      importerUrlPath: '/style.css',
+      resolver: createResolver(),
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe(
+      "@import 'themes/node_modules/@vivliostyle/theme-a/theme-all.css';",
     );
   });
 
@@ -573,6 +624,149 @@ describe('scanCssDependencies', () => {
       postcssConfig: await loadPostcssConfig(projectDir),
     });
     expect(errors).toEqual([]);
+  });
+});
+
+describe('collectCssPackageImports', () => {
+  const fileTheme = (rel: string): ParsedTheme => ({
+    type: 'file',
+    name: upath.basename(rel),
+    source: abs(rel),
+    location: abs(upath.join('.vivliostyle', rel)),
+  });
+
+  it('discovers the imported packages with their versions', async () => {
+    writeFiles({
+      'style.css': "@import './base.css';",
+      'base.css':
+        "@import '@scope/pkg@^3.0.0/theme-all.css';\n@import 'other-pkg';",
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set([fileTheme('style.css')]),
+    });
+    expect(discovered).toEqual(
+      new Map([
+        ['@scope/pkg', '@scope/pkg@^3.0.0'],
+        ['other-pkg', 'other-pkg'],
+      ]),
+    );
+  });
+
+  it('skips packages configured as themes', async () => {
+    writeFiles({
+      'style.css': "@import 'configured-pkg@^2.0.0/a.css';",
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set<ParsedTheme>([
+        fileTheme('style.css'),
+        {
+          type: 'package',
+          name: 'configured-pkg',
+          specifier: 'configured-pkg@^1.0.0',
+          location: abs('.vivliostyle/themes/node_modules/configured-pkg'),
+          registry: true,
+        },
+      ]),
+    });
+    expect(discovered.size).toBe(0);
+  });
+
+  it('scans local package themes and follows their imports', async () => {
+    writeFiles({
+      'my-theme/package.json': JSON.stringify({
+        name: 'my-theme',
+        vivliostyle: { theme: { style: 'theme.css' } },
+      }),
+      'my-theme/theme.css': "@import 'remote-pkg@^2.0.0/theme.css';",
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set<ParsedTheme>([
+        {
+          type: 'package',
+          name: 'my-theme',
+          specifier: abs('my-theme'),
+          location: abs('.vivliostyle/themes/node_modules/my-theme'),
+          registry: false,
+        },
+      ]),
+    });
+    expect(discovered).toEqual(new Map([['remote-pkg', 'remote-pkg@^2.0.0']]));
+  });
+
+  it('traverses imports referring to the configured local packages', async () => {
+    writeFiles({
+      'style.css': "@import 'my-theme/extra.css';",
+      'my-theme/package.json': JSON.stringify({ name: 'my-theme' }),
+      'my-theme/extra.css': "@import 'nested-pkg';",
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set<ParsedTheme>([
+        fileTheme('style.css'),
+        {
+          type: 'package',
+          name: 'my-theme',
+          specifier: abs('my-theme'),
+          location: abs('.vivliostyle/themes/node_modules/my-theme'),
+          registry: false,
+          importPath: [],
+        },
+      ]),
+    });
+    expect(discovered).toEqual(new Map([['nested-pkg', 'nested-pkg']]));
+  });
+
+  it('skips packages resolvable from the project unless the version is unsatisfied', async () => {
+    writeFiles({
+      'style.css': [
+        "@import 'installed-pkg';",
+        "@import 'outdated-pkg@^9.0.0/a.css';",
+        "@import 'fresh-pkg@^1.0.0/a.css';",
+      ].join('\n'),
+      'node_modules/installed-pkg/package.json': JSON.stringify({
+        name: 'installed-pkg',
+        version: '1.0.0',
+      }),
+      'node_modules/outdated-pkg/package.json': JSON.stringify({
+        name: 'outdated-pkg',
+        version: '1.0.0',
+      }),
+      'node_modules/fresh-pkg/package.json': JSON.stringify({
+        name: 'fresh-pkg',
+        version: '1.2.0',
+      }),
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set([fileTheme('style.css')]),
+    });
+    expect(discovered).toEqual(
+      new Map([['outdated-pkg', 'outdated-pkg@^9.0.0']]),
+    );
+  });
+
+  it('does not traverse the imports of the packages resolved from the project', async () => {
+    writeFiles({
+      'style.css': "@import 'installed-pkg';",
+      'node_modules/installed-pkg/package.json': JSON.stringify({
+        name: 'installed-pkg',
+        version: '1.0.0',
+        style: 'theme.css',
+      }),
+      'node_modules/installed-pkg/theme.css': "@import 'hidden-pkg';",
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set([fileTheme('style.css')]),
+    });
+    expect(discovered.size).toBe(0);
+  });
+
+  it('keeps the first specifier for conflicting versions', async () => {
+    writeFiles({
+      'style.css': "@import 'pkg@^1.0.0/a.css';\n@import 'pkg@^2.0.0/b.css';",
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set([fileTheme('style.css')]),
+    });
+    expect(discovered).toEqual(new Map([['pkg', 'pkg@^1.0.0']]));
   });
 });
 
