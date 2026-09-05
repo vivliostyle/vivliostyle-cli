@@ -21,6 +21,7 @@ import {
   compile,
   prepareThemeDirectory,
 } from '../processor/compile.js';
+import { validateThemeCssDependencies } from '../processor/css.js';
 import { createViteServer, generateCmykReserveMap } from '../server.js';
 import { cwd, runCleanupHandlers } from '../util.js';
 
@@ -96,6 +97,7 @@ export async function build(
       if (isWebPubConfig(config)) {
         await cleanupWorkspace(config);
         await prepareThemeDirectory(config, inlineConfig.signal);
+        await validateThemeCssDependencies(config);
         await compile(config);
         await copyAssets(config);
       }

@@ -686,6 +686,38 @@ export const ServerConfig = v.pipe(
 );
 export type ServerConfig = v.InferInput<typeof ServerConfig>;
 
+export type PostcssInlineConfig = import('postcss').ProcessOptions & {
+  plugins?: import('postcss').AcceptedPlugin[];
+};
+
+export const CssConfig = v.pipe(
+  v.partial(
+    v.object({
+      postcss: v.pipe(
+        v.union([
+          ValidString,
+          v.pipe(
+            v.custom<PostcssInlineConfig>((value) =>
+              Boolean(value && typeof value === 'object'),
+            ),
+            v.metadata({
+              typeString:
+                'import("postcss").ProcessOptions & { plugins?: import("postcss").AcceptedPlugin[] }',
+            }),
+          ),
+        ]),
+        v.description($`
+          Inline PostCSS config, or a directory to search for the PostCSS config file from.
+          (default: the directory of the Vivliostyle config file)
+          If an inline config is provided, the PostCSS config file is not searched.
+        `),
+      ),
+    }),
+  ),
+  v.title('CssConfig'),
+);
+export type CssConfig = v.InferInput<typeof CssConfig>;
+
 export const BuildTask = v.pipe(
   v.intersect([
     v.required(
@@ -854,6 +886,12 @@ export const BuildTask = v.pipe(
           v.union([VfmConfig]),
           v.description($`
             Options for converting Markdown into a stringified format (HTML).
+          `),
+        ),
+        css: v.pipe(
+          v.union([CssConfig]),
+          v.description($`
+            Options for CSS processing.
           `),
         ),
         image: v.pipe(

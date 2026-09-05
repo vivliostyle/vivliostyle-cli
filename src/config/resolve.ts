@@ -40,6 +40,7 @@ import {
 } from '../constants.js';
 import type { CMYKValue } from '../global-viewer.js';
 import { Logger } from '../logger.js';
+import { resolveLocalStyleFile } from '../processor/css.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
 import {
   cliVersion,
@@ -54,7 +55,11 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
-import type { InlineOptions, ParsedBuildTask } from './schema.js';
+import type {
+  InlineOptions,
+  ParsedBuildTask,
+  PostcssInlineConfig,
+} from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -352,6 +357,7 @@ export type ResolvedTaskConfig = {
     hardLineBreaks: boolean;
     disableFormatHtml: boolean;
   };
+  postcss: string | PostcssInlineConfig | UseTemporaryServerRoot;
   cover:
     | {
         src: string;
@@ -492,8 +498,8 @@ export function parseTheme({
   }
 
   // bare .css file
-  const stylePath = upath.resolve(context, specifier);
-  if (fs.existsSync(stylePath) && stylePath.endsWith('.css')) {
+  const stylePath = resolveLocalStyleFile(specifier, context);
+  if (stylePath) {
     const sourceRelPath = upath.relative(context, stylePath);
     return {
       type: 'file',
@@ -980,6 +986,11 @@ export function resolveTaskConfig(
       );
     }
   }
+  const postcss =
+    (typeof config.css?.postcss === 'string'
+      ? upath.resolve(context, config.css.postcss)
+      : config.css?.postcss) ?? projectConfig.serverRootDir;
+
   const { entries, workspaceDir } = projectConfig;
   const duplicatedTarget = entries.find(
     (v1, i) => entries.findLastIndex((v2) => v1.target === v2.target) !== i,
@@ -1017,6 +1028,7 @@ export function resolveTaskConfig(
     language,
     readingProgression,
     vfmOptions,
+    postcss,
     cover,
     timeout,
     sandbox,

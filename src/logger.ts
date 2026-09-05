@@ -101,7 +101,7 @@ export class Logger {
     );
   }
 
-  static startLogging(text: string): Logger | undefined {
+  static startLogging(text: string): Disposable | undefined {
     if (this.#logLevel === 0) {
       return;
     }
@@ -111,7 +111,11 @@ export class Logger {
     }
     if (this.#loggerInstance) {
       this.#loggerInstance.#setCheckpointText(text);
-      return this.#loggerInstance;
+      // The spinner is owned by the outermost startLogging call; nested
+      // calls only update the checkpoint text and must not stop it
+      return {
+        [Symbol.dispose](): void {},
+      };
     }
     this.#loggerInstance = new Logger(this.#stderr);
     this.#loggerInstance.#start(text);
@@ -335,6 +339,7 @@ export class Logger {
   }
 
   #start(text: string) {
+    Logger.#nonBlockingLogPrinted = false;
     this.#setCheckpointText(text);
     this.#spinnerInstance.start();
     this.#disposeSpinnerCleanupHandler = registerCleanupHandler(

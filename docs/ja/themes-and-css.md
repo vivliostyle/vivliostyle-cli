@@ -74,7 +74,7 @@ npm パッケージとして公開されているテーマを見つけるには 
 - [Example: theme-css](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/theme-css)
 - [Example: theme-preset](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/theme-preset)
 
-`-T`（`--theme`）オプション、または [構成ファイル](./using-config-file.md) で `theme` を指定するとテーマを利用できます。ローカルにテーマファイルが存在しない場合、初回実行時に `themes` ディレクトリに自動的にインストールされます。
+`-T`（`--theme`）オプション、または [構成ファイル](./using-config-file.md) で `theme` を指定するとテーマを利用できます。ローカルにテーマファイルが存在しない場合、初回実行時に自動的にインストールされます。
 
 ```
 vivliostyle build manuscript.md --theme @vivliostyle/theme-techbook -o paper.pdf
@@ -92,6 +92,80 @@ vivliostyle build manuscript.md --theme ./my-theme/style.css -o paper.pdf
 vivliostyle build manuscript.md --theme ./my-theme -o paper.pdf
 ```
 
+上記の設定はすべて構成ファイルで指定できます。また、複数使用することもできます。
+
+```js
+theme: [
+  '@vivliostyle/theme-techbook',
+  './my-theme',
+],
+```
+
+### CSS からのテーマの読み込み
+
+`theme` オプションでVivliostyle Themes を指定する代わりに、`theme` オプションで指定した CSS ファイルから npm パッケージ名でテーマを直接読み込むことができます:
+
+```css
+@import '@vivliostyle/theme-base';
+@import '@vivliostyle/theme-base/footnote';
+
+h1 {
+  /* 独自のカスタマイズ */
+}
+```
+
+パッケージ名のみを指定した場合、そのパッケージの package.json の `vivliostyle.theme.style`、`style`、`exports`（`style` コンディション）、`main` フィールドをこの順で参照し、既定のスタイルファイルを読み込みます。サブパスを指定した場合は指定したファイルを読み込みます。パッケージが `exports` フィールドを宣言している場合、サブパスは `exports` を通して解決されます。
+
+読み込んだパッケージは、`theme` オプションによる指定と同様に自動でインストールされます。パッケージ名の後に npm 形式の `@` 記法を続けることで、インストールするバージョンを指定することもできます:
+
+```css
+@import '@vivliostyle/theme-base@^3.0.0';
+```
+
+`.css` 拡張子を持つ既存のファイルを指す指定子は、相対 URL として標準の CSS の扱いが保たれます。例えば `@import 'foo.css'` は、読み込み元のスタイルシートの隣に foo.css が存在する場合、その相対パスのファイルを参照します。それ以外の指定子は npm パッケージとして解決されます。同じパッケージがプロジェクトと `themes` ディレクトリの両方にインストールされている場合、`themes` ディレクトリのものが優先されます。
+
 ### Create Book の利用
 
 Create Book を使用すると、あらかじめテーマが設定された状態のプロジェクトを簡単に作成できます。[Create Book](https://docs.vivliostyle.org/ja/cli/getting-started/) を参照してください。
+
+## PostCSS の利用
+
+プロジェクトに [PostCSS](https://postcss.org/) の設定ファイルがある場合、Vivliostyle CLI が処理するすべての CSS ファイルにそのプラグインが適用されます。
+
+PostCSS の設定ファイルは、[構成ファイル](./using-config-file.md) と同じディレクトリに配置してください。[postcss-load-config](https://github.com/postcss/postcss-load-config) がサポートする形式の設定（例: `postcss.config.js`）を読み込めます。この設定は、利用しているテーマパッケージの CSS ファイルにも適用されます。
+
+構成ファイルの [`css.postcss` オプション](../config.md#cssconfig)には、インラインの PostCSS 設定、または PostCSS 設定ファイルを探索するディレクトリを指定できます。インライン設定を指定した場合、PostCSS 設定ファイルの探索は行われません。
+
+```js
+import autoprefixer from 'autoprefixer';
+
+export default {
+  entry: ['manuscript.md'],
+  css: {
+    postcss: {
+      plugins: [autoprefixer()],
+    },
+  },
+};
+```
+
+## Tailwind CSS
+
+- [Example: with-tailwindcss](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-tailwindcss)
+
+PostCSS のプラグインを通して、[Tailwind CSS](https://tailwindcss.com/) などの CSS フレームワークを利用することもできます。
+
+Tailwind CSS 公式ドキュメントの [Using PostCSS](https://tailwindcss.com/docs/installation/using-postcss) のセクションに従ってセットアップしてください。
+
+Tailwind CSS は、ユーティリティクラスと呼ばれるクラスを要素に指定して、クラス名に応じたスタイルを適用するフレームワークです。VFM と組み合わせる場合は、以下のように [VFM の属性記法](https://vivliostyle.github.io/vfm/#/vfm) でクラスを指定できます。Tailwind が原稿ファイルをスキャンし、使われているクラスに対応するスタイルを生成します。
+
+```md
+# Vivliostyle meets Tailwind CSS {.text-4xl .font-extrabold .tracking-tight .text-accent}
+
+This document is styled with [Tailwind CSS](https://tailwindcss.com/) utility classes.
+Tailwind scans this Markdown file for class names, so you can attach utilities to
+inline elements with the **VFM attribute syntax**{.bg-accent/15 .px-1 .rounded} like
+`**text**{.underline}`.
+```
+
+Tailwind CSS は強力なツールですが、Vivliostyle が主な対象とする文章中心のドキュメントは Web ページと異なる点も多く、ユーティリティクラスによる指定が文章の制作に合うかどうかはあなたの執筆スタイルによります。とはいえ、本文中でアドホックなスタイルを多用したい場合には、有力な選択肢となるでしょう。

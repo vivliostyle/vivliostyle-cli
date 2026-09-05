@@ -18,6 +18,7 @@ export interface PackageJson {
     tarball: string;
     unpackedSize: number;
   };
+  exports?: unknown;
   keywords?: string[];
   main?: string;
   style?: string;
