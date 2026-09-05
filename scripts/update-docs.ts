@@ -51,6 +51,7 @@ function buildConfigDocs(): Promise<string> {
     | v.VariantSchema<string, v.VariantOptions<string>, undefined>
     | v.IntersectSchema<v.IntersectOptions, undefined>
     | v.OptionalSchema<Schema, undefined>
+    | v.ExactOptionalSchema<Schema, undefined>
     | v.NonOptionalSchemaAsync<Schema, undefined>
     | v.LazySchema<Schema>
     | v.RecordSchema<v.GenericSchema<string>, Schema, undefined>
@@ -60,6 +61,7 @@ function buildConfigDocs(): Promise<string> {
     | v.NumberSchema<undefined>
     | v.BooleanSchema<undefined>
     | v.LiteralSchema<v.Literal, undefined>
+    | v.NeverSchema<undefined>
   ) & {
     [visited]?: boolean;
     [definition]?: string;
@@ -138,7 +140,7 @@ function buildConfigDocs(): Promise<string> {
       schema[definition] = `{${Object.entries(schema.entries)
         .map(
           ([k, value]) =>
-            `${v.isOfType('optional', value) ? `${k}?` : k}: ${getSchema(value)[definition] || 'unknown'}`,
+            `${v.isOfType('optional', value) || v.isOfType('exact_optional', value) ? `${k}?` : k}: ${getSchema(value)[definition] || 'unknown'}`,
         )
         .join('; ')}}`;
       properties = { ...schema.entries };
@@ -185,7 +187,7 @@ function buildConfigDocs(): Promise<string> {
         schema[definition] = `{${Object.entries(merged)
           .map(
             ([k, value]) =>
-              `${v.isOfType('optional', value) ? `${k}?` : k}: ${getSchema(value)[definition] || 'unknown'}`,
+              `${v.isOfType('optional', value) || v.isOfType('exact_optional', value) ? `${k}?` : k}: ${getSchema(value)[definition] || 'unknown'}`,
           )
           .join('; ')}}`;
       } else {
@@ -196,6 +198,7 @@ function buildConfigDocs(): Promise<string> {
       }
     } else if (
       v.isOfType('optional', schema) ||
+      v.isOfType('exact_optional', schema) ||
       v.isOfType('non_optional', schema)
     ) {
       const out = await traverse(schema.wrapped);
@@ -219,13 +222,16 @@ function buildConfigDocs(): Promise<string> {
         Promise.resolve([] as string[]),
       );
       docs += out.filter(Boolean).join('\n\n');
-      schema[definition] = meta.typeString || 'Function';
+      schema[definition] =
+        meta.typeString ||
+        (title ? `import("@vivliostyle/cli").${title}` : 'Function');
     } else if (
       v.isOfType('instance', schema) ||
       v.isOfType('string', schema) ||
       v.isOfType('number', schema) ||
       v.isOfType('boolean', schema) ||
-      v.isOfType('literal', schema)
+      v.isOfType('literal', schema) ||
+      v.isOfType('never', schema)
     ) {
       schema[definition] = schema.expects;
     } else {
@@ -257,20 +263,26 @@ function buildConfigDocs(): Promise<string> {
           const propMeta =
             'pipe' in value
               ? getMeta(value)
-              : value.type === 'optional' || value.type === 'non_optional'
+              : value.type === 'optional' ||
+                  value.type === 'exact_optional' ||
+                  value.type === 'non_optional'
                 ? getMeta(
                     (
                       value as
                         | v.OptionalSchema<Schema, undefined>
+                        | v.ExactOptionalSchema<Schema, undefined>
                         | v.NonOptionalSchema<Schema, undefined>
                     ).wrapped,
                   )
                 : {};
           const unwrapped =
-            value.type === 'optional' || value.type === 'non_optional'
+            value.type === 'optional' ||
+            value.type === 'exact_optional' ||
+            value.type === 'non_optional'
               ? (
                   value as
                     | v.OptionalSchema<Schema, undefined>
+                    | v.ExactOptionalSchema<Schema, undefined>
                     | v.NonOptionalSchema<Schema, undefined>
                 ).wrapped
               : value;

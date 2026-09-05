@@ -10,11 +10,7 @@ import * as v from 'valibot';
 import { CONTAINER_URL } from '../constants.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
-import { isImageConversionReplacement } from './replace-image.js';
-import type {
-  BareImageConversionReplacement,
-  ReplaceFunction,
-} from './replace-image.js';
+import type { ReplaceFunction } from './replace-image.js';
 
 const $ = (strings: TemplateStringsArray, ...values: unknown[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
@@ -360,20 +356,36 @@ const CmykSchema = v.pipe(
 );
 
 const ReplaceFunctionSchema = v.pipe(
-  v.custom<ReplaceFunction>((input) => typeof input === 'function'),
-  v.metadata({
-    typeString: 'import("@vivliostyle/cli").ReplaceFunction',
-  }),
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  v.function() as v.GenericSchema<ReplaceFunction>,
+  v.title('ReplaceFunction'),
   v.description(
     'Function that receives the current image and its MuPDF module, then returns an owned replacement image or null to decline the current match and continue to the next replacement candidate.',
   ),
 );
 
 const ImageConversionReplacementSchema = v.pipe(
-  v.custom<BareImageConversionReplacement>(isImageConversionReplacement),
-  v.metadata({
-    typeString: 'import("@vivliostyle/cli").ImageConversionReplacement',
-  }),
+  v.variant('kind', [
+    v.object({
+      kind: v.literal('builtin'),
+      destination: v.union([
+        v.literal('DeviceGray'),
+        v.literal('DeviceRGB'),
+        v.literal('DeviceCMYK'),
+      ]),
+      inputProfile: v.optional(ValidString),
+      source: v.exactOptional(v.never()),
+      replacement: v.exactOptional(v.never()),
+    }),
+    v.object({
+      kind: v.literal('icc'),
+      inputProfile: v.optional(ValidString),
+      outputProfile: ValidString,
+      source: v.exactOptional(v.never()),
+      replacement: v.exactOptional(v.never()),
+    }),
+  ]),
+  v.title('ImageConversionReplacement'),
   v.description('Image color conversion created by a replacement factory.'),
 );
 
