@@ -7,28 +7,11 @@ import type {
   ResolvedReplaceImageConfig,
   ResolvedReplacement,
 } from '../config/schema.js';
+import { disposable, disposableOrNull } from '../disposable.js';
 import { createImageConversionReplaceFunction } from '../image-replacement.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import type { PdfEditHook, PdfImageXObjectNode } from './pdf-visitor.js';
-
-interface Destroyable {
-  destroy(): void;
-}
-
-function disposable<T extends Destroyable>(obj: T): T & Disposable {
-  return Object.assign(obj, {
-    [Symbol.dispose]() {
-      obj.destroy();
-    },
-  });
-}
-
-function disposableOrNull<T extends Destroyable>(
-  obj: T | null,
-): (T & Disposable) | null {
-  return obj && disposable(obj);
-}
 
 function premultiplySkiaColorSample(sample: number, alpha: number): number {
   // NOTE: Chromium/Skia writes unpremultiplied RGB and alpha separately.

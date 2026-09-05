@@ -6,24 +6,7 @@ import type {
   ImageConversionReplacement,
   ReplaceFunction,
 } from './config/schema.js';
-
-interface Destroyable {
-  destroy(): void;
-}
-
-function disposable<T extends Destroyable>(obj: T): T & Disposable {
-  return Object.assign(obj, {
-    [Symbol.dispose]() {
-      obj.destroy();
-    },
-  });
-}
-
-function disposableOrNull<T extends Destroyable>(
-  obj: T | null,
-): (T & Disposable) | null {
-  return obj && disposable(obj);
-}
+import { disposable, disposableOrNull } from './disposable.js';
 
 /** Options shared by image color conversion replacements. */
 export interface ColorConversionOptions {
