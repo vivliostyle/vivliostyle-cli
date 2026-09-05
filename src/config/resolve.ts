@@ -821,12 +821,6 @@ export function resolveTaskConfig(
               : resolveReplacement(replacement, index);
           if (source instanceof RegExp) {
             const matcher = new RegExp(source.source, source.flags);
-            // NOTE: If multiple matched files contain pixel-identical images,
-            // the same replacement function may be called once per match. This
-            // is only a small overhead when repeated calls with the same input
-            // return the same result, but a stateful function can make the
-            // result depend on the matched-file order. Whether replacement
-            // functions should instead run once per PDF image remains unsettled.
             return filesInEntryContext
               .filter((file) => {
                 matcher.lastIndex = 0;

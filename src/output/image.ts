@@ -364,6 +364,12 @@ async function createReplaceFn(
     replaceFns.length === 0
       ? null
       : async (context) => {
+          // NOTE: If multiple matched files contain pixel-identical images,
+          // the same replacement function may be called once per match. This
+          // is only a small overhead when repeated calls with the same input
+          // return the same result, but a stateful function can make the
+          // result depend on the matched-file order. Whether replacement
+          // functions should instead run once per PDF image remains unsettled.
           for (const replace of replaceFns) {
             const inputImage = new mupdf.Image(context.image.pointer);
             let inputMoved = false;
