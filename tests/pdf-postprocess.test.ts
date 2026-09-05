@@ -5,6 +5,7 @@ import path from 'node:path';
 import { expect, it, vi } from 'vitest';
 
 import type { CmykConfig } from '../src/config/resolve.js';
+import type { CmykConvertFunction } from '../src/config/schema.js';
 import { Logger } from '../src/logger.js';
 import { PostProcess } from '../src/output/pdf-postprocess.js';
 
@@ -17,6 +18,7 @@ function cmykConfig(overrides: Partial<CmykConfig> = {}): CmykConfig {
     ifIncompatibleImagesFound: 'warn',
     overrideMap: [],
     reserveMap: [],
+    fallback: undefined,
     mapOutput: undefined,
     ...overrides,
   };
@@ -97,6 +99,48 @@ it('fails before writing when an unmapped color is found', async () => {
   expect(result.warnings).toContainEqual(
     expect.stringContaining('RGB color not mapped to CMYK'),
   );
+});
+
+it('uses cmyk fallback before reporting an unmapped color', async () => {
+  const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+  const fallback = vi.fn<CmykConvertFunction>(() => ({
+    c: 0,
+    m: 0,
+    y: 0,
+    k: 10000,
+  }));
+
+  const result = await runSave(
+    pdf,
+    cmykConfig({
+      fallback,
+      ifUnmappedColorsFound: 'error',
+      ifIncompatibleImagesFound: 'ignore',
+    }),
+  );
+
+  expect(result.error).toBeNull();
+  expect(result.written).toBe(true);
+  expect(result.warnings).toEqual([]);
+  expect(fallback).toHaveBeenCalled();
+});
+
+it('fails without writing when cmyk fallback throws', async () => {
+  const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+  const fallback = vi.fn<CmykConvertFunction>(() => {
+    throw new Error('fallback failed');
+  });
+
+  const result = await runSave(
+    pdf,
+    cmykConfig({
+      fallback,
+      ifIncompatibleImagesFound: 'ignore',
+    }),
+  );
+
+  expect(result.error?.message).toContain('fallback failed');
+  expect(result.written).toBe(false);
 });
 
 it('combines color and image failures', async () => {

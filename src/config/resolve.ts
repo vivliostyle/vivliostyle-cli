@@ -45,6 +45,7 @@ import {
 import type {
   ArticleEntryConfig,
   BrowserType,
+  CmykConvertFunction,
   ContentsEntryConfig,
   CoverEntryConfig,
   EntryConfig,
@@ -277,6 +278,7 @@ export interface CmykConfig {
   ifIncompatibleImagesFound: 'warn' | 'error' | 'ignore';
   overrideMap: CmykMapEntry[];
   reserveMap: CmykMapEntry[];
+  fallback: CmykConvertFunction | undefined;
   mapOutput: string | undefined;
 }
 
@@ -715,8 +717,10 @@ export function resolveTaskConfig(
             (cmykObject.warnUnmapped === false ? 'ignore' : 'warn'),
           ifIncompatibleImagesFound:
             cmykObject.ifIncompatibleImagesFound ?? 'warn',
+          // oxlint-disable-next-line typescript/no-deprecated -- preserve overrideMap behavior for existing configurations
           overrideMap: resolveMapEntries(cmykObject.overrideMap ?? []),
           reserveMap: resolveMapEntries(cmykObject.reserveMap ?? []),
+          fallback: cmykObject.fallback,
           mapOutput: cmykObject.mapOutput
             ? upath.resolve(context, cmykObject.mapOutput)
             : undefined,
@@ -728,6 +732,7 @@ export function resolveTaskConfig(
           ifIncompatibleImagesFound: 'warn',
           overrideMap: [],
           reserveMap: [],
+          fallback: undefined,
           mapOutput: undefined,
         };
       }

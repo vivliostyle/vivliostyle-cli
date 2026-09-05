@@ -13,8 +13,10 @@ export {
   type Metadata,
   type StringifyMarkdownOptions,
 } from '@vivliostyle/vfm';
+export type { CMYKValue } from './global-viewer.js';
 export { defineConfig } from './config/define.js';
 export type {
+  CmykConvertFunction,
   ImageConversionReplacement,
   ReplaceFunction,
   ReplaceFunctionContext,
@@ -26,10 +28,13 @@ export type {
 } from './config/schema.js';
 export type { TemplateVariable } from './create-template.js';
 export {
+  builtinCmykConversion,
+  builtinGrayConversion,
   createBuiltinCmykConversionReplacement,
   createBuiltinGrayConversionReplacement,
   createBuiltinRgbConversionReplacement,
   createIccConversionReplacement,
+  iccConversion,
 } from './image-replacement.js';
 export type {
   ColorConversionOptions,
