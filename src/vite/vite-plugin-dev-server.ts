@@ -282,9 +282,7 @@ export function vsDevServerPlugin({
       server?.watcher.add(postcssConfig.file);
       projectDeps.push(postcssConfig.file);
     }
-    const cssEntries = collectThemeCssEntryFiles(config.themeIndexes, {
-      preferSource: true,
-    });
+    const cssEntries = collectThemeCssEntryFiles(config.themeIndexes);
     const cssScan = await scanCssDependencies({
       entryFiles: cssEntries.files,
       resolver: cssResolver,
