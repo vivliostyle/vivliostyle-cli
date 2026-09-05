@@ -273,6 +273,11 @@ export class ThemeCssResolver {
     if (pathContains(this.#workspaceDir, file)) {
       return `/${upath.relative(this.#workspaceDir, file)}`;
     }
+    // Known limitation: mounts are keyed by the package name alone, so when
+    // multiple instances of the same package exist (e.g. different versions
+    // in nested node_modules), their imports are rewritten to the same URL
+    // and the instance registered last wins, serving the wrong package for
+    // imports rewritten earlier.
     const registered = this.#mounts.get(pkgName);
     if (registered && registered !== pkgDir) {
       Logger.logWarn(
