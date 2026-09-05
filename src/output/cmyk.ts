@@ -1,6 +1,8 @@
-import type { CmykConvertFunction } from '../config/cmyk.js';
 import type { CmykConfig, RGBValue } from '../config/resolve.js';
-import { isValidCMYKValue } from '../config/schema.js';
+import {
+  type CmykConvertFunction,
+  isValidCMYKValue,
+} from '../config/schema.js';
 import type { CMYKValue } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { tokenize, type OperatorToken } from './pdf-stream.js';

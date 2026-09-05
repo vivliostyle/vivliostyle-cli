@@ -2,8 +2,8 @@ import fs from 'node:fs';
 
 import type * as mupdfType from 'mupdf';
 
-import type { CmykConvertFunction } from './config/cmyk.js';
 import type {
+  CmykConvertFunction,
   ImageConversionReplacement,
   ReplaceFunction,
 } from './config/schema.js';

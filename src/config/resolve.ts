@@ -42,10 +42,10 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
-import type { CmykConvertFunction } from './cmyk.js';
 import type {
   ArticleEntryConfig,
   BrowserType,
+  CmykConvertFunction,
   ContentsEntryConfig,
   CoverEntryConfig,
   EntryConfig,

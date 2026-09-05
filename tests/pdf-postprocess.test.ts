@@ -4,8 +4,8 @@ import path from 'node:path';
 
 import { expect, it, vi } from 'vitest';
 
-import type { CmykConvertFunction } from '../src/config/cmyk.js';
 import type { CmykConfig } from '../src/config/resolve.js';
+import type { CmykConvertFunction } from '../src/config/schema.js';
 import { Logger } from '../src/logger.js';
 import { PostProcess } from '../src/output/pdf-postprocess.js';
 

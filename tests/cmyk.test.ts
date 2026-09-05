@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import type { CmykConvertFunction } from '../src/config/cmyk.js';
 import type { CmykConfig } from '../src/config/resolve.js';
+import type { CmykConvertFunction } from '../src/config/schema.js';
 import type { CmykMap } from '../src/global-viewer.js';
 import { createCmykColorHook } from '../src/output/cmyk.js';
 import { editPdf } from '../src/output/pdf-visitor.js';

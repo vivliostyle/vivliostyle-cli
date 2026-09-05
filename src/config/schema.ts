@@ -9,9 +9,9 @@ import upath from 'upath';
 import * as v from 'valibot';
 
 import { CONTAINER_URL } from '../constants.js';
+import type { CMYKValue } from '../global-viewer.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
-import type { CmykConvertFunction } from './cmyk.js';
 
 const $ = (strings: TemplateStringsArray, ...values: unknown[]) => {
   const lines = String.raw({ raw: strings }, ...values).split('\n');
@@ -296,6 +296,16 @@ export function isValidCMYKValue(
 ): value is v.InferOutput<typeof CMYKValueSchema> {
   return v.is(CMYKValueSchema, value);
 }
+
+/**
+ * Converts an unmapped RGB color on a 0-10000 scale to CMYK, or returns `null`
+ * to leave it unmapped.
+ */
+export type CmykConvertFunction = (rgb: {
+  r: number;
+  g: number;
+  b: number;
+}) => CMYKValue | null | Promise<CMYKValue | null>;
 
 const CmykConvertFunctionSchema = v.pipe(
   v.custom<CmykConvertFunction>((input) => typeof input === 'function'),

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CmykConvertFunction } from '../src/config/cmyk.js';
+import type { CmykConvertFunction } from '../src/config/schema.js';
 import type { CMYKValue } from '../src/global-viewer.js';
 import { createCmykColorHook } from '../src/output/cmyk.js';
 import type { PdfContentStreamNode } from '../src/output/pdf-visitor.js';
