@@ -270,7 +270,7 @@ export class ThemeCssResolver {
    * the workspace directory).
    */
   urlPathOf({ file, pkgName, pkgDir }: CssBareImportResolution): string {
-    if (pathContains(this.#workspaceDir, file)) {
+    if (pathContains(this.#themesDir, file)) {
       return `/${upath.relative(this.#workspaceDir, file)}`;
     }
     // Known limitation: mounts are keyed by the package name alone, so when
