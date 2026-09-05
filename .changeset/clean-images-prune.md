@@ -2,4 +2,5 @@
 '@vivliostyle/cli': patch
 ---
 
-Remove replaced image objects and their unused dependencies when no references to them remain.
+Fix `pdfPostprocess.replaceImage` leaving original images and their dependencies inside the output PDF after replacement, even when no references to them remain.
+
