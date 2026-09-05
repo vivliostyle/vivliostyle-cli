@@ -331,7 +331,7 @@ export function loadPostcssConfig(
       try {
         const config = await postcssrc({ cwd: dir }, dir);
         Logger.debug('css > postcss config %s', config.file);
-        return config;
+        return { ...config, file: upath.normalize(config.file) };
       } catch (error) {
         const { message } = toError(error);
         if (!message.startsWith('No PostCSS Config found')) {
