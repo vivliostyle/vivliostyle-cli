@@ -5,7 +5,7 @@ import type * as mupdfType from 'mupdf';
 import type {
   ImageConversionReplacement,
   ReplaceFunction,
-} from './config/replace-image.js';
+} from './config/schema.js';
 
 interface Destroyable {
   destroy(): void;

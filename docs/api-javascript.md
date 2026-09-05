@@ -1256,7 +1256,7 @@ interface to the schema, so a drift in either direction is rejected.
 
 ### ImageConversionReplacement
 
-> **ImageConversionReplacement** = `Readonly`\<\{ `destination`: `"DeviceGray"` \| `"DeviceRGB"` \| `"DeviceCMYK"`; `inputProfile?`: `string`; `kind`: `"builtin"`; \}\> \| `Readonly`\<\{ `inputProfile?`: `string`; `kind`: `"icc"`; `outputProfile`: `string`; \}\>
+> **ImageConversionReplacement** = `Readonly`\<`v.InferInput`\<*typeof* `ImageConversionReplacementSchema`\>\>
 
 ***
 

@@ -12,21 +12,9 @@ import npa from 'npm-package-arg';
 import { globSync } from 'tinyglobby';
 import type { Processor } from 'unified';
 import upath from 'upath';
+import * as v from 'valibot';
 import type { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
 
-import type {
-  ArticleEntryConfig,
-  BrowserType,
-  ContentsEntryConfig,
-  CoverEntryConfig,
-  EntryConfig,
-  HastTransformFunction,
-  InputFormat,
-  StructuredDocument,
-  StructuredDocumentSection,
-  ThemeConfig,
-  TocCompose,
-} from '../config/schema.js';
 import {
   CONTAINER_LOCAL_HOSTNAME,
   CONTAINER_URL,
@@ -55,16 +43,28 @@ import {
   touchTmpFile,
 } from '../util.js';
 import type {
+  ArticleEntryConfig,
+  BrowserType,
+  ContentsEntryConfig,
+  CoverEntryConfig,
+  EntryConfig,
+  HastTransformFunction,
   ImageConversionReplacement,
+  InlineOptions,
+  InputFormat,
+  ParsedBuildTask,
   ReplaceFunction,
   ResolvedImageConversionReplacement,
   ResolvedReplaceImageConfig,
   ResolvedReplaceImageEntry,
   ResolvedReplaceFunction,
   ResolvedReplacement,
-} from './replace-image.js';
-import { isImageConversionReplacement } from './replace-image.js';
-import type { InlineOptions, ParsedBuildTask } from './schema.js';
+  StructuredDocument,
+  StructuredDocumentSection,
+  ThemeConfig,
+  TocCompose,
+} from './schema.js';
+import { ImageConversionReplacementSchema } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -792,7 +792,7 @@ export function resolveTaskConfig(
       const filesInEntryContext = replaceImageOption.some(
         (item) =>
           typeof item !== 'function' &&
-          !isImageConversionReplacement(item) &&
+          !v.is(ImageConversionReplacementSchema, item) &&
           item.source instanceof RegExp,
       )
         ? globSync('**/*', {
@@ -810,7 +810,7 @@ export function resolveTaskConfig(
           | ResolvedReplaceImageEntry[] => {
           if (
             typeof item === 'function' ||
-            isImageConversionReplacement(item)
+            v.is(ImageConversionReplacementSchema, item)
           ) {
             return resolveReplacement(item, index);
           }

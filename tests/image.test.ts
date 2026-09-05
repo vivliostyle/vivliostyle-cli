@@ -4,13 +4,13 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import type { CmykConfig } from '../src/config/resolve.js';
 import type {
   ImageConversionReplacement,
   ReplaceFunction,
   ResolvedImageConversionReplacement,
   ResolvedReplaceFunction,
-} from '../src/config/replace-image.js';
-import type { CmykConfig } from '../src/config/resolve.js';
+} from '../src/config/schema.js';
 import {
   createBuiltinCmykConversionReplacement,
   createBuiltinGrayConversionReplacement,

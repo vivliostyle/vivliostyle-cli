@@ -2,11 +2,11 @@ import fs from 'node:fs';
 
 import type * as mupdfType from 'mupdf';
 
+import type { CmykConfig } from '../config/resolve.js';
 import type {
   ResolvedReplaceImageConfig,
   ResolvedReplacement,
-} from '../config/replace-image.js';
-import type { CmykConfig } from '../config/resolve.js';
+} from '../config/schema.js';
 import { createImageConversionReplaceFunction } from '../image-replacement.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';

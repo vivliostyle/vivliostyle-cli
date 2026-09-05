@@ -15,16 +15,16 @@ vi.mock('tinyglobby', async (importOriginal) => {
 
 import { warnDeprecatedConfig } from '../src/config/load.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
-import type {
-  ReplaceFunction,
-  ReplaceImageConfig,
-} from '../src/config/replace-image.js';
-import { isImageConversionReplacement } from '../src/config/replace-image.js';
 import {
   resolveTaskConfig,
   UseTemporaryServerRoot,
 } from '../src/config/resolve.js';
+import type {
+  ReplaceFunction,
+  ReplaceImageConfig,
+} from '../src/config/schema.js';
 import {
+  ImageConversionReplacementSchema,
   VivliostyleConfigSchema,
   VivliostyleInlineConfig,
 } from '../src/config/schema.js';
@@ -793,7 +793,7 @@ it('rejects entry fields mixed into a bare image conversion', () => {
   type MixedReplacementIsAccepted =
     typeof mixedReplacement extends ReplaceImageConfig[number] ? true : false;
   expectTypeOf<MixedReplacementIsAccepted>().toEqualTypeOf<false>();
-  expect(isImageConversionReplacement(mixedReplacement)).toBe(false);
+  expect(v.is(ImageConversionReplacementSchema, mixedReplacement)).toBe(false);
   expect(
     v.safeParse(VivliostyleConfigSchema, {
       pdfPostprocess: { replaceImage: [mixedReplacement] },

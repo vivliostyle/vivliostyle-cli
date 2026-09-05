@@ -15,17 +15,15 @@ export {
 } from '@vivliostyle/vfm';
 export { defineConfig } from './config/define.js';
 export type {
+  ImageConversionReplacement,
+  ReplaceFunction,
+  ReplaceFunctionContext,
   StructuredDocument,
   StructuredDocumentSection,
   TocCompose,
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';
-export type {
-  ImageConversionReplacement,
-  ReplaceFunction,
-  ReplaceFunctionContext,
-} from './config/replace-image.js';
 export type { TemplateVariable } from './create-template.js';
 export {
   createBuiltinCmykConversionReplacement,
