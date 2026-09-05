@@ -108,6 +108,38 @@ describe('Logger', () => {
     );
   });
 
+  it('keeps the spinner running after a nested startLogging call is disposed', () => {
+    setupInteractiveLogger();
+    using _ = Logger.startLogging('Start building')!;
+    const spinner = mockedYoctoSpinner.mock.results[0]!.value;
+
+    {
+      using _ = Logger.startLogging('Installing theme files')!;
+      expect(spinner.text).toBe('Installing theme files');
+    }
+
+    expect(mockedYoctoSpinner).toHaveBeenCalledOnce();
+    expect(spinner.stop).not.toHaveBeenCalled();
+  });
+
+  it('stops the spinner when the initiating startLogging call is disposed', () => {
+    setupInteractiveLogger();
+    {
+      using _ = Logger.startLogging('Start preview')!;
+      Logger.logInfo('some message');
+    }
+
+    // A session started after the previous one ended (e.g. a reload on the
+    // preview server) must own its spinner and stop it on dispose
+    {
+      using _ = Logger.startLogging('Installing theme files')!;
+    }
+
+    expect(mockedYoctoSpinner).toHaveBeenCalledTimes(2);
+    const spinner = mockedYoctoSpinner.mock.results[1]!.value;
+    expect(spinner.stop).toHaveBeenCalledWith('INFO Installing theme files');
+  });
+
   it('ignores logUpdateProgress when the output is not interactive', () => {
     const written: string[] = [];
     const stream = new PassThrough();

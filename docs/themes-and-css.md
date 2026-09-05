@@ -103,22 +103,24 @@ theme: [
 
 ### Importing Themes from CSS
 
-You can import a theme package directly from your CSS file with its npm package name, instead of writing a relative path into the `themes` directory:
+Instead of specifying Vivliostyle Themes with the `theme` option, you can import a theme package directly with its npm package name, from a CSS file specified with the `theme` option:
 
 ```css
 @import '@vivliostyle/theme-base';
-@import '@vivliostyle/theme-base/css/partial/footnote.css';
+@import '@vivliostyle/theme-base/footnote';
 
 h1 {
   /* your customization */
 }
 ```
 
-Note that this is usually unnecessary if you only want to use a theme. It is generally needed when you want to create a new theme that extends other themes.
-
 An import with the package name alone loads the default style entry of the package, resolved from the `vivliostyle.theme.style`, `style`, `exports` (with the `style` condition), and `main` fields of its package.json, in this order. An import with a subpath loads the specified file; when the package declares the `exports` field, the subpath is resolved through it.
 
-The imported package must be installed beforehand. Unlike a theme specified with the `theme` option, Vivliostyle CLI does not install packages referred from CSS automatically. Install the packages you want to use with the `npm install` command.
+The imported packages are automatically installed, in the same way as the themes specified with the `theme` option. A specifier can also request the version to install, with the npm-style `@` notation after the package name:
+
+```css
+@import '@vivliostyle/theme-base@^3.0.0';
+```
 
 A specifier is treated as a relative URL and keeps the standard CSS semantics when it points to an existing file with the `.css` extension; for example, `@import 'foo.css'` refers to the relative file when it exists next to the importing stylesheet. Any other specifier is resolved as an npm package. When the same package is installed both in the project and in the `themes` directory, the one in the `themes` directory takes precedence.
 

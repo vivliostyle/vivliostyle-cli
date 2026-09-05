@@ -7,14 +7,15 @@ import upath from 'upath';
 import serializeToXml from 'w3c-xmlserializer';
 import MIMEType from 'whatwg-mimetype';
 
-import type {
-  ContentsEntry,
-  CoverEntry,
-  ManuscriptEntry,
-  ParsedEntry,
-  ParsedTheme,
-  ResolvedTaskConfig,
-  WebPublicationManifestConfig,
+import {
+  type ContentsEntry,
+  type CoverEntry,
+  type ManuscriptEntry,
+  type ParsedEntry,
+  parseTheme,
+  type ParsedTheme,
+  type ResolvedTaskConfig,
+  type WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import type { ArticleEntryConfig } from '../config/schema.js';
 import { XML_DECLARATION } from '../constants.js';
@@ -28,7 +29,13 @@ import {
   toError,
   writeFileIfChanged,
 } from '../util.js';
-import { resolvePackageCssEntry, resolvePackageCssSubpath } from './css.js';
+import {
+  collectCssPackageImports,
+  type PostcssConfig,
+  resolvePackageCssEntry,
+  resolvePackageCssSubpath,
+  resolvePostcssConfig,
+} from './css.js';
 import {
   createVirtualConsole,
   generateDefaultCoverHtml,
@@ -127,9 +134,10 @@ export async function cleanupWorkspace({
 }
 
 export async function prepareThemeDirectory(
-  { themesDir, themeIndexes }: ResolvedTaskConfig,
+  config: ResolvedTaskConfig,
   signal?: AbortSignal,
 ): Promise<string[]> {
+  const { themesDir, themeIndexes, workspaceDir } = config;
   // Backward compatibility: v8 to v9
   if (
     fs.existsSync(upath.join(themesDir, 'packages')) &&
@@ -141,10 +149,51 @@ export async function prepareThemeDirectory(
     );
   }
 
+  // Themes may import other theme packages from their CSS files, which also
+  // need to be installed
+  let postcssConfig: PostcssConfig | undefined;
+  try {
+    postcssConfig = await resolvePostcssConfig(config);
+  } catch (error) {
+    // A broken PostCSS config is reported by the scan after the installation
+    Logger.debug('compile > skipped loading the PostCSS config %o', error);
+  }
+  const cssImports = await collectCssPackageImports({
+    themeIndexes,
+    postcssConfig,
+  });
+  const installTargets = new Set(themeIndexes);
+  for (const specifier of cssImports.values()) {
+    try {
+      const theme = parseTheme({
+        theme: { specifier, import: [] },
+        context: workspaceDir,
+        workspaceDir,
+        themesDir,
+      });
+      if (theme.type === 'package') {
+        installTargets.add(theme);
+      }
+    } catch (error) {
+      Logger.logWarn(
+        `Skipped the installation of the imported theme package: ${specifier}\n${toError(error).message}`,
+      );
+    }
+  }
+
   // install theme packages
-  if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
-    Logger.startLogging('Installing theme files');
-    await installThemeDependencies({ themesDir, themeIndexes, signal });
+  if (
+    await checkThemeInstallationNecessity({
+      themesDir,
+      themeIndexes: installTargets,
+    })
+  ) {
+    using _ = Logger.startLogging('Installing theme files');
+    await installThemeDependencies({
+      themesDir,
+      themeIndexes: installTargets,
+      signal,
+    });
   }
 
   // copy theme files

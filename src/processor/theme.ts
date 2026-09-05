@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 
 import Arborist from '@npmcli/arborist';
+import npa from 'npm-package-arg';
+import { satisfies as semverSatisfies } from 'semver';
 import upath from 'upath';
 
 import type { ResolvedTaskConfig } from '../config/resolve.js';
@@ -68,10 +70,35 @@ export async function checkThemeInstallationNecessity({
   };
   const arb = new Arborist(commonOpt);
   const tree = await arb.loadActual();
-  const pkgs = new Set(Array.from(tree.children.keys()));
-  return [...themeIndexes].some(
-    (theme) => theme.type === 'package' && !pkgs.has(theme.name),
-  );
+  return [...themeIndexes].some((theme) => {
+    if (theme.type !== 'package') {
+      return false;
+    }
+    const node = tree.children.get(theme.name);
+    if (!node) {
+      return true;
+    }
+    if (!theme.registry) {
+      return false;
+    }
+    let spec: npa.Result;
+    try {
+      spec = npa(theme.specifier);
+    } catch {
+      return false;
+    }
+    if ((spec.type !== 'range' && spec.type !== 'version') || !spec.fetchSpec) {
+      return false;
+    }
+    // Reinstall when the installed version no longer satisfies the requested
+    // version range
+    return (
+      !node.version ||
+      !semverSatisfies(node.version, spec.fetchSpec, {
+        includePrerelease: true,
+      })
+    );
+  });
 }
 
 export function getLocalThemePaths({
@@ -97,6 +124,9 @@ export async function installThemeDependencies({
       cache: getThemeInstallCacheDir(themesDir),
       lockfileVersion: 3,
       installLinks: true,
+      // The audit report is not used, and reify awaits its registry request
+      // even for local-only installs, which hangs the process while offline
+      audit: false,
     };
     const tree = await new Arborist(commonOpt).buildIdealTree();
     signal?.throwIfAborted();
