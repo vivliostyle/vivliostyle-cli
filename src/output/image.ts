@@ -55,38 +55,51 @@ function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
   );
 }
 
-interface ImagePair {
-  srcImage: mupdfType.Image & Disposable;
-  destImage: mupdfType.Image & Disposable;
-  sourcePath: string;
-  replacementPath: string;
+interface ReplaceContext {
+  image: mupdfType.Image;
 }
 
-function disposeImagePairs(imagePairs: readonly ImagePair[]): void {
-  for (const pair of imagePairs) {
-    pair.srcImage[Symbol.dispose]();
-    pair.destImage[Symbol.dispose]();
+interface Replacement {
+  image: mupdfType.Image;
+  sourceLabel: string;
+  replacementLabel: string;
+}
+
+type ReplaceFn = (
+  context: ReplaceContext,
+) => Replacement | null | Promise<Replacement | null>;
+
+function disposeImages(
+  images: readonly (mupdfType.Image & Disposable)[],
+): void {
+  for (const image of images) {
+    image[Symbol.dispose]();
   }
 }
 
-async function createImagePairs(
-  replacements: ReplaceImageConfig,
-): Promise<ImagePair[]> {
+async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
+  replaceFn: ReplaceFn | null;
+  loadedImages: (mupdfType.Image & Disposable)[];
+}> {
   if (replacements.length === 0) {
-    return [];
+    return {
+      replaceFn: null,
+      loadedImages: [],
+    };
   }
   const mupdf = await importNodeModule('mupdf');
-  const imagePairs: ImagePair[] = [];
+  const replaceFns: ReplaceFn[] = [];
+  const loadedImages: (mupdfType.Image & Disposable)[] = [];
   try {
     for (const { source, replacement } of replacements) {
-      let srcImage: mupdfType.Image & Disposable;
-      let destImage: mupdfType.Image & Disposable;
+      let sourceImage: mupdfType.Image & Disposable;
+      let replacementImage: (mupdfType.Image & Disposable) | undefined;
 
       try {
         const srcBuffer = fs.readFileSync(source);
-        srcImage = disposable(new mupdf.Image(srcBuffer));
+        sourceImage = disposable(new mupdf.Image(srcBuffer));
         Logger.debug(
-          `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
+          `Loaded source image: ${source} (${sourceImage.getWidth()}x${sourceImage.getHeight()})`,
         );
       } catch (error) {
         Logger.logWarn(
@@ -96,31 +109,61 @@ async function createImagePairs(
       }
 
       try {
-        const destBuffer = fs.readFileSync(replacement);
-        destImage = disposable(new mupdf.Image(destBuffer));
+        const replacementBytes = fs.readFileSync(replacement);
+        replacementImage = disposable(new mupdf.Image(replacementBytes));
         Logger.debug(
-          `Loaded replacement image: ${replacement} (${destImage.getWidth()}x${destImage.getHeight()})`,
+          `Loaded replacement image: ${replacement} (${replacementImage.getWidth()}x${replacementImage.getHeight()})`,
         );
       } catch (error) {
-        srcImage[Symbol.dispose]();
+        sourceImage[Symbol.dispose]();
+        replacementImage?.[Symbol.dispose]();
         Logger.logWarn(
           `Failed to load replacement image: ${replacement}: ${String(error)}`,
         );
         continue;
       }
 
-      imagePairs.push({
-        srcImage,
-        destImage,
-        sourcePath: source,
-        replacementPath: replacement,
+      loadedImages.push(sourceImage, replacementImage);
+      replaceFns.push(({ image }) => {
+        if (!imagesEqual(image, sourceImage)) {
+          return null;
+        }
+        return {
+          image: new mupdf.Image(replacementImage.pointer),
+          sourceLabel: source,
+          replacementLabel: replacement,
+        };
       });
     }
   } catch (error) {
-    disposeImagePairs(imagePairs);
+    disposeImages(loadedImages);
     throw error;
   }
-  return imagePairs;
+  const replaceFn: ReplaceFn | null =
+    replaceFns.length === 0
+      ? null
+      : async (context) => {
+          for (const replace of replaceFns) {
+            const inputImage = new mupdf.Image(context.image.pointer);
+            let inputMoved = false;
+            try {
+              const replacement = await replace({ image: inputImage });
+              if (replacement !== null) {
+                inputMoved = replacement.image === inputImage;
+                return replacement;
+              }
+            } finally {
+              if (!inputMoved) {
+                inputImage.destroy();
+              }
+            }
+          }
+          return null;
+        };
+  return {
+    replaceFn,
+    loadedImages,
+  };
 }
 
 interface DeviceCmykIncompatibleImage {
@@ -271,30 +314,31 @@ type ReplaceImageResult =
       readonly cleanupCandidates: ReadonlySet<number>;
     };
 
-function replaceImage(
+async function replaceImage(
   node: PdfImageXObjectNode,
-  imagePairs: readonly ImagePair[],
+  replaceFn: ReplaceFn | null,
   incompatibleImages: DeviceCmykIncompatibleImage[] | null,
-): ReplaceImageResult {
+): Promise<ReplaceImageResult> {
   using pdfImage = disposable(node.document.loadImage(node.object));
   let replacementRef: mupdfType.PDFObject | null = null;
   let cleanupCandidates: ReadonlySet<number> | null = null;
 
-  if (node.resourceVisit === 'initial') {
-    const pair = imagePairs.find((candidate) =>
-      imagesEqual(pdfImage, candidate.srcImage),
-    );
-    if (pair) {
-      const replacement = addReplacementImage(
+  if (node.resourceVisit === 'initial' && replaceFn !== null) {
+    const replacement = await replaceFn({
+      image: pdfImage,
+    });
+    if (replacement !== null) {
+      using replacementImage = disposable(replacement.image);
+      const addedImage = addReplacementImage(
         node.document,
         node.object,
-        pair.destImage,
+        replacementImage,
       );
-      replacementRef = replacement.ref;
-      cleanupCandidates = replacement.cleanupCandidates;
+      replacementRef = addedImage.ref;
+      cleanupCandidates = addedImage.cleanupCandidates;
       node.replaceWith(replacementRef);
       Logger.debug(
-        `  Page ${node.pageIndex + 1}, ref "${node.key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
+        `  Page ${node.pageIndex + 1}, ref "${node.key}": ${replacement.sourceLabel} -> ${replacement.replacementLabel}`,
       );
     }
   }
@@ -332,8 +376,8 @@ export async function createReplaceImageHook(
   ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'],
   failures: string[],
 ): Promise<PdfEditHook & Disposable> {
-  const imagePairs = await createImagePairs(replacements);
-  if (imagePairs.length === 0 && ifIncompatibleImagesFound === 'ignore') {
+  const { replaceFn, loadedImages } = await createReplaceFn(replacements);
+  if (replaceFn === null && ifIncompatibleImagesFound === 'ignore') {
     return {
       [Symbol.dispose]() {},
     };
@@ -345,11 +389,11 @@ export async function createReplaceImageHook(
   let total = 0;
   const cleanupCandidateBatches: ReadonlySet<number>[] = [];
   return {
-    visit(node) {
+    async visit(node) {
       if (node.kind !== 'image-xobject') {
         return;
       }
-      const result = replaceImage(node, imagePairs, incompatibleImages);
+      const result = await replaceImage(node, replaceFn, incompatibleImages);
       total++;
       if (result.kind === 'replaced') {
         replaced++;
@@ -384,7 +428,7 @@ export async function createReplaceImageHook(
       }
     },
     [Symbol.dispose]() {
-      disposeImagePairs(imagePairs);
+      disposeImages(loadedImages);
     },
   };
 }
