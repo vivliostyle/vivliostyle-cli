@@ -735,15 +735,22 @@ export function resolveTaskConfig(
       });
       return replaceImageOption.flatMap(({ source, replacement }) => {
         if (source instanceof RegExp) {
+          const matcher = new RegExp(source.source, source.flags);
           return allFiles
-            .filter((file) => source.test(file))
-            .map((file) => ({
-              source: upath.resolve(entryContextDir, file),
-              replacement: upath.resolve(
-                entryContextDir,
-                file.replace(source, replacement),
-              ),
-            }));
+            .filter((file) => {
+              matcher.lastIndex = 0;
+              return matcher.test(file);
+            })
+            .map((file) => {
+              matcher.lastIndex = 0;
+              return {
+                source: upath.resolve(entryContextDir, file),
+                replacement: upath.resolve(
+                  entryContextDir,
+                  file.replace(matcher, replacement),
+                ),
+              };
+            });
         }
         return {
           source: upath.resolve(entryContextDir, source),

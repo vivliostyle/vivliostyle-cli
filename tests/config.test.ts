@@ -563,6 +563,22 @@ it('rejects unknown extensions without documentProcessor', async () => {
   ).rejects.toThrow('Invalid manuscript type');
 });
 
+const resolveReplaceImageEntries = async (
+  source: RegExp,
+): Promise<{ source: string; replacement: string }[]> => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      replaceImage: [{ source, replacement: 'img_cmyk.tiff' }],
+    },
+  });
+  const output = config.outputs[0] as unknown as {
+    replaceImage: { source: string; replacement: string }[];
+  };
+  return output.replaceImage;
+};
+
 it('supports pdfPostprocess configuration', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',
@@ -588,6 +604,32 @@ it('supports pdfPostprocess configuration', async () => {
       },
     ],
   });
+});
+
+it('matches every replaceImage source with a global RegExp', async () => {
+  const expectedEntries = await resolveReplaceImageEntries(/\.md$/v);
+  expect(expectedEntries.length).toBeGreaterThan(1);
+
+  const globalSource = /\.md$/gv;
+  expect(await resolveReplaceImageEntries(globalSource)).toEqual(
+    expectedEntries,
+  );
+  expect(await resolveReplaceImageEntries(globalSource)).toEqual(
+    expectedEntries,
+  );
+});
+
+it('preserves sticky matching across independent source paths', async () => {
+  const searchableEntries = await resolveReplaceImageEntries(/[^\/]+\.md$/v);
+  const stickyEntries = await resolveReplaceImageEntries(/[^\/]+\.md$/vy);
+
+  expect(stickyEntries.length).toBeGreaterThan(1);
+  expect(stickyEntries.length).toBeLessThan(searchableEntries.length);
+  expect(
+    stickyEntries.every(({ replacement }) =>
+      replacement.endsWith('img_cmyk.tiff'),
+    ),
+  ).toBe(true);
 });
 
 it('pdfPostprocess takes precedence over legacy pressReady option', async () => {
