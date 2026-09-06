@@ -197,12 +197,196 @@ function collectDeviceCmykIncompatibleImage(
   };
 }
 
+// ITU-T T.800 (06/2019) sections I.5.3 and I.5.3.6 define the `jp2h` and
+// `cdef` box types; Table I.16 assigns 1 to opacity and 2 to premultiplied
+// opacity. PDF 32000-1:2008 section 8.9.5, Table 89 uses the same values for
+// `/SMaskInData`.
+// https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-T.800-201906-S!!PDF-E&type=items
+// https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
+const JP2_HEADER_BOX_TYPE = 0x6a703268;
+const JP2_CHANNEL_DEFINITION_BOX_TYPE = 0x63646566;
+const JP2_UNASSOCIATED_ALPHA = 1;
+const JP2_PREMULTIPLIED_ALPHA = 2;
+
+interface Jp2ChannelDefinition {
+  channelIndex: number;
+  type: number;
+  association: number;
+}
+
+interface Jp2Box {
+  type: number;
+  contentStart: number;
+  end: number;
+}
+
+function readJp2Box(
+  view: DataView,
+  offset: number,
+  end: number,
+): Jp2Box | null {
+  if (offset + 8 > end) {
+    return null;
+  }
+  let boxLength = view.getUint32(offset);
+  const type = view.getUint32(offset + 4);
+  let headerLength = 8;
+  if (boxLength === 1) {
+    if (offset + 16 > end) {
+      return null;
+    }
+    const extendedLength = view.getBigUint64(offset + 8);
+    if (extendedLength > BigInt(Number.MAX_SAFE_INTEGER)) {
+      return null;
+    }
+    boxLength = Number(extendedLength);
+    headerLength = 16;
+  } else if (boxLength === 0) {
+    boxLength = end - offset;
+  }
+  if (boxLength < headerLength || offset + boxLength > end) {
+    return null;
+  }
+  return {
+    type,
+    contentStart: offset + headerLength,
+    end: offset + boxLength,
+  };
+}
+
+function getJp2AlphaType(
+  definitions: readonly Jp2ChannelDefinition[],
+): typeof JP2_UNASSOCIATED_ALPHA | typeof JP2_PREMULTIPLIED_ALPHA | null {
+  const alphaDefinitions = definitions.filter(
+    ({ type }) =>
+      type === JP2_UNASSOCIATED_ALPHA || type === JP2_PREMULTIPLIED_ALPHA,
+  );
+  if (alphaDefinitions.length === 0) {
+    return null;
+  }
+
+  const alphaChannelIndexes = new Set(
+    alphaDefinitions.map(({ channelIndex }) => channelIndex),
+  );
+  const alphaTypes = new Set(alphaDefinitions.map(({ type }) => type));
+  const alphaAssociations = new Set(
+    alphaDefinitions.map(({ association }) => association),
+  );
+  const colorAssociations = new Set(
+    definitions
+      .filter(({ type, association }) => type === 0 && association !== 0xffff)
+      .map(({ association }) => association),
+  );
+  const appliesToAllColors =
+    alphaAssociations.has(0) ||
+    (colorAssociations.size > 0 &&
+      colorAssociations.isSubsetOf(alphaAssociations));
+  if (
+    alphaChannelIndexes.size !== 1 ||
+    alphaTypes.size !== 1 ||
+    !appliesToAllColors
+  ) {
+    throw new TypeError(
+      'JPX replacement alpha must use one opacity channel that applies to all color channels',
+    );
+  }
+  return alphaDefinitions[0].type === JP2_UNASSOCIATED_ALPHA
+    ? JP2_UNASSOCIATED_ALPHA
+    : JP2_PREMULTIPLIED_ALPHA;
+}
+
+function readJp2ChannelDefinitions(
+  view: DataView,
+  start: number,
+  end: number,
+): Jp2ChannelDefinition[] | null {
+  for (let offset = start; offset + 8 <= end; ) {
+    const box = readJp2Box(view, offset, end);
+    if (box === null) {
+      return null;
+    }
+    if (
+      box.type === JP2_CHANNEL_DEFINITION_BOX_TYPE &&
+      box.contentStart + 2 <= box.end
+    ) {
+      const entryCount = view.getUint16(box.contentStart);
+      const definitions: Jp2ChannelDefinition[] = [];
+      for (let index = 0; index < entryCount; index++) {
+        const entryOffset = box.contentStart + 2 + index * 6;
+        if (entryOffset + 6 > box.end) {
+          return null;
+        }
+        definitions.push({
+          channelIndex: view.getUint16(entryOffset),
+          type: view.getUint16(entryOffset + 2),
+          association: view.getUint16(entryOffset + 4),
+        });
+      }
+      return definitions;
+    }
+    offset = box.end;
+  }
+  return null;
+}
+
+function findJp2AlphaType(
+  view: DataView,
+): typeof JP2_UNASSOCIATED_ALPHA | typeof JP2_PREMULTIPLIED_ALPHA | null {
+  for (let offset = 0; offset + 8 <= view.byteLength; ) {
+    const box = readJp2Box(view, offset, view.byteLength);
+    if (box === null) {
+      return null;
+    }
+    if (box.type === JP2_HEADER_BOX_TYPE) {
+      const definitions = readJp2ChannelDefinitions(
+        view,
+        box.contentStart,
+        box.end,
+      );
+      return definitions === null ? null : getJp2AlphaType(definitions);
+    }
+    offset = box.end;
+  }
+  return null;
+}
+
+function setJpxEmbeddedAlphaParameter(
+  doc: mupdfType.PDFDocument,
+  imageRef: mupdfType.PDFObject,
+): void {
+  // NOTE: Chromium/Skia serializes browser images as JPEG or deflated samples,
+  // writes alpha as a separate `/SMask` reference, and omits the entry when
+  // there is no mask. Source images in `browserResult.pdf` therefore do not
+  // use JPX `/SMaskInData`.
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=380
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=398
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=275
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=111
+  const imageObject = imageRef.resolve();
+  if (
+    imageObject.get('Filter').toString() !== '/JPXDecode' ||
+    !imageObject.get('SMask').isNull() ||
+    !imageObject.get('Mask').isNull()
+  ) {
+    return;
+  }
+
+  using data = disposable(imageRef.readRawStream());
+  const bytes = data.asUint8Array();
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const alphaType = findJp2AlphaType(view);
+  if (alphaType !== null) {
+    imageObject.put('SMaskInData', doc.newInteger(alphaType));
+  }
+}
+
 function addImagePreservingColorSpace(
   doc: mupdfType.PDFDocument,
   image: mupdfType.Image,
 ): { ref: mupdfType.PDFObject; objectNumbers: Set<number> } {
   const xrefLengthBefore = doc.countObjects();
   const ref = doc.addImage(image);
+  setJpxEmbeddedAlphaParameter(doc, ref);
   const objectNumbers = collectReachableObjectNumbers([ref]);
   for (const objectNumber of objectNumbers) {
     if (objectNumber < xrefLengthBefore) {
