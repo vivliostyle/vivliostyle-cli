@@ -17,12 +17,15 @@ vi.mock('../src/core/create', () => ({ create: mockedCreate }));
 vi.mock('../src/core/preview', () => ({ preview: mockedPreview }));
 
 import {
+  builtinCmykConversion,
+  builtinGrayConversion,
   build,
   create,
   createBuiltinCmykConversionReplacement,
   createBuiltinGrayConversionReplacement,
   createBuiltinRgbConversionReplacement,
   createIccConversionReplacement,
+  iccConversion,
   preview,
 } from '../src/index.js';
 
@@ -35,6 +38,12 @@ it('provides build function', async () => {
       config: 'vivliostyle.config.js',
     }),
   );
+});
+
+it('provides CMYK fallback conversion factories', () => {
+  expect(builtinCmykConversion()).toBeTypeOf('function');
+  expect(builtinGrayConversion()).toBeTypeOf('function');
+  expect(iccConversion(new Uint8Array())).toBeTypeOf('function');
 });
 
 it('provides create function', async () => {

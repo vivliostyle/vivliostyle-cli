@@ -2509,6 +2509,7 @@ describe('PDF edit hooks', () => {
     const nestedPdf = await nestFirstImageInForms(pdf);
     const cmykColorHook = createCmykColorHook(
       new Map([['[10000,0,0]', { c: 0, m: 10000, y: 10000, k: 0 }]]),
+      undefined,
       'ignore',
       [],
     );

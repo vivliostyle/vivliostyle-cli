@@ -219,6 +219,15 @@ export function warnDeprecatedConfig(
       "'warnUnmapped' property of cmyk configuration was deprecated and will be removed in a future release. Please use 'ifUnmappedColorsFound' property instead.",
     );
   }
+  if (
+    cmykOptions.some(
+      (cmyk) => typeof cmyk === 'object' && cmyk.overrideMap !== undefined,
+    )
+  ) {
+    Logger.logWarn(
+      "'overrideMap' property of cmyk configuration was deprecated and will be removed in a future release. Please use 'fallback' property instead.",
+    );
+  }
   /* oxlint-enable typescript/no-deprecated */
 
   if (

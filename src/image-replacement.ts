@@ -3,10 +3,12 @@ import fs from 'node:fs';
 import type * as mupdfType from 'mupdf';
 
 import type {
+  CmykConvertFunction,
   ImageConversionReplacement,
   ReplaceFunction,
 } from './config/schema.js';
 import { disposable, disposableOrNull } from './disposable.js';
+import { importNodeModule } from './node-modules.js';
 
 /** Options shared by image color conversion replacements. */
 export interface ColorConversionOptions {
@@ -224,8 +226,9 @@ function createIccConversionReplaceFunction(
   const outputProfile = new Uint8Array(options.outputProfile);
 
   return ({ image, mupdf }) => {
+    using outputProfileBuffer = disposable(new mupdf.Buffer(outputProfile));
     using destination = disposable(
-      new mupdf.ColorSpace(outputProfile, 'output-profile'),
+      new mupdf.ColorSpace(outputProfileBuffer, 'output-profile'),
     );
     const destinationType = destination.getType();
     // NOTE: Lab is the only ICC color space that reaches this check. Unlike Gray, RGB, and CMYK, it has neither a Device color-space destination nor a PAM representation for a profile-free output image.
@@ -246,6 +249,90 @@ function createIccConversionReplaceFunction(
       mupdf,
     );
   };
+}
+
+function createColorConversion(
+  replaceFunction: ReplaceFunction,
+): CmykConvertFunction {
+  let mupdfPromise: Promise<typeof import('mupdf')> | undefined;
+  return async (rgb) => {
+    const mupdf = await (mupdfPromise ??= importNodeModule('mupdf'));
+    using pixmap = disposable(
+      new mupdf.Pixmap(mupdf.ColorSpace.DeviceRGB, [0, 0, 1, 1], false),
+    );
+    const pixels = pixmap.getPixels();
+    pixels[0] = Math.round((rgb.r / 10000) * 255);
+    pixels[1] = Math.round((rgb.g / 10000) * 255);
+    pixels[2] = Math.round((rgb.b / 10000) * 255);
+
+    const inputImage = new mupdf.Image(pixmap);
+    let replacementImage: mupdfType.Image | null | undefined;
+    try {
+      replacementImage = await replaceFunction({ image: inputImage, mupdf });
+    } finally {
+      if (replacementImage !== inputImage) {
+        inputImage.destroy();
+      }
+    }
+    if (replacementImage === null) {
+      return null;
+    }
+
+    using resultImage = disposable(replacementImage);
+    using resultPixmap = disposable(resultImage.toPixmap());
+    using resultColorSpace = disposableOrNull(resultPixmap.getColorSpace());
+    const resultPixels = resultPixmap.getPixels();
+    if (resultColorSpace?.isCMYK()) {
+      return {
+        c: Math.round((resultPixels[0] / 255) * 10000),
+        m: Math.round((resultPixels[1] / 255) * 10000),
+        y: Math.round((resultPixels[2] / 255) * 10000),
+        k: Math.round((resultPixels[3] / 255) * 10000),
+      };
+    }
+    if (resultColorSpace?.isGray()) {
+      return {
+        c: 0,
+        m: 0,
+        y: 0,
+        k: Math.round(((255 - resultPixels[0]) / 255) * 10000),
+      };
+    }
+    throw new Error(
+      `Cannot derive CMYK values from a ${String(resultColorSpace)} image`,
+    );
+  };
+}
+
+/**
+ * Creates a function for cmyk.fallback that converts RGB colors to CMYK using
+ * MuPDF's DeviceCMYK color space.
+ */
+export function builtinCmykConversion(): CmykConvertFunction {
+  return createColorConversion(
+    createBuiltinConversionReplaceFunction('DeviceCMYK', {}),
+  );
+}
+
+/**
+ * Creates a function for cmyk.fallback that converts RGB colors to grayscale
+ * and maps the result to the K channel.
+ */
+export function builtinGrayConversion(): CmykConvertFunction {
+  return createColorConversion(
+    createBuiltinConversionReplaceFunction('DeviceGray', {}),
+  );
+}
+
+/**
+ * Creates a function for cmyk.fallback that converts RGB colors through an ICC
+ * profile. CMYK profiles return all four channels; grayscale profiles map to
+ * the K channel.
+ */
+export function iccConversion(outputProfile: Uint8Array): CmykConvertFunction {
+  return createColorConversion(
+    createIccConversionReplaceFunction({ outputProfile }),
+  );
 }
 
 export function createImageConversionReplaceFunction(

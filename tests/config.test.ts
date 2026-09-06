@@ -622,6 +622,7 @@ it('supports pdfPostprocess configuration', async () => {
       ifIncompatibleImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
+      fallback: undefined,
       mapOutput: undefined,
     },
     replaceImage: [
@@ -878,6 +879,19 @@ it('resolves CMYK issue policies and the deprecated warnUnmapped option', async 
   });
 });
 
+it('resolves cmyk fallback functions without wrapping them', async () => {
+  const fallback = () => ({ c: 0, m: 0, y: 0, k: 10000 });
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: { fallback } },
+  });
+
+  expect(config.outputs[0]).toMatchObject({
+    cmyk: { fallback },
+  });
+});
+
 it('resolves a top-level CMYK config object', () => {
   const mergedConfig = mergeInlineConfig(
     v.parse(VivliostyleConfigSchema, {
@@ -1016,6 +1030,54 @@ it('warns when top-level cmyk config uses warnUnmapped', () => {
   );
 });
 
+it('warns when build-level cmyk config uses overrideMap', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    pdfPostprocess: {
+      cmyk: { overrideMap: [['#000', { c: 0, m: 0, y: 0, k: 10000 }]] },
+    },
+  });
+
+  warnDeprecatedConfig(config);
+
+  expect(warn).toHaveBeenCalledWith(expect.stringContaining("'fallback'"));
+});
+
+it('warns when output-level cmyk config uses overrideMap', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    output: {
+      path: 'output.pdf',
+      pdfPostprocess: {
+        cmyk: { overrideMap: [['#000', { c: 0, m: 0, y: 0, k: 10000 }]] },
+      },
+    },
+  });
+
+  warnDeprecatedConfig(config);
+
+  expect(warn).toHaveBeenCalledWith(expect.stringContaining("'fallback'"));
+});
+
+it('warns when top-level cmyk config uses overrideMap', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+  });
+  const inlineConfig = v.parse(VivliostyleInlineConfig, {
+    cmyk: { overrideMap: [['#000', { c: 0, m: 0, y: 0, k: 10000 }]] },
+  });
+
+  warnDeprecatedConfig(config, inlineConfig);
+
+  expect(warn).toHaveBeenCalledWith(expect.stringContaining("'fallback'"));
+});
+
 it('does not warn for current top-level preflight options', () => {
   const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
   onTestFinished(() => warn.mockRestore());
@@ -1079,6 +1141,7 @@ it('output-level pdfPostprocess overrides build-level', async () => {
       ifIncompatibleImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
+      fallback: undefined,
       mapOutput: undefined,
     },
   });
