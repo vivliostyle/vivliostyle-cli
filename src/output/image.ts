@@ -94,8 +94,15 @@ function collectDeviceCmykIncompatibleImage(
 function addImagePreservingColorSpace(
   doc: mupdfType.PDFDocument,
   image: mupdfType.Image,
-): mupdfType.PDFObject {
+): { ref: mupdfType.PDFObject; objectNumbers: Set<number> } {
+  const xrefLengthBefore = doc.countObjects();
   const ref = doc.addImage(image);
+  const objectNumbers = collectReachableObjectNumbers([ref]);
+  for (const objectNumber of objectNumbers) {
+    if (objectNumber < xrefLengthBefore) {
+      objectNumbers.delete(objectNumber);
+    }
+  }
   const colorSpaceName = image.getColorSpace()?.getName();
 
   if (
@@ -108,7 +115,89 @@ function addImagePreservingColorSpace(
     ref.resolve().put('ColorSpace', colorSpaceName);
   }
 
-  return ref;
+  return { ref, objectNumbers };
+}
+
+function collectReachableObjectNumbers(
+  roots: Iterable<mupdfType.PDFObject>,
+): Set<number> {
+  const reachable = new Set<number>();
+  const pending = [...roots];
+
+  while (pending.length > 0) {
+    const object = pending.pop();
+    if (!object) {
+      break;
+    }
+    if (object.isIndirect()) {
+      const objectNumber = object.asIndirect();
+      if (reachable.has(objectNumber)) {
+        continue;
+      }
+      reachable.add(objectNumber);
+      pending.push(object.resolve());
+      continue;
+    }
+    if (object.isArray() || object.isDictionary()) {
+      object.forEach((value) => {
+        pending.push(value);
+      });
+    }
+  }
+
+  return reachable;
+}
+
+function removeUnreferencedCandidates(
+  doc: mupdfType.PDFDocument,
+  candidates: Set<number>,
+): void {
+  if (candidates.size === 0) {
+    return;
+  }
+
+  const roots: mupdfType.PDFObject[] = [doc.getTrailer()];
+  const xrefLength = doc.countObjects();
+  for (let objectNumber = 1; objectNumber < xrefLength; objectNumber++) {
+    if (candidates.has(objectNumber)) {
+      continue;
+    }
+    const ref = doc.newIndirect(objectNumber);
+    if (!ref.resolve().isNull()) {
+      roots.push(ref);
+    }
+  }
+  const referenced = collectReachableObjectNumbers(roots);
+
+  for (const objectNumber of candidates) {
+    if (!referenced.has(objectNumber)) {
+      doc.deleteObject(objectNumber);
+    }
+  }
+}
+
+function addReplacementImage(
+  doc: mupdfType.PDFDocument,
+  source: mupdfType.PDFObject,
+  image: mupdfType.Image,
+  cleanupCandidates: Set<number>,
+): mupdfType.PDFObject {
+  const sourceObjectNumbers = collectReachableObjectNumbers([source]);
+  const replacement = addImagePreservingColorSpace(doc, image);
+  const replacementObjectNumbers = collectReachableObjectNumbers([
+    replacement.ref,
+  ]);
+
+  for (const objectNumber of sourceObjectNumbers) {
+    cleanupCandidates.add(objectNumber);
+  }
+  for (const objectNumber of replacement.objectNumbers) {
+    if (!replacementObjectNumbers.has(objectNumber)) {
+      cleanupCandidates.add(objectNumber);
+    }
+  }
+
+  return replacement.ref;
 }
 
 function replaceImagesInDocument(
@@ -118,6 +207,7 @@ function replaceImagesInDocument(
 ): ReplaceStats {
   let replaced = 0;
   let total = 0;
+  const cleanupCandidates = new Set<number>();
 
   const pageCount = doc.countPages();
 
@@ -157,7 +247,12 @@ function replaceImagesInDocument(
       // Find matching source image
       for (const pair of imagePairs) {
         if (imagesEqual(pdfImage, pair.srcImage)) {
-          replacementRef = addImagePreservingColorSpace(doc, pair.destImage);
+          replacementRef = addReplacementImage(
+            doc,
+            value,
+            pair.destImage,
+            cleanupCandidates,
+          );
           xobjects.put(key, replacementRef);
           replaced++;
           Logger.debug(
@@ -191,6 +286,7 @@ function replaceImagesInDocument(
     pageObj.put('Resources', res);
   }
 
+  removeUnreferencedCandidates(doc, cleanupCandidates);
   return { replaced, total };
 }
 
