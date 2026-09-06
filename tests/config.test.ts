@@ -20,16 +20,21 @@ import {
   UseTemporaryServerRoot,
 } from '../src/config/resolve.js';
 import type {
+  CmykConversion,
   ReplaceFunction,
   ReplaceImageConfig,
 } from '../src/config/schema.js';
 import {
+  CmykConversionSchema,
   ImageConversionReplacementSchema,
   VivliostyleConfigSchema,
   VivliostyleInlineConfig,
 } from '../src/config/schema.js';
 import {
+  createBuiltinCmykConversion,
   createBuiltinCmykConversionReplacement,
+  createBuiltinGrayConversion,
+  createIccConversion,
   createIccConversionReplacement,
 } from '../src/image-replacement.js';
 import { Logger } from '../src/logger.js';
@@ -890,6 +895,128 @@ it('resolves cmyk fallback functions without wrapping them', async () => {
   expect(config.outputs[0]).toMatchObject({
     cmyk: { fallback },
   });
+});
+
+it('resolves fallback profiles from the entry context for each output', async () => {
+  const fallback = createIccConversion({
+    inputProfile: ' profiles/input.icc ',
+    outputProfile: ' profiles/output.icc ',
+  });
+  const config = await getTaskConfig(['build'], resolveFixture('.'), {
+    entryContext: 'config',
+    entry: 'manuscript.md',
+    output: [
+      'default.pdf',
+      {
+        path: 'cmyk.pdf',
+        pdfPostprocess: {
+          cmyk: {
+            fallback: createBuiltinCmykConversion({
+              inputProfile: 'profiles/input.icc',
+            }),
+          },
+        },
+      },
+      {
+        path: 'gray.pdf',
+        pdfPostprocess: {
+          cmyk: {
+            fallback: createBuiltinGrayConversion({
+              inputProfile: resolveFixture('cmyk/absolute.icc'),
+            }),
+          },
+        },
+      },
+    ],
+    pdfPostprocess: { cmyk: { fallback } },
+  });
+
+  expect(config.outputs).toMatchObject([
+    {
+      cmyk: {
+        fallback: {
+          kind: 'icc',
+          inputProfile: resolveFixture('config/profiles/input.icc'),
+          outputProfile: resolveFixture('config/profiles/output.icc'),
+        },
+      },
+    },
+    {
+      cmyk: {
+        fallback: {
+          kind: 'builtin',
+          destination: 'DeviceCMYK',
+          inputProfile: resolveFixture('config/profiles/input.icc'),
+        },
+      },
+    },
+    {
+      cmyk: {
+        fallback: {
+          kind: 'builtin',
+          destination: 'DeviceGray',
+          inputProfile: resolveFixture('cmyk/absolute.icc'),
+        },
+      },
+    },
+  ]);
+  expect(fallback).toMatchObject({
+    inputProfile: ' profiles/input.icc ',
+    outputProfile: ' profiles/output.icc ',
+  });
+});
+
+it('resolves fallback profiles supplied through the inline API', () => {
+  const merged = mergeInlineConfig(
+    v.parse(VivliostyleConfigSchema, {
+      entryContext: 'config',
+      entry: 'manuscript.md',
+      output: 'output.pdf',
+    }),
+    v.parse(VivliostyleInlineConfig, {
+      cwd: resolveFixture('.'),
+      cmyk: {
+        fallback: createIccConversion({ outputProfile: 'output.icc' }),
+      },
+    }),
+  );
+  const config = resolveTaskConfig(merged.tasks[0], merged.inlineOptions);
+
+  expect(config.outputs[0]).toMatchObject({
+    cmyk: {
+      fallback: {
+        kind: 'icc',
+        outputProfile: resolveFixture('config/output.icc'),
+      },
+    },
+  });
+});
+
+it.each([
+  { kind: 'builtin', destination: 'DeviceRGB' },
+  { kind: 'builtin', destination: 'DeviceCMYK', inputProfile: '' },
+  {
+    kind: 'builtin',
+    destination: 'DeviceGray',
+    inputProfile: new Uint8Array(),
+  },
+  { kind: 'icc' },
+  { kind: 'icc', outputProfile: ' ' },
+  { kind: 'icc', outputProfile: new Uint8Array() },
+])('rejects an invalid fallback conversion: %j', (fallback) => {
+  expect(v.is(CmykConversionSchema, fallback)).toBe(false);
+  expect(
+    v.safeParse(VivliostyleConfigSchema, {
+      pdfPostprocess: { cmyk: { fallback } },
+    }).success,
+  ).toBe(false);
+});
+
+it('excludes DeviceRGB from the fallback conversion type', () => {
+  expectTypeOf<{
+    kind: 'builtin';
+    destination: 'DeviceRGB';
+  }>().not.toExtend<CmykConversion>();
 });
 
 it('resolves a top-level CMYK config object', () => {

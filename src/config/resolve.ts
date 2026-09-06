@@ -45,6 +45,7 @@ import {
 import type {
   ArticleEntryConfig,
   BrowserType,
+  CmykConversion,
   CmykConvertFunction,
   ContentsEntryConfig,
   CoverEntryConfig,
@@ -278,7 +279,7 @@ export interface CmykConfig {
   ifIncompatibleImagesFound: 'warn' | 'error' | 'ignore';
   overrideMap: CmykMapEntry[];
   reserveMap: CmykMapEntry[];
-  fallback: CmykConvertFunction | undefined;
+  fallback: CmykConvertFunction | CmykConversion | undefined;
   mapOutput: string | undefined;
 }
 
@@ -701,6 +702,23 @@ export function resolveTaskConfig(
     undefined;
 
   const outputs = ((): OutputConfig[] => {
+    const resolveColorConversion = <T extends ImageConversionReplacement>(
+      conversion: T,
+    ): T => ({
+      ...conversion,
+      inputProfile:
+        conversion.inputProfile === undefined
+          ? undefined
+          : upath.resolve(entryContextDir, conversion.inputProfile.trim()),
+      ...(conversion.kind === 'icc'
+        ? {
+            outputProfile: upath.resolve(
+              entryContextDir,
+              conversion.outputProfile.trim(),
+            ),
+          }
+        : {}),
+    });
     type CmykOption = NonNullable<typeof config.pdfPostprocess>['cmyk'];
     const resolveCmykConfig = (cmykOption: CmykOption): CmykConfig | false => {
       const cmykObject =
@@ -720,7 +738,10 @@ export function resolveTaskConfig(
           // oxlint-disable-next-line typescript/no-deprecated -- preserve overrideMap behavior for existing configurations
           overrideMap: resolveMapEntries(cmykObject.overrideMap ?? []),
           reserveMap: resolveMapEntries(cmykObject.reserveMap ?? []),
-          fallback: cmykObject.fallback,
+          fallback:
+            typeof cmykObject.fallback === 'object'
+              ? resolveColorConversion(cmykObject.fallback)
+              : cmykObject.fallback,
           mapOutput: cmykObject.mapOutput
             ? upath.resolve(context, cmykObject.mapOutput)
             : undefined,
@@ -759,32 +780,7 @@ export function resolveTaskConfig(
         replacement: ImageConversionReplacement,
         index: number,
       ): ResolvedImageConversionReplacement => ({
-        imageConversion:
-          replacement.kind === 'builtin'
-            ? {
-                ...replacement,
-                inputProfile:
-                  replacement.inputProfile === undefined
-                    ? undefined
-                    : upath.resolve(
-                        entryContextDir,
-                        replacement.inputProfile.trim(),
-                      ),
-              }
-            : {
-                ...replacement,
-                inputProfile:
-                  replacement.inputProfile === undefined
-                    ? undefined
-                    : upath.resolve(
-                        entryContextDir,
-                        replacement.inputProfile.trim(),
-                      ),
-                outputProfile: upath.resolve(
-                  entryContextDir,
-                  replacement.outputProfile.trim(),
-                ),
-              },
+        imageConversion: resolveColorConversion(replacement),
         label: `[function#${index}]`,
       });
       const resolveReplacement = (

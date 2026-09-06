@@ -6,6 +6,11 @@ import { expect, it, vi } from 'vitest';
 
 import type { CmykConfig } from '../src/config/resolve.js';
 import type { CmykConvertFunction } from '../src/config/schema.js';
+import {
+  createBuiltinCmykConversion,
+  createBuiltinGrayConversion,
+  createIccConversion,
+} from '../src/image-replacement.js';
 import { Logger } from '../src/logger.js';
 import { PostProcess } from '../src/output/pdf-postprocess.js';
 
@@ -142,6 +147,45 @@ it('fails without writing when cmyk fallback throws', async () => {
   expect(result.error?.message).toContain('fallback failed');
   expect(result.written).toBe(false);
 });
+
+it.each([
+  createBuiltinCmykConversion(),
+  createBuiltinGrayConversion(),
+  createIccConversion({ outputProfile: path.join(fixturesDir, 'ps_cmyk.icc') }),
+  createIccConversion({ outputProfile: path.join(fixturesDir, 'ps_gray.icc') }),
+])('uses a factory-created cmyk fallback: %j', async (fallback) => {
+  const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+  const result = await runSave(
+    pdf,
+    cmykConfig({
+      fallback,
+      ifUnmappedColorsFound: 'error',
+      ifIncompatibleImagesFound: 'ignore',
+    }),
+  );
+
+  expect(result.error).toBeNull();
+  expect(result.written).toBe(true);
+  expect(result.warnings).toEqual([]);
+});
+
+it.each([
+  createBuiltinCmykConversion({
+    inputProfile: path.join(fixturesDir, 'missing.icc'),
+  }),
+  createIccConversion({ outputProfile: path.join(fixturesDir, 'missing.icc') }),
+])(
+  'fails without writing when a fallback profile is missing: %j',
+  async (fallback) => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+
+    const result = await runSave(pdf, cmykConfig({ fallback }));
+
+    expect(result.error?.message).toContain('missing.icc');
+    expect(result.written).toBe(false);
+  },
+);
 
 it('combines color and image failures', async () => {
   const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));

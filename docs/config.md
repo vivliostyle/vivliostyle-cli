@@ -465,10 +465,11 @@ type PdfPostprocessConfig = {
     Each entry is a tuple of [rgb, {c, m, y, k}] that overrides the color mapping.
     RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
 
-  - `fallback`: import("@vivliostyle/cli").CmykConvertFunction  
-    Custom conversion applied to RGB colors not covered by the regular mapping.
+  - `fallback`: import("@vivliostyle/cli").CmykConvertFunction | [CmykConversion](#cmykconversion)  
+    Conversion applied to RGB colors not covered by the regular mapping.
+    Accepts a custom function or a color conversion created by a fallback factory.
     RGB and CMYK channel values are integers on a 0-10000 scale.
-    Return null to leave the color unmapped.
+    Return null from a custom function to leave the color unmapped.
     Exceptions and invalid return values fail the build.
 
   - `reserveMap`: ("{tuple(Array)}")[]  
@@ -499,7 +500,9 @@ type PdfPostprocessConfig = {
 ```ts
 type CmykConfig = {
   overrideMap?: "{tuple(Array)}"[];
-  fallback?: import("@vivliostyle/cli").CmykConvertFunction;
+  fallback?:
+    | import("@vivliostyle/cli").CmykConvertFunction
+    | CmykConversion;
   reserveMap?: "{tuple(Array)}"[];
   warnUnmapped?: boolean;
   ifUnmappedColorsFound?:
@@ -512,6 +515,28 @@ type CmykConfig = {
     | "ignore";
   mapOutput?: string;
 };
+```
+
+### CmykConversion
+
+RGB to CMYK color conversion created by a fallback factory.
+
+#### Type definition
+
+```ts
+type CmykConversion =
+  | {
+      kind: "builtin";
+      destination:
+        | "DeviceGray"
+        | "DeviceCMYK";
+      inputProfile?: string;
+    }
+  | {
+      kind: "icc";
+      inputProfile?: string;
+      outputProfile: string;
+    };
 ```
 
 ### ReplaceImageEntry

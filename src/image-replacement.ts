@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import type * as mupdfType from 'mupdf';
 
 import type {
+  CmykConversion,
   CmykConvertFunction,
   ImageConversionReplacement,
   ReplaceFunction,
@@ -10,13 +11,13 @@ import type {
 import { disposable, disposableOrNull } from './disposable.js';
 import { importNodeModule } from './node-modules.js';
 
-/** Options shared by image color conversion replacements. */
+/** Options shared by color conversions and image conversion replacements. */
 export interface ColorConversionOptions {
   /**
    * Path to an ICC profile used to interpret an unprofiled DeviceGray,
    * DeviceRGB, or DeviceCMYK input. It must use the same color space as the
-   * input image. Relative paths use the same entry context as `replaceImage`
-   * source and replacement paths.
+   * input. For cmyk.fallback, the input is always RGB. Relative paths use the
+   * same entry context as `replaceImage` source and replacement paths.
    */
   inputProfile?: string;
 }
@@ -27,7 +28,8 @@ export interface IccConversionOptions extends ColorConversionOptions {
    * Path to the destination ICC profile. Relative paths use the same entry
    * context as `replaceImage` source and replacement paths. The converted
    * image uses the corresponding Device color space; the profile itself is
-   * not embedded in the image.
+   * not embedded in the image. For cmyk.fallback, the profile must use CMYK
+   * or Gray; Gray is mapped to the K channel.
    */
   outputProfile: string;
 }
@@ -129,8 +131,9 @@ function convertImage(
     return convertPixmap(source, destination, outputColorSpace, mupdf);
   }
 
+  using inputProfileBuffer = disposable(new mupdf.Buffer(inputProfile));
   using inputColorSpace = disposable(
-    new mupdf.ColorSpace(inputProfile, 'input-profile'),
+    new mupdf.ColorSpace(inputProfileBuffer, 'input-profile'),
   );
   if (inputColorSpace.getType() !== deviceColorSpaceType) {
     throw new TypeError(
@@ -251,9 +254,10 @@ function createIccConversionReplaceFunction(
   };
 }
 
-function createColorConversion(
-  replaceFunction: ReplaceFunction,
+export function createCmykConversionFunction(
+  conversion: CmykConversion,
 ): CmykConvertFunction {
+  const { replaceFunction } = createImageConversionReplaceFunction(conversion);
   let mupdfPromise: Promise<typeof import('mupdf')> | undefined;
   return async (rgb) => {
     const mupdf = await (mupdfPromise ??= importNodeModule('mupdf'));
@@ -305,34 +309,46 @@ function createColorConversion(
 }
 
 /**
- * Creates a function for cmyk.fallback that converts RGB colors to CMYK using
+ * Creates a conversion for cmyk.fallback that converts RGB colors to CMYK using
  * MuPDF's DeviceCMYK color space.
  */
-export function builtinCmykConversion(): CmykConvertFunction {
-  return createColorConversion(
-    createBuiltinConversionReplaceFunction('DeviceCMYK', {}),
-  );
+export function createBuiltinCmykConversion(
+  options: ColorConversionOptions = {},
+): CmykConversion {
+  return Object.freeze({
+    kind: 'builtin',
+    destination: 'DeviceCMYK',
+    inputProfile: options.inputProfile,
+  });
 }
 
 /**
- * Creates a function for cmyk.fallback that converts RGB colors to grayscale
+ * Creates a conversion for cmyk.fallback that converts RGB colors to grayscale
  * and maps the result to the K channel.
  */
-export function builtinGrayConversion(): CmykConvertFunction {
-  return createColorConversion(
-    createBuiltinConversionReplaceFunction('DeviceGray', {}),
-  );
+export function createBuiltinGrayConversion(
+  options: ColorConversionOptions = {},
+): CmykConversion {
+  return Object.freeze({
+    kind: 'builtin',
+    destination: 'DeviceGray',
+    inputProfile: options.inputProfile,
+  });
 }
 
 /**
- * Creates a function for cmyk.fallback that converts RGB colors through an ICC
+ * Creates a conversion for cmyk.fallback that converts RGB colors through an ICC
  * profile. CMYK profiles return all four channels; grayscale profiles map to
  * the K channel.
  */
-export function iccConversion(outputProfile: Uint8Array): CmykConvertFunction {
-  return createColorConversion(
-    createIccConversionReplaceFunction({ outputProfile }),
-  );
+export function createIccConversion(
+  options: IccConversionOptions,
+): CmykConversion {
+  return Object.freeze({
+    kind: 'icc',
+    inputProfile: options.inputProfile,
+    outputProfile: options.outputProfile,
+  });
 }
 
 export function createImageConversionReplaceFunction(

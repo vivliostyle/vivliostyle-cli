@@ -6,16 +6,16 @@
 ### Functions
 
 - [`build`](#build)
-- [`builtinCmykConversion`](#builtincmykconversion)
-- [`builtinGrayConversion`](#builtingrayconversion)
 - [`create`](#create)
+- [`createBuiltinCmykConversion`](#createbuiltincmykconversion)
 - [`createBuiltinCmykConversionReplacement`](#createbuiltincmykconversionreplacement)
+- [`createBuiltinGrayConversion`](#createbuiltingrayconversion)
 - [`createBuiltinGrayConversionReplacement`](#createbuiltingrayconversionreplacement)
 - [`createBuiltinRgbConversionReplacement`](#createbuiltinrgbconversionreplacement)
+- [`createIccConversion`](#createiccconversion)
 - [`createIccConversionReplacement`](#createiccconversionreplacement)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
-- [`iccConversion`](#iccconversion)
 - [`preview`](#preview)
 - [`VFM`](#vfm)
 
@@ -30,6 +30,7 @@
 
 ### Type Aliases
 
+- [`CmykConversion`](#cmykconversion)
 - [`CmykConvertFunction`](#cmykconvertfunction)
 - [`ImageConversionReplacement`](#imageconversionreplacement)
 - [`Metadata`](#metadata)
@@ -79,7 +80,7 @@ build({
 
 ###### cmyk?
 
-`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -284,32 +285,6 @@ build({
 #### Returns
 
 `Promise`\<`void`\>
-
-***
-
-### builtinCmykConversion()
-
-> **builtinCmykConversion**(): [`CmykConvertFunction`](#cmykconvertfunction)
-
-Creates a function for cmyk.fallback that converts RGB colors to CMYK using
-MuPDF's DeviceCMYK color space.
-
-#### Returns
-
-[`CmykConvertFunction`](#cmykconvertfunction)
-
-***
-
-### builtinGrayConversion()
-
-> **builtinGrayConversion**(): [`CmykConvertFunction`](#cmykconvertfunction)
-
-Creates a function for cmyk.fallback that converts RGB colors to grayscale
-and maps the result to the K channel.
-
-#### Returns
-
-[`CmykConvertFunction`](#cmykconvertfunction)
 
 ***
 
@@ -337,7 +312,7 @@ Scaffold a new Vivliostyle project.
 
 ###### cmyk?
 
-`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -545,6 +520,25 @@ Scaffold a new Vivliostyle project.
 
 ***
 
+### createBuiltinCmykConversion()
+
+> **createBuiltinCmykConversion**(`options?`): [`CmykConversion`](#cmykconversion)
+
+Creates a conversion for cmyk.fallback that converts RGB colors to CMYK using
+MuPDF's DeviceCMYK color space.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`CmykConversion`](#cmykconversion)
+
+***
+
 ### createBuiltinCmykConversionReplacement()
 
 > **createBuiltinCmykConversionReplacement**(`options?`): [`ImageConversionReplacement`](#imageconversionreplacement)
@@ -560,6 +554,25 @@ Creates a replacement that converts images to DeviceCMYK.
 #### Returns
 
 [`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createBuiltinGrayConversion()
+
+> **createBuiltinGrayConversion**(`options?`): [`CmykConversion`](#cmykconversion)
+
+Creates a conversion for cmyk.fallback that converts RGB colors to grayscale
+and maps the result to the K channel.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`CmykConversion`](#cmykconversion)
 
 ***
 
@@ -596,6 +609,26 @@ Creates a replacement that converts images to DeviceRGB.
 #### Returns
 
 [`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createIccConversion()
+
+> **createIccConversion**(`options`): [`CmykConversion`](#cmykconversion)
+
+Creates a conversion for cmyk.fallback that converts RGB colors through an ICC
+profile. CMYK profiles return all four channels; grayscale profiles map to
+the K channel.
+
+#### Parameters
+
+##### options
+
+[`IccConversionOptions`](#iccconversionoptions)
+
+#### Returns
+
+[`CmykConversion`](#cmykconversion)
 
 ***
 
@@ -640,7 +673,7 @@ profile and returns an image in the corresponding Device color space.
 
 ###### cmyk?
 
-`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -866,26 +899,6 @@ Define the configuration for Vivliostyle CLI.
 
 ***
 
-### iccConversion()
-
-> **iccConversion**(`outputProfile`): [`CmykConvertFunction`](#cmykconvertfunction)
-
-Creates a function for cmyk.fallback that converts RGB colors through an ICC
-profile. CMYK profiles return all four channels; grayscale profiles map to
-the K channel.
-
-#### Parameters
-
-##### outputProfile
-
-`Uint8Array`
-
-#### Returns
-
-[`CmykConvertFunction`](#cmykconvertfunction)
-
-***
-
 ### preview()
 
 > **preview**(`options`): `Promise`\<`ViteDevServer`\>
@@ -910,7 +923,7 @@ Open a browser for previewing the publication.
 
 ###### cmyk?
 
-`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+`boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
 
 ###### config?
 
@@ -1159,7 +1172,7 @@ Unified processor.
 
 ### ColorConversionOptions
 
-Options shared by image color conversion replacements.
+Options shared by color conversions and image conversion replacements.
 
 #### Extended by
 
@@ -1169,7 +1182,7 @@ Options shared by image color conversion replacements.
 
 | Property | Type | Description |
 | ------ | ------ | ------ |
-| <a id="property-inputprofile"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input image. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
+| <a id="property-inputprofile"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input. For cmyk.fallback, the input is always RGB. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
 
 ***
 
@@ -1185,8 +1198,8 @@ Options for conversion using a caller-provided destination ICC profile.
 
 | Property | Type | Description |
 | ------ | ------ | ------ |
-| <a id="property-inputprofile-1"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input image. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
-| <a id="property-outputprofile"></a> `outputProfile` | `string` | Path to the destination ICC profile. Relative paths use the same entry context as `replaceImage` source and replacement paths. The converted image uses the corresponding Device color space; the profile itself is not embedded in the image. |
+| <a id="property-inputprofile-1"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input. For cmyk.fallback, the input is always RGB. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
+| <a id="property-outputprofile"></a> `outputProfile` | `string` | Path to the destination ICC profile. Relative paths use the same entry context as `replaceImage` source and replacement paths. The converted image uses the corresponding Device color space; the profile itself is not embedded in the image. For cmyk.fallback, the profile must use CMYK or Gray; Gray is mapped to the K channel. |
 
 ***
 
@@ -1260,7 +1273,7 @@ interface to the schema, so a drift in either direction is rejected.
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
 | <a id="property-cliversion"></a> `cliVersion` | `string` |
-| <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
+| <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
 | <a id="property-config"></a> `config?` | `string` |
 | <a id="property-configdata"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
 | <a id="property-coreversion"></a> `coreVersion` | `string` |
@@ -1317,6 +1330,12 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
+
+### CmykConversion
+
+> **CmykConversion** = `Readonly`\<`v.InferInput`\<*typeof* `CmykConversionSchema`\>\>
+
+***
 
 ### CmykConvertFunction
 

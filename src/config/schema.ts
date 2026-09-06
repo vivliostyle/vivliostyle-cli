@@ -291,6 +291,37 @@ const CMYKValueSchema = v.pipe(
 
 const CmykMapEntrySchema = v.tuple([RGBValueSchema, CMYKValueSchema]);
 
+const BuiltinColorConversionSchema = v.object({
+  kind: v.literal('builtin'),
+  destination: v.union([
+    v.literal('DeviceGray'),
+    v.literal('DeviceRGB'),
+    v.literal('DeviceCMYK'),
+  ]),
+  inputProfile: v.optional(ValidString),
+});
+
+const IccColorConversionSchema = v.object({
+  kind: v.literal('icc'),
+  inputProfile: v.optional(ValidString),
+  outputProfile: ValidString,
+});
+
+export const CmykConversionSchema = v.pipe(
+  v.variant('kind', [
+    v.object({
+      ...BuiltinColorConversionSchema.entries,
+      destination: v.union([v.literal('DeviceGray'), v.literal('DeviceCMYK')]),
+    }),
+    IccColorConversionSchema,
+  ]),
+  v.title('CmykConversion'),
+  v.description('RGB to CMYK color conversion created by a fallback factory.'),
+);
+export type CmykConversion = Readonly<
+  v.InferInput<typeof CmykConversionSchema>
+>;
+
 export function isValidCMYKValue(
   value: unknown,
 ): value is v.InferOutput<typeof CMYKValueSchema> {
@@ -320,6 +351,19 @@ const CmykConvertFunctionSchema = v.pipe(
   `),
 );
 
+const CmykFallbackSchema: v.GenericSchema<
+  CmykConvertFunction | CmykConversion
+> = v.pipe(
+  v.union([CmykConvertFunctionSchema, CmykConversionSchema]),
+  v.description($`
+    Conversion applied to RGB colors not covered by the regular mapping.
+    Accepts a custom function or a color conversion created by a fallback factory.
+    RGB and CMYK channel values are integers on a 0-10000 scale.
+    Return null from a custom function to leave the color unmapped.
+    Exceptions and invalid return values fail the build.
+  `),
+);
+
 const CmykConfigSchema = v.pipe(
   v.partial(
     v.object({
@@ -333,7 +377,7 @@ const CmykConfigSchema = v.pipe(
           RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
         `),
       ),
-      fallback: CmykConvertFunctionSchema,
+      fallback: CmykFallbackSchema,
       reserveMap: v.pipe(
         v.array(CmykMapEntrySchema),
         v.description($`
@@ -430,20 +474,12 @@ const ReplaceFunctionSchema = v.pipe(
 export const ImageConversionReplacementSchema = v.pipe(
   v.variant('kind', [
     v.object({
-      kind: v.literal('builtin'),
-      destination: v.union([
-        v.literal('DeviceGray'),
-        v.literal('DeviceRGB'),
-        v.literal('DeviceCMYK'),
-      ]),
-      inputProfile: v.optional(ValidString),
+      ...BuiltinColorConversionSchema.entries,
       source: v.exactOptional(v.never()),
       replacement: v.exactOptional(v.never()),
     }),
     v.object({
-      kind: v.literal('icc'),
-      inputProfile: v.optional(ValidString),
-      outputProfile: ValidString,
+      ...IccColorConversionSchema.entries,
       source: v.exactOptional(v.never()),
       replacement: v.exactOptional(v.never()),
     }),
