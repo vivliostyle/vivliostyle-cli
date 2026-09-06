@@ -4,6 +4,7 @@ import {
   isValidCMYKValue,
 } from '../config/schema.js';
 import type { CMYKValue } from '../global-viewer.js';
+import { createCmykConversionFunction } from '../image-replacement.js';
 import { Logger } from '../logger.js';
 import { tokenize, type OperatorToken } from './pdf-stream.js';
 import type { PdfEditHook } from './pdf-visitor.js';
@@ -128,11 +129,16 @@ async function convertColors(
 
 export function createCmykColorHook(
   colorMap: ReadonlyMap<string, CMYKValue>,
-  fallback: CmykConvertFunction | undefined,
+  fallback: CmykConfig['fallback'],
   ifUnmappedColorsFound: CmykConfig['ifUnmappedColorsFound'],
   failures: string[],
 ): PdfEditHook {
-  const convert = createColorConverter(colorMap, fallback);
+  const convert = createColorConverter(
+    colorMap,
+    typeof fallback === 'object'
+      ? createCmykConversionFunction(fallback)
+      : fallback,
+  );
   const unmappedColors =
     ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
   return {

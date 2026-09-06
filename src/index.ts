@@ -16,6 +16,7 @@ export {
 export type { CMYKValue } from './global-viewer.js';
 export { defineConfig } from './config/define.js';
 export type {
+  CmykConversion,
   CmykConvertFunction,
   ImageConversionReplacement,
   ReplaceFunction,
@@ -28,13 +29,13 @@ export type {
 } from './config/schema.js';
 export type { TemplateVariable } from './create-template.js';
 export {
-  builtinCmykConversion,
-  builtinGrayConversion,
+  createBuiltinCmykConversion,
+  createBuiltinGrayConversion,
   createBuiltinCmykConversionReplacement,
   createBuiltinGrayConversionReplacement,
   createBuiltinRgbConversionReplacement,
+  createIccConversion,
   createIccConversionReplacement,
-  iccConversion,
 } from './image-replacement.js';
 export type {
   ColorConversionOptions,

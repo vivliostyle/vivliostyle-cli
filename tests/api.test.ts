@@ -1,6 +1,6 @@
 import './mocks/fs.js';
 import './mocks/tmp.js';
-import { expect, it, vi } from 'vitest';
+import { expect, expectTypeOf, it, vi } from 'vitest';
 
 const mockedBuild = vi.hoisted(() =>
   vi.fn<typeof import('../src/core/build.js').build>(),
@@ -17,15 +17,15 @@ vi.mock('../src/core/create', () => ({ create: mockedCreate }));
 vi.mock('../src/core/preview', () => ({ preview: mockedPreview }));
 
 import {
-  builtinCmykConversion,
-  builtinGrayConversion,
   build,
   create,
+  createBuiltinCmykConversion,
   createBuiltinCmykConversionReplacement,
+  createBuiltinGrayConversion,
   createBuiltinGrayConversionReplacement,
   createBuiltinRgbConversionReplacement,
+  createIccConversion,
   createIccConversionReplacement,
-  iccConversion,
   preview,
 } from '../src/index.js';
 
@@ -41,9 +41,32 @@ it('provides build function', async () => {
 });
 
 it('provides CMYK fallback conversion factories', () => {
-  expect(builtinCmykConversion()).toBeTypeOf('function');
-  expect(builtinGrayConversion()).toBeTypeOf('function');
-  expect(iccConversion(new Uint8Array())).toBeTypeOf('function');
+  expect(createBuiltinCmykConversion()).toEqual(
+    createBuiltinCmykConversionReplacement(),
+  );
+  expect(createBuiltinGrayConversion()).toEqual(
+    createBuiltinGrayConversionReplacement(),
+  );
+  const options = { inputProfile: 'input.icc' };
+  expect(createBuiltinCmykConversion(options)).toEqual(
+    createBuiltinCmykConversionReplacement(options),
+  );
+  expect(createBuiltinGrayConversion(options)).toEqual(
+    createBuiltinGrayConversionReplacement(options),
+  );
+  const iccOptions = { ...options, outputProfile: 'output.icc' };
+  expect(createIccConversion(iccOptions)).toEqual(
+    createIccConversionReplacement(iccOptions),
+  );
+  expectTypeOf(createBuiltinCmykConversion).parameters.toEqualTypeOf<
+    Parameters<typeof createBuiltinCmykConversionReplacement>
+  >();
+  expectTypeOf(createBuiltinGrayConversion).parameters.toEqualTypeOf<
+    Parameters<typeof createBuiltinGrayConversionReplacement>
+  >();
+  expectTypeOf(createIccConversion).parameters.toEqualTypeOf<
+    Parameters<typeof createIccConversionReplacement>
+  >();
 });
 
 it('provides create function', async () => {
