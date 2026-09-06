@@ -3,10 +3,32 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import type { CmykConfig } from '../src/config/resolve.js';
 import type { CmykMap } from '../src/global-viewer.js';
-import { convertCmykColors } from '../src/output/cmyk.js';
+import { createCmykColorHook } from '../src/output/cmyk.js';
+import { editPdf } from '../src/output/pdf-visitor.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
+const signal = AbortSignal.any([]);
+
+function convertCmykColors({
+  pdf,
+  colorMap,
+  ifUnmappedColorsFound,
+  failures,
+}: {
+  pdf: Uint8Array;
+  colorMap: CmykMap;
+  ifUnmappedColorsFound: CmykConfig['ifUnmappedColorsFound'];
+  failures: string[];
+}): Promise<Uint8Array> {
+  const hook = createCmykColorHook(
+    new Map(Object.entries(colorMap)),
+    ifUnmappedColorsFound,
+    failures,
+  );
+  return editPdf(pdf, [hook], { signal });
+}
 
 /**
  * Helper to extract text content from a PDF content stream
@@ -42,6 +64,84 @@ async function extractPdfContentStream(pdf: Uint8Array): Promise<string[]> {
 
   doc.destroy();
   return contents;
+}
+
+async function addAnnotationAppearance(pdf: Uint8Array): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const pageObject = page.getObject().resolve();
+  const appearanceDictionary = doc.newDictionary();
+  appearanceDictionary.put('Type', doc.newName('XObject'));
+  appearanceDictionary.put('Subtype', doc.newName('Form'));
+  const bbox = doc.newArray();
+  for (const value of [0, 0, 1, 1]) {
+    bbox.push(doc.newInteger(value));
+  }
+  appearanceDictionary.put('BBox', bbox);
+  const appearance = doc.addStream('1 0 0 rg', appearanceDictionary);
+  const appearanceStates = doc.newDictionary();
+  appearanceStates.put('N', appearance);
+  const annotation = doc.newDictionary();
+  annotation.put('AP', appearanceStates);
+  const annotations = doc.newArray();
+  annotations.push(doc.addObject(annotation));
+  pageObject.put('Annots', annotations);
+  const output = doc.saveToBuffer('compress');
+  const result = new Uint8Array(output.asUint8Array());
+  output.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
+async function replacePageContentsWithRepeatedColorStreams(
+  pdf: Uint8Array,
+  streamCount: number,
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const contents = doc.newArray();
+  for (let index = 0; index < streamCount; index++) {
+    contents.push(doc.addStream('0.1 0.2 0.3 rg', doc.newDictionary()));
+  }
+  page.getObject().resolve().put('Contents', contents);
+  const output = doc.saveToBuffer('compress');
+  const result = new Uint8Array(output.asUint8Array());
+  output.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
+async function getAnnotationAppearance(pdf: Uint8Array): Promise<string> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const appearance = page
+    .getObject()
+    .resolve()
+    .get('Annots')
+    .get(0)
+    .resolve()
+    .get('AP')
+    .get('N');
+  const content = appearance.readStream();
+  const result = content.asString();
+  content.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
 }
 
 /**
@@ -91,7 +191,8 @@ describe('convertCmykColors', () => {
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
       colorMap,
-      unmappedColors: null,
+      ifUnmappedColorsFound: 'ignore',
+      failures: [],
     });
 
     // Verify destination PDF contains CMYK operators
@@ -117,31 +218,57 @@ describe('convertCmykColors', () => {
     const destPdf = await convertCmykColors({
       pdf: srcPdf,
       colorMap,
-      unmappedColors: null,
+      ifUnmappedColorsFound: 'ignore',
+      failures: [],
     });
 
     expect(destPdf).toBeInstanceOf(Uint8Array);
     expect(destPdf.length).toBeGreaterThan(0);
   });
 
-  it('collects unmapped colors', async () => {
+  it('converts colors in annotation appearance streams', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
-    const unmappedColors = new Set<string>();
+    const annotatedPdf = await addAnnotationAppearance(srcPdf);
+
+    const destPdf = await convertCmykColors({
+      pdf: annotatedPdf,
+      colorMap: {
+        '[10000,0,0]': { c: 0, m: 10000, y: 10000, k: 0 },
+      },
+      ifUnmappedColorsFound: 'ignore',
+      failures: [],
+    });
+
+    expect(await getAnnotationAppearance(destPdf)).toBe('0 1 1 0 k');
+  });
+
+  it('reports unmapped colors', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+    const failures: string[] = [];
 
     await convertCmykColors({
       pdf: srcPdf,
       colorMap: {},
-      unmappedColors,
+      ifUnmappedColorsFound: 'error',
+      failures,
     });
 
-    expect(unmappedColors.size).toBeGreaterThan(0);
-    for (const color of unmappedColors) {
-      expect(JSON.parse(color)).toMatchObject({
-        r: expect.any(Number),
-        g: expect.any(Number),
-        b: expect.any(Number),
-      });
-    }
+    expect(failures).toEqual([
+      expect.stringMatching(/^\d+ RGB color\(s\) not mapped to CMYK$/v),
+    ]);
+  });
+
+  it('stores repeated unmapped colors once across content streams', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'text.pdf'));
+    const repeatedColorPdf = await replacePageContentsWithRepeatedColorStreams(
+      srcPdf,
+      64,
+    );
+    const failures: string[] = [];
+    const hook = createCmykColorHook(new Map(), 'error', failures);
+    await editPdf(repeatedColorPdf, [hook], { signal });
+
+    expect(failures).toEqual(['1 RGB color(s) not mapped to CMYK']);
   });
 
   it('preserves unmapped RGB colors', async () => {
@@ -151,7 +278,8 @@ describe('convertCmykColors', () => {
       pdf: srcPdf,
       // no colors will be converted
       colorMap: {},
-      unmappedColors: null,
+      ifUnmappedColorsFound: 'ignore',
+      failures: [],
     });
 
     // Verify destination PDF still contains RGB operators

@@ -1,11 +1,46 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { replaceImages } from '../src/output/image.js';
+import type { CmykConfig } from '../src/config/resolve.js';
+import { Logger } from '../src/logger.js';
+import { createCmykColorHook } from '../src/output/cmyk.js';
+import { createReplaceImageHook } from '../src/output/image.js';
+import { editPdf } from '../src/output/pdf-visitor.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
+const signal = AbortSignal.any([]);
+
+async function replaceImages(
+  pdf: Uint8Array,
+  options: {
+    replacements: Parameters<typeof createReplaceImageHook>[0];
+    ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'];
+  },
+) {
+  const warnings: string[] = [];
+  const warning = vi.spyOn(Logger, 'logWarn').mockImplementation((message) => {
+    if (
+      typeof message === 'string' &&
+      message.startsWith('Image color space is incompatible')
+    ) {
+      warnings.push(message);
+    }
+  });
+  const failures: string[] = [];
+  try {
+    using replaceImageHook = await createReplaceImageHook(
+      options.replacements,
+      options.ifIncompatibleImagesFound,
+      failures,
+    );
+    const result = await editPdf(pdf, [replaceImageHook], { signal });
+    return { pdf: result, warnings, failures };
+  } finally {
+    warning.mockRestore();
+  }
+}
 
 /**
  * Helper to extract image color space from PDF
@@ -50,6 +85,7 @@ async function getImageColorSpace(
           : objectColorSpace.toString(),
         image: imageColorSpace?.getName() ?? 'Unknown',
       };
+      imageColorSpace?.destroy();
     }
   });
 
@@ -76,7 +112,9 @@ async function getXrefImageColorSpaces(pdf: Uint8Array): Promise<string[]> {
         continue;
       }
       const image = doc.loadImage(ref);
-      colorSpaces.push(image.getColorSpace()?.getName() ?? 'Unknown');
+      const imageColorSpace = image.getColorSpace();
+      colorSpaces.push(imageColorSpace?.getName() ?? 'Unknown');
+      imageColorSpace?.destroy();
       image.destroy();
     } catch {
       continue;
@@ -227,7 +265,9 @@ async function getRetainedImageColorSpace(pdf: Uint8Array): Promise<string> {
         continue;
       }
       const image = doc.loadImage(object.get('Image'));
-      const colorSpace = image.getColorSpace()?.getName() ?? 'Unknown';
+      const imageColorSpace = image.getColorSpace();
+      const colorSpace = imageColorSpace?.getName() ?? 'Unknown';
+      imageColorSpace?.destroy();
       image.destroy();
       doc.destroy();
       return colorSpace;
@@ -298,7 +338,9 @@ async function getSoftMaskColorSpace(pdf: Uint8Array): Promise<string> {
         continue;
       }
       const image = doc.loadImage(softMask);
-      const colorSpace = image.getColorSpace()?.getName() ?? 'Unknown';
+      const imageColorSpace = image.getColorSpace();
+      const colorSpace = imageColorSpace?.getName() ?? 'Unknown';
+      imageColorSpace?.destroy();
       image.destroy();
       doc.destroy();
       return colorSpace;
@@ -405,6 +447,192 @@ async function convertFirstImageToIndexed(
   return result;
 }
 
+function createFormXObject(
+  doc: import('mupdf').PDFDocument,
+  xobjects: import('mupdf').PDFObject,
+  content: string,
+): import('mupdf').PDFObject {
+  const resources = doc.newDictionary();
+  resources.put('XObject', xobjects);
+  return createFormXObjectWithResources(doc, resources, content);
+}
+
+function createFormXObjectWithResources(
+  doc: import('mupdf').PDFDocument,
+  resources: import('mupdf').PDFObject,
+  content: string,
+): import('mupdf').PDFObject {
+  const dictionary = doc.newDictionary();
+  dictionary.put('Type', doc.newName('XObject'));
+  dictionary.put('Subtype', doc.newName('Form'));
+  const bbox = doc.newArray();
+  for (const value of [0, 0, 1, 1]) {
+    bbox.push(doc.newInteger(value));
+  }
+  dictionary.put('BBox', bbox);
+  dictionary.put('Resources', resources);
+  return doc.addStream(content, dictionary);
+}
+
+async function nestFirstImageInForms(
+  pdf: Uint8Array,
+  circular = false,
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const xobjects = page.getObject().resolve().get('Resources').get('XObject');
+  const { key, value: image } = findFirstImageXObject(xobjects);
+
+  const innerXObjects = doc.newDictionary();
+  innerXObjects.put('NestedImage', image);
+  const inner = createFormXObject(
+    doc,
+    innerXObjects,
+    '1 0 0 rg /NestedImage Do',
+  );
+
+  const outerXObjects = doc.newDictionary();
+  outerXObjects.put('InnerForm', inner);
+  const outer = createFormXObject(doc, outerXObjects, '/InnerForm Do');
+  if (circular) {
+    innerXObjects.put('OuterForm', outer);
+  }
+  xobjects.put(key, outer);
+
+  const output = doc.saveToBuffer('compress');
+  const result = new Uint8Array(output.asUint8Array());
+  output.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
+async function shareResourcesBetweenForms(
+  pdf: Uint8Array,
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const pageXObjects = page
+    .getObject()
+    .resolve()
+    .get('Resources')
+    .get('XObject');
+  const { key, value: image } = findFirstImageXObject(pageXObjects);
+  const sharedXObjects = doc.newDictionary();
+  sharedXObjects.put('SharedImage', image);
+  const sharedResources = doc.newDictionary();
+  sharedResources.put('XObject', sharedXObjects);
+  const sharedResourcesReference = doc.addObject(sharedResources);
+  const firstForm = createFormXObjectWithResources(
+    doc,
+    sharedResourcesReference,
+    '/SharedImage Do',
+  );
+  const secondForm = createFormXObjectWithResources(
+    doc,
+    sharedResourcesReference,
+    '/SharedImage Do',
+  );
+  pageXObjects.put(key, firstForm);
+  pageXObjects.put('SharedForm', secondForm);
+
+  const output = doc.saveToBuffer('compress');
+  const result = new Uint8Array(output.asUint8Array());
+  output.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
+async function shareResourcesBetweenPages(
+  pdf: Uint8Array,
+): Promise<Uint8Array> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const pageObject = page.getObject().resolve();
+  const resources = pageObject.get('Resources');
+  const sharedResources = resources.asIndirect()
+    ? resources
+    : doc.addObject(resources);
+  pageObject.put('Resources', sharedResources);
+  const secondPage = doc.addPage(page.getBounds(), 0, sharedResources, '');
+  doc.insertPage(-1, secondPage);
+
+  const output = doc.saveToBuffer('compress');
+  const result = new Uint8Array(output.asUint8Array());
+  output.destroy();
+  page.destroy();
+  doc.destroy();
+  return result;
+}
+
+async function inspectNestedForms(pdf: Uint8Array): Promise<{
+  colorSpaces: string[];
+  contents: string[];
+}> {
+  const mupdf = await import('mupdf');
+  const doc = mupdf.PDFDocument.openDocument(
+    pdf,
+    'application/pdf',
+  ) as import('mupdf').PDFDocument;
+  const page = doc.loadPage(0);
+  const processedForms = new Set<number>();
+  const colorSpaces: string[] = [];
+  const contents: string[] = [];
+
+  const inspectResources = (resources: import('mupdf').PDFObject): void => {
+    const xobjects = resources.get('XObject');
+    if (!xobjects?.isDictionary()) {
+      return;
+    }
+    xobjects.forEach((value) => {
+      const subtype = value.get('Subtype')?.toString();
+      if (subtype === '/Image') {
+        const image = doc.loadImage(value);
+        const imageColorSpace = image.getColorSpace();
+        colorSpaces.push(imageColorSpace?.getName() ?? 'Unknown');
+        imageColorSpace?.destroy();
+        image.destroy();
+        return;
+      }
+      if (subtype !== '/Form') {
+        return;
+      }
+      const objectNumber = value.asIndirect();
+      if (objectNumber && processedForms.has(objectNumber)) {
+        return;
+      }
+      if (objectNumber) {
+        processedForms.add(objectNumber);
+      }
+      const content = value.readStream();
+      contents.push(content.asString());
+      content.destroy();
+      const nestedResources = value.get('Resources');
+      if (nestedResources?.isDictionary()) {
+        inspectResources(nestedResources);
+      }
+    });
+  };
+
+  inspectResources(page.getObject().resolve().get('Resources'));
+  page.destroy();
+  doc.destroy();
+  return { colorSpaces, contents };
+}
+
 describe('replaceImages', () => {
   it.each([
     ['Gray', 'ck_gray.pgm', '/DeviceGray', 'DeviceGray', 0],
@@ -420,7 +648,7 @@ describe('replaceImages', () => {
       incompatibleCount,
     ) => {
       const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
-      const { pdf: destPdf, incompatibleImages } = await replaceImages(srcPdf, {
+      const { pdf: destPdf, warnings } = await replaceImages(srcPdf, {
         replacements: [
           {
             source: path.join(fixturesDir, 'ck_rgb.png'),
@@ -434,13 +662,13 @@ describe('replaceImages', () => {
         object: objectColorSpace,
         image: imageColorSpace,
       });
-      expect(incompatibleImages).toHaveLength(incompatibleCount);
+      expect(warnings).toHaveLength(incompatibleCount);
     },
   );
 
   it('preserves an ICCBased replacement color space', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
-    const { pdf: destPdf, incompatibleImages } = await replaceImages(srcPdf, {
+    const { pdf: destPdf, warnings } = await replaceImages(srcPdf, {
       replacements: [
         {
           source: path.join(fixturesDir, 'ck_rgb.png'),
@@ -454,11 +682,27 @@ describe('replaceImages', () => {
       object: '/ICCBased',
       image: 'ICCBased(RGB,sRGB IEC61966-2.1)',
     });
-    expect(incompatibleImages).toEqual([
-      expect.objectContaining({
-        colorSpace: expect.stringMatching(/^ICCBased/v),
-      }),
-    ]);
+    expect(warnings).toEqual([expect.stringContaining('(ICCBased')]);
+  });
+
+  it('replaces images when the incompatible image policy is ignore', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+
+    const { pdf: destPdf, warnings } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceCMYK',
+      image: 'DeviceCMYK',
+    });
+    expect(warnings).toEqual([]);
   });
 
   it('removes replaced image objects that are no longer referenced', async () => {
@@ -582,7 +826,29 @@ describe('replaceImages', () => {
       ifIncompatibleImagesFound: 'ignore',
     });
 
-    expect(result).toEqual({ pdf: srcPdf, incompatibleImages: [] });
+    expect(result).toEqual({ pdf: srcPdf, warnings: [], failures: [] });
+  });
+
+  it('returns an empty hook when no replacement pairs can be loaded and the policy is ignore', async () => {
+    const warning = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+
+    try {
+      using hook = await createReplaceImageHook(
+        [
+          {
+            source: path.join(fixturesDir, 'missing-source.png'),
+            replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+          },
+        ],
+        'ignore',
+        [],
+      );
+
+      expect(hook.visit).toBeUndefined();
+      expect(hook.complete).toBeUndefined();
+    } finally {
+      warning.mockRestore();
+    }
   });
 
   it('reports incompatible images when replacements are empty', async () => {
@@ -594,14 +860,10 @@ describe('replaceImages', () => {
     });
 
     expect(result.pdf).toEqual(pdf);
-    expect(result.incompatibleImages).toEqual([
-      {
-        key: expect.anything(),
-        colorSpace: expect.any(String),
-        width: expect.any(Number),
-        height: expect.any(Number),
-        pageIndex: 0,
-      },
+    expect(result.warnings).toEqual([
+      expect.stringMatching(
+        /^Image color space is incompatible with Device CMYK: ref ".+" \(.+, \d+x\d+\) on page 1$/v,
+      ),
     ]);
   });
 
@@ -614,7 +876,7 @@ describe('replaceImages', () => {
       ifIncompatibleImagesFound: 'warn',
     });
 
-    expect(result.incompatibleImages).toHaveLength(1);
+    expect(result.warnings).toHaveLength(1);
   });
 
   it('reports unmatched images encountered by the replacement scan', async () => {
@@ -630,7 +892,10 @@ describe('replaceImages', () => {
       ifIncompatibleImagesFound: 'error',
     });
 
-    expect(result.incompatibleImages).toHaveLength(1);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.failures).toEqual([
+      '1 image(s) incompatible with Device CMYK color',
+    ]);
   });
 
   it('accepts PDFs without images', async () => {
@@ -641,6 +906,196 @@ describe('replaceImages', () => {
       ifIncompatibleImagesFound: 'warn',
     });
 
-    expect(result.incompatibleImages).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('replaces and validates images nested in Form XObjects', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const nestedPdf = await nestFirstImageInForms(pdf);
+
+    const result = await replaceImages(nestedPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect((await inspectNestedForms(result.pdf)).colorSpaces).toEqual([
+      'DeviceCMYK',
+    ]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('reports unmatched images nested in Form XObjects', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const nestedPdf = await nestFirstImageInForms(pdf);
+
+    const result = await replaceImages(nestedPdf, {
+      replacements: [],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect(result.pdf).toEqual(nestedPdf);
+    expect(result.warnings).toEqual([
+      expect.stringMatching(/\(.*RGB.*, \d+x\d+\) on page 1$/v),
+    ]);
+  });
+
+  it('handles circular Form XObject references', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const circularPdf = await nestFirstImageInForms(pdf, true);
+
+    const result = await replaceImages(circularPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect((await inspectNestedForms(result.pdf)).colorSpaces).toEqual([
+      'DeviceCMYK',
+    ]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('processes shared XObject dictionaries once', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const sharedResourcesPdf = await shareResourcesBetweenForms(pdf);
+
+    const result = await replaceImages(sharedResourcesPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+        {
+          source: path.join(fixturesDir, 'ck_gray.pgm'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect((await inspectNestedForms(result.pdf)).colorSpaces).toEqual([
+      'DeviceGray',
+      'DeviceGray',
+    ]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('reports shared XObject dictionaries on each page', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const sharedResourcesPdf = await shareResourcesBetweenPages(pdf);
+
+    const result = await replaceImages(sharedResourcesPdf, {
+      replacements: [],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect(result.warnings).toEqual([
+      expect.stringMatching(/on page 1$/v),
+      expect.stringMatching(/on page 2$/v),
+    ]);
+  });
+
+  it('reports images in shared Form resources on each page', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const nestedPdf = await nestFirstImageInForms(pdf);
+    const sharedResourcesPdf = await shareResourcesBetweenPages(nestedPdf);
+
+    const result = await replaceImages(sharedResourcesPdf, {
+      replacements: [],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect(result.warnings).toEqual([
+      expect.stringMatching(/on page 1$/v),
+      expect.stringMatching(/on page 2$/v),
+    ]);
+  });
+
+  it('does not replace shared XObject dictionaries again on later pages', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const sharedResourcesPdf = await shareResourcesBetweenPages(pdf);
+
+    const result = await replaceImages(sharedResourcesPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+        {
+          source: path.join(fixturesDir, 'ck_gray.pgm'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect(await getImageColorSpace(result.pdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('does not replace images in shared Forms again on later pages', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const nestedPdf = await nestFirstImageInForms(pdf);
+    const sharedResourcesPdf = await shareResourcesBetweenPages(nestedPdf);
+
+    const result = await replaceImages(sharedResourcesPdf, {
+      replacements: [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+        {
+          source: path.join(fixturesDir, 'ck_gray.pgm'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'warn',
+    });
+
+    expect((await inspectNestedForms(result.pdf)).colorSpaces).toEqual([
+      'DeviceGray',
+    ]);
+  });
+});
+
+describe('PDF edit hooks', () => {
+  it('edits colors and images during the same Form traversal', async () => {
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const nestedPdf = await nestFirstImageInForms(pdf);
+    const cmykColorHook = createCmykColorHook(
+      new Map([['[10000,0,0]', { c: 0, m: 10000, y: 10000, k: 0 }]]),
+      'ignore',
+      [],
+    );
+    const failures: string[] = [];
+    using replaceImageHook = await createReplaceImageHook(
+      [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      'error',
+      failures,
+    );
+    const result = await editPdf(nestedPdf, [cmykColorHook, replaceImageHook], {
+      signal,
+    });
+    const inspected = await inspectNestedForms(result);
+
+    expect(inspected.colorSpaces).toEqual(['DeviceCMYK']);
+    expect(inspected.contents).toContain('0 1 1 0 k /NestedImage Do');
+    expect(failures).toEqual([]);
   });
 });

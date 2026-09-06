@@ -5,6 +5,7 @@ import type * as mupdfType from 'mupdf';
 import type { CmykConfig, ReplaceImageConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
+import type { PdfEditHook, PdfImageXObjectNode } from './pdf-visitor.js';
 
 interface Destroyable {
   destroy(): void;
@@ -18,23 +19,29 @@ function disposable<T extends Destroyable>(obj: T): T & Disposable {
   });
 }
 
+function disposableOrNull<T extends Destroyable>(
+  obj: T | null,
+): (T & Disposable) | null {
+  return obj && disposable(obj);
+}
+
 function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
   if (a.getWidth() !== b.getWidth() || a.getHeight() !== b.getHeight()) {
     return false;
   }
 
-  const pixmapA = a.toPixmap();
-  const pixmapB = b.toPixmap();
+  using pixmapA = disposable(a.toPixmap());
+  using pixmapB = disposable(b.toPixmap());
 
-  const typeA = pixmapA.getColorSpace();
-  const typeB = pixmapB.getColorSpace();
+  using colorSpaceA = disposableOrNull(pixmapA.getColorSpace());
+  using colorSpaceB = disposableOrNull(pixmapB.getColorSpace());
   if (
-    typeA === null ||
-    typeB === null ||
+    colorSpaceA === null ||
+    colorSpaceB === null ||
     !(
-      (typeA.isRGB() && typeB.isRGB()) ||
-      (typeA.isCMYK() && typeB.isCMYK()) ||
-      (typeA.isGray() && typeB.isGray())
+      (colorSpaceA.isRGB() && colorSpaceB.isRGB()) ||
+      (colorSpaceA.isCMYK() && colorSpaceB.isCMYK()) ||
+      (colorSpaceA.isGray() && colorSpaceB.isGray())
     )
   ) {
     return false;
@@ -49,18 +56,74 @@ function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
 }
 
 interface ImagePair {
-  srcImage: mupdfType.Image;
-  destImage: mupdfType.Image;
+  srcImage: mupdfType.Image & Disposable;
+  destImage: mupdfType.Image & Disposable;
   sourcePath: string;
   replacementPath: string;
 }
 
-interface ReplaceStats {
-  replaced: number;
-  total: number;
+function disposeImagePairs(imagePairs: readonly ImagePair[]): void {
+  for (const pair of imagePairs) {
+    pair.srcImage[Symbol.dispose]();
+    pair.destImage[Symbol.dispose]();
+  }
 }
 
-export interface DeviceCmykIncompatibleImage {
+async function createImagePairs(
+  replacements: ReplaceImageConfig,
+): Promise<ImagePair[]> {
+  if (replacements.length === 0) {
+    return [];
+  }
+  const mupdf = await importNodeModule('mupdf');
+  const imagePairs: ImagePair[] = [];
+  try {
+    for (const { source, replacement } of replacements) {
+      let srcImage: mupdfType.Image & Disposable;
+      let destImage: mupdfType.Image & Disposable;
+
+      try {
+        const srcBuffer = fs.readFileSync(source);
+        srcImage = disposable(new mupdf.Image(srcBuffer));
+        Logger.debug(
+          `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
+        );
+      } catch (error) {
+        Logger.logWarn(
+          `Failed to load source image: ${source}: ${String(error)}`,
+        );
+        continue;
+      }
+
+      try {
+        const destBuffer = fs.readFileSync(replacement);
+        destImage = disposable(new mupdf.Image(destBuffer));
+        Logger.debug(
+          `Loaded replacement image: ${replacement} (${destImage.getWidth()}x${destImage.getHeight()})`,
+        );
+      } catch (error) {
+        srcImage[Symbol.dispose]();
+        Logger.logWarn(
+          `Failed to load replacement image: ${replacement}: ${String(error)}`,
+        );
+        continue;
+      }
+
+      imagePairs.push({
+        srcImage,
+        destImage,
+        sourcePath: source,
+        replacementPath: replacement,
+      });
+    }
+  } catch (error) {
+    disposeImagePairs(imagePairs);
+    throw error;
+  }
+  return imagePairs;
+}
+
+interface DeviceCmykIncompatibleImage {
   key: string | number;
   colorSpace: string;
   width: number;
@@ -72,23 +135,23 @@ function collectDeviceCmykIncompatibleImage(
   image: mupdfType.Image,
   key: string | number,
   pageIndex: number,
-  found: DeviceCmykIncompatibleImage[],
-): void {
-  const colorSpace = image.getColorSpace()?.getName() ?? 'None';
+): DeviceCmykIncompatibleImage | null {
+  using imageColorSpace = disposableOrNull(image.getColorSpace());
+  const colorSpace = imageColorSpace?.getName() ?? 'None';
   if (
     image.getImageMask() ||
     colorSpace === 'DeviceCMYK' ||
     colorSpace === 'DeviceGray'
   ) {
-    return;
+    return null;
   }
-  found.push({
+  return {
     key,
     colorSpace,
     width: image.getWidth(),
     height: image.getHeight(),
     pageIndex,
-  });
+  };
 }
 
 function addImagePreservingColorSpace(
@@ -103,7 +166,8 @@ function addImagePreservingColorSpace(
       objectNumbers.delete(objectNumber);
     }
   }
-  const colorSpaceName = image.getColorSpace()?.getName();
+  using imageColorSpace = disposableOrNull(image.getColorSpace());
+  const colorSpaceName = imageColorSpace?.getName();
 
   if (
     colorSpaceName === 'DeviceGray' ||
@@ -180,8 +244,8 @@ function addReplacementImage(
   doc: mupdfType.PDFDocument,
   source: mupdfType.PDFObject,
   image: mupdfType.Image,
-  cleanupCandidates: Set<number>,
-): mupdfType.PDFObject {
+): { ref: mupdfType.PDFObject; cleanupCandidates: ReadonlySet<number> } {
+  const cleanupCandidates = new Set<number>();
   const sourceObjectNumbers = collectReachableObjectNumbers([source]);
   const replacement = addImagePreservingColorSpace(doc, image);
   const replacementObjectNumbers = collectReachableObjectNumbers([
@@ -197,186 +261,130 @@ function addReplacementImage(
     }
   }
 
-  return replacement.ref;
+  return { ref: replacement.ref, cleanupCandidates };
 }
 
-function replaceImagesInDocument(
-  doc: mupdfType.PDFDocument,
-  imagePairs: ImagePair[],
+type ReplaceImageResult =
+  | { readonly kind: 'unchanged' }
+  | {
+      readonly kind: 'replaced';
+      readonly cleanupCandidates: ReadonlySet<number>;
+    };
+
+function replaceImage(
+  node: PdfImageXObjectNode,
+  imagePairs: readonly ImagePair[],
   incompatibleImages: DeviceCmykIncompatibleImage[] | null,
-): ReplaceStats {
+): ReplaceImageResult {
+  using pdfImage = disposable(node.document.loadImage(node.object));
+  let replacementRef: mupdfType.PDFObject | null = null;
+  let cleanupCandidates: ReadonlySet<number> | null = null;
+
+  if (node.resourceVisit === 'initial') {
+    const pair = imagePairs.find((candidate) =>
+      imagesEqual(pdfImage, candidate.srcImage),
+    );
+    if (pair) {
+      const replacement = addReplacementImage(
+        node.document,
+        node.object,
+        pair.destImage,
+      );
+      replacementRef = replacement.ref;
+      cleanupCandidates = replacement.cleanupCandidates;
+      node.replaceWith(replacementRef);
+      Logger.debug(
+        `  Page ${node.pageIndex + 1}, ref "${node.key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
+      );
+    }
+  }
+
+  if (incompatibleImages !== null) {
+    let incompatibleImage: DeviceCmykIncompatibleImage | null = null;
+    if (replacementRef === null) {
+      incompatibleImage = collectDeviceCmykIncompatibleImage(
+        pdfImage,
+        node.key,
+        node.pageIndex,
+      );
+    } else {
+      using replacementImage = disposable(
+        node.document.loadImage(replacementRef),
+      );
+      incompatibleImage = collectDeviceCmykIncompatibleImage(
+        replacementImage,
+        node.key,
+        node.pageIndex,
+      );
+    }
+    if (incompatibleImage) {
+      incompatibleImages.push(incompatibleImage);
+    }
+  }
+
+  return cleanupCandidates
+    ? { kind: 'replaced', cleanupCandidates }
+    : { kind: 'unchanged' };
+}
+
+export async function createReplaceImageHook(
+  replacements: ReplaceImageConfig,
+  ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'],
+  failures: string[],
+): Promise<PdfEditHook & Disposable> {
+  const imagePairs = await createImagePairs(replacements);
+  if (imagePairs.length === 0 && ifIncompatibleImagesFound === 'ignore') {
+    return {
+      [Symbol.dispose]() {},
+    };
+  }
+
+  const incompatibleImages: DeviceCmykIncompatibleImage[] | null =
+    ifIncompatibleImagesFound === 'ignore' ? null : [];
   let replaced = 0;
   let total = 0;
-  const cleanupCandidates = new Set<number>();
-
-  const pageCount = doc.countPages();
-
-  for (let i = 0; i < pageCount; i++) {
-    const page = doc.loadPage(i);
-    const pageObj = page.getObject().resolve();
-
-    const res = pageObj.get('Resources');
-    if (!res || !res.isDictionary()) {
-      continue;
-    }
-
-    const xobjects = res.get('XObject');
-    if (!xobjects || !xobjects.isDictionary()) {
-      continue;
-    }
-
-    // Collect keys first to avoid modification during iteration
-    const entries: { key: string | number; value: mupdfType.PDFObject }[] = [];
-    xobjects.forEach((value, key) => {
-      entries.push({ key, value });
-    });
-
-    for (const { key, value } of entries) {
-      const resolved = value.resolve();
-      const subtype = resolved.get('Subtype');
-
-      if (!subtype || subtype.toString() !== '/Image') {
-        continue;
-      }
-      total++;
-
-      // Extract image from PDF
-      using pdfImage = disposable(doc.loadImage(value));
-      let replacementRef: mupdfType.PDFObject | undefined;
-
-      // Find matching source image
-      for (const pair of imagePairs) {
-        if (imagesEqual(pdfImage, pair.srcImage)) {
-          replacementRef = addReplacementImage(
-            doc,
-            value,
-            pair.destImage,
-            cleanupCandidates,
-          );
-          xobjects.put(key, replacementRef);
-          replaced++;
-          Logger.debug(
-            `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
-          );
-          break;
-        }
-      }
-
-      if (incompatibleImages) {
-        if (replacementRef) {
-          using replacementImage = disposable(doc.loadImage(replacementRef));
-          collectDeviceCmykIncompatibleImage(
-            replacementImage,
-            key,
-            i,
-            incompatibleImages,
-          );
-        } else {
-          collectDeviceCmykIncompatibleImage(
-            pdfImage,
-            key,
-            i,
-            incompatibleImages,
-          );
-        }
-      }
-    }
-
-    res.put('XObject', xobjects);
-    pageObj.put('Resources', res);
-  }
-
-  removeUnreferencedCandidates(doc, cleanupCandidates);
-  return { replaced, total };
-}
-
-export async function replaceImages(
-  pdf: Uint8Array,
-  {
-    replacements,
-    ifIncompatibleImagesFound,
-  }: {
-    replacements: ReplaceImageConfig;
-    ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'];
-  },
-): Promise<{
-  pdf: Uint8Array;
-  incompatibleImages: DeviceCmykIncompatibleImage[];
-}> {
-  if (replacements.length === 0 && ifIncompatibleImagesFound === 'ignore') {
-    return { pdf, incompatibleImages: [] };
-  }
-
-  const mupdf = await importNodeModule('mupdf');
-
-  // Load image pairs
-  const imagePairs: ImagePair[] = [];
-  for (const { source, replacement } of replacements) {
-    let srcImage: mupdfType.Image;
-    let destImage: mupdfType.Image;
-
-    try {
-      const srcBuffer = fs.readFileSync(source);
-      srcImage = new mupdf.Image(srcBuffer);
-      Logger.debug(
-        `Loaded source image: ${source} (${srcImage.getWidth()}x${srcImage.getHeight()})`,
-      );
-    } catch (error) {
-      Logger.logWarn(
-        `Failed to load source image: ${source}: ${String(error)}`,
-      );
-      continue;
-    }
-
-    try {
-      const destBuffer = fs.readFileSync(replacement);
-      destImage = new mupdf.Image(destBuffer);
-      Logger.debug(
-        `Loaded replacement image: ${replacement} (${destImage.getWidth()}x${destImage.getHeight()})`,
-      );
-    } catch (error) {
-      Logger.logWarn(
-        `Failed to load replacement image: ${replacement}: ${String(error)}`,
-      );
-      continue;
-    }
-
-    imagePairs.push({
-      srcImage,
-      destImage,
-      sourcePath: source,
-      replacementPath: replacement,
-    });
-  }
-
-  if (imagePairs.length === 0 && ifIncompatibleImagesFound === 'ignore') {
-    return { pdf, incompatibleImages: [] };
-  }
-
-  using doc = disposable(
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- openDocument returns the Document base type; a PDF input yields a PDFDocument
-    mupdf.PDFDocument.openDocument(
-      pdf,
-      'application/pdf',
-    ) as mupdfType.PDFDocument,
-  );
-
-  const incompatibleImages: DeviceCmykIncompatibleImage[] = [];
-  const stats = replaceImagesInDocument(
-    doc,
-    imagePairs,
-    ifIncompatibleImagesFound === 'ignore' ? null : incompatibleImages,
-  );
-  Logger.debug(`Replaced ${stats.replaced} of ${stats.total} images`);
-
-  if (imagePairs.length === 0) {
-    return { pdf, incompatibleImages };
-  }
-
-  using outputBuffer = disposable(doc.saveToBuffer('compress'));
-  // Create a copy to ensure the data remains valid after the buffer is destroyed
+  const cleanupCandidateBatches: ReadonlySet<number>[] = [];
   return {
-    pdf: new Uint8Array(outputBuffer.asUint8Array()),
-    incompatibleImages,
+    visit(node) {
+      if (node.kind !== 'image-xobject') {
+        return;
+      }
+      const result = replaceImage(node, imagePairs, incompatibleImages);
+      total++;
+      if (result.kind === 'replaced') {
+        replaced++;
+        cleanupCandidateBatches.push(result.cleanupCandidates);
+      }
+    },
+    complete(document) {
+      const cleanupCandidates = new Set<number>();
+      for (const batch of cleanupCandidateBatches) {
+        for (const objectNumber of batch) {
+          cleanupCandidates.add(objectNumber);
+        }
+      }
+      removeUnreferencedCandidates(document, cleanupCandidates);
+
+      Logger.debug(`Replaced ${replaced} of ${total} images`);
+      if (!incompatibleImages) {
+        return;
+      }
+      for (const incompatibleImage of incompatibleImages) {
+        Logger.logWarn(
+          `Image color space is incompatible with Device CMYK: ref "${incompatibleImage.key}" (${incompatibleImage.colorSpace}, ${incompatibleImage.width}x${incompatibleImage.height}) on page ${incompatibleImage.pageIndex + 1}`,
+        );
+      }
+      if (
+        incompatibleImages.length > 0 &&
+        ifIncompatibleImagesFound === 'error'
+      ) {
+        failures.push(
+          `${incompatibleImages.length} image(s) incompatible with Device CMYK color`,
+        );
+      }
+    },
+    [Symbol.dispose]() {
+      disposeImagePairs(imagePairs);
+    },
   };
 }

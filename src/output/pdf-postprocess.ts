@@ -12,7 +12,7 @@ import {
   runContainer,
   toContainerPath,
 } from '../container.js';
-import type { CmykMap, Meta, TOCItem } from '../global-viewer.js';
+import type { CMYKValue, CmykMap, Meta, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import {
@@ -20,8 +20,9 @@ import {
   executeWithCleanupOnInterrupt,
   isInContainer,
 } from '../util.js';
-import { convertCmykColors } from './cmyk.js';
-import { replaceImages } from './image.js';
+import { createCmykColorHook } from './cmyk.js';
+import { createReplaceImageHook } from './image.js';
+import { editPdf } from './pdf-visitor.js';
 
 export type SaveOption = Pick<
   PdfOutput,
@@ -115,79 +116,62 @@ export class PostProcess {
       preflight,
       preflightOption,
       image,
-      cmyk,
+      cmyk: cmykConfig,
       cmykMap,
-      replaceImage,
+      replaceImage: replaceImageConfig,
       signal,
     }: SaveOption,
   ): Promise<void> {
     let pdf = await this.document.save();
     signal?.throwIfAborted();
 
-    const failures: string[] = [];
-    if (cmyk) {
-      const mergedMap: CmykMap = { ...cmykMap };
-      for (const [rgb, cmykValue] of cmyk.overrideMap) {
-        const key = JSON.stringify([rgb.r, rgb.g, rgb.b]);
-        mergedMap[key] = cmykValue;
-      }
+    const mergedMap = new Map<string, CMYKValue>([
+      ...Object.entries(cmykMap),
+      ...(cmykConfig ? cmykConfig.overrideMap : []).map(
+        ([{ r, g, b }, cmyk]) => [JSON.stringify([r, g, b]), cmyk] as const,
+      ),
+    ]);
+    if (cmykConfig && cmykConfig.mapOutput) {
+      const mapOutputDir = upath.dirname(cmykConfig.mapOutput);
+      await fs.promises.mkdir(mapOutputDir, { recursive: true });
+      await fs.promises.writeFile(
+        cmykConfig.mapOutput,
+        JSON.stringify(Object.fromEntries(mergedMap), null, 2),
+      );
+      Logger.logInfo(`CMYK color map saved to ${cmykConfig.mapOutput}`);
+    }
 
+    const replacesColors = cmykConfig && mergedMap.size > 0;
+    const replacesImages = replaceImageConfig.length > 0;
+    if (replacesColors && replacesImages) {
+      Logger.logInfo('Converting CMYK colors and replacing images');
+    } else if (replacesColors) {
       Logger.logInfo('Converting CMYK colors');
-      const unmappedColors =
-        cmyk.ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
-      pdf = await convertCmykColors({
-        pdf,
-        colorMap: mergedMap,
-        unmappedColors,
-      });
-      if (
-        cmyk.ifUnmappedColorsFound === 'error' &&
-        unmappedColors &&
-        unmappedColors.size > 0
-      ) {
-        failures.push(`${unmappedColors.size} RGB color(s) not mapped to CMYK`);
-      }
-      signal?.throwIfAborted();
-
-      if (cmyk.mapOutput) {
-        const mapOutputDir = upath.dirname(cmyk.mapOutput);
-        fs.mkdirSync(mapOutputDir, { recursive: true });
-        await fs.promises.writeFile(
-          cmyk.mapOutput,
-          JSON.stringify(mergedMap, null, 2),
-        );
-        Logger.logInfo(`CMYK color map saved to ${cmyk.mapOutput}`);
-      }
+    } else if (replacesImages) {
+      Logger.logInfo('Replacing images');
     }
 
-    const ifIncompatibleImagesFound = cmyk
-      ? cmyk.ifIncompatibleImagesFound
-      : 'ignore';
-    if (replaceImage.length > 0 || ifIncompatibleImagesFound !== 'ignore') {
-      if (replaceImage.length > 0) {
-        Logger.logInfo('Replacing images');
-      }
-      const result = await replaceImages(pdf, {
-        replacements: replaceImage,
-        ifIncompatibleImagesFound,
+    const failures: string[] = [];
+
+    const cmykColorHook = cmykConfig
+      ? createCmykColorHook(
+          mergedMap,
+          cmykConfig ? cmykConfig.ifUnmappedColorsFound : 'ignore',
+          failures,
+        )
+      : {};
+
+    pdf = await (async () => {
+      using replaceImageHook = await createReplaceImageHook(
+        replaceImageConfig,
+        cmykConfig ? cmykConfig.ifIncompatibleImagesFound : 'ignore',
+        failures,
+      );
+      return await editPdf(pdf, [cmykColorHook, replaceImageHook], {
+        signal,
       });
-      pdf = result.pdf;
-      const { incompatibleImages } = result;
-      for (const incompatibleImage of incompatibleImages) {
-        Logger.logWarn(
-          `Image color space is incompatible with Device CMYK: ref "${incompatibleImage.key}" (${incompatibleImage.colorSpace}, ${incompatibleImage.width}x${incompatibleImage.height}) on page ${incompatibleImage.pageIndex + 1}`,
-        );
-      }
-      if (
-        ifIncompatibleImagesFound === 'error' &&
-        incompatibleImages.length > 0
-      ) {
-        failures.push(
-          `${incompatibleImages.length} image(s) incompatible with Device CMYK color`,
-        );
-      }
-      signal?.throwIfAborted();
-    }
+    })();
+    signal?.throwIfAborted();
 
     if (failures.length > 0) {
       throw new Error(failures.join('; '));
