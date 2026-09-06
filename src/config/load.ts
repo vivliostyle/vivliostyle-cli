@@ -152,6 +152,7 @@ export async function loadVivliostyleConfig({
 
 export function warnDeprecatedConfig(
   config: ParsedVivliostyleConfigSchema,
+  inlineOptions: Pick<InlineOptions, 'cmyk'> = {},
 ): void {
   /* oxlint-disable typescript/no-deprecated -- This function intentionally inspects deprecated config fields to emit migration warnings */
   if (config.tasks.some((task) => task.includeAssets)) {
@@ -196,6 +197,26 @@ export function warnDeprecatedConfig(
   ) {
     Logger.logWarn(
       "'preflightOption' property of output config was deprecated and will be removed in a future release. Please use 'pdfPostprocess.preflightOption' property instead.",
+    );
+  }
+
+  const cmykOptions = [
+    inlineOptions.cmyk,
+    config.inlineOptions.cmyk,
+    ...config.tasks.flatMap((task) => [
+      task.pdfPostprocess?.cmyk,
+      ...(task.output
+        ? [task.output].flat().map((o) => o.pdfPostprocess?.cmyk)
+        : []),
+    ]),
+  ];
+  if (
+    cmykOptions.some(
+      (cmyk) => typeof cmyk === 'object' && cmyk.warnUnmapped !== undefined,
+    )
+  ) {
+    Logger.logWarn(
+      "'warnUnmapped' property of cmyk configuration was deprecated and will be removed in a future release. Please use 'ifUnmappedColorsFound' property instead.",
     );
   }
   /* oxlint-enable typescript/no-deprecated */

@@ -22,11 +22,13 @@ Images used in Vivliostyle must be displayable by a web browser. You reference a
 
 Replacement works when the original image stream is preserved, such as when only resizing is applied as in the example, but there are cases where replacement does not work when complex operations like filters are applied to the image. Additionally, replacement does not work if the image contains semi-transparent pixels. Only fully opaque RGB images (not RGBA) are supported.
 
-## Other options
+## Validation policies
 
-By design, this feature cannot produce PDFs that freely mix RGB and CMYK colors (more precisely, it can produce a PDF with unconverted RGB values left in place, but it cannot guarantee that arbitrary RGB and CMYK values will coexist correctly). Since stray RGB elements are usually undesirable in a CMYK workflow, `cmyk.warnUnmapped` (default: `true`) logs warnings for any RGB colors in the PDF that have not been mapped to CMYK.
+By design, this feature cannot produce PDFs that freely mix RGB and CMYK colors (more precisely, it can produce a PDF with unconverted RGB values left in place, but it cannot guarantee that arbitrary RGB and CMYK values will coexist correctly). `cmyk.ifUnmappedColorsFound` determines what happens when RGB colors remain outside the color map: `"warn"` logs a warning, `"error"` fails the build, and `"ignore"` continues without reporting them. The default is `"warn"`.
 
-This CMYK feature assumes that you are aware of and in control of every colored element in your document. For complex documents, that may not always be the case. `cmyk.overrideMap` is a last resort for silencing `cmyk.warnUnmapped` warnings: it forcibly replaces any remaining RGB values in the PDF with the specified CMYK values.
+Raster images require a separate check because replacing color operators does not change image data. During the same scan used by `replaceImage`, `cmyk.ifIncompatibleImagesFound` checks every encountered image, including images that do not match a replacement. It applies the same `"warn"`, `"error"`, and `"ignore"` policies when an image's color space is not DeviceCMYK or DeviceGray. The scan runs for `"warn"` and `"error"` even when no replacements are configured. The default is `"warn"`; disabling `cmyk` disables this check.
+
+The example config sets both policies to `"error"`, so the build fails if either an unmapped RGB color or an incompatible image remains. For complex documents where every color cannot be controlled at the source, `cmyk.overrideMap` can forcibly replace remaining RGB values with specified CMYK values.
 
 `mapOutput` is primarily a debugging tool. It writes the internal color mapping table to a file.
 

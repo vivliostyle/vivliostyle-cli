@@ -308,10 +308,31 @@ const CmykConfigSchema = v.pipe(
           RGB can be an object {r, g, b} with integers (0-10000) or a hex color string (e.g. "#ff0000").
         `),
       ),
+      /** @deprecated */
       warnUnmapped: v.pipe(
         v.boolean(),
+        v.metadata({ deprecated: true }),
         v.description($`
-          Warn when RGB colors not mapped to CMYK are encountered. (default: true)
+          Use \`ifUnmappedColorsFound\` instead.
+          \`true\` corresponds to \`"warn"\` and \`false\` to \`"ignore"\`.
+          When both are specified, \`ifUnmappedColorsFound\` takes precedence.
+        `),
+      ),
+      ifUnmappedColorsFound: v.pipe(
+        v.picklist(['warn', 'error', 'ignore']),
+        v.metadata({ typeString: '"warn" | "error" | "ignore"' }),
+        v.description($`
+          What to do when RGB colors not mapped to CMYK are encountered:
+          log a warning, fail the build, or do nothing. (default: warn)
+        `),
+      ),
+      ifIncompatibleImagesFound: v.pipe(
+        v.picklist(['warn', 'error', 'ignore']),
+        v.metadata({ typeString: '"warn" | "error" | "ignore"' }),
+        v.description($`
+          What to do when the replaceImage scan encounters images whose color
+          spaces are not DeviceCMYK or DeviceGray: log a warning, fail the build,
+          or do nothing. (default: warn)
         `),
       ),
       mapOutput: v.pipe(
@@ -329,7 +350,7 @@ const CmykSchema = v.pipe(
   v.union([v.boolean(), CmykConfigSchema]),
   v.description($`
     Convert device-cmyk() colors to CMYK in the output PDF.
-    Can be a boolean or a config object with overrideMap and warnUnmapped options.
+    Can be a boolean or a config object.
   `),
 );
 

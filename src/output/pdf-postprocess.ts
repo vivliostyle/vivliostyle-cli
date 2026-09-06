@@ -124,6 +124,7 @@ export class PostProcess {
     let pdf = await this.document.save();
     signal?.throwIfAborted();
 
+    const failures: string[] = [];
     if (cmyk) {
       const mergedMap: CmykMap = { ...cmykMap };
       for (const [rgb, cmykValue] of cmyk.overrideMap) {
@@ -132,11 +133,20 @@ export class PostProcess {
       }
 
       Logger.logInfo('Converting CMYK colors');
+      const unmappedColors =
+        cmyk.ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
       pdf = await convertCmykColors({
         pdf,
         colorMap: mergedMap,
-        warnUnmapped: cmyk.warnUnmapped,
+        unmappedColors,
       });
+      if (
+        cmyk.ifUnmappedColorsFound === 'error' &&
+        unmappedColors &&
+        unmappedColors.size > 0
+      ) {
+        failures.push(`${unmappedColors.size} RGB color(s) not mapped to CMYK`);
+      }
       signal?.throwIfAborted();
 
       if (cmyk.mapOutput) {
@@ -150,13 +160,37 @@ export class PostProcess {
       }
     }
 
-    if (replaceImage.length > 0) {
-      Logger.logInfo('Replacing images');
-      pdf = await replaceImages({
-        pdf,
-        replaceImageConfig: replaceImage,
+    const ifIncompatibleImagesFound = cmyk
+      ? cmyk.ifIncompatibleImagesFound
+      : 'ignore';
+    if (replaceImage.length > 0 || ifIncompatibleImagesFound !== 'ignore') {
+      if (replaceImage.length > 0) {
+        Logger.logInfo('Replacing images');
+      }
+      const result = await replaceImages(pdf, {
+        replacements: replaceImage,
+        ifIncompatibleImagesFound,
       });
+      pdf = result.pdf;
+      const { incompatibleImages } = result;
+      for (const incompatibleImage of incompatibleImages) {
+        Logger.logWarn(
+          `Image color space is incompatible with Device CMYK: ref "${incompatibleImage.key}" (${incompatibleImage.colorSpace}, ${incompatibleImage.width}x${incompatibleImage.height}) on page ${incompatibleImage.pageIndex + 1}`,
+        );
+      }
+      if (
+        ifIncompatibleImagesFound === 'error' &&
+        incompatibleImages.length > 0
+      ) {
+        failures.push(
+          `${incompatibleImages.length} image(s) incompatible with Device CMYK color`,
+        );
+      }
       signal?.throwIfAborted();
+    }
+
+    if (failures.length > 0) {
+      throw new Error(failures.join('; '));
     }
 
     if (preflight) {

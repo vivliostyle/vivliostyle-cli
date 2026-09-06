@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import type * as mupdfType from 'mupdf';
 
-import type { ReplaceImageConfig } from '../config/resolve.js';
+import type { CmykConfig, ReplaceImageConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 
@@ -60,6 +60,37 @@ interface ReplaceStats {
   total: number;
 }
 
+export interface DeviceCmykIncompatibleImage {
+  key: string | number;
+  colorSpace: string;
+  width: number;
+  height: number;
+  pageIndex: number;
+}
+
+function collectDeviceCmykIncompatibleImage(
+  image: mupdfType.Image,
+  key: string | number,
+  pageIndex: number,
+  found: DeviceCmykIncompatibleImage[],
+): void {
+  const colorSpace = image.getColorSpace()?.getName() ?? 'None';
+  if (
+    image.getImageMask() ||
+    colorSpace === 'DeviceCMYK' ||
+    colorSpace === 'DeviceGray'
+  ) {
+    return;
+  }
+  found.push({
+    key,
+    colorSpace,
+    width: image.getWidth(),
+    height: image.getHeight(),
+    pageIndex,
+  });
+}
+
 function addImagePreservingColorSpace(
   doc: mupdfType.PDFDocument,
   image: mupdfType.Image,
@@ -83,6 +114,7 @@ function addImagePreservingColorSpace(
 function replaceImagesInDocument(
   doc: mupdfType.PDFDocument,
   imagePairs: ImagePair[],
+  incompatibleImages: DeviceCmykIncompatibleImage[] | null,
 ): ReplaceStats {
   let replaced = 0;
   let total = 0;
@@ -119,18 +151,38 @@ function replaceImagesInDocument(
       total++;
 
       // Extract image from PDF
-      const pdfImage = doc.loadImage(value);
+      using pdfImage = disposable(doc.loadImage(value));
+      let replacementRef: mupdfType.PDFObject | undefined;
 
       // Find matching source image
       for (const pair of imagePairs) {
         if (imagesEqual(pdfImage, pair.srcImage)) {
-          const newImageRef = addImagePreservingColorSpace(doc, pair.destImage);
-          xobjects.put(key, newImageRef);
+          replacementRef = addImagePreservingColorSpace(doc, pair.destImage);
+          xobjects.put(key, replacementRef);
           replaced++;
           Logger.debug(
             `  Page ${i + 1}, ref "${key}": ${pair.sourcePath} -> ${pair.replacementPath}`,
           );
           break;
+        }
+      }
+
+      if (incompatibleImages) {
+        if (replacementRef) {
+          using replacementImage = disposable(doc.loadImage(replacementRef));
+          collectDeviceCmykIncompatibleImage(
+            replacementImage,
+            key,
+            i,
+            incompatibleImages,
+          );
+        } else {
+          collectDeviceCmykIncompatibleImage(
+            pdfImage,
+            key,
+            i,
+            incompatibleImages,
+          );
         }
       }
     }
@@ -142,22 +194,28 @@ function replaceImagesInDocument(
   return { replaced, total };
 }
 
-export async function replaceImages({
-  pdf,
-  replaceImageConfig,
-}: {
+export async function replaceImages(
+  pdf: Uint8Array,
+  {
+    replacements,
+    ifIncompatibleImagesFound,
+  }: {
+    replacements: ReplaceImageConfig;
+    ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'];
+  },
+): Promise<{
   pdf: Uint8Array;
-  replaceImageConfig: ReplaceImageConfig;
-}): Promise<Uint8Array> {
-  if (replaceImageConfig.length === 0) {
-    return pdf;
+  incompatibleImages: DeviceCmykIncompatibleImage[];
+}> {
+  if (replacements.length === 0 && ifIncompatibleImagesFound === 'ignore') {
+    return { pdf, incompatibleImages: [] };
   }
 
   const mupdf = await importNodeModule('mupdf');
 
   // Load image pairs
   const imagePairs: ImagePair[] = [];
-  for (const { source, replacement } of replaceImageConfig) {
+  for (const { source, replacement } of replacements) {
     let srcImage: mupdfType.Image;
     let destImage: mupdfType.Image;
 
@@ -195,8 +253,8 @@ export async function replaceImages({
     });
   }
 
-  if (imagePairs.length === 0) {
-    return pdf;
+  if (imagePairs.length === 0 && ifIncompatibleImagesFound === 'ignore') {
+    return { pdf, incompatibleImages: [] };
   }
 
   using doc = disposable(
@@ -207,10 +265,22 @@ export async function replaceImages({
     ) as mupdfType.PDFDocument,
   );
 
-  const stats = replaceImagesInDocument(doc, imagePairs);
+  const incompatibleImages: DeviceCmykIncompatibleImage[] = [];
+  const stats = replaceImagesInDocument(
+    doc,
+    imagePairs,
+    ifIncompatibleImagesFound === 'ignore' ? null : incompatibleImages,
+  );
   Logger.debug(`Replaced ${stats.replaced} of ${stats.total} images`);
+
+  if (imagePairs.length === 0) {
+    return { pdf, incompatibleImages };
+  }
 
   using outputBuffer = disposable(doc.saveToBuffer('compress'));
   // Create a copy to ensure the data remains valid after the buffer is destroyed
-  return new Uint8Array(outputBuffer.asUint8Array());
+  return {
+    pdf: new Uint8Array(outputBuffer.asUint8Array()),
+    incompatibleImages,
+  };
 }

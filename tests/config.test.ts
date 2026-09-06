@@ -4,8 +4,15 @@ import { ValiError } from 'valibot';
 import { expect, it, onTestFinished, vi } from 'vitest';
 
 import { warnDeprecatedConfig } from '../src/config/load.js';
-import { UseTemporaryServerRoot } from '../src/config/resolve.js';
-import { VivliostyleConfigSchema } from '../src/config/schema.js';
+import { mergeInlineConfig } from '../src/config/merge.js';
+import {
+  resolveTaskConfig,
+  UseTemporaryServerRoot,
+} from '../src/config/resolve.js';
+import {
+  VivliostyleConfigSchema,
+  VivliostyleInlineConfig,
+} from '../src/config/schema.js';
 import { Logger } from '../src/logger.js';
 import { getTaskConfig, maskConfig, resolveFixture } from './command-util.js';
 
@@ -592,7 +599,8 @@ it('supports pdfPostprocess configuration', async () => {
   expect(config.outputs[0]).toMatchObject({
     format: 'pdf',
     cmyk: {
-      warnUnmapped: true,
+      ifUnmappedColorsFound: 'warn',
+      ifIncompatibleImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
       mapOutput: undefined,
@@ -630,6 +638,212 @@ it('preserves sticky matching across independent source paths', async () => {
       replacement.endsWith('img_cmyk.tiff'),
     ),
   ).toBe(true);
+});
+
+it('resolves CMYK issue policies and the deprecated warnUnmapped option', async () => {
+  const defaulted = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: {} },
+  });
+  expect(defaulted.outputs[0]).toMatchObject({
+    cmyk: {
+      ifUnmappedColorsFound: 'warn',
+      ifIncompatibleImagesFound: 'warn',
+    },
+  });
+
+  const explicit = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      cmyk: {
+        ifUnmappedColorsFound: 'error',
+        ifIncompatibleImagesFound: 'ignore',
+      },
+    },
+  });
+  expect(explicit.outputs[0]).toMatchObject({
+    cmyk: {
+      ifUnmappedColorsFound: 'error',
+      ifIncompatibleImagesFound: 'ignore',
+    },
+  });
+
+  const legacy = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: { cmyk: { warnUnmapped: false } },
+  });
+  expect(legacy.outputs[0]).toMatchObject({
+    cmyk: { ifUnmappedColorsFound: 'ignore' },
+  });
+
+  const preferred = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+    pdfPostprocess: {
+      cmyk: { warnUnmapped: false, ifUnmappedColorsFound: 'error' },
+    },
+  });
+  expect(preferred.outputs[0]).toMatchObject({
+    cmyk: { ifUnmappedColorsFound: 'error' },
+  });
+});
+
+it('resolves a top-level CMYK config object', () => {
+  const mergedConfig = mergeInlineConfig(
+    v.parse(VivliostyleConfigSchema, {
+      entry: 'manuscript.md',
+      output: 'output.pdf',
+    }),
+    v.parse(VivliostyleInlineConfig, {
+      cwd: resolveFixture('config'),
+      cmyk: {
+        ifUnmappedColorsFound: 'error',
+        ifIncompatibleImagesFound: 'ignore',
+      },
+    }),
+  );
+
+  const config = resolveTaskConfig(
+    mergedConfig.tasks[0],
+    mergedConfig.inlineOptions,
+  );
+
+  expect(config.outputs[0]).toMatchObject({
+    cmyk: {
+      ifUnmappedColorsFound: 'error',
+      ifIncompatibleImagesFound: 'ignore',
+    },
+  });
+});
+
+it('preserves boolean CMYK config when the top-level API specifies false', () => {
+  const mergedConfig = mergeInlineConfig(
+    v.parse(VivliostyleConfigSchema, {
+      entry: 'manuscript.md',
+      output: 'output.pdf',
+      pdfPostprocess: { cmyk: true },
+    }),
+    v.parse(VivliostyleInlineConfig, {
+      cwd: resolveFixture('config'),
+      cmyk: false,
+    }),
+  );
+
+  const config = resolveTaskConfig(
+    mergedConfig.tasks[0],
+    mergedConfig.inlineOptions,
+  );
+
+  expect(config.outputs[0]).toMatchObject({
+    cmyk: {
+      ifUnmappedColorsFound: 'warn',
+      ifIncompatibleImagesFound: 'warn',
+    },
+  });
+});
+
+it('gives a config-file CMYK object priority over the top-level API', () => {
+  const mergedConfig = mergeInlineConfig(
+    v.parse(VivliostyleConfigSchema, {
+      entry: 'manuscript.md',
+      output: 'output.pdf',
+      pdfPostprocess: {
+        cmyk: {
+          ifUnmappedColorsFound: 'ignore',
+          ifIncompatibleImagesFound: 'warn',
+        },
+      },
+    }),
+    v.parse(VivliostyleInlineConfig, {
+      cwd: resolveFixture('config'),
+      cmyk: {
+        ifUnmappedColorsFound: 'error',
+        ifIncompatibleImagesFound: 'ignore',
+      },
+    }),
+  );
+
+  const config = resolveTaskConfig(
+    mergedConfig.tasks[0],
+    mergedConfig.inlineOptions,
+  );
+
+  expect(config.outputs[0]).toMatchObject({
+    cmyk: {
+      ifUnmappedColorsFound: 'ignore',
+      ifIncompatibleImagesFound: 'warn',
+    },
+  });
+});
+
+it('warns when build-level cmyk config uses warnUnmapped', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    pdfPostprocess: { cmyk: { warnUnmapped: true } },
+  });
+
+  warnDeprecatedConfig(config);
+
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining('ifUnmappedColorsFound'),
+  );
+});
+
+it('warns when output-level cmyk config uses warnUnmapped', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    output: {
+      path: 'output.pdf',
+      pdfPostprocess: { cmyk: { warnUnmapped: false } },
+    },
+  });
+
+  warnDeprecatedConfig(config);
+
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining('ifUnmappedColorsFound'),
+  );
+});
+
+it('warns when top-level cmyk config uses warnUnmapped', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+  });
+  const inlineConfig = v.parse(VivliostyleInlineConfig, {
+    cmyk: { warnUnmapped: false },
+  });
+
+  warnDeprecatedConfig(config, inlineConfig);
+
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining('ifUnmappedColorsFound'),
+  );
+});
+
+it('does not warn for current top-level preflight options', () => {
+  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+  onTestFinished(() => warn.mockRestore());
+  const config = v.parse(VivliostyleConfigSchema, {
+    entry: 'manuscript.md',
+    output: 'output.pdf',
+  });
+  const inlineConfig = v.parse(VivliostyleInlineConfig, {
+    preflight: 'press-ready',
+    preflightOption: ['gray-scale'],
+  });
+
+  warnDeprecatedConfig(config, inlineConfig);
+
+  expect(warn).not.toHaveBeenCalled();
 });
 
 it('pdfPostprocess takes precedence over legacy pressReady option', async () => {
@@ -674,7 +888,8 @@ it('output-level pdfPostprocess overrides build-level', async () => {
   expect(config.outputs[0]).toMatchObject({
     format: 'pdf',
     cmyk: {
-      warnUnmapped: true,
+      ifUnmappedColorsFound: 'warn',
+      ifIncompatibleImagesFound: 'warn',
       overrideMap: [],
       reserveMap: [],
       mapOutput: undefined,

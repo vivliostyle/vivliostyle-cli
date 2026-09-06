@@ -107,14 +107,15 @@ function processContents(
 export async function convertCmykColors({
   pdf,
   colorMap,
-  warnUnmapped,
+  unmappedColors,
 }: {
   pdf: Uint8Array;
   colorMap: CmykMap;
-  warnUnmapped: boolean;
+  unmappedColors: Set<string> | null;
 }): Promise<Uint8Array> {
   const mupdf = await importNodeModule('mupdf');
-  const warnedColors = new Set<string>();
+  const foundUnmappedColors = unmappedColors ?? new Set<string>();
+  const warnUnmapped = unmappedColors !== null;
   const processedXObjects = new Set<number>();
 
   using doc = disposable(
@@ -132,7 +133,13 @@ export async function convertCmykColors({
 
     const contents = pageObj.get('Contents');
     if (contents) {
-      processContents(contents, colorMap, warnUnmapped, warnedColors, mupdf);
+      processContents(
+        contents,
+        colorMap,
+        warnUnmapped,
+        foundUnmappedColors,
+        mupdf,
+      );
     }
 
     const resources = pageObj.get('Resources');
@@ -141,7 +148,7 @@ export async function convertCmykColors({
         resources,
         colorMap,
         warnUnmapped,
-        warnedColors,
+        foundUnmappedColors,
         mupdf,
         processedXObjects,
       );
@@ -167,12 +174,18 @@ export async function convertCmykColors({
         continue;
       }
       if (n.isStream()) {
-        processStream(n, colorMap, warnUnmapped, warnedColors, mupdf);
+        processStream(n, colorMap, warnUnmapped, foundUnmappedColors, mupdf);
       } else if (n.isDictionary()) {
         // Multiple appearance states
         n.forEach((val) => {
           if (val?.isStream()) {
-            processStream(val, colorMap, warnUnmapped, warnedColors, mupdf);
+            processStream(
+              val,
+              colorMap,
+              warnUnmapped,
+              foundUnmappedColors,
+              mupdf,
+            );
           }
         });
       }
