@@ -46,7 +46,6 @@ RUN set -x \
   && apt-get install -y nodejs \
   && node -v \
   && npm -v \
-  && npm install -g pnpm \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Chromium (for arm64 build, use the official Debian package)
@@ -66,6 +65,13 @@ RUN set -x \
   && mkdir -p /data \
   && chown -R vivliostyle: /data \
   && chown -R vivliostyle: /opt
+
+# Install the pnpm version pinned by `packageManager`
+COPY package.json /tmp/package.json
+RUN set -x \
+  && npm install -g "$(node -p "require('/tmp/package.json').packageManager.split('+')[0]")" \
+  && pnpm -v \
+  && rm -rf /tmp/* /var/tmp/*
 
 USER vivliostyle
 WORKDIR /opt/vivliostyle-cli
