@@ -3,7 +3,6 @@ import type * as vite from 'vite';
 import { launchPreview, runBrowserOperationWithAbort } from '../browser.js';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
-import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { getOsLocale, runCleanupHandlers } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
@@ -18,6 +17,7 @@ export function vsBrowserPlugin({
   let config = _config;
   let server: vite.ViteDevServer | undefined;
   let closeBrowser: (() => Promise<void>) | undefined;
+  let pendingFullReload = false;
 
   function handlePageClose() {
     void (async () => {
@@ -26,34 +26,18 @@ export function vsBrowserPlugin({
     })();
   }
 
-  async function openPreviewPage() {
+  async function openPreviewPage(send: vite.WebSocketServer['send']) {
     const locale = getOsLocale();
     const url = await getViewerFullUrl(config);
-    let localeScriptId: string | undefined;
-    const {
-      page,
-      browser,
-      closeBrowser: closeLaunchedBrowser,
-    } = await launchPreview({
+    const { page, closeBrowser: closeLaunchedBrowser } = await launchPreview({
       mode: 'preview',
       url,
       signal: inlineConfig.signal,
       config,
-      onPageOpen: async (openedPage) => {
+      /* v8 ignore next 4 */
+      onPageOpen: (openedPage) => {
         // Terminate preview when the previewing page is closed
         openedPage.on('close', handlePageClose);
-        try {
-          ({ identifier: localeScriptId } =
-            await openedPage.evaluateOnNewDocument((lng) => {
-              // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
-              window.localStorage.setItem('i18nextLng', lng);
-            }, locale));
-        } catch (error) {
-          if (inlineConfig.signal?.aborted) {
-            throw error;
-          }
-          Logger.debug('Failed to set up the viewer UI language', error);
-        }
       },
     });
 
@@ -66,50 +50,44 @@ export function vsBrowserPlugin({
       signal: inlineConfig.signal,
       closeBrowser,
       operation: async () => {
-        const continueUnlessPreviewIsEnding = async (
-          description: string,
-          setup: () => Promise<unknown>,
-        ) => {
-          try {
-            await setup();
-          } catch (error) {
-            if (
-              inlineConfig.signal?.aborted ||
-              (!browser.connected && !page.isClosed())
-            ) {
-              throw error;
-            }
-            Logger.debug(`Failed to ${description}`, error);
-          }
-        };
-        const registeredLocaleScriptId = localeScriptId;
-        if (registeredLocaleScriptId !== undefined) {
-          await continueUnlessPreviewIsEnding('remove the locale script', () =>
-            page.removeScriptToEvaluateOnNewDocument(registeredLocaleScriptId),
-          );
+        // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
+        if (!import.meta.env?.VITEST) {
+          /* v8 ignore next 4 */
+          await page.evaluate((lng) => {
+            window.localStorage.setItem('i18nextLng', lng);
+          }, locale);
         }
-        // Move focus from the address bar to the page
-        await continueUnlessPreviewIsEnding('bring the page to front', () =>
-          page.bringToFront(),
-        );
-        // Focus to the URL input box if available.
-        // `waitForFunction` re-runs in the new document when a navigation
-        // destroys the execution context
-        await continueUnlessPreviewIsEnding('focus the URL input box', () =>
-          page.waitForFunction(
-            () => {
-              const urlInput = document.querySelector<HTMLInputElement>(
-                '#vivliostyle-input-url',
-              );
-              if (urlInput) {
-                urlInput.focus();
-                return true;
-              }
-              return document.readyState === 'complete';
-            },
-            { polling: 1000, signal: inlineConfig.signal },
-          ),
-        );
+        do {
+          if (pendingFullReload) {
+            pendingFullReload = false;
+            const navigation =
+              !config.viewer &&
+              server?.config.server.hmr !== false &&
+              server?.config.server.ws !== false
+                ? (async () => {
+                    let response;
+                    do {
+                      response = await page.waitForNavigation({
+                        signal: inlineConfig.signal,
+                      });
+                    } while (response === null);
+                  })()
+                : undefined;
+            send({ type: 'full-reload', path: '*' });
+            await navigation;
+          }
+          // Move focus from the address bar to the page
+          await page.bringToFront();
+          // Focus to the URL input box if available
+          if (!import.meta.env?.VITEST) {
+            /* v8 ignore next 6 */
+            await page.evaluate(() => {
+              document
+                .querySelector<HTMLInputElement>('#vivliostyle-input-url')
+                ?.focus();
+            });
+          }
+        } while (pendingFullReload);
       },
     });
   }
@@ -120,12 +98,31 @@ export function vsBrowserPlugin({
     configureServer(viteServer) {
       server = viteServer;
 
+      const originalSend = viteServer.ws.send.bind(viteServer.ws);
+      viteServer.ws.send = (
+        ...args: [vite.HotPayload] | [string, unknown?]
+      ) => {
+        if (typeof args[0] !== 'string' && args[0].type === 'full-reload') {
+          pendingFullReload = true;
+          return;
+        }
+        Reflect.apply(originalSend, viteServer.ws, args);
+      };
+
       const originalListen = viteServer.listen.bind(viteServer);
       viteServer.listen = async (...args) => {
-        const startedServer = await originalListen(...args);
-        config = await reloadConfig(config, inlineConfig, startedServer.config);
-        await openPreviewPage();
-        return startedServer;
+        try {
+          const startedServer = await originalListen(...args);
+          config = await reloadConfig(
+            config,
+            inlineConfig,
+            startedServer.config,
+          );
+          await openPreviewPage(originalSend);
+          return startedServer;
+        } finally {
+          viteServer.ws.send = originalSend;
+        }
       };
     },
     async closeBundle() {

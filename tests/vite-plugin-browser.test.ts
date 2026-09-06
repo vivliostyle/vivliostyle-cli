@@ -1,17 +1,11 @@
-import type { Page } from 'puppeteer-core';
-import type { ViteDevServer } from 'vite';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { HTTPResponse, Page } from 'puppeteer-core';
+import type { HotPayload, ViteDevServer } from 'vite';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ResolvedTaskConfig } from '../src/config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../src/config/schema.js';
 
-const mockedLaunchPreview = vi.hoisted(() =>
-  vi.fn<
-    (
-      options: Parameters<typeof import('../src/browser.js').launchPreview>[0],
-    ) => Promise<unknown>
-  >(),
-);
+const mockedLaunchPreview = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
 const mockedGetViewerFullUrl = vi.hoisted(() =>
   vi.fn<() => Promise<unknown>>(),
 );
@@ -51,7 +45,6 @@ describe('vsBrowserPlugin cancellation', () => {
     const page = {
       on: vi.fn<() => void>(),
       off: vi.fn<() => void>(),
-      isClosed: () => false,
       bringToFront: vi.fn<() => Promise<void>>(() => {
         controller.abort(reason);
         throw protocolError;
@@ -59,7 +52,6 @@ describe('vsBrowserPlugin cancellation', () => {
     } as unknown as Page;
     mockedLaunchPreview.mockResolvedValue({
       page,
-      browser: { connected: true },
       closeBrowser,
     });
 
@@ -75,6 +67,7 @@ describe('vsBrowserPlugin cancellation', () => {
       listen: vi.fn<() => Promise<unknown>>(async () => server),
       close: vi.fn<() => Promise<void>>(async () => {}),
       config: {},
+      ws: { send: vi.fn<() => void>() },
     } as unknown as ViteDevServer;
     const configureServer = plugin.configureServer;
     expect(typeof configureServer).toBe('function');
@@ -90,195 +83,182 @@ describe('vsBrowserPlugin cancellation', () => {
   });
 });
 
-describe('vsBrowserPlugin page setup', () => {
-  const calls: string[] = [];
-  const page = {
-    on: vi.fn<() => void>(),
-    off: vi.fn<() => void>(),
-    isClosed: () => pageClosed,
-    evaluateOnNewDocument: vi
-      .fn<
-        (
-          fn: (lng: string) => void,
-          lng: string,
-        ) => Promise<{ identifier: string }>
-      >()
-      .mockImplementation(() => {
-        calls.push('evaluateOnNewDocument');
-        return Promise.resolve({ identifier: 'locale-script' });
-      }),
-    bringToFront: vi.fn<() => Promise<void>>().mockImplementation(() => {
-      calls.push('bringToFront');
-      return Promise.resolve();
-    }),
-    removeScriptToEvaluateOnNewDocument: vi
-      .fn<(id: string) => Promise<void>>()
-      .mockImplementation((id) => {
-        calls.push(`remove:${id}`);
-        return Promise.resolve();
-      }),
-    waitForFunction: vi
-      .fn<(fn: () => boolean, options: unknown) => Promise<unknown>>()
-      .mockImplementation(() => {
-        calls.push('waitForFunction');
-        return Promise.resolve();
-      }),
-  };
-  const browser = { connected: true };
-  let pageClosed = false;
-  const closeBrowser = vi.fn<() => Promise<void>>().mockResolvedValue();
+describe('vsBrowserPlugin reload suppression', () => {
+  const fullReload = { type: 'full-reload', path: '*' } as const;
 
-  function listenWithPlugin(signal?: AbortSignal) {
+  function createPreview({
+    signal,
+    viewer,
+    hmr,
+    ws,
+  }: {
+    signal?: AbortSignal;
+    viewer?: string;
+    hmr?: false;
+    ws?: false;
+  } = {}) {
+    const calls: string[] = [];
+    const send = vi
+      .fn<(...args: [HotPayload] | [string, unknown?]) => void>()
+      .mockImplementation((...args) => {
+        calls.push(typeof args[0] === 'string' ? args[0] : args[0].type);
+      });
+    const page = {
+      on: vi.fn<() => void>(),
+      off: vi.fn<() => void>(),
+      waitForNavigation: vi
+        .fn<() => Promise<HTTPResponse | null>>()
+        .mockImplementation(() => {
+          calls.push('waitForNavigation');
+          return Promise.resolve({} as HTTPResponse);
+        }),
+      bringToFront: vi.fn<() => Promise<void>>().mockImplementation(() => {
+        calls.push('bringToFront');
+        return Promise.resolve();
+      }),
+    };
+    const closeBrowser = vi.fn<() => Promise<void>>().mockResolvedValue();
+    const resolvedConfig = { ...config, viewer };
+    mockedReloadConfig.mockResolvedValue(resolvedConfig);
+    mockedGetViewerFullUrl.mockResolvedValue('http://localhost:13000/viewer');
+    mockedLaunchPreview.mockResolvedValue({ page, closeBrowser });
+    const listen = vi.fn<() => Promise<ViteDevServer>>();
+    const server = {
+      ws: { send },
+      config: { server: { hmr, ws } },
+      listen,
+    } as unknown as ViteDevServer;
+    listen.mockResolvedValue(server);
     const plugin = vsBrowserPlugin({
-      config,
+      config: resolvedConfig,
       inlineConfig: {
         openViewer: true,
         signal,
       } as ParsedVivliostyleInlineConfig,
     });
-    const server = {
-      listen: vi
-        .fn<() => Promise<unknown>>()
-        .mockImplementation(() => Promise.resolve(server)),
-      close: vi.fn<() => Promise<void>>().mockResolvedValue(),
-      config: {},
-    } as unknown as ViteDevServer;
     (plugin.configureServer as (server: ViteDevServer) => void)(server);
-    return server.listen();
+    return { server, send, page, closeBrowser, calls, listen };
   }
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    calls.length = 0;
-    browser.connected = true;
-    pageClosed = false;
-    mockedGetViewerFullUrl.mockResolvedValue('http://localhost:13000/viewer');
-    mockedReloadConfig.mockResolvedValue(config);
-    mockedLaunchPreview.mockImplementation(async ({ onPageOpen }) => {
-      await onPageOpen?.(page as unknown as Page);
-      calls.push('goto');
-      return { page, browser, closeBrowser };
+  it('coalesces reloads queued before listening and waits for navigation before focusing', async () => {
+    const { server, send, page, calls } = createPreview();
+    server.ws.send(fullReload);
+    server.ws.send({ type: 'full-reload', path: '/chapter.html' });
+    expect(send).not.toHaveBeenCalled();
+    await server.listen();
+    expect(calls).toEqual(['waitForNavigation', 'full-reload', 'bringToFront']);
+    expect(page.waitForNavigation).toHaveBeenCalledWith({
+      signal: undefined,
     });
+    server.ws.send(fullReload);
+    expect(send).toHaveBeenCalledTimes(2);
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
+  it('forwards custom events, errors, and module updates during startup', async () => {
+    const { server, send } = createPreview();
+    const error = {
+      type: 'error',
+      err: { message: 'failure', stack: 'stack' },
+    } as const;
+    const update = { type: 'update', updates: [] } as const;
+    server.ws.send('custom:event', { value: 1 });
+    server.ws.send(error);
+    server.ws.send({ ...update, updates: [] });
+    expect(send.mock.calls).toEqual([
+      ['custom:event', { value: 1 }],
+      [error],
+      [update],
+    ]);
+    await server.listen();
   });
 
-  it('sets the viewer language before navigation and focuses the URL input after bringing the page to front', async () => {
-    const { signal } = new AbortController();
-    await expect(listenWithPlugin(signal)).resolves.toBeDefined();
+  it('handles a reload requested while focusing before startup completes', async () => {
+    const { server, page, calls } = createPreview();
+    page.bringToFront.mockImplementationOnce(() => {
+      calls.push('bringToFront');
+      server.ws.send(fullReload);
+      return Promise.resolve();
+    });
+    await server.listen();
     expect(calls).toEqual([
-      'evaluateOnNewDocument',
-      'goto',
-      'remove:locale-script',
       'bringToFront',
-      'waitForFunction',
-    ]);
-
-    const [setLanguage, lng] = page.evaluateOnNewDocument.mock.calls[0];
-    const setItem = vi.fn<(key: string, value: string) => void>();
-    vi.stubGlobal('window', { localStorage: { setItem } });
-    setLanguage(lng);
-    expect(setItem).toHaveBeenCalledWith('i18nextLng', 'en');
-
-    const [focusUrlInput, options] = page.waitForFunction.mock.calls[0];
-    const focus = vi.fn<() => void>();
-    const querySelector = vi
-      .fn<(selector: string) => { focus: () => void }>()
-      .mockReturnValue({ focus });
-    vi.stubGlobal('document', { querySelector, readyState: 'loading' });
-    expect(focusUrlInput()).toBe(true);
-    expect(querySelector).toHaveBeenCalledWith('#vivliostyle-input-url');
-    expect(focus).toHaveBeenCalledOnce();
-    expect(options).toEqual({ polling: 1000, signal });
-    expect((options as { signal: AbortSignal }).signal).toBe(signal);
-  });
-
-  it('waits for the URL input until the document has finished loading', async () => {
-    await listenWithPlugin();
-    const [focusUrlInput] = page.waitForFunction.mock.calls[0];
-    vi.stubGlobal('document', {
-      querySelector: () => null,
-      readyState: 'loading',
-    });
-    expect(focusUrlInput()).toBe(false);
-    vi.stubGlobal('document', {
-      querySelector: () => null,
-      readyState: 'complete',
-    });
-    expect(focusUrlInput()).toBe(true);
-  });
-
-  it('opens the preview even if the language setup fails', async () => {
-    page.evaluateOnNewDocument.mockRejectedValueOnce(
-      new Error('Protocol error (Page.addScriptToEvaluateOnNewDocument)'),
-    );
-    await expect(listenWithPlugin()).resolves.toBeDefined();
-    expect(page.removeScriptToEvaluateOnNewDocument).not.toHaveBeenCalled();
-    expect(calls).toEqual(['goto', 'bringToFront', 'waitForFunction']);
-  });
-
-  it('removes the locale script and focuses the URL input even if bringing the page to front fails', async () => {
-    page.bringToFront.mockRejectedValueOnce(
-      new Error('Protocol error (Page.bringToFront): Target closed'),
-    );
-    await expect(listenWithPlugin()).resolves.toBeDefined();
-    expect(calls).toEqual([
-      'evaluateOnNewDocument',
-      'goto',
-      'remove:locale-script',
-      'waitForFunction',
+      'waitForNavigation',
+      'full-reload',
+      'bringToFront',
     ]);
   });
 
-  it('focuses the URL input even if removing the locale script fails', async () => {
-    page.removeScriptToEvaluateOnNewDocument.mockRejectedValueOnce(
-      new Error('Protocol error (Page.removeScriptToEvaluateOnNewDocument)'),
-    );
-    await expect(listenWithPlugin()).resolves.toBeDefined();
-    expect(page.waitForFunction).toHaveBeenCalledOnce();
-    expect(closeBrowser).not.toHaveBeenCalled();
+  it('handles another update arriving during the controlled reload', async () => {
+    const { server, page, send } = createPreview();
+    server.ws.send(fullReload);
+    page.waitForNavigation.mockImplementationOnce(() => {
+      server.ws.send(fullReload);
+      return Promise.resolve({} as HTTPResponse);
+    });
+    await server.listen();
+    expect(page.waitForNavigation).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledTimes(2);
   });
 
-  it('opens the preview even if focusing the URL input times out', async () => {
-    page.waitForFunction.mockRejectedValueOnce(
-      new Error('Waiting failed: 30000ms exceeded'),
-    );
-    await expect(listenWithPlugin()).resolves.toBeDefined();
-    expect(closeBrowser).not.toHaveBeenCalled();
+  it('keeps waiting after a same-document navigation', async () => {
+    const { server, page, send, calls } = createPreview();
+    server.ws.send(fullReload);
+    page.waitForNavigation.mockResolvedValueOnce(null);
+    await server.listen();
+    expect(page.waitForNavigation).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledOnce();
+    expect(calls.at(-1)).toBe('bringToFront');
   });
 
-  it('propagates cancellation while waiting for the URL input', async () => {
+  it.each([
+    { viewer: 'https://example.com/viewer' },
+    { hmr: false as const },
+    { ws: false as const },
+  ])('does not wait for a viewer navigation with %j', async (options) => {
+    const { server, page, send } = createPreview(options);
+    server.ws.send(fullReload);
+    await server.listen();
+    expect(page.waitForNavigation).not.toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith(fullReload);
+    expect(page.bringToFront).toHaveBeenCalledOnce();
+  });
+
+  it.each(['listen', 'config', 'browser', 'navigation', 'focus'] as const)(
+    'restores sending and propagates a %s failure',
+    async (stage) => {
+      const { server, listen, page, send } = createPreview();
+      const error = new Error(`${stage} failed`);
+      const operation = {
+        listen,
+        config: mockedReloadConfig,
+        browser: mockedLaunchPreview,
+        navigation: page.waitForNavigation,
+        focus: page.bringToFront,
+      }[stage];
+      operation.mockRejectedValueOnce(error);
+      server.ws.send(fullReload);
+      await expect(server.listen()).rejects.toBe(error);
+      send.mockClear();
+      server.ws.send(fullReload);
+      expect(send).toHaveBeenCalledWith(fullReload);
+    },
+  );
+
+  it('closes the browser and restores sending when navigation is cancelled', async () => {
     const controller = new AbortController();
+    const { server, page, send, closeBrowser } = createPreview({
+      signal: controller.signal,
+    });
     const reason = new Error('cancelled');
-    page.waitForFunction.mockImplementationOnce(() => {
+    page.waitForNavigation.mockImplementationOnce(() => {
       controller.abort(reason);
-      return Promise.reject(reason);
+      return Promise.reject(new Error('Target closed'));
     });
-    await expect(listenWithPlugin(controller.signal)).rejects.toBe(reason);
+    server.ws.send(fullReload);
+    await expect(server.listen()).rejects.toBe(reason);
     expect(closeBrowser).toHaveBeenCalledOnce();
-  });
-
-  it('opens the preview without failing if the page is closed during the page setup', async () => {
-    page.waitForFunction.mockImplementationOnce(() => {
-      pageClosed = true;
-      browser.connected = false;
-      return Promise.reject(
-        new Error('Protocol error (Runtime.callFunctionOn): Target closed'),
-      );
-    });
-    await expect(listenWithPlugin()).resolves.toBeDefined();
-    expect(closeBrowser).not.toHaveBeenCalled();
-  });
-
-  it('fails to open the preview if the browser is disconnected while the page is still open', async () => {
-    page.waitForFunction.mockImplementationOnce(() => {
-      browser.connected = false;
-      return Promise.reject(
-        new Error('Protocol error (Runtime.callFunctionOn): Target closed'),
-      );
-    });
-    await expect(listenWithPlugin()).rejects.toThrow('Target closed');
+    send.mockClear();
+    server.ws.send(fullReload);
+    expect(send).toHaveBeenCalledWith(fullReload);
   });
 });
