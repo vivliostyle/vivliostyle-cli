@@ -2,28 +2,16 @@ import fs from 'node:fs';
 
 import type * as mupdfType from 'mupdf';
 
-import type { CmykConfig, ReplaceImageConfig } from '../config/resolve.js';
+import type { CmykConfig } from '../config/resolve.js';
+import type {
+  ResolvedReplaceImageConfig,
+  ResolvedReplacement,
+} from '../config/schema.js';
+import { disposable, disposableOrNull } from '../disposable.js';
+import { createImageConversionReplaceFunction } from '../image-replacement.js';
 import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import type { PdfEditHook, PdfImageXObjectNode } from './pdf-visitor.js';
-
-interface Destroyable {
-  destroy(): void;
-}
-
-function disposable<T extends Destroyable>(obj: T): T & Disposable {
-  return Object.assign(obj, {
-    [Symbol.dispose]() {
-      obj.destroy();
-    },
-  });
-}
-
-function disposableOrNull<T extends Destroyable>(
-  obj: T | null,
-): (T & Disposable) | null {
-  return obj && disposable(obj);
-}
 
 function premultiplySkiaColorSample(sample: number, alpha: number): number {
   // NOTE: Chromium/Skia writes unpremultiplied RGB and alpha separately.
@@ -190,9 +178,15 @@ interface Replacement {
   replacementLabel: string;
 }
 
+const NO_REPLACEMENT_NEEDED = Symbol('no-replacement-needed');
+
 type ReplaceFn = (
   context: ReplaceContext,
-) => Replacement | null | Promise<Replacement | null>;
+) =>
+  | Replacement
+  | typeof NO_REPLACEMENT_NEEDED
+  | null
+  | Promise<Replacement | typeof NO_REPLACEMENT_NEEDED | null>;
 
 function disposeImages(
   images: readonly (mupdfType.Image & Disposable)[],
@@ -202,7 +196,9 @@ function disposeImages(
   }
 }
 
-async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
+async function createReplaceFn(
+  replacements: ResolvedReplaceImageConfig,
+): Promise<{
   replaceFn: ReplaceFn | null;
   loadedImages: (mupdfType.Image & Disposable)[];
 }> {
@@ -215,10 +211,80 @@ async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
   const mupdf = await importNodeModule('mupdf');
   const replaceFns: ReplaceFn[] = [];
   const loadedImages: (mupdfType.Image & Disposable)[] = [];
+  type PreparedReplaceFunction = ReturnType<
+    typeof createImageConversionReplaceFunction
+  >;
+  const conversionFunctions = new WeakMap<object, PreparedReplaceFunction>();
+
+  const getReplaceFunction = (
+    replacement: ResolvedReplacement,
+  ): PreparedReplaceFunction => {
+    if ('replaceFunction' in replacement) {
+      return {
+        replaceFunction: replacement.replaceFunction,
+        builtinDestination: null,
+      };
+    }
+    const cached = conversionFunctions.get(replacement.imageConversion);
+    if (cached) {
+      return cached;
+    }
+    const created = createImageConversionReplaceFunction(
+      replacement.imageConversion,
+    );
+    conversionFunctions.set(replacement.imageConversion, created);
+    return created;
+  };
+
+  const wrapReplaceFunction = (
+    replacement: ResolvedReplacement,
+    sourceLabel: string,
+  ): ReplaceFn => {
+    const { replaceFunction, builtinDestination } =
+      getReplaceFunction(replacement);
+    return async (context) => {
+      if (builtinDestination !== null) {
+        using colorSpace = disposableOrNull(context.image.getColorSpace());
+        // MuPDF exposes built-in Device color spaces as canonical native objects,
+        // so pointer equality distinguishes them from ICCBased and calibrated
+        // spaces. Preserve an exact match without re-encoding it; null would
+        // continue to the next replacement candidate.
+        if (
+          colorSpace?.pointer === mupdf.ColorSpace[builtinDestination].pointer
+        ) {
+          return NO_REPLACEMENT_NEEDED;
+        }
+      }
+      const replacementImage = await replaceFunction({
+        image: context.image,
+        mupdf,
+      });
+      if (replacementImage === null) {
+        return null;
+      }
+      if (!(replacementImage instanceof mupdf.Image)) {
+        throw new TypeError(
+          `${replacement.label} must return a mupdf.Image created by context.mupdf or null`,
+        );
+      }
+      return {
+        image: replacementImage,
+        sourceLabel,
+        replacementLabel: replacement.label,
+      };
+    };
+  };
+
   try {
-    for (const { source, replacement } of replacements) {
+    for (const rule of replacements) {
+      if (!('source' in rule)) {
+        replaceFns.push(wrapReplaceFunction(rule, '[*]'));
+        continue;
+      }
+      const { source, replacement } = rule;
+      const replacementLabel =
+        typeof replacement === 'string' ? replacement : replacement.label;
       let sourceImage: mupdfType.Image & Disposable;
-      let replacementImage: (mupdfType.Image & Disposable) | undefined;
 
       try {
         const srcBuffer = fs.readFileSync(source);
@@ -233,6 +299,19 @@ async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
         continue;
       }
 
+      if (typeof replacement !== 'string') {
+        loadedImages.push(sourceImage);
+        const replace = wrapReplaceFunction(replacement, source);
+        replaceFns.push((context) => {
+          if (!imagesEqual(context.image, sourceImage)) {
+            return null;
+          }
+          return replace(context);
+        });
+        continue;
+      }
+
+      let replacementImage: (mupdfType.Image & Disposable) | undefined;
       try {
         const replacementBytes = fs.readFileSync(replacement);
         replacementImage = disposable(new mupdf.Image(replacementBytes));
@@ -256,7 +335,7 @@ async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
         return {
           image: new mupdf.Image(replacementImage.pointer),
           sourceLabel: source,
-          replacementLabel: replacement,
+          replacementLabel,
         };
       });
     }
@@ -268,13 +347,21 @@ async function createReplaceFn(replacements: ReplaceImageConfig): Promise<{
     replaceFns.length === 0
       ? null
       : async (context) => {
+          // NOTE: If multiple matched files contain pixel-identical images,
+          // the same replacement function may be called once per match. This
+          // is only a small overhead when repeated calls with the same input
+          // return the same result, but a stateful function can make the
+          // result depend on the matched-file order. Whether replacement
+          // functions should instead run once per PDF image remains unsettled.
           for (const replace of replaceFns) {
             const inputImage = new mupdf.Image(context.image.pointer);
             let inputMoved = false;
             try {
               const replacement = await replace({ image: inputImage });
               if (replacement !== null) {
-                inputMoved = replacement.image === inputImage;
+                inputMoved =
+                  replacement !== NO_REPLACEMENT_NEEDED &&
+                  replacement.image === inputImage;
                 return replacement;
               }
             } finally {
@@ -636,7 +723,7 @@ async function replaceImage(
     const replacement = await replaceFn({
       image: pdfImage,
     });
-    if (replacement !== null) {
+    if (replacement !== null && replacement !== NO_REPLACEMENT_NEEDED) {
       using replacementImage = disposable(replacement.image);
       const addedImage = addReplacementImage(
         node.document,
@@ -681,7 +768,7 @@ async function replaceImage(
 }
 
 export async function createReplaceImageHook(
-  replacements: ReplaceImageConfig,
+  replacements: ResolvedReplaceImageConfig,
   ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'],
   failures: string[],
 ): Promise<PdfEditHook & Disposable> {

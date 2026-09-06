@@ -1,18 +1,7 @@
 import type * as mupdfType from 'mupdf';
 
+import { disposable } from '../disposable.js';
 import { importNodeModule } from '../node-modules.js';
-
-interface Destroyable {
-  destroy(): void;
-}
-
-function disposable<T extends Destroyable>(obj: T): T & Disposable {
-  return Object.assign(obj, {
-    [Symbol.dispose]() {
-      obj.destroy();
-    },
-  });
-}
 
 export type PdfNodeOrigin = 'page' | 'annotation-appearance';
 

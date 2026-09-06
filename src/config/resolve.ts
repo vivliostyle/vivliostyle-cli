@@ -12,21 +12,9 @@ import npa from 'npm-package-arg';
 import { globSync } from 'tinyglobby';
 import type { Processor } from 'unified';
 import upath from 'upath';
+import * as v from 'valibot';
 import type { ResolvedConfig as ResolvedViteConfig, UserConfig } from 'vite';
 
-import type {
-  ArticleEntryConfig,
-  BrowserType,
-  ContentsEntryConfig,
-  CoverEntryConfig,
-  EntryConfig,
-  HastTransformFunction,
-  InputFormat,
-  StructuredDocument,
-  StructuredDocumentSection,
-  ThemeConfig,
-  TocCompose,
-} from '../config/schema.js';
 import {
   CONTAINER_LOCAL_HOSTNAME,
   CONTAINER_URL,
@@ -54,7 +42,29 @@ import {
   statFileSync,
   touchTmpFile,
 } from '../util.js';
-import type { InlineOptions, ParsedBuildTask } from './schema.js';
+import type {
+  ArticleEntryConfig,
+  BrowserType,
+  ContentsEntryConfig,
+  CoverEntryConfig,
+  EntryConfig,
+  HastTransformFunction,
+  ImageConversionReplacement,
+  InlineOptions,
+  InputFormat,
+  ParsedBuildTask,
+  ReplaceFunction,
+  ResolvedImageConversionReplacement,
+  ResolvedReplaceImageConfig,
+  ResolvedReplaceImageEntry,
+  ResolvedReplaceFunction,
+  ResolvedReplacement,
+  StructuredDocument,
+  StructuredDocumentSection,
+  ThemeConfig,
+  TocCompose,
+} from './schema.js';
+import { ImageConversionReplacementSchema } from './schema.js';
 
 export type ParsedTheme = UriTheme | FileTheme | PackageTheme;
 
@@ -270,13 +280,6 @@ export interface CmykConfig {
   mapOutput: string | undefined;
 }
 
-export interface ReplaceImageEntry {
-  source: string;
-  replacement: string;
-}
-
-export type ReplaceImageConfig = ReplaceImageEntry[];
-
 export interface PdfOutput {
   format: 'pdf';
   path: string;
@@ -284,7 +287,7 @@ export interface PdfOutput {
   preflight: 'press-ready' | 'press-ready-local' | undefined;
   preflightOption: string[];
   cmyk: CmykConfig | false;
-  replaceImage: ReplaceImageConfig;
+  replaceImage: ResolvedReplaceImageConfig;
 }
 
 export interface WebPublicationOutput {
@@ -736,38 +739,116 @@ export function resolveTaskConfig(
     >['replaceImage'];
     const resolveReplaceImageConfig = (
       replaceImageOption: ReplaceImageOption,
-    ): ReplaceImageConfig => {
+    ): ResolvedReplaceImageConfig => {
       if (!replaceImageOption) {
         return [];
       }
-      const allFiles = globSync('**/*', {
-        cwd: entryContextDir,
-        onlyFiles: true,
+      const resolveReplaceFunction = (
+        replaceFunction: ReplaceFunction,
+        index: number,
+      ): ResolvedReplaceFunction => ({
+        replaceFunction,
+        label: `[function#${index}]`,
       });
-      return replaceImageOption.flatMap(({ source, replacement }) => {
-        if (source instanceof RegExp) {
-          const matcher = new RegExp(source.source, source.flags);
-          return allFiles
-            .filter((file) => {
-              matcher.lastIndex = 0;
-              return matcher.test(file);
-            })
-            .map((file) => {
-              matcher.lastIndex = 0;
-              return {
-                source: upath.resolve(entryContextDir, file),
-                replacement: upath.resolve(
+      const resolveImageConversionReplacement = (
+        replacement: ImageConversionReplacement,
+        index: number,
+      ): ResolvedImageConversionReplacement => ({
+        imageConversion:
+          replacement.kind === 'builtin'
+            ? {
+                ...replacement,
+                inputProfile:
+                  replacement.inputProfile === undefined
+                    ? undefined
+                    : upath.resolve(
+                        entryContextDir,
+                        replacement.inputProfile.trim(),
+                      ),
+              }
+            : {
+                ...replacement,
+                inputProfile:
+                  replacement.inputProfile === undefined
+                    ? undefined
+                    : upath.resolve(
+                        entryContextDir,
+                        replacement.inputProfile.trim(),
+                      ),
+                outputProfile: upath.resolve(
                   entryContextDir,
-                  file.replace(matcher, replacement),
+                  replacement.outputProfile.trim(),
                 ),
-              };
-            });
-        }
-        return {
-          source: upath.resolve(entryContextDir, source),
-          replacement: upath.resolve(entryContextDir, replacement),
-        };
+              },
+        label: `[function#${index}]`,
       });
+      const resolveReplacement = (
+        replacement: ReplaceFunction | ImageConversionReplacement,
+        index: number,
+      ): ResolvedReplacement =>
+        typeof replacement === 'function'
+          ? resolveReplaceFunction(replacement, index)
+          : resolveImageConversionReplacement(replacement, index);
+      const filesInEntryContext = replaceImageOption.some(
+        (item) =>
+          typeof item !== 'function' &&
+          !v.is(ImageConversionReplacementSchema, item) &&
+          item.source instanceof RegExp,
+      )
+        ? globSync('**/*', {
+            cwd: entryContextDir,
+            onlyFiles: true,
+          })
+        : [];
+      return replaceImageOption.flatMap(
+        (
+          item,
+          index,
+        ):
+          | ResolvedReplacement
+          | ResolvedReplaceImageEntry
+          | ResolvedReplaceImageEntry[] => {
+          if (
+            typeof item === 'function' ||
+            v.is(ImageConversionReplacementSchema, item)
+          ) {
+            return resolveReplacement(item, index);
+          }
+          const { source, replacement } = item;
+          const resolvedReplacement =
+            typeof replacement === 'string'
+              ? replacement
+              : resolveReplacement(replacement, index);
+          if (source instanceof RegExp) {
+            const matcher = new RegExp(source.source, source.flags);
+            return filesInEntryContext
+              .filter((file) => {
+                matcher.lastIndex = 0;
+                return matcher.test(file);
+              })
+              .map((file) => {
+                matcher.lastIndex = 0;
+                return {
+                  source: upath.resolve(entryContextDir, file),
+                  replacement:
+                    typeof resolvedReplacement === 'string'
+                      ? upath.resolve(
+                          entryContextDir,
+                          file.replace(matcher, resolvedReplacement),
+                        )
+                      : resolvedReplacement,
+                };
+              });
+          }
+          return {
+            source: upath.resolve(entryContextDir, source),
+            replacement:
+              typeof resolvedReplacement === 'string'
+                ? upath.resolve(entryContextDir, resolvedReplacement)
+                : resolvedReplacement,
+          };
+        },
+      );
     };
 
     // Resolve preflight with priority:

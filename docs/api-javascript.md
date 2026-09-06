@@ -7,6 +7,10 @@
 
 - [`build`](#build)
 - [`create`](#create)
+- [`createBuiltinCmykConversionReplacement`](#createbuiltincmykconversionreplacement)
+- [`createBuiltinGrayConversionReplacement`](#createbuiltingrayconversionreplacement)
+- [`createBuiltinRgbConversionReplacement`](#createbuiltinrgbconversionreplacement)
+- [`createIccConversionReplacement`](#createiccconversionreplacement)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
 - [`preview`](#preview)
@@ -14,12 +18,17 @@
 
 ### Interfaces
 
+- [`ColorConversionOptions`](#colorconversionoptions)
+- [`IccConversionOptions`](#iccconversionoptions)
+- [`ReplaceFunctionContext`](#replacefunctioncontext)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
 
 ### Type Aliases
 
+- [`ImageConversionReplacement`](#imageconversionreplacement)
 - [`Metadata`](#metadata)
+- [`ReplaceFunction`](#replacefunction)
 - [`StructuredDocument`](#structureddocument)
 - [`StructuredDocumentSection`](#structureddocumentsection)
 - [`TocCompose`](#toccompose)
@@ -502,6 +511,79 @@ Scaffold a new Vivliostyle project.
 #### Returns
 
 `Promise`\<`void`\>
+
+***
+
+### createBuiltinCmykConversionReplacement()
+
+> **createBuiltinCmykConversionReplacement**(`options?`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images to DeviceCMYK.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createBuiltinGrayConversionReplacement()
+
+> **createBuiltinGrayConversionReplacement**(`options?`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images to DeviceGray.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createBuiltinRgbConversionReplacement()
+
+> **createBuiltinRgbConversionReplacement**(`options?`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images to DeviceRGB.
+
+#### Parameters
+
+##### options?
+
+[`ColorConversionOptions`](#colorconversionoptions) = `{}`
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
+
+***
+
+### createIccConversionReplacement()
+
+> **createIccConversionReplacement**(`options`): [`ImageConversionReplacement`](#imageconversionreplacement)
+
+Creates a replacement that converts images using a destination ICC
+profile and returns an image in the corresponding Device color space.
+
+#### Parameters
+
+##### options
+
+[`IccConversionOptions`](#iccconversionoptions)
+
+#### Returns
+
+[`ImageConversionReplacement`](#imageconversionreplacement)
 
 ***
 
@@ -1011,6 +1093,52 @@ Unified processor.
 
 ## Interfaces
 
+### ColorConversionOptions
+
+Options shared by image color conversion replacements.
+
+#### Extended by
+
+- [`IccConversionOptions`](#iccconversionoptions)
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="property-inputprofile"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input image. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
+
+***
+
+### IccConversionOptions
+
+Options for conversion using a caller-provided destination ICC profile.
+
+#### Extends
+
+- [`ColorConversionOptions`](#colorconversionoptions)
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="property-inputprofile-1"></a> `inputProfile?` | `string` | Path to an ICC profile used to interpret an unprofiled DeviceGray, DeviceRGB, or DeviceCMYK input. It must use the same color space as the input image. Relative paths use the same entry context as `replaceImage` source and replacement paths. |
+| <a id="property-outputprofile"></a> `outputProfile` | `string` | Path to the destination ICC profile. Relative paths use the same entry context as `replaceImage` source and replacement paths. The converted image uses the corresponding Device color space; the profile itself is not embedded in the image. |
+
+***
+
+### ReplaceFunctionContext
+
+Values available while a replacement function is running.
+
+#### Properties
+
+| Property | Type | Description |
+| ------ | ------ | ------ |
+| <a id="property-image"></a> `image` | `Image` | The current PDF image as an owned reference scoped to this invocation. Its ownership is moved into the replacement function and Vivliostyle CLI destroys it when the function settles unless it is returned as the replacement. It must not be destroyed manually or retained after the function settles. Native objects returned by its methods are owned by the replacement function and must be destroyed before it settles unless that object is an image returned as the replacement. |
+| <a id="property-mupdf"></a> `mupdf` | `__module` | The MuPDF module that owns the current image. |
+
+***
+
 ### StringifyMarkdownOptions
 
 Option for convert Markdown to a stringify (HTML).
@@ -1083,7 +1211,7 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-executablebrowser"></a> `executableBrowser?` | `string` |
 | <a id="property-host"></a> `host?` | `string` \| `boolean` |
 | <a id="property-ignorehttpserrors"></a> `ignoreHttpsErrors?` | `boolean` |
-| <a id="property-image"></a> `image?` | `string` |
+| <a id="property-image-1"></a> `image?` | `string` |
 | <a id="property-input"></a> `input?` | `object` |
 | `input.entry` | `string` |
 | `input.format` | `InputFormat` |
@@ -1125,6 +1253,12 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
 
 ## Type Aliases
+
+### ImageConversionReplacement
+
+> **ImageConversionReplacement** = `Readonly`\<`v.InferInput`\<*typeof* `ImageConversionReplacementSchema`\>\>
+
+***
 
 ### Metadata
 
@@ -1230,6 +1364,29 @@ Value of `<title>...</title>`.
 > `optional` **vfm?**: `VFMSettings`
 
 VFM settings.
+
+***
+
+### ReplaceFunction
+
+> **ReplaceFunction** = (`context`) => `mupdfType.Image` \| `null` \| `Promise`\<`mupdfType.Image` \| `null`\>
+
+Returns an owned replacement image, transferring its ownership to
+Vivliostyle CLI, or `null` to decline the current match and continue to the
+next replacement candidate. The returned image must be created with the
+supplied `mupdf` module and must not be used or destroyed after it is
+returned. The current `image` may be returned directly to use it as the
+replacement.
+
+#### Parameters
+
+##### context
+
+[`ReplaceFunctionContext`](#replacefunctioncontext)
+
+#### Returns
+
+`mupdfType.Image` \| `null` \| `Promise`\<`mupdfType.Image` \| `null`\>
 
 ***
 
