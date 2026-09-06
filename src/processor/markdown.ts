@@ -7,6 +7,7 @@ import type {
   DocumentMetadataReader,
   DocumentProcessorFactory,
 } from '../config/resolve.js';
+import { Logger } from '../logger.js';
 
 export interface VSFile extends VFile {
   data: {
@@ -30,6 +31,22 @@ export async function processMarkdown(
   const processed = (await processor.process(
     vfile({ path: filepath, contents: markdownString }),
   )) as VSFile;
+  const errors: VFile['messages'] = [];
+  for (const message of processed.messages) {
+    if (message.fatal === true) {
+      Logger.logError(String(message));
+      errors.push(message);
+    } else if (message.fatal === false) {
+      Logger.logWarn(String(message));
+    } else {
+      Logger.logInfo(String(message));
+    }
+  }
+  if (errors.length > 0) {
+    throw errors.length === 1
+      ? errors[0]
+      : new AggregateError(errors, errors.map(String).join('\n'));
+  }
   return processed;
 }
 
