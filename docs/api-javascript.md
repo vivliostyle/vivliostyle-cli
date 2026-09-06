@@ -155,7 +155,7 @@ build({
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -413,7 +413,7 @@ Scaffold a new Vivliostyle project.
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -716,7 +716,7 @@ profile and returns an image in the corresponding Device color space.
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -986,7 +986,7 @@ Open a browser for previewing the publication.
 
 ###### logLevel?
 
-`"info"` \| `"silent"` \| `"verbose"` \| `"debug"` = `...`
+`"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
 
 ###### openViewer?
 
@@ -1282,7 +1282,7 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-installdependencies"></a> `installDependencies?` | `boolean` |
 | <a id="property-language-1"></a> `language` | `string` |
 | <a id="property-logger"></a> `logger?` | `LoggerInterface` |
-| <a id="property-loglevel"></a> `logLevel?` | `"info"` \| `"silent"` \| `"verbose"` \| `"debug"` |
+| <a id="property-loglevel"></a> `logLevel?` | `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` |
 | <a id="property-openviewer"></a> `openViewer?` | `boolean` |
 | <a id="property-output"></a> `output?` | `object` & `object` & `object`[] |
 | <a id="property-port"></a> `port?` | `number` |
