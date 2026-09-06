@@ -25,33 +25,158 @@ function disposableOrNull<T extends Destroyable>(
   return obj && disposable(obj);
 }
 
-function imagesEqual(a: mupdfType.Image, b: mupdfType.Image): boolean {
-  if (a.getWidth() !== b.getWidth() || a.getHeight() !== b.getHeight()) {
-    return false;
-  }
+function premultiplySkiaColorSample(sample: number, alpha: number): number {
+  // NOTE: Chromium/Skia writes unpremultiplied RGB and alpha separately.
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=236-259
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=127-168
+  // This mirrors SkMulDiv255Round used by SkPremultiplyARGBInline.
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/core/SkColorPriv.h;l=120-132
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/include/private/SkMath.h;l=61-75
+  // MuPDF decodes PNG alpha into premultiplied samples with the same formula.
+  // https://github.com/ArtifexSoftware/mupdf/blob/1.28.0/source/fitz/load-png.c#L663-L664
+  // https://github.com/ArtifexSoftware/mupdf/blob/1.28.0/source/fitz/pixmap.c#L777-L797
+  // https://github.com/ArtifexSoftware/mupdf/blob/1.28.0/include/mupdf/fitz/geometry.h#L38-L43
+  const product = sample * alpha + 128;
+  return (product + (product >> 8)) >> 8;
+}
 
-  using pixmapA = disposable(a.toPixmap());
-  using pixmapB = disposable(b.toPixmap());
-
-  using colorSpaceA = disposableOrNull(pixmapA.getColorSpace());
-  using colorSpaceB = disposableOrNull(pixmapB.getColorSpace());
+function pixmapsEqual(
+  pdfPixmap: mupdfType.Pixmap,
+  sourcePixmap: mupdfType.Pixmap,
+  maskPixmap: mupdfType.Pixmap | null,
+  sourceGrayExpandedToRgb: boolean,
+): boolean {
+  const pdfHasAlpha = pdfPixmap.getAlpha() !== 0;
+  const sourceHasAlpha = sourcePixmap.getAlpha() !== 0;
+  const pdfColorComponents =
+    pdfPixmap.getNumberOfComponents() - Number(pdfHasAlpha);
+  const sourceColorComponents =
+    sourcePixmap.getNumberOfComponents() - Number(sourceHasAlpha);
   if (
-    colorSpaceA === null ||
-    colorSpaceB === null ||
+    pdfColorComponents !== sourceColorComponents &&
     !(
-      (colorSpaceA.isRGB() && colorSpaceB.isRGB()) ||
-      (colorSpaceA.isCMYK() && colorSpaceB.isCMYK()) ||
-      (colorSpaceA.isGray() && colorSpaceB.isGray())
+      sourceGrayExpandedToRgb &&
+      pdfColorComponents === 3 &&
+      sourceColorComponents === 1
     )
   ) {
     return false;
   }
+  if (
+    maskPixmap !== null &&
+    (maskPixmap.getWidth() !== pdfPixmap.getWidth() ||
+      maskPixmap.getHeight() !== pdfPixmap.getHeight())
+  ) {
+    // NOTE: Chromium/Skia writes the base image and its soft mask from the
+    // same pixmap dimensions.
+    // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=127-168
+    // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=275-283
+    return false;
+  }
+  if (
+    maskPixmap === null &&
+    pdfHasAlpha === sourceHasAlpha &&
+    !sourceGrayExpandedToRgb
+  ) {
+    const pdfPixels = pdfPixmap.getPixels();
+    const sourcePixels = sourcePixmap.getPixels();
+    return (
+      pdfPixels.length === sourcePixels.length &&
+      Buffer.compare(Buffer.from(pdfPixels), Buffer.from(sourcePixels)) === 0
+    );
+  }
 
-  const pixelsA = pixmapA.getPixels();
-  const pixelsB = pixmapB.getPixels();
-  return (
-    pixelsA.length === pixelsB.length &&
-    Buffer.compare(Buffer.from(pixelsA), Buffer.from(pixelsB)) === 0
+  const pdfPixels = pdfPixmap.getPixels();
+  const sourcePixels = sourcePixmap.getPixels();
+  const maskPixels = maskPixmap?.getPixels();
+  const pdfStride = pdfPixmap.getStride();
+  const sourceStride = sourcePixmap.getStride();
+  const maskStride = maskPixmap?.getStride() ?? 0;
+  const pdfComponents = pdfPixmap.getNumberOfComponents();
+  const sourceComponents = sourcePixmap.getNumberOfComponents();
+  const maskComponents = maskPixmap?.getNumberOfComponents() ?? 0;
+  const width = pdfPixmap.getWidth();
+  const height = pdfPixmap.getHeight();
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const pdfOffset = y * pdfStride + x * pdfComponents;
+      const sourceOffset = y * sourceStride + x * sourceComponents;
+      const maskOffset = y * maskStride + x * maskComponents;
+      const pdfAlpha = maskPixels
+        ? maskPixels[maskOffset + maskComponents - 1]
+        : pdfHasAlpha
+          ? pdfPixels[pdfOffset + pdfColorComponents]
+          : 255;
+      const sourceAlpha = sourceHasAlpha
+        ? sourcePixels[sourceOffset + sourceColorComponents]
+        : 255;
+      if (pdfAlpha !== sourceAlpha) {
+        return false;
+      }
+      for (let component = 0; component < pdfColorComponents; component++) {
+        const pdfSample =
+          pdfHasAlpha && maskPixmap === null
+            ? pdfPixels[pdfOffset + component]
+            : premultiplySkiaColorSample(
+                pdfPixels[pdfOffset + component],
+                pdfAlpha,
+              );
+        const sourceComponent = sourceGrayExpandedToRgb ? 0 : component;
+        if (pdfSample !== sourcePixels[sourceOffset + sourceComponent]) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+function imagesEqual(
+  pdfImage: mupdfType.Image,
+  sourceImage: mupdfType.Image,
+): boolean {
+  if (
+    pdfImage.getWidth() !== sourceImage.getWidth() ||
+    pdfImage.getHeight() !== sourceImage.getHeight()
+  ) {
+    return false;
+  }
+
+  using pdfPixmap = disposable(pdfImage.toPixmap());
+  using sourcePixmap = disposable(sourceImage.toPixmap());
+
+  using pdfColorSpace = disposableOrNull(pdfPixmap.getColorSpace());
+  using sourceColorSpace = disposableOrNull(sourcePixmap.getColorSpace());
+  const matchingColorSpaces =
+    pdfColorSpace !== null &&
+    sourceColorSpace !== null &&
+    ((pdfColorSpace.isRGB() && sourceColorSpace.isRGB()) ||
+      (pdfColorSpace.isCMYK() && sourceColorSpace.isCMYK()) ||
+      (pdfColorSpace.isGray() && sourceColorSpace.isGray()));
+  // NOTE: Chromium/Skia preserves DeviceGray only for opaque kGray_8 images;
+  // gray images with alpha take the BGRA-backed DeviceRGB path.
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=346-368
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=220-259
+  const sourceGrayExpandedToRgb =
+    pdfColorSpace?.isRGB() === true &&
+    sourceColorSpace?.isGray() === true &&
+    sourcePixmap.getAlpha() !== 0;
+  if (
+    pdfColorSpace === null ||
+    sourceColorSpace === null ||
+    (!matchingColorSpaces && !sourceGrayExpandedToRgb)
+  ) {
+    return false;
+  }
+
+  using maskImage = disposableOrNull(pdfImage.getMask());
+  using maskPixmap = disposableOrNull(maskImage?.toPixmap() ?? null);
+  return pixmapsEqual(
+    pdfPixmap,
+    sourcePixmap,
+    maskPixmap,
+    sourceGrayExpandedToRgb,
   );
 }
 
