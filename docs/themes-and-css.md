@@ -182,6 +182,14 @@ The `vivliostyle theme create` command scaffolds a new theme package. Answer the
 vivliostyle theme create
 ```
 
+If Vivliostyle CLI is not installed, `npm create vivliostyle-theme@latest` runs the same command without installing it.
+
+```
+npm create vivliostyle-theme@latest
+yarn create vivliostyle-theme # For yarn users
+pnpm create vivliostyle-theme # For pnpm users
+```
+
 The generated package has the following structure:
 
 ```

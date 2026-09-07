@@ -182,6 +182,14 @@ Tailwind CSS は強力なツールですが、Vivliostyle が主な対象とす�
 vivliostyle theme create
 ```
 
+Vivliostyle CLI をインストールしていない場合は、`npm create vivliostyle-theme@latest` を実行すると、インストールせずに同じコマンドを利用できます。
+
+```
+npm create vivliostyle-theme@latest
+yarn create vivliostyle-theme # For yarn users
+pnpm create vivliostyle-theme # For pnpm users
+```
+
 生成されるパッケージの構成は次のとおりです。
 
 ```

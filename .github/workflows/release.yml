@@ -41,6 +41,7 @@ jobs:
           path: |
             dist/**
             packages/create-book/dist/**
+            packages/create-vivliostyle-theme/dist/**
 
   create-version-pr:
     runs-on: ubuntu-latest
@@ -197,7 +198,7 @@ jobs:
           cat release_notes.txt
       - name: Determine previous release tag
         id: previous-tag
-        if: ${{ matrix.package.name != 'create-book' }}
+        if: ${{ matrix.package.name != 'create-book' && matrix.package.name != 'create-vivliostyle-theme' }}
         run: |
           prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD 2>/dev/null || true)
           echo "name=$prev" >> "$GITHUB_OUTPUT"
@@ -214,7 +215,7 @@ jobs:
           git tag -a $name -m "Release ${{ matrix.package.name }}@${{ matrix.package.version }}"
           git push origin $name
       - name: Release to GitHub
-        if: ${{ matrix.package.name != 'create-book' }}
+        if: ${{ matrix.package.name != 'create-book' && matrix.package.name != 'create-vivliostyle-theme' }}
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ steps.create-tag.outputs.name }}

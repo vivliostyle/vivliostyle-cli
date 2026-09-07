@@ -1,6 +1,6 @@
 # Vivliostyle Templates
 
-This directory contains templates that can be used when creating publication projects with the `vivliostyle create` command and `create-book`, and theme packages with the `vivliostyle theme create` command.
+This directory contains templates that can be used when creating publication projects with the `vivliostyle create` command and `create-book`, and theme packages with the `vivliostyle theme create` command and `create-vivliostyle-theme`.
 
 ## Official Templates
 
@@ -12,7 +12,7 @@ The following templates are officially provided:
 
 - basic-ja: A Japanese version of the basic template. It includes multiple manuscript files written in Japanese, suitable for creating Japanese-language publications.
 
-- theme: A template for a Vivliostyle Theme package, used by the `vivliostyle theme create` command. It includes a stylesheet based on `@vivliostyle/theme-base` and example manuscripts for previewing the theme.
+- theme: A template for a Vivliostyle Theme package, used by the `vivliostyle theme create` command and `create-vivliostyle-theme`. It includes a stylesheet based on `@vivliostyle/theme-base` and example manuscripts for previewing the theme.
 
 ## Community Templates
 

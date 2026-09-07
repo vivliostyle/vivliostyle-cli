@@ -22,7 +22,7 @@ Key areas:
 - `src/output/`: PDF, EPUB, webbook, image, and post-processing output logic.
 - `src/processor/`: Markdown, HTML, theme, asset, and compile processing.
 - `src/vite/` and `src/vite-adapter.ts`: Vite integration and preview/build server plugins.
-- `packages/create-book/`: `create-book` workspace package.
+- `packages/create-book/` and `packages/create-vivliostyle-theme/`: the `create-book` and `create-vivliostyle-theme` workspace packages, thin wrappers around the `create` and `theme create` commands.
 - `docs/` and `docs/ja/`: English and Japanese user documentation.
 - `examples/`, `templates/`, and `tests/fixtures/`: sample projects, project templates, and test fixtures.
 
@@ -31,7 +31,7 @@ Key areas:
 Use pnpm. The repository declares `pnpm@11.10.0` and requires Node `>=22.12.0`.
 
 - Install dependencies: `pnpm install`
-- Build everything: `pnpm build` (bundles the CLI and create-book with tsdown, then builds docs; it does not type-check)
+- Build everything: `pnpm build` (bundles the CLI, create-book, and create-vivliostyle-theme with tsdown, then builds docs; it does not type-check)
 - Build the CLI only: `pnpm build:cli`
 - Typecheck: `pnpm typecheck` (uses tsgo, the TypeScript native preview; run it separately because the build no longer type-checks)
 - Run tests: `pnpm test`

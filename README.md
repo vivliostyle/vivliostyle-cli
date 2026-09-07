@@ -225,6 +225,7 @@ Options:
 > Create and validate Vivliostyle theme packages
 
 The `theme` command scaffolds a new [Vivliostyle Theme](https://github.com/vivliostyle/themes) package and validates its `package.json`. See [Creating a Theme](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/docs/themes-and-css.md#creating-a-theme) for details.
+You can also scaffold a theme package without installing Vivliostyle CLI with our [Create Vivliostyle Theme](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/packages/create-vivliostyle-theme#readme) project: `npm create vivliostyle-theme@latest`.
 
 <details>
 <summary><b>Full CLI options</b></summary>

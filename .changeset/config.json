@@ -5,7 +5,7 @@
     { "repo": "vivliostyle/vivliostyle-cli" }
   ],
   "commit": false,
-  "fixed": [["@vivliostyle/cli", "create-book"]],
+  "fixed": [["@vivliostyle/cli", "create-book", "create-vivliostyle-theme"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
