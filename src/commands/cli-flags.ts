@@ -49,6 +49,11 @@ export interface CliFlags {
   ignoreHttpsErrors?: boolean;
   projectPath?: string;
   template?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  license?: string;
+  themePath?: string;
 }
 
 export function createParserProgram({

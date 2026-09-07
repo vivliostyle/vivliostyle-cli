@@ -1,0 +1,39 @@
+{
+  "name": "{{name}}",
+  "version": "0.1.0",
+  "description": "{{description}}",
+  "keywords": [
+    "vivliostyle",
+    "vivliostyle-theme"
+  ],
+  "license": "{{license}}",
+  "author": "{{author}}",
+  "files": [
+    "*.css",
+    "example",
+    "vivliostyle.config.js"
+  ],
+  "type": "module",
+  "main": "theme.css",
+  "scripts": {
+    "example:build": "vivliostyle build",
+    "example:preview": "vivliostyle preview",
+    "validate": "vivliostyle theme validate",
+    "prepublishOnly": "vivliostyle theme validate"
+  },
+  "dependencies": {
+    "@vivliostyle/theme-base": "^3.0.0"
+  },
+  "devDependencies": {
+    "@vivliostyle/cli": "^{{cliVersion}}"
+  },
+  "vivliostyle": {
+    "theme": {
+      "name": "{{themeName}}",
+      "author": "{{author}}",
+      "style": "theme.css",
+      "category": "{{category}}",
+      "topics": []
+    }
+  }
+}

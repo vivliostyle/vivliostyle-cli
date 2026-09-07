@@ -11,10 +11,17 @@ import { parseBuildCommand } from '../src/commands/build.parser.js';
 import { setupConfigFromFlags } from '../src/commands/cli-flags.js';
 import { parseCreateCommand } from '../src/commands/create.parser.js';
 import { parsePreviewCommand } from '../src/commands/preview.parser.js';
+import { parseThemeCreateCommand } from '../src/commands/theme-create.parser.js';
+import { parseThemeValidateCommand } from '../src/commands/theme-validate.parser.js';
 import { mergeInlineConfig } from '../src/config/merge.js';
 import { build } from '../src/core/build.js';
 import { create } from '../src/core/create.js';
 import { preview } from '../src/core/preview.js';
+import { createTheme } from '../src/core/theme-create.js';
+import {
+  type ThemeValidationResult,
+  validateTheme,
+} from '../src/core/theme-validate.js';
 import { parseInitCommand } from './../src/commands/init.parser.js';
 import type { ResolvedTaskConfig } from './../src/config/resolve.js';
 import { resolveTaskConfig } from './../src/config/resolve.js';
@@ -45,35 +52,61 @@ afterEach(async () => {
   runningServers.clear();
 });
 
-export const runCommand = async (
-  [command, ...args]: ['build' | 'preview' | 'create' | 'init', ...string[]],
-  {
-    cwd,
-    config,
-    logLevel = 'silent',
-    port,
-  }: {
-    cwd: string;
-    config?: VivliostyleConfigSchema;
-    logLevel?: LogLevel;
-    port?: number;
-  },
-): Promise<ViteDevServer | undefined> => {
+type CommandName =
+  | 'build'
+  | 'preview'
+  | 'create'
+  | 'init'
+  | 'theme create'
+  | 'theme validate';
+
+interface RunCommandOptions {
+  cwd: string;
+  config?: VivliostyleConfigSchema;
+  logLevel?: LogLevel;
+  port?: number;
+}
+
+export async function runCommand(
+  command: ['theme validate', ...string[]],
+  options: RunCommandOptions,
+): Promise<ThemeValidationResult[]>;
+export async function runCommand(
+  command: [Exclude<CommandName, 'theme validate'>, ...string[]],
+  options: RunCommandOptions,
+): Promise<ViteDevServer | undefined>;
+export async function runCommand(
+  [command, ...args]: [CommandName, ...string[]],
+  { cwd, config, logLevel = 'silent', port }: RunCommandOptions,
+): Promise<ViteDevServer | ThemeValidationResult[] | undefined> {
   let inlineConfig = {
     build: parseBuildCommand,
     preview: parsePreviewCommand,
     create: parseCreateCommand,
     init: parseInitCommand,
+    'theme create': parseThemeCreateCommand,
+    'theme validate': parseThemeValidateCommand,
   }[command](['vivliostyle', command, ...args]);
   inlineConfig = { ...inlineConfig, configData: config, cwd, logLevel, port };
-  const server = (await { build, preview, create, init: create }[command](
-    inlineConfig,
-  )) as ViteDevServer | undefined;
-  if (server) {
-    runningServers.add(server);
+  const result = (await {
+    build,
+    preview,
+    create,
+    init: create,
+    'theme create': createTheme,
+    'theme validate': validateTheme,
+  }[command](inlineConfig)) as
+    | ViteDevServer
+    | ThemeValidationResult[]
+    | undefined;
+  if (Array.isArray(result)) {
+    return result;
   }
-  return server;
-};
+  if (result) {
+    runningServers.add(result);
+  }
+  return result;
+}
 
 export const createServerMiddleware = async ({
   cwd,

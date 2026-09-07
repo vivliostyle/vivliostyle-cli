@@ -126,7 +126,7 @@ A specifier is treated as a relative URL and keeps the standard CSS semantics wh
 
 ### Using Create Book
 
-By using Create Book, you can easily create a project with a theme already set. Refer to [Create Book](https://docs.vivliostyle.org/en/cli/getting-started/).
+By using Create Book, you can easily create a project with a theme already set. Refer to [Creating a Vivliostyle Project](./getting-started.md#creating-a-vivliostyle-project).
 
 ## Using PostCSS
 
@@ -169,3 +169,79 @@ inline elements with the **VFM attribute syntax**{.bg-accent/15 .px-1 .rounded} 
 ```
 
 Tailwind CSS is a powerful tool, but the text-centric documents Vivliostyle mainly targets differ from web pages in many ways, and whether styling with utility classes fits your writing process depends on your authoring style. Still, it can be a strong option when you want plenty of ad hoc styles in your text.
+
+## Creating a Theme
+
+You can create your own Vivliostyle Theme and publish it as an npm package so that other users can apply it to their publications.
+
+### Scaffolding a Theme Package
+
+The `vivliostyle theme create` command scaffolds a new theme package. Answer the questions it asks, and the necessary files and directories are generated.
+
+```
+vivliostyle theme create
+```
+
+The generated package has the following structure:
+
+```
+my-theme/
+├── README.md
+├── example/
+│   ├── assets/
+│   ├── 01_typography.md
+│   ├── 02_figures-and-tables.md
+│   └── 03_code-and-math.md
+├── package.json
+├── theme.css
+└── vivliostyle.config.js
+```
+
+- `theme.css`: The stylesheet of the theme. It imports [`@vivliostyle/theme-base`](https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base) and its feature modules, and adjusts them with CSS variables.
+- `example/`: Sample manuscripts that cover the elements a theme should style, such as headings, lists, footnotes, figures, tables, code, and math. `npm run example:preview` opens a preview of them with the theme applied.
+- `vivliostyle.config.js`: The configuration used to preview and build the sample manuscripts.
+
+### Theme Metadata
+
+A theme package describes itself in the `vivliostyle.theme` field of `package.json`. Vivliostyle CLI reads this field to locate the stylesheet. See the [Vivliostyle Themes documentation](https://github.com/vivliostyle/themes) for the details of each field.
+
+```json
+{
+  "name": "vivliostyle-theme-my-theme",
+  "author": "John Doe <john@example.com>",
+  "main": "theme.css",
+  "keywords": ["vivliostyle", "vivliostyle-theme"],
+  "vivliostyle": {
+    "theme": {
+      "name": "My Theme",
+      "author": "John Doe",
+      "style": "theme.css",
+      "category": "novel",
+      "topics": ["paperback"]
+    }
+  }
+}
+```
+
+A theme package can also provide project templates. See [Providing Templates in a Vivliostyle Themes Package](./templates.md#providing-templates-in-a-vivliostyle-themes-package).
+
+### Validating a Theme Package
+
+The `vivliostyle theme validate` command checks that a theme package is set up correctly. Run it in the theme directory, or pass the path to the directory as an argument.
+
+```
+vivliostyle theme validate
+```
+
+It validates the schema of the `vivliostyle` field and reports the following:
+
+- Error: The style file is not specified, or the specified file does not exist inside the package.
+- Warning: The author is not specified.
+- Warning: `keywords` does not include `vivliostyle-theme`.
+- Warning: `vivliostyle.theme.category` is not one of the known categories.
+
+The command exits with a non-zero status when any error is reported, so it can be used in a `prepublishOnly` script or in CI. The generated package includes a `validate` script that runs this command.
+
+### Publishing a Theme
+
+When the theme is ready, publish it to npm with `npm publish`. Published themes with the `vivliostyle-theme` keyword appear in the [list of themes on npm](https://www.npmjs.com/search?q=keywords%3Avivliostyle-theme) and can be chosen with the `create` command. See the [Vivliostyle Themes](https://github.com/vivliostyle/themes) repository for the theme specification and how to contribute your theme to the official collection.

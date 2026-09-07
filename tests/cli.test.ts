@@ -5,6 +5,7 @@ const mockedCommands = vi.hoisted(() => ({
   runCreateCli: vi.fn<(...args: any[]) => unknown>(),
   runInitCli: vi.fn<(...args: any[]) => unknown>(),
   runPreviewCli: vi.fn<(...args: any[]) => unknown>(),
+  runThemeCli: vi.fn<(...args: any[]) => unknown>(),
 }));
 
 vi.mock('../src/commands/build.runner.js', () => ({
@@ -23,13 +24,17 @@ vi.mock('../src/commands/preview.runner.js', () => ({
   runPreviewCli: mockedCommands.runPreviewCli,
 }));
 
+vi.mock('../src/commands/theme.runner.js', () => ({
+  runThemeCli: mockedCommands.runThemeCli,
+}));
+
 import { dispatchCli } from '../src/cli.js';
 
 function expectRootHelp(calls: unknown[][]) {
   const output = calls.flat().map(String).join('');
 
   expect(output).toContain('Usage: vivliostyle [options] [command]');
-  for (const command of ['create', 'init', 'build', 'preview']) {
+  for (const command of ['create', 'init', 'build', 'preview', 'theme']) {
     expect(output).toMatch(new RegExp(`^  ${command}\\b`, 'mv'));
   }
 }
@@ -52,6 +57,7 @@ describe('dispatchCli', () => {
     ['create', mockedCommands.runCreateCli],
     ['init', mockedCommands.runInitCli],
     ['preview', mockedCommands.runPreviewCli],
+    ['theme', mockedCommands.runThemeCli],
   ])('routes the %s subcommand in-process', async (command, runner) => {
     await dispatchCli(['node', 'cli.js', command, '--help']);
 
@@ -165,6 +171,7 @@ describe('dispatchCli', () => {
       expect(mockedCommands.runCreateCli).not.toHaveBeenCalled();
       expect(mockedCommands.runInitCli).not.toHaveBeenCalled();
       expect(mockedCommands.runPreviewCli).not.toHaveBeenCalled();
+      expect(mockedCommands.runThemeCli).not.toHaveBeenCalled();
     },
   );
 });

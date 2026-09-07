@@ -1,14 +1,10 @@
-import { isUtf8 } from 'node:buffer';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-import { downloadTemplate } from '@bluwy/giget-core';
-import { copy } from 'fs-extra/esm';
 import terminalLink from 'terminal-link';
-import { x } from 'tinyexec';
 import upath from 'upath';
 import * as v from 'valibot';
-import { cyan, dim, gray, green, yellow } from 'yoctocolors';
+import { cyan, gray, green, yellow } from 'yoctocolors';
 
 import { locateVivliostyleConfig } from '../config/load.js';
 import {
@@ -34,15 +30,18 @@ import {
   listVivliostyleThemes,
   type PackageJson,
 } from '../npm.js';
-import { GlobMatcher } from '../processor/asset.js';
+import {
+  assertDestinationEmpty,
+  performInstallDependencies,
+  resolveTemplateSource,
+  setupTemplate,
+} from '../scaffold.js';
 import {
   cliVersion,
   coreVersion,
   cwd as defaultCwd,
-  executeWithCleanupOnInterrupt,
   getDefaultBrowserTag,
   getOsLocale,
-  type PackageManager,
   toTitleCase,
   whichPm,
 } from '../util.js';
@@ -74,26 +73,13 @@ export async function create(
   let themePackage: VivliostylePackageJson | undefined;
   let useLocalTemplate = false;
 
-  if (template && !/^([\w.\-]+):/v.test(template)) {
-    const absTemplatePath = upath.resolve(cwd, template);
-    useLocalTemplate =
-      fs.existsSync(upath.resolve(cwd, template)) &&
-      fs.statSync(upath.resolve(cwd, template)).isDirectory();
-    const usingPresetTemplate = TEMPLATE_SETTINGS.find(
-      (t) => t.value === template,
-    );
-    if (useLocalTemplate) {
-      template = absTemplatePath;
-      interactiveLogger.logInfo(
-        `Using the specified local template directory\n${dim(upath.relative(cwd, absTemplatePath) || '.')}`,
-      );
-    } else if (usingPresetTemplate) {
-      template = usingPresetTemplate.template;
-    } else {
-      interactiveLogger.logWarn(
-        `The specified theme ${green(template)} was not found as a local directory. Proceeding to fetch it from GitHub repository.`,
-      );
-    }
+  if (template) {
+    ({ template, useLocalTemplate } = resolveTemplateSource({
+      template,
+      cwd,
+      presets: TEMPLATE_SETTINGS,
+      interactiveLogger,
+    }));
   }
 
   if (!projectPath) {
@@ -104,12 +90,8 @@ export async function create(
     if (fs.existsSync(upath.join(dist, DEFAULT_CONFIG_FILENAME))) {
       throw new Error(`${DEFAULT_CONFIG_FILENAME} already exists. Aborting.`);
     }
-  } else if (
-    (projectPath === '.' &&
-      fs.readdirSync(dist).some((n) => !n.startsWith('.'))) ||
-    (projectPath !== '.' && fs.existsSync(dist))
-  ) {
-    throw new Error(`Destination ${dist} is not empty.`);
+  } else {
+    assertDestinationEmpty({ cwd, projectPath });
   }
 
   if (!title) {
@@ -214,6 +196,7 @@ export async function create(
         ...explicitTemplateVariables,
       },
       useLocalTemplate,
+      writeDefaultFiles: writeDefaultProjectFiles,
     });
     if (installDependencies) {
       const pm = whichPm();
@@ -611,107 +594,18 @@ function askInstallDependencies({
   });
 }
 
-async function setupTemplate({
-  cwd,
-  projectPath,
-  template,
-  templateVariables,
-  useLocalTemplate,
-  signal,
-}: Required<
-  Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath' | 'template'>
-> & {
-  templateVariables: Record<string, unknown>;
-  useLocalTemplate?: boolean;
-  signal?: AbortSignal;
-}) {
-  signal?.throwIfAborted();
-  if (useLocalTemplate) {
-    const matcher = new GlobMatcher([
-      {
-        patterns: ['**'],
-        ignore: ['**/node_modules/**', '**/.git/**'],
-        dot: true,
-        cwd: template,
-      },
-    ]);
-    const files = await matcher.glob({ followSymbolicLinks: true });
-    signal?.throwIfAborted();
-    Logger.debug('setupTemplate > files from local template %O', files);
-    for (const file of files) {
-      signal?.throwIfAborted();
-      const targetPath = upath.join(cwd, projectPath, file);
-      fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
-      await copy(upath.join(template, file), targetPath);
-      signal?.throwIfAborted();
-    }
-  } else {
-    // `downloadTemplate` deletes the destination directory for rollback purposes
-    // when template download fails. To prevent this behavior from deleting
-    // the current directory, create a temporary directory and copy the template
-    // to its final location.
-    // https://github.com/bluwy/giget-core/blob/2247658f4cc3240e8dc3819c782355fe4b535214/src/utils.js#L195
-    const tmpDownloadDir = upath.join(
-      cwd,
-      projectPath,
-      `.vs-template-${Date.now()}`,
-    );
-    Logger.debug('setupTemplate > tmpDownloadDir %s', tmpDownloadDir);
-    await executeWithCleanupOnInterrupt(
-      `Removing the temporary directory: ${tmpDownloadDir}`,
-      async () => {
-        try {
-          await downloadTemplate(template, { dir: tmpDownloadDir });
-          signal?.throwIfAborted();
-          for (const entry of fs.readdirSync(tmpDownloadDir)) {
-            fs.renameSync(
-              upath.join(tmpDownloadDir, entry),
-              upath.join(cwd, projectPath, entry),
-            );
-            signal?.throwIfAborted();
-          }
-        } catch (error) {
-          signal?.throwIfAborted();
-          throw error;
-        }
-      },
-      () => {
-        fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
-      },
-    );
-  }
-
-  const packageJsonPath = upath.join(cwd, projectPath, 'package.json');
+function writeDefaultProjectFiles(projectDir: string) {
+  const packageJsonPath = upath.join(projectDir, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
     fs.writeFileSync(packageJsonPath, TEMPLATE_DEFAULT_PACKAGE_JSON, 'utf8');
   }
-  if (!locateVivliostyleConfig({ cwd: upath.join(cwd, projectPath) })) {
+  if (!locateVivliostyleConfig({ cwd: projectDir })) {
     fs.writeFileSync(
-      upath.join(cwd, projectPath, DEFAULT_CONFIG_FILENAME),
+      upath.join(projectDir, DEFAULT_CONFIG_FILENAME),
       TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS,
       'utf8',
     );
   }
-
-  const replaceTemplateVariable = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const entryPath = upath.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        replaceTemplateVariable(entryPath);
-      } else {
-        const buf = fs.readFileSync(entryPath);
-        if (!isUtf8(buf)) {
-          continue;
-        }
-        fs.writeFileSync(
-          entryPath,
-          format(buf.toString(), templateVariables),
-          'utf8',
-        );
-      }
-    }
-  };
-  replaceTemplateVariable(upath.join(cwd, projectPath));
 }
 
 function setupConfigFile({
@@ -725,44 +619,6 @@ function setupConfigFile({
   const content = TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS;
   fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
   fs.writeFileSync(targetPath, format(content, templateVariables), 'utf8');
-}
-
-async function performInstallDependencies({
-  pm,
-  cwd,
-  projectPath,
-  signal,
-}: Required<Pick<ParsedVivliostyleInlineConfig, 'cwd' | 'projectPath'>> & {
-  pm: PackageManager;
-  signal?: AbortSignal;
-}) {
-  signal?.throwIfAborted();
-  const proc = x(pm, ['install'], {
-    throwOnError: true,
-    signal,
-    nodeOptions: {
-      cwd: upath.join(cwd, projectPath),
-      stdio: Logger.isInteractive ? 'inherit' : undefined,
-    },
-  });
-  await executeWithCleanupOnInterrupt(
-    'Waiting for dependency installation to stop',
-    async () => {
-      try {
-        if (Logger.isInteractive) {
-          await proc;
-        } else {
-          for await (const line of proc) {
-            Logger.log(line);
-          }
-        }
-        signal?.throwIfAborted();
-      } catch (error) {
-        signal?.throwIfAborted();
-        throw error;
-      }
-    },
-  );
 }
 
 function caveat(

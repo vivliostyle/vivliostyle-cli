@@ -40,6 +40,11 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never;
 
+export type Question = DistributiveOmit<PromptOption, 'name'> & {
+  /** Validate the input on submit; return a message to reject it. */
+  validate?: (value: string) => string | undefined;
+};
+
 type AnyObjectSchema =
   | v.ObjectSchema<v.ObjectEntries, v.ErrorMessage<v.ObjectIssue> | undefined>
   | v.ObjectSchemaAsync<
@@ -48,17 +53,14 @@ type AnyObjectSchema =
     >;
 
 export async function askQuestion<S extends AnyObjectSchema>(_: {
-  question: Record<
-    keyof v.InferInput<S>,
-    DistributiveOmit<PromptOption, 'name'>
-  >;
+  question: Record<keyof v.InferInput<S>, Question>;
   interactiveLogger: InteractiveLogger;
   schema: S;
   validateProgressMessage?: string;
 }): Promise<v.InferOutput<NonNullable<S>>>;
 
 export async function askQuestion<T extends object>(_: {
-  question: Record<string, DistributiveOmit<PromptOption, 'name'>>;
+  question: Record<string, Question>;
   interactiveLogger: InteractiveLogger;
   schema?: undefined;
   validateProgressMessage?: string;
@@ -70,10 +72,7 @@ export async function askQuestion<S extends AnyObjectSchema>({
   schema,
   validateProgressMessage,
 }: {
-  question: Record<
-    keyof v.InferInput<S>,
-    DistributiveOmit<PromptOption, 'name'>
-  >;
+  question: Record<keyof v.InferInput<S>, Question>;
   interactiveLogger: InteractiveLogger;
   schema?: S;
   validateProgressMessage?: string;
@@ -91,48 +90,59 @@ export async function askQuestion<S extends AnyObjectSchema>({
         options.map((option) =>
           typeof option === 'string' ? { value: option } : option,
         );
-      const validate = (value: unknown = '') => {
-        if (!question.required || 'defaultValue' in question) {
-          return;
-        }
-        const { success, issues } = v.safeParse(ValidString, value);
-        return success ? undefined : issues[0].message;
-      };
-
       if (import.meta.env?.VITEST) {
         // For testing, safely assign the name property using a type assertion
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         (question as { name?: string }).name = name;
       }
-      if (question.type === 'text') {
-        result = await textPrompt({ ...question, validate });
-      } else if (question.type === 'select') {
+      const { validate: customValidate, ...promptOptions } = question;
+      const validate = (value: unknown = '') => {
+        if (promptOptions.required && !('defaultValue' in promptOptions)) {
+          const { success, issues } = v.safeParse(ValidString, value);
+          if (!success) {
+            return issues[0].message;
+          }
+        }
+        if (!customValidate) {
+          return;
+        }
+        // The prompt falls back to the default value only after validation
+        const input =
+          value === '' && 'defaultValue' in promptOptions
+            ? (promptOptions.defaultValue ?? '')
+            : value;
+        return typeof input === 'string' ? customValidate(input) : undefined;
+      };
+
+      if (promptOptions.type === 'text') {
+        result = await textPrompt({ ...promptOptions, validate });
+      } else if (promptOptions.type === 'select') {
         result = await selectPrompt({
-          ...question,
-          options: normalizeOptions(question.options),
+          ...promptOptions,
+          options: normalizeOptions(promptOptions.options),
           maxItems,
         });
-      } else if (question.type === 'multiSelect') {
+      } else if (promptOptions.type === 'multiSelect') {
         result = await multiSelectPrompt({
-          ...question,
-          options: normalizeOptions(question.options),
+          ...promptOptions,
+          options: normalizeOptions(promptOptions.options),
           maxItems,
         });
-      } else if (question.type === 'autocomplete') {
+      } else if (promptOptions.type === 'autocomplete') {
         result = await autocompletePrompt({
-          ...question,
-          options: normalizeOptions(question.options),
+          ...promptOptions,
+          options: normalizeOptions(promptOptions.options),
           maxItems,
           validate,
         });
-      } else if (question.type === 'autocompleteMultiSelect') {
+      } else if (promptOptions.type === 'autocompleteMultiSelect') {
         result = await autocompleteMultiSelectPrompt({
-          ...question,
-          options: normalizeOptions(question.options),
+          ...promptOptions,
+          options: normalizeOptions(promptOptions.options),
           maxItems,
         });
       } else {
-        result = question satisfies never;
+        result = promptOptions satisfies never;
       }
       if (isCancel(result)) {
         // Let the CLI entry point handle cleanup while preserving prompt cancellation as non-error.

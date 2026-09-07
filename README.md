@@ -35,6 +35,7 @@ Commands:
   init            Create a Vivliostyle configuration file
   build           Create PDF, EPUB, and other publication files
   preview         Open the preview page and interactively save PDFs
+  theme           Create and validate Vivliostyle theme packages
   help [command]  display help for command
 ```
 
@@ -215,6 +216,71 @@ Options:
   --no-vite-config-file              ignore Vite config file even if it exists
   -v, --version                      output the version number
   -h, --help                         display help for command
+```
+
+</details>
+
+### `theme`
+
+> Create and validate Vivliostyle theme packages
+
+The `theme` command scaffolds a new [Vivliostyle Theme](https://github.com/vivliostyle/themes) package and validates its `package.json`. See [Creating a Theme](https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/docs/themes-and-css.md#creating-a-theme) for details.
+
+<details>
+<summary><b>Full CLI options</b></summary>
+
+```
+Usage: vivliostyle theme [options] [command]
+
+Create and validate Vivliostyle theme packages
+
+Options:
+  -v, --version   output the version number
+  -h, --help      display help for command
+
+Commands:
+  create          Scaffold a new Vivliostyle theme package
+  validate        Validate a Vivliostyle theme package
+  help [command]  display help for command
+```
+
+```
+Usage: vivliostyle theme create [options] [projectPath]
+
+scaffold a new Vivliostyle theme package
+
+Options:
+  --name <name>                npm package name of the theme (default:
+                               "vivliostyle-theme-<directory name>")
+  --description <description>  description of the theme
+  --author <author>            author
+  --category <category>        category of the theme (choices: "novel",
+                               "magazine", "journal", "report", "misc")
+  --license <license>          SPDX license identifier of the theme (default:
+                               "MIT")
+  --template <template>        Template source in the format of
+                               `[provider]:repo[/subpath][#ref]` or as a local
+                               directory to copy from.
+  --install-dependencies       Install dependencies after creating a theme.
+  --no-install-dependencies    Do not install dependencies after creating a
+                               theme.
+  --log-level <level>          specify a log level of console outputs (choices:
+                               "silent", "info", "verbose", "debug", default:
+                               "info")
+  -v, --version                output the version number
+  -h, --help                   display help for command
+```
+
+```
+Usage: vivliostyle theme validate [options] [themePath]
+
+validate a Vivliostyle theme package
+
+Options:
+  --log-level <level>  specify a log level of console outputs (choices:
+                       "silent", "info", "verbose", "debug", default: "info")
+  -v, --version        output the version number
+  -h, --help           display help for command
 ```
 
 </details>

@@ -126,7 +126,7 @@ h1 {
 
 ### Create Book の利用
 
-Create Book を使用すると、あらかじめテーマが設定された状態のプロジェクトを簡単に作成できます。[Create Book](https://docs.vivliostyle.org/ja/cli/getting-started/) を参照してください。
+Create Book を使用すると、あらかじめテーマが設定された状態のプロジェクトを簡単に作成できます。[Vivliostyle プロジェクトを作成する](./getting-started.md#vivliostyle-プロジェクトを作成する) を参照してください。
 
 ## PostCSS の利用
 
@@ -169,3 +169,79 @@ inline elements with the **VFM attribute syntax**{.bg-accent/15 .px-1 .rounded} 
 ```
 
 Tailwind CSS は強力なツールですが、Vivliostyle が主な対象とする文章中心のドキュメントは Web ページと異なる点も多く、ユーティリティクラスによる指定が文章の制作に合うかどうかはあなたの執筆スタイルによります。とはいえ、本文中でアドホックなスタイルを多用したい場合には、有力な選択肢となるでしょう。
+
+## テーマの作成
+
+独自の Vivliostyle Theme を作成して npm パッケージとして公開すると、他のユーザーも自分の出版物にそのテーマを適用できるようになります。
+
+### テーマパッケージの雛形を作成する
+
+`vivliostyle theme create` コマンドは、新しいテーマパッケージの雛形を作成します。質問される内容に答えると、必要なファイルとディレクトリが生成されます。
+
+```
+vivliostyle theme create
+```
+
+生成されるパッケージの構成は次のとおりです。
+
+```
+my-theme/
+├── README.md
+├── example/
+│   ├── assets/
+│   ├── 01_typography.md
+│   ├── 02_figures-and-tables.md
+│   └── 03_code-and-math.md
+├── package.json
+├── theme.css
+└── vivliostyle.config.js
+```
+
+- `theme.css`：テーマのスタイルシートです。[`@vivliostyle/theme-base`](https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base) とその機能モジュールを読み込み、CSS 変数で調整しています。
+- `example/`：見出し、リスト、脚注、図、表、コード、数式など、テーマがスタイルを定めるべき要素を網羅したサンプル原稿です。`npm run example:preview` を実行すると、テーマを適用したプレビューが開きます。
+- `vivliostyle.config.js`：サンプル原稿のプレビューとビルドに使う構成ファイルです。
+
+### テーマのメタデータ
+
+テーマパッケージは `package.json` の `vivliostyle.theme` フィールドに自身の情報を記述します。Vivliostyle CLI はこのフィールドからスタイルシートの場所を取得します。それぞれのフィールドの詳細については、[Vivliostyle Themes のドキュメント](https://github.com/vivliostyle/themes) を参照してください。
+
+```json
+{
+  "name": "vivliostyle-theme-my-theme",
+  "author": "John Doe <john@example.com>",
+  "main": "theme.css",
+  "keywords": ["vivliostyle", "vivliostyle-theme"],
+  "vivliostyle": {
+    "theme": {
+      "name": "My Theme",
+      "author": "John Doe",
+      "style": "theme.css",
+      "category": "novel",
+      "topics": ["paperback"]
+    }
+  }
+}
+```
+
+テーマパッケージはプロジェクトのテンプレートを提供することもできます。[Theme パッケージでテンプレートを提供する](./templates.md#theme-パッケージでテンプレートを提供する) を参照してください。
+
+### テーマパッケージを検証する
+
+`vivliostyle theme validate` コマンドは、テーマパッケージが正しく設定されているかを確認します。テーマのディレクトリで実行するか、ディレクトリのパスを引数に指定します。
+
+```
+vivliostyle theme validate
+```
+
+`vivliostyle` フィールドのスキーマを検証したうえで、次の項目を報告します。
+
+- エラー：スタイルファイルが指定されていない、または指定されたファイルがパッケージ内に存在しない
+- 警告：著者が指定されていない
+- 警告：`keywords` に `vivliostyle-theme` が含まれていない
+- 警告：`vivliostyle.theme.category` が既知のカテゴリではない
+
+エラーがある場合はゼロ以外の終了コードで終了するため、`prepublishOnly` スクリプトや CI で利用できます。生成されたパッケージには、このコマンドを実行する `validate` スクリプトが含まれています。
+
+### テーマを公開する
+
+テーマが完成したら、`npm publish` で npm に公開します。`vivliostyle-theme` キーワードを持つテーマは [npm のテーマ一覧](https://www.npmjs.com/search?q=keywords%3Avivliostyle-theme) に表示され、`create` コマンドでも選択できるようになります。テーマの仕様や公式テーマ集への寄稿については、[Vivliostyle Themes](https://github.com/vivliostyle/themes) リポジトリを参照してください。

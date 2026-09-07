@@ -1,0 +1,407 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`theme create command > creates a theme package interactively 1`] = `
+Object {
+  "/work/my-theme/.gitignore": "node_modules/
+.vivliostyle/
+dist/
+",
+  "/work/my-theme/README.md": "# My Theme
+
+[![npm: version](https://flat.badgen.net/npm/v/vivliostyle-theme-my-theme)](https://npmjs.com/package/vivliostyle-theme-my-theme)
+[![npm: total downloads](https://flat.badgen.net/npm/dt/vivliostyle-theme-my-theme)](https://npmjs.com/package/vivliostyle-theme-my-theme)
+![npm: license](https://flat.badgen.net/npm/license/vivliostyle-theme-my-theme)
+
+A theme for testing
+
+## Use
+
+Install the theme in your project and set it in \`vivliostyle.config.js\`:
+
+\`\`\`sh
+npm install vivliostyle-theme-my-theme
+\`\`\`
+
+\`\`\`js
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  theme: 'vivliostyle-theme-my-theme',
+});
+\`\`\`
+
+To add your own CSS on top of the theme, list it after the theme:
+
+\`\`\`js
+export default defineConfig({
+  theme: ['vivliostyle-theme-my-theme', './custom.css'],
+});
+\`\`\`
+
+## Development
+
+### Files
+
+\`\`\`
+vivliostyle-theme-my-theme
+├── README.md
+├── example/                  Sample manuscripts for checking the theme
+│   ├── assets/
+│   ├── 01_typography.md
+│   ├── 02_figures-and-tables.md
+│   └── 03_code-and-math.md
+├── package.json
+├── theme.css                 The stylesheet of the theme
+└── vivliostyle.config.js     Configuration for previewing and building the example
+\`\`\`
+
+### Customizing the theme
+
+\`theme.css\` is built on [\`@vivliostyle/theme-base\`](https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base). It imports the base styles and the feature modules you need, and adjusts them with CSS custom properties. Change the values in \`theme.css\`, remove the modules you do not need, and add your own rules at the end of the file.
+
+Users of the theme can override the same variables in their own stylesheet, so prefer variables over hard-coded values where possible.
+
+### Commands
+
+Preview the example manuscripts with the theme applied. The preview reloads when you edit the files:
+
+\`\`\`sh
+npm run example:preview
+\`\`\`
+
+Build the example as a PDF and a web publication into \`dist/\`:
+
+\`\`\`sh
+npm run example:build
+\`\`\`
+
+Validate \`package.json\` before publishing. The \`prepublishOnly\` script runs it automatically on \`npm publish\`:
+
+\`\`\`sh
+npm run validate
+\`\`\`
+
+## Publishing
+
+Publish the theme to npm with \`npm publish\`. Packages with the \`vivliostyle-theme\` keyword are listed on [npm](https://www.npmjs.com/search?q=keywords%3Avivliostyle-theme) and can be chosen when creating a project with Create Book. See [Vivliostyle Themes](https://github.com/vivliostyle/themes) for the theme specification and how to contribute your theme to the official collection.
+",
+  "/work/my-theme/example/01_typography.md": "# Typography
+
+This document is a sample manuscript for checking how a theme styles body text. Edit \`theme.css\` and run \`npm run example:preview\` to see the result right away.
+
+## Paragraphs
+
+Paragraphs are the backbone of any publication, so a theme should settle the typeface, the font size, the line height, and the space or indent between paragraphs first. Inline elements such as **bold text**, _emphasized text_, \`inline code\`, ~~deleted text~~, and [links](https://vivliostyle.org) should sit comfortably in the surrounding text.
+
+Long paragraphs also show how the theme handles justification, hyphenation, and the widows and orphans at the top and bottom of a page. Keep an eye on the rhythm of the lines when you change the font size or the line height, and check the result on both the first page and the following pages.
+
+### Headings
+
+Headings come in six levels. The first level is used for the title of each document, the second and third levels for sections, and the deeper levels only occasionally. This section is a level-three heading.
+
+#### A level-four heading
+
+Deeper headings often share the size of the body text and rely on weight or spacing to stand out.
+
+## Lists
+
+- An unordered list item
+- Another item with a nested list
+  - A nested item
+  - Another nested item
+- The last item
+
+1. An ordered list item
+2. Another item with a nested list
+   1. A nested item
+   2. Another nested item
+3. The last item
+
+## Quotations
+
+> A blockquote is used for quoted text. It is usually set apart from the main text with an indent, a rule, or a different typeface.
+>
+> — The source of the quotation
+
+## Ruby and CJK Text
+
+Ruby annotations are written as {漢字|かんじ} in VFM and rendered with the \`<ruby>\` element. Japanese text such as 日本語の文章 also shows whether the font stack of the theme covers CJK characters.
+
+## Footnotes
+
+Footnotes are placed at the bottom of the page[^1]. They can also be written inline^[This footnote is written inline.]. A theme decides the style of the footnote call in the text and the footnote area at the bottom of the page[^area].
+
+[^1]: This is a footnote.
+
+[^area]: The footnote area is separated from the body text by a rule.
+
+## Horizontal Rules
+
+A horizontal rule separates parts of a document without a heading.
+
+---
+
+The text continues after the rule.
+",
+  "/work/my-theme/example/02_figures-and-tables.md": "# Figures and Tables
+
+Figures and tables are numbered automatically and can be referenced from the text.
+
+## Figures
+
+An image written on its own line with alternative text becomes a figure with a caption, as shown in <a data-ref=\\"fig\\" href=\\"#fig-layout\\"></a>. The empty \`<a data-ref=\\"fig\\">\` element in the previous sentence is filled with the number of the figure it links to.
+
+![The parts of a page: the page area, the margins, and the margin boxes for running heads](./assets/page-layout.svg){id=\\"fig-layout\\"}
+
+A theme decides the size of the figure, the alignment of the caption, and whether the figure may be split across pages.
+
+## Tables
+
+Markdown tables become \`<table>\` elements. A paragraph with the class \`tbl-caption\` placed before a table gives it a numbered caption, as in <a data-ref=\\"tbl\\" href=\\"#tbl-sizes\\"></a>.
+
+<p class=\\"tbl-caption\\" id=\\"tbl-sizes\\">Common paper sizes</p>
+
+| Name     |  Width | Height |
+| :------- | -----: | -----: |
+| A4       | 210 mm | 297 mm |
+| A5       | 148 mm | 210 mm |
+| B5 (JIS) | 182 mm | 257 mm |
+| Letter   | 8.5 in |  11 in |
+
+Check the borders, the padding of the cells, and the style of the header row, and try a table that is too wide for the page.
+",
+  "/work/my-theme/example/03_code-and-math.md": "# Code and Math
+
+## Code Blocks
+
+Fenced code blocks are rendered with \`<pre>\` and highlighted by Prism when a language is given.
+
+\`\`\`js
+export function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+\`\`\`
+
+A code block with a title becomes a numbered listing with a caption.
+
+\`\`\`js:vivliostyle.config.js
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  theme: 'vivliostyle-theme-my-theme',
+  entry: ['manuscript.md'],
+});
+\`\`\`
+
+Inline code such as \`npm run example:preview\` should be distinguishable from the surrounding text without breaking the line rhythm.
+
+## Math
+
+Math written between dollar signs is typeset as a formula. Inline math like $E = mc^2$ flows with the text, and display math is set on its own line:
+
+$$
+\\\\int_0^1 x^2 \\\\, dx = \\\\frac{1}{3}
+$$
+
+Long formulas show how the theme aligns display math and how much space it leaves around it.
+",
+  "/work/my-theme/example/assets/page-layout.svg": "<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 300 400\\" width=\\"210\\" height=\\"280\\" role=\\"img\\" aria-label=\\"Diagram of a page with margins and margin boxes\\">
+  <rect x=\\"0.5\\" y=\\"0.5\\" width=\\"299\\" height=\\"399\\" fill=\\"#ffffff\\" stroke=\\"#333333\\"/>
+  <rect x=\\"40\\" y=\\"46\\" width=\\"220\\" height=\\"308\\" fill=\\"none\\" stroke=\\"#999999\\" stroke-dasharray=\\"4 3\\"/>
+  <rect x=\\"40\\" y=\\"14\\" width=\\"220\\" height=\\"20\\" fill=\\"#f0f0ec\\"/>
+  <rect x=\\"40\\" y=\\"366\\" width=\\"220\\" height=\\"20\\" fill=\\"#f0f0ec\\"/>
+  <text x=\\"150\\" y=\\"28\\" font-family=\\"sans-serif\\" font-size=\\"10\\" fill=\\"#666666\\" text-anchor=\\"middle\\">running head</text>
+  <text x=\\"150\\" y=\\"380\\" font-family=\\"sans-serif\\" font-size=\\"10\\" fill=\\"#666666\\" text-anchor=\\"middle\\">page number</text>
+  <rect x=\\"52\\" y=\\"60\\" width=\\"140\\" height=\\"8\\" fill=\\"#333333\\"/>
+  <rect x=\\"52\\" y=\\"82\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"92\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"102\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"112\\" width=\\"130\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"132\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"142\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"152\\" width=\\"170\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"80\\" y=\\"172\\" width=\\"140\\" height=\\"70\\" fill=\\"#f0f0ec\\" stroke=\\"#999999\\"/>
+  <text x=\\"150\\" y=\\"212\\" font-family=\\"sans-serif\\" font-size=\\"10\\" fill=\\"#666666\\" text-anchor=\\"middle\\">figure</text>
+  <rect x=\\"52\\" y=\\"262\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"272\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"282\\" width=\\"196\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"292\\" width=\\"110\\" height=\\"4\\" fill=\\"#bbbbbb\\"/>
+  <rect x=\\"52\\" y=\\"318\\" width=\\"60\\" height=\\"1\\" fill=\\"#999999\\"/>
+  <rect x=\\"52\\" y=\\"326\\" width=\\"150\\" height=\\"3\\" fill=\\"#cccccc\\"/>
+  <rect x=\\"52\\" y=\\"334\\" width=\\"120\\" height=\\"3\\" fill=\\"#cccccc\\"/>
+  <text x=\\"20\\" y=\\"200\\" font-family=\\"sans-serif\\" font-size=\\"9\\" fill=\\"#666666\\" text-anchor=\\"middle\\" transform=\\"rotate(-90 20 200)\\">inside margin</text>
+  <text x=\\"280\\" y=\\"200\\" font-family=\\"sans-serif\\" font-size=\\"9\\" fill=\\"#666666\\" text-anchor=\\"middle\\" transform=\\"rotate(90 280 200)\\">outside margin</text>
+</svg>
+",
+  "/work/my-theme/package.json": "{
+  \\"name\\": \\"vivliostyle-theme-my-theme\\",
+  \\"version\\": \\"0.1.0\\",
+  \\"description\\": \\"A theme for testing\\",
+  \\"keywords\\": [
+    \\"vivliostyle\\",
+    \\"vivliostyle-theme\\"
+  ],
+  \\"license\\": \\"MIT\\",
+  \\"author\\": \\"Theme Author\\",
+  \\"files\\": [
+    \\"*.css\\",
+    \\"example\\",
+    \\"vivliostyle.config.js\\"
+  ],
+  \\"type\\": \\"module\\",
+  \\"main\\": \\"theme.css\\",
+  \\"scripts\\": {
+    \\"example:build\\": \\"vivliostyle build\\",
+    \\"example:preview\\": \\"vivliostyle preview\\",
+    \\"validate\\": \\"vivliostyle theme validate\\",
+    \\"prepublishOnly\\": \\"vivliostyle theme validate\\"
+  },
+  \\"dependencies\\": {
+    \\"@vivliostyle/theme-base\\": \\"^3.0.0\\"
+  },
+  \\"devDependencies\\": {
+    \\"@vivliostyle/cli\\": \\"^0.0.1\\"
+  },
+  \\"vivliostyle\\": {
+    \\"theme\\": {
+      \\"name\\": \\"My Theme\\",
+      \\"author\\": \\"Theme Author\\",
+      \\"style\\": \\"theme.css\\",
+      \\"category\\": \\"novel\\",
+      \\"topics\\": []
+    }
+  }
+}
+",
+  "/work/my-theme/theme.css": "/*
+ * My Theme
+ * A theme for testing
+ *
+ * This theme is built on @vivliostyle/theme-base: it imports the base styles
+ * and the feature modules, then adjusts them through CSS custom properties.
+ * Every variable below is optional. Change the values, remove the ones you do
+ * not need, and add your own rules at the end of this file.
+ *
+ * Available modules and variables:
+ * https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base
+ */
+
+/* Base styles: CSS reset, variable defaults, and basic HTML elements */
+@import '@vivliostyle/theme-base';
+
+/* Feature modules: keep the ones your theme supports */
+@import '@vivliostyle/theme-base/page';
+@import '@vivliostyle/theme-base/section';
+@import '@vivliostyle/theme-base/toc';
+@import '@vivliostyle/theme-base/figure';
+@import '@vivliostyle/theme-base/table';
+@import '@vivliostyle/theme-base/listing';
+@import '@vivliostyle/theme-base/equation';
+@import '@vivliostyle/theme-base/math';
+@import '@vivliostyle/theme-base/footnote';
+@import '@vivliostyle/theme-base/endnote';
+@import '@vivliostyle/theme-base/sidenote';
+@import '@vivliostyle/theme-base/citation';
+@import '@vivliostyle/theme-base/theorem';
+@import '@vivliostyle/theme-base/appendix';
+
+/* Syntax highlighting for code blocks */
+@import '@vivliostyle/theme-base/prism';
+@import '@vivliostyle/theme-base/prism/theme-prism';
+
+:root {
+  /* Typography */
+  --vs-font-family: 'Georgia', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  --vs-font-family-alt: 'Helvetica Neue', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  --vs-font-family-monospace: 'Menlo', 'Consolas', monospace;
+  --vs-font-size: 10.5pt;
+  --vs-line-height: 1.7;
+  --vs-widows-orphans: 2;
+
+  /* Colors */
+  --vs-color-foreground: #1a1a1a;
+  --vs-color-foreground-alt: #555;
+  --vs-color-background-alt: #f3f3f0;
+  --vs-color-border: #b8b8b8;
+
+  /* Headings */
+  --vs--heading-font-family: var(--vs-font-family-alt);
+  --vs--heading-line-height: 1.3;
+  --vs--h1-font-size: 2em;
+  --vs--h1-padding-block: 0 0.25em;
+  --vs--h1-border-width-block-end: 1px;
+  --vs--h1-border-style-block-end: solid;
+  --vs--h2-font-size: 1.5em;
+  --vs--h3-font-size: 1.2em;
+  --vs--h4-font-size: 1em;
+
+  /* Paragraphs: indent the first line instead of leaving a gap */
+  --vs--p-text-indent: 1em;
+  --vs--p-margin-block: 0;
+
+  /* Figures, tables, and code */
+  --vs--figcaption-font-family: var(--vs-font-family-alt);
+  --vs--figcaption-font-size: 0.9em;
+  --vs--figcaption-text-color: var(--vs-color-foreground-alt);
+  --vs--table-font-family: var(--vs-font-family-alt);
+  --vs--th-background-color: var(--vs-color-background-alt);
+  --vs--pre-font-size: 0.85em;
+  --vs-prism--block-code-padding: 0.75em 1em;
+
+  /* Section numbering: enable it for reports and technical books */
+  /* --vs-section--marker-display: inline; */
+
+  /* Table of contents */
+  --vs-toc--page-leader-content: leader(dotted) ' ';
+
+  /* Pages: margins and running heads (page numbers on the outer edge) */
+  --vs-page--margin-top: 22mm;
+  --vs-page--margin-bottom: 22mm;
+  --vs-page--margin-inside: 20mm;
+  --vs-page--margin-outside: 16mm;
+  --vs-page--mbox-top-outside-content: env(doc-title);
+  --vs-page--mbox-bottom-outside-content: counter(page);
+  --vs-page--mbox-font-size: 0.85em;
+  --vs-page--mbox-text-color: var(--vs-color-foreground-alt);
+}
+
+/* Styles that only apply to the web version */
+@media screen {
+  :root {
+    --vs--anchor-text-color: #0b6bcb;
+  }
+}
+
+/* Add your own rules below */
+",
+  "/work/my-theme/vivliostyle.config.js": "// @ts-check
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  title: \\"My Theme Example\\",
+  author: \\"Theme Author\\",
+  language: \\"en\\",
+  size: \\"A5\\",
+  theme: \\".\\",
+  image: \\"ghcr.io/vivliostyle/cli:0.0.1\\",
+  entry: [
+    { rel: \\"contents\\" },
+    \\"example/01_typography.md\\",
+    \\"example/02_figures-and-tables.md\\",
+    \\"example/03_code-and-math.md\\",
+  ],
+  toc: {
+    sectionDepth: 2,
+  },
+  workspaceDir: \\".vivliostyle\\",
+  output: [
+    \\"dist/example.pdf\\",
+    {
+      path: \\"dist/example\\",
+      format: \\"webpub\\",
+    },
+  ],
+});
+",
+}
+`;
