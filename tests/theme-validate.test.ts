@@ -1,5 +1,6 @@
 import './mocks/fs.js';
 import { vol } from 'memfs';
+import upath from 'upath';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '../src/logger.js';
@@ -220,7 +221,7 @@ describe('theme validate command', () => {
 
   it('fails when package.json does not exist', async () => {
     await expect(validate('theme')).rejects.toThrow(
-      'Failed to read package.json: /work/theme/package.json',
+      `Failed to read package.json: ${upath.resolve('/work/theme/package.json')}`,
     );
   });
 
@@ -229,7 +230,7 @@ describe('theme validate command', () => {
 
     await expect(validate('theme')).rejects.toThrow(DetailError);
     await expect(validate('theme')).rejects.toThrow(
-      'Failed to parse package.json: /work/theme/package.json',
+      `Failed to parse package.json: ${upath.resolve('/work/theme/package.json')}`,
     );
   });
 });

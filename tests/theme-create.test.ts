@@ -150,7 +150,7 @@ describe('theme create command', () => {
       },
     });
     expect(vol.readFileSync('/work/my-theme/README.md', 'utf8')).toMatch(
-      /^# Fancy Book\n/v,
+      /^# Fancy Book\r?\n/v,
     );
     expect(mockedExec.x).not.toHaveBeenCalled();
   });
