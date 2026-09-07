@@ -77,12 +77,32 @@ export function vsBrowserPlugin({
     configureServer(viteServer) {
       server = viteServer;
 
+      // Vite registers its own watcher listeners before this hook runs,
+      // so intercept `emit` to drop file events until the browser is ready
+      const { watcher } = viteServer;
+      const originalEmit = watcher.emit.bind(watcher);
+      let suppressWatcherEvents = true;
+      watcher.emit = (event: string | symbol, ...args: unknown[]) => {
+        if (suppressWatcherEvents && event !== 'error') {
+          return false;
+        }
+        return originalEmit(event, ...args);
+      };
+
       const originalListen = viteServer.listen.bind(viteServer);
       viteServer.listen = async (...args) => {
-        const startedServer = await originalListen(...args);
-        config = await reloadConfig(config, inlineConfig, startedServer.config);
-        await openPreviewPage();
-        return startedServer;
+        try {
+          const startedServer = await originalListen(...args);
+          config = await reloadConfig(
+            config,
+            inlineConfig,
+            startedServer.config,
+          );
+          await openPreviewPage();
+          return startedServer;
+        } finally {
+          suppressWatcherEvents = false;
+        }
       };
     },
     async closeBundle() {
