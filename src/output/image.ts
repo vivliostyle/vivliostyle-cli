@@ -618,6 +618,10 @@ function addImagePreservingColorSpace(
   using imageColorSpace = disposableOrNull(image.getColorSpace());
   const colorSpaceName = imageColorSpace?.getName();
   using imageObject = disposable(ref.resolve());
+  using filter = disposable(imageObject.get('Filter'));
+  if (filter.toString() === '/JBIG2Decode') {
+    setMinimumPdfVersion(14);
+  }
 
   if (
     colorSpaceName === 'DeviceGray' ||
