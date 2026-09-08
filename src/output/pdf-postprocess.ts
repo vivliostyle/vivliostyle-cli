@@ -168,18 +168,16 @@ export class PostProcess {
     const outputIntentHook =
       outputIntent === undefined ? {} : createOutputIntentHook(outputIntent);
 
-    pdf = await (async () => {
-      using replaceImageHook = await createReplaceImageHook(
-        replaceImageConfig,
-        cmykConfig ? cmykConfig.ifIncompatibleImagesFound : 'ignore',
-        failures,
-      );
-      return await editPdf(
-        pdf,
-        [cmykColorHook, replaceImageHook, outputIntentHook],
-        { signal },
-      );
-    })();
+    const replaceImageHook = createReplaceImageHook(
+      replaceImageConfig,
+      cmykConfig ? cmykConfig.ifIncompatibleImagesFound : 'ignore',
+      failures,
+    );
+    pdf = await editPdf(
+      pdf,
+      [cmykColorHook, replaceImageHook, outputIntentHook],
+      { signal },
+    );
     signal?.throwIfAborted();
 
     if (failures.length > 0) {
