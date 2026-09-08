@@ -1324,6 +1324,87 @@ describe('replaceImages', () => {
     });
     expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
   });
+  it.each([
+    { version: '1.2', expectedVersion: '1.4' },
+    { version: '1.3', expectedVersion: '1.4' },
+    { version: '1.4', expectedVersion: '1.4' },
+    { version: '1.7', expectedVersion: '1.7' },
+  ])(
+    'preserves JBIG2 replacement pixels and enforces the required version for PDF $version',
+    async ({ version, expectedVersion }) => {
+      const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+      const {
+        pdf: destPdf,
+        warnings,
+        failures,
+      } = await replaceImages(withPdfVersion(srcPdf, version), {
+        replacements: [
+          {
+            source: path.join(fixturesDir, 'ck_rgb.png'),
+            replacement: path.join(fixturesDir, 'checker.jbig2'),
+          },
+        ],
+        ifIncompatibleImagesFound: 'error',
+      });
+
+      expect(warnings).toEqual([]);
+      expect(failures).toEqual([]);
+      expect(await getFirstPageImageStreamState(destPdf)).toMatchObject({
+        filter: '/JBIG2Decode',
+        hasSoftMask: false,
+        smaskInData: null,
+      });
+      expect(await getImageColorSpace(destPdf)).toEqual({
+        object: '/DeviceGray',
+        image: 'DeviceGray',
+      });
+      expect(await getFirstPageImagePixels(destPdf)).toEqual(
+        new Uint8Array([
+          255, 0, 255, 0, 0, 255, 0, 255, 0, 255, 0, 255, 255, 0, 255, 0,
+        ]),
+      );
+      expect(Buffer.from(destPdf.subarray(0, 8)).toString('ascii')).toBe(
+        `%PDF-${expectedVersion}`,
+      );
+    },
+  );
+
+  it('replaces a transparent source with opaque JBIG2 pixels', async () => {
+    const srcPdf = await replaceFirstPageImage(
+      fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
+      3,
+      1,
+      chromiumTransparentRgb,
+      chromiumTransparentAlpha,
+    );
+    const {
+      pdf: destPdf,
+      warnings,
+      failures,
+    } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: path.join(fixturesDir, 'checker.jbig2'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'error',
+    });
+
+    expect(warnings).toEqual([]);
+    expect(failures).toEqual([]);
+    expect(await getFirstPageImageStreamState(destPdf)).toMatchObject({
+      filter: '/JBIG2Decode',
+      hasSoftMask: false,
+      smaskInData: null,
+    });
+    expect(await getFirstPageImagePixels(destPdf)).toEqual(
+      new Uint8Array([
+        255, 0, 255, 0, 0, 255, 0, 255, 0, 255, 0, 255, 255, 0, 255, 0,
+      ]),
+    );
+  });
+
   it('preserves unassociated alpha embedded in a JPX replacement', async () => {
     const srcPdf = withPdfVersion(
       fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
