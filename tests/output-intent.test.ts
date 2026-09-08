@@ -123,6 +123,18 @@ it('leaves output intents absent when the option is omitted', async () => {
   expect(document.catalog.has(PDFName.of('OutputIntents'))).toBe(false);
 });
 
+it('raises the PDF version required by an output intent', async () => {
+  const input = Buffer.from(
+    fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
+  );
+  input.write('%PDF-1.3', 0, 'ascii');
+
+  await savePdf({ outputIntent: path.join(fixturesDir, 'ps_gray.icc') }, input);
+
+  const output = fs.readFileSync(path.join(temporaryDir, 'output.pdf'));
+  expect(output.subarray(0, 8).toString('ascii')).toBe('%PDF-1.4');
+});
+
 it('embeds an RGB profile extracted from an existing PDF', async () => {
   const original = await PDFDocument.load(
     fs.readFileSync(path.join(fixturesDir, 'image.pdf')),

@@ -7,7 +7,7 @@ import type { PdfEditHook } from './pdf-visitor.js';
 
 export function createOutputIntentHook(profilePath: string): PdfEditHook {
   return {
-    async afterVisit({ document, mupdf }) {
+    async afterVisit({ document, mupdf, setMinimumPdfVersion }) {
       const profile = await fs.readFile(profilePath);
       using profileBuffer = disposable(new mupdf.Buffer(profile));
       using colorSpace = disposable(
@@ -20,7 +20,8 @@ export function createOutputIntentHook(profilePath: string): PdfEditHook {
       );
       using identifier = disposable(document.newString('Custom'));
       using info = disposable(document.newString(upath.basename(profilePath)));
-      // ISO 32000-1:2008, 14.11.5, Table 365 (OutputIntent dictionary):
+      // ISO 32000-1:2008, 7.7.2, Table 28 (PDF 1.4 catalog entry), and
+      // 14.11.5, Table 365 (OutputIntent dictionary):
       // https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
       // OutputConditionIdentifier may be "Custom or an application-specific,
       // machine-readable name"; Info and DestOutputProfile are required for
@@ -37,6 +38,7 @@ export function createOutputIntentHook(profilePath: string): PdfEditHook {
       using trailer = disposable(document.getTrailer());
       using catalog = disposable(trailer.get('Root'));
       catalog.put('OutputIntents', [intentRef]);
+      setMinimumPdfVersion(14);
     },
   };
 }

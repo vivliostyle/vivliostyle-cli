@@ -10,7 +10,11 @@ import type {
 import { disposable, disposableOrNull } from '../disposable.js';
 import { createImageConversionReplaceFunction } from '../image-replacement.js';
 import { Logger } from '../logger.js';
-import type { PdfEditHook, PdfImageXObjectNode } from './pdf-visitor.js';
+import type {
+  PdfDocumentHookContext,
+  PdfEditHook,
+  PdfImageXObjectNode,
+} from './pdf-visitor.js';
 
 function premultiplySkiaColorSample(sample: number, alpha: number): number {
   // NOTE: Chromium/Skia writes unpremultiplied RGB and alpha separately.
@@ -412,8 +416,8 @@ function collectDeviceCmykIncompatibleImage(
 
 // ITU-T T.800 (06/2019) sections I.5.3 and I.5.3.6 define the `jp2h` and
 // `cdef` box types; Table I.16 assigns 1 to opacity and 2 to premultiplied
-// opacity. PDF 32000-1:2008 section 8.9.5, Table 89 uses the same values for
-// `/SMaskInData`.
+// opacity. PDF 32000-1:2008 section 7.4.9 defines `/JPXDecode` as PDF 1.5,
+// and section 8.9.5, Table 89 uses the same values for `/SMaskInData`.
 // https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-T.800-201906-S!!PDF-E&type=items
 // https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
 const JP2_HEADER_BOX_TYPE = 0x6a703268;
@@ -566,6 +570,7 @@ function findJp2AlphaType(
 function setJpxEmbeddedAlphaParameter(
   doc: mupdfType.PDFDocument,
   imageRef: mupdfType.PDFObject,
+  setMinimumPdfVersion: PdfDocumentHookContext['setMinimumPdfVersion'],
 ): void {
   // NOTE: Chromium/Skia serializes browser images as JPEG or deflated samples,
   // writes alpha as a separate `/SMask` reference, and omits the entry when
@@ -575,12 +580,15 @@ function setJpxEmbeddedAlphaParameter(
   // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=398
   // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=275
   // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=111
-  const imageObject = imageRef.resolve();
-  if (
-    imageObject.get('Filter').toString() !== '/JPXDecode' ||
-    !imageObject.get('SMask').isNull() ||
-    !imageObject.get('Mask').isNull()
-  ) {
+  using imageObject = disposable(imageRef.resolve());
+  using filter = disposable(imageObject.get('Filter'));
+  if (filter.toString() !== '/JPXDecode') {
+    return;
+  }
+  setMinimumPdfVersion(15);
+  using softMask = disposable(imageObject.get('SMask'));
+  using mask = disposable(imageObject.get('Mask'));
+  if (!softMask.isNull() || !mask.isNull()) {
     return;
   }
 
@@ -596,10 +604,11 @@ function setJpxEmbeddedAlphaParameter(
 function addImagePreservingColorSpace(
   doc: mupdfType.PDFDocument,
   image: mupdfType.Image,
+  setMinimumPdfVersion: PdfDocumentHookContext['setMinimumPdfVersion'],
 ): { ref: mupdfType.PDFObject; objectNumbers: Set<number> } {
   const xrefLengthBefore = doc.countObjects();
   const ref = doc.addImage(image);
-  setJpxEmbeddedAlphaParameter(doc, ref);
+  setJpxEmbeddedAlphaParameter(doc, ref, setMinimumPdfVersion);
   const objectNumbers = collectReachableObjectNumbers([ref]);
   for (const objectNumber of objectNumbers) {
     if (objectNumber < xrefLengthBefore) {
@@ -608,6 +617,7 @@ function addImagePreservingColorSpace(
   }
   using imageColorSpace = disposableOrNull(image.getColorSpace());
   const colorSpaceName = imageColorSpace?.getName();
+  using imageObject = disposable(ref.resolve());
 
   if (
     colorSpaceName === 'DeviceGray' ||
@@ -616,7 +626,24 @@ function addImagePreservingColorSpace(
     // Preserving DeviceRGB here is the only way to represent an unprofiled RGB replacement as such.
     colorSpaceName === 'DeviceRGB'
   ) {
-    ref.resolve().put('ColorSpace', colorSpaceName);
+    imageObject.put('ColorSpace', colorSpaceName);
+  }
+
+  using softMask = disposable(imageObject.get('SMask'));
+  if (!softMask.isNull()) {
+    setMinimumPdfVersion(14);
+  }
+  using mask = disposable(imageObject.get('Mask'));
+  if (!mask.isNull()) {
+    setMinimumPdfVersion(13);
+  }
+  using colorSpaceReference = disposable(imageObject.get('ColorSpace'));
+  using colorSpace = disposable(colorSpaceReference.resolve());
+  if (colorSpace.isArray()) {
+    using family = disposable(colorSpace.get(0));
+    if (family.toString() === '/ICCBased') {
+      setMinimumPdfVersion(13);
+    }
   }
 
   return { ref, objectNumbers };
@@ -684,10 +711,15 @@ function addReplacementImage(
   doc: mupdfType.PDFDocument,
   source: mupdfType.PDFObject,
   image: mupdfType.Image,
+  setMinimumPdfVersion: PdfDocumentHookContext['setMinimumPdfVersion'],
 ): { ref: mupdfType.PDFObject; cleanupCandidates: ReadonlySet<number> } {
   const cleanupCandidates = new Set<number>();
   const sourceObjectNumbers = collectReachableObjectNumbers([source]);
-  const replacement = addImagePreservingColorSpace(doc, image);
+  const replacement = addImagePreservingColorSpace(
+    doc,
+    image,
+    setMinimumPdfVersion,
+  );
   const replacementObjectNumbers = collectReachableObjectNumbers([
     replacement.ref,
   ]);
@@ -716,6 +748,7 @@ async function replaceImage(
   node: PdfImageXObjectNode,
   replaceFn: ReplaceFn,
   incompatibleImages: DeviceCmykIncompatibleImage[] | null,
+  setMinimumPdfVersion: PdfDocumentHookContext['setMinimumPdfVersion'],
 ): Promise<ReplaceImageResult> {
   using pdfImage = disposable(document.loadImage(node.object));
   let replacementRef: mupdfType.PDFObject | null = null;
@@ -731,6 +764,7 @@ async function replaceImage(
         document,
         node.object,
         replacementImage,
+        setMinimumPdfVersion,
       );
       replacementRef = addedImage.ref;
       cleanupCandidates = addedImage.cleanupCandidates;
@@ -794,7 +828,7 @@ export function createReplaceImageHook(
         replaceFnInitialized = true;
       }
     },
-    async visit({ document, node }) {
+    async visit({ document, node, setMinimumPdfVersion }) {
       if (node.kind !== 'image-xobject') {
         return;
       }
@@ -803,6 +837,7 @@ export function createReplaceImageHook(
         node,
         replaceFn,
         incompatibleImages,
+        setMinimumPdfVersion,
       );
       total++;
       if (result.kind === 'replaced') {

@@ -24,6 +24,8 @@ vi.mock('../src/util.js', async (importOriginal) => ({
 import { postProcessPDF } from '../src/output/pdf-postprocess.js';
 import { runCleanupHandlers } from '../src/util.js';
 
+const pdf = fs.readFileSync(new URL('fixtures/cmyk/text.pdf', import.meta.url));
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -32,7 +34,7 @@ it('passes the signal to press-ready Docker preflight', async () => {
   const controller = new AbortController();
 
   await postProcessPDF({
-    pdf: new Uint8Array([1]),
+    pdf,
     output: 'output.pdf',
     preflight: 'press-ready',
     preflightOption: [],
@@ -59,7 +61,7 @@ it('waits for press-ready before removing the temporary preflight input', async 
   );
 
   const saving = postProcessPDF({
-    pdf: new Uint8Array([1]),
+    pdf,
     output: 'output.pdf',
     preflight: 'press-ready',
     preflightOption: [],

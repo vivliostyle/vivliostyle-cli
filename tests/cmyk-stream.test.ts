@@ -15,6 +15,7 @@ async function convertColors(
   await hook.visit?.({
     document: null as never,
     mupdf: null as never,
+    setMinimumPdfVersion() {},
     node: {
       kind: 'content-stream',
       read: () => content,
@@ -36,6 +37,7 @@ async function reportUnmappedColors(...contents: string[]): Promise<string[]> {
     await hook.visit?.({
       document: null as never,
       mupdf: null as never,
+      setMinimumPdfVersion() {},
       node: {
         kind: 'content-stream',
         read: () => content,
@@ -46,6 +48,7 @@ async function reportUnmappedColors(...contents: string[]): Promise<string[]> {
   await hook.afterVisit?.({
     document: null as never,
     mupdf: null as never,
+    setMinimumPdfVersion() {},
   });
   return failures;
 }

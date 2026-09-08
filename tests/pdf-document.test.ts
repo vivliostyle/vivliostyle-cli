@@ -126,6 +126,34 @@ it('applies document metadata, outlines, page boxes, and trailing-page removal',
   expect(section.get(PDFName.of('Dest'))?.toString()).toBe('/section');
 });
 
+it('raises unsupported PDF 1.0 input to the minimum supported version', async () => {
+  fs.mkdirSync(temporaryDir, { recursive: true });
+  const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
+  onTestFinished(() => fs.rmSync(output, { force: true }));
+
+  const document = await PDFDocument.create();
+  document.addPage();
+  const input = Buffer.from(await document.save({ useObjectStreams: false }));
+  input.write('%PDF-1.0', 0, 'ascii');
+
+  await postProcessPDF({
+    pdf: input,
+    output,
+    tocItems: [{ id: 'chapter', title: 'Chapter', children: [] }],
+    preflight: undefined,
+    preflightOption: [],
+    image: '',
+    cmyk: false,
+    cmykMap: {},
+    replaceImage: [],
+  });
+
+  const result = fs.readFileSync(output);
+  expect(result.subarray(0, 8).toString('ascii')).toBe('%PDF-1.2');
+  const resultDocument = await PDFDocument.load(result);
+  expect(resultDocument.catalog.has(PDFName.of('Version'))).toBe(false);
+});
+
 it('removes a trailing page before visiting its content', async () => {
   fs.mkdirSync(temporaryDir, { recursive: true });
   const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
