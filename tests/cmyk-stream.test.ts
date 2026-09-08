@@ -13,12 +13,16 @@ async function convertColors(
   let converted: string | undefined;
   const hook = createCmykColorHook(colorMap, fallback, 'ignore', []);
   await hook.visit?.({
-    kind: 'content-stream',
-    read: () => content,
-    write: (value) => {
-      converted = value;
-    },
-  } as PdfContentStreamNode);
+    document: null as never,
+    mupdf: null as never,
+    node: {
+      kind: 'content-stream',
+      read: () => content,
+      write: (value) => {
+        converted = value;
+      },
+    } as PdfContentStreamNode,
+  });
   if (converted === undefined) {
     throw new Error('CMYK color hook did not write the content stream');
   }
@@ -30,12 +34,19 @@ async function reportUnmappedColors(...contents: string[]): Promise<string[]> {
   const hook = createCmykColorHook(new Map(), undefined, 'error', failures);
   for (const content of contents) {
     await hook.visit?.({
-      kind: 'content-stream',
-      read: () => content,
-      write() {},
-    } as unknown as PdfContentStreamNode);
+      document: null as never,
+      mupdf: null as never,
+      node: {
+        kind: 'content-stream',
+        read: () => content,
+        write() {},
+      } as unknown as PdfContentStreamNode,
+    });
   }
-  await hook.complete?.(null as never);
+  await hook.afterVisit?.({
+    document: null as never,
+    mupdf: null as never,
+  });
   return failures;
 }
 
