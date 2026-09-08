@@ -2,6 +2,12 @@ import type * as mupdfType from 'mupdf';
 
 import { disposable } from '../disposable.js';
 import { importNodeModule } from '../node-modules.js';
+import {
+  PDF_CATALOG_VERSION_MINIMUM,
+  setMinimumPdfVersion,
+  setPdfHeaderVersion,
+  type PdfVersion,
+} from './pdf-version.js';
 
 export type PdfNodeOrigin = 'page' | 'annotation-appearance';
 
@@ -43,6 +49,7 @@ export type PdfVisitNode =
 export interface PdfDocumentHookContext {
   readonly document: mupdfType.PDFDocument;
   readonly mupdf: typeof import('mupdf');
+  readonly setMinimumPdfVersion: (minimumVersion: PdfVersion) => void;
 }
 
 export interface PdfVisitHookContext extends PdfDocumentHookContext {
@@ -58,6 +65,7 @@ export interface PdfEditHook {
 interface PdfVisitContext {
   readonly document: mupdfType.PDFDocument;
   readonly mupdf: typeof import('mupdf');
+  readonly setMinimumPdfVersion: (minimumVersion: PdfVersion) => void;
   readonly signal?: AbortSignal;
   readonly processedForms: Set<number>;
   readonly processedXObjectDictionaries: Set<number>;
@@ -73,6 +81,7 @@ async function visitNode(
   const hookContext: PdfVisitHookContext = {
     document: context.document,
     mupdf: context.mupdf,
+    setMinimumPdfVersion: context.setMinimumPdfVersion,
     node,
   };
   for (const hook of hooks) {
@@ -353,6 +362,7 @@ async function runBeforeVisitHooks(
   const hookContext: PdfDocumentHookContext = {
     document: context.document,
     mupdf: context.mupdf,
+    setMinimumPdfVersion: context.setMinimumPdfVersion,
   };
   for (const hook of hooks) {
     if (!hook.beforeVisit) {
@@ -405,6 +415,7 @@ async function runAfterVisitHooks(
   const hookContext: PdfDocumentHookContext = {
     document: context.document,
     mupdf: context.mupdf,
+    setMinimumPdfVersion: context.setMinimumPdfVersion,
   };
   for (const hook of hooks) {
     if (!hook.afterVisit) {
@@ -440,10 +451,24 @@ export async function editPdf(
       'application/pdf',
     ) as mupdfType.PDFDocument,
   );
+  let deferredHeaderVersion: PdfVersion | undefined;
   await visitDocument(
     {
       document,
       mupdf,
+      setMinimumPdfVersion: (minimumVersion) => {
+        if (
+          document.getVersion() >= minimumVersion ||
+          (deferredHeaderVersion ?? 0) >= minimumVersion
+        ) {
+          return;
+        }
+        if (minimumVersion < PDF_CATALOG_VERSION_MINIMUM) {
+          deferredHeaderVersion = minimumVersion;
+          return;
+        }
+        setMinimumPdfVersion(document, minimumVersion);
+      },
       signal,
       processedForms: new Set(),
       processedXObjectDictionaries: new Set(),
@@ -455,6 +480,14 @@ export async function editPdf(
   signal?.throwIfAborted();
 
   if (!document.hasUnsavedChanges()) {
+    if (
+      deferredHeaderVersion &&
+      document.getVersion() < deferredHeaderVersion
+    ) {
+      const result = new Uint8Array(pdf);
+      setPdfHeaderVersion(result, deferredHeaderVersion);
+      return result;
+    }
     return pdf;
   }
 
@@ -466,5 +499,9 @@ export async function editPdf(
   // retaining PDF 1.4 has a practical rationale.
   using outputBuffer = disposable(document.saveToBuffer('compress'));
   // Create a copy to ensure the data remains valid after the buffer is destroyed
-  return new Uint8Array(outputBuffer.asUint8Array());
+  const result = new Uint8Array(outputBuffer.asUint8Array());
+  if (deferredHeaderVersion && document.getVersion() < deferredHeaderVersion) {
+    setPdfHeaderVersion(result, deferredHeaderVersion);
+  }
+  return result;
 }

@@ -3,7 +3,7 @@ import type * as mupdfType from 'mupdf';
 import { disposable } from '../disposable.js';
 import type { Meta, TOCItem } from '../global-viewer.js';
 import { coreVersion } from '../util.js';
-import type { PdfEditHook } from './pdf-visitor.js';
+import type { PdfDocumentHookContext, PdfEditHook } from './pdf-visitor.js';
 
 const prefixes = {
   dcterms: 'http://purl.org/dc/terms/',
@@ -100,6 +100,7 @@ function formatPdfDate(date: Date): string {
 function applyMetadata(
   document: mupdfType.PDFDocument,
   metadata: PDFMetadata,
+  setMinimumPdfVersion: PdfDocumentHookContext['setMinimumPdfVersion'],
 ): void {
   if (metadata.title) {
     document.setMetaData('info:Title', metadata.title);
@@ -116,6 +117,7 @@ function applyMetadata(
   document.setMetaData('info:Creator', metadata.creator);
   if (metadata.language) {
     document.setLanguage(metadata.language);
+    setMinimumPdfVersion(14);
   }
   if (metadata.creationDate) {
     document.setMetaData(
@@ -138,6 +140,7 @@ function applyMetadata(
       viewerPreferences.put('Direction', direction);
       catalog.put('ViewerPreferences', viewerPreferences);
     }
+    setMinimumPdfVersion(13);
   }
 }
 
@@ -212,6 +215,7 @@ function applyToc(document: mupdfType.PDFDocument, tocItems: TOCItem[]): void {
 function applyPageBoxes(
   document: mupdfType.PDFDocument,
   pageSizeData: PageSizeData[],
+  setMinimumPdfVersion: PdfDocumentHookContext['setMinimumPdfVersion'],
 ): void {
   if (pageSizeData.length + 1 === document.countPages()) {
     // fix issue #312: Chromium LayoutNGPrinting adds unnecessary blank page
@@ -258,6 +262,7 @@ function applyPageBoxes(
       sizeData.mediaWidth - trimOffset,
       yOffset + sizeData.mediaHeight - trimOffset,
     ]);
+    setMinimumPdfVersion(13);
   }
 }
 
@@ -270,18 +275,28 @@ export function createPdfDocumentHook({
   tocItems?: TOCItem[];
   pageSizeData?: PageSizeData[];
 }): PdfEditHook {
-  if (!metadata && !tocItems && !pageSizeData) {
-    return {};
-  }
   return {
-    beforeVisit: pageSizeData
-      ? ({ document }) => applyPageBoxes(document, pageSizeData)
-      : undefined,
+    beforeVisit({ document, setMinimumPdfVersion }) {
+      // Some document information entries and outline destinations require
+      // PDF 1.1, while Unicode strings, name escaping, and FlateDecode compression
+      // require PDF 1.2. Vivliostyle CLI therefore supports post-processing only
+      // PDF 1.2 or later; Chromium's Skia PDF backend emits PDF 1.4.
+      // ISO 32000-1:2008, 7.3.5, 7.4 Table 6, and 14.3.3 Table 317:
+      // https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf
+      // Adobe PDF Reference 1.2, 4.4:
+      // https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.2.pdf
+      // Chromium 151, Skia PDF header serialization:
+      // https://source.chromium.org/chromium/chromium/src/+/refs/tags/151.0.7922.173:third_party/skia/src/pdf/SkPDFDocument.cpp;l=124-126
+      setMinimumPdfVersion(12);
+      if (pageSizeData) {
+        applyPageBoxes(document, pageSizeData, setMinimumPdfVersion);
+      }
+    },
     afterVisit:
       metadata || tocItems
-        ? ({ document }) => {
+        ? ({ document, setMinimumPdfVersion }) => {
             if (metadata) {
-              applyMetadata(document, metadata);
+              applyMetadata(document, metadata, setMinimumPdfVersion);
             }
             if (tocItems) {
               applyToc(document, tocItems);

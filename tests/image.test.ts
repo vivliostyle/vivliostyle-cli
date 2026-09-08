@@ -46,6 +46,12 @@ function writeTemporaryImage(extension: string, bytes: Uint8Array): string {
   return imagePath;
 }
 
+function withPdfVersion(pdf: Uint8Array, version: string): Uint8Array {
+  const result = Buffer.from(pdf);
+  result.write(`%PDF-${version}`, 0, 'ascii');
+  return result;
+}
+
 function changeJp2ChannelDefinition(
   bytes: Uint8Array,
   definitionIndex: number,
@@ -1319,7 +1325,10 @@ describe('replaceImages', () => {
     expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
   });
   it('preserves unassociated alpha embedded in a JPX replacement', async () => {
-    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcPdf = withPdfVersion(
+      fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
+      '1.4',
+    );
     const replacementBytes = new Uint8Array(
       fs.readFileSync(unassociatedAlphaJp2),
     );
@@ -1342,6 +1351,9 @@ describe('replaceImages', () => {
     });
     expect(await getFirstPageImagePixels(destPdf)).toEqual(
       new Uint8Array([127, 0, 0, 127, 127, 0, 0, 127]),
+    );
+    expect(Buffer.from(destPdf.subarray(0, 8)).toString('ascii')).toBe(
+      '%PDF-1.5',
     );
     expect(await countUnreachableObjects(destPdf)).toBe(0);
   });
