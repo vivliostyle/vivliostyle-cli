@@ -158,7 +158,7 @@ async function replaceImages(
   });
   const failures: string[] = [];
   try {
-    using replaceImageHook = createReplaceImageHook(
+    const replaceImageHook = createReplaceImageHook(
       options.replacements,
       options.ifIncompatibleImagesFound,
       failures,
@@ -1024,6 +1024,54 @@ describe('replaceImages', () => {
       expect(warnings).toHaveLength(incompatibleCount);
     },
   );
+
+  it('reuses a replacement hook without retaining visit state', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const debugMessages: string[] = [];
+    const debug = vi.spyOn(Logger, 'debug').mockImplementation((message) => {
+      debugMessages.push(String(message));
+    });
+    const hook = createReplaceImageHook(
+      [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      'ignore',
+      [],
+    );
+
+    try {
+      const firstResult = await editPdf(srcPdf, [hook], { signal });
+      const secondResult = await editPdf(srcPdf, [hook], { signal });
+
+      expect(await getImageColorSpace(firstResult)).toEqual({
+        object: '/DeviceCMYK',
+        image: 'DeviceCMYK',
+      });
+      expect(await getImageColorSpace(secondResult)).toEqual({
+        object: '/DeviceCMYK',
+        image: 'DeviceCMYK',
+      });
+      expect(
+        debugMessages.filter((message) => message === 'Replaced 1 of 1 images'),
+      ).toHaveLength(2);
+      expect(
+        debugMessages.filter((message) =>
+          message.startsWith('Loaded source image:'),
+        ),
+      ).toHaveLength(1);
+      expect(
+        debugMessages.filter((message) =>
+          message.startsWith('Loaded replacement image:'),
+        ),
+      ).toHaveLength(1);
+      expect(Symbol.dispose in hook).toBe(false);
+    } finally {
+      debug.mockRestore();
+    }
+  });
 
   it('preserves an ICCBased replacement color space', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
@@ -2268,7 +2316,7 @@ describe('replaceImages', () => {
     const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
     try {
-      using hook = createReplaceImageHook(
+      const hook = createReplaceImageHook(
         [
           {
             source: path.join(fixturesDir, 'missing-source.png'),
@@ -2514,7 +2562,7 @@ describe('PDF edit hooks', () => {
       [],
     );
     const failures: string[] = [];
-    using replaceImageHook = createReplaceImageHook(
+    const replaceImageHook = createReplaceImageHook(
       [
         {
           source: path.join(fixturesDir, 'ck_rgb.png'),
