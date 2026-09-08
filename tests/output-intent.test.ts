@@ -14,7 +14,10 @@ import {
 import { assert, beforeEach, expect, it, onTestFinished, vi } from 'vitest';
 
 import { Logger } from '../src/logger.js';
-import { PostProcess, type SaveOption } from '../src/output/pdf-postprocess.js';
+import {
+  postProcessPDF,
+  type SaveOption,
+} from '../src/output/pdf-postprocess.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 let temporaryDir: string;
@@ -32,9 +35,10 @@ async function savePdf(
   options: Partial<SaveOption> = {},
   input = fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
 ): Promise<PDFDocument> {
-  const post = await PostProcess.load(input);
   const output = path.join(temporaryDir, 'output.pdf');
-  await post.save(output, {
+  await postProcessPDF({
+    pdf: input,
+    output,
     preflight: undefined,
     preflightOption: [],
     image: 'vivliostyle/cli',

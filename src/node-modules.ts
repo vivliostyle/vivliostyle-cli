@@ -8,7 +8,6 @@ export const nodeExternalModules = [
   'command-exists',
   'mupdf',
   'press-ready',
-  'pdf-lib',
   'puppeteer-core',
 ] as const;
 
@@ -22,7 +21,6 @@ export type NodeExternalModules = {
   'command-exists': CjsNamespace<typeof import('command-exists')>;
   mupdf: typeof import('mupdf');
   'press-ready': CjsNamespace<typeof import('press-ready')>;
-  'pdf-lib': CjsNamespace<typeof import('pdf-lib')>;
   'puppeteer-core': typeof import('puppeteer-core');
 };
 
