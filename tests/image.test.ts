@@ -158,7 +158,7 @@ async function replaceImages(
   });
   const failures: string[] = [];
   try {
-    using replaceImageHook = await createReplaceImageHook(
+    using replaceImageHook = createReplaceImageHook(
       options.replacements,
       options.ifIncompatibleImagesFound,
       failures,
@@ -2263,11 +2263,12 @@ describe('replaceImages', () => {
     expect(result).toEqual({ pdf: srcPdf, warnings: [], failures: [] });
   });
 
-  it('returns an empty hook when no replacement functions can be prepared and the policy is ignore', async () => {
+  it('returns the original PDF when no replacement functions can be prepared and the policy is ignore', async () => {
     const warning = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
     try {
-      using hook = await createReplaceImageHook(
+      using hook = createReplaceImageHook(
         [
           {
             source: path.join(fixturesDir, 'missing-source.png'),
@@ -2278,8 +2279,7 @@ describe('replaceImages', () => {
         [],
       );
 
-      expect(hook.visit).toBeUndefined();
-      expect(hook.complete).toBeUndefined();
+      expect(await editPdf(pdf, [hook], { signal })).toBe(pdf);
     } finally {
       warning.mockRestore();
     }
@@ -2514,7 +2514,7 @@ describe('PDF edit hooks', () => {
       [],
     );
     const failures: string[] = [];
-    using replaceImageHook = await createReplaceImageHook(
+    using replaceImageHook = createReplaceImageHook(
       [
         {
           source: path.join(fixturesDir, 'ck_rgb.png'),
