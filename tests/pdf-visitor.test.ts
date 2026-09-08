@@ -38,18 +38,18 @@ describe('editPdf', () => {
     expect(result).toBe(pdf);
   });
 
-  it('completes every registered hook', async () => {
+  it('runs every registered afterVisit hook', async () => {
     const firstVisit = vi.fn<NonNullable<PdfEditHook['visit']>>();
     const secondVisit = vi.fn<NonNullable<PdfEditHook['visit']>>();
-    const firstComplete = vi.fn<NonNullable<PdfEditHook['complete']>>();
-    const secondComplete = vi.fn<NonNullable<PdfEditHook['complete']>>();
+    const firstAfterVisit = vi.fn<NonNullable<PdfEditHook['afterVisit']>>();
+    const secondAfterVisit = vi.fn<NonNullable<PdfEditHook['afterVisit']>>();
     const firstHook: PdfEditHook = {
       visit: firstVisit,
-      complete: firstComplete,
+      afterVisit: firstAfterVisit,
     };
     const secondHook: PdfEditHook = {
       visit: secondVisit,
-      complete: secondComplete,
+      afterVisit: secondAfterVisit,
     };
     const pdf = fs.readFileSync(
       path.join(import.meta.dirname, 'fixtures', 'cmyk', 'text.pdf'),
@@ -59,8 +59,8 @@ describe('editPdf', () => {
 
     expect(firstVisit).toHaveBeenCalled();
     expect(secondVisit).toHaveBeenCalledTimes(firstVisit.mock.calls.length);
-    expect(firstComplete).toHaveBeenCalledOnce();
-    expect(secondComplete).toHaveBeenCalledOnce();
+    expect(firstAfterVisit).toHaveBeenCalledOnce();
+    expect(secondAfterVisit).toHaveBeenCalledOnce();
   });
 
   it('runs hooks in array order during one traversal', async () => {
@@ -97,14 +97,14 @@ describe('editPdf', () => {
     let firstVisits = 0;
     let secondVisits = 0;
     const firstHook: PdfEditHook = {
-      visit: (node) =>
+      visit: ({ document, node }) =>
         visitImageXObject(node, (imageNode) => {
-          const image = imageNode.document.loadImage(imageNode.object);
+          const image = document.loadImage(imageNode.object);
           try {
-            const replacement = imageNode.document.addImage(image);
+            const replacement = document.addImage(image);
             replacement
               .resolve()
-              .put('VisitMarker', imageNode.document.newName('Replaced'));
+              .put('VisitMarker', document.newName('Replaced'));
             replacementObjectNumber = replacement.asIndirect();
             imageNode.replaceWith(replacement);
             firstVisits++;
@@ -114,7 +114,7 @@ describe('editPdf', () => {
         }),
     };
     const secondHook: PdfEditHook = {
-      visit: (node) =>
+      visit: ({ node }) =>
         visitImageXObject(node, (imageNode) => {
           expect(imageNode.object.asIndirect()).toBe(replacementObjectNumber);
           expect(imageNode.objectNumber).toBe(replacementObjectNumber);
@@ -157,17 +157,19 @@ describe('editPdf', () => {
     expect(secondVisit).not.toHaveBeenCalled();
   });
 
-  it('stops completing hooks after cancellation', async () => {
+  it('stops running afterVisit hooks after cancellation', async () => {
     const controller = new AbortController();
-    const firstComplete = vi.fn<NonNullable<PdfEditHook['complete']>>(() => {
-      controller.abort();
-    });
-    const secondComplete = vi.fn<NonNullable<PdfEditHook['complete']>>();
+    const firstAfterVisit = vi.fn<NonNullable<PdfEditHook['afterVisit']>>(
+      () => {
+        controller.abort();
+      },
+    );
+    const secondAfterVisit = vi.fn<NonNullable<PdfEditHook['afterVisit']>>();
     const firstHook: PdfEditHook = {
-      complete: firstComplete,
+      afterVisit: firstAfterVisit,
     };
     const secondHook: PdfEditHook = {
-      complete: secondComplete,
+      afterVisit: secondAfterVisit,
     };
     const pdf = fs.readFileSync(
       path.join(import.meta.dirname, 'fixtures', 'cmyk', 'text.pdf'),
@@ -176,7 +178,7 @@ describe('editPdf', () => {
     await expect(
       editPdf(pdf, [firstHook, secondHook], { signal: controller.signal }),
     ).rejects.toThrow('This operation was aborted');
-    expect(firstComplete).toHaveBeenCalledOnce();
-    expect(secondComplete).not.toHaveBeenCalled();
+    expect(firstAfterVisit).toHaveBeenCalledOnce();
+    expect(secondAfterVisit).not.toHaveBeenCalled();
   });
 });

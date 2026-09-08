@@ -3,14 +3,12 @@ import fs from 'node:fs/promises';
 import upath from 'upath';
 
 import { disposable } from '../disposable.js';
-import { importNodeModule } from '../node-modules.js';
 import type { PdfEditHook } from './pdf-visitor.js';
 
 export function createOutputIntentHook(profilePath: string): PdfEditHook {
   return {
-    async complete(document) {
+    async afterVisit({ document, mupdf }) {
       const profile = await fs.readFile(profilePath);
-      const mupdf = await importNodeModule('mupdf');
       using profileBuffer = disposable(new mupdf.Buffer(profile));
       using colorSpace = disposable(
         new mupdf.ColorSpace(profileBuffer, profilePath),

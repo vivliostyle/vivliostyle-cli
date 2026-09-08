@@ -10,7 +10,6 @@ import type {
 import { disposable, disposableOrNull } from '../disposable.js';
 import { createImageConversionReplaceFunction } from '../image-replacement.js';
 import { Logger } from '../logger.js';
-import { importNodeModule } from '../node-modules.js';
 import type { PdfEditHook, PdfImageXObjectNode } from './pdf-visitor.js';
 
 function premultiplySkiaColorSample(sample: number, alpha: number): number {
@@ -196,19 +195,19 @@ function disposeImages(
   }
 }
 
-async function createReplaceFn(
+function createReplaceFn(
   replacements: ResolvedReplaceImageConfig,
-): Promise<{
+  mupdf: typeof import('mupdf'),
+): {
   replaceFn: ReplaceFn | null;
   loadedImages: (mupdfType.Image & Disposable)[];
-}> {
+} {
   if (replacements.length === 0) {
     return {
       replaceFn: null,
       loadedImages: [],
     };
   }
-  const mupdf = await importNodeModule('mupdf');
   const replaceFns: ReplaceFn[] = [];
   const loadedImages: (mupdfType.Image & Disposable)[] = [];
   type PreparedReplaceFunction = ReturnType<
@@ -711,11 +710,12 @@ type ReplaceImageResult =
     };
 
 async function replaceImage(
+  document: mupdfType.PDFDocument,
   node: PdfImageXObjectNode,
   replaceFn: ReplaceFn | null,
   incompatibleImages: DeviceCmykIncompatibleImage[] | null,
 ): Promise<ReplaceImageResult> {
-  using pdfImage = disposable(node.document.loadImage(node.object));
+  using pdfImage = disposable(document.loadImage(node.object));
   let replacementRef: mupdfType.PDFObject | null = null;
   let cleanupCandidates: ReadonlySet<number> | null = null;
 
@@ -726,7 +726,7 @@ async function replaceImage(
     if (replacement !== null && replacement !== NO_REPLACEMENT_NEEDED) {
       using replacementImage = disposable(replacement.image);
       const addedImage = addReplacementImage(
-        node.document,
+        document,
         node.object,
         replacementImage,
       );
@@ -748,9 +748,7 @@ async function replaceImage(
         node.pageIndex,
       );
     } else {
-      using replacementImage = disposable(
-        node.document.loadImage(replacementRef),
-      );
+      using replacementImage = disposable(document.loadImage(replacementRef));
       incompatibleImage = collectDeviceCmykIncompatibleImage(
         replacementImage,
         node.key,
@@ -767,36 +765,46 @@ async function replaceImage(
     : { kind: 'unchanged' };
 }
 
-export async function createReplaceImageHook(
+// Use the returned hook for exactly one document visit and dispose it afterward; otherwise its loaded images leak.
+export function createReplaceImageHook(
   replacements: ResolvedReplaceImageConfig,
   ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'],
   failures: string[],
-): Promise<PdfEditHook & Disposable> {
-  const { replaceFn, loadedImages } = await createReplaceFn(replacements);
-  if (replaceFn === null && ifIncompatibleImagesFound === 'ignore') {
+): PdfEditHook & Disposable {
+  if (replacements.length === 0 && ifIncompatibleImagesFound === 'ignore') {
     return {
       [Symbol.dispose]() {},
     };
   }
 
+  let replaceFn: ReplaceFn | null = null;
+  let loadedImages: (mupdfType.Image & Disposable)[] = [];
   const incompatibleImages: DeviceCmykIncompatibleImage[] | null =
     ifIncompatibleImagesFound === 'ignore' ? null : [];
   let replaced = 0;
   let total = 0;
   const cleanupCandidateBatches: ReadonlySet<number>[] = [];
   return {
-    async visit(node) {
+    beforeVisit({ mupdf }) {
+      ({ replaceFn, loadedImages } = createReplaceFn(replacements, mupdf));
+    },
+    async visit({ document, node }) {
       if (node.kind !== 'image-xobject') {
         return;
       }
-      const result = await replaceImage(node, replaceFn, incompatibleImages);
+      const result = await replaceImage(
+        document,
+        node,
+        replaceFn,
+        incompatibleImages,
+      );
       total++;
       if (result.kind === 'replaced') {
         replaced++;
         cleanupCandidateBatches.push(result.cleanupCandidates);
       }
     },
-    complete(document) {
+    afterVisit({ document }) {
       const cleanupCandidates = new Set<number>();
       for (const batch of cleanupCandidateBatches) {
         for (const objectNumber of batch) {
