@@ -21,14 +21,8 @@ vi.mock('../src/util.js', async (importOriginal) => ({
   isInContainer: vi.fn<() => boolean>(() => false),
 }));
 
-import { PostProcess } from '../src/output/pdf-postprocess.js';
+import { postProcessPDF } from '../src/output/pdf-postprocess.js';
 import { runCleanupHandlers } from '../src/util.js';
-
-function createPostProcess(document: any) {
-  return Object.assign(Object.create(PostProcess.prototype), {
-    document,
-  }) as PostProcess;
-}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -36,13 +30,10 @@ beforeEach(() => {
 
 it('passes the signal to press-ready Docker preflight', async () => {
   const controller = new AbortController();
-  const post = createPostProcess({
-    save: vi.fn<() => Promise<Uint8Array>>(() =>
-      Promise.resolve(new Uint8Array([1])),
-    ),
-  });
 
-  await post.save('output.pdf', {
+  await postProcessPDF({
+    pdf: new Uint8Array([1]),
+    output: 'output.pdf',
     preflight: 'press-ready',
     preflightOption: [],
     image: 'vivliostyle/cli',
@@ -66,13 +57,10 @@ it('waits for press-ready before removing the temporary preflight input', async 
       finishPreflight = resolve;
     }),
   );
-  const post = createPostProcess({
-    save: vi.fn<() => Promise<Uint8Array>>(() =>
-      Promise.resolve(new Uint8Array([1])),
-    ),
-  });
 
-  const saving = post.save('output.pdf', {
+  const saving = postProcessPDF({
+    pdf: new Uint8Array([1]),
+    output: 'output.pdf',
     preflight: 'press-ready',
     preflightOption: [],
     image: 'vivliostyle/cli',

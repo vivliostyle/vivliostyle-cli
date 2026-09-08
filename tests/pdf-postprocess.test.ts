@@ -12,7 +12,7 @@ import {
   createIccConversion,
 } from '../src/image-replacement.js';
 import { Logger } from '../src/logger.js';
-import { PostProcess } from '../src/output/pdf-postprocess.js';
+import { postProcessPDF } from '../src/output/pdf-postprocess.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 const temporaryDir = path.join(import.meta.dirname, '..', '.tmp');
@@ -39,8 +39,9 @@ async function runSave(
   let error: Error | null = null;
 
   try {
-    const postProcess = await PostProcess.load(pdf);
-    await postProcess.save(output, {
+    await postProcessPDF({
+      pdf,
+      output,
       preflight: undefined,
       preflightOption: [],
       image: '',
