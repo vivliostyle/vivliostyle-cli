@@ -458,6 +458,12 @@ export async function editPdf(
     return pdf;
   }
 
+  // NOTE: Should we enable objstms? pdf-lib previously enabled the equivalent
+  // useObjectStreams option by default, reducing file size while producing PDF
+  // 1.7. MuPDF requires objstms to be enabled explicitly. Keeping it disabled
+  // increases file size but keeps Chromium-generated output at PDF 1.4.
+  // PDF/X-1a:2003 is based on PDF 1.4, while PDF/X-4 is based on PDF 1.6, so
+  // retaining PDF 1.4 has a practical rationale.
   using outputBuffer = disposable(document.saveToBuffer('compress'));
   // Create a copy to ensure the data remains valid after the buffer is destroyed
   return new Uint8Array(outputBuffer.asUint8Array());
