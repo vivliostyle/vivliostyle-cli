@@ -27,18 +27,32 @@ function premultiplySkiaColorSample(sample: number, alpha: number): number {
   return (product + (product >> 8)) >> 8;
 }
 
+type ImageColorSpace = 'RGB' | 'CMYK' | 'Gray' | null;
+
+interface ImageComparisonGate {
+  imageWidth: number;
+  imageHeight: number;
+  pixmap: {
+    pixels: Uint8Array;
+    stride: number;
+    components: number;
+    hasAlpha: boolean;
+    colorSpace: ImageColorSpace;
+  };
+}
+
 function pixmapsEqual(
   pdfPixmap: mupdfType.Pixmap,
-  sourcePixmap: mupdfType.Pixmap,
+  sourcePixmap: ImageComparisonGate['pixmap'],
   maskPixmap: mupdfType.Pixmap | null,
   sourceGrayExpandedToRgb: boolean,
 ): boolean {
   const pdfHasAlpha = pdfPixmap.getAlpha() !== 0;
-  const sourceHasAlpha = sourcePixmap.getAlpha() !== 0;
+  const sourceHasAlpha = sourcePixmap.hasAlpha;
   const pdfColorComponents =
     pdfPixmap.getNumberOfComponents() - Number(pdfHasAlpha);
   const sourceColorComponents =
-    sourcePixmap.getNumberOfComponents() - Number(sourceHasAlpha);
+    sourcePixmap.components - Number(sourceHasAlpha);
   if (
     pdfColorComponents !== sourceColorComponents &&
     !(
@@ -66,7 +80,7 @@ function pixmapsEqual(
     !sourceGrayExpandedToRgb
   ) {
     const pdfPixels = pdfPixmap.getPixels();
-    const sourcePixels = sourcePixmap.getPixels();
+    const sourcePixels = sourcePixmap.pixels;
     return (
       pdfPixels.length === sourcePixels.length &&
       Buffer.compare(Buffer.from(pdfPixels), Buffer.from(sourcePixels)) === 0
@@ -74,13 +88,13 @@ function pixmapsEqual(
   }
 
   const pdfPixels = pdfPixmap.getPixels();
-  const sourcePixels = sourcePixmap.getPixels();
+  const sourcePixels = sourcePixmap.pixels;
   const maskPixels = maskPixmap?.getPixels();
   const pdfStride = pdfPixmap.getStride();
-  const sourceStride = sourcePixmap.getStride();
+  const sourceStride = sourcePixmap.stride;
   const maskStride = maskPixmap?.getStride() ?? 0;
   const pdfComponents = pdfPixmap.getNumberOfComponents();
-  const sourceComponents = sourcePixmap.getNumberOfComponents();
+  const sourceComponents = sourcePixmap.components;
   const maskComponents = maskPixmap?.getNumberOfComponents() ?? 0;
   const width = pdfPixmap.getWidth();
   const height = pdfPixmap.getHeight();
@@ -119,39 +133,60 @@ function pixmapsEqual(
   return true;
 }
 
+function createImageComparisonGate(
+  sourceImage: mupdfType.Image,
+): ImageComparisonGate {
+  using sourcePixmap = disposable(sourceImage.toPixmap());
+  using sourceColorSpace = disposableOrNull(sourcePixmap.getColorSpace());
+  const colorSpace: ImageColorSpace = sourceColorSpace?.isRGB()
+    ? 'RGB'
+    : sourceColorSpace?.isCMYK()
+      ? 'CMYK'
+      : sourceColorSpace?.isGray()
+        ? 'Gray'
+        : null;
+  return {
+    imageWidth: sourceImage.getWidth(),
+    imageHeight: sourceImage.getHeight(),
+    pixmap: {
+      pixels: Uint8Array.from(sourcePixmap.getPixels()),
+      stride: sourcePixmap.getStride(),
+      components: sourcePixmap.getNumberOfComponents(),
+      hasAlpha: sourcePixmap.getAlpha() !== 0,
+      colorSpace,
+    },
+  };
+}
+
 function imagesEqual(
   pdfImage: mupdfType.Image,
-  sourceImage: mupdfType.Image,
+  sourceGate: ImageComparisonGate,
 ): boolean {
   if (
-    pdfImage.getWidth() !== sourceImage.getWidth() ||
-    pdfImage.getHeight() !== sourceImage.getHeight()
+    pdfImage.getWidth() !== sourceGate.imageWidth ||
+    pdfImage.getHeight() !== sourceGate.imageHeight
   ) {
     return false;
   }
 
   using pdfPixmap = disposable(pdfImage.toPixmap());
-  using sourcePixmap = disposable(sourceImage.toPixmap());
-
   using pdfColorSpace = disposableOrNull(pdfPixmap.getColorSpace());
-  using sourceColorSpace = disposableOrNull(sourcePixmap.getColorSpace());
   const matchingColorSpaces =
     pdfColorSpace !== null &&
-    sourceColorSpace !== null &&
-    ((pdfColorSpace.isRGB() && sourceColorSpace.isRGB()) ||
-      (pdfColorSpace.isCMYK() && sourceColorSpace.isCMYK()) ||
-      (pdfColorSpace.isGray() && sourceColorSpace.isGray()));
+    ((pdfColorSpace.isRGB() && sourceGate.pixmap.colorSpace === 'RGB') ||
+      (pdfColorSpace.isCMYK() && sourceGate.pixmap.colorSpace === 'CMYK') ||
+      (pdfColorSpace.isGray() && sourceGate.pixmap.colorSpace === 'Gray'));
   // NOTE: Chromium/Skia preserves DeviceGray only for opaque kGray_8 images;
   // gray images with alpha take the BGRA-backed DeviceRGB path.
   // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=346-368
   // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=220-259
   const sourceGrayExpandedToRgb =
     pdfColorSpace?.isRGB() === true &&
-    sourceColorSpace?.isGray() === true &&
-    sourcePixmap.getAlpha() !== 0;
+    sourceGate.pixmap.colorSpace === 'Gray' &&
+    sourceGate.pixmap.hasAlpha;
   if (
     pdfColorSpace === null ||
-    sourceColorSpace === null ||
+    sourceGate.pixmap.colorSpace === null ||
     (!matchingColorSpaces && !sourceGrayExpandedToRgb)
   ) {
     return false;
@@ -161,7 +196,7 @@ function imagesEqual(
   using maskPixmap = disposableOrNull(maskImage?.toPixmap() ?? null);
   return pixmapsEqual(
     pdfPixmap,
-    sourcePixmap,
+    sourceGate.pixmap,
     maskPixmap,
     sourceGrayExpandedToRgb,
   );
@@ -187,29 +222,11 @@ type ReplaceFn = (
   | null
   | Promise<Replacement | typeof NO_REPLACEMENT_NEEDED | null>;
 
-function disposeImages(
-  images: readonly (mupdfType.Image & Disposable)[],
-): void {
-  for (const image of images) {
-    image[Symbol.dispose]();
-  }
-}
-
 function createReplaceFn(
   replacements: ResolvedReplaceImageConfig,
   mupdf: typeof import('mupdf'),
-): {
-  replaceFn: ReplaceFn | null;
-  loadedImages: (mupdfType.Image & Disposable)[];
-} {
-  if (replacements.length === 0) {
-    return {
-      replaceFn: null,
-      loadedImages: [],
-    };
-  }
+): ReplaceFn {
   const replaceFns: ReplaceFn[] = [];
-  const loadedImages: (mupdfType.Image & Disposable)[] = [];
   type PreparedReplaceFunction = ReturnType<
     typeof createImageConversionReplaceFunction
   >;
@@ -274,106 +291,91 @@ function createReplaceFn(
     };
   };
 
-  try {
-    for (const rule of replacements) {
-      if (!('source' in rule)) {
-        replaceFns.push(wrapReplaceFunction(rule, '[*]'));
-        continue;
-      }
-      const { source, replacement } = rule;
-      const replacementLabel =
-        typeof replacement === 'string' ? replacement : replacement.label;
-      let sourceImage: mupdfType.Image & Disposable;
+  for (const rule of replacements) {
+    if (!('source' in rule)) {
+      replaceFns.push(wrapReplaceFunction(rule, '[*]'));
+      continue;
+    }
+    const { source, replacement } = rule;
+    const replacementLabel =
+      typeof replacement === 'string' ? replacement : replacement.label;
+    let sourceGate: ImageComparisonGate;
 
-      try {
-        const srcBuffer = fs.readFileSync(source);
-        sourceImage = disposable(new mupdf.Image(srcBuffer));
-        Logger.debug(
-          `Loaded source image: ${source} (${sourceImage.getWidth()}x${sourceImage.getHeight()})`,
-        );
-      } catch (error) {
-        Logger.logWarn(
-          `Failed to load source image: ${source}: ${String(error)}`,
-        );
-        continue;
-      }
+    try {
+      const sourceBytes = fs.readFileSync(source);
+      using sourceImage = disposable(new mupdf.Image(sourceBytes));
+      sourceGate = createImageComparisonGate(sourceImage);
+      Logger.debug(
+        `Loaded source image: ${source} (${sourceImage.getWidth()}x${sourceImage.getHeight()})`,
+      );
+    } catch (error) {
+      Logger.logWarn(
+        `Failed to load source image: ${source}: ${String(error)}`,
+      );
+      continue;
+    }
 
-      if (typeof replacement !== 'string') {
-        loadedImages.push(sourceImage);
-        const replace = wrapReplaceFunction(replacement, source);
-        replaceFns.push((context) => {
-          if (!imagesEqual(context.image, sourceImage)) {
-            return null;
-          }
-          return replace(context);
-        });
-        continue;
-      }
-
-      let replacementImage: (mupdfType.Image & Disposable) | undefined;
-      try {
-        const replacementBytes = fs.readFileSync(replacement);
-        replacementImage = disposable(new mupdf.Image(replacementBytes));
-        Logger.debug(
-          `Loaded replacement image: ${replacement} (${replacementImage.getWidth()}x${replacementImage.getHeight()})`,
-        );
-      } catch (error) {
-        sourceImage[Symbol.dispose]();
-        replacementImage?.[Symbol.dispose]();
-        Logger.logWarn(
-          `Failed to load replacement image: ${replacement}: ${String(error)}`,
-        );
-        continue;
-      }
-
-      loadedImages.push(sourceImage, replacementImage);
-      replaceFns.push(({ image }) => {
-        if (!imagesEqual(image, sourceImage)) {
+    if (typeof replacement !== 'string') {
+      const replace = wrapReplaceFunction(replacement, source);
+      replaceFns.push((context) => {
+        if (!imagesEqual(context.image, sourceGate)) {
           return null;
         }
-        return {
-          image: new mupdf.Image(replacementImage.pointer),
-          sourceLabel: source,
-          replacementLabel,
-        };
+        return replace(context);
       });
+      continue;
     }
-  } catch (error) {
-    disposeImages(loadedImages);
-    throw error;
+
+    let replacementBytes: Buffer;
+    try {
+      replacementBytes = fs.readFileSync(replacement);
+      using replacementImage = disposable(new mupdf.Image(replacementBytes));
+      Logger.debug(
+        `Loaded replacement image: ${replacement} (${replacementImage.getWidth()}x${replacementImage.getHeight()})`,
+      );
+    } catch (error) {
+      Logger.logWarn(
+        `Failed to load replacement image: ${replacement}: ${String(error)}`,
+      );
+      continue;
+    }
+
+    replaceFns.push(({ image }) => {
+      if (!imagesEqual(image, sourceGate)) {
+        return null;
+      }
+      return {
+        image: new mupdf.Image(replacementBytes),
+        sourceLabel: source,
+        replacementLabel,
+      };
+    });
   }
-  const replaceFn: ReplaceFn | null =
-    replaceFns.length === 0
-      ? null
-      : async (context) => {
-          // NOTE: If multiple matched files contain pixel-identical images,
-          // the same replacement function may be called once per match. This
-          // is only a small overhead when repeated calls with the same input
-          // return the same result, but a stateful function can make the
-          // result depend on the matched-file order. Whether replacement
-          // functions should instead run once per PDF image remains unsettled.
-          for (const replace of replaceFns) {
-            const inputImage = new mupdf.Image(context.image.pointer);
-            let inputMoved = false;
-            try {
-              const replacement = await replace({ image: inputImage });
-              if (replacement !== null) {
-                inputMoved =
-                  replacement !== NO_REPLACEMENT_NEEDED &&
-                  replacement.image === inputImage;
-                return replacement;
-              }
-            } finally {
-              if (!inputMoved) {
-                inputImage.destroy();
-              }
-            }
-          }
-          return null;
-        };
-  return {
-    replaceFn,
-    loadedImages,
+  return async (context) => {
+    // NOTE: If multiple matched files contain pixel-identical images,
+    // the same replacement function may be called once per match. This
+    // is only a small overhead when repeated calls with the same input
+    // return the same result, but a stateful function can make the
+    // result depend on the matched-file order. Whether replacement
+    // functions should instead run once per PDF image remains unsettled.
+    for (const replace of replaceFns) {
+      const inputImage = new mupdf.Image(context.image.pointer);
+      let inputMoved = false;
+      try {
+        const replacement = await replace({ image: inputImage });
+        if (replacement !== null) {
+          inputMoved =
+            replacement !== NO_REPLACEMENT_NEEDED &&
+            replacement.image === inputImage;
+          return replacement;
+        }
+      } finally {
+        if (!inputMoved) {
+          inputImage.destroy();
+        }
+      }
+    }
+    return null;
   };
 }
 
@@ -712,14 +714,14 @@ type ReplaceImageResult =
 async function replaceImage(
   document: mupdfType.PDFDocument,
   node: PdfImageXObjectNode,
-  replaceFn: ReplaceFn | null,
+  replaceFn: ReplaceFn,
   incompatibleImages: DeviceCmykIncompatibleImage[] | null,
 ): Promise<ReplaceImageResult> {
   using pdfImage = disposable(document.loadImage(node.object));
   let replacementRef: mupdfType.PDFObject | null = null;
   let cleanupCandidates: ReadonlySet<number> | null = null;
 
-  if (node.resourceVisit === 'initial' && replaceFn !== null) {
+  if (node.resourceVisit === 'initial') {
     const replacement = await replaceFn({
       image: pdfImage,
     });
@@ -765,20 +767,17 @@ async function replaceImage(
     : { kind: 'unchanged' };
 }
 
-// Use the returned hook for exactly one document visit and dispose it afterward; otherwise its loaded images leak.
 export function createReplaceImageHook(
   replacements: ResolvedReplaceImageConfig,
   ifIncompatibleImagesFound: CmykConfig['ifIncompatibleImagesFound'],
   failures: string[],
-): PdfEditHook & Disposable {
+): PdfEditHook {
   if (replacements.length === 0 && ifIncompatibleImagesFound === 'ignore') {
-    return {
-      [Symbol.dispose]() {},
-    };
+    return {};
   }
 
-  let replaceFn: ReplaceFn | null = null;
-  let loadedImages: (mupdfType.Image & Disposable)[] = [];
+  let replaceFn: ReplaceFn = () => null;
+  let replaceFnInitialized = false;
   const incompatibleImages: DeviceCmykIncompatibleImage[] | null =
     ifIncompatibleImagesFound === 'ignore' ? null : [];
   let replaced = 0;
@@ -786,7 +785,14 @@ export function createReplaceImageHook(
   const cleanupCandidateBatches: ReadonlySet<number>[] = [];
   return {
     beforeVisit({ mupdf }) {
-      ({ replaceFn, loadedImages } = createReplaceFn(replacements, mupdf));
+      incompatibleImages?.splice(0);
+      replaced = 0;
+      total = 0;
+      cleanupCandidateBatches.splice(0);
+      if (!replaceFnInitialized) {
+        replaceFn = createReplaceFn(replacements, mupdf);
+        replaceFnInitialized = true;
+      }
     },
     async visit({ document, node }) {
       if (node.kind !== 'image-xobject') {
@@ -830,9 +836,6 @@ export function createReplaceImageHook(
           `${incompatibleImages.length} image(s) incompatible with Device CMYK color`,
         );
       }
-    },
-    [Symbol.dispose]() {
-      disposeImages(loadedImages);
     },
   };
 }
