@@ -1,6 +1,9 @@
+import fs from 'node:fs';
 import os from 'node:os';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { BrowserPlatform } from '../src/util.js';
 
 const mockedLaunch = vi.hoisted(() =>
   vi.fn<(options?: unknown) => Promise<unknown>>(),
@@ -13,12 +16,30 @@ const mockedUseTmpDirectory = vi.hoisted(() =>
     Promise.resolve(['/tmp/vivliostyle-home-test', () => {}]),
   ),
 );
+const mockedDetectBrowserPlatform = vi.hoisted(() =>
+  vi.fn<() => BrowserPlatform | undefined>(),
+);
+const mockedResolveBuildId = vi.hoisted(() =>
+  vi.fn<
+    (browser: string, platform: BrowserPlatform, tag: string) => Promise<string>
+  >(),
+);
+const mockedComputeExecutablePath = vi.hoisted(() =>
+  vi.fn<
+    (options: { cacheDir: string; browser: string; buildId: string }) => string
+  >(),
+);
 
 vi.mock('../src/node-modules.js', () => ({
-  importNodeModule: vi.fn<() => Promise<unknown>>(() =>
-    Promise.resolve({
-      launch: mockedLaunch,
-    }),
+  importNodeModule: vi.fn<(name: string) => Promise<unknown>>((name) =>
+    Promise.resolve(
+      name === 'puppeteer-core'
+        ? { launch: mockedLaunch }
+        : {
+            resolveBuildId: mockedResolveBuildId,
+            computeExecutablePath: mockedComputeExecutablePath,
+          },
+    ),
   ),
 }));
 
@@ -26,6 +47,8 @@ vi.mock('../src/util.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/util.js')>();
   return {
     ...actual,
+    detectBrowserPlatform: mockedDetectBrowserPlatform,
+    getCacheDir: () => '/__vivliostyle_browser_test_cache__',
     registerCleanupHandler: mockedRegisterCleanupHandler,
     useTmpDirectory: mockedUseTmpDirectory,
   };
@@ -181,6 +204,79 @@ describe('launchPreview', () => {
     await cleanup;
     expect(browserClose).toHaveBeenCalledOnce();
     await expect(launching).rejects.toThrow(Error);
+  });
+});
+
+describe('browser executable resolution', () => {
+  const chromePlatforms = [
+    'linux',
+    'linux_arm',
+    'mac',
+    'mac_arm',
+    'win32',
+    'win64',
+  ] as const satisfies readonly BrowserPlatform[];
+
+  const launch = (type: 'chrome' | 'chromium') =>
+    launchPreview({
+      mode: 'build',
+      url: 'https://example.com',
+      config: {
+        browser: {
+          type,
+          tag: 'stable',
+          executablePath: undefined,
+        },
+        proxy: undefined,
+        sandbox: false,
+        ignoreHttpsErrors: false,
+        timeout: 1000,
+      },
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(fs, 'readFileSync').mockImplementation(() => {
+      throw new Error('Browser cache is unavailable');
+    });
+    vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
+    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    mockedLaunch.mockRejectedValue(new Error('Browser launch stopped'));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each(chromePlatforms)(
+    'uses the resolved Chrome for Testing executable on %s',
+    async (platform) => {
+      mockedDetectBrowserPlatform.mockReturnValue(platform);
+      mockedResolveBuildId.mockResolvedValue('resolved-build-id');
+      mockedComputeExecutablePath.mockReturnValue(process.execPath);
+
+      await expect(launch('chrome')).rejects.toThrow('Browser launch stopped');
+
+      expect(mockedResolveBuildId).toHaveBeenCalledWith(
+        'chrome',
+        platform,
+        'stable',
+      );
+      expect(mockedLaunch).toHaveBeenCalledWith(
+        expect.objectContaining({ executablePath: process.execPath }),
+      );
+    },
+  );
+
+  it('uses the system Chromium executable on Linux ARM64', async () => {
+    mockedDetectBrowserPlatform.mockReturnValue('linux_arm');
+
+    await expect(launch('chromium')).rejects.toThrow('Browser launch stopped');
+
+    expect(mockedResolveBuildId).not.toHaveBeenCalled();
+    expect(mockedLaunch).toHaveBeenCalledWith(
+      expect.objectContaining({ executablePath: '/usr/bin/chromium' }),
+    );
   });
 });
 
