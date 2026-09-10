@@ -8,13 +8,14 @@
  * - https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base
  */
 
-/* Import partial CSS modules as needed */
-/* This example includes footnote external link styling */
-/* @import url(themes/node_modules/@vivliostyle/theme-base/css/partial/footnote-external-link.css); */
+/* Import modules of @vivliostyle/theme-base by the npm package name as needed */
+/* (The official themes already include the feature modules such as footnote, page, section and toc) */
+/* This example turns external links into footnotes */
+/* @import '@vivliostyle/theme-base/footnote/external-links'; */
 
-/* Import Prism.js CSS module for code syntax highlighting */
-/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/base.css); */
-/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/theme-okaidia.css); */
+/* Import Prism.js CSS modules for code syntax highlighting */
+/* @import '@vivliostyle/theme-base/prism'; */
+/* @import '@vivliostyle/theme-base/prism/theme-okaidia'; */
 
 :root {
   /* ===================================
@@ -25,7 +26,7 @@
   --vs-font-family:
     system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 
-  /* Base font size (default: 10pt for print, 16px for screen) */
+  /* Base font size */
   /* --vs-font-size: 11pt; */
 
   /* Line height */
@@ -53,11 +54,14 @@
    * =================================== */
 
   /* Text colors */
-  /* --vs-color-body: #5b4030; */
-  /* --vs--anchor-color: #0066cc; */
+  /* --vs-color-foreground: #5b4030; */
+  /* --vs--anchor-text-color: #0066cc; */
 
   /* Background colors */
-  /* --vs-color-bg: rgb(232, 220, 207); */
+  /* --vs-color-background: rgb(232, 220, 207); */
+
+  /* Border colors (rules of tables, blockquotes, etc.) */
+  /* --vs-color-border: #cccccc; */
 
   /* ===================================
    * Spacing
@@ -82,29 +86,32 @@
   /* Page margins */
   /* --vs-page--margin-top: 20mm; */
   /* --vs-page--margin-bottom: 20mm; */
-  /* --vs-page--margin-inner: 25mm; */
-  /* --vs-page--margin-outer: 25mm; */
+  /* --vs-page--margin-inside: 25mm; */
+  /* --vs-page--margin-outside: 25mm; */
 
   /* Headers and footers */
   /* Page numbers in bottom center */
-  /* --vs-page--mbox-content-bottom-center: counter(page); */
+  /* --vs-page--mbox-bottom-center-content: counter(page); */
 
   /* Document title in top left */
-  /* --vs-page--mbox-content-top-left: env(pub-title); */
+  /* --vs-page--mbox-top-left-content: env(pub-title); */
 
   /* Chapter title in top right */
-  /* --vs-page--mbox-content-top-right: env(doc-title); */
+  /* --vs-page--mbox-top-right-content: env(doc-title); */
+
+  /* Page numbers on the outer edge (bottom left on left pages, bottom right on right pages) */
+  /* --vs-page--mbox-bottom-outside-content: counter(page); */
 
   /* ===================================
    * Code Blocks (Prism.js)
-   * Note: You need to include the Prism.js CSS module additionally
+   * Note: You need to import the Prism.js CSS module additionally
    * or use the theme that includes it. (e.g., @vivliostyle/theme-techbook)
    * =================================== */
 
   /* Code block styling */
   /* --vs-prism--background: #101842; */
-  /* --vs-prism--color: #eff4b8; */
-  /* --vs-prism--color-comment: #869db7; */
+  /* --vs-prism--text-color: #eff4b8; */
+  /* --vs-prism--comment-text-color: #869db7; */
   /* --vs-prism--block-code-padding: 0.5em 1.5em; */
 
   /* ===================================
@@ -112,7 +119,7 @@
    * =================================== */
 
   /* Footnote reference marker */
-  /* --vs-footnote--call-content: "[" counter(footnote) "]"; */
+  /* --vs-footnote--call-content: "[" counter(vs-counter-footnote) "]"; */
 
   /* Footnote text size */
   /* --vs-footnote--call-font-size: 0.8em; */
@@ -124,10 +131,8 @@
    * Table of Contents
    * =================================== */
 
-  /* TOC indentation */
-  /* --vs-toc--indent-level-1: 0; */
-  /* --vs-toc--indent-level-2: 1em; */
-  /* --vs-toc--indent-level-3: 2em; */
+  /* TOC indentation per level */
+  /* --vs-toc--ol-indent-size: 1.5rem; */
 
   /* TOC page content style */
   /* --vs-toc--page-counter-style: roman; */
@@ -143,7 +148,11 @@
   /* Show section numbers in headings */
   /* --vs-section--marker-display: inline; */
 
-  /* Section numbering format */
+  /* Section numbering style */
+  /* --vs-section--counter-style: upper-roman; */
+  /* --vs-section--counter-delimiter: '-'; */
+
+  /* Section numbering format (prefix the chapter number of each document) */
   /* --vs-section--h1-marker-content: counter(vs-counter-doc); */
   /* --vs-section--h2-marker-content: var(--vs-section--h1-marker-content) '.' counter(vs-counter-sec-h2); */
   /* --vs-section--h3-marker-content: var(--vs-section--h2-marker-content) '.' counter(vs-counter-sec-h3); */
@@ -158,9 +167,19 @@
    * Cross-References
    * =================================== */
 
-  /* Figure and table reference format */
-  /* --vs-crossref--counter-style: decimal; */
-  /* --vs-crossref--marker-cite-content: "[" target-counter(attr(href), citation) "]"; */
+  /* Numbering style of figures, tables, etc. */
+  /* --vs-counter-style: decimal; */
+
+  /* Figure and table labels */
+  /* --vs-figure--label: 'Fig. '; */
+  /* --vs-table--label: 'Tbl. '; */
+
+  /* Prefix the chapter number of each document (e.g., "Figure 2.3") */
+  /* --vs-crossref-marker-counter-prefix: counter(vs-counter-doc) '.'; */
+  /* --vs-crossref-call-counter-prefix: target-counter(attr(href), vs-counter-doc) '.'; */
+
+  /* Citation marker format */
+  /* --vs-citation--marker-content: counter(vs-counter-cite) '. '; */
 
   /* ===================================
    * Tables
@@ -185,16 +204,16 @@
    * =================================== */
 
   /* --vs--ul-list-style-type: "▶︎"; */
-  /* --vs--ul-minimum-inline-indent-size: 3rem; */
+  /* --vs--ul-padding-inline-start: 3rem; */
   /* --vs--ol-list-style-type: lower-roman; */
   /* --vs--ol-padding-inline-start: 2.5em; */
 
   /* ===================================
    * Multi-Column Layout
    * =================================== */
-  /* column-count: 2; */
-  /* column-gap: 2em; */
-  /* column-rule: 1px solid var(--vs-border-color); */
+  /* --vs-columns: 2; */
+  /* --vs-column-gap: 2em; */
+  /* --vs-column-rule-width: 1px; */
 }
 
 /* ===================================
@@ -206,16 +225,6 @@
 /* @page :first {
   @top-left { content: none; }
   @top-right { content: none; }
-} */
-
-/* Left and right pages with different layouts */
-
-/* @page :left {
-  --vs-page--mbox-content-bottom-left: counter(page);
-}
-
-@page :right {
-  --vs-page--mbox-content-bottom-right: counter(page);
 } */
 
 /* ===================================
