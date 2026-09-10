@@ -122,9 +122,14 @@ describe('vsBrowserPlugin cancellation', () => {
     await vi.waitFor(() => {
       expect(mockedLaunchPreview).toHaveBeenCalledOnce();
     });
+
+    const onError = vi.fn<(err: Error) => void>();
+    watcher.on('error', onError);
+    watcher.emit('error', new Error('boom'));
+    expect(onError).toHaveBeenCalledOnce();
+
     watcher.emit('change', 'while-launching.html');
     expect(onChange).not.toHaveBeenCalled();
-
     resolveLaunch({ page, closeBrowser: vi.fn<() => Promise<void>>() });
     await listening;
     watcher.emit('change', 'after-launch.html');
