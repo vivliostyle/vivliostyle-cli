@@ -14,9 +14,11 @@
 - [`createBuiltinRgbConversionReplacement`](#createbuiltinrgbconversionreplacement)
 - [`createIccConversion`](#createiccconversion)
 - [`createIccConversionReplacement`](#createiccconversionreplacement)
+- [`createTheme`](#createtheme)
 - [`createVitePlugin`](#createviteplugin)
 - [`defineConfig`](#defineconfig)
 - [`preview`](#preview)
+- [`validateTheme`](#validatetheme)
 - [`VFM`](#vfm)
 
 ### Interfaces
@@ -27,6 +29,8 @@
 - [`ReplaceFunctionContext`](#replacefunctioncontext)
 - [`StringifyMarkdownOptions`](#stringifymarkdownoptions)
 - [`TemplateVariable`](#templatevariable)
+- [`ThemeTemplateVariable`](#themetemplatevariable)
+- [`ThemeValidationResult`](#themevalidationresult)
 
 ### Type Aliases
 
@@ -78,6 +82,10 @@ build({
 
 `string` = `...`
 
+###### category?
+
+`"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
+
 ###### cmyk?
 
 `boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
@@ -107,6 +115,10 @@ build({
 `string` = `...`
 
 ###### cwd?
+
+`string` = `...`
+
+###### description?
 
 `string` = `...`
 
@@ -150,6 +162,10 @@ build({
 
 `string` = `...`
 
+###### license?
+
+`string` = `...`
+
 ###### logger?
 
 `LoggerInterface` = `...`
@@ -157,6 +173,10 @@ build({
 ###### logLevel?
 
 `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+
+###### name?
+
+`string` = `...`
 
 ###### openViewer?
 
@@ -253,6 +273,10 @@ build({
 ###### theme?
 
 `string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### themePath?
+
+`string` = `...`
 
 ###### timeout?
 
@@ -310,6 +334,10 @@ Scaffold a new Vivliostyle project.
 
 `string` = `...`
 
+###### category?
+
+`"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
+
 ###### cmyk?
 
 `boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
@@ -339,6 +367,10 @@ Scaffold a new Vivliostyle project.
 `string` = `...`
 
 ###### cwd?
+
+`string` = `...`
+
+###### description?
 
 `string` = `...`
 
@@ -382,6 +414,10 @@ Scaffold a new Vivliostyle project.
 
 `string` = `...`
 
+###### license?
+
+`string` = `...`
+
 ###### logger?
 
 `LoggerInterface` = `...`
@@ -389,6 +425,10 @@ Scaffold a new Vivliostyle project.
 ###### logLevel?
 
 `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+
+###### name?
+
+`string` = `...`
 
 ###### openViewer?
 
@@ -485,6 +525,10 @@ Scaffold a new Vivliostyle project.
 ###### theme?
 
 `string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### themePath?
+
+`string` = `...`
 
 ###### timeout?
 
@@ -651,13 +695,15 @@ profile and returns an image in the corresponding Device color space.
 
 ***
 
-### createVitePlugin()
+### createTheme()
 
-> **createVitePlugin**(`inlineConfig?`): `Promise`\<`Plugin`\<`any`\>[]\>
+> **createTheme**(`options`): `Promise`\<`void`\>
+
+Scaffold a new Vivliostyle theme package.
 
 #### Parameters
 
-##### inlineConfig?
+##### options
 
 ###### author?
 
@@ -670,6 +716,10 @@ profile and returns an image in the corresponding Device color space.
 ###### browser?
 
 `string` = `...`
+
+###### category?
+
+`"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
 
 ###### cmyk?
 
@@ -700,6 +750,10 @@ profile and returns an image in the corresponding Device color space.
 `string` = `...`
 
 ###### cwd?
+
+`string` = `...`
+
+###### description?
 
 `string` = `...`
 
@@ -743,6 +797,10 @@ profile and returns an image in the corresponding Device color space.
 
 `string` = `...`
 
+###### license?
+
+`string` = `...`
+
 ###### logger?
 
 `LoggerInterface` = `...`
@@ -750,6 +808,10 @@ profile and returns an image in the corresponding Device color space.
 ###### logLevel?
 
 `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+
+###### name?
+
+`string` = `...`
 
 ###### openViewer?
 
@@ -846,6 +908,260 @@ profile and returns an image in the corresponding Device color space.
 ###### theme?
 
 `string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### themePath?
+
+`string` = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### createVitePlugin()
+
+> **createVitePlugin**(`inlineConfig?`): `Promise`\<`Plugin`\<`any`\>[]\>
+
+#### Parameters
+
+##### inlineConfig?
+
+###### author?
+
+`string` = `...`
+
+###### bleed?
+
+`string` = `...`
+
+###### browser?
+
+`string` = `...`
+
+###### category?
+
+`"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
+
+###### cmyk?
+
+`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+
+###### config?
+
+`string` = `...`
+
+###### configData?
+
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` = `...`
+
+###### createConfigFileOnly?
+
+`boolean` = `...`
+
+###### cropMarks?
+
+`boolean` = `...`
+
+###### cropOffset?
+
+`string` = `...`
+
+###### css?
+
+`string` = `...`
+
+###### cwd?
+
+`string` = `...`
+
+###### description?
+
+`string` = `...`
+
+###### disableServerStartup?
+
+`boolean` = `...`
+
+###### enableStaticServe?
+
+`boolean` = `...`
+
+###### enableViewerStartPage?
+
+`boolean` = `...`
+
+###### executableBrowser?
+
+`string` = `...`
+
+###### host?
+
+`string` \| `boolean` = `...`
+
+###### ignoreHttpsErrors?
+
+`boolean` = `...`
+
+###### image?
+
+`string` = `...`
+
+###### input?
+
+`string` = `...`
+
+###### installDependencies?
+
+`boolean` = `...`
+
+###### language?
+
+`string` = `...`
+
+###### license?
+
+`string` = `...`
+
+###### logger?
+
+`LoggerInterface` = `...`
+
+###### logLevel?
+
+`"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+
+###### name?
+
+`string` = `...`
+
+###### openViewer?
+
+`boolean` = `...`
+
+###### output?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### port?
+
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### projectPath?
+
+`string` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### signal?
+
+`AbortSignal` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### stderr?
+
+`Writable` = `...`
+
+###### stdin?
+
+`Readable` = `...`
+
+###### stdout?
+
+`Writable` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### template?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### themePath?
+
+`string` = `...`
 
 ###### timeout?
 
@@ -921,6 +1237,10 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### category?
+
+`"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
+
 ###### cmyk?
 
 `boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
@@ -950,6 +1270,10 @@ Open a browser for previewing the publication.
 `string` = `...`
 
 ###### cwd?
+
+`string` = `...`
+
+###### description?
 
 `string` = `...`
 
@@ -993,6 +1317,10 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### license?
+
+`string` = `...`
+
 ###### logger?
 
 `LoggerInterface` = `...`
@@ -1000,6 +1328,10 @@ Open a browser for previewing the publication.
 ###### logLevel?
 
 `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+
+###### name?
+
+`string` = `...`
 
 ###### openViewer?
 
@@ -1097,6 +1429,10 @@ Open a browser for previewing the publication.
 
 `string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
 
+###### themePath?
+
+`string` = `...`
+
 ###### timeout?
 
 `number` = `...`
@@ -1128,6 +1464,260 @@ Open a browser for previewing the publication.
 #### Returns
 
 `Promise`\<`ViteDevServer`\>
+
+***
+
+### validateTheme()
+
+> **validateTheme**(`options`): `Promise`\<[`ThemeValidationResult`](#themevalidationresult)[]\>
+
+Validate a Vivliostyle theme package.
+
+#### Parameters
+
+##### options
+
+###### author?
+
+`string` = `...`
+
+###### bleed?
+
+`string` = `...`
+
+###### browser?
+
+`string` = `...`
+
+###### category?
+
+`"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
+
+###### cmyk?
+
+`boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} = `CmykSchema`
+
+###### config?
+
+`string` = `...`
+
+###### configData?
+
+[`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` = `...`
+
+###### createConfigFileOnly?
+
+`boolean` = `...`
+
+###### cropMarks?
+
+`boolean` = `...`
+
+###### cropOffset?
+
+`string` = `...`
+
+###### css?
+
+`string` = `...`
+
+###### cwd?
+
+`string` = `...`
+
+###### description?
+
+`string` = `...`
+
+###### disableServerStartup?
+
+`boolean` = `...`
+
+###### enableStaticServe?
+
+`boolean` = `...`
+
+###### enableViewerStartPage?
+
+`boolean` = `...`
+
+###### executableBrowser?
+
+`string` = `...`
+
+###### host?
+
+`string` \| `boolean` = `...`
+
+###### ignoreHttpsErrors?
+
+`boolean` = `...`
+
+###### image?
+
+`string` = `...`
+
+###### input?
+
+`string` = `...`
+
+###### installDependencies?
+
+`boolean` = `...`
+
+###### language?
+
+`string` = `...`
+
+###### license?
+
+`string` = `...`
+
+###### logger?
+
+`LoggerInterface` = `...`
+
+###### logLevel?
+
+`"silent"` \| `"info"` \| `"verbose"` \| `"debug"` = `...`
+
+###### name?
+
+`string` = `...`
+
+###### openViewer?
+
+`boolean` = `...`
+
+###### output?
+
+`string` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### port?
+
+`number` = `...`
+
+###### preflight?
+
+`"press-ready"` \| `"press-ready-local"` = `...`
+
+###### preflightOption?
+
+`string` \| `string`[] = `...`
+
+###### pressReady?
+
+`boolean` = `...`
+
+###### projectPath?
+
+`string` = `...`
+
+###### proxyBypass?
+
+`string` = `...`
+
+###### proxyPass?
+
+`string` = `...`
+
+###### proxyServer?
+
+`string` = `...`
+
+###### proxyUser?
+
+`string` = `...`
+
+###### quick?
+
+`boolean` = `...`
+
+###### readingProgression?
+
+`"ltr"` \| `"rtl"` = `...`
+
+###### renderMode?
+
+`"local"` \| `"docker"` = `...`
+
+###### sandbox?
+
+`boolean` = `...`
+
+###### signal?
+
+`AbortSignal` = `...`
+
+###### singleDoc?
+
+`boolean` = `...`
+
+###### size?
+
+`string` = `...`
+
+###### stderr?
+
+`Writable` = `...`
+
+###### stdin?
+
+`Readable` = `...`
+
+###### stdout?
+
+`Writable` = `...`
+
+###### style?
+
+`string` = `...`
+
+###### template?
+
+`string` = `...`
+
+###### theme?
+
+`string` \| `false` \| `object` & `object` \| (`string` \| `object` & `object`)[] = `...`
+
+###### themePath?
+
+`string` = `...`
+
+###### timeout?
+
+`number` = `...`
+
+###### title?
+
+`string` = `...`
+
+###### userStyle?
+
+`string` = `...`
+
+###### viewer?
+
+`string` = `...`
+
+###### viewerParam?
+
+`string` = `...`
+
+###### vite?
+
+`UserConfig` = `...`
+
+###### viteConfigFile?
+
+`string` \| `boolean` = `...`
+
+#### Returns
+
+`Promise`\<[`ThemeValidationResult`](#themevalidationresult)[]\>
+
+Validation results. The package is valid if no result has the type `error`.
 
 ***
 
@@ -1272,6 +1862,7 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-browser"></a> `browser?` | `object` |
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
+| <a id="property-category"></a> `category?` | `"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` |
 | <a id="property-cliversion"></a> `cliVersion` | `string` |
 | <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
 | <a id="property-config"></a> `config?` | `string` |
@@ -1282,6 +1873,7 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-cropoffset"></a> `cropOffset?` | `string` |
 | <a id="property-css"></a> `css?` | `string` |
 | <a id="property-cwd"></a> `cwd?` | `string` |
+| <a id="property-description"></a> `description?` | `string` |
 | <a id="property-disableserverstartup"></a> `disableServerStartup?` | `boolean` |
 | <a id="property-enablestaticserve"></a> `enableStaticServe?` | `boolean` |
 | <a id="property-enableviewerstartpage"></a> `enableViewerStartPage?` | `boolean` |
@@ -1294,8 +1886,10 @@ interface to the schema, so a drift in either direction is rejected.
 | `input.format` | `InputFormat` |
 | <a id="property-installdependencies"></a> `installDependencies?` | `boolean` |
 | <a id="property-language-1"></a> `language` | `string` |
+| <a id="property-license"></a> `license?` | `string` |
 | <a id="property-logger"></a> `logger?` | `LoggerInterface` |
 | <a id="property-loglevel"></a> `logLevel?` | `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` |
+| <a id="property-name"></a> `name?` | `string` |
 | <a id="property-openviewer"></a> `openViewer?` | `boolean` |
 | <a id="property-output"></a> `output?` | `object` & `object` & `object`[] |
 | <a id="property-port"></a> `port?` | `number` |
@@ -1321,6 +1915,7 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-template"></a> `template?` | `string` |
 | <a id="property-theme"></a> `theme?` | `string` \| `object` & `object` \| (`string` \| `object` & `object`)[] |
 | <a id="property-themepackage"></a> `themePackage?` | `VivliostylePackageJson` |
+| <a id="property-themepath"></a> `themePath?` | `string` |
 | <a id="property-timeout"></a> `timeout?` | `number` |
 | <a id="property-title-1"></a> `title` | `string` |
 | <a id="property-userstyle"></a> `userStyle?` | `string` |
@@ -1328,6 +1923,96 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-viewerparam"></a> `viewerParam?` | `string` |
 | <a id="property-vite"></a> `vite?` | `UserConfig` |
 | <a id="property-viteconfigfile"></a> `viteConfigFile?` | `string` \| `boolean` |
+
+***
+
+### ThemeTemplateVariable
+
+#### Extends
+
+- `ParsedVivliostyleInlineConfig`
+
+#### Properties
+
+| Property | Type |
+| ------ | ------ |
+| <a id="property-author-1"></a> `author` | `string` |
+| <a id="property-bleed-1"></a> `bleed?` | `string` |
+| <a id="property-browser-1"></a> `browser?` | `object` |
+| `browser.tag?` | `string` |
+| `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
+| <a id="property-category-1"></a> `category` | `"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` |
+| <a id="property-cliversion-1"></a> `cliVersion` | `string` |
+| <a id="property-cmyk-1"></a> `cmyk?` | `boolean` \| \{ `fallback?`: [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
+| <a id="property-config-1"></a> `config?` | `string` |
+| <a id="property-configdata-1"></a> `configData?` | [`VivliostyleConfigSchema`](#vivliostyleconfigschema) \| `null` |
+| <a id="property-coreversion-1"></a> `coreVersion` | `string` |
+| <a id="property-createconfigfileonly-1"></a> `createConfigFileOnly?` | `boolean` |
+| <a id="property-cropmarks-1"></a> `cropMarks?` | `boolean` |
+| <a id="property-cropoffset-1"></a> `cropOffset?` | `string` |
+| <a id="property-css-1"></a> `css?` | `string` |
+| <a id="property-cwd-1"></a> `cwd?` | `string` |
+| <a id="property-description-1"></a> `description` | `string` |
+| <a id="property-disableserverstartup-1"></a> `disableServerStartup?` | `boolean` |
+| <a id="property-enablestaticserve-1"></a> `enableStaticServe?` | `boolean` |
+| <a id="property-enableviewerstartpage-1"></a> `enableViewerStartPage?` | `boolean` |
+| <a id="property-executablebrowser-1"></a> `executableBrowser?` | `string` |
+| <a id="property-host-1"></a> `host?` | `string` \| `boolean` |
+| <a id="property-ignorehttpserrors-1"></a> `ignoreHttpsErrors?` | `boolean` |
+| <a id="property-image-2"></a> `image?` | `string` |
+| <a id="property-input-1"></a> `input?` | `object` |
+| `input.entry` | `string` |
+| `input.format` | `InputFormat` |
+| <a id="property-installdependencies-1"></a> `installDependencies` | `boolean` |
+| <a id="property-language-2"></a> `language?` | `string` |
+| <a id="property-license-1"></a> `license` | `string` |
+| <a id="property-logger-1"></a> `logger?` | `LoggerInterface` |
+| <a id="property-loglevel-1"></a> `logLevel?` | `"silent"` \| `"info"` \| `"verbose"` \| `"debug"` |
+| <a id="property-name-1"></a> `name` | `string` |
+| <a id="property-openviewer-1"></a> `openViewer?` | `boolean` |
+| <a id="property-output-1"></a> `output?` | `object` & `object` & `object`[] |
+| <a id="property-port-1"></a> `port?` | `number` |
+| <a id="property-preflight-1"></a> `preflight?` | `"press-ready"` \| `"press-ready-local"` |
+| <a id="property-preflightoption-1"></a> `preflightOption?` | `string`[] |
+| <a id="property-pressready-1"></a> `pressReady?` | `boolean` |
+| <a id="property-projectpath-1"></a> `projectPath` | `string` |
+| <a id="property-proxybypass-1"></a> `proxyBypass?` | `string` |
+| <a id="property-proxypass-1"></a> `proxyPass?` | `string` |
+| <a id="property-proxyserver-1"></a> `proxyServer?` | `string` |
+| <a id="property-proxyuser-1"></a> `proxyUser?` | `string` |
+| <a id="property-quick-1"></a> `quick?` | `boolean` |
+| <a id="property-readingprogression-1"></a> `readingProgression?` | `"ltr"` \| `"rtl"` |
+| <a id="property-rendermode-1"></a> `renderMode?` | `"local"` \| `"docker"` |
+| <a id="property-sandbox-1"></a> `sandbox?` | `boolean` |
+| <a id="property-signal-1"></a> `signal?` | `AbortSignal` |
+| <a id="property-singledoc-1"></a> `singleDoc?` | `boolean` |
+| <a id="property-size-1"></a> `size?` | `string` |
+| <a id="property-stderr-1"></a> `stderr?` | `Writable` |
+| <a id="property-stdin-1"></a> `stdin?` | `Readable` |
+| <a id="property-stdout-1"></a> `stdout?` | `Writable` |
+| <a id="property-style-2"></a> `style?` | `string` |
+| <a id="property-template-1"></a> `template` | `string` |
+| <a id="property-theme-1"></a> `theme?` | `false` \| `object` & `object`[] |
+| <a id="property-themename"></a> `themeName` | `string` |
+| <a id="property-themepath-1"></a> `themePath?` | `string` |
+| <a id="property-timeout-1"></a> `timeout?` | `number` |
+| <a id="property-title-2"></a> `title?` | `string` |
+| <a id="property-userstyle-1"></a> `userStyle?` | `string` |
+| <a id="property-viewer-1"></a> `viewer?` | `string` |
+| <a id="property-viewerparam-1"></a> `viewerParam?` | `string` |
+| <a id="property-vite-1"></a> `vite?` | `UserConfig` |
+| <a id="property-viteconfigfile-1"></a> `viteConfigFile?` | `string` \| `boolean` |
+
+***
+
+### ThemeValidationResult
+
+#### Properties
+
+| Property | Type |
+| ------ | ------ |
+| <a id="property-message"></a> `message` | `string` |
+| <a id="property-type"></a> `type` | `"error"` \| `"warning"` |
 
 ## Type Aliases
 
