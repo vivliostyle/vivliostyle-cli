@@ -434,11 +434,10 @@ export async function launchPreview({
     }
   } else if (
     detectBrowserPlatform() === 'linux_arm' &&
-    (browserConfig.type === 'chrome' || browserConfig.type === 'chromium')
+    browserConfig.type === 'chromium'
   ) {
-    // https://github.com/puppeteer/puppeteer/issues/7740
     Logger.logInfo(
-      'The official Chrome/Chromium binaries are not available for ARM64 Linux. Using the system-installed Chromium browser instead.',
+      'The official Chromium binaries are not available for ARM64 Linux. Using the system-installed Chromium browser instead.',
     );
     executableBrowser = '/usr/bin/chromium';
   } else {
