@@ -63,10 +63,41 @@ export const TEMPLATE_SETTINGS = [
   },
 ] as const;
 
+export const THEME_CATEGORIES = [
+  {
+    value: 'novel',
+    label: 'Novel',
+    hint: 'Novels and other literary works',
+  },
+  {
+    value: 'magazine',
+    label: 'Magazine',
+    hint: 'Magazines and other periodicals',
+  },
+  {
+    value: 'journal',
+    label: 'Journal',
+    hint: 'Academic journals, bulletins, and papers',
+  },
+  {
+    value: 'report',
+    label: 'Report',
+    hint: 'Reports, theses, and other documents',
+  },
+  {
+    value: 'misc',
+    label: 'Misc',
+    hint: 'Anything else, such as technical books and slides',
+  },
+] as const;
+export const DEFAULT_THEME_TEMPLATE =
+  'gh:vivliostyle/vivliostyle-cli/templates/theme';
+export const DEFAULT_THEME_LICENSE = 'MIT';
+
 export const TEMPLATE_DEFAULT_PACKAGE_JSON = `{
   "name": "{{kebab title}}",
-  "description": "{{proper title}}",
-  "author": "{{author}}",
+  "description": {{json (proper title)}},
+  "author": {{json author}},
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -84,13 +115,13 @@ export const TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS = `// @ts-check
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: "{{proper title}}",
-  author: "{{author}}",
+  title: {{json (proper title)}},
+  author: {{json author}},
   {{#if language}}
-  language: "{{language}}",
+  language: {{json language}},
   {{/if}}
   {{#if size}}
-  size: "{{size}}",
+  size: {{json size}},
   {{/if}}
   {{#if theme}}
   theme: {{json theme}},

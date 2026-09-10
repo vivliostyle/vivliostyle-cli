@@ -7,8 +7,9 @@ import type * as mupdfType from 'mupdf';
 import { satisfies as semverSatisfies } from 'semver';
 import upath from 'upath';
 import * as v from 'valibot';
+import validateNpmPackageName from 'validate-npm-package-name';
 
-import { CONTAINER_URL } from '../constants.js';
+import { CONTAINER_URL, THEME_CATEGORIES } from '../constants.js';
 import type { CMYKValue } from '../global-viewer.js';
 import type { LoggerInterface } from '../logger.js';
 import { cliVersion } from '../util.js';
@@ -89,6 +90,31 @@ export const ValidString = v.pipe(
   v.string(),
   v.trim(),
   v.minLength(1, 'At least one character is required'),
+);
+
+export const NpmPackageName = v.pipe(
+  ValidString,
+  v.rawCheck(({ dataset, addIssue }) => {
+    if (!dataset.typed) {
+      return;
+    }
+    const result = validateNpmPackageName(dataset.value);
+    if (!result.validForNewPackages) {
+      const reasons = [
+        ...(result.errors ?? []),
+        ...(result.warnings ?? []),
+      ].map((reason) =>
+        // npm's "URL-friendly" wording is inaccurate ("!" is URL-friendly but
+        // rejected) and does not tell users which characters are allowed
+        reason === 'name can only contain URL-friendly characters'
+          ? 'name can only contain lowercase letters, digits, hyphens, underscores, and periods, optionally prefixed with a scope such as @scope/'
+          : reason,
+      );
+      addIssue({
+        message: `Invalid npm package name: ${reasons.join('; ')}`,
+      });
+    }
+  }),
 );
 
 export const DocumentProcessorSchema = v.pipe(
@@ -1575,6 +1601,37 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
         Install dependencies after creating a project.
       `),
     ),
+    name: v.pipe(
+      NpmPackageName,
+      v.description($`
+        npm package name of the theme to create.
+      `),
+    ),
+    description: v.pipe(
+      v.string(),
+      v.trim(),
+      v.description($`
+        Description of the theme to create.
+      `),
+    ),
+    category: v.pipe(
+      v.picklist(THEME_CATEGORIES.map((c) => c.value)),
+      v.description($`
+        Category of the theme to create.
+      `),
+    ),
+    license: v.pipe(
+      ValidString,
+      v.description($`
+        SPDX license identifier of the theme to create.
+      `),
+    ),
+    themePath: v.pipe(
+      ValidString,
+      v.description($`
+        Path to the theme package directory to validate.
+      `),
+    ),
     stdin: v.pipe(
       v.custom<import('node:stream').Readable>(() => true),
       v.metadata({
@@ -1674,6 +1731,11 @@ export type InlineOptions = Pick<
   | 'template'
   | 'createConfigFileOnly'
   | 'installDependencies'
+  | 'name'
+  | 'description'
+  | 'category'
+  | 'license'
+  | 'themePath'
   | 'stdin'
   | 'stdout'
   | 'stderr'
@@ -1845,4 +1907,30 @@ export const VivliostylePackageMetadata = v.pipe(
 );
 export type VivliostylePackageMetadata = v.InferInput<
   typeof VivliostylePackageMetadata
+>;
+
+export const VivliostyleThemePackageJson = v.pipe(
+  v.object({
+    name: ValidString,
+    version: v.optional(ValidString),
+    description: v.optional(v.string()),
+    author: v.optional(
+      v.union([
+        ValidString,
+        v.object({
+          name: v.optional(ValidString),
+          email: v.optional(ValidString),
+          url: v.optional(ValidString),
+        }),
+      ]),
+    ),
+    main: v.optional(ValidString),
+    style: v.optional(ValidString),
+    keywords: v.optional(v.array(ValidString)),
+    vivliostyle: v.optional(VivliostylePackageMetadata),
+  }),
+  v.title('VivliostyleThemePackageJson'),
+);
+export type VivliostyleThemePackageJson = v.InferOutput<
+  typeof VivliostyleThemePackageJson
 >;

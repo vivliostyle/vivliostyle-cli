@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="210" height="280" role="img" aria-label="Diagram of a page with margins and margin boxes">
+  <rect x="0.5" y="0.5" width="299" height="399" fill="#ffffff" stroke="#333333"/>
+  <rect x="40" y="46" width="220" height="308" fill="none" stroke="#999999" stroke-dasharray="4 3"/>
+  <rect x="40" y="14" width="220" height="20" fill="#f0f0ec"/>
+  <rect x="40" y="366" width="220" height="20" fill="#f0f0ec"/>
+  <text x="150" y="28" font-family="sans-serif" font-size="10" fill="#666666" text-anchor="middle">running head</text>
+  <text x="150" y="380" font-family="sans-serif" font-size="10" fill="#666666" text-anchor="middle">page number</text>
+  <rect x="52" y="60" width="140" height="8" fill="#333333"/>
+  <rect x="52" y="82" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="92" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="102" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="112" width="130" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="132" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="142" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="152" width="170" height="4" fill="#bbbbbb"/>
+  <rect x="80" y="172" width="140" height="70" fill="#f0f0ec" stroke="#999999"/>
+  <text x="150" y="212" font-family="sans-serif" font-size="10" fill="#666666" text-anchor="middle">figure</text>
+  <rect x="52" y="262" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="272" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="282" width="196" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="292" width="110" height="4" fill="#bbbbbb"/>
+  <rect x="52" y="318" width="60" height="1" fill="#999999"/>
+  <rect x="52" y="326" width="150" height="3" fill="#cccccc"/>
+  <rect x="52" y="334" width="120" height="3" fill="#cccccc"/>
+  <text x="20" y="200" font-family="sans-serif" font-size="9" fill="#666666" text-anchor="middle" transform="rotate(-90 20 200)">inside margin</text>
+  <text x="280" y="200" font-family="sans-serif" font-size="9" fill="#666666" text-anchor="middle" transform="rotate(90 280 200)">outside margin</text>
+</svg>

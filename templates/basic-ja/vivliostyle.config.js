@@ -2,13 +2,13 @@
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: "{{proper title}}",
-  author: "{{author}}",
+  title: {{json (proper title)}},
+  author: {{json author}},
   {{#if language}}
-  language: "{{language}}",
+  language: {{json language}},
   {{/if}}
   {{#if size}}
-  size: "{{size}}",
+  size: {{json size}},
   {{/if}}
   theme: [
     {{#if theme}}

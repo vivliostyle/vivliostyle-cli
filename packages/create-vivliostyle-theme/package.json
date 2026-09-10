@@ -1,0 +1,32 @@
+{
+  "name": "create-vivliostyle-theme",
+  "description": "The fastest way to create a Vivliostyle theme package.",
+  "version": "11.2.0",
+  "author": "Vivliostyle Foundation",
+  "type": "module",
+  "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "bin": "dist/cli.js",
+  "keywords": [
+    "vivliostyle"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vivliostyle/vivliostyle-cli.git"
+  },
+  "homepage": "https://github.com/vivliostyle/vivliostyle-cli/tree/HEAD/packages/create-vivliostyle-theme",
+  "bugs": {
+    "url": "https://github.com/vivliostyle/vivliostyle-cli/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "@vivliostyle/cli": "workspace:*"
+  }
+}

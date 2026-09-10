@@ -5,6 +5,11 @@ import { VivliostyleInlineConfig } from './config/schema.js';
 import { build as _build } from './core/build.js';
 import { create as _create } from './core/create.js';
 import { preview as _preview } from './core/preview.js';
+import { createTheme as _createTheme } from './core/theme-create.js';
+import {
+  type ThemeValidationResult,
+  validateTheme as _validateTheme,
+} from './core/theme-validate.js';
 import type { PublicationManifest as _PublicationManifest } from './schema/publication.schema.js';
 
 export {
@@ -27,6 +32,8 @@ export type {
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
 } from './config/schema.js';
+export type { ThemeTemplateVariable } from './core/theme-create.js';
+export type { ThemeValidationResult } from './core/theme-validate.js';
 export type { TemplateVariable } from './create-template.js';
 export {
   createBuiltinCmykConversion,
@@ -86,4 +93,28 @@ export function preview(
 export function create(options: VivliostyleInlineConfig): Promise<void> {
   const parsed = v.parse(VivliostyleInlineConfig, options);
   return _create(parsed);
+}
+
+/**
+ * Scaffold a new Vivliostyle theme package.
+ *
+ * @param options
+ * @returns
+ */
+export function createTheme(options: VivliostyleInlineConfig): Promise<void> {
+  const parsed = v.parse(VivliostyleInlineConfig, options);
+  return _createTheme(parsed);
+}
+
+/**
+ * Validate a Vivliostyle theme package.
+ *
+ * @param options
+ * @returns Validation results. The package is valid if no result has the type `error`.
+ */
+export function validateTheme(
+  options: VivliostyleInlineConfig,
+): Promise<ThemeValidationResult[]> {
+  const parsed = v.parse(VivliostyleInlineConfig, options);
+  return _validateTheme(parsed);
 }

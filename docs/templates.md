@@ -106,6 +106,8 @@ The following Handlebars helpers are registered:
 | `lorem`   | Lorem ipsum placeholder text | (no input)                                          |
 | `json`    | JSON serialization           | object → JSON string                                |
 
+Template values are inserted without escaping. When you place a user-supplied value inside a JavaScript or JSON string literal, wrap it with the `json` helper (e.g. `{{json author}}` or `{{json (proper title)}}`) so that quotes and backslashes in the value are escaped properly.
+
 ### Example: `vivliostyle.config.js`
 
 ```js
@@ -113,10 +115,10 @@ The following Handlebars helpers are registered:
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: "{{proper title}}",
-  author: "{{author}}",
+  title: {{json (proper title)}},
+  author: {{json author}},
   {{#if language}}
-  language: "{{language}}",
+  language: {{json language}},
   {{/if}}
   {{#if theme}}
   theme: {{json theme}},
@@ -131,8 +133,8 @@ export default defineConfig({
 ```json
 {
   "name": "{{kebab title}}",
-  "description": "{{proper title}}",
-  "author": "{{author}}",
+  "description": {{json (proper title)}},
+  "author": {{json author}},
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -307,8 +309,8 @@ The following is the simplest possible template: a single Markdown file and a co
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: '{{proper title}}',
-  author: '{{author}}',
+  title: {{json (proper title)}},
+  author: {{json author}},
   entry: ['manuscript.md'],
 });
 ```
@@ -328,8 +330,8 @@ When a user runs `vivliostyle create my-book --title "My First Book" --author "J
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: 'My First Book',
-  author: 'Jane Doe',
+  title: "My First Book",
+  author: "Jane Doe",
   entry: ['manuscript.md'],
 });
 ```
