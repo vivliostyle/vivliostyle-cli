@@ -155,6 +155,40 @@ describe('theme create command', () => {
     expect(mockedExec.x).not.toHaveBeenCalled();
   });
 
+  it('escapes quotes and backslashes in template values', async () => {
+    await runCommand(
+      [
+        'theme create',
+        '--name',
+        'vivliostyle-theme-quoted',
+        '--description',
+        'A "quoted" \\ theme',
+        '--author',
+        'Acme "Inc." <acme@example.com>',
+        '--category',
+        'novel',
+        '--license',
+        'Custom "License"',
+        '--no-install-dependencies',
+        'my-theme',
+      ],
+      { cwd: '/work' },
+    );
+
+    const pkg = readPackageJson('/work/my-theme/package.json');
+    expect(pkg).toMatchObject({
+      description: 'A "quoted" \\ theme',
+      author: 'Acme "Inc." <acme@example.com>',
+      license: 'Custom "License"',
+      vivliostyle: {
+        theme: { author: 'Acme "Inc." <acme@example.com>' },
+      },
+    });
+    expect(
+      vol.readFileSync('/work/my-theme/vivliostyle.config.js', 'utf8'),
+    ).toMatch('author: "Acme \\"Inc.\\" <acme@example.com>",');
+  });
+
   it.each([
     [
       'my cool theme',

@@ -1,13 +1,13 @@
 {
   "name": "{{name}}",
   "version": "0.1.0",
-  "description": "{{description}}",
+  "description": {{json description}},
   "keywords": [
     "vivliostyle",
     "vivliostyle-theme"
   ],
-  "license": "{{license}}",
-  "author": "{{author}}",
+  "license": {{json license}},
+  "author": {{json author}},
   "files": [
     "*.css",
     "example",
@@ -29,8 +29,8 @@
   },
   "vivliostyle": {
     "theme": {
-      "name": "{{themeName}}",
-      "author": "{{author}}",
+      "name": {{json themeName}},
+      "author": {{json author}},
       "style": "theme.css",
       "category": "{{category}}",
       "topics": []

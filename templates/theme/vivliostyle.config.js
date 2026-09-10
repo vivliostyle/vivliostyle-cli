@@ -3,7 +3,7 @@ import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
   title: "{{themeName}} Example",
-  author: "{{author}}",
+  author: {{json author}},
   language: "en",
   size: "A5",
   theme: ".",

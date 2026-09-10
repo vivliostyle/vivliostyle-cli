@@ -274,6 +274,23 @@ describe('init command', () => {
     expect(files['/work/vivliostyle.config.js']).toMatchSnapshot();
   });
 
+  it('escapes quotes and backslashes in the config file', async () => {
+    await runCommand(
+      [
+        'init',
+        '--title',
+        'my "quoted" \\ book',
+        '--author',
+        'Author "Name" <author@example.com>',
+      ],
+      { cwd: '/work' },
+    );
+    const files = vol.toJSON();
+    const config = files['/work/vivliostyle.config.js'];
+    expect(config).toMatch('title: "My \\"Quoted\\" \\\\ Book",');
+    expect(config).toMatch('author: "Author \\"Name\\" <author@example.com>",');
+  });
+
   it('test the init command with short options', async () => {
     await runCommand(
       [

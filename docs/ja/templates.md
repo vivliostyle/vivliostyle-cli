@@ -106,6 +106,8 @@ vivliostyle create my-project --template minimal
 | `lorem`   | Lorem ipsum のダミーテキストを挿入 | （引数なし）                                        |
 | `json`    | JSON 文字列にシリアライズ          | オブジェクト → JSON 文字列                          |
 
+テンプレート変数はエスケープされずにそのまま挿入されます。ユーザーが入力した値を JavaScript や JSON の文字列リテラル内に置く場合は、`json` ヘルパーで囲む（例：`{{json author}}`、`{{json (proper title)}}`）ことで、値に含まれる引用符やバックスラッシュが正しくエスケープされます。
+
 ### 例：`vivliostyle.config.js`
 
 ```js
@@ -113,10 +115,10 @@ vivliostyle create my-project --template minimal
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: "{{proper title}}",
-  author: "{{author}}",
+  title: {{json (proper title)}},
+  author: {{json author}},
   {{#if language}}
-  language: "{{language}}",
+  language: {{json language}},
   {{/if}}
   {{#if theme}}
   theme: {{json theme}},
@@ -131,8 +133,8 @@ export default defineConfig({
 ```json
 {
   "name": "{{kebab title}}",
-  "description": "{{proper title}}",
-  "author": "{{author}}",
+  "description": {{json (proper title)}},
+  "author": {{json author}},
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -307,8 +309,8 @@ my-vivliostyle-theme/
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: '{{proper title}}',
-  author: '{{author}}',
+  title: {{json (proper title)}},
+  author: {{json author}},
   entry: ['manuscript.md'],
 });
 ```
@@ -328,8 +330,8 @@ export default defineConfig({
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: 'はじめての本',
-  author: '山田 太郎',
+  title: "はじめての本",
+  author: "山田 太郎",
   entry: ['manuscript.md'],
 });
 ```

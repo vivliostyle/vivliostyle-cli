@@ -96,8 +96,8 @@ export const DEFAULT_THEME_LICENSE = 'MIT';
 
 export const TEMPLATE_DEFAULT_PACKAGE_JSON = `{
   "name": "{{kebab title}}",
-  "description": "{{proper title}}",
-  "author": "{{author}}",
+  "description": {{json (proper title)}},
+  "author": {{json author}},
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -115,13 +115,13 @@ export const TEMPLATE_DEFAULT_VIVLIOSTYLE_CONFIG_JS = `// @ts-check
 import { defineConfig } from '@vivliostyle/cli';
 
 export default defineConfig({
-  title: "{{proper title}}",
-  author: "{{author}}",
+  title: {{json (proper title)}},
+  author: {{json author}},
   {{#if language}}
-  language: "{{language}}",
+  language: {{json language}},
   {{/if}}
   {{#if size}}
-  size: "{{size}}",
+  size: {{json size}},
   {{/if}}
   {{#if theme}}
   theme: {{json theme}},
