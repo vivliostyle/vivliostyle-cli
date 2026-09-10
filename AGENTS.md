@@ -28,7 +28,7 @@ Key areas:
 
 ## Development Commands
 
-Use pnpm. The repository declares `pnpm@11.10.0` and requires Node `>=22.12.0`.
+Use pnpm. The repository declares `pnpm@12.3.4` and requires Node `>=22.12.0`.
 
 - Install dependencies: `pnpm install`
 - Build everything: `pnpm build` (bundles the CLI, create-book, and create-vivliostyle-theme with tsdown, then builds docs; it does not type-check)
