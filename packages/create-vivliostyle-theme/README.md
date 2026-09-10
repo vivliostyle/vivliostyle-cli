@@ -20,7 +20,7 @@ Answer the questions, and a theme package is scaffolded from the [theme template
 
 ```bash
 npm create vivliostyle-theme@latest my-theme
-cd vivliostyle-theme-my-theme
+cd my-theme
 npm run example:preview
 ```
 
