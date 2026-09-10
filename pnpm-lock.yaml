@@ -119,9 +119,6 @@ importers:
       os-locale:
         specifier: 8.0.0
         version: 8.0.0
-      pdf-lib:
-        specifier: 1.17.1
-        version: 1.17.1
       picomatch:
         specifier: 4.0.4
         version: 4.0.4
@@ -300,6 +297,9 @@ importers:
       oxlint-tsgolint:
         specifier: 0.23.0
         version: 0.23.0
+      pdf-lib:
+        specifier: 1.17.1
+        version: 1.17.1
       pnpm:
         specifier: 11.10.0
         version: 11.10.0

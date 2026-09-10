@@ -16,7 +16,8 @@ import type { CmykMap, Meta, Payload, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
 import { pathEquals, toError } from '../util.js';
-import { type PageSizeData, PostProcess } from './pdf-postprocess.js';
+import type { PageSizeData } from './pdf-document.js';
+import { postProcessPDF } from './pdf-postprocess.js';
 
 export async function buildPDF({
   target,
@@ -319,18 +320,20 @@ export async function buildPDF({
   Logger.logUpdate('Processing PDF');
   fs.mkdirSync(upath.dirname(target.path), { recursive: true });
 
-  const post = await PostProcess.load(browserResult.pdf);
-  await post.metadata(browserResult.metadata, {
-    pageProgression: browserResult.pageProgression,
-    browserVersion: browserResult.browserVersion,
-    viewerCoreVersion: browserResult.viewerCoreVersion,
-    // If custom viewer is set and its version info is not available,
-    // there is no guarantee that the default creator option is correct.
-    disableCreatorOption: !!config.viewer && !browserResult.viewerCoreVersion,
-  });
-  await post.toc(browserResult.toc);
-  post.setPageBoxes(browserResult.pageSizeData);
-  await post.save(target.path, {
+  await postProcessPDF({
+    pdf: browserResult.pdf,
+    output: target.path,
+    metadata: browserResult.metadata,
+    metadataOptions: {
+      pageProgression: browserResult.pageProgression,
+      browserVersion: browserResult.browserVersion,
+      viewerCoreVersion: browserResult.viewerCoreVersion,
+      // If custom viewer is set and its version info is not available,
+      // there is no guarantee that the default creator option is correct.
+      disableCreatorOption: !!config.viewer && !browserResult.viewerCoreVersion,
+    },
+    tocItems: browserResult.toc,
+    pageSizeData: browserResult.pageSizeData,
     preflight: target.preflight,
     preflightOption: target.preflightOption,
     image: config.image,
