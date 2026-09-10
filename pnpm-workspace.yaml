@@ -5,6 +5,7 @@ packages:
 
 allowBuilds:
   esbuild: true
+  pnpm: false
   sharp: true
 
 saveExact: true
