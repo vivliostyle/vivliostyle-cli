@@ -158,13 +158,14 @@ Object {
  * - https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base
  */
 
-/* 必要に応じて部分的な CSS モジュールをインポートできます */
-/* 注釈に外部リンクを表示するスタイルの例 */
-/* @import url(themes/node_modules/@vivliostyle/theme-base/css/partial/footnote-external-link.css); */
+/* 必要に応じて @vivliostyle/theme-base のモジュールを npm パッケージ名でインポートできます */
+/* （公式テーマには footnote、page、section、toc などの機能モジュールがあらかじめ含まれています） */
+/* 外部リンクを脚注として表示する例 */
+/* @import '@vivliostyle/theme-base/footnote/external-links'; */
 
 /* コードのシンタックスハイライト用 Prism.js CSS モジュール */
-/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/base.css); */
-/* @import url(themes/node_modules/@vivliostyle/theme-base/css/lib/prism/theme-okaidia.css); */
+/* @import '@vivliostyle/theme-base/prism'; */
+/* @import '@vivliostyle/theme-base/prism/theme-okaidia'; */
 
 :root {
   /* ===================================
@@ -175,7 +176,7 @@ Object {
   --vs-font-family:
     '游明朝', 'YuMincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', serif;
 
-  /* 基本フォントサイズ（デフォルト: 印刷用 10pt、画面用 16px） */
+  /* 基本フォントサイズ */
   /* --vs-font-size: 11pt; */
 
   /* 行の高さ */
@@ -203,11 +204,14 @@ Object {
    * =================================== */
 
   /* テキスト色 */
-  /* --vs-color-body: #5b4030; */
-  /* --vs--anchor-color: #0066cc; */
+  /* --vs-color-foreground: #5b4030; */
+  /* --vs--anchor-text-color: #0066cc; */
 
   /* 背景色 */
-  /* --vs-color-bg: rgb(232, 220, 207); */
+  /* --vs-color-background: rgb(232, 220, 207); */
+
+  /* 罫線の色（表や引用ブロックなどの罫線） */
+  /* --vs-color-border: #cccccc; */
 
   /* ===================================
    * 余白
@@ -226,28 +230,193 @@ Object {
    * ページレイアウト（PDF 出力用）
    * =================================== */
 
+  /* ページサイズ */
+  /* --vs-page--size: A4; */
+
   /* ページマージン */
   /* --vs-page--margin-top: 20mm; */
   /* --vs-page--margin-bottom: 20mm; */
-  /* --vs-page--margin-inner: 25mm; */
-  /* --vs-page--margin-outer: 25mm; */
+  /* --vs-page--margin-inside: 25mm; */
+  /* --vs-page--margin-outside: 25mm; */
 
   /* ヘッダーとフッター */
   /* ページ番号をページ下部中央に表示 */
-  /* --vs-page--mbox-content-bottom-center: counter(page); */
+  /* --vs-page--mbox-bottom-center-content: counter(page); */
 
   /* ドキュメントタイトルを左上に表示 */
-  /* --vs-page--mbox-content-top-left: env(pub-title); */
+  /* --vs-page--mbox-top-left-content: env(pub-title); */
 
   /* 章タイトルを右上に表示 */
-  /* --vs-page--mbox-content-top-right: env(doc-title); */
+  /* --vs-page--mbox-top-right-content: env(doc-title); */
+
+  /* ページ番号を小口側に表示（左ページでは左下、右ページでは右下） */
+  /* --vs-page--mbox-bottom-outside-content: counter(page); */
 
   /* ===================================
    * コードブロック（Prism.js）
-   * 注: Prism.js CSS モジュールを追加でインクルードするか、
+   * 注: Prism.js CSS モジュールを追加でインポートするか、
    * それを含むテーマを使用する必要があります（例: @vivliostyle/theme-techbook）
    * =================================== */
+
+  /* コードブロックのスタイル */
+  /* --vs-prism--background: #101842; */
+  /* --vs-prism--text-color: #eff4b8; */
+  /* --vs-prism--comment-text-color: #869db7; */
+  /* --vs-prism--block-code-padding: 0.5em 1.5em; */
+
+  /* ===================================
+   * 脚注
+   * =================================== */
+
+  /* 脚注参照マーカー */
+  /* --vs-footnote--call-content: \\"[\\" counter(vs-counter-footnote) \\"]\\"; */
+
+  /* 脚注テキストサイズ */
+  /* --vs-footnote--call-font-size: 0.8em; */
+
+  /* 脚注エリアの余白 */
+  /* --vs-footnote--area-before-margin-inline: 2em; */
+
+  /* ===================================
+   * 目次
+   * =================================== */
+
+  /* 目次の階層ごとのインデント */
+  /* --vs-toc--ol-indent-size: 1.5rem; */
+
+  /* 目次ページ内容のスタイル */
+  /* --vs-toc--page-counter-style: roman; */
+  /* --vs-toc--page-leader-content: leader(' ✻ ') ' '; */
+
+  /* 目次の番号 */
+  /* --vs-toc--marker-display: inline; */
+
+  /* ===================================
+   * セクション番号
+   * =================================== */
+
+  /* 見出しにセクション番号を表示 */
+  /* --vs-section--marker-display: inline; */
+
+  /* セクション番号のスタイル */
+  /* --vs-section--counter-style: upper-roman; */
+  /* --vs-section--counter-delimiter: '-'; */
+
+  /* セクション番号の形式（ドキュメントごとの章番号を先頭に付ける） */
+  /* --vs-section--h1-marker-content: counter(vs-counter-doc); */
+  /* --vs-section--h2-marker-content: var(--vs-section--h1-marker-content) '.' counter(vs-counter-sec-h2); */
+  /* --vs-section--h3-marker-content: var(--vs-section--h2-marker-content) '.' counter(vs-counter-sec-h3); */
+  /* --vs-section--h4-marker-content: var(--vs-section--h3-marker-content) '.' counter(vs-counter-sec-h4); */
+  /* --vs-section--h5-marker-content: var(--vs-section--h4-marker-content) '.' counter(vs-counter-sec-h5); */
+  /* --vs-section--h6-marker-content: var(--vs-section--h5-marker-content) '.' counter(vs-counter-sec-h6); */
+
+  /* セクション参照の形式 */
+  /* --vs-section--call-content: '§' target-text(attr(href), before); */
+
+  /* ===================================
+   * 相互参照
+   * =================================== */
+
+  /* 図表などの番号のスタイル */
+  /* --vs-counter-style: decimal; */
+
+  /* 図表のラベル */
+  /* --vs-figure--label: '図 '; */
+  /* --vs-table--label: '表 '; */
+
+  /* ドキュメントごとの章番号を先頭に付ける（例: 「図 2.3」） */
+  /* --vs-crossref-marker-counter-prefix: counter(vs-counter-doc) '.'; */
+  /* --vs-crossref-call-counter-prefix: target-counter(attr(href), vs-counter-doc) '.'; */
+
+  /* 参考文献マーカーの形式 */
+  /* --vs-citation--marker-content: counter(vs-counter-cite) '. '; */
+
+  /* ===================================
+   * 表
+   * =================================== */
+
+  /* 表の罫線 */
+  /* --vs--table-border-width-column: 2px; */
+  /* --vs--table-border-color: #cccccc; */
+
+  /* 表セルのパディング */
+  /* --vs--table-cell-padding-block: 1em; */
+
+  /* ===================================
+   * 引用ブロック
+   * =================================== */
+
+  /* --vs--blockquote-font-size: 0.95em; */
+  /* --vs--blockquote-margin-inline: 2em 0; */
+
+  /* ===================================
+   * リスト
+   * =================================== */
+
+  /* --vs--ul-list-style-type: \\"▶︎\\"; */
+  /* --vs--ul-padding-inline-start: 3rem; */
+  /* --vs--ol-list-style-type: lower-roman; */
+  /* --vs--ol-padding-inline-start: 2.5em; */
+
+  /* ===================================
+   * 段組みレイアウト
+   * =================================== */
+  /* --vs-columns: 2; */
+  /* --vs-column-gap: 2em; */
+  /* --vs-column-rule-width: 1px; */
 }
+
+/* ===================================
+ * カスタムページレイアウト
+ * =================================== */
+
+/* 先頭ページのヘッダーを非表示 */
+
+/* @page :first {
+  @top-left { content: none; }
+  @top-right { content: none; }
+} */
+
+/* ===================================
+ * カスタム要素スタイル
+ * =================================== */
+
+/* 例: 最初の段落を強調 */
+
+/* p:first-of-type {
+  font-style: italic;
+  font-size: 1.1em;
+  font-weight: 500;
+} */
+
+/* 例: 表紙ページのスタイル */
+/*
+.cover {
+  text-align: center;
+  page-break-after: always;
+}
+
+.cover h1 {
+  font-size: 3rem;
+  margin-top: 5em;
+}
+*/
+
+/* 例: カスタムコンテナのスタイル */
+
+/* .note {
+  padding: 1em;
+  margin-block: var(--vs-spacing-rlh);
+  border-left: 4px solid #4a90e2;
+  background-color: #f0f8ff;
+}
+
+.warning {
+  padding: 1em;
+  margin-block: var(--vs-spacing-rlh);
+  border-left: 4px solid #e24a4a;
+  background-color: #fff0f0;
+} */
 ",
   "/work/project-name/draft/01_cover.md": "---
 class: cover-page
@@ -1069,13 +1238,13 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 \`\`\`css
 :root {
   /* ページ番号を下部中央に表示 */
-  --vs-page--mbox-content-bottom-center: counter(page);
+  --vs-page--mbox-bottom-center-content: counter(page);
 
   /* ドキュメントタイトルを左上に表示 */
-  --vs-page--mbox-content-top-left: env(doc-title);
+  --vs-page--mbox-top-left-content: env(doc-title);
 
   /* 出版物タイトルを右上に表示 */
-  --vs-page--mbox-content-top-right: env(pub-title);
+  --vs-page--mbox-top-right-content: env(pub-title);
 }
 \`\`\`
 
@@ -1083,9 +1252,19 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 
 レイアウト改善のために改ページを制御します：
 
-<div class=\\"break-after-page\\"></div>
+強制的に改ページするクラスや、要素内での改ページを防止するクラスを \`custom.css\` で定義します：
 
-\`.break-after-page\` クラスで強制的に改ページし、\`.break-inside-avoid\` で要素内での改ページを防止します。
+\`\`\`css
+.break-after-page {
+  break-after: page;
+}
+
+.break-inside-avoid {
+  break-inside: avoid;
+}
+\`\`\`
+
+<div class=\\"break-after-page\\"></div>
 
 ## 配色
 
@@ -1095,9 +1274,9 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 
 \`\`\`css
 :root {
-  --vs-color-bg: #ffffff;
-  --vs-color-body: #2c3e50;
-  --vs--anchor-color: #3498db;
+  --vs-color-background: #ffffff;
+  --vs-color-foreground: #2c3e50;
+  --vs--anchor-text-color: #3498db;
 }
 \`\`\`
 
@@ -1108,8 +1287,8 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 \`\`\`css
 :root {
   --vs-prism--background: #f8f8f8;
-  --vs-prism--color: #2c3e50;
-  --vs-prism--color-comment: #6a737d;
+  --vs-prism--text-color: #2c3e50;
+  --vs-prism--comment-text-color: #6a737d;
 }
 \`\`\`
 
@@ -1183,7 +1362,7 @@ $$
 \`\`\`css
 :root {
   --vs-footnote--call-font-size: 0.75em;
-  --vs-footnote--call-content: '[' counter(footnote) ']';
+  --vs-footnote--call-content: '[' counter(vs-counter-footnote) ']';
 }
 \`\`\`
 
@@ -1245,15 +1424,11 @@ $$
 
 ### 左右ページのレイアウト
 
-両面印刷用の非対称マージンを作成：
+左右ページの小口側にページ番号を配置します（\`inside\` / \`outside\` はページの左右に応じて物理的な側に解決されます）：
 
 \`\`\`css
-@page :left {
-  --vs-page--mbox-content-bottom-left: counter(page);
-}
-
-@page :right {
-  --vs-page--mbox-content-bottom-right: counter(page);
+:root {
+  --vs-page--mbox-bottom-outside-content: counter(page);
 }
 \`\`\`
 
@@ -1576,7 +1751,7 @@ CSSでWebフォントを読み込みます：
 
 \`\`\`css
 /* コードブロックに Okaidia テーマを使用 */
-@import url('./node_modules/@vivliostyle/theme-base/css/prism/theme-okaidia.css');
+@import '@vivliostyle/theme-base/prism/theme-okaidia';
 \`\`\`
 
 ## 数式の組版
@@ -1893,9 +2068,9 @@ CSS変数を使う場合：
 
 \`\`\`css
 :root {
-  --vs-page--mbox-content-top-left: env(doc-title);
-  --vs-page--mbox-content-top-right: env(pub-title);
-  --vs-page--mbox-content-bottom-center: counter(page);
+  --vs-page--mbox-top-left-content: env(doc-title);
+  --vs-page--mbox-top-right-content: env(pub-title);
+  --vs-page--mbox-bottom-center-content: counter(page);
 }
 \`\`\`
 

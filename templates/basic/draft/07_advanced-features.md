@@ -305,7 +305,7 @@ Change the syntax highlighting theme in `custom.css`:
 
 ```css
 /* Use Okaidia theme for code blocks */
-@import url('./node_modules/@vivliostyle/theme-base/css/prism/theme-okaidia.css');
+@import '@vivliostyle/theme-base/prism/theme-okaidia';
 ```
 
 ## Mathematical Typesetting

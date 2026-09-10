@@ -81,13 +81,13 @@ Configure headers and footers using CSS custom properties for professional-looki
 ```css
 :root {
   /* Display page numbers in bottom center */
-  --vs-page--mbox-content-bottom-center: counter(page);
+  --vs-page--mbox-bottom-center-content: counter(page);
 
   /* Display document title in top left */
-  --vs-page--mbox-content-top-left: env(doc-title);
+  --vs-page--mbox-top-left-content: env(doc-title);
 
   /* Display chapter title in top right */
-  --vs-page--mbox-content-top-right: env(pub-title);
+  --vs-page--mbox-top-right-content: env(pub-title);
 }
 ```
 
@@ -95,9 +95,19 @@ Configure headers and footers using CSS custom properties for professional-looki
 
 Control page breaks for better layout:
 
-<div class="break-after-page"></div>
+Define classes in `custom.css` to force a page break or to prevent breaking within an element:
 
-Use the `.break-after-page` class to force a page break, or `.break-inside-avoid` to prevent breaking within an element.
+```css
+.break-after-page {
+  break-after: page;
+}
+
+.break-inside-avoid {
+  break-inside: avoid;
+}
+```
+
+<div class="break-after-page"></div>
 
 ## Color Schemes
 
@@ -107,9 +117,9 @@ Define a consistent color scheme:
 
 ```css
 :root {
-  --vs-color-bg: #ffffff;
-  --vs-color-body: #2c3e50;
-  --vs--anchor-color: #3498db;
+  --vs-color-background: #ffffff;
+  --vs-color-foreground: #2c3e50;
+  --vs--anchor-text-color: #3498db;
 }
 ```
 
@@ -120,8 +130,8 @@ Customize code block appearance:
 ```css
 :root {
   --vs-prism--background: #f8f8f8;
-  --vs-prism--color: #2c3e50;
-  --vs-prism--color-comment: #6a737d;
+  --vs-prism--text-color: #2c3e50;
+  --vs-prism--comment-text-color: #6a737d;
 }
 ```
 
@@ -195,7 +205,7 @@ Footnotes provide additional context without cluttering the main text<span class
 ```css
 :root {
   --vs-footnote--call-font-size: 0.75em;
-  --vs-footnote--call-content: '[' counter(footnote) ']';
+  --vs-footnote--call-content: '[' counter(vs-counter-footnote) ']';
 }
 ```
 
@@ -257,15 +267,11 @@ Style the first page differently:
 
 ### Left and Right Page Layouts
 
-Create asymmetric margins for two-sided printing:
+Place page numbers on the outer edge of left and right pages (`inside` / `outside` resolve to the physical side depending on the page):
 
 ```css
-@page :left {
-  --vs-page--mbox-content-bottom-left: counter(page);
-}
-
-@page :right {
-  --vs-page--mbox-content-bottom-right: counter(page);
+:root {
+  --vs-page--mbox-bottom-outside-content: counter(page);
 }
 ```
 
