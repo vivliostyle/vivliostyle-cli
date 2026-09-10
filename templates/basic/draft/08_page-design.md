@@ -170,9 +170,9 @@ Using CSS variables in `custom.css`:
 
 ```css
 :root {
-  --vs-page--mbox-content-top-left: env(doc-title);
-  --vs-page--mbox-content-top-right: env(pub-title);
-  --vs-page--mbox-content-bottom-center: counter(page);
+  --vs-page--mbox-top-left-content: env(doc-title);
+  --vs-page--mbox-top-right-content: env(pub-title);
+  --vs-page--mbox-bottom-center-content: counter(page);
 }
 ```
 

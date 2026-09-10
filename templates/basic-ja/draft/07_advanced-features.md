@@ -305,7 +305,7 @@ CSSでWebフォントを読み込みます：
 
 ```css
 /* コードブロックに Okaidia テーマを使用 */
-@import url('./node_modules/@vivliostyle/theme-base/css/prism/theme-okaidia.css');
+@import '@vivliostyle/theme-base/prism/theme-okaidia';
 ```
 
 ## 数式の組版

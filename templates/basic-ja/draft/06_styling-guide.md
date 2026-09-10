@@ -81,13 +81,13 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 ```css
 :root {
   /* ページ番号を下部中央に表示 */
-  --vs-page--mbox-content-bottom-center: counter(page);
+  --vs-page--mbox-bottom-center-content: counter(page);
 
   /* ドキュメントタイトルを左上に表示 */
-  --vs-page--mbox-content-top-left: env(doc-title);
+  --vs-page--mbox-top-left-content: env(doc-title);
 
   /* 出版物タイトルを右上に表示 */
-  --vs-page--mbox-content-top-right: env(pub-title);
+  --vs-page--mbox-top-right-content: env(pub-title);
 }
 ```
 
@@ -95,9 +95,19 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 
 レイアウト改善のために改ページを制御します：
 
-<div class="break-after-page"></div>
+強制的に改ページするクラスや、要素内での改ページを防止するクラスを `custom.css` で定義します：
 
-`.break-after-page` クラスで強制的に改ページし、`.break-inside-avoid` で要素内での改ページを防止します。
+```css
+.break-after-page {
+  break-after: page;
+}
+
+.break-inside-avoid {
+  break-inside: avoid;
+}
+```
+
+<div class="break-after-page"></div>
 
 ## 配色
 
@@ -107,9 +117,9 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 
 ```css
 :root {
-  --vs-color-bg: #ffffff;
-  --vs-color-body: #2c3e50;
-  --vs--anchor-color: #3498db;
+  --vs-color-background: #ffffff;
+  --vs-color-foreground: #2c3e50;
+  --vs--anchor-text-color: #3498db;
 }
 ```
 
@@ -120,8 +130,8 @@ CSSカスタムプロパティ（CSS変数とも呼ばれます）は、テー�
 ```css
 :root {
   --vs-prism--background: #f8f8f8;
-  --vs-prism--color: #2c3e50;
-  --vs-prism--color-comment: #6a737d;
+  --vs-prism--text-color: #2c3e50;
+  --vs-prism--comment-text-color: #6a737d;
 }
 ```
 
@@ -195,7 +205,7 @@ $$
 ```css
 :root {
   --vs-footnote--call-font-size: 0.75em;
-  --vs-footnote--call-content: '[' counter(footnote) ']';
+  --vs-footnote--call-content: '[' counter(vs-counter-footnote) ']';
 }
 ```
 
@@ -257,15 +267,11 @@ $$
 
 ### 左右ページのレイアウト
 
-両面印刷用の非対称マージンを作成：
+左右ページの小口側にページ番号を配置します（`inside` / `outside` はページの左右に応じて物理的な側に解決されます）：
 
 ```css
-@page :left {
-  --vs-page--mbox-content-bottom-left: counter(page);
-}
-
-@page :right {
-  --vs-page--mbox-content-bottom-right: counter(page);
+:root {
+  --vs-page--mbox-bottom-outside-content: counter(page);
 }
 ```
 
