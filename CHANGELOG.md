@@ -1,5 +1,49 @@
 # @vivliostyle/cli
 
+## 11.3.0
+
+### Minor Changes
+
+- Add `vivliostyle theme create` and `vivliostyle theme validate` commands, which scaffold a new Vivliostyle Theme package and validate its `package.json`, along with the `createTheme` and `validateTheme` JavaScript APIs. ([#910](https://github.com/vivliostyle/vivliostyle-cli/pull/910))
+
+- Add `cmyk.fallback`, which accepts a custom function or a factory-created color conversion for RGB colors not covered by the regular color mapping, and deprecate `cmyk.overrideMap`. Return `null` from a custom function to leave a color unmapped. ([#886](https://github.com/vivliostyle/vivliostyle-cli/pull/886))
+
+- Add function-based `replaceImage` replacements and factories for built-in or ICC-based image color conversion. ([#766](https://github.com/vivliostyle/vivliostyle-cli/pull/766))
+
+- Download the official Chrome for Testing build on ARM64 Linux instead of falling back to the system-installed Chromium. ([#885](https://github.com/vivliostyle/vivliostyle-cli/pull/885))
+
+- Apply the PostCSS config of the project (`postcss.config.*`, `.postcssrc*` or the `postcss` field of package.json) to the CSS files processed by Vivliostyle CLI. ([#889](https://github.com/vivliostyle/vivliostyle-cli/pull/889))
+
+  - Add the `css.postcss` option to the config file. Similar to the option of the same name in Vite, it accepts an inline PostCSS config or a directory to search for the PostCSS config file from.
+
+- Add `cmyk.ifUnmappedColorsFound` and `cmyk.ifIncompatibleImagesFound` policies for unmapped RGB colors and images encountered by `replaceImage` whose color spaces are incompatible with Device CMYK. Deprecate `cmyk.warnUnmapped` while preserving its behavior. ([#897](https://github.com/vivliostyle/vivliostyle-cli/pull/897))
+
+- Support importing theme packages from CSS with npm package names, e.g. `@import '@vivliostyle/theme-base';`. Imports are resolved from installed packages honoring the `exports` field. ([#889](https://github.com/vivliostyle/vivliostyle-cli/pull/889))
+
+- Add factories for built-in or ICC-based RGB to CMYK color conversion in `cmyk.fallback`. ([#886](https://github.com/vivliostyle/vivliostyle-cli/pull/886))
+
+### Patch Changes
+
+- Update Vivliostyle.js to 2.45.1: Bug Fixes ([#908](https://github.com/vivliostyle/vivliostyle-cli/pull/908))
+
+- Fix `replaceImage` source matching with stateful regular expressions by resetting each expression before matching or replacing an independent file path. ([#896](https://github.com/vivliostyle/vivliostyle-cli/pull/896))
+
+- Fix `pdfPostprocess.replaceImage` leaving original images and their dependencies inside the output PDF after replacement, even when no references to them remain. ([#899](https://github.com/vivliostyle/vivliostyle-cli/pull/899))
+
+- Fix `pdfPostprocess.replaceImage` skipping images nested in Form XObjects. ([#900](https://github.com/vivliostyle/vivliostyle-cli/pull/900))
+
+- Ignore file watcher events until the preview browser has opened, so that the files written to the workspace on startup no longer reload the viewer and fail with `Execution context was destroyed`. Changes made during startup may require an additional edit to trigger a reload once the browser is ready. ([#911](https://github.com/vivliostyle/vivliostyle-cli/pull/911))
+
+- Update custom.css in Basic and Basic-ja templates for Vivliostyle Themes v3 ([#869](https://github.com/vivliostyle/vivliostyle-cli/pull/869))
+
+- Preserve DeviceGray, DeviceRGB, and DeviceCMYK color spaces when embedding replacement images during PDF post-processing. ([#893](https://github.com/vivliostyle/vivliostyle-cli/pull/893))
+
+- Update default browser versions ([#890](https://github.com/vivliostyle/vivliostyle-cli/pull/890))
+
+  - Chrome: 153.0.8010.36
+  - Chromium: 1694988
+  - Firefox: stable_155.0.1
+
 ## 11.2.0
 
 ### Minor Changes
