@@ -149,6 +149,7 @@ describe('vsBrowserPlugin cancellation', () => {
     } as unknown as ViteDevServer;
     (plugin.configureServer as (server: ViteDevServer) => void)(server);
 
+    expect(Object.hasOwn(watcher, 'emit')).toBe(false);
     watcher.emit('change', 'middleware-mode.html');
     expect(onChange).toHaveBeenCalledExactlyOnceWith('middleware-mode.html');
   });
