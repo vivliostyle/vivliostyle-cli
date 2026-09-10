@@ -78,10 +78,12 @@ export function vsBrowserPlugin({
       server = viteServer;
 
       // Vite registers its own watcher listeners before this hook runs,
-      // so intercept `emit` to drop file events until the browser is ready
+      // so intercept `emit` to drop file events until the browser is ready.
+      // The gate is released in `listen`, which never runs in middleware mode
+      // (no HTTP server), so leave the watcher alone in that case
       const { watcher } = viteServer;
       const originalEmit = watcher.emit.bind(watcher);
-      let suppressWatcherEvents = true;
+      let suppressWatcherEvents = Boolean(viteServer.httpServer);
       watcher.emit = (event: string | symbol, ...args: unknown[]) => {
         if (suppressWatcherEvents && event !== 'error') {
           return false;

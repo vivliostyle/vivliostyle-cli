@@ -69,6 +69,7 @@ describe('vsBrowserPlugin cancellation', () => {
       listen: vi.fn<() => Promise<unknown>>(async () => server),
       close: vi.fn<() => Promise<void>>(async () => {}),
       config: {},
+      httpServer: {},
       // oxlint-disable-next-line prefer-event-target -- Vite's watcher is a chokidar FSWatcher, which is an EventEmitter
       watcher: new EventEmitter(),
     } as unknown as ViteDevServer;
@@ -111,6 +112,7 @@ describe('vsBrowserPlugin cancellation', () => {
       listen: vi.fn<() => Promise<unknown>>(async () => server),
       close: vi.fn<() => Promise<void>>(async () => {}),
       config: {},
+      httpServer: {},
       watcher,
     } as unknown as ViteDevServer;
     (plugin.configureServer as (server: ViteDevServer) => void)(server);
@@ -127,5 +129,27 @@ describe('vsBrowserPlugin cancellation', () => {
     await listening;
     watcher.emit('change', 'after-launch.html');
     expect(onChange).toHaveBeenCalledExactlyOnceWith('after-launch.html');
+  });
+
+  it('keeps watcher events flowing in middleware mode', () => {
+    const plugin = vsBrowserPlugin({
+      config,
+      inlineConfig: { openViewer: true } as ParsedVivliostyleInlineConfig,
+    });
+    // oxlint-disable-next-line prefer-event-target -- Vite's watcher is a chokidar FSWatcher, which is an EventEmitter
+    const watcher = new EventEmitter();
+    const onChange = vi.fn<() => void>();
+    watcher.on('change', onChange);
+    const server = {
+      listen: vi.fn<() => Promise<unknown>>(),
+      close: vi.fn<() => Promise<void>>(async () => {}),
+      config: {},
+      httpServer: null,
+      watcher,
+    } as unknown as ViteDevServer;
+    (plugin.configureServer as (server: ViteDevServer) => void)(server);
+
+    watcher.emit('change', 'middleware-mode.html');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('middleware-mode.html');
   });
 });
