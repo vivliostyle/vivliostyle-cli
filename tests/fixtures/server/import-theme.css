@@ -1,0 +1,5 @@
+@import 'debug-theme';
+
+p {
+  color: red;
+}

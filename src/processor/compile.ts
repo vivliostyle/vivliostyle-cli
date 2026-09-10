@@ -7,14 +7,15 @@ import upath from 'upath';
 import serializeToXml from 'w3c-xmlserializer';
 import MIMEType from 'whatwg-mimetype';
 
-import type {
-  ContentsEntry,
-  CoverEntry,
-  ManuscriptEntry,
-  ParsedEntry,
-  ParsedTheme,
-  ResolvedTaskConfig,
-  WebPublicationManifestConfig,
+import {
+  type ContentsEntry,
+  type CoverEntry,
+  type ManuscriptEntry,
+  type ParsedEntry,
+  parseTheme,
+  type ParsedTheme,
+  type ResolvedTaskConfig,
+  type WebPublicationManifestConfig,
 } from '../config/resolve.js';
 import type { ArticleEntryConfig } from '../config/schema.js';
 import { XML_DECLARATION } from '../constants.js';
@@ -25,10 +26,16 @@ import {
   executeWithCleanupOnInterrupt,
   pathContains,
   pathEquals,
-  readPackageJson,
   toError,
   writeFileIfChanged,
 } from '../util.js';
+import {
+  collectCssPackageImports,
+  type PostcssConfig,
+  resolvePackageCssEntry,
+  resolvePackageCssSubpath,
+  resolvePostcssConfig,
+} from './css.js';
 import {
   createVirtualConsole,
   generateDefaultCoverHtml,
@@ -63,31 +70,19 @@ function locateThemePath(theme: ParsedTheme, from: string): string | string[] {
   }
   if (theme.importPath) {
     return [theme.importPath].flat().map((locator) => {
-      const resolvedPath = upath.resolve(theme.location, locator);
-      if (
-        !pathContains(theme.location, resolvedPath) ||
-        !fs.existsSync(resolvedPath)
-      ) {
+      let resolvedPath;
+      try {
+        resolvedPath = resolvePackageCssSubpath(theme.location, locator);
+      } catch (error) {
         throw new Error(
           `Could not find a style path ${locator} for the theme: ${theme.name}.`,
+          { cause: error },
         );
       }
       return upath.relative(from, resolvedPath);
     });
   }
-  const pkgJsonPath = upath.join(theme.location, 'package.json');
-  const packageJson = readPackageJson(pkgJsonPath);
-  const maybeStyle =
-    packageJson.vivliostyle?.theme?.style ??
-    packageJson.style ??
-    packageJson.main;
-  if (!maybeStyle) {
-    throw new DetailError(
-      `Could not find a style file for the theme: ${theme.name}.`,
-      'Please ensure this package satisfies a `vivliostyle.theme.style` property.',
-    );
-  }
-  return upath.relative(from, upath.join(theme.location, maybeStyle));
+  return upath.relative(from, resolvePackageCssEntry(theme.location));
 }
 
 export async function cleanupWorkspace({
@@ -139,9 +134,10 @@ export async function cleanupWorkspace({
 }
 
 export async function prepareThemeDirectory(
-  { themesDir, themeIndexes }: ResolvedTaskConfig,
+  config: ResolvedTaskConfig,
   signal?: AbortSignal,
 ): Promise<string[]> {
+  const { themesDir, themeIndexes, workspaceDir } = config;
   // Backward compatibility: v8 to v9
   if (
     fs.existsSync(upath.join(themesDir, 'packages')) &&
@@ -153,10 +149,51 @@ export async function prepareThemeDirectory(
     );
   }
 
+  // Themes may import other theme packages from their CSS files, which also
+  // need to be installed
+  let postcssConfig: PostcssConfig | undefined;
+  try {
+    postcssConfig = await resolvePostcssConfig(config);
+  } catch (error) {
+    // A broken PostCSS config is reported by the scan after the installation
+    Logger.debug('compile > skipped loading the PostCSS config %o', error);
+  }
+  const cssImports = await collectCssPackageImports({
+    themeIndexes,
+    postcssConfig,
+  });
+  const installTargets = new Set(themeIndexes);
+  for (const specifier of cssImports.values()) {
+    try {
+      const theme = parseTheme({
+        theme: { specifier, import: [] },
+        context: workspaceDir,
+        workspaceDir,
+        themesDir,
+      });
+      if (theme.type === 'package') {
+        installTargets.add(theme);
+      }
+    } catch (error) {
+      Logger.logWarn(
+        `Skipped the installation of the imported theme package: ${specifier}\n${toError(error).message}`,
+      );
+    }
+  }
+
   // install theme packages
-  if (await checkThemeInstallationNecessity({ themesDir, themeIndexes })) {
-    Logger.startLogging('Installing theme files');
-    await installThemeDependencies({ themesDir, themeIndexes, signal });
+  if (
+    await checkThemeInstallationNecessity({
+      themesDir,
+      themeIndexes: installTargets,
+    })
+  ) {
+    using _ = Logger.startLogging('Installing theme files');
+    await installThemeDependencies({
+      themesDir,
+      themeIndexes: installTargets,
+      signal,
+    });
   }
 
   // copy theme files

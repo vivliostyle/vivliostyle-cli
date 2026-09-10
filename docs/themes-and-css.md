@@ -74,7 +74,7 @@ To find themes published as npm packages, search for the keyword "vivliostyle-th
 - [Example: theme-css](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/theme-css)
 - [Example: theme-preset](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/theme-preset)
 
-You can use a theme by specifying the `-T` (`--theme`) option or `theme` in the [configuration file](./using-config-file.md). If the theme file does not exist locally, it will be automatically installed in the `themes` directory on the first run.
+You can use a theme by specifying the `-T` (`--theme`) option or `theme` in the [configuration file](./using-config-file.md). If the theme file does not exist locally, it will be automatically installed on the first run.
 
 ```
 vivliostyle build manuscript.md --theme @vivliostyle/theme-techbook -o paper.pdf
@@ -92,6 +92,80 @@ If there is a `package.json` file that conforms to npm in your local environment
 vivliostyle build manuscript.md --theme ./my-theme -o paper.pdf
 ```
 
+All of the settings above can be specified in the configuration file, and you can also use more than one of them.
+
+```js
+theme: [
+  '@vivliostyle/theme-techbook',
+  './my-theme',
+],
+```
+
+### Importing Themes from CSS
+
+Instead of specifying Vivliostyle Themes with the `theme` option, you can import a theme package directly with its npm package name, from a CSS file specified with the `theme` option:
+
+```css
+@import '@vivliostyle/theme-base';
+@import '@vivliostyle/theme-base/footnote';
+
+h1 {
+  /* your customization */
+}
+```
+
+An import with the package name alone loads the default style entry of the package, resolved from the `vivliostyle.theme.style`, `style`, `exports` (with the `style` condition), and `main` fields of its package.json, in this order. An import with a subpath loads the specified file; when the package declares the `exports` field, the subpath is resolved through it.
+
+The imported packages are automatically installed, in the same way as the themes specified with the `theme` option. A specifier can also request the version to install, with the npm-style `@` notation after the package name:
+
+```css
+@import '@vivliostyle/theme-base@^3.0.0';
+```
+
+A specifier is treated as a relative URL and keeps the standard CSS semantics when it points to an existing file with the `.css` extension; for example, `@import 'foo.css'` refers to the relative file when it exists next to the importing stylesheet. Any other specifier is resolved as an npm package. When the same package is installed both in the project and in the `themes` directory, the one in the `themes` directory takes precedence.
+
 ### Using Create Book
 
 By using Create Book, you can easily create a project with a theme already set. Refer to [Create Book](https://docs.vivliostyle.org/en/cli/getting-started/).
+
+## Using PostCSS
+
+If your project has a [PostCSS](https://postcss.org/) configuration file, Vivliostyle CLI applies its plugins to every CSS file it processes.
+
+Place the PostCSS config in the same directory as the [configuration file](./using-config-file.md). Any config format supported by [postcss-load-config](https://github.com/postcss/postcss-load-config) (e.g. `postcss.config.js`) can be loaded. The config is also applied to the CSS files of the theme packages you use.
+
+The [`css.postcss` option](./config.md#cssconfig) of the configuration file accepts an inline PostCSS config, or a directory to search for the PostCSS config file from. If an inline config is provided, the PostCSS config file is not searched.
+
+```js
+import autoprefixer from 'autoprefixer';
+
+export default {
+  entry: ['manuscript.md'],
+  css: {
+    postcss: {
+      plugins: [autoprefixer()],
+    },
+  },
+};
+```
+
+## Tailwind CSS
+
+- [Example: with-tailwindcss](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/with-tailwindcss)
+
+Through PostCSS plugins, you can also use CSS frameworks such as [Tailwind CSS](https://tailwindcss.com/).
+
+Follow the [Using PostCSS](https://tailwindcss.com/docs/installation/using-postcss) section of the Tailwind CSS documentation to set it up.
+
+Tailwind CSS is a framework that styles elements through classes called utility classes, applying the styles that correspond to each class name. When combined with VFM, you can specify the classes with the [VFM attribute syntax](https://vivliostyle.github.io/vfm/#/vfm) as follows; Tailwind scans the manuscript files and generates the styles for the classes in use.
+
+```md
+# Vivliostyle meets Tailwind CSS {.text-4xl .font-extrabold .tracking-tight .text-accent}
+
+This document is styled with [Tailwind CSS](https://tailwindcss.com/) utility classes.
+Tailwind scans this Markdown file for class names, so you can attach utilities to
+inline elements with the **VFM attribute syntax**{.bg-accent/15 .px-1 .rounded} like
+`**text**{.underline}`.
+```
+
+Tailwind CSS is a powerful tool, but the text-centric documents Vivliostyle mainly targets differ from web pages in many ways, and whether styling with utility classes fits your writing process depends on your authoring style. Still, it can be a strong option when you want plenty of ad hoc styles in your text.
