@@ -481,6 +481,7 @@ export async function copyWebPublicationAssets({
   exportAliases,
   outputs,
   copyAsset,
+  entryContextDir,
   themesDir,
   postcss,
   manifestPath,
@@ -492,6 +493,7 @@ export async function copyWebPublicationAssets({
   | 'exportAliases'
   | 'outputs'
   | 'copyAsset'
+  | 'entryContextDir'
   | 'themesDir'
   | 'entries'
   | 'postcss'
@@ -550,6 +552,7 @@ export async function copyWebPublicationAssets({
     upath.relative(input, manifestPath),
   );
   const cssResolver = new ThemeCssResolver({
+    entryContextDir,
     workspaceDir: input,
     themesDir,
   });

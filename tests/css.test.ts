@@ -57,10 +57,14 @@ function abs(rel: string): string {
   return upath.join(projectDir, rel);
 }
 
-function createResolver(): ThemeCssResolver {
+function createResolver(
+  overrides: Partial<ConstructorParameters<typeof ThemeCssResolver>[0]> = {},
+): ThemeCssResolver {
   return new ThemeCssResolver({
+    entryContextDir: projectDir,
     workspaceDir: abs('.vivliostyle'),
     themesDir: abs('.vivliostyle/themes'),
+    ...overrides,
   });
 }
 
@@ -500,6 +504,141 @@ describe('transformCssImports', () => {
     expect(resolver.mounts.get('theme-c')).toBe(abs('node_modules/theme-c'));
   });
 
+  it('resolves imports referring to the package containing the importer', async () => {
+    writeFiles({
+      'package.json': JSON.stringify({
+        name: '@scope/my-theme',
+        main: 'theme.css',
+        exports: { '.': './theme.css', './*': './css/*.css' },
+      }),
+      'theme.css': '',
+      'css/footnote.css': '',
+      'example.css': '',
+    });
+    const resolver = createResolver({ workspaceDir: projectDir });
+    const result = await transformCssImports({
+      code: "@import '@scope/my-theme';\n@import '@scope/my-theme/footnote';",
+      importer: abs('example.css'),
+      importerUrlPath: '/example.css',
+      resolver,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe(
+      "@import 'theme.css';\n@import 'css/footnote.css';",
+    );
+    expect(resolver.mounts.size).toBe(0);
+  });
+
+  it('resolves self-references from the workspace copy of a file theme', async () => {
+    writeFiles({
+      'package.json': JSON.stringify({ name: 'my-theme', main: 'theme.css' }),
+      'theme.css': '',
+      'example.css': '',
+      '.vivliostyle/example.css': '',
+    });
+    const resolver = createResolver();
+    const result = await transformCssImports({
+      code: "@import 'my-theme';",
+      importer: abs('.vivliostyle/example.css'),
+      importerUrlPath: '/example.css',
+      resolver,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe("@import 'theme.css';");
+    expect(resolver.mounts.size).toBe(0);
+  });
+
+  it('resolves self-references from a workspace placed outside the package', async () => {
+    writeFiles({
+      'pkg/package.json': JSON.stringify({
+        name: 'my-theme',
+        main: 'theme.css',
+      }),
+      'pkg/theme.css': '',
+      'pkg/example.css': '',
+      'ws/example.css': '',
+    });
+    const resolver = createResolver({
+      entryContextDir: abs('pkg'),
+      workspaceDir: abs('ws'),
+      themesDir: abs('ws/themes'),
+    });
+    const result = await transformCssImports({
+      code: "@import 'my-theme';",
+      importer: abs('ws/example.css'),
+      importerUrlPath: '/example.css',
+      resolver,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe("@import 'theme.css';");
+    expect(resolver.mounts.size).toBe(0);
+  });
+
+  it('mounts self-referenced packages located outside the entry context', async () => {
+    writeFiles({
+      'package.json': JSON.stringify({ name: 'my-theme', main: 'theme.css' }),
+      'theme.css': '',
+      'example/style.css': '',
+    });
+    const resolver = createResolver({
+      entryContextDir: abs('example'),
+      workspaceDir: abs('example'),
+      themesDir: abs('example/themes'),
+    });
+    const result = await transformCssImports({
+      code: "@import 'my-theme';",
+      importer: abs('example/style.css'),
+      importerUrlPath: '/style.css',
+      resolver,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe(
+      "@import 'themes/node_modules/my-theme/theme.css';",
+    );
+    expect(resolver.mounts.get('my-theme')).toBe(projectDir);
+  });
+
+  it('limits self-references to the nearest package scope', async () => {
+    writeFiles({
+      'package.json': JSON.stringify({ name: 'my-theme', main: 'theme.css' }),
+      'theme.css': '',
+      'sub/package.json': JSON.stringify({ name: 'sub' }),
+      'sub/style.css': '',
+    });
+    const result = await transformCssImports({
+      code: "@import 'my-theme';",
+      importer: abs('sub/style.css'),
+      importerUrlPath: '/sub/style.css',
+      resolver: createResolver({ workspaceDir: projectDir }),
+    });
+    expect(result.errors.map((e) => e.message)).toEqual([
+      expect.stringContaining('Could not resolve the CSS import: my-theme'),
+    ]);
+  });
+
+  it('prefers the themes directory over a self-reference', async () => {
+    writeFiles({
+      'package.json': JSON.stringify({ name: 'my-theme', main: 'theme.css' }),
+      'theme.css': '',
+      '.vivliostyle/themes/node_modules/my-theme/package.json': JSON.stringify({
+        name: 'my-theme',
+        main: 'theme.css',
+      }),
+      '.vivliostyle/themes/node_modules/my-theme/theme.css': '',
+      'example.css': '',
+    });
+    const result = await transformCssImports({
+      code: "@import 'my-theme';",
+      importer: abs('example.css'),
+      importerUrlPath: '/example.css',
+      resolver: createResolver({ workspaceDir: projectDir }),
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe(
+      "@import '.vivliostyle/themes/node_modules/my-theme/theme.css';",
+    );
+  });
+
   it('reports unresolved bare imports without changing the code', async () => {
     writeFiles({
       '.vivliostyle/style.css': '',
@@ -768,6 +907,28 @@ describe('collectCssPackageImports', () => {
     expect(discovered.size).toBe(0);
   });
 
+  it('does not install packages referring to themselves and follows their imports', async () => {
+    writeFiles({
+      'package.json': JSON.stringify({
+        name: 'my-theme',
+        version: '3.0.0',
+        exports: { '.': './theme.css', './*': './css/*.css' },
+      }),
+      'theme.css': "@import 'remote-pkg';",
+      'css/footnote.css': "@import 'other-pkg@^1.0.0';",
+      'example.css': "@import 'my-theme@^2.0.0';\n@import 'my-theme/footnote';",
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set([fileTheme('example.css')]),
+    });
+    expect(discovered).toEqual(
+      new Map([
+        ['remote-pkg', 'remote-pkg'],
+        ['other-pkg', 'other-pkg@^1.0.0'],
+      ]),
+    );
+  });
+
   it('keeps the first specifier for conflicting versions', async () => {
     writeFiles({
       'style.css': "@import 'pkg@^1.0.0/a.css';\n@import 'pkg@^2.0.0/b.css';",
@@ -987,6 +1148,7 @@ describe('validateThemeCssDependencies', () => {
     };
     await expect(
       validateThemeCssDependencies({
+        entryContextDir: projectDir,
         workspaceDir: projectDir,
         themesDir: abs('themes'),
         themeIndexes: new Set([theme]),
@@ -1012,6 +1174,7 @@ describe('validateThemeCssDependencies', () => {
     };
     await expect(
       validateThemeCssDependencies({
+        entryContextDir: projectDir,
         workspaceDir: projectDir,
         themesDir: abs('themes'),
         themeIndexes: new Set([theme]),
@@ -1036,6 +1199,7 @@ describe('validateThemeCssDependencies', () => {
     };
     await expect(
       validateThemeCssDependencies({
+        entryContextDir: projectDir,
         workspaceDir: abs('.vivliostyle'),
         themesDir: abs('.vivliostyle/themes'),
         themeIndexes: new Set([theme]),

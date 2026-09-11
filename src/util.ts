@@ -270,6 +270,31 @@ export function findPackageDir(
   return undefined;
 }
 
+/**
+ * Locate the package containing `fromDir` when the package is named
+ * `pkgName`, following the Node.js self-referencing rule: only the nearest
+ * package.json defines the package scope, and a `node_modules` directory
+ * ends the lookup.
+ */
+export function findOwnPackageDir(
+  pkgName: string,
+  fromDir: string,
+): string | undefined {
+  let dir = fromDir;
+  while (upath.basename(dir) !== 'node_modules') {
+    const pkgJsonPath = upath.join(dir, 'package.json');
+    if (fs.existsSync(pkgJsonPath)) {
+      return readPackageJson(pkgJsonPath).name === pkgName ? dir : undefined;
+    }
+    const parent = upath.dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+    dir = parent;
+  }
+  return undefined;
+}
+
 export function inflateZip(filePath: string, dest: string): Promise<void> {
   return new Promise<void>((res, rej) => {
     try {
