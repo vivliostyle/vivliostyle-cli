@@ -69,7 +69,17 @@ jobs:
         run: find dist -name '*.js' -print0 | xargs -0 -n1 node --check
       - run: pnpm test
   build-and-push-image:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            browser_platform: linux
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            browser_platform: linux_arm
+    runs-on: ${{ matrix.runner }}
     services:
       registry:
         image: registry:2
@@ -88,12 +98,10 @@ jobs:
       - name: Output browser version
         id: browser
         run: |
-          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/constants.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.linux')
+          BROWSER_VERSION=$(sed -n '/START DEFAULT_BROWSER_VERSIONS/,/END DEFAULT_BROWSER_VERSIONS/p' src/constants.ts | grep -oP 'chrome:\s*\K\{[^}]+\}' | jq -r '.${{ matrix.browser_platform }}')
           echo "browser=chrome@$BROWSER_VERSION" >> $GITHUB_OUTPUT
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver-opts: network=host
       - name: Build container
@@ -101,6 +109,7 @@ jobs:
         with:
           context: .
           push: true
+          platforms: linux/${{ matrix.arch }}
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
             BROWSER=${{ steps.browser.outputs.browser }}
