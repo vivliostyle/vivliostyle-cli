@@ -14,6 +14,7 @@ import type { ParsedTheme, ResolvedTaskConfig } from '../config/resolve.js';
 import { Logger } from '../logger.js';
 import {
   DetailError,
+  findOwnPackageDir,
   findPackageDir,
   getFormattedError,
   isFileSync,
@@ -27,6 +28,8 @@ export interface CssBareImportResolution {
   file: string;
   pkgName: string;
   pkgDir: string;
+  /** The importer belongs to the resolved package (Node.js-style self-referencing) */
+  self: boolean;
 }
 
 export interface BareImportSpecifier {
@@ -75,16 +78,23 @@ function findThemePackageDir(
   pkgName: string,
   importerDir: string,
   themesDir: string,
-): string | undefined {
-  return (
+): Pick<CssBareImportResolution, 'pkgDir' | 'self'> | undefined {
+  const pkgDir =
     // Importers inside the themes directory resolve against their own tree
     // first so that nested node_modules layouts are respected
     findPackageDir(pkgName, importerDir, { boundary: themesDir }) ??
     // The themes directory takes precedence over the project node_modules
-    findPackageDir(pkgName, themesDir, { boundary: themesDir }) ??
-    // Fall back to the Node.js style resolution walking up from the importer
-    findPackageDir(pkgName, importerDir)
-  );
+    findPackageDir(pkgName, themesDir, { boundary: themesDir });
+  if (pkgDir) {
+    return { pkgDir, self: false };
+  }
+  const ownPkgDir = findOwnPackageDir(pkgName, importerDir);
+  if (ownPkgDir) {
+    return { pkgDir: ownPkgDir, self: true };
+  }
+  // Fall back to the Node.js style resolution walking up from the importer
+  const projectPkgDir = findPackageDir(pkgName, importerDir);
+  return projectPkgDir ? { pkgDir: projectPkgDir, self: false } : undefined;
 }
 
 function resolveExportsSubpath(
@@ -190,15 +200,21 @@ export function resolvePackageCssSubpath(
 }
 
 export class ThemeCssResolver {
+  #entryContextDir: string;
   #workspaceDir: string;
   #themesDir: string;
   #mounts = new Map<string, string>();
   #checkedVersions = new Set<string>();
 
   constructor({
+    entryContextDir,
     workspaceDir,
     themesDir,
-  }: Pick<ResolvedTaskConfig, 'workspaceDir' | 'themesDir'>) {
+  }: Pick<
+    ResolvedTaskConfig,
+    'entryContextDir' | 'workspaceDir' | 'themesDir'
+  >) {
+    this.#entryContextDir = entryContextDir;
     this.#workspaceDir = workspaceDir;
     this.#themesDir = themesDir;
   }
@@ -217,12 +233,12 @@ export class ThemeCssResolver {
       throw new Error(`Invalid import specifier: ${specifier}`);
     }
     const { pkgName, version, subpath } = parsed;
-    const pkgDir = findThemePackageDir(
+    const found = findThemePackageDir(
       pkgName,
       upath.dirname(importer),
       this.#themesDir,
     );
-    if (!pkgDir) {
+    if (!found) {
       throw new DetailError(
         `Could not resolve the CSS import: ${specifier} (imported from ${importer})`,
         [
@@ -232,13 +248,14 @@ export class ThemeCssResolver {
         ].join('\n'),
       );
     }
+    const { pkgDir, self } = found;
     if (version) {
       this.#warnUnsatisfiedVersion(pkgName, version, pkgDir);
     }
     const file = subpath
       ? resolvePackageCssSubpath(pkgDir, stripUrlQuery(subpath))
       : resolvePackageCssEntry(pkgDir);
-    return { file, pkgName, pkgDir };
+    return { file, pkgName, pkgDir, self };
   }
 
   #warnUnsatisfiedVersion(
@@ -269,9 +286,20 @@ export class ThemeCssResolver {
    * Map a resolved file to its location on the server URL space (rooted at
    * the workspace directory).
    */
-  urlPathOf({ file, pkgName, pkgDir }: CssBareImportResolution): string {
+  urlPathOf({ file, pkgName, pkgDir, self }: CssBareImportResolution): string {
     if (pathContains(this.#themesDir, file)) {
       return `/${upath.relative(this.#workspaceDir, file)}`;
+    }
+    if (self) {
+      // A self-reference stays inside the package like a relative import:
+      // files under the entry context are served in place and copied to the
+      // workspace and the outputs along with the importing stylesheet, so
+      // mounting the package (which may be the whole project) is unnecessary
+      for (const root of [this.#workspaceDir, this.#entryContextDir]) {
+        if (pathContains(root, file)) {
+          return `/${upath.relative(root, file)}`;
+        }
+      }
     }
     // Known limitation: mounts are keyed by the package name alone, so when
     // multiple instances of the same package exist (e.g. different versions
@@ -719,6 +747,13 @@ export async function collectCssPackageImports({
         }
         return;
       }
+      const ownPackageDir = findOwnPackageDir(pkgName, upath.dirname(importer));
+      if (ownPackageDir) {
+        return resolvePackageFile(
+          ownPackageDir,
+          subpath ? stripUrlQuery(subpath) : undefined,
+        );
+      }
       const projectPackageDir = findPackageDir(
         pkgName,
         upath.dirname(importer),
@@ -806,7 +841,11 @@ export function collectThemeCssEntryFiles(themeIndexes: Set<ParsedTheme>): {
 export async function validateThemeCssDependencies(
   config: Pick<
     ResolvedTaskConfig,
-    'workspaceDir' | 'themesDir' | 'themeIndexes' | 'postcss'
+    | 'entryContextDir'
+    | 'workspaceDir'
+    | 'themesDir'
+    | 'themeIndexes'
+    | 'postcss'
   >,
 ): Promise<void> {
   const resolver = new ThemeCssResolver(config);
