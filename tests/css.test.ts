@@ -548,6 +548,32 @@ describe('transformCssImports', () => {
     expect(resolver.mounts.size).toBe(0);
   });
 
+  it('resolves self-references from a workspace placed outside the package', async () => {
+    writeFiles({
+      'pkg/package.json': JSON.stringify({
+        name: 'my-theme',
+        main: 'theme.css',
+      }),
+      'pkg/theme.css': '',
+      'pkg/example.css': '',
+      'ws/example.css': '',
+    });
+    const resolver = createResolver({
+      entryContextDir: abs('pkg'),
+      workspaceDir: abs('ws'),
+      themesDir: abs('ws/themes'),
+    });
+    const result = await transformCssImports({
+      code: "@import 'my-theme';",
+      importer: abs('ws/example.css'),
+      importerUrlPath: '/example.css',
+      resolver,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe("@import 'theme.css';");
+    expect(resolver.mounts.size).toBe(0);
+  });
+
   it('mounts self-referenced packages located outside the entry context', async () => {
     writeFiles({
       'package.json': JSON.stringify({ name: 'my-theme', main: 'theme.css' }),

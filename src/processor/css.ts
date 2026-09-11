@@ -20,6 +20,7 @@ import {
   isFileSync,
   isValidUri,
   pathContains,
+  pathEquals,
   readPackageJson,
   toError,
 } from '../util.js';
@@ -74,11 +75,18 @@ export function resolveLocalStyleFile(
   return file.endsWith('.css') && isFileSync(file) ? file : undefined;
 }
 
-function findThemePackageDir(
-  pkgName: string,
-  importerDir: string,
-  themesDir: string,
-): Pick<CssBareImportResolution, 'pkgDir' | 'self'> | undefined {
+function findThemePackageDir({
+  pkgName,
+  importerDir,
+  scopeDir,
+  themesDir,
+}: {
+  pkgName: string;
+  importerDir: string;
+  /** The directory the importer belongs to, which may differ from its physical location */
+  scopeDir: string;
+  themesDir: string;
+}): Pick<CssBareImportResolution, 'pkgDir' | 'self'> | undefined {
   const pkgDir =
     // Importers inside the themes directory resolve against their own tree
     // first so that nested node_modules layouts are respected
@@ -88,7 +96,7 @@ function findThemePackageDir(
   if (pkgDir) {
     return { pkgDir, self: false };
   }
-  const ownPkgDir = findOwnPackageDir(pkgName, importerDir);
+  const ownPkgDir = findOwnPackageDir(pkgName, scopeDir);
   if (ownPkgDir) {
     return { pkgDir: ownPkgDir, self: true };
   }
@@ -233,11 +241,13 @@ export class ThemeCssResolver {
       throw new Error(`Invalid import specifier: ${specifier}`);
     }
     const { pkgName, version, subpath } = parsed;
-    const found = findThemePackageDir(
+    const importerDir = upath.dirname(importer);
+    const found = findThemePackageDir({
       pkgName,
-      upath.dirname(importer),
-      this.#themesDir,
-    );
+      importerDir,
+      scopeDir: this.#sourceDirOf(importerDir),
+      themesDir: this.#themesDir,
+    });
     if (!found) {
       throw new DetailError(
         `Could not resolve the CSS import: ${specifier} (imported from ${importer})`,
@@ -256,6 +266,24 @@ export class ThemeCssResolver {
       ? resolvePackageCssSubpath(pkgDir, stripUrlQuery(subpath))
       : resolvePackageCssEntry(pkgDir);
     return { file, pkgName, pkgDir, self };
+  }
+
+  /**
+   * File themes are transformed from their workspace copies, which mirror
+   * the layout of the entry context. The package containing a copy is
+   * determined at its source location, as the workspace may be placed
+   * outside of the package (or the project).
+   */
+  #sourceDirOf(importerDir: string): string {
+    const isInside = (parent: string) =>
+      pathEquals(parent, importerDir) || pathContains(parent, importerDir);
+    if (isInside(this.#themesDir) || !isInside(this.#workspaceDir)) {
+      return importerDir;
+    }
+    return upath.join(
+      this.#entryContextDir,
+      upath.relative(this.#workspaceDir, importerDir),
+    );
   }
 
   #warnUnsatisfiedVersion(
