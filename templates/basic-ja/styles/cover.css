@@ -1,0 +1,36 @@
+/**
+ * 表紙用カスタムスタイル
+ * このファイルで表紙のスタイルに必要な Vivliostyle Theme のモジュールをインポートします。
+ * このファイルやcustom.cssを編集することで、表紙のスタイルをカスタマイズできます。
+ */
+
+{{#if theme}}
+@import '{{theme}}';
+@import '@vivliostyle/theme-base/page';
+{{/if}}
+
+/* 表紙のみテキストを中央揃えにする */
+:root {
+  text-align: center;
+}
+
+/* タイトル付き表紙ページのレイアウト */
+section:has(> h1:first-child) {
+  display: flex;
+  flex-direction: column;
+  block-size: 100vb;
+
+  section:has([role='doc-cover']) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-block-size: 0;
+  }
+
+  [role='doc-cover'] {
+    flex: 1;
+    min-block-size: 0;
+    object-fit: contain;
+  }
+}
+

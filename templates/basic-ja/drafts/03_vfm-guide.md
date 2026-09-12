@@ -46,7 +46,7 @@ VFMは標準的なMarkdownの機能をすべてサポートしています：
 
 画像はキャプション付きで埋め込めます：
 
-![サンプル図のキャプション](image-with-caption.webp)
+![サンプル図のキャプション](../assets/image-with-caption.webp)
 
 ### 引用
 
