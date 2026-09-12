@@ -1,5 +1,11 @@
 # @vivliostyle/cli
 
+## 11.3.2
+
+### Patch Changes
+
+- Removed the unnecessary warning for resolving multiple instances of the same theme package. ([#922](https://github.com/vivliostyle/vivliostyle-cli/pull/922))
+
 ## 11.3.1
 
 ### Patch Changes
