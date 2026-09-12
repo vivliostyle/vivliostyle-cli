@@ -18,15 +18,18 @@
 section:has(> h1:first-child) {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  block-size: 100vb;
 
   section:has([role='doc-cover']) {
     display: flex;
+    flex-direction: column;
     flex: 1;
+    min-block-size: 0;
   }
 
   [role='doc-cover'] {
     flex: 1;
+    min-block-size: 0;
     object-fit: contain;
   }
 }
