@@ -1,0 +1,33 @@
+/**
+ * Custom Styles for the Body Text
+ * This file imports the Vivliostyle Theme modules required to style the body text.
+ * (Depending on the theme you use, the theme itself may already import the required modules.)
+ *
+ * Edit this file or custom.css to customize the body text styles.
+ */
+
+{{#if theme}}
+@import '{{theme}}';
+@import '@vivliostyle/theme-base/appendix';
+@import '@vivliostyle/theme-base/citation';
+@import '@vivliostyle/theme-base/endnote';
+@import '@vivliostyle/theme-base/equation';
+@import '@vivliostyle/theme-base/figure';
+@import '@vivliostyle/theme-base/footnote';
+@import '@vivliostyle/theme-base/listing';
+@import '@vivliostyle/theme-base/math';
+@import '@vivliostyle/theme-base/page';
+@import '@vivliostyle/theme-base/section';
+@import '@vivliostyle/theme-base/sidenote';
+@import '@vivliostyle/theme-base/table';
+@import '@vivliostyle/theme-base/theorem';
+@import '@vivliostyle/theme-base/toc';
+
+/* You can import other modules of @vivliostyle/theme-base or other npm packages as needed */
+/* This example turns external links into footnotes */
+/* @import '@vivliostyle/theme-base/footnote/external-links'; */
+
+/* Prism.js CSS modules for code syntax highlighting */
+/* @import '@vivliostyle/theme-base/prism'; */
+/* @import '@vivliostyle/theme-base/prism/theme-okaidia'; */
+{{/if}}

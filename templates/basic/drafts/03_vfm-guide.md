@@ -46,7 +46,7 @@ Create [links to websites](https://vivliostyle.org) or reference other documents
 
 Images can be embedded with captions:
 
-![Sample diagram caption](image-with-caption.webp)
+![Sample diagram caption](../assets/image-with-caption.webp)
 
 ### Blockquotes
 

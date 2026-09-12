@@ -1,0 +1,33 @@
+/**
+ * 本文用カスタムスタイル
+ * このファイルで本文のスタイルに必要な Vivliostyle Theme のモジュールをインポートします。
+ * （使用するテーマによっては、そのテーマ自身がすでに必要なモジュールをインポートしている場合があります）
+ *
+ * このファイルやcustom.cssを編集することで、本文のスタイルをカスタマイズできます。
+ */
+
+{{#if theme}}
+@import '{{theme}}';
+@import '@vivliostyle/theme-base/appendix';
+@import '@vivliostyle/theme-base/citation';
+@import '@vivliostyle/theme-base/endnote';
+@import '@vivliostyle/theme-base/equation';
+@import '@vivliostyle/theme-base/figure';
+@import '@vivliostyle/theme-base/footnote';
+@import '@vivliostyle/theme-base/listing';
+@import '@vivliostyle/theme-base/math';
+@import '@vivliostyle/theme-base/page';
+@import '@vivliostyle/theme-base/section';
+@import '@vivliostyle/theme-base/sidenote';
+@import '@vivliostyle/theme-base/table';
+@import '@vivliostyle/theme-base/theorem';
+@import '@vivliostyle/theme-base/toc';
+
+/* 必要に応じて @vivliostyle/theme-base の別のモジュールや別の npm パッケージをインポートできます */
+/* 外部リンクを脚注として表示する例 */
+/* @import '@vivliostyle/theme-base/footnote/external-links'; */
+
+/* コードのシンタックスハイライト用 Prism.js CSS モジュール */
+/* @import '@vivliostyle/theme-base/prism'; */
+/* @import '@vivliostyle/theme-base/prism/theme-okaidia'; */
+{{/if}}

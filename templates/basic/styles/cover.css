@@ -1,0 +1,33 @@
+/**
+ * Custom Styles for the Cover
+ * This file imports the Vivliostyle Theme modules required to style the cover.
+ * Edit this file or custom.css to customize the cover styles.
+ */
+
+{{#if theme}}
+@import '{{theme}}';
+@import '@vivliostyle/theme-base/page';
+{{/if}}
+
+/* Center the text only on the cover */
+:root {
+  text-align: center;
+}
+
+/* Layout of the cover page with a title */
+section:has(> h1:first-child) {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+
+  section:has([role='doc-cover']) {
+    display: flex;
+    flex: 1;
+  }
+
+  [role='doc-cover'] {
+    flex: 1;
+    object-fit: contain;
+  }
+}
+

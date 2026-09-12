@@ -3,28 +3,20 @@
  *
  * このファイルでは、CSS カスタムプロパティを使って Vivliostyle テーマをカスタマイズできます。
  * テーマ変数をオーバーライドすることで、フォント、色、余白、レイアウトを調整できます。
+ * このファイルの変更は表紙と本文の両方に適用されます。
  *
  * 詳細:
  * - https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base
  */
 
-/* 必要に応じて @vivliostyle/theme-base のモジュールを npm パッケージ名でインポートできます */
-/* （公式テーマには footnote、page、section、toc などの機能モジュールがあらかじめ含まれています） */
-/* 外部リンクを脚注として表示する例 */
-/* @import '@vivliostyle/theme-base/footnote/external-links'; */
-
-/* コードのシンタックスハイライト用 Prism.js CSS モジュール */
-/* @import '@vivliostyle/theme-base/prism'; */
-/* @import '@vivliostyle/theme-base/prism/theme-okaidia'; */
-
+{{#if theme}}
 :root {
   /* ===================================
    * フォント
    * =================================== */
 
   /* 基本フォントファミリー */
-  --vs-font-family:
-    '游明朝', 'YuMincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', serif;
+  /* --vs-font-family: '游明朝', 'YuMincho', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro', serif; */
 
   /* 基本フォントサイズ */
   /* --vs-font-size: 11pt; */
@@ -267,3 +259,4 @@
   border-left: 4px solid #e24a4a;
   background-color: #fff0f0;
 } */
+{{/if}}
