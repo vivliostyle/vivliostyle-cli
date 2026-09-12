@@ -5,6 +5,7 @@ import postcssrc from 'postcss-load-config';
 import valueParser from 'postcss-value-parser';
 import { exports as resolvePackageExports } from 'resolve.exports';
 import {
+  intersects as semverIntersects,
   satisfies as semverSatisfies,
   validRange as semverValidRange,
 } from 'semver';
@@ -735,6 +736,7 @@ export async function collectCssPackageImports({
   }
 
   const discovered = new Map<string, string>();
+  const discoveredVersions = new Map<string, string>();
   await walkCssImports({
     entryFiles,
     postcssConfig,
@@ -790,17 +792,25 @@ export async function collectCssPackageImports({
           return;
         }
       }
-      const specifier = version ? `${pkgName}@${version}` : pkgName;
-      const existing = discovered.get(pkgName);
-      if (existing !== undefined) {
-        if (existing !== specifier) {
-          Logger.logWarn(
-            `The theme package ${pkgName} is imported with conflicting versions: ${existing}, ${specifier}. Using ${existing}.`,
-          );
-        }
+      const existing = discoveredVersions.get(pkgName);
+      if (!version || existing === version) {
+        discovered.set(pkgName, discovered.get(pkgName) ?? pkgName);
         return;
       }
-      discovered.set(pkgName, specifier);
+      if (existing === undefined) {
+        discovered.set(pkgName, `${pkgName}@${version}`);
+        discoveredVersions.set(pkgName, version);
+        return;
+      }
+      const compatible =
+        semverValidRange(existing) &&
+        semverValidRange(version) &&
+        semverIntersects(existing, version, { includePrerelease: true });
+      if (!compatible) {
+        Logger.logWarn(
+          `The theme package ${pkgName} is imported with conflicting versions: ${pkgName}@${existing}, ${pkgName}@${version}. Using ${pkgName}@${existing}.`,
+        );
+      }
     },
   });
   return discovered;

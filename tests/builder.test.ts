@@ -543,7 +543,7 @@ it('install remote themes', async () => {
   );
   expect(
     doc.window.document.querySelector(
-      'link[rel="stylesheet"][href="../themes/node_modules/@vivliostyle/theme-base/theme-all.css"]',
+      'link[rel="stylesheet"][href="../themes/node_modules/@vivliostyle/theme-base/theme.css"]',
     ),
   ).toBeTruthy();
   // Longer timeout to ensure installing remote themes
