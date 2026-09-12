@@ -599,6 +599,12 @@ const PdfPostprocessConfigSchema = v.pipe(
       ),
       cmyk: CmykSchema,
       replaceImage: ReplaceImageSchema,
+      outputIntent: v.pipe(
+        ValidString,
+        v.description($`
+          Path to the ICC profile for the PDF output intent.
+        `),
+      ),
     }),
   ),
   v.title('PdfPostprocessConfig'),
