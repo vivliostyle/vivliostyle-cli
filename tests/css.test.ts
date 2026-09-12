@@ -930,6 +930,7 @@ describe('collectCssPackageImports', () => {
   });
 
   it('keeps the first specifier for conflicting versions', async () => {
+    const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
     writeFiles({
       'style.css': "@import 'pkg@^1.0.0/a.css';\n@import 'pkg@^2.0.0/b.css';",
     });
@@ -937,6 +938,47 @@ describe('collectCssPackageImports', () => {
       themeIndexes: new Set([fileTheme('style.css')]),
     });
     expect(discovered).toEqual(new Map([['pkg', 'pkg@^1.0.0']]));
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('conflicting versions: pkg@^1.0.0, pkg@^2.0.0'),
+    );
+  });
+
+  it('accepts intersecting version ranges without a warning', async () => {
+    const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+    writeFiles({
+      'style.css': [
+        "@import 'pkg@^1.0.0/a.css';",
+        "@import 'pkg@>=1.2.0 <3.0.0/b.css';",
+        "@import 'pkg@1.5.0/c.css';",
+      ].join('\n'),
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set([fileTheme('style.css')]),
+    });
+    expect(discovered).toEqual(new Map([['pkg', 'pkg@^1.0.0']]));
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('does not treat unversioned imports as conflicting with a versioned one', async () => {
+    const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+    writeFiles({
+      'style.css': [
+        "@import 'pkg@^1.0.0';",
+        "@import 'pkg/a.css';",
+        "@import 'later/a.css';",
+        "@import 'later@^2.0.0';",
+      ].join('\n'),
+    });
+    const discovered = await collectCssPackageImports({
+      themeIndexes: new Set([fileTheme('style.css')]),
+    });
+    expect(discovered).toEqual(
+      new Map([
+        ['pkg', 'pkg@^1.0.0'],
+        ['later', 'later@^2.0.0'],
+      ]),
+    );
+    expect(warn).not.toHaveBeenCalled();
   });
 });
 
