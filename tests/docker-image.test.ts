@@ -23,6 +23,18 @@ const IMAGE_INSPECT = await (
   await getContainerRuntimeClient()
 ).image.inspect(ImageName.fromString(IMAGE));
 
+// Set VIVLIOSTYLE_CLI_IMAGE_SLIM (any non-empty value) when the image under
+// test is built from Dockerfile.slim; it switches the suite to the slim
+// image's contract.
+const SLIM_ENV = 'VIVLIOSTYLE_CLI_IMAGE_SLIM';
+const SLIM_IMAGE = Boolean(process.env[SLIM_ENV]);
+
+// The slim image guarantees only the browser bundled at image build time (the
+// BROWSER build arg, a Chrome for Testing build); browsers downloaded at run
+// time are outside its contract.
+const NON_BUNDLED_SKIP_REASON =
+  'The slim image supports only the bundled browser.';
+
 // Set VIVLIOSTYLE_CLI_ARTIFACT_DIR to keep test artifacts (preview screenshots
 // and built PDFs) for human inspection.
 const ARTIFACT_DIR_ENV = 'VIVLIOSTYLE_CLI_ARTIFACT_DIR';
@@ -62,7 +74,8 @@ function startIdleContainer(
   const READY = 'SHELL_READY';
   const container = new GenericContainer(IMAGE)
     .withEntrypoint(['sh', '-c', `echo ${READY}; exec sleep infinity`])
-    .withWaitStrategy(Wait.forLogMessage(READY));
+    .withWaitStrategy(Wait.forLogMessage(READY))
+    .withStartupTimeout(15_000);
   if (opts.user) {
     container.withUser(opts.user);
   }
@@ -268,6 +281,7 @@ describe('document production', () => {
     it(
       'with chromium',
       async ({ skip }) => {
+        skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
         skip(
           IMAGE_INSPECT.Architecture === 'arm64',
           'Chromium snapshots are not available for Linux ARM64.',
@@ -280,7 +294,8 @@ describe('document production', () => {
     );
     it(
       'with firefox',
-      async () => {
+      async ({ skip }) => {
+        skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
         const { exitCode, output } = await buildWithBrowser('firefox');
         printOnFailure(output);
         expect(exitCode).toBe(0);
@@ -290,6 +305,7 @@ describe('document production', () => {
     it(
       'with a pinned chrome (chrome@130)',
       async ({ skip }) => {
+        skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
         skip(
           IMAGE_INSPECT.Architecture === 'arm64',
           'Chrome for Testing before 153 is not available for Linux ARM64.',
@@ -536,6 +552,7 @@ describe('document production', () => {
     it(
       'with chromium',
       async ({ skip }) => {
+        skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
         skip(
           IMAGE_INSPECT.Architecture === 'arm64',
           'Chromium snapshots are not available for Linux ARM64.',
@@ -546,7 +563,8 @@ describe('document production', () => {
     );
     it(
       'with firefox',
-      async () => {
+      async ({ skip }) => {
+        skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
         expect(await previewRendersContent('firefox')).toBe(true);
       },
       Timeout.HEAVY,
@@ -574,6 +592,7 @@ describe('document production', () => {
       it(
         'with chromium',
         async ({ skip }) => {
+          skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
           skip(
             IMAGE_INSPECT.Architecture === 'arm64',
             'Chromium snapshots are not available for Linux ARM64.',
@@ -589,7 +608,8 @@ describe('document production', () => {
       );
       it(
         'with firefox',
-        async () => {
+        async ({ skip }) => {
+          skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
           const { exitCode, output } = await buildWithBrowser(
             'firefox',
             ARBITRARY_USER,
@@ -602,6 +622,7 @@ describe('document production', () => {
       it(
         'with a pinned chrome (chrome@130)',
         async ({ skip }) => {
+          skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
           skip(
             IMAGE_INSPECT.Architecture === 'arm64',
             'Chrome for Testing before 153 is not available for Linux ARM64.',
@@ -630,6 +651,7 @@ describe('document production', () => {
       it(
         'with chromium',
         async ({ skip }) => {
+          skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
           skip(
             IMAGE_INSPECT.Architecture === 'arm64',
             'Chromium snapshots are not available for Linux ARM64.',
@@ -642,7 +664,8 @@ describe('document production', () => {
       );
       it(
         'with firefox',
-        async () => {
+        async ({ skip }) => {
+          skip(SLIM_IMAGE, NON_BUNDLED_SKIP_REASON);
           expect(await previewRendersContent('firefox', ARBITRARY_USER)).toBe(
             true,
           );
@@ -712,34 +735,57 @@ describe('mounted system fonts', () => {
 });
 
 describe('extensibility', () => {
-  // For now this test looks trivial; it runs as a probe and as self-documentation
-  // with a future aggressively slimmed, distroless-like base in mind.
-  it(
-    'installs a package via apt and runs it',
-    async () => {
-      const { exitCode, output } = await runOneShot(
-        `set -e
+  // The slim image purges perl-base (Essential), so /usr/bin/perl is gone and
+  // the package DB is left with unmet dependencies. Restoring it through apt is
+  // circular: apt refuses a broken system, and the --fix-broken repair it would
+  // run relies on perl (maintainer scripts, dpkg triggers), which is exactly
+  // what is missing. dpkg breaks the cycle by unpacking perl-base directly
+  // (--force-depends past the unmet deps), putting the interpreter back; only
+  // then can apt --fix-broken repair the remaining purged deps so the target
+  // package installs.
+  const RESTORE_PERL_BASE = SLIM_IMAGE
+    ? `apt-get download perl-base
+        dpkg --install --force-depends perl-base_*.deb
+        rm --force perl-base_*.deb
+        apt-get install --fix-broken --yes --no-install-recommends`
+    : ':';
+
+  const INSTALL_RENAME = `set -e
         apt-get update
+        ${RESTORE_PERL_BASE}
         apt-get install --yes --no-install-recommends rename
         rm --recursive --force /var/lib/apt/lists/*
         cd "$(mktemp -d)"
         : > probe.txt
         rename 's/probe/renamed/' probe.txt
-        test -f renamed.txt`,
-        { user: 'root' },
-      );
+        test -f renamed.txt`;
+
+  it(
+    'installs a package via apt and runs it',
+    async () => {
+      const { exitCode, output } = await runOneShot(INSTALL_RENAME, {
+        user: 'root',
+      });
       printOnFailure(output);
       expect(exitCode).toBe(0);
     },
     Timeout.MEDIUM,
   );
 
-  it(
-    'installs a native module with node-gyp and runs it',
-    async () => {
-      const { exitCode, output } = await runOneShot(
-        `set -e
+  // The slim image build strips node-gyp; reinstalling nodejs restores it.
+  // openssl must return first or apt cannot verify the NodeSource TLS
+  // certificate. node-gyp then needs python, which the slim image also lacks.
+  const RESTORE_NODE_GYP = SLIM_IMAGE
+    ? `${RESTORE_PERL_BASE}
+        apt-get install --yes --no-install-recommends openssl
         apt-get update
+        apt-get install --yes --no-install-recommends --reinstall nodejs
+        apt-get install --yes --no-install-recommends python3`
+    : ':';
+
+  const BUILD_BUFFERUTIL = `set -e
+        apt-get update
+        ${RESTORE_NODE_GYP}
         apt-get install --yes --no-install-recommends make g++
         rm --recursive --force /var/lib/apt/lists/*
         cd "$(mktemp -d)"
@@ -751,9 +797,14 @@ describe('extensibility', () => {
           const out = Buffer.alloc(4);
           mask(Buffer.from([1, 2, 3, 4]), Buffer.from([255, 255, 255, 255]), out, 0, 4);
           require("assert").deepStrictEqual([...out], [254, 253, 252, 251]);
-        '`,
-        { user: 'root' },
-      );
+        '`;
+
+  it(
+    'installs a native module with node-gyp and runs it',
+    async () => {
+      const { exitCode, output } = await runOneShot(BUILD_BUFFERUTIL, {
+        user: 'root',
+      });
       printOnFailure(output);
       expect(exitCode).toBe(0);
     },
