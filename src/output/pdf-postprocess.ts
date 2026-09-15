@@ -22,11 +22,12 @@ import {
 } from '../util.js';
 import { createCmykColorHook } from './cmyk.js';
 import { createReplaceImageHook } from './image.js';
+import { createOutputIntentHook } from './output-intent.js';
 import { editPdf } from './pdf-visitor.js';
 
 export type SaveOption = Pick<
   PdfOutput,
-  'preflight' | 'preflightOption' | 'cmyk' | 'replaceImage'
+  'preflight' | 'preflightOption' | 'cmyk' | 'replaceImage' | 'outputIntent'
 > &
   Pick<ResolvedTaskConfig, 'image'> & {
     cmykMap: CmykMap;
@@ -119,6 +120,7 @@ export class PostProcess {
       cmyk: cmykConfig,
       cmykMap,
       replaceImage: replaceImageConfig,
+      outputIntent,
       signal,
     }: SaveOption,
   ): Promise<void> {
@@ -163,15 +165,20 @@ export class PostProcess {
         )
       : {};
 
+    const outputIntentHook =
+      outputIntent === undefined ? {} : createOutputIntentHook(outputIntent);
+
     pdf = await (async () => {
       using replaceImageHook = await createReplaceImageHook(
         replaceImageConfig,
         cmykConfig ? cmykConfig.ifIncompatibleImagesFound : 'ignore',
         failures,
       );
-      return await editPdf(pdf, [cmykColorHook, replaceImageHook], {
-        signal,
-      });
+      return await editPdf(
+        pdf,
+        [cmykColorHook, replaceImageHook, outputIntentHook],
+        { signal },
+      );
     })();
     signal?.throwIfAborted();
 
