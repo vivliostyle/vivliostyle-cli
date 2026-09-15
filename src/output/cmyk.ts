@@ -142,7 +142,7 @@ export function createCmykColorHook(
   const unmappedColors =
     ifUnmappedColorsFound === 'ignore' ? null : new Set<string>();
   return {
-    async visit(node) {
+    async visit({ node }) {
       if (node.kind !== 'content-stream') {
         return;
       }
@@ -153,7 +153,7 @@ export function createCmykColorHook(
       );
       node.write(converted);
     },
-    complete() {
+    afterVisit() {
       if (!unmappedColors) {
         return;
       }

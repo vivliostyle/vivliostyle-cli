@@ -7,7 +7,9 @@ const mockedLaunchPreview = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
 const mockedGetViewerFullUrl = vi.hoisted(() =>
   vi.fn<() => Promise<unknown>>(),
 );
-const mockedPostProcessLoad = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
+const mockedPostProcessPDF = vi.hoisted(() =>
+  vi.fn<(options: { signal?: AbortSignal }) => Promise<void>>(),
+);
 
 vi.mock('../src/browser.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/browser.js')>()),
@@ -19,9 +21,7 @@ vi.mock('../src/server.js', () => ({
 }));
 
 vi.mock('../src/output/pdf-postprocess.js', () => ({
-  PostProcess: {
-    load: mockedPostProcessLoad,
-  },
+  postProcessPDF: mockedPostProcessPDF,
 }));
 
 import { buildPDF } from '../src/output/pdf.js';
@@ -79,7 +79,7 @@ function setupPdfBuild(
 describe('buildPDF cancellation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedPostProcessLoad.mockReset();
+    mockedPostProcessPDF.mockReset();
     mockedGetViewerFullUrl.mockResolvedValue('http://localhost:13000/viewer');
   });
 
@@ -97,7 +97,7 @@ describe('buildPDF cancellation', () => {
       buildPDF({ target, config, signal: controller.signal }),
     ).rejects.toBe(reason);
     expect(closeBrowser).toHaveBeenCalledOnce();
-    expect(mockedPostProcessLoad).not.toHaveBeenCalled();
+    expect(mockedPostProcessPDF).not.toHaveBeenCalled();
   });
 
   it('waits for browser closure before rejecting after cancellation', async () => {
@@ -195,13 +195,7 @@ describe('buildPDF cancellation', () => {
 
   it('passes the signal to PDF postprocess', async () => {
     const controller = new AbortController();
-    const save = vi.fn<() => Promise<void>>(async () => {});
-    mockedPostProcessLoad.mockResolvedValue({
-      metadata: vi.fn<() => Promise<void>>(async () => {}),
-      toc: vi.fn<() => Promise<void>>(async () => {}),
-      setPageBoxes: vi.fn<() => Promise<void>>(async () => {}),
-      save,
-    });
+    mockedPostProcessPDF.mockResolvedValue();
     setupPdfBuild(vi.fn(() => Promise.resolve(new Uint8Array([1]))));
 
     await expect(
@@ -212,9 +206,9 @@ describe('buildPDF cancellation', () => {
       }),
     ).resolves.toBe('output.pdf');
 
-    expect(save).toHaveBeenCalledWith(
-      'output.pdf',
+    expect(mockedPostProcessPDF).toHaveBeenCalledWith(
       expect.objectContaining({
+        output: 'output.pdf',
         signal: controller.signal,
       }),
     );

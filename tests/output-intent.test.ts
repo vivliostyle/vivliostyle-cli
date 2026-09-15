@@ -14,7 +14,10 @@ import {
 import { assert, beforeEach, expect, it, onTestFinished, vi } from 'vitest';
 
 import { Logger } from '../src/logger.js';
-import { PostProcess, type SaveOption } from '../src/output/pdf-postprocess.js';
+import {
+  postProcessPDF,
+  type SaveOption,
+} from '../src/output/pdf-postprocess.js';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'cmyk');
 let temporaryDir: string;
@@ -32,9 +35,10 @@ async function savePdf(
   options: Partial<SaveOption> = {},
   input = fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
 ): Promise<PDFDocument> {
-  const post = await PostProcess.load(input);
   const output = path.join(temporaryDir, 'output.pdf');
-  await post.save(output, {
+  await postProcessPDF({
+    pdf: input,
+    output,
     preflight: undefined,
     preflightOption: [],
     image: 'vivliostyle/cli',
@@ -117,6 +121,18 @@ it('leaves output intents absent when the option is omitted', async () => {
   const document = await savePdf();
 
   expect(document.catalog.has(PDFName.of('OutputIntents'))).toBe(false);
+});
+
+it('raises the PDF version required by an output intent', async () => {
+  const input = Buffer.from(
+    fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
+  );
+  input.write('%PDF-1.3', 0, 'ascii');
+
+  await savePdf({ outputIntent: path.join(fixturesDir, 'ps_gray.icc') }, input);
+
+  const output = fs.readFileSync(path.join(temporaryDir, 'output.pdf'));
+  expect(output.subarray(0, 8).toString('ascii')).toBe('%PDF-1.4');
 });
 
 it('embeds an RGB profile extracted from an existing PDF', async () => {
