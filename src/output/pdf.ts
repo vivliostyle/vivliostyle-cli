@@ -231,10 +231,6 @@ export async function buildPDF({
       const { protocol } = browser as Browser & {
         protocol: 'cdp' | 'webDriverBiDi';
       };
-      // Only CDP supports emulateMediaType
-      if (protocol === 'cdp') {
-        await page.emulateMediaType('print');
-      }
       await page.waitForFunction(
         /* v8 ignore next */
         () => window.coreViewer.readyState === 'complete',
