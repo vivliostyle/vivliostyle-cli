@@ -260,7 +260,7 @@ Long formulas show how the theme aligns display math and how much space it leave
     \\"@vivliostyle/theme-base\\": \\"^3.0.0\\"
   },
   \\"devDependencies\\": {
-    \\"@vivliostyle/cli\\": \\"^11.3.0\\"
+    \\"@vivliostyle/cli\\": \\"^999.0.0\\"
   },
   \\"vivliostyle\\": {
     \\"theme\\": {
@@ -383,7 +383,7 @@ export default defineConfig({
   language: \\"en\\",
   size: \\"A5\\",
   theme: \\".\\",
-  image: \\"ghcr.io/vivliostyle/cli:11.3.0\\",
+  image: \\"ghcr.io/vivliostyle/cli:999.0.0\\",
   entry: [
     { rel: \\"contents\\" },
     \\"example/01_typography.md\\",

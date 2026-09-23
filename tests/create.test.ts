@@ -96,7 +96,7 @@ vi.mock('../src/npm', () => mockedNpmModule);
 
 vi.mock('../src/util.js', async (importOriginal) => ({
   ...(await importOriginal<typeof UtilModule>()),
-  cliVersion: '11.3.0',
+  cliVersion: '999.0.0',
 }));
 
 beforeEach(() => {
@@ -255,11 +255,12 @@ describe('create command', () => {
     it('rejects a local template that requires a newer CLI', async () => {
       vol.fromJSON({
         '/work/local-template/file.md': '# {{proper title}}',
-        '/work/local-template/vivliostyle-template.json': manifest('>=99.0.0'),
+        '/work/local-template/vivliostyle-template.json':
+          manifest('>=9999.0.0'),
       });
 
       await expect(createFromLocalTemplate()).rejects.toThrow(
-        'The template requires @vivliostyle/cli ">=99.0.0", but the current version is 11.3.0.',
+        'The template requires @vivliostyle/cli ">=9999.0.0", but the current version is 999.0.0.',
       );
       expect(vol.toJSON()['/work/project/file.md']).toBeUndefined();
     });
@@ -295,7 +296,7 @@ describe('create command', () => {
           { cwd: '/work' },
         ),
       ).rejects.toThrow(
-        'The template requires @vivliostyle/cli ">=99.0.0", but the current version is 11.3.0.',
+        'The template requires @vivliostyle/cli ">=9999.0.0", but the current version is 999.0.0.',
       );
       const files = vol.toJSON();
       expect(files['/work/project/manuscript.md']).toBeUndefined();
@@ -310,7 +311,7 @@ describe('create command', () => {
         (_, { dir = '' } = {}) => {
           vol.fromJSON({
             [`${dir}/manuscript.md`]: '# {{proper title}}',
-            [`${dir}/vivliostyle-template.json`]: manifest('>=99.0.0'),
+            [`${dir}/vivliostyle-template.json`]: manifest('>=9999.0.0'),
           });
           return Promise.resolve({});
         },
@@ -337,7 +338,7 @@ describe('create command', () => {
         vi.mocked(downloadTemplate).mock.calls.map(([input]) => input),
       ).toEqual([
         'gh:vivliostyle/vivliostyle-cli/templates/basic',
-        'gh:vivliostyle/vivliostyle-cli/templates/basic#v11.3.0',
+        'gh:vivliostyle/vivliostyle-cli/templates/basic#v999.0.0',
       ]);
       const files = vol.toJSON();
       expect(files['/work/project/manuscript.md']).toBeUndefined();

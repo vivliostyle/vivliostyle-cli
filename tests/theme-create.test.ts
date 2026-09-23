@@ -74,7 +74,7 @@ vi.mock('tinyexec', () => ({ x: mockedExec.x }));
 
 vi.mock('../src/util.js', async (importOriginal) => ({
   ...(await importOriginal<typeof UtilModule>()),
-  cliVersion: '11.3.0',
+  cliVersion: '999.0.0',
 }));
 
 const readPackageJson = (path: string) =>
@@ -314,7 +314,7 @@ describe('theme create command', () => {
     vol.fromJSON({
       '/work/local-template/package.json': '{ "name": "{{name}}" }',
       '/work/local-template/vivliostyle-template.json': JSON.stringify({
-        engines: { '@vivliostyle/cli': '>=99.0.0' },
+        engines: { '@vivliostyle/cli': '>=9999.0.0' },
       }),
     });
 
@@ -338,7 +338,7 @@ describe('theme create command', () => {
         { cwd: '/work' },
       ),
     ).rejects.toThrow(
-      'The template requires @vivliostyle/cli ">=99.0.0", but the current version is 11.3.0.',
+      'The template requires @vivliostyle/cli ">=9999.0.0", but the current version is 999.0.0.',
     );
     expect(vol.toJSON('/work/my-theme')).toEqual({});
   });

@@ -168,7 +168,7 @@ The `engines["@vivliostyle/cli"]` value is a [semver range](https://github.com/n
 
 The manifest itself is never copied into the generated project.
 
-All built-in templates carry this manifest. Because they are fetched from the `main` branch of the Vivliostyle CLI repository, they may require a CLI newer than the one you are running. In that case, the CLI warns and uses the template of the release that matches its own version (for example, `gh:vivliostyle/vivliostyle-cli/templates/basic#v11.3.0` for CLI 11.3.0) instead of aborting. Update `@vivliostyle/cli` to use the latest template.
+All built-in templates carry this manifest. Because they are fetched from the `main` branch of the Vivliostyle CLI repository, they may require a CLI newer than the one you are running. In that case, the CLI warns and uses the template of the release that matches its own version (for example, `gh:vivliostyle/vivliostyle-cli/templates/basic#v11.4.0` for CLI 11.4.0) instead of aborting. Update `@vivliostyle/cli` to use the latest template.
 
 ## Providing Templates in a Vivliostyle Themes Package
 

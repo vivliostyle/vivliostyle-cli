@@ -26,7 +26,7 @@ Each official template contains a `vivliostyle-template.json` file that declares
 }
 ```
 
-Vivliostyle CLI checks this manifest before applying a template and aborts when its own version does not satisfy the range. The manifest is not copied into the generated project. Since official templates are fetched from the `main` branch, they may require a CLI newer than the running one; in that case, the CLI warns and falls back to the template of the release tag matching its own version (for example, `gh:vivliostyle/vivliostyle-cli/templates/basic#v11.3.0` for CLI 11.3.0).
+Vivliostyle CLI 11.4.0 and later check this manifest before applying a template and abort when their own version does not satisfy the range; older versions ignore the manifest. The manifest is not copied into the generated project. Since official templates are fetched from the `main` branch, they may require a CLI newer than the running one; in that case, the CLI warns and falls back to the template of the release tag matching its own version (for example, `gh:vivliostyle/vivliostyle-cli/templates/basic#v11.4.0` for CLI 11.4.0).
 
 ## Community Templates
 
