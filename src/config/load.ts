@@ -7,6 +7,7 @@ import upath from 'upath';
 import * as v from 'valibot';
 import { cyan, underline } from 'yoctocolors';
 
+import { CLI_PACKAGE_NAME } from '../constants.js';
 import { Logger } from '../logger.js';
 import {
   cwd as defaultRoot,
@@ -40,12 +41,11 @@ function registerConfigImportFallback(): void {
     return;
   }
   importFallbackRegistered = true;
-  const selfPackageName = '@vivliostyle/cli';
   registerHooks({
     resolve(specifier, context, nextResolve) {
       if (
-        specifier !== selfPackageName &&
-        !specifier.startsWith(`${selfPackageName}/`)
+        specifier !== CLI_PACKAGE_NAME &&
+        !specifier.startsWith(`${CLI_PACKAGE_NAME}/`)
       ) {
         return nextResolve(specifier, context);
       }
