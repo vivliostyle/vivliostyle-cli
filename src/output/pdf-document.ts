@@ -121,7 +121,10 @@ function applyMetadata(
   }
   document.setMetaData('info:Creator', metadata.creator);
   if (metadata.language) {
-    document.setLanguage(metadata.language);
+    using trailer = disposable(document.getTrailer());
+    using catalog = disposable(trailer.get('Root'));
+    using language = disposable(document.newString(metadata.language));
+    catalog.put('Lang', language);
     setMinimumPdfVersion(14);
   }
   if (metadata.creationDate) {

@@ -159,6 +159,36 @@ it.each([
   expect(document.getCreationDate()).toBeUndefined();
 });
 
+it.each(['en-US', 'zh-Hant-TW', 'zh-TW', 'x-private'])(
+  'writes the document language %s to the catalog as given',
+  async (language) => {
+    fs.mkdirSync(temporaryDir, { recursive: true });
+    const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
+    onTestFinished(() => fs.rmSync(output, { force: true }));
+
+    const input = await PDFDocument.create({ updateMetadata: false });
+    input.addPage();
+    await postProcessPDF({
+      pdf: await input.save(),
+      output,
+      metadata: {
+        'http://purl.org/dc/terms/language': [{ v: language, o: 0 }],
+      } satisfies Meta,
+      preflight: undefined,
+      preflightOption: [],
+      image: '',
+      cmyk: false,
+      cmykMap: {},
+      replaceImage: [],
+    });
+
+    const document = await PDFDocument.load(fs.readFileSync(output), {
+      updateMetadata: false,
+    });
+    expect(text(document.catalog, 'Lang')).toBe(language);
+  },
+);
+
 it('raises unsupported PDF 1.0 input to the minimum supported version', async () => {
   fs.mkdirSync(temporaryDir, { recursive: true });
   const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
