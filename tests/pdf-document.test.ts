@@ -126,6 +126,39 @@ it('applies document metadata, outlines, page boxes, and trailing-page removal',
   expect(section.get(PDFName.of('Dest'))?.toString()).toBe('/section');
 });
 
+it.each([
+  ['an invalid date', '2024年5月6日'],
+  ['a five-digit year', '+012345-05-06T07:08:09Z'],
+  ['a negative year', '-000001-05-06T07:08:09Z'],
+])('omits the creation date for %s', async (_, created) => {
+  fs.mkdirSync(temporaryDir, { recursive: true });
+  const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
+  onTestFinished(() => fs.rmSync(output, { force: true }));
+
+  const input = await PDFDocument.create({ updateMetadata: false });
+  input.addPage();
+  await postProcessPDF({
+    pdf: await input.save(),
+    output,
+    metadata: {
+      'http://idpf.org/epub/vocab/package/meta/#created': [
+        { v: created, o: 0 },
+      ],
+    } satisfies Meta,
+    preflight: undefined,
+    preflightOption: [],
+    image: '',
+    cmyk: false,
+    cmykMap: {},
+    replaceImage: [],
+  });
+
+  const document = await PDFDocument.load(fs.readFileSync(output), {
+    updateMetadata: false,
+  });
+  expect(document.getCreationDate()).toBeUndefined();
+});
+
 it('raises unsupported PDF 1.0 input to the minimum supported version', async () => {
   fs.mkdirSync(temporaryDir, { recursive: true });
   const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);

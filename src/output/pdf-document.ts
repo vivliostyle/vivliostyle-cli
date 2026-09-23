@@ -72,7 +72,8 @@ export function resolvePdfMetadata(
   }
   const language = tree[metaTerms.language]?.[0].v;
   const creation = (tree[metaTerms.created] || tree[metaTerms.date])?.[0].v;
-  const creationDate = creation && new Date(creation);
+  const creationDate = creation ? new Date(creation) : undefined;
+  const creationYear = creationDate?.getUTCFullYear();
   return {
     title,
     author,
@@ -82,7 +83,11 @@ export function resolvePdfMetadata(
       ? 'Vivliostyle'
       : `Vivliostyle (${creatorOpt})`,
     language,
-    creationDate: creationDate || undefined,
+    // The PDF date format has a four-digit year field (ISO 32000-1:2008, 7.9.4).
+    creationDate:
+      creationYear !== undefined && creationYear >= 0 && creationYear <= 9999
+        ? creationDate
+        : undefined,
     readingDirection: pageProgression === 'rtl' ? 'rtl' : undefined,
   };
 }
