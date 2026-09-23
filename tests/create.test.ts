@@ -1,6 +1,7 @@
 import './mocks/bluwy__giget-core.js';
 import './mocks/fs.js';
 import './mocks/tmp.js';
+import { downloadTemplate } from '@bluwy/giget-core';
 import { vol } from 'memfs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -298,6 +299,50 @@ describe('create command', () => {
       );
       const files = vol.toJSON();
       expect(files['/work/project/manuscript.md']).toBeUndefined();
+      expect(
+        Object.keys(files).filter((f) => f.includes('.vs-template-')),
+      ).toEqual([]);
+      expect(vol.existsSync('/work/project')).toBe(false);
+    });
+
+    it('falls back to the release tag when a built-in template requires a newer CLI', async () => {
+      vi.mocked(downloadTemplate, { partial: true }).mockImplementationOnce(
+        (_, { dir = '' } = {}) => {
+          vol.fromJSON({
+            [`${dir}/manuscript.md`]: '# {{proper title}}',
+            [`${dir}/vivliostyle-template.json`]: manifest('>=99.0.0'),
+          });
+          return Promise.resolve({});
+        },
+      );
+
+      await runCommand(
+        [
+          'create',
+          '--title',
+          'book',
+          '--author',
+          'john',
+          '--language',
+          'en',
+          '--template',
+          'basic',
+          '--no-theme',
+          '--no-install-dependencies',
+          'project',
+        ],
+        { cwd: '/work' },
+      );
+      expect(
+        vi.mocked(downloadTemplate).mock.calls.map(([input]) => input),
+      ).toEqual([
+        'gh:vivliostyle/vivliostyle-cli/templates/basic',
+        'gh:vivliostyle/vivliostyle-cli/templates/basic#v11.3.0',
+      ]);
+      const files = vol.toJSON();
+      expect(files['/work/project/manuscript.md']).toBeUndefined();
+      expect(files['/work/project/vivliostyle.config.js']).toBeDefined();
+      expect(files['/work/project/vivliostyle-template.json']).toBeUndefined();
       expect(
         Object.keys(files).filter((f) => f.includes('.vs-template-')),
       ).toEqual([]);

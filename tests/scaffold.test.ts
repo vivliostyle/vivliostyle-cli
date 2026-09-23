@@ -14,12 +14,8 @@ const writeManifest = (content: unknown) => {
   });
 };
 
-const check = (currentVersion: string, templateSource = TEMPLATE_DIR) =>
-  assertTemplateCompatibility({
-    templateDir: TEMPLATE_DIR,
-    templateSource,
-    currentVersion,
-  });
+const check = (currentVersion: string) =>
+  assertTemplateCompatibility({ templateDir: TEMPLATE_DIR, currentVersion });
 
 beforeEach(() => {
   vol.reset();
@@ -59,30 +55,6 @@ describe('assertTemplateCompatibility', () => {
     expect(() => check('11.2.0')).toThrow(
       'The template requires @vivliostyle/cli ">=11.3.0", but the current version is 11.2.0.\nUpdate @vivliostyle/cli to a version that satisfies the requirement, or use a template that supports the current version.',
     );
-  });
-
-  it('suggests a release tag for built-in templates', () => {
-    writeManifest({ engines: { '@vivliostyle/cli': '>=11.3.0' } });
-    expect(() =>
-      check('11.2.0', 'gh:vivliostyle/vivliostyle-cli/templates/basic'),
-    ).toThrow(
-      'To use this template without updating @vivliostyle/cli, specify the release tag that matches the current version: --template gh:vivliostyle/vivliostyle-cli/templates/basic#v11.2.0',
-    );
-  });
-
-  it('does not suggest a release tag for other sources', () => {
-    writeManifest({ engines: { '@vivliostyle/cli': '>=11.3.0' } });
-    for (const source of [
-      TEMPLATE_DIR,
-      'gh:org/repo/templates/basic',
-      'gh:vivliostyle/vivliostyle-cli/templates/basic#main',
-    ]) {
-      expect(() => check('11.2.0', source)).toThrow(
-        expect.objectContaining({
-          message: expect.not.stringContaining('#v11.2.0') as string,
-        }) as Error,
-      );
-    }
   });
 
   it('rejects a malformed manifest', () => {

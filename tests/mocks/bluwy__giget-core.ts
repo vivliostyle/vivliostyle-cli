@@ -8,10 +8,9 @@ const mocked = await vi.hoisted(async () => {
   const { mockRequire } = await import('./index.js');
 
   const mod = {
-    downloadTemplate(
-      input: string,
-      { dir, cwd }: { dir?: string; cwd?: string } = {},
-    ) {
+    downloadTemplate: vi.fn<
+      (input: string, options?: { dir?: string; cwd?: string }) => void
+    >(function (input, { dir, cwd } = {}) {
       const repo = 'vivliostyle/vivliostyle-cli/';
       const loc = input
         .replace(/^.+:/v, '')
@@ -41,7 +40,7 @@ const mocked = await vi.hoisted(async () => {
         }
       };
       copyFiles(source, dest);
-    },
+    }),
   };
 
   await mockRequire('@bluwy/giget-core', mod);

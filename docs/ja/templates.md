@@ -168,11 +168,7 @@ export default defineConfig({
 
 マニフェスト自体が生成されたプロジェクトにコピーされることはありません。
 
-ビルトインテンプレートはすべてこのマニフェストを持っています。ビルトインテンプレートは Vivliostyle CLI リポジトリの `main` ブランチから取得されるため、古い CLI では拒否されることがあります。その場合は、使用している CLI のバージョンに対応するリリースタグを指定してテンプレートを固定してください：
-
-```sh
-vivliostyle create my-project --template gh:vivliostyle/vivliostyle-cli/templates/basic#v11.3.0
-```
+ビルトインテンプレートはすべてこのマニフェストを持っています。ビルトインテンプレートは Vivliostyle CLI リポジトリの `main` ブランチから取得されるため、実行中の CLI より新しいバージョンを要求することがあります。その場合、CLI は処理を中断せず、警告を表示したうえで自身のバージョンに対応するリリースのテンプレート（例えば CLI 11.3.0 では `gh:vivliostyle/vivliostyle-cli/templates/basic#v11.3.0`）を代わりに使用します。最新のテンプレートを使用するには `@vivliostyle/cli` を更新してください。
 
 ## Theme パッケージでテンプレートを提供する
 

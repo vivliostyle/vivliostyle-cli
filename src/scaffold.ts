@@ -11,6 +11,7 @@ import { cyan, dim, green } from 'yoctocolors';
 
 import { VivliostyleTemplateManifest } from './config/schema.js';
 import {
+  CLI_PACKAGE_NAME,
   DEFAULT_THEME_TEMPLATE,
   TEMPLATE_MANIFEST_FILENAME,
   TEMPLATE_SETTINGS,
@@ -94,33 +95,37 @@ function readTemplateManifest(
   return result.output;
 }
 
+export class TemplateCompatibilityError extends Error {
+  range: string;
+  currentVersion: string;
+
+  constructor(range: string, currentVersion: string) {
+    super(
+      [
+        `The template requires ${CLI_PACKAGE_NAME} "${range}", but the current version is ${currentVersion}.`,
+        `Update ${CLI_PACKAGE_NAME} to a version that satisfies the requirement, or use a template that supports the current version.`,
+      ].join('\n'),
+    );
+    this.range = range;
+    this.currentVersion = currentVersion;
+  }
+}
+
 export function assertTemplateCompatibility({
   templateDir,
-  templateSource,
   currentVersion = cliVersion,
 }: {
   templateDir: string;
-  templateSource: string;
   currentVersion?: string;
 }): void {
-  const selfPackageName = '@vivliostyle/cli';
-  const range = readTemplateManifest(templateDir)?.engines?.[selfPackageName];
+  const range = readTemplateManifest(templateDir)?.engines?.[CLI_PACKAGE_NAME];
   if (
     !range ||
     semverSatisfies(currentVersion, range, { includePrerelease: true })
   ) {
     return;
   }
-  const lines = [
-    `The template requires ${selfPackageName} "${range}", but the current version is ${currentVersion}.`,
-    `Update ${selfPackageName} to a version that satisfies the requirement, or use a template that supports the current version.`,
-  ];
-  if (BUILTIN_TEMPLATES.has(templateSource)) {
-    lines.push(
-      `To use this template without updating ${selfPackageName}, specify the release tag that matches the current version: ${cyan(`--template ${templateSource}#v${currentVersion}`)}`,
-    );
-  }
-  throw new Error(lines.join('\n'));
+  throw new TemplateCompatibilityError(range, currentVersion);
 }
 
 export function assertDestinationEmpty({
@@ -159,10 +164,7 @@ export async function setupTemplate({
 }): Promise<void> {
   signal?.throwIfAborted();
   if (useLocalTemplate) {
-    assertTemplateCompatibility({
-      templateDir: template,
-      templateSource: template,
-    });
+    assertTemplateCompatibility({ templateDir: template });
     const matcher = new GlobMatcher([
       {
         patterns: ['**'],
@@ -190,29 +192,44 @@ export async function setupTemplate({
     // the current directory, create a temporary directory and copy the template
     // to its final location.
     // https://github.com/bluwy/giget-core/blob/2247658f4cc3240e8dc3819c782355fe4b535214/src/utils.js#L195
-    const tmpDownloadDir = upath.join(
-      cwd,
-      projectPath,
-      `.vs-template-${Date.now()}`,
-    );
+    const projectDir = upath.join(cwd, projectPath);
+    const projectDirExists = fs.existsSync(projectDir);
+    const tmpDownloadDir = upath.join(projectDir, `.vs-template-${Date.now()}`);
     Logger.debug('setupTemplate > tmpDownloadDir %s', tmpDownloadDir);
+    const download = async (source: string) => {
+      fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
+      await downloadTemplate(source, { dir: tmpDownloadDir });
+      signal?.throwIfAborted();
+      assertTemplateCompatibility({ templateDir: tmpDownloadDir });
+    };
     await executeWithCleanupOnInterrupt(
       `Removing the temporary directory: ${tmpDownloadDir}`,
       async () => {
         try {
-          await downloadTemplate(template, { dir: tmpDownloadDir });
-          signal?.throwIfAborted();
-          assertTemplateCompatibility({
-            templateDir: tmpDownloadDir,
-            templateSource: template,
-          });
+          try {
+            await download(template);
+          } catch (error) {
+            // Built-in templates are fetched from the `main` branch, which may
+            // already require a CLI newer than the running one.
+            if (
+              !(error instanceof TemplateCompatibilityError) ||
+              !BUILTIN_TEMPLATES.has(template)
+            ) {
+              throw error;
+            }
+            const fallback = `${template}#v${error.currentVersion}`;
+            Logger.logWarn(
+              `The latest built-in template requires ${CLI_PACKAGE_NAME} "${error.range}", but the current version is ${error.currentVersion}. Using the template of the ${error.currentVersion} release instead: ${cyan(fallback)}\nUpdate ${CLI_PACKAGE_NAME} to use the latest template.`,
+            );
+            await download(fallback);
+          }
           for (const entry of fs.readdirSync(tmpDownloadDir)) {
             if (entry === TEMPLATE_MANIFEST_FILENAME) {
               continue;
             }
             fs.renameSync(
               upath.join(tmpDownloadDir, entry),
-              upath.join(cwd, projectPath, entry),
+              upath.join(projectDir, entry),
             );
             signal?.throwIfAborted();
           }
@@ -221,8 +238,13 @@ export async function setupTemplate({
           throw error;
         }
       },
-      () => {
+      (error) => {
         fs.rmSync(tmpDownloadDir, { recursive: true, force: true });
+        // `downloadTemplate` creates the project directory as the parent of
+        // the temporary directory, which would make a retry fail as non-empty.
+        if (error !== undefined && !projectDirExists) {
+          fs.rmSync(projectDir, { recursive: true, force: true });
+        }
       },
     );
   }
