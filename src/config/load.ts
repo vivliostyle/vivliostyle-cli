@@ -9,12 +9,10 @@ import { cyan, underline } from 'yoctocolors';
 
 import { Logger } from '../logger.js';
 import {
-  cliRoot,
   cwd as defaultRoot,
   DetailError,
   parseJsonc,
   prettifySchemaError,
-  readPackageJson,
   toError,
 } from '../util.js';
 import {
@@ -42,12 +40,7 @@ function registerConfigImportFallback(): void {
     return;
   }
   importFallbackRegistered = true;
-  const selfPackageName = readPackageJson(
-    upath.join(cliRoot, 'package.json'),
-  ).name;
-  if (!selfPackageName) {
-    return;
-  }
+  const selfPackageName = '@vivliostyle/cli';
   registerHooks({
     resolve(specifier, context, nextResolve) {
       if (
