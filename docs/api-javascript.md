@@ -45,6 +45,8 @@
 - [`VivliostyleConfigSchema`](#vivliostyleconfigschema)
 - [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
 - [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)
+- [`VivliostyleTemplateManifest`](#vivliostyletemplatemanifest)
+- [`VivliostyleTemplateManifest`](#vivliostyletemplatemanifest)
 
 ### Variables
 
@@ -2294,6 +2296,18 @@ https://github.com/vivliostyle/vivliostyle-cli/blob/main/docs/config.md
 ### VivliostylePackageMetadata
 
 > **VivliostylePackageMetadata** = `v.InferInput`\<*typeof* [`VivliostylePackageMetadata`](#vivliostylepackagemetadata)\>
+
+***
+
+### VivliostyleTemplateManifest
+
+> **VivliostyleTemplateManifest** = `SchemaWithPipe`\<readonly \[`ObjectSchema`\<\{ `engines`: `SchemaWithPipe`\<readonly \[`OptionalSchema`\<`RecordSchema`\<`SchemaWithPipe`\<readonly \[`StringSchema`\<...\>, `TrimAction`, `MinLengthAction`\<..., ..., ...\>\]\>, `SchemaWithPipe`\<readonly \[`SchemaWithPipe`\<...\>, `CheckAction`\<..., ...\>\]\>, `undefined`\>, `undefined`\>, `DescriptionAction`\<\{\[`key`: `string`\]: `string`; \} \| `undefined`, `string`\>\]\>; \}, `undefined`\>, `TitleAction`\<\{ `engines?`: \{\[`key`: `string`\]: `string`; \}; \}, `"VivliostyleTemplateManifest"`\>\]\>
+
+***
+
+### VivliostyleTemplateManifest
+
+> **VivliostyleTemplateManifest** = `v.InferOutput`\<*typeof* [`VivliostyleTemplateManifest`](#vivliostyletemplatemanifest)\>
 
 ## Variables
 

@@ -4,7 +4,10 @@ import {
   StringifyMarkdownOptionsSchema,
 } from '@vivliostyle/vfm';
 import type * as mupdfType from 'mupdf';
-import { satisfies as semverSatisfies } from 'semver';
+import {
+  satisfies as semverSatisfies,
+  validRange as semverValidRange,
+} from 'semver';
 import upath from 'upath';
 import * as v from 'valibot';
 import validateNpmPackageName from 'validate-npm-package-name';
@@ -1895,6 +1898,34 @@ export const VivliostyleTemplateMetadata = v.pipe(
   ),
   v.title('VivliostyleTemplateMetadata'),
 );
+
+export const VivliostyleTemplateManifest = v.pipe(
+  v.object({
+    engines: v.pipe(
+      v.optional(
+        v.record(
+          ValidString,
+          v.pipe(
+            ValidString,
+            v.check(
+              (value) =>
+                semverValidRange(value, { includePrerelease: true }) !== null,
+              'Invalid semver range',
+            ),
+          ),
+        ),
+      ),
+      v.description($`
+        Version ranges of the packages required by the template.
+        The \`@vivliostyle/cli\` entry is checked against the running CLI version.
+      `),
+    ),
+  }),
+  v.title('VivliostyleTemplateManifest'),
+);
+export type VivliostyleTemplateManifest = v.InferOutput<
+  typeof VivliostyleTemplateManifest
+>;
 
 export const VivliostylePackageMetadata = v.pipe(
   v.partial(

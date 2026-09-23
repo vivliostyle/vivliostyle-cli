@@ -60,7 +60,7 @@ vivliostyle create my-project --template minimal
 --template ../shared-templates/book-template
 ```
 
-`node_modules/` と `.git/` を除く全ファイルが再帰的にコピーされます。
+`node_modules/`、`.git/`、および[テンプレートマニフェスト](#対応する-cli-バージョンの宣言)である `vivliostyle-template.json` を除く全ファイルが再帰的にコピーされます。
 
 ### Vivliostyle Themes固有のテンプレート
 
@@ -146,6 +146,32 @@ export default defineConfig({
     "@vivliostyle/cli": "{{cliVersion}}"
   }
 }
+```
+
+## 対応する CLI バージョンの宣言
+
+テンプレートはプロジェクト作成時に取得元から取得されるため、ユーザーが使用している Vivliostyle CLI よりも新しいバージョンの機能にテンプレートが依存してしまうことがあります。そのようなテンプレートから動作しないプロジェクトが生成されるのを防ぐため、テンプレートのルートに `vivliostyle-template.json` ファイルを置き、対応する CLI のバージョンを宣言できます：
+
+```json
+{
+  "engines": {
+    "@vivliostyle/cli": ">=11.3.0"
+  }
+}
+```
+
+`engines["@vivliostyle/cli"]` の値は `package.json` の `engines` フィールドと同じ形式の [semver の範囲指定](https://github.com/npm/node-semver#ranges)です。`vivliostyle create` や `vivliostyle theme create` がテンプレートを適用する際、テンプレートの取得後、プロジェクトへファイルをコピーする前にこのマニフェストがチェックされます：
+
+- 実行中の CLI が範囲を満たしていれば、テンプレートは通常どおり適用されます。
+- 満たしていない場合、要求される範囲と現在の CLI バージョンを示すエラーで処理を中断します。`@vivliostyle/cli` を更新する（例えば `npm create book@latest` は常に最新の CLI を使用します）か、現在のバージョンに対応したテンプレートを使用してください。
+- テンプレートに `vivliostyle-template.json` がなければ、チェックは行われません。
+
+マニフェスト自体が生成されたプロジェクトにコピーされることはありません。
+
+ビルトインテンプレートはすべてこのマニフェストを持っています。ビルトインテンプレートは Vivliostyle CLI リポジトリの `main` ブランチから取得されるため、古い CLI では拒否されることがあります。その場合は、使用している CLI のバージョンに対応するリリースタグを指定してテンプレートを固定してください：
+
+```sh
+vivliostyle create my-project --template gh:vivliostyle/vivliostyle-cli/templates/basic#v11.3.0
 ```
 
 ## Theme パッケージでテンプレートを提供する
@@ -292,6 +318,7 @@ my-vivliostyle-theme/
 ├── theme.css
 └── template/
     └── default/
+        ├── vivliostyle-template.json   # 対応する CLI バージョンを宣言（省略可）
         ├── vivliostyle.config.js   # {{title}}、{{author}} などを使用
         ├── manuscript.md
         └── assets/

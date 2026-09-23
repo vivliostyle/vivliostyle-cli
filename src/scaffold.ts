@@ -3,15 +3,35 @@ import fs from 'node:fs';
 
 import { downloadTemplate } from '@bluwy/giget-core';
 import { copy } from 'fs-extra/esm';
+import { satisfies as semverSatisfies } from 'semver';
 import { x } from 'tinyexec';
 import upath from 'upath';
-import { dim, green } from 'yoctocolors';
+import * as v from 'valibot';
+import { cyan, dim, green } from 'yoctocolors';
 
+import { VivliostyleTemplateManifest } from './config/schema.js';
+import {
+  DEFAULT_THEME_TEMPLATE,
+  TEMPLATE_MANIFEST_FILENAME,
+  TEMPLATE_SETTINGS,
+} from './constants.js';
 import { format } from './create-template.js';
 import type { InteractiveLogger } from './interactive.js';
 import { Logger } from './logger.js';
 import { GlobMatcher } from './processor/asset.js';
-import { executeWithCleanupOnInterrupt, type PackageManager } from './util.js';
+import {
+  cliVersion,
+  DetailError,
+  executeWithCleanupOnInterrupt,
+  type PackageManager,
+  prettifySchemaError,
+  toError,
+} from './util.js';
+
+const BUILTIN_TEMPLATES: ReadonlySet<string> = new Set([
+  ...TEMPLATE_SETTINGS.map((t) => t.template),
+  DEFAULT_THEME_TEMPLATE,
+]);
 
 export function resolveTemplateSource({
   template,
@@ -45,6 +65,62 @@ export function resolveTemplateSource({
     `The specified template ${green(template)} was not found as a local directory. Proceeding to fetch it from GitHub repository.`,
   );
   return { template, useLocalTemplate: false };
+}
+
+function readTemplateManifest(
+  templateDir: string,
+): VivliostyleTemplateManifest | undefined {
+  const manifestPath = upath.join(templateDir, TEMPLATE_MANIFEST_FILENAME);
+  if (!fs.existsSync(manifestPath)) {
+    return;
+  }
+  const raw = fs.readFileSync(manifestPath, 'utf8');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `Failed to parse the template manifest ${manifestPath}: ${toError(error).message}`,
+      { cause: error },
+    );
+  }
+  const result = v.safeParse(VivliostyleTemplateManifest, parsed);
+  if (!result.success) {
+    throw new DetailError(
+      `Validation of the template manifest failed: ${manifestPath}`,
+      prettifySchemaError(raw, result.issues),
+    );
+  }
+  return result.output;
+}
+
+export function assertTemplateCompatibility({
+  templateDir,
+  templateSource,
+  currentVersion = cliVersion,
+}: {
+  templateDir: string;
+  templateSource: string;
+  currentVersion?: string;
+}): void {
+  const selfPackageName = '@vivliostyle/cli';
+  const range = readTemplateManifest(templateDir)?.engines?.[selfPackageName];
+  if (
+    !range ||
+    semverSatisfies(currentVersion, range, { includePrerelease: true })
+  ) {
+    return;
+  }
+  const lines = [
+    `The template requires ${selfPackageName} "${range}", but the current version is ${currentVersion}.`,
+    `Update ${selfPackageName} to a version that satisfies the requirement, or use a template that supports the current version.`,
+  ];
+  if (BUILTIN_TEMPLATES.has(templateSource)) {
+    lines.push(
+      `To use this template without updating ${selfPackageName}, specify the release tag that matches the current version: ${cyan(`--template ${templateSource}#v${currentVersion}`)}`,
+    );
+  }
+  throw new Error(lines.join('\n'));
 }
 
 export function assertDestinationEmpty({
@@ -83,6 +159,10 @@ export async function setupTemplate({
 }): Promise<void> {
   signal?.throwIfAborted();
   if (useLocalTemplate) {
+    assertTemplateCompatibility({
+      templateDir: template,
+      templateSource: template,
+    });
     const matcher = new GlobMatcher([
       {
         patterns: ['**'],
@@ -96,6 +176,9 @@ export async function setupTemplate({
     Logger.debug('setupTemplate > files from local template %O', files);
     for (const file of files) {
       signal?.throwIfAborted();
+      if (file === TEMPLATE_MANIFEST_FILENAME) {
+        continue;
+      }
       const targetPath = upath.join(cwd, projectPath, file);
       fs.mkdirSync(upath.dirname(targetPath), { recursive: true });
       await copy(upath.join(template, file), targetPath);
@@ -119,7 +202,14 @@ export async function setupTemplate({
         try {
           await downloadTemplate(template, { dir: tmpDownloadDir });
           signal?.throwIfAborted();
+          assertTemplateCompatibility({
+            templateDir: tmpDownloadDir,
+            templateSource: template,
+          });
           for (const entry of fs.readdirSync(tmpDownloadDir)) {
+            if (entry === TEMPLATE_MANIFEST_FILENAME) {
+              continue;
+            }
             fs.renameSync(
               upath.join(tmpDownloadDir, entry),
               upath.join(cwd, projectPath, entry),

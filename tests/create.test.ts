@@ -10,6 +10,7 @@ import {
   THEME_ANSWER_NOT_USE,
 } from '../src/core/create.js';
 import type { PackageJson, PackageSearchResult } from '../src/npm.js';
+import type * as UtilModule from '../src/util.js';
 import { runCommand } from './command-util.js';
 
 const mockedClackModule = vi.hoisted(() => {
@@ -92,6 +93,11 @@ const mockedNpmModule = vi.hoisted(async () => {
 
 vi.mock('../src/npm', () => mockedNpmModule);
 
+vi.mock('../src/util.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof UtilModule>()),
+  cliVersion: '11.3.0',
+}));
+
 beforeEach(() => {
   vol.reset();
   mockedClackModule.answers.mockReturnValue({});
@@ -146,6 +152,9 @@ describe('create command', () => {
 
     await runCommand(['create'], { cwd: '/work' });
     const files = vol.toJSON();
+    expect(
+      Object.keys(files).some((f) => f.endsWith('vivliostyle-template.json')),
+    ).toBe(false);
     expect(files).toMatchSnapshot();
   });
 
@@ -206,6 +215,93 @@ describe('create command', () => {
     });
     const files = vol.toJSON();
     expect(files['/work/project-name/file.md']).toMatch('# Booook Titleeee');
+  });
+
+  describe('template manifest', () => {
+    const createFromLocalTemplate = () =>
+      runCommand(
+        [
+          'create',
+          '--title',
+          'book',
+          '--author',
+          'john',
+          '--language',
+          'en',
+          '--template',
+          'local-template',
+          '--no-theme',
+          '--no-install-dependencies',
+          'project',
+        ],
+        { cwd: '/work' },
+      );
+    const manifest = (range: string) =>
+      JSON.stringify({ engines: { '@vivliostyle/cli': range } });
+
+    it('creates a project from a template with a compatible manifest', async () => {
+      vol.fromJSON({
+        '/work/local-template/file.md': '# {{proper title}}',
+        '/work/local-template/vivliostyle-template.json': manifest('>=11.3.0'),
+      });
+
+      await createFromLocalTemplate();
+      const files = vol.toJSON();
+      expect(files['/work/project/file.md']).toBe('# Book');
+      expect(files['/work/project/vivliostyle-template.json']).toBeUndefined();
+    });
+
+    it('rejects a local template that requires a newer CLI', async () => {
+      vol.fromJSON({
+        '/work/local-template/file.md': '# {{proper title}}',
+        '/work/local-template/vivliostyle-template.json': manifest('>=99.0.0'),
+      });
+
+      await expect(createFromLocalTemplate()).rejects.toThrow(
+        'The template requires @vivliostyle/cli ">=99.0.0", but the current version is 11.3.0.',
+      );
+      expect(vol.toJSON()['/work/project/file.md']).toBeUndefined();
+    });
+
+    it('rejects a malformed template manifest', async () => {
+      vol.fromJSON({
+        '/work/local-template/file.md': '# {{proper title}}',
+        '/work/local-template/vivliostyle-template.json': '{ engines: ',
+      });
+
+      await expect(createFromLocalTemplate()).rejects.toThrow(
+        'Failed to parse the template manifest',
+      );
+    });
+
+    it('rejects a remote template that requires a newer CLI', async () => {
+      await expect(
+        runCommand(
+          [
+            'create',
+            '--title',
+            'book',
+            '--author',
+            'john',
+            '--language',
+            'en',
+            '--template',
+            'gh:template-requires-newer-cli',
+            '--no-theme',
+            '--no-install-dependencies',
+            'project',
+          ],
+          { cwd: '/work' },
+        ),
+      ).rejects.toThrow(
+        'The template requires @vivliostyle/cli ">=99.0.0", but the current version is 11.3.0.',
+      );
+      const files = vol.toJSON();
+      expect(files['/work/project/manuscript.md']).toBeUndefined();
+      expect(
+        Object.keys(files).filter((f) => f.includes('.vs-template-')),
+      ).toEqual([]);
+    });
   });
 
   it('create project without any additional prompts', async () => {
