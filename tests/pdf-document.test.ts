@@ -214,7 +214,9 @@ it('raises unsupported PDF 1.0 input to the minimum supported version', async ()
   const result = fs.readFileSync(output);
   expect(result.subarray(0, 8).toString('ascii')).toBe('%PDF-1.2');
   const resultDocument = await PDFDocument.load(result);
-  expect(resultDocument.catalog.has(PDFName.of('Version'))).toBe(false);
+  expect(resultDocument.catalog.get(PDFName.of('Version'))?.toString()).toBe(
+    '/1.2',
+  );
 });
 
 it('removes a trailing page before visiting its content', async () => {
