@@ -25,6 +25,7 @@ import {
   DetailError,
   executeWithCleanupOnInterrupt,
   type PackageManager,
+  parseJsonc,
   prettifySchemaError,
   toError,
 } from './util.js';
@@ -78,7 +79,7 @@ function readTemplateManifest(
   const raw = fs.readFileSync(manifestPath, 'utf8');
   let parsed: unknown;
   try {
-    parsed = JSON.parse(raw);
+    parsed = parseJsonc(raw);
   } catch (error) {
     throw new Error(
       `Failed to parse the template manifest ${manifestPath}: ${toError(error).message}`,

@@ -150,7 +150,7 @@ export default defineConfig({
 
 ## Declaring Compatible CLI Versions
 
-Templates are fetched from their source at project creation time, so a template may start relying on features of a newer Vivliostyle CLI than the one a user is running. To prevent such a template from producing a project that does not work, a template can declare the CLI versions it supports in a `vivliostyle-template.json` file placed at the template root:
+Templates are fetched from their source at project creation time, so a template may start relying on features of a newer Vivliostyle CLI than the one a user is running. To prevent such a template from producing a project that does not work, a template can declare the CLI versions it supports in a `vivliostyle-template.json` file placed at the template root. Like `vivliostyle.config.json`, the file may contain comments ([JSONC](https://code.visualstudio.com/docs/languages/json#_json-with-comments)):
 
 ```json
 {

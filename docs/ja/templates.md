@@ -150,7 +150,7 @@ export default defineConfig({
 
 ## 対応する CLI バージョンの宣言
 
-テンプレートはプロジェクト作成時に取得元から取得されるため、ユーザーが使用している Vivliostyle CLI よりも新しいバージョンの機能にテンプレートが依存してしまうことがあります。そのようなテンプレートから動作しないプロジェクトが生成されるのを防ぐため、テンプレートのルートに `vivliostyle-template.json` ファイルを置き、対応する CLI のバージョンを宣言できます：
+テンプレートはプロジェクト作成時に取得元から取得されるため、ユーザーが使用している Vivliostyle CLI よりも新しいバージョンの機能にテンプレートが依存してしまうことがあります。そのようなテンプレートから動作しないプロジェクトが生成されるのを防ぐため、テンプレートのルートに `vivliostyle-template.json` ファイルを置き、対応する CLI のバージョンを宣言できます。`vivliostyle.config.json` と同様に、このファイルには [JSONC](https://code.visualstudio.com/docs/languages/json#_json-with-comments) 形式でコメントを書くことができます：
 
 ```json
 {

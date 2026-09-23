@@ -57,6 +57,15 @@ describe('assertTemplateCompatibility', () => {
     );
   });
 
+  it('accepts comments in the manifest', () => {
+    writeManifest(`{
+  // supported CLI versions
+  "engines": { "@vivliostyle/cli": ">=11.3.0" /* pinned */ }
+}`);
+    expect(() => check('11.3.0')).not.toThrow();
+    expect(() => check('11.2.0')).toThrow('but the current version is 11.2.0');
+  });
+
   it('rejects a malformed manifest', () => {
     writeManifest('{ engines: ');
     expect(() => check('11.3.0')).toThrow(
