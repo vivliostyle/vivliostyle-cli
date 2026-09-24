@@ -7,14 +7,13 @@ import upath from 'upath';
 import * as v from 'valibot';
 import { cyan, underline } from 'yoctocolors';
 
+import { CLI_PACKAGE_NAME } from '../constants.js';
 import { Logger } from '../logger.js';
 import {
-  cliRoot,
   cwd as defaultRoot,
   DetailError,
   parseJsonc,
   prettifySchemaError,
-  readPackageJson,
   toError,
 } from '../util.js';
 import {
@@ -42,17 +41,11 @@ function registerConfigImportFallback(): void {
     return;
   }
   importFallbackRegistered = true;
-  const selfPackageName = readPackageJson(
-    upath.join(cliRoot, 'package.json'),
-  ).name;
-  if (!selfPackageName) {
-    return;
-  }
   registerHooks({
     resolve(specifier, context, nextResolve) {
       if (
-        specifier !== selfPackageName &&
-        !specifier.startsWith(`${selfPackageName}/`)
+        specifier !== CLI_PACKAGE_NAME &&
+        !specifier.startsWith(`${CLI_PACKAGE_NAME}/`)
       ) {
         return nextResolve(specifier, context);
       }

@@ -38,7 +38,9 @@ export const DEFAULT_BROWSER_VERSIONS = {
 } as const;
 // END DEFAULT_BROWSER_VERSIONS
 
+export const CLI_PACKAGE_NAME = '@vivliostyle/cli';
 export const DEFAULT_CONFIG_FILENAME = 'vivliostyle.config.js';
+export const TEMPLATE_MANIFEST_FILENAME = 'vivliostyle-template.json';
 export const DEFAULT_PROJECT_TITLE = 'My Title';
 export const DEFAULT_PROJECT_AUTHOR = 'My Name';
 

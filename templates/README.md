@@ -14,6 +14,20 @@ The following templates are officially provided:
 
 - theme: A template for a Vivliostyle Theme package, used by the `vivliostyle theme create` command and `create-vivliostyle-theme`. It includes a stylesheet based on `@vivliostyle/theme-base` and example manuscripts for previewing the theme.
 
+## Compatible CLI Versions
+
+Each official template contains a `vivliostyle-template.json` file that declares the Vivliostyle CLI versions it supports, for example:
+
+```json
+{
+  "engines": {
+    "@vivliostyle/cli": ">=11.3.0"
+  }
+}
+```
+
+Vivliostyle CLI 11.4.0 and later check this manifest before applying a template and abort when their own version does not satisfy the range; older versions ignore the manifest. The manifest is not copied into the generated project. Since official templates are fetched from the `main` branch, they may require a CLI newer than the running one; in that case, the CLI warns and falls back to the template of the release tag matching its own version (for example, `gh:vivliostyle/vivliostyle-cli/templates/basic#v11.4.0` for CLI 11.4.0).
+
 ## Community Templates
 
 You can use templates provided by the community or your own templates by using the `--template` option.
