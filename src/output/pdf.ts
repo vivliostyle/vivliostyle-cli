@@ -333,6 +333,7 @@ export async function buildPDF({
     cmyk: target.cmyk,
     cmykMap: browserResult.cmykMap,
     replaceImage: target.replaceImage,
+    outputIntent: target.outputIntent,
     signal,
   });
 

@@ -293,6 +293,7 @@ export interface PdfOutput {
   preflightOption: string[];
   cmyk: CmykConfig | false;
   replaceImage: ResolvedReplaceImageConfig;
+  outputIntent?: string;
 }
 
 export interface WebPublicationOutput {
@@ -894,6 +895,9 @@ export function resolveTaskConfig(
       replaceImage: resolveReplaceImageConfig(
         config.pdfPostprocess?.replaceImage,
       ),
+      outputIntent: config.pdfPostprocess?.outputIntent
+        ? upath.resolve(entryContextDir, config.pdfPostprocess.outputIntent)
+        : undefined,
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
@@ -956,6 +960,9 @@ export function resolveTaskConfig(
               preflightOption: resolvedPreflightOption,
               cmyk: resolvedCmyk,
               replaceImage: resolvedReplaceImage,
+              outputIntent: targetPp?.outputIntent
+                ? upath.resolve(entryContextDir, targetPp.outputIntent)
+                : defaultPdfOptions.outputIntent,
             };
           }
           case 'epub':
