@@ -46,6 +46,12 @@ function writeTemporaryImage(extension: string, bytes: Uint8Array): string {
   return imagePath;
 }
 
+function withPdfVersion(pdf: Uint8Array, version: string): Uint8Array {
+  const result = Buffer.from(pdf);
+  result.write(`%PDF-${version}`, 0, 'ascii');
+  return result;
+}
+
 function changeJp2ChannelDefinition(
   bytes: Uint8Array,
   definitionIndex: number,
@@ -158,7 +164,7 @@ async function replaceImages(
   });
   const failures: string[] = [];
   try {
-    using replaceImageHook = await createReplaceImageHook(
+    const replaceImageHook = createReplaceImageHook(
       options.replacements,
       options.ifIncompatibleImagesFound,
       failures,
@@ -1025,6 +1031,54 @@ describe('replaceImages', () => {
     },
   );
 
+  it('reuses a replacement hook without retaining visit state', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const debugMessages: string[] = [];
+    const debug = vi.spyOn(Logger, 'debug').mockImplementation((message) => {
+      debugMessages.push(String(message));
+    });
+    const hook = createReplaceImageHook(
+      [
+        {
+          source: path.join(fixturesDir, 'ck_rgb.png'),
+          replacement: path.join(fixturesDir, 'ck_cmyk.tiff'),
+        },
+      ],
+      'ignore',
+      [],
+    );
+
+    try {
+      const firstResult = await editPdf(srcPdf, [hook], { signal });
+      const secondResult = await editPdf(srcPdf, [hook], { signal });
+
+      expect(await getImageColorSpace(firstResult)).toEqual({
+        object: '/DeviceCMYK',
+        image: 'DeviceCMYK',
+      });
+      expect(await getImageColorSpace(secondResult)).toEqual({
+        object: '/DeviceCMYK',
+        image: 'DeviceCMYK',
+      });
+      expect(
+        debugMessages.filter((message) => message === 'Replaced 1 of 1 images'),
+      ).toHaveLength(2);
+      expect(
+        debugMessages.filter((message) =>
+          message.startsWith('Loaded source image:'),
+        ),
+      ).toHaveLength(1);
+      expect(
+        debugMessages.filter((message) =>
+          message.startsWith('Loaded replacement image:'),
+        ),
+      ).toHaveLength(1);
+      expect(Symbol.dispose in hook).toBe(false);
+    } finally {
+      debug.mockRestore();
+    }
+  });
+
   it('preserves an ICCBased replacement color space', async () => {
     const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
     const { pdf: destPdf, warnings } = await replaceImages(srcPdf, {
@@ -1270,8 +1324,92 @@ describe('replaceImages', () => {
     });
     expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
   });
+  it.each([
+    { version: '1.2', expectedVersion: '1.4' },
+    { version: '1.3', expectedVersion: '1.4' },
+    { version: '1.4', expectedVersion: '1.4' },
+    { version: '1.7', expectedVersion: '1.7' },
+  ])(
+    'preserves JBIG2 replacement pixels and enforces the required version for PDF $version',
+    async ({ version, expectedVersion }) => {
+      const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+      const {
+        pdf: destPdf,
+        warnings,
+        failures,
+      } = await replaceImages(withPdfVersion(srcPdf, version), {
+        replacements: [
+          {
+            source: path.join(fixturesDir, 'ck_rgb.png'),
+            replacement: path.join(fixturesDir, 'checker.jbig2'),
+          },
+        ],
+        ifIncompatibleImagesFound: 'error',
+      });
+
+      expect(warnings).toEqual([]);
+      expect(failures).toEqual([]);
+      expect(await getFirstPageImageStreamState(destPdf)).toMatchObject({
+        filter: '/JBIG2Decode',
+        hasSoftMask: false,
+        smaskInData: null,
+      });
+      expect(await getImageColorSpace(destPdf)).toEqual({
+        object: '/DeviceGray',
+        image: 'DeviceGray',
+      });
+      expect(await getFirstPageImagePixels(destPdf)).toEqual(
+        new Uint8Array([
+          255, 0, 255, 0, 0, 255, 0, 255, 0, 255, 0, 255, 255, 0, 255, 0,
+        ]),
+      );
+      expect(Buffer.from(destPdf.subarray(0, 8)).toString('ascii')).toBe(
+        `%PDF-${expectedVersion}`,
+      );
+    },
+  );
+
+  it('replaces a transparent source with opaque JBIG2 pixels', async () => {
+    const srcPdf = await replaceFirstPageImage(
+      fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
+      3,
+      1,
+      chromiumTransparentRgb,
+      chromiumTransparentAlpha,
+    );
+    const {
+      pdf: destPdf,
+      warnings,
+      failures,
+    } = await replaceImages(srcPdf, {
+      replacements: [
+        {
+          source: transparentRgbPng,
+          replacement: path.join(fixturesDir, 'checker.jbig2'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'error',
+    });
+
+    expect(warnings).toEqual([]);
+    expect(failures).toEqual([]);
+    expect(await getFirstPageImageStreamState(destPdf)).toMatchObject({
+      filter: '/JBIG2Decode',
+      hasSoftMask: false,
+      smaskInData: null,
+    });
+    expect(await getFirstPageImagePixels(destPdf)).toEqual(
+      new Uint8Array([
+        255, 0, 255, 0, 0, 255, 0, 255, 0, 255, 0, 255, 255, 0, 255, 0,
+      ]),
+    );
+  });
+
   it('preserves unassociated alpha embedded in a JPX replacement', async () => {
-    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const srcPdf = withPdfVersion(
+      fs.readFileSync(path.join(fixturesDir, 'image.pdf')),
+      '1.4',
+    );
     const replacementBytes = new Uint8Array(
       fs.readFileSync(unassociatedAlphaJp2),
     );
@@ -1294,6 +1432,9 @@ describe('replaceImages', () => {
     });
     expect(await getFirstPageImagePixels(destPdf)).toEqual(
       new Uint8Array([127, 0, 0, 127, 127, 0, 0, 127]),
+    );
+    expect(Buffer.from(destPdf.subarray(0, 8)).toString('ascii')).toBe(
+      '%PDF-1.5',
     );
     expect(await countUnreachableObjects(destPdf)).toBe(0);
   });
@@ -2263,11 +2404,12 @@ describe('replaceImages', () => {
     expect(result).toEqual({ pdf: srcPdf, warnings: [], failures: [] });
   });
 
-  it('returns an empty hook when no replacement functions can be prepared and the policy is ignore', async () => {
+  it('returns the original PDF when no replacement functions can be prepared and the policy is ignore', async () => {
     const warning = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
+    const pdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
 
     try {
-      using hook = await createReplaceImageHook(
+      const hook = createReplaceImageHook(
         [
           {
             source: path.join(fixturesDir, 'missing-source.png'),
@@ -2278,8 +2420,7 @@ describe('replaceImages', () => {
         [],
       );
 
-      expect(hook.visit).toBeUndefined();
-      expect(hook.complete).toBeUndefined();
+      expect(await editPdf(pdf, [hook], { signal })).toBe(pdf);
     } finally {
       warning.mockRestore();
     }
@@ -2514,7 +2655,7 @@ describe('PDF edit hooks', () => {
       [],
     );
     const failures: string[] = [];
-    using replaceImageHook = await createReplaceImageHook(
+    const replaceImageHook = createReplaceImageHook(
       [
         {
           source: path.join(fixturesDir, 'ck_rgb.png'),

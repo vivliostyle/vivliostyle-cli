@@ -2,11 +2,11 @@ import type * as mupdfType from 'mupdf';
 
 import { disposable } from '../disposable.js';
 import { importNodeModule } from '../node-modules.js';
+import { setMinimumPdfVersion, type PdfVersion } from './pdf-version.js';
 
 export type PdfNodeOrigin = 'page' | 'annotation-appearance';
 
 interface PdfNodeBase {
-  document: mupdfType.PDFDocument;
   pageIndex: number;
   origin: PdfNodeOrigin;
   formDepth: number;
@@ -41,14 +41,26 @@ export type PdfVisitNode =
   | PdfFormXObjectNode
   | PdfImageXObjectNode;
 
+export interface PdfDocumentHookContext {
+  readonly document: mupdfType.PDFDocument;
+  readonly mupdf: typeof import('mupdf');
+  readonly setMinimumPdfVersion: (minimumVersion: PdfVersion) => void;
+}
+
+export interface PdfVisitHookContext extends PdfDocumentHookContext {
+  readonly node: PdfVisitNode;
+}
+
 export interface PdfEditHook {
-  visit?(node: PdfVisitNode): void | Promise<void>;
-  complete?(document: mupdfType.PDFDocument): void | Promise<void>;
+  beforeVisit?(context: PdfDocumentHookContext): void | Promise<void>;
+  visit?(context: PdfVisitHookContext): void | Promise<void>;
+  afterVisit?(context: PdfDocumentHookContext): void | Promise<void>;
 }
 
 interface PdfVisitContext {
   readonly document: mupdfType.PDFDocument;
   readonly mupdf: typeof import('mupdf');
+  readonly setMinimumPdfVersion: (minimumVersion: PdfVersion) => void;
   readonly signal?: AbortSignal;
   readonly processedForms: Set<number>;
   readonly processedXObjectDictionaries: Set<number>;
@@ -61,12 +73,18 @@ async function visitNode(
   hooks: readonly PdfEditHook[],
   node: PdfVisitNode,
 ): Promise<void> {
+  const hookContext: PdfVisitHookContext = {
+    document: context.document,
+    mupdf: context.mupdf,
+    setMinimumPdfVersion: context.setMinimumPdfVersion,
+    node,
+  };
   for (const hook of hooks) {
     if (!hook.visit) {
       continue;
     }
     context.signal?.throwIfAborted();
-    await hook.visit(node);
+    await hook.visit(hookContext);
   }
 }
 
@@ -81,7 +99,6 @@ function visitContentStream(
 ): Promise<void> {
   return visitNode(context, hooks, {
     kind: 'content-stream',
-    document: context.document,
     pageIndex,
     origin,
     formDepth,
@@ -148,7 +165,6 @@ function createImageXObjectNode(
   const node: PdfImageXObjectNode = {
     kind: 'image-xobject',
     resourceVisit,
-    document: context.document,
     pageIndex,
     origin: 'page',
     formDepth,
@@ -223,7 +239,6 @@ async function visitResources(
       if (processForm) {
         await visitNode(context, hooks, {
           kind: 'form-xobject',
-          document: context.document,
           pageIndex,
           origin: 'page',
           formDepth: formDepth + 1,
@@ -335,10 +350,29 @@ async function visitAnnotationAppearances(
   }
 }
 
+async function runBeforeVisitHooks(
+  context: PdfVisitContext,
+  hooks: readonly PdfEditHook[],
+): Promise<void> {
+  const hookContext: PdfDocumentHookContext = {
+    document: context.document,
+    mupdf: context.mupdf,
+    setMinimumPdfVersion: context.setMinimumPdfVersion,
+  };
+  for (const hook of hooks) {
+    if (!hook.beforeVisit) {
+      continue;
+    }
+    context.signal?.throwIfAborted();
+    await hook.beforeVisit(hookContext);
+  }
+}
+
 async function visitDocument(
   context: PdfVisitContext,
   hooks: readonly PdfEditHook[],
 ): Promise<void> {
+  await runBeforeVisitHooks(context, hooks);
   const pageCount = context.document.countPages();
   for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
     context.signal?.throwIfAborted();
@@ -366,19 +400,24 @@ async function visitDocument(
     // https://source.chromium.org/chromium/chromium/src/+/refs/tags/151.0.7922.173:third_party/skia/src/pdf/SkPDFDocument.cpp;l=337
     await visitAnnotationAppearances(context, hooks, pageObject, pageIndex);
   }
-  await visitDocumentCompletion(context, hooks);
+  await runAfterVisitHooks(context, hooks);
 }
 
-async function visitDocumentCompletion(
+async function runAfterVisitHooks(
   context: PdfVisitContext,
   hooks: readonly PdfEditHook[],
 ): Promise<void> {
+  const hookContext: PdfDocumentHookContext = {
+    document: context.document,
+    mupdf: context.mupdf,
+    setMinimumPdfVersion: context.setMinimumPdfVersion,
+  };
   for (const hook of hooks) {
-    if (!hook.complete) {
+    if (!hook.afterVisit) {
       continue;
     }
     context.signal?.throwIfAborted();
-    await hook.complete(context.document);
+    await hook.afterVisit(hookContext);
   }
 }
 
@@ -390,7 +429,10 @@ export async function editPdf(
   signal?.throwIfAborted();
   if (
     hooks.every(
-      (hook) => hook.visit === undefined && hook.complete === undefined,
+      (hook) =>
+        hook.beforeVisit === undefined &&
+        hook.visit === undefined &&
+        hook.afterVisit === undefined,
     )
   ) {
     return pdf;
@@ -408,6 +450,8 @@ export async function editPdf(
     {
       document,
       mupdf,
+      setMinimumPdfVersion: (minimumVersion) =>
+        setMinimumPdfVersion(document, minimumVersion),
       signal,
       processedForms: new Set(),
       processedXObjectDictionaries: new Set(),
