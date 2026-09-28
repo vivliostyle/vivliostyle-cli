@@ -31,6 +31,7 @@ export type {
   TocCompose,
   VivliostyleConfigSchema,
   VivliostylePackageMetadata,
+  VivliostyleTemplateManifest,
 } from './config/schema.js';
 export type { ThemeTemplateVariable } from './core/theme-create.js';
 export type { ThemeValidationResult } from './core/theme-validate.js';

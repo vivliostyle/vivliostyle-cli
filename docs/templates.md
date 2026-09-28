@@ -60,7 +60,7 @@ Specify a relative or absolute path to a local directory:
 --template ../shared-templates/book-template
 ```
 
-All files are copied recursively, excluding `node_modules/` and `.git/`.
+All files are copied recursively, excluding `node_modules/`, `.git/`, and the [template manifest](#declaring-compatible-cli-versions) `vivliostyle-template.json`.
 
 ### Vivliostyle Themes templates
 
@@ -147,6 +147,28 @@ export default defineConfig({
   }
 }
 ```
+
+## Declaring Compatible CLI Versions
+
+Templates are fetched from their source at project creation time, so a template may start relying on features of a newer Vivliostyle CLI than the one a user is running. To prevent such a template from producing a project that does not work, a template can declare the CLI versions it supports in a `vivliostyle-template.json` file placed at the template root. Like `vivliostyle.config.json`, the file may contain comments ([JSONC](https://code.visualstudio.com/docs/languages/json#_json-with-comments)):
+
+```json
+{
+  "engines": {
+    "@vivliostyle/cli": ">=11.3.0"
+  }
+}
+```
+
+The `engines["@vivliostyle/cli"]` value is a [semver range](https://github.com/npm/node-semver#ranges), in the same format as the `engines` field of `package.json`. When `vivliostyle create` or `vivliostyle theme create` applies a template, the manifest is checked after the template is fetched and before any file is copied into the project:
+
+- If the running CLI satisfies the range, the template is applied as usual.
+- If it does not, the command aborts with an error that shows the required range and the current CLI version. Update `@vivliostyle/cli` (for example, `npm create book@latest` always uses the latest CLI) or use a template that supports the current version.
+- If the template has no `vivliostyle-template.json`, no check is performed.
+
+The manifest itself is never copied into the generated project.
+
+All built-in templates carry this manifest. Because they are fetched from the `main` branch of the Vivliostyle CLI repository, they may require a CLI newer than the one you are running. In that case, the CLI warns and uses the template of the release that matches its own version (for example, `gh:vivliostyle/vivliostyle-cli/templates/basic#v11.4.0` for CLI 11.4.0) instead of aborting. Update `@vivliostyle/cli` to use the latest template.
 
 ## Providing Templates in a Vivliostyle Themes Package
 
@@ -292,6 +314,7 @@ my-vivliostyle-theme/
 ├── theme.css
 └── template/
     └── default/
+        ├── vivliostyle-template.json   # declares compatible CLI versions (optional)
         ├── vivliostyle.config.js   # uses {{title}}, {{author}}, etc.
         ├── manuscript.md
         └── assets/
