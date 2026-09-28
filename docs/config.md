@@ -441,6 +441,9 @@ pdfPostprocess takes precedence.
     with a replacement function or color conversion, or applies one to every
     replaceable image.
 
+  - `outputIntent`: string  
+    Path to the ICC profile for the PDF output intent.
+
 #### Type definition
 
 ```ts
@@ -455,6 +458,7 @@ type PdfPostprocessConfig = {
     | ReplaceFunction
     | ImageConversionReplacement
   )[];
+  outputIntent?: string;
 };
 ```
 
