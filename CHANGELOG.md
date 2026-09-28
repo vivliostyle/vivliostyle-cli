@@ -1,5 +1,19 @@
 # @vivliostyle/cli
 
+## 11.4.0
+
+### Minor Changes
+
+- Add `pdfPostprocess.outputIntent` to embed an ICC output profile. ([#909](https://github.com/vivliostyle/vivliostyle-cli/pull/909))
+
+### Patch Changes
+
+- Speed up PDF builds by no longer emulating print media before pagination, so that the pages already completed stay out of the layout while the remaining pages are typeset. `page.pdf()` prints with the print media type by itself. ([#928](https://github.com/vivliostyle/vivliostyle-cli/pull/928))
+
+- Update Vivliostyle.js to 2.45.2. ([#932](https://github.com/vivliostyle/vivliostyle-cli/pull/932))
+
+- Stop forcing generated PDFs to version 1.7 and use the minimum version required by their post-processed content. ([#912](https://github.com/vivliostyle/vivliostyle-cli/pull/912))
+
 ## 11.3.3
 
 ### Patch Changes
