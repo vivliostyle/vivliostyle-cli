@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGL probe</title>
+    <style>
+      @page {
+        size: 200px 200px;
+        margin: 0;
+      }
+      body {
+        margin: 0;
+      }
+      #c {
+        display: block;
+        width: 200px;
+        height: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="200" height="200"></canvas>
+    <script>
+      // Without preserveDrawingBuffer the drawing buffer may be cleared
+      // before print capture reads it back.
+      const gl = document
+        .getElementById('c')
+        .getContext('webgl', { preserveDrawingBuffer: true });
+      gl.clearColor(1, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    </script>
+  </body>
+</html>
