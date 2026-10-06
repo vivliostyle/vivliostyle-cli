@@ -449,6 +449,13 @@ pdfPostprocess takes precedence.
     in the resource dictionaries of the output PDF.
     DeviceRGB colors are then interpreted through this profile.
 
+  - `pdfxLabel`: "X-4" | "X-1a:2003"  
+    Write the identification metadata of the given PDF/X conformance
+    level (XMP for X-4, document information entries for X-1a:2003, and
+    the file identifier) into the output PDF. This is a label only: the
+    content is neither converted nor checked, and conformance of the
+    content is the author's responsibility.
+
 #### Type definition
 
 ```ts
@@ -465,6 +472,7 @@ type PdfPostprocessConfig = {
   )[];
   outputIntent?: string;
   defaultRgbProfile?: string;
+  pdfxLabel?: "X-4" | "X-1a:2003";
 };
 ```
 

@@ -616,6 +616,16 @@ const PdfPostprocessConfigSchema = v.pipe(
           DeviceRGB colors are then interpreted through this profile.
         `),
       ),
+      pdfxLabel: v.pipe(
+        v.union([v.literal('X-4'), v.literal('X-1a:2003')]),
+        v.description($`
+          Write the identification metadata of the given PDF/X conformance
+          level (XMP for X-4, document information entries for X-1a:2003, and
+          the file identifier) into the output PDF. This is a label only: the
+          content is neither converted nor checked, and conformance of the
+          content is the author's responsibility.
+        `),
+      ),
     }),
   ),
   v.title('PdfPostprocessConfig'),

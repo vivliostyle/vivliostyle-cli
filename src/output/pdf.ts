@@ -338,6 +338,7 @@ export async function buildPDF({
     replaceImage: target.replaceImage,
     outputIntent: target.outputIntent,
     defaultRgbProfile: target.defaultRgbProfile,
+    pdfxLabel: target.pdfxLabel,
     signal,
   });
 
