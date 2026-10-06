@@ -744,6 +744,52 @@ it.each(['', '   ', 42, true])(
   },
 );
 
+it('resolves DefaultRGB profiles from the entry context for each output', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('.'), {
+    entryContext: 'config',
+    entry: 'manuscript.md',
+    pdfPostprocess: { defaultRgbProfile: 'profiles/default.icc' },
+    output: [
+      'default.pdf',
+      {
+        path: 'override.pdf',
+        pdfPostprocess: { defaultRgbProfile: 'profiles/override.icc' },
+      },
+      {
+        path: 'absolute.pdf',
+        pdfPostprocess: {
+          defaultRgbProfile: resolveFixture('cmyk/ps_gray.icc'),
+        },
+      },
+      {
+        path: 'inherited.pdf',
+        pdfPostprocess: { cmyk: false },
+      },
+    ],
+  });
+
+  expect(config.outputs).toMatchObject(
+    [
+      'config/profiles/default.icc',
+      'config/profiles/override.icc',
+      'cmyk/ps_gray.icc',
+      'config/profiles/default.icc',
+    ].map((profile) => ({ defaultRgbProfile: resolveFixture(profile) })),
+  );
+});
+
+it.each(['', '   ', 42, true])(
+  'rejects an invalid defaultRgbProfile: %j',
+  (defaultRgbProfile) => {
+    expect(
+      v.safeParse(VivliostyleConfigSchema, {
+        entry: 'manuscript.md',
+        pdfPostprocess: { defaultRgbProfile },
+      }).success,
+    ).toBe(false);
+  },
+);
+
 it('preserves a function entry index across RegExp expansion', async () => {
   const replacementFunction: ReplaceFunction = () => null;
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
