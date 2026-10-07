@@ -1,0 +1,15 @@
+@page {
+  size: A5;
+}
+
+body {
+  color: device-cmyk(0 0 0 1);
+}
+
+h1 {
+  color: device-cmyk(1 0.4 0 0);
+}
+
+[href] {
+  color: device-cmyk(1 0 0 0);
+}

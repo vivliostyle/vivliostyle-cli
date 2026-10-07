@@ -273,3 +273,26 @@ export default defineConfig({
 Vivliostyle が実装する色置換を経由しない場合、CSS の色は sRGB に解決され、DeviceRGB として PDF に書き出されます。`pdfPostprocess.defaultRgbProfile` は、DeviceRGB の解釈を示すプロファイルを指定します。通常は sRGB を設定することになります。
 
 `inputProfile`、`outputProfile`、`defaultRgbProfile`、`outputIntent` の相対パスの基準は `entryContext`です。
+
+## PDF/X のラベル付け
+
+`pdfPostprocess.pdfxLabel` は、PDF/X の適合レベルを識別するメタデータを出力 PDF に書き込みます。`"X-4"` は PDF/X-4、`"X-1a:2003"` は PDF/X-1a:2003 です。そのレベルを満たす内容に変換する機能ではありません。この機能で PDF/X 適合になるのは、リンク無効、使用色、透明効果、出力インテントなどを適切に設定した文書のみです。適合の成否は、入稿先が指定するプリフライトで確認してください。
+
+```js
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  entry: ['manuscript.html'],
+  pdfPostprocess: {
+    cmyk: true,
+    outputIntent: './print-cmyk.icc',
+    pdfxLabel: 'X-4',
+  },
+});
+```
+
+ラベルとして書き込むのは次の項目です。
+
+- X-4: PDF/X の識別情報 `pdfxid:GTS_PDFXVersion`、`pdf:Trapped`、`xmpMM:DocumentID`、`xmpMM:VersionID`、`xmpMM:RenditionClass`、および文書情報の写しである `dc:title`、`dc:creator`、`dc:description`、`pdf:Keywords`、`xmp:CreatorTool`、`pdf:Producer`、`xmp:CreateDate`、`xmp:ModifyDate`、`xmp:MetadataDate` を持つ XMP メタデータ。
+- X-1a:2003: 文書情報の `GTS_PDFXVersion` と `Trapped`。
+- 両レベル共通: トレーラのファイル識別子（`ID`）。
