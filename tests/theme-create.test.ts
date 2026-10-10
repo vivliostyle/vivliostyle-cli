@@ -4,6 +4,7 @@ import './mocks/tmp.js';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as UtilModule from '../src/util.js';
 import { runCommand } from './command-util.js';
 
 const USE_DEFAULT_ANSWER = '<use default>';
@@ -70,6 +71,11 @@ const mockedExec = vi.hoisted(() => {
 });
 
 vi.mock('tinyexec', () => ({ x: mockedExec.x }));
+
+vi.mock('../src/util.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof UtilModule>()),
+  cliVersion: '999.0.0',
+}));
 
 const readPackageJson = (path: string) =>
   JSON.parse(vol.readFileSync(path, 'utf8') as string) as {
@@ -274,6 +280,9 @@ describe('theme create command', () => {
     vol.fromJSON({
       '/work/local-template/package.json': '{ "name": "{{name}}" }',
       '/work/local-template/style.css': '/* {{themeName}} */',
+      '/work/local-template/vivliostyle-template.json': JSON.stringify({
+        engines: { '@vivliostyle/cli': '>=11.3.0' },
+      }),
     });
 
     await runCommand(
@@ -299,6 +308,39 @@ describe('theme create command', () => {
       '/work/my-theme/package.json': '{ "name": "vivliostyle-theme-local" }',
       '/work/my-theme/style.css': '/* Local */',
     });
+  });
+
+  it('rejects a local template that requires a newer CLI', async () => {
+    vol.fromJSON({
+      '/work/local-template/package.json': '{ "name": "{{name}}" }',
+      '/work/local-template/vivliostyle-template.json': JSON.stringify({
+        engines: { '@vivliostyle/cli': '>=9999.0.0' },
+      }),
+    });
+
+    await expect(
+      runCommand(
+        [
+          'theme create',
+          '--name',
+          'vivliostyle-theme-local',
+          '--author',
+          'A',
+          '--category',
+          'misc',
+          '--description',
+          '',
+          '--template',
+          './local-template',
+          '--no-install-dependencies',
+          'my-theme',
+        ],
+        { cwd: '/work' },
+      ),
+    ).rejects.toThrow(
+      'The template requires @vivliostyle/cli ">=9999.0.0", but the current version is 999.0.0.',
+    );
+    expect(vol.toJSON('/work/my-theme')).toEqual({});
   });
 
   it('installs dependencies', async () => {
