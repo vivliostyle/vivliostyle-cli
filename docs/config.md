@@ -444,6 +444,11 @@ pdfPostprocess takes precedence.
   - `outputIntent`: string  
     Path to the ICC profile for the PDF output intent.
 
+  - `defaultRgbProfile`: string  
+    Path to an RGB ICC profile declared as the `DefaultRGB` color space
+    in the resource dictionaries of the output PDF.
+    DeviceRGB colors are then interpreted through this profile.
+
 #### Type definition
 
 ```ts
@@ -459,6 +464,7 @@ type PdfPostprocessConfig = {
     | ImageConversionReplacement
   )[];
   outputIntent?: string;
+  defaultRgbProfile?: string;
 };
 ```
 

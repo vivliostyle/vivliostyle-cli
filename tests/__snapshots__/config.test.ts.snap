@@ -125,6 +125,7 @@ Object {
   "outputs": Array [
     Object {
       "cmyk": false,
+      "defaultRgbProfile": undefined,
       "format": "pdf",
       "outputIntent": undefined,
       "path": "__WORKSPACE__/tests/fixtures/config/yuno.pdf",
@@ -336,6 +337,7 @@ Object {
   "outputs": Array [
     Object {
       "cmyk": false,
+      "defaultRgbProfile": undefined,
       "format": "pdf",
       "outputIntent": undefined,
       "path": "__WORKSPACE__/tests/fixtures/config/output1.pdf",
@@ -346,6 +348,7 @@ Object {
     },
     Object {
       "cmyk": false,
+      "defaultRgbProfile": undefined,
       "format": "pdf",
       "outputIntent": undefined,
       "path": "__WORKSPACE__/tests/fixtures/config/output2.pdf",
