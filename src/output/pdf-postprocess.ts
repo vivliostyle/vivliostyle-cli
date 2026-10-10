@@ -133,6 +133,11 @@ export async function postProcessPDF({
   } else if (replacesImages) {
     Logger.logInfo('Replacing images');
   }
+  if (pdfxLabel !== undefined) {
+    Logger.logInfo(
+      `Labeling the output as PDF/${pdfxLabel} without checking conformance. Verify the output with your print provider's preflight check.`,
+    );
+  }
 
   const failures: string[] = [];
 
