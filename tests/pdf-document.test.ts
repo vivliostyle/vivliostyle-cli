@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {
+  PDFArray,
   PDFDict,
   PDFDocument,
   PDFHexString,
@@ -217,6 +218,40 @@ it('raises unsupported PDF 1.0 input to the minimum supported version', async ()
   expect(resultDocument.catalog.get(PDFName.of('Version'))?.toString()).toBe(
     '/1.2',
   );
+});
+
+it('writes page boxes equal to the MediaBox without bleed or crop marks', async () => {
+  fs.mkdirSync(temporaryDir, { recursive: true });
+  const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
+  onTestFinished(() => fs.rmSync(output, { force: true }));
+
+  const input = await PDFDocument.create();
+  input.addPage([600, 900]);
+  await postProcessPDF({
+    pdf: await input.save(),
+    output,
+    pageSizeData: [
+      {
+        mediaWidth: 500,
+        mediaHeight: 700,
+        bleedOffset: 0,
+        bleedSize: 0,
+      },
+    ],
+    preflight: undefined,
+    preflightOption: [],
+    image: '',
+    cmyk: false,
+    cmykMap: {},
+    replaceImage: [],
+  });
+
+  const page = (await PDFDocument.load(fs.readFileSync(output))).getPage(0);
+  const box = (name: string) =>
+    page.node.lookup(PDFName.of(name), PDFArray).asArray().map(String);
+  expect(box('MediaBox')).toEqual(['0', '200', '500', '900']);
+  expect(box('BleedBox')).toEqual(box('MediaBox'));
+  expect(box('TrimBox')).toEqual(box('MediaBox'));
 });
 
 it('removes a trailing page before visiting its content', async () => {
