@@ -26,6 +26,7 @@ import {
   resolvePdfMetadata,
 } from './pdf-document.js';
 import { editPdf } from './pdf-visitor.js';
+import { createPdfxHook } from './pdfx.js';
 
 export type SaveOption = Pick<
   PdfOutput,
@@ -35,6 +36,7 @@ export type SaveOption = Pick<
   | 'replaceImage'
   | 'outputIntent'
   | 'defaultRgbProfile'
+  | 'pdfxLabel'
 > &
   Pick<ResolvedTaskConfig, 'image'> & {
     cmykMap: CmykMap;
@@ -99,6 +101,7 @@ export async function postProcessPDF({
   replaceImage: replaceImageConfig,
   outputIntent,
   defaultRgbProfile,
+  pdfxLabel,
   signal,
 }: PostProcessOptions): Promise<void> {
   let pdf = sourcePdf;
@@ -130,6 +133,11 @@ export async function postProcessPDF({
   } else if (replacesImages) {
     Logger.logInfo('Replacing images');
   }
+  if (pdfxLabel !== undefined) {
+    Logger.logInfo(
+      `Labeling the output as PDF/${pdfxLabel} without checking conformance. Verify the output with your print provider's preflight check.`,
+    );
+  }
 
   const failures: string[] = [];
 
@@ -148,6 +156,7 @@ export async function postProcessPDF({
     defaultRgbProfile === undefined
       ? {}
       : createDefaultRgbHook(defaultRgbProfile);
+  const pdfxHook = pdfxLabel === undefined ? {} : createPdfxHook(pdfxLabel);
   const documentHook = createPdfDocumentHook({
     metadata:
       metadata === undefined
@@ -170,6 +179,7 @@ export async function postProcessPDF({
       defaultRgbHook,
       replaceImageHook,
       outputIntentHook,
+      pdfxHook,
     ],
     { signal },
   );

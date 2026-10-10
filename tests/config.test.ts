@@ -790,6 +790,34 @@ it.each(['', '   ', 42, true])(
   },
 );
 
+it('resolves pdfxLabel for each output', async () => {
+  const config = await getTaskConfig(['build'], resolveFixture('config'), {
+    entry: 'manuscript.md',
+    pdfPostprocess: { pdfxLabel: 'X-4' },
+    output: [
+      'default.pdf',
+      { path: 'x1a.pdf', pdfPostprocess: { pdfxLabel: 'X-1a:2003' } },
+      { path: 'inherited.pdf', pdfPostprocess: { cmyk: false } },
+    ],
+  });
+
+  expect(config.outputs).toMatchObject(
+    ['X-4', 'X-1a:2003', 'X-4'].map((pdfxLabel) => ({ pdfxLabel })),
+  );
+});
+
+it.each(['X4', 'PDF/X-4', 'X-1a', '', 4, true])(
+  'rejects an invalid pdfxLabel: %j',
+  (pdfxLabel) => {
+    expect(
+      v.safeParse(VivliostyleConfigSchema, {
+        entry: 'manuscript.md',
+        pdfPostprocess: { pdfxLabel },
+      }).success,
+    ).toBe(false);
+  },
+);
+
 it('preserves a function entry index across RegExp expansion', async () => {
   const replacementFunction: ReplaceFunction = () => null;
   const config = await getTaskConfig(['build'], resolveFixture('config'), {

@@ -1,0 +1,14 @@
+{
+  "name": "pdfx",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vivliostyle build",
+    "preview": "vivliostyle preview"
+  },
+  "dependencies": {
+    "@types/hast": "3.0.4",
+    "@vivliostyle/cli": "workspace:*",
+    "hast-util-select": "6.0.4"
+  }
+}

@@ -56,6 +56,7 @@ import type {
   InlineOptions,
   InputFormat,
   ParsedBuildTask,
+  PdfPostprocessConfig,
   PostcssInlineConfig,
   ReplaceFunction,
   ResolvedImageConversionReplacement,
@@ -276,6 +277,8 @@ function resolveMapEntries(
   });
 }
 
+export type PdfxLevel = NonNullable<PdfPostprocessConfig['pdfxLabel']>;
+
 export interface CmykConfig {
   ifUnmappedColorsFound: 'warn' | 'error' | 'ignore';
   ifIncompatibleImagesFound: 'warn' | 'error' | 'ignore';
@@ -295,6 +298,7 @@ export interface PdfOutput {
   replaceImage: ResolvedReplaceImageConfig;
   outputIntent?: string;
   defaultRgbProfile?: string;
+  pdfxLabel?: PdfxLevel;
 }
 
 export interface WebPublicationOutput {
@@ -905,6 +909,7 @@ export function resolveTaskConfig(
             config.pdfPostprocess.defaultRgbProfile,
           )
         : undefined,
+      pdfxLabel: config.pdfPostprocess?.pdfxLabel,
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
@@ -973,6 +978,7 @@ export function resolveTaskConfig(
               defaultRgbProfile: targetPp?.defaultRgbProfile
                 ? upath.resolve(entryContextDir, targetPp.defaultRgbProfile)
                 : defaultPdfOptions.defaultRgbProfile,
+              pdfxLabel: targetPp?.pdfxLabel ?? defaultPdfOptions.pdfxLabel,
             };
           }
           case 'epub':

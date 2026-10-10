@@ -273,3 +273,26 @@ All automatic conversion functions also accept `inputProfile`. This ICC profile 
 Without the color replacement that Vivliostyle implements, CSS colors are resolved to sRGB and written to the PDF as DeviceRGB. `pdfPostprocess.defaultRgbProfile` specifies the profile that indicates how DeviceRGB is interpreted. This is usually an sRGB profile.
 
 Relative paths in `inputProfile`, `outputProfile`, `defaultRgbProfile`, and `outputIntent` are resolved from `entryContext`.
+
+## Labeling the PDF as PDF/X
+
+`pdfPostprocess.pdfxLabel` writes the identification metadata of a PDF/X conformance level into the output PDF: `"X-4"` for PDF/X-4 and `"X-1a:2003"` for PDF/X-1a:2003. It does not convert the content into content that satisfies the level. Only a document whose links are disabled and whose colors, transparency effects, output intent, and so on are set appropriately becomes PDF/X-conformant with this option. Check conformance with the preflight that the print provider specifies.
+
+```js
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  entry: ['manuscript.html'],
+  pdfPostprocess: {
+    cmyk: true,
+    outputIntent: './print-cmyk.icc',
+    pdfxLabel: 'X-4',
+  },
+});
+```
+
+The label consists of the following.
+
+- X-4: XMP metadata with the PDF/X identification `pdfxid:GTS_PDFXVersion`, `pdf:Trapped`, `xmpMM:DocumentID`, `xmpMM:VersionID`, `xmpMM:RenditionClass`, and the document information mirrored as `dc:title`, `dc:creator`, `dc:description`, `pdf:Keywords`, `xmp:CreatorTool`, `pdf:Producer`, `xmp:CreateDate`, `xmp:ModifyDate`, and `xmp:MetadataDate`.
+- X-1a:2003: `GTS_PDFXVersion` and `Trapped` in the document information.
+- Both levels: a file identifier (`ID`) in the trailer.
