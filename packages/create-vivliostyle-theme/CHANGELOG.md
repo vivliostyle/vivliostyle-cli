@@ -1,5 +1,7 @@
 # create-vivliostyle-theme
 
+## 11.4.0
+
 ## 11.3.3
 
 ## 11.3.2
