@@ -199,6 +199,74 @@ it('declares DefaultRGB on form XObjects, tiling patterns and Type 3 fonts and k
   ).toBe('/DeviceRGB');
 });
 
+it('declares DefaultRGB on Type 3 fonts written directly in font resources', async () => {
+  const input = await PDFDocument.create();
+  const type3Font = (resources: PDFDict | PDFRef) =>
+    input.context.obj({
+      Type: 'Font',
+      Subtype: 'Type3',
+      FontBBox: [0, 0, 10, 10],
+      FontMatrix: [0.1, 0, 0, 0.1, 0, 0],
+      CharProcs: {},
+      Encoding: { Type: 'Encoding', Differences: [] },
+      FirstChar: 0,
+      LastChar: 0,
+      Widths: [0],
+      Resources: resources,
+    });
+  const page = input.addPage([100, 100]);
+  page.node.set(
+    PDFName.of('Resources'),
+    input.context.obj({
+      Font: {
+        T1: type3Font(
+          input.context.obj({
+            Font: { T2: type3Font(input.context.obj({})) },
+          }),
+        ),
+        T3: type3Font(
+          input.context.register(
+            input.context.obj({
+              Font: { T4: type3Font(input.context.obj({})) },
+            }),
+          ),
+        ),
+        T5: type3Font(
+          input.context.obj({
+            Font: input.context.register(
+              input.context.obj({ T6: type3Font(input.context.obj({})) }),
+            ),
+          }),
+        ),
+      },
+    }),
+  );
+
+  const document = await savePdf(
+    { defaultRgbProfile: rgbProfile },
+    Buffer.from(await input.save()),
+  );
+
+  const pageResources = document.getPage(0).node.Resources()!;
+  const pageProfile = defaultRgb(document, pageResources);
+  const fontResources = (resources: PDFDict, name: string) =>
+    resources
+      .lookup(PDFName.of('Font'), PDFDict)
+      .lookup(PDFName.of(name), PDFDict)
+      .lookup(PDFName.of('Resources'), PDFDict);
+  for (const [outer, inner] of [
+    ['T1', 'T2'],
+    ['T3', 'T4'],
+    ['T5', 'T6'],
+  ]) {
+    const outerResources = fontResources(pageResources, outer);
+    expect(defaultRgb(document, outerResources)).toBe(pageProfile);
+    expect(defaultRgb(document, fontResources(outerResources, inner))).toBe(
+      pageProfile,
+    );
+  }
+});
+
 it('raises the PDF version required by ICC-based color spaces', async () => {
   const input = Buffer.from(
     fs.readFileSync(path.join(fixturesDir, 'image.pdf')),

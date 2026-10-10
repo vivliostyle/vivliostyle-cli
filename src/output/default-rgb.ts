@@ -23,6 +23,26 @@ function declareDefaultRgb(
   }
 }
 
+function declareDefaultRgbRecursively(
+  document: mupdfType.PDFDocument,
+  dictionary: mupdfType.PDFObject,
+  colorSpace: mupdfType.PDFObject,
+): void {
+  using resources = disposable(dictionary.get('Resources'));
+  if (resources.isDictionary()) {
+    declareDefaultRgb(document, resources, colorSpace);
+  }
+  const children: (mupdfType.PDFObject & Disposable)[] = [];
+  dictionary.forEach((value) => {
+    if (!value.isIndirect() && value.isDictionary()) {
+      children.push(disposable(value));
+    }
+  });
+  for (using child of children) {
+    declareDefaultRgbRecursively(document, child, colorSpace);
+  }
+}
+
 export function createDefaultRgbHook(profilePath: string): PdfEditHook {
   return {
     async afterVisit({ document, mupdf, setMinimumPdfVersion }) {
@@ -47,12 +67,8 @@ export function createDefaultRgbHook(profilePath: string): PdfEditHook {
       for (let number = 1; number < objectCount; number++) {
         using reference = disposable(document.newIndirect(number));
         using object = disposable(reference.resolve());
-        if (!object.isDictionary()) {
-          continue;
-        }
-        using resources = disposable(object.get('Resources'));
-        if (resources.isDictionary()) {
-          declareDefaultRgb(document, resources, colorSpace);
+        if (object.isDictionary()) {
+          declareDefaultRgbRecursively(document, object, colorSpace);
         }
       }
       setMinimumPdfVersion(13);
