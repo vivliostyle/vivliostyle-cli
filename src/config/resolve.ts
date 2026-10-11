@@ -277,7 +277,22 @@ function resolveMapEntries(
   });
 }
 
-export type PdfxLevel = NonNullable<PdfPostprocessConfig['pdfxLabel']>;
+export interface PdfxConfig {
+  version: 'X-4' | 'X-1a:2003';
+  outputIntent: string;
+}
+
+function resolvePdfxConfig(
+  pdfx: PdfPostprocessConfig['pdfx'],
+  entryContextDir: string,
+): PdfxConfig | undefined {
+  return pdfx === undefined
+    ? undefined
+    : {
+        version: pdfx.version,
+        outputIntent: upath.resolve(entryContextDir, pdfx.outputIntent),
+      };
+}
 
 export interface CmykConfig {
   ifUnmappedColorsFound: 'warn' | 'error' | 'ignore';
@@ -296,9 +311,8 @@ export interface PdfOutput {
   preflightOption: string[];
   cmyk: CmykConfig | false;
   replaceImage: ResolvedReplaceImageConfig;
-  outputIntent?: string;
   defaultRgbProfile?: string;
-  pdfxLabel?: PdfxLevel;
+  pdfx?: PdfxConfig;
 }
 
 export interface WebPublicationOutput {
@@ -900,16 +914,13 @@ export function resolveTaskConfig(
       replaceImage: resolveReplaceImageConfig(
         config.pdfPostprocess?.replaceImage,
       ),
-      outputIntent: config.pdfPostprocess?.outputIntent
-        ? upath.resolve(entryContextDir, config.pdfPostprocess.outputIntent)
-        : undefined,
       defaultRgbProfile: config.pdfPostprocess?.defaultRgbProfile
         ? upath.resolve(
             entryContextDir,
             config.pdfPostprocess.defaultRgbProfile,
           )
         : undefined,
-      pdfxLabel: config.pdfPostprocess?.pdfxLabel,
+      pdfx: resolvePdfxConfig(config.pdfPostprocess?.pdfx, entryContextDir),
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
@@ -972,13 +983,13 @@ export function resolveTaskConfig(
               preflightOption: resolvedPreflightOption,
               cmyk: resolvedCmyk,
               replaceImage: resolvedReplaceImage,
-              outputIntent: targetPp?.outputIntent
-                ? upath.resolve(entryContextDir, targetPp.outputIntent)
-                : defaultPdfOptions.outputIntent,
               defaultRgbProfile: targetPp?.defaultRgbProfile
                 ? upath.resolve(entryContextDir, targetPp.defaultRgbProfile)
                 : defaultPdfOptions.defaultRgbProfile,
-              pdfxLabel: targetPp?.pdfxLabel ?? defaultPdfOptions.pdfxLabel,
+              pdfx:
+                targetPp?.pdfx === undefined
+                  ? defaultPdfOptions.pdfx
+                  : resolvePdfxConfig(targetPp.pdfx, entryContextDir),
             };
           }
           case 'epub':

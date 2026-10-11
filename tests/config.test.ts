@@ -683,20 +683,29 @@ it('resolves replaceImage function entries', async () => {
   ]);
 });
 
-it('resolves output intent profiles from the entry context for each output', async () => {
+it('resolves PDF/X output intent profiles from the entry context for each output', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('.'), {
     entryContext: 'config',
     entry: 'manuscript.md',
-    pdfPostprocess: { outputIntent: 'profiles/default.icc' },
+    pdfPostprocess: {
+      pdfx: { version: 'X-4', outputIntent: 'profiles/default.icc' },
+    },
     output: [
       'default.pdf',
       {
         path: 'override.pdf',
-        pdfPostprocess: { outputIntent: 'profiles/override.icc' },
+        pdfPostprocess: {
+          pdfx: { version: 'X-1a:2003', outputIntent: 'profiles/override.icc' },
+        },
       },
       {
         path: 'absolute.pdf',
-        pdfPostprocess: { outputIntent: resolveFixture('cmyk/ps_gray.icc') },
+        pdfPostprocess: {
+          pdfx: {
+            version: 'X-4',
+            outputIntent: resolveFixture('cmyk/ps_gray.icc'),
+          },
+        },
       },
       {
         path: 'inherited.pdf',
@@ -706,43 +715,62 @@ it('resolves output intent profiles from the entry context for each output', asy
   });
 
   expect(config.outputs).toMatchObject(
-    [
-      'config/profiles/default.icc',
-      'config/profiles/override.icc',
-      'cmyk/ps_gray.icc',
-      'config/profiles/default.icc',
-    ].map((profile) => ({
-      outputIntent: resolveFixture(profile),
+    (
+      [
+        ['X-4', 'config/profiles/default.icc'],
+        ['X-1a:2003', 'config/profiles/override.icc'],
+        ['X-4', 'cmyk/ps_gray.icc'],
+        ['X-4', 'config/profiles/default.icc'],
+      ] as const
+    ).map(([version, profile]) => ({
+      pdfx: { version, outputIntent: resolveFixture(profile) },
       preflight: undefined,
       cmyk: false,
     })),
   );
 });
 
-it('applies an output intent to the default PDF output', async () => {
+it('applies a PDF/X label to the default PDF output', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',
-    pdfPostprocess: { outputIntent: 'profiles/default.icc' },
+    pdfPostprocess: {
+      pdfx: { version: 'X-4', outputIntent: 'profiles/default.icc' },
+    },
   });
 
   expect(config.outputs[0]).toMatchObject({
-    outputIntent: resolveFixture('config/profiles/default.icc'),
+    pdfx: {
+      version: 'X-4',
+      outputIntent: resolveFixture('config/profiles/default.icc'),
+    },
     preflight: undefined,
     cmyk: false,
   });
 });
 
-it.each(['', '   ', 42, true])(
-  'rejects an invalid outputIntent: %j',
-  (outputIntent) => {
-    expect(
-      v.safeParse(VivliostyleConfigSchema, {
-        entry: 'manuscript.md',
-        pdfPostprocess: { outputIntent },
-      }).success,
-    ).toBe(false);
-  },
-);
+it.each([
+  { version: 'X-4' },
+  { outputIntent: 'profiles/default.icc' },
+  { version: 'X-4', outputIntent: '' },
+  { version: 'X-4', outputIntent: '   ' },
+  { version: 'X-4', outputIntent: 42 },
+  { version: 'X-4', outputIntent: true },
+  { version: 'X4', outputIntent: 'profiles/default.icc' },
+  { version: 'PDF/X-4', outputIntent: 'profiles/default.icc' },
+  { version: 'X-1a', outputIntent: 'profiles/default.icc' },
+  { version: '', outputIntent: 'profiles/default.icc' },
+  { version: 4, outputIntent: 'profiles/default.icc' },
+  { version: true, outputIntent: 'profiles/default.icc' },
+  'X-4',
+  true,
+])('rejects an invalid pdfx: %j', (pdfx) => {
+  expect(
+    v.safeParse(VivliostyleConfigSchema, {
+      entry: 'manuscript.md',
+      pdfPostprocess: { pdfx },
+    }).success,
+  ).toBe(false);
+});
 
 it('resolves DefaultRGB profiles from the entry context for each output', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('.'), {
@@ -785,34 +813,6 @@ it.each(['', '   ', 42, true])(
       v.safeParse(VivliostyleConfigSchema, {
         entry: 'manuscript.md',
         pdfPostprocess: { defaultRgbProfile },
-      }).success,
-    ).toBe(false);
-  },
-);
-
-it('resolves pdfxLabel for each output', async () => {
-  const config = await getTaskConfig(['build'], resolveFixture('config'), {
-    entry: 'manuscript.md',
-    pdfPostprocess: { pdfxLabel: 'X-4' },
-    output: [
-      'default.pdf',
-      { path: 'x1a.pdf', pdfPostprocess: { pdfxLabel: 'X-1a:2003' } },
-      { path: 'inherited.pdf', pdfPostprocess: { cmyk: false } },
-    ],
-  });
-
-  expect(config.outputs).toMatchObject(
-    ['X-4', 'X-1a:2003', 'X-4'].map((pdfxLabel) => ({ pdfxLabel })),
-  );
-});
-
-it.each(['X4', 'PDF/X-4', 'X-1a', '', 4, true])(
-  'rejects an invalid pdfxLabel: %j',
-  (pdfxLabel) => {
-    expect(
-      v.safeParse(VivliostyleConfigSchema, {
-        entry: 'manuscript.md',
-        pdfPostprocess: { pdfxLabel },
       }).success,
     ).toBe(false);
   },

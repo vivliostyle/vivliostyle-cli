@@ -17,14 +17,12 @@ export default defineConfig({
     }),
   pdfPostprocess: {
     cmyk: true,
-    outputIntent: './ps_cmyk.icc',
-    pdfxLabel: 'X-4',
+    pdfx: { version: 'X-4', outputIntent: './ps_cmyk.icc' },
   },
   // To label the output as PDF/X-1a:2003 instead, replace pdfPostprocess
   // above with the following.
   // pdfPostprocess: {
   //   cmyk: true,
-  //   outputIntent: './ps_cmyk.icc',
-  //   pdfxLabel: 'X-1a:2003',
+  //   pdfx: { version: 'X-1a:2003', outputIntent: './ps_cmyk.icc' },
   // },
 });

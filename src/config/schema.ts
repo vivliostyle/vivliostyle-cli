@@ -584,6 +584,31 @@ export type ResolvedReplaceImageConfig = (
   | ResolvedReplacement
 )[];
 
+const PdfxConfigSchema = v.pipe(
+  v.object({
+    version: v.pipe(
+      v.union([v.literal('X-4'), v.literal('X-1a:2003')]),
+      v.description($`
+        PDF/X conformance level written as the identification metadata:
+        XMP for X-4, document information entries for X-1a:2003.
+      `),
+    ),
+    outputIntent: v.pipe(
+      ValidString,
+      v.description($`
+        Path to the ICC profile embedded as the PDF/X output intent.
+      `),
+    ),
+  }),
+  v.title('PdfxConfig'),
+  v.description($`
+    Label the output PDF as PDF/X: write the identification metadata of the
+    given conformance level, the output intent, and the file identifier.
+    This is a label only: the content is neither converted nor checked, and
+    conformance of the content is the author's responsibility.
+  `),
+);
+
 const PdfPostprocessConfigSchema = v.pipe(
   v.partial(
     v.object({
@@ -602,12 +627,6 @@ const PdfPostprocessConfigSchema = v.pipe(
       ),
       cmyk: CmykSchema,
       replaceImage: ReplaceImageSchema,
-      outputIntent: v.pipe(
-        ValidString,
-        v.description($`
-          Path to the ICC profile for the PDF output intent.
-        `),
-      ),
       defaultRgbProfile: v.pipe(
         ValidString,
         v.description($`
@@ -616,16 +635,7 @@ const PdfPostprocessConfigSchema = v.pipe(
           DeviceRGB colors are then interpreted through this profile.
         `),
       ),
-      pdfxLabel: v.pipe(
-        v.union([v.literal('X-4'), v.literal('X-1a:2003')]),
-        v.description($`
-          Write the identification metadata of the given PDF/X conformance
-          level (XMP for X-4, document information entries for X-1a:2003, and
-          the file identifier) into the output PDF. This is a label only: the
-          content is neither converted nor checked, and conformance of the
-          content is the author's responsibility.
-        `),
-      ),
+      pdfx: PdfxConfigSchema,
     }),
   ),
   v.title('PdfPostprocessConfig'),
