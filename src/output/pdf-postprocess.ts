@@ -18,7 +18,6 @@ import { executeWithCleanupOnInterrupt, isInContainer } from '../util.js';
 import { createCmykColorHook } from './cmyk.js';
 import { createDefaultRgbHook } from './default-rgb.js';
 import { createReplaceImageHook } from './image.js';
-import { createOutputIntentHook } from './output-intent.js';
 import {
   createPdfDocumentHook,
   type PageSizeData,
@@ -26,6 +25,7 @@ import {
   resolvePdfMetadata,
 } from './pdf-document.js';
 import { editPdf } from './pdf-visitor.js';
+import { createPdfxHook } from './pdfx.js';
 
 export type SaveOption = Pick<
   PdfOutput,
@@ -33,8 +33,8 @@ export type SaveOption = Pick<
   | 'preflightOption'
   | 'cmyk'
   | 'replaceImage'
-  | 'outputIntent'
   | 'defaultRgbProfile'
+  | 'pdfx'
 > &
   Pick<ResolvedTaskConfig, 'image'> & {
     cmykMap: CmykMap;
@@ -97,8 +97,8 @@ export async function postProcessPDF({
   cmyk: cmykConfig,
   cmykMap,
   replaceImage: replaceImageConfig,
-  outputIntent,
   defaultRgbProfile,
+  pdfx,
   signal,
 }: PostProcessOptions): Promise<void> {
   let pdf = sourcePdf;
@@ -130,6 +130,11 @@ export async function postProcessPDF({
   } else if (replacesImages) {
     Logger.logInfo('Replacing images');
   }
+  if (pdfx !== undefined) {
+    Logger.logInfo(
+      `Labeling the output as PDF/${pdfx.version} without checking conformance. Verify the output with your print provider's preflight check.`,
+    );
+  }
 
   const failures: string[] = [];
 
@@ -142,12 +147,11 @@ export async function postProcessPDF({
       )
     : {};
 
-  const outputIntentHook =
-    outputIntent === undefined ? {} : createOutputIntentHook(outputIntent);
   const defaultRgbHook =
     defaultRgbProfile === undefined
       ? {}
       : createDefaultRgbHook(defaultRgbProfile);
+  const pdfxHook = pdfx === undefined ? {} : createPdfxHook(pdfx);
   const documentHook = createPdfDocumentHook({
     metadata:
       metadata === undefined
@@ -164,13 +168,7 @@ export async function postProcessPDF({
   );
   pdf = await editPdf(
     pdf,
-    [
-      documentHook,
-      cmykColorHook,
-      defaultRgbHook,
-      replaceImageHook,
-      outputIntentHook,
-    ],
+    [documentHook, cmykColorHook, defaultRgbHook, replaceImageHook, pdfxHook],
     { signal },
   );
   signal?.throwIfAborted();

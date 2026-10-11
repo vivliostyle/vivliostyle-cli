@@ -441,13 +441,16 @@ pdfPostprocess takes precedence.
     with a replacement function or color conversion, or applies one to every
     replaceable image.
 
-  - `outputIntent`: string  
-    Path to the ICC profile for the PDF output intent.
-
   - `defaultRgbProfile`: string  
     Path to an RGB ICC profile declared as the `DefaultRGB` color space
     in the resource dictionaries of the output PDF.
     DeviceRGB colors are then interpreted through this profile.
+
+  - `pdfx`: [PdfxConfig](#pdfxconfig)  
+    Label the output PDF as PDF/X: write the identification metadata of the
+    given conformance level, the output intent, and the file identifier.
+    This is a label only: the content is neither converted nor checked, and
+    conformance of the content is the author's responsibility.
 
 #### Type definition
 
@@ -463,8 +466,8 @@ type PdfPostprocessConfig = {
     | ReplaceFunction
     | ImageConversionReplacement
   )[];
-  outputIntent?: string;
   defaultRgbProfile?: string;
+  pdfx?: PdfxConfig;
 };
 ```
 
@@ -613,6 +616,33 @@ type ImageConversionReplacement =
       source?: never;
       replacement?: never;
     };
+```
+
+### PdfxConfig
+
+Label the output PDF as PDF/X: write the identification metadata of the
+given conformance level, the output intent, and the file identifier.
+This is a label only: the content is neither converted nor checked, and
+conformance of the content is the author's responsibility.
+
+#### Properties
+
+- `PdfxConfig`
+
+  - `version`: "X-4" | "X-1a:2003"  
+    PDF/X conformance level written as the identification metadata:
+    XMP for X-4, document information entries for X-1a:2003.
+
+  - `outputIntent`: string  
+    Path to the ICC profile embedded as the PDF/X output intent.
+
+#### Type definition
+
+```ts
+type PdfxConfig = {
+  version: "X-4" | "X-1a:2003";
+  outputIntent: string;
+};
 ```
 
 ### CopyAssetConfig

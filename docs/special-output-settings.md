@@ -241,7 +241,7 @@ gs -dQUIET -dBATCH -dNOPAUSE -sOutputFile=- -sDEVICE=ink_cov output.pdf
 
 ### ICC profiles and output intents
 
-`pdfPostprocess.outputIntent` embeds the supplied ICC profile as the PDF output intent. It does not validate that the profile is appropriate for the PDF content.
+The ICC profile given as `pdfPostprocess.pdfx.outputIntent` is embedded as the output intent when [labeling the PDF as PDF/X](#labeling-the-pdf-as-pdfx). It does not validate that the profile is appropriate for the PDF content.
 
 When using automatic conversion for the output condition specified by the output intent, specify the same profile in the conversion functions’ `outputProfile`. The conversion produces device colors for that output condition.
 
@@ -261,7 +261,7 @@ export default defineConfig({
     replaceImage: [
       createIccConversionReplacement({ outputProfile: './print-cmyk.icc' }),
     ],
-    outputIntent: './print-cmyk.icc',
+    pdfx: { version: 'X-4', outputIntent: './print-cmyk.icc' },
   },
 });
 ```
@@ -272,4 +272,26 @@ All automatic conversion functions also accept `inputProfile`. This ICC profile 
 
 Without the color replacement that Vivliostyle implements, CSS colors are resolved to sRGB and written to the PDF as DeviceRGB. `pdfPostprocess.defaultRgbProfile` specifies the profile that indicates how DeviceRGB is interpreted. This is usually an sRGB profile.
 
-Relative paths in `inputProfile`, `outputProfile`, `defaultRgbProfile`, and `outputIntent` are resolved from `entryContext`.
+Relative paths in `inputProfile`, `outputProfile`, `defaultRgbProfile`, and `pdfx.outputIntent` are resolved from `entryContext`.
+
+## Labeling the PDF as PDF/X
+
+`pdfPostprocess.pdfx` writes the identification metadata of a PDF/X conformance level and the output intent into the output PDF. `version` is `"X-4"` for PDF/X-4 or `"X-1a:2003"` for PDF/X-1a:2003, and `outputIntent` is the path to the ICC profile embedded as the output intent. It does not convert the content into content that satisfies the level. Only a document whose links are disabled and whose colors, transparency effects, and so on are set appropriately becomes PDF/X-conformant with this option. Check conformance with the preflight that the print provider specifies.
+
+```js
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  entry: ['manuscript.html'],
+  pdfPostprocess: {
+    cmyk: true,
+    pdfx: { version: 'X-4', outputIntent: './print-cmyk.icc' },
+  },
+});
+```
+
+The label consists of the following.
+
+- X-4: XMP metadata with the PDF/X identification `pdfxid:GTS_PDFXVersion`, `pdf:Trapped`, `xmpMM:DocumentID`, `xmpMM:VersionID`, `xmpMM:RenditionClass`, and the document information mirrored as `dc:title`, `dc:creator`, `dc:description`, `pdf:Keywords`, `xmp:CreatorTool`, `pdf:Producer`, `xmp:CreateDate`, `xmp:ModifyDate`, and `xmp:MetadataDate`.
+- X-1a:2003: `GTS_PDFXVersion` and `Trapped` in the document information.
+- Both levels: a `GTS_PDFX` output intent (`OutputIntents`) whose `DestOutputProfile` is the `outputIntent` profile, and a file identifier (`ID`) in the trailer.
