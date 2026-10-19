@@ -241,7 +241,7 @@ gs -dQUIET -dBATCH -dNOPAUSE -sOutputFile=- -sDEVICE=ink_cov output.pdf
 
 ### ICC プロファイルと出力インテント
 
-`pdfPostprocess.outputIntent` は、指定した ICC プロファイルを PDF の出力インテントとして埋め込みます。プロファイルと PDF 内容の整合性は検証しません。
+`pdfPostprocess.pdfx.outputIntent` に指定した ICC プロファイルが、[PDF/X のラベル付け](#pdfx-のラベル付け)の出力インテントとして埋め込まれます。プロファイルと PDF 内容の整合性は検証しません。
 
 出力インテントで示す出力条件に合わせて自動変換する場合は、変換関数の `outputProfile` に同じプロファイルを指定します。変換結果は、その出力条件に対応するデバイス色になります。
 
@@ -261,7 +261,7 @@ export default defineConfig({
     replaceImage: [
       createIccConversionReplacement({ outputProfile: './print-cmyk.icc' }),
     ],
-    outputIntent: './print-cmyk.icc',
+    pdfx: { version: 'X-4', outputIntent: './print-cmyk.icc' },
   },
 });
 ```
@@ -272,4 +272,26 @@ export default defineConfig({
 
 Vivliostyle が実装する色置換を経由しない場合、CSS の色は sRGB に解決され、DeviceRGB として PDF に書き出されます。`pdfPostprocess.defaultRgbProfile` は、DeviceRGB の解釈を示すプロファイルを指定します。通常は sRGB を設定することになります。
 
-`inputProfile`、`outputProfile`、`defaultRgbProfile`、`outputIntent` の相対パスの基準は `entryContext`です。
+`inputProfile`、`outputProfile`、`defaultRgbProfile`、`pdfx.outputIntent` の相対パスの基準は `entryContext`です。
+
+## PDF/X のラベル付け
+
+`pdfPostprocess.pdfx` は、PDF/X の適合レベルを識別するメタデータと出力インテントを出力 PDF に書き込みます。`version` には `"X-4"`（PDF/X-4）または `"X-1a:2003"`（PDF/X-1a:2003）を、`outputIntent` には出力インテントとして埋め込む ICC プロファイルのパスを指定します。そのレベルを満たす内容に変換する機能ではありません。この機能で PDF/X 適合になるのは、リンク無効、使用色、透明効果などを適切に設定した文書のみです。適合の成否は、入稿先が指定するプリフライトで確認してください。
+
+```js
+import { defineConfig } from '@vivliostyle/cli';
+
+export default defineConfig({
+  entry: ['manuscript.html'],
+  pdfPostprocess: {
+    cmyk: true,
+    pdfx: { version: 'X-4', outputIntent: './print-cmyk.icc' },
+  },
+});
+```
+
+ラベルとして書き込むのは次の項目です。
+
+- X-4: PDF/X の識別情報 `pdfxid:GTS_PDFXVersion`、`pdf:Trapped`、`xmpMM:DocumentID`、`xmpMM:VersionID`、`xmpMM:RenditionClass`、および文書情報の写しである `dc:title`、`dc:creator`、`dc:description`、`pdf:Keywords`、`xmp:CreatorTool`、`pdf:Producer`、`xmp:CreateDate`、`xmp:ModifyDate`、`xmp:MetadataDate` を持つ XMP メタデータ。
+- X-1a:2003: 文書情報の `GTS_PDFXVersion` と `Trapped`。
+- 両レベル共通: `outputIntent` のプロファイルを `DestOutputProfile` とする `GTS_PDFX` 出力インテント（`OutputIntents`）と、トレーラのファイル識別子（`ID`）。
