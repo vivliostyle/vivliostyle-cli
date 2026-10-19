@@ -1,5 +1,33 @@
 # @vivliostyle/cli
 
+## 11.4.0
+
+### Minor Changes
+
+- Add `pdfPostprocess.pdfx` to label the output PDF as PDF/X-4 or PDF/X-1a:2003 with the identification metadata and an ICC output intent. ([#939](https://github.com/vivliostyle/vivliostyle-cli/pull/939))
+
+- Add `pdfPostprocess.defaultRgbProfile` to declare an ICC profile as the `DefaultRGB` color space of the output PDF. ([#936](https://github.com/vivliostyle/vivliostyle-cli/pull/936))
+
+- Add a `vivliostyle-template.json` manifest that lets a project template declare the Vivliostyle CLI versions it supports. `vivliostyle create` and `vivliostyle theme create` abort when the running CLI does not satisfy the declared range, and all built-in templates now require `>=11.3.0`. ([#931](https://github.com/vivliostyle/vivliostyle-cli/pull/931))
+
+### Patch Changes
+
+- Write TrimBox and BleedBox on pages without bleed or crop marks, equal to the MediaBox. ([#938](https://github.com/vivliostyle/vivliostyle-cli/pull/938))
+
+- Speed up PDF builds by no longer emulating print media before pagination, so that the pages already completed stay out of the layout while the remaining pages are typeset. `page.pdf()` prints with the print media type by itself. ([#928](https://github.com/vivliostyle/vivliostyle-cli/pull/928))
+
+- Fix PDF post-processing failing on a page whose `/Annots` array holds a null or other non-dictionary entry. ([#935](https://github.com/vivliostyle/vivliostyle-cli/pull/935))
+
+- Update default browser versions ([#926](https://github.com/vivliostyle/vivliostyle-cli/pull/926))
+
+  - Chrome: 155.0.8059.84
+  - Chromium: 1721552
+  - Firefox: stable_158.0
+
+- Update Vivliostyle.js to 2.45.2. ([#932](https://github.com/vivliostyle/vivliostyle-cli/pull/932))
+
+- Stop forcing generated PDFs to version 1.7 and use the minimum version required by their post-processed content. ([#912](https://github.com/vivliostyle/vivliostyle-cli/pull/912))
+
 ## 11.3.3
 
 ### Patch Changes
