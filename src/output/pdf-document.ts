@@ -254,9 +254,6 @@ function applyPageBoxes(
       sizeData.mediaWidth,
       yOffset + sizeData.mediaHeight,
     ]);
-    if (!sizeData.bleedOffset && !sizeData.bleedSize) {
-      continue;
-    }
     pageObject.put('BleedBox', [
       sizeData.bleedOffset,
       yOffset + sizeData.bleedOffset,
