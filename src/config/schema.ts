@@ -889,7 +889,12 @@ export const CoverConfig = v.pipe(
 );
 export type CoverConfig = v.InferInput<typeof CoverConfig>;
 
-const VfmConfig = v.pipe(StringifyMarkdownOptionsSchema, v.title('VfmConfig'));
+// @vivliostyle/vfm pins its own valibot version, so re-type the schema with
+// ours to keep declaration emit from referencing vfm's copy of valibot.
+const VfmConfig = v.pipe(
+  StringifyMarkdownOptionsSchema as v.GenericSchema<StringifyMarkdownOptions>,
+  v.title('VfmConfig'),
+);
 export type VfmConfig = StringifyMarkdownOptions;
 
 export const ServerConfig = v.pipe(
