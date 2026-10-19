@@ -305,7 +305,7 @@ async function visitAnnotationAppearances(
 
   for (let i = 0; i < annots.length; i++) {
     const annot = annots.get(i);
-    if (!annot) {
+    if (!annot.isDictionary()) {
       continue;
     }
     const ap = annot.resolve().get('AP');

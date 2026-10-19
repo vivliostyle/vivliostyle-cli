@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { PDFDocument, PDFName, PDFNull } from 'pdf-lib';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -132,6 +133,40 @@ describe('editPdf', () => {
 
     expect(firstVisits).toBeGreaterThan(0);
     expect(secondVisits).toBe(firstVisits);
+  });
+
+  it('skips Annots entries that are not dictionaries', async () => {
+    const input = await PDFDocument.create();
+    const page = input.addPage([200, 200]);
+    const appearance = input.context.register(
+      input.context.stream('0 0 10 10 re f', {
+        Type: 'XObject',
+        Subtype: 'Form',
+        BBox: [0, 0, 10, 10],
+      }),
+    );
+    page.node.set(
+      PDFName.of('Annots'),
+      input.context.obj([
+        PDFNull,
+        7,
+        {
+          Type: 'Annot',
+          Subtype: 'Square',
+          Rect: [0, 0, 10, 10],
+          AP: { N: appearance },
+        },
+      ]),
+    );
+    const visit = vi.fn<NonNullable<PdfEditHook['visit']>>();
+
+    await editPdf(await input.save(), [{ visit }], { signal });
+
+    expect(
+      visit.mock.calls.filter(
+        ([{ node }]) => node.origin === 'annotation-appearance',
+      ),
+    ).toHaveLength(1);
   });
 
   it('stops visiting nodes after cancellation', async () => {
