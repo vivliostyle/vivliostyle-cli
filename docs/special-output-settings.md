@@ -270,4 +270,6 @@ CMYK values specified with `device-cmyk()` or `reserveMap` are output as DeviceC
 
 All automatic conversion functions also accept `inputProfile`. This ICC profile is used to interpret unprofiled DeviceRGB, DeviceGray, or DeviceCMYK input and must match the input's color space. Input to `cmyk.fallback` is always RGB. If an image already has an ICC profile, that profile is used.
 
-Relative paths in `inputProfile`, `outputProfile`, and `outputIntent` are resolved from `entryContext`.
+Without the color replacement that Vivliostyle implements, CSS colors are resolved to sRGB and written to the PDF as DeviceRGB. `pdfPostprocess.defaultRgbProfile` specifies the profile that indicates how DeviceRGB is interpreted. This is usually an sRGB profile.
+
+Relative paths in `inputProfile`, `outputProfile`, `defaultRgbProfile`, and `outputIntent` are resolved from `entryContext`.

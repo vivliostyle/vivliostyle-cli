@@ -294,6 +294,7 @@ export interface PdfOutput {
   cmyk: CmykConfig | false;
   replaceImage: ResolvedReplaceImageConfig;
   outputIntent?: string;
+  defaultRgbProfile?: string;
 }
 
 export interface WebPublicationOutput {
@@ -898,6 +899,12 @@ export function resolveTaskConfig(
       outputIntent: config.pdfPostprocess?.outputIntent
         ? upath.resolve(entryContextDir, config.pdfPostprocess.outputIntent)
         : undefined,
+      defaultRgbProfile: config.pdfPostprocess?.defaultRgbProfile
+        ? upath.resolve(
+            entryContextDir,
+            config.pdfPostprocess.defaultRgbProfile,
+          )
+        : undefined,
     };
     if (config.output) {
       return config.output.map((target): OutputConfig => {
@@ -963,6 +970,9 @@ export function resolveTaskConfig(
               outputIntent: targetPp?.outputIntent
                 ? upath.resolve(entryContextDir, targetPp.outputIntent)
                 : defaultPdfOptions.outputIntent,
+              defaultRgbProfile: targetPp?.defaultRgbProfile
+                ? upath.resolve(entryContextDir, targetPp.defaultRgbProfile)
+                : defaultPdfOptions.defaultRgbProfile,
             };
           }
           case 'epub':

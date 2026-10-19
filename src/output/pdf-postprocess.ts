@@ -16,6 +16,7 @@ import { Logger } from '../logger.js';
 import { importNodeModule } from '../node-modules.js';
 import { executeWithCleanupOnInterrupt, isInContainer } from '../util.js';
 import { createCmykColorHook } from './cmyk.js';
+import { createDefaultRgbHook } from './default-rgb.js';
 import { createReplaceImageHook } from './image.js';
 import { createOutputIntentHook } from './output-intent.js';
 import {
@@ -28,7 +29,12 @@ import { editPdf } from './pdf-visitor.js';
 
 export type SaveOption = Pick<
   PdfOutput,
-  'preflight' | 'preflightOption' | 'cmyk' | 'replaceImage' | 'outputIntent'
+  | 'preflight'
+  | 'preflightOption'
+  | 'cmyk'
+  | 'replaceImage'
+  | 'outputIntent'
+  | 'defaultRgbProfile'
 > &
   Pick<ResolvedTaskConfig, 'image'> & {
     cmykMap: CmykMap;
@@ -92,6 +98,7 @@ export async function postProcessPDF({
   cmykMap,
   replaceImage: replaceImageConfig,
   outputIntent,
+  defaultRgbProfile,
   signal,
 }: PostProcessOptions): Promise<void> {
   let pdf = sourcePdf;
@@ -137,6 +144,10 @@ export async function postProcessPDF({
 
   const outputIntentHook =
     outputIntent === undefined ? {} : createOutputIntentHook(outputIntent);
+  const defaultRgbHook =
+    defaultRgbProfile === undefined
+      ? {}
+      : createDefaultRgbHook(defaultRgbProfile);
   const documentHook = createPdfDocumentHook({
     metadata:
       metadata === undefined
@@ -153,7 +164,13 @@ export async function postProcessPDF({
   );
   pdf = await editPdf(
     pdf,
-    [documentHook, cmykColorHook, replaceImageHook, outputIntentHook],
+    [
+      documentHook,
+      cmykColorHook,
+      defaultRgbHook,
+      replaceImageHook,
+      outputIntentHook,
+    ],
     { signal },
   );
   signal?.throwIfAborted();

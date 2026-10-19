@@ -608,6 +608,14 @@ const PdfPostprocessConfigSchema = v.pipe(
           Path to the ICC profile for the PDF output intent.
         `),
       ),
+      defaultRgbProfile: v.pipe(
+        ValidString,
+        v.description($`
+          Path to an RGB ICC profile declared as the \`DefaultRGB\` color space
+          in the resource dictionaries of the output PDF.
+          DeviceRGB colors are then interpreted through this profile.
+        `),
+      ),
     }),
   ),
   v.title('PdfPostprocessConfig'),

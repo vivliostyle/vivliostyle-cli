@@ -270,4 +270,6 @@ export default defineConfig({
 
 自動変換の各関数には、`inputProfile` も指定できます。これはプロファイルを持たない DeviceRGB、DeviceGray、DeviceCMYK の入力を解釈するための ICC プロファイルで、入力と同じ色空間である必要があります。`cmyk.fallback` の入力は常に RGB です。画像がすでに ICC プロファイルを持っている場合は、そのプロファイルが使われます。
 
-`inputProfile`、`outputProfile`、`outputIntent` の相対パスの基準は `entryContext`です。
+Vivliostyle が実装する色置換を経由しない場合、CSS の色は sRGB に解決され、DeviceRGB として PDF に書き出されます。`pdfPostprocess.defaultRgbProfile` は、DeviceRGB の解釈を示すプロファイルを指定します。通常は sRGB を設定することになります。
+
+`inputProfile`、`outputProfile`、`defaultRgbProfile`、`outputIntent` の相対パスの基準は `entryContext`です。
