@@ -44,6 +44,8 @@ export const TEMPLATE_MANIFEST_FILENAME = 'vivliostyle-template.json';
 export const DEFAULT_PROJECT_TITLE = 'My Title';
 export const DEFAULT_PROJECT_AUTHOR = 'My Name';
 
+export const THEME_SITE_URL = 'https://theme.vivliostyle.org';
+
 export const TEMPLATE_SETTINGS = [
   {
     value: 'minimal',

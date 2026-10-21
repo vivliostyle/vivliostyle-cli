@@ -187,11 +187,11 @@ export default defineConfig({
       "default": {
         "name": "デフォルトテンプレート",
         "description": "基本的なスタート地点",
-        "source": "org/my-vivliostyle-theme/template/default"
+        "source": "./template/default"
       },
       "with-prompts": {
         "name": "カスタムオプション付きテンプレート",
-        "source": "org/my-vivliostyle-theme/template/with-prompts",
+        "source": "./template/with-prompts",
         "prompt": [
           {
             "type": "text",
@@ -218,10 +218,16 @@ export default defineConfig({
 | ------------- | ---------------- | ---- | ------------------------------------ |
 | `name`        | `string`         |      | 対話プロンプトに表示される名前       |
 | `description` | `string`         |      | ヒントとして表示される短い説明       |
-| `source`      | `string`         | ✔   | ダウンロードするテンプレートの参照先 |
+| `source`      | `string`         | ✔   | パッケージ内のパス、またはgiget形式の参照先 |
 | `prompt`      | `PromptOption[]` |      | ユーザーへの追加質問の定義           |
 
-`source` フィールドには `--template` オプションと同じく giget 形式でダウンロードするテンプレートを指定します。
+`./`または`../`で始まる`source`は、テーマのパッケージ内のディレクトリを指します。Vivliostyle CLIは、選ばれたテーマと同じバージョンのパッケージをnpmのintegrityで検証して取得し、その中からテンプレートを読み込みます。パッケージの外を指すパスはエラーになります。テンプレートが常にテーマのバージョンと一致し、[theme.vivliostyle.org](https://theme.vivliostyle.org)のプレビューとも同じになるため、この形式を推奨します。テンプレートのディレクトリは`package.json`の`files`に含めてください。
+
+`source`には、`--template`オプションと同じgiget形式も指定できます。この場合は、参照先のブランチの最新の内容がダウンロードされます。
+
+選んだテーマがテンプレートを提供していない場合、Vivliostyle CLIはBasicテンプレートを使います。theme.vivliostyle.orgでも、そのようなテーマはBasicテンプレートでプレビューしています。
+
+テンプレート内のUTF-8のファイルはすべてHandlebarsで処理されるため、サンプルの文章に`{{`をそのまま書く場合は`\{{`と書いてください。
 
 ### カスタムプロンプト
 

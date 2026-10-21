@@ -1920,7 +1920,7 @@ export const VivliostyleTemplateMetadata = v.pipe(
       source: v.pipe(
         ValidString,
         v.description($`
-          Template source in the format of \`[provider]:repo[/subpath][#ref]\` or as a local directory to copy from.
+          Template source: a directory inside the theme package starting with \`./\`, which is taken from the same version as the chosen theme, or a source in the format of \`[provider]:repo[/subpath][#ref]\`.
           See the [giget](https://github.com/unjs/giget) documentation for more details of the source format.
         `),
       ),

@@ -1,5 +1,10 @@
+import Arborist from '@npmcli/arborist';
 import { fetch as _fetch } from 'node-fetch-native';
 import { createProxy } from 'node-fetch-native/proxy';
+import upath from 'upath';
+import * as v from 'valibot';
+
+import { THEME_SITE_URL } from './constants.js';
 
 export interface PackageJson {
   name: string;
@@ -120,4 +125,98 @@ export function fetchPackageMetadata({
   return fetch(`https://registry.npmjs.org/${packageName}/${version}`).then(
     (response) => response.json(),
   );
+}
+
+/** The theme catalog site; tests point it to a local server. */
+export function getThemeSiteUrl(): string {
+  return (process.env.VIVLIOSTYLE_THEME_SITE_URL || THEME_SITE_URL).replace(
+    /\/$/v,
+    '',
+  );
+}
+
+const CatalogThemeSchema = v.object({
+  name: v.string(),
+  version: v.string(),
+  description: v.string(),
+  official: v.boolean(),
+  downloads: v.object({ weekly: v.number(), monthly: v.number() }),
+  templates: v.array(
+    v.object({
+      id: v.string(),
+      name: v.optional(v.string()),
+      description: v.optional(v.string()),
+    }),
+  ),
+});
+export type CatalogTheme = v.InferOutput<typeof CatalogThemeSchema>;
+
+/**
+ * Lists the themes of theme.vivliostyle.org, which excludes deprecated,
+ * invalid, and moderated packages, in the order of `vivliostyle create`.
+ */
+export async function fetchThemeCatalog({
+  fetch,
+  source,
+}: {
+  fetch: typeof globalThis.fetch;
+  source?: 'official' | 'community';
+}): Promise<CatalogTheme[]> {
+  const query = source ? `?source=${source}` : '';
+  const response = await fetch(`${getThemeSiteUrl()}/api/v1/themes${query}`);
+  return v.parse(
+    v.object({ themes: v.array(CatalogThemeSchema) }),
+    await response.json(),
+  ).themes;
+}
+
+const ThemeModerationSchema = v.object({
+  status: v.picklist(['visible', 'hidden']),
+  reason: v.optional(v.string()),
+});
+export type ThemeModeration = v.InferOutput<typeof ThemeModerationSchema>;
+
+/** Returns undefined when the catalog cannot tell, e.g. for unknown packages. */
+export async function fetchThemeModeration({
+  fetch,
+  packageName,
+}: {
+  fetch: typeof globalThis.fetch;
+  packageName: string;
+}): Promise<ThemeModeration | undefined> {
+  try {
+    const response = await fetch(
+      `${getThemeSiteUrl()}/api/v1/themes/${packageName}`,
+    );
+    return v.parse(
+      v.object({ moderation: ThemeModerationSchema }),
+      await response.json(),
+    ).moderation;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Installs a package into `dir` without running lifecycle scripts and
+ * returns its directory. Arborist verifies the tarball against the
+ * integrity recorded by the registry.
+ */
+export async function installPackageForTemplate({
+  packageName,
+  version,
+  dir,
+}: {
+  packageName: string;
+  version: string;
+  dir: string;
+}): Promise<string> {
+  const options = {
+    path: dir,
+    add: [`${packageName}@${version}`],
+    ignoreScripts: true,
+    audit: false,
+  };
+  await new Arborist(options).reify(options);
+  return upath.join(dir, 'node_modules', packageName);
 }

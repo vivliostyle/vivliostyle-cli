@@ -187,11 +187,11 @@ A [Vivliostyle Themes](./themes-and-css.md) package can bundle one or more proje
       "default": {
         "name": "Default template",
         "description": "A basic starting point",
-        "source": "org/my-vivliostyle-theme/template/default"
+        "source": "./template/default"
       },
       "with-prompts": {
         "name": "Template with custom options",
-        "source": "org/my-vivliostyle-theme/template/with-prompts",
+        "source": "./template/with-prompts",
         "prompt": [
           {
             "type": "text",
@@ -218,10 +218,16 @@ Each key in `vivliostyle.template` is a template ID. The object has the followin
 | ------------- | ---------------- | -------- | -------------------------------------------- |
 | `name`        | `string`         |          | Display name shown in the interactive prompt |
 | `description` | `string`         |          | Short description shown as a hint            |
-| `source`      | `string`         | ✔       | Template source in giget format              |
+| `source`      | `string`         | ✔       | Path in the package, or a giget source       |
 | `prompt`      | `PromptOption[]` |          | Additional prompts to collect user input     |
 
-The `source` field accepts the same giget format as the `--template` option.
+A `source` starting with `./` or `../` is a directory inside the theme package. Vivliostyle CLI takes it from the same version of the package as the chosen theme, verified by its npm integrity, and refuses a path that leaves the package. This is the recommended form: the template always matches the theme version, and it is what [theme.vivliostyle.org](https://theme.vivliostyle.org) previews. Include the template directory in the `files` of `package.json`.
+
+The `source` field also accepts the same giget format as the `--template` option, which downloads the template from the head of the referenced branch.
+
+If the chosen theme provides no template, Vivliostyle CLI applies the Basic template, which is also what theme.vivliostyle.org uses to preview such themes.
+
+Every UTF-8 file of a template is processed with Handlebars, so write a literal `{{` in sample text as `\{{`.
 
 ### Custom Prompts
 

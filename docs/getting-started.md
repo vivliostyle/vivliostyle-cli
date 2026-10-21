@@ -17,6 +17,14 @@ pnpm create book # For pnpm users
 
 When you create a project, a configuration file named `vivliostyle.config.js` will be generated automatically. For details on usage, please see [Using Config File](./using-config-file.md).
 
+## Choosing a Theme
+
+When `create` asks for the theme, it lists the themes of [theme.vivliostyle.org](https://theme.vivliostyle.org), which leaves out deprecated, invalid, and moderated packages. If the site cannot be reached, the list falls back to the npm search.
+
+In a terminal, you can also select `Choose a theme in the browser`. Vivliostyle CLI opens theme.vivliostyle.org, where you can preview the themes and their templates; the theme you choose there is sent back to the CLI through a temporary server on `127.0.0.1`. Press Esc in the terminal to go back to the list. If the browser runs on another machine, type the package name shown on the theme page with `Install other themes from npm` instead.
+
+When you type a package name that theme.vivliostyle.org hides, for example because it was reported as malicious, the CLI shows the reason and asks before using it.
+
 ## Community Templates
 
 Vivliostyle CLI provides several default templates: Minimal, Basic, Documentation, Novel, Academic, and Magazine. If the Vivliostyle Theme you want to use offers its own template, you can select `Use templates from the community theme` during project creation to start your project from that template.

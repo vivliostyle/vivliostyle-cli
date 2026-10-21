@@ -17,6 +17,14 @@ pnpm create book # For pnpm users
 
 プロジェクトを作成すると、自動的に `vivliostyle.config.js` という名前の構成ファイルが作成されます。詳しい使用方法は [構成ファイル](./using-config-file.md) を参照してください。
 
+## テーマを選ぶ
+
+`create`でテーマを選ぶときには、[theme.vivliostyle.org](https://theme.vivliostyle.org)のテーマ一覧が表示されます。この一覧には、非推奨になったパッケージ、検証を通らないパッケージ、管理者が非表示にしたパッケージは含まれません。サイトにつながらない場合は、npmの検索結果を表示します。
+
+ターミナルで実行している場合は、`Choose a theme in the browser`も選べます。Vivliostyle CLIがtheme.vivliostyle.orgを開くので、テーマとテンプレートをプレビューして選んでください。選んだテーマは、`127.0.0.1`で一時的に起動するサーバーを通してCLIに送られます。ターミナルでEscキーを押すと一覧に戻ります。ブラウザを別のマシンで開いている場合は、`Install other themes from npm`を選び、テーマのページに表示されたパッケージ名を入力してください。
+
+theme.vivliostyle.orgで非表示になっているパッケージ名を入力すると（例えば、マルウェアとして報告された場合）、CLIは理由を表示し、使うかどうかを確認します。
+
 ## コミュニティーテンプレート
 
 Vivliostyle CLIはデフォルトでMinimal、Basic、Documentation、Novel、Academic、Magazineのテンプレートを用意しています。もし使いたいVivliostyle Themeが独自のテンプレートを提供している場合、プロジェクト作成ステップで `Use templates from the community theme` を選ぶことでそのテンプレートからプロジェクトを作り始めることができます。

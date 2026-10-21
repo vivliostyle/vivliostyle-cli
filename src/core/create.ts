@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import * as v from 'valibot';
-import { cyan, gray, green, yellow } from 'yoctocolors';
+import { cyan, dim, gray, green, yellow } from 'yoctocolors';
 
 import { locateVivliostyleConfig } from '../config/load.js';
 import {
@@ -27,6 +27,10 @@ import { Logger } from '../logger.js';
 import {
   createFetch,
   fetchPackageMetadata,
+  fetchThemeCatalog,
+  fetchThemeModeration,
+  getThemeSiteUrl,
+  installPackageForTemplate,
   listVivliostyleThemes,
   type PackageJson,
 } from '../npm.js';
@@ -36,13 +40,17 @@ import {
   resolveTemplateSource,
   setupTemplate,
 } from '../scaffold.js';
+import { pickThemeInBrowser } from '../theme-picker.js';
 import {
   cliVersion,
   coreVersion,
   cwd as defaultCwd,
+  DetailError,
   getDefaultBrowserTag,
   getOsLocale,
+  pathContains,
   toTitleCase,
+  useTmpDirectory,
   whichPm,
 } from '../util.js';
 
@@ -71,6 +79,7 @@ export async function create(
   } = inlineConfig;
   let extraTemplateVariables: Record<string, unknown> = {};
   let themePackage: VivliostylePackageJson | undefined;
+  let templateId: string | undefined;
   let useLocalTemplate = false;
 
   if (template) {
@@ -119,7 +128,7 @@ export async function create(
       }
     }
     if (!theme && theme !== false) {
-      ({ theme, themePackage } = await askTheme({
+      ({ theme, themePackage, templateId } = await askTheme({
         presetTemplate,
         template,
         fetch,
@@ -127,10 +136,12 @@ export async function create(
       }));
     }
     if (!template) {
-      ({ template, extraTemplateVariables } = await askThemeTemplate({
-        themeMetadata: themePackage?.vivliostyle,
-        interactiveLogger,
-      }));
+      ({ template, extraTemplateVariables, useLocalTemplate } =
+        await askThemeTemplate({
+          themePackage,
+          templateId,
+          interactiveLogger,
+        }));
     }
     if (typeof installDependencies !== 'boolean') {
       ({ installDependencies } = await askInstallDependencies({
@@ -369,6 +380,163 @@ const truncateString = (str: string) => {
 
 export const THEME_ANSWER_NOT_USE = 'Not use Vivliostyle theme';
 export const THEME_ANSWER_MANUAL = 'Install other themes from npm';
+export const THEME_ANSWER_BROWSER = 'Choose a theme in the browser';
+
+const HIDDEN_REASONS: Record<string, string> = {
+  deprecated: 'the package is deprecated',
+  unpublished: 'the package was unpublished',
+  'invalid-package': 'the package is not a valid theme',
+  'not-a-theme': 'the package is not marked as a Vivliostyle theme',
+  spam: 'it was reported as spam',
+  malware: 'it was reported as malicious',
+  inappropriate: 'it was reported as inappropriate',
+  infringement: 'it was reported as infringing rights',
+  impersonation: 'it was reported as an impersonation',
+  broken: 'it was reported as not working',
+};
+
+/**
+ * Lists themes from theme.vivliostyle.org, which leaves out deprecated,
+ * invalid, and moderated packages, and falls back to the npm search.
+ */
+async function listThemes({
+  fetch,
+  communityOnly,
+  interactiveLogger,
+}: {
+  fetch: ReturnType<typeof createFetch>;
+  communityOnly: boolean;
+  interactiveLogger: InteractiveLogger;
+}): Promise<{ name: string; description?: string }[]> {
+  let catalogError: unknown;
+  const themes = await interactiveLogger.logLoading(
+    'Fetching a list of Vivliostyle themes...',
+    async () => {
+      try {
+        return await fetchThemeCatalog({
+          fetch,
+          source: communityOnly ? 'community' : undefined,
+        });
+      } catch (error) {
+        catalogError = error;
+      }
+      let objects = (await listVivliostyleThemes({ fetch })).objects;
+      if (communityOnly) {
+        objects = objects.filter(
+          (theme) => !theme.package.name.startsWith('@vivliostyle/'),
+        );
+      }
+      objects.sort((a, b) => {
+        // Prioritize packages in the @vivliostyle namespace
+        const aIsOfficial = a.package.name.startsWith('@vivliostyle/') ? 1 : 0;
+        const bIsOfficial = b.package.name.startsWith('@vivliostyle/') ? 1 : 0;
+        return aIsOfficial ^ bIsOfficial
+          ? bIsOfficial - aIsOfficial
+          : b.downloads.monthly - a.downloads.monthly;
+      });
+      return objects.map((theme) => theme.package);
+    },
+  );
+  if (catalogError) {
+    Logger.debug('listThemes > catalog error %O', catalogError);
+    interactiveLogger.logWarn(
+      `Could not fetch the list of themes from ${getThemeSiteUrl()}. Showing the npm search results instead, which may include deprecated or hidden themes.`,
+    );
+  }
+  return themes;
+}
+
+const ThemePackageSchema = v.object({
+  name: v.string(),
+  version: v.string(),
+  vivliostyle: v.optional(VivliostylePackageMetadata),
+});
+
+/** Warns about a theme hidden on theme.vivliostyle.org and asks to proceed. */
+async function confirmHiddenTheme({
+  fetch,
+  packageName,
+  interactiveLogger,
+}: {
+  fetch: ReturnType<typeof createFetch>;
+  packageName: string;
+  interactiveLogger: InteractiveLogger;
+}): Promise<boolean> {
+  const moderation = await fetchThemeModeration({ fetch, packageName });
+  if (moderation?.status !== 'hidden') {
+    return true;
+  }
+  const reason =
+    (moderation.reason && HIDDEN_REASONS[moderation.reason]) ||
+    'it was hidden by the moderators';
+  interactiveLogger.logWarn(
+    `${packageName} is not listed on ${getThemeSiteUrl()} because ${reason}.`,
+  );
+  const { proceed } = await askQuestion({
+    question: {
+      proceed: {
+        type: 'select',
+        message: 'Do you want to use this theme anyway?',
+        options: [
+          { value: 'no', label: 'No, choose another theme' },
+          { value: 'yes', label: 'Yes, use this theme' },
+        ],
+      },
+    },
+    schema: v.object({ proceed: v.picklist(['no', 'yes']) }),
+    interactiveLogger,
+  });
+  return proceed === 'yes';
+}
+
+async function askThemeInBrowser({
+  fetch,
+  allowTemplate,
+  communityOnly,
+  interactiveLogger,
+}: {
+  fetch: ReturnType<typeof createFetch>;
+  allowTemplate: boolean;
+  communityOnly: boolean;
+  interactiveLogger: InteractiveLogger;
+}): Promise<
+  | {
+      themePackage: VivliostylePackageJson;
+      templateId: string | undefined;
+    }
+  | undefined
+> {
+  const result = await pickThemeInBrowser({
+    siteUrl: getThemeSiteUrl(),
+    locale: getOsLocale(),
+    allowTemplate,
+    communityOnly,
+    onUrl: (url) =>
+      interactiveLogger.logInfo(
+        `Choose a theme in your browser. If it does not open, visit:\n${cyan(url)}\n${dim('Press Esc to go back to the list.')}`,
+      ),
+  });
+  if (result.type === 'timeout') {
+    interactiveLogger.logWarn('No theme was chosen in the browser in time.');
+    return;
+  }
+  if (result.type === 'cancelled') {
+    return;
+  }
+  const { name, version, templateId } = result.selection;
+  const pkg = await interactiveLogger.logLoading(
+    'Fetching package metadata...',
+    () => fetchPackageMetadata({ fetch, packageName: name, version }),
+  );
+  const parsed = v.safeParse(ThemePackageSchema, pkg);
+  if (!parsed.success) {
+    interactiveLogger.logWarn(
+      `${name}@${version} is not a valid theme package. Please choose another theme.`,
+    );
+    return;
+  }
+  return { themePackage: parsed.output, templateId };
+}
 
 async function askTheme({
   template,
@@ -382,35 +550,26 @@ async function askTheme({
 }): Promise<
   Pick<ParsedVivliostyleInlineConfig, 'theme'> & {
     themePackage: VivliostylePackageJson | undefined;
+    templateId?: string;
   }
 > {
   const useCommunityThemes = !presetTemplate && !template;
-  const themePackages = await interactiveLogger.logLoading(
-    'Fetching a list of Vivliostyle themes...',
-    async () => {
-      let themes = (await listVivliostyleThemes({ fetch })).objects;
-      if (useCommunityThemes) {
-        // Show only community themes
-        themes = themes.filter(
-          (theme) => !theme.package.name.startsWith('@vivliostyle/'),
-        );
-      }
-      themes.sort((a, b) => {
-        // Prioritize packages in the @vivliostyle namespace
-        const aIsOfficial = a.package.name.startsWith('@vivliostyle/') ? 1 : 0;
-        const bIsOfficial = b.package.name.startsWith('@vivliostyle/') ? 1 : 0;
-        return aIsOfficial ^ bIsOfficial
-          ? bIsOfficial - aIsOfficial
-          : b.downloads.monthly - a.downloads.monthly;
-      });
-      return themes.map((theme) => theme.package);
-    },
-  );
+  const themePackages = await listThemes({
+    fetch,
+    communityOnly: useCommunityThemes,
+    interactiveLogger,
+  });
+  // The page in the browser needs a terminal to cancel the wait from.
+  const canChooseInBrowser = process.stdin.isTTY;
 
   let themePackage: VivliostylePackageJson | undefined;
   const fetchedPackages: Record<string, PackageJson> = {};
   const validateThemeMetadataSchema = v.customAsync<string>(async (value) => {
-    if (value === THEME_ANSWER_NOT_USE || value === THEME_ANSWER_MANUAL) {
+    if (
+      value === THEME_ANSWER_NOT_USE ||
+      value === THEME_ANSWER_MANUAL ||
+      value === THEME_ANSWER_BROWSER
+    ) {
       return true;
     }
     if (typeof value !== 'string') {
@@ -422,141 +581,232 @@ async function askTheme({
       version: 'latest',
     });
     const pkg = fetchedPackages[value];
-    const ret = v.safeParse(
-      v.object({
-        name: v.string(),
-        version: v.string(),
-        vivliostyle: v.optional(VivliostylePackageMetadata),
-      }),
-      pkg,
-    );
+    const ret = v.safeParse(ThemePackageSchema, pkg);
     if (ret.success) {
       themePackage = ret.output;
     }
     return ret.success;
   }, 'Invalid theme package. Please check the schema of the `vivliostyle` field.');
 
-  let { theme } = await askQuestion({
-    question: {
-      theme: {
-        type: 'autocomplete',
-        message: "What's the project theme?",
-        options: [
-          ...(useCommunityThemes
-            ? []
-            : [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]),
-          { label: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
-          ...themePackages.map((pkg) => ({
-            label: pkg.name,
-            value: pkg.name,
-            hint: truncateString(pkg.description || ''),
-          })),
-        ],
-        initialValue: themePackages[0].name,
-      },
-    },
-    schema: v.objectAsync({ theme: validateThemeMetadataSchema }),
-    validateProgressMessage: 'Fetching package metadata...',
-    interactiveLogger,
-  });
-
-  if (theme === THEME_ANSWER_NOT_USE) {
-    return { theme: undefined, themePackage: undefined };
-  }
-
-  if (theme === THEME_ANSWER_MANUAL) {
-    theme = await askQuestion({
+  while (true) {
+    let { theme } = await askQuestion({
       question: {
-        themeManualInput: {
-          type: 'text',
-          message: 'Input npm package name:',
-          required: true,
+        theme: {
+          type: 'autocomplete',
+          message: "What's the project theme?",
+          options: [
+            ...(useCommunityThemes
+              ? []
+              : [{ label: THEME_ANSWER_NOT_USE, value: THEME_ANSWER_NOT_USE }]),
+            ...(canChooseInBrowser
+              ? [
+                  {
+                    label: THEME_ANSWER_BROWSER,
+                    value: THEME_ANSWER_BROWSER,
+                    hint: `Preview themes on ${getThemeSiteUrl()}`,
+                  },
+                ]
+              : []),
+            { label: THEME_ANSWER_MANUAL, value: THEME_ANSWER_MANUAL },
+            ...themePackages.map((pkg) => ({
+              label: pkg.name,
+              value: pkg.name,
+              hint: truncateString(pkg.description || ''),
+            })),
+          ],
+          initialValue: themePackages[0]?.name,
         },
       },
-      schema: v.objectAsync({
-        themeManualInput: v.pipeAsync(
-          v.string(),
-          v.customAsync(async (packageName) => {
-            if (typeof packageName !== 'string') {
-              return false;
-            }
-            try {
-              fetchedPackages[packageName] = await fetchPackageMetadata({
-                fetch,
-                packageName,
-                version: 'latest',
-              });
-              return true;
-            } catch (error) {
-              return false;
-            }
-          }, 'Package not found'),
-          validateThemeMetadataSchema,
-        ),
-      }),
+      schema: v.objectAsync({ theme: validateThemeMetadataSchema }),
       validateProgressMessage: 'Fetching package metadata...',
       interactiveLogger,
-    }).then((ret) => ret.themeManualInput);
-  }
+    });
 
-  return {
-    theme: [
-      { specifier: themePackage ? `${theme}@^${themePackage.version}` : theme },
-    ],
-    themePackage,
-  };
+    if (theme === THEME_ANSWER_NOT_USE) {
+      return { theme: undefined, themePackage: undefined };
+    }
+
+    if (theme === THEME_ANSWER_BROWSER) {
+      const chosen = await askThemeInBrowser({
+        fetch,
+        // A template chosen before the theme cannot be replaced.
+        allowTemplate: useCommunityThemes,
+        communityOnly: useCommunityThemes,
+        interactiveLogger,
+      });
+      if (!chosen) {
+        continue;
+      }
+      return {
+        theme: [
+          {
+            specifier: `${chosen.themePackage.name}@^${chosen.themePackage.version}`,
+          },
+        ],
+        themePackage: chosen.themePackage,
+        templateId: chosen.templateId,
+      };
+    }
+
+    if (theme === THEME_ANSWER_MANUAL) {
+      theme = await askQuestion({
+        question: {
+          themeManualInput: {
+            type: 'text',
+            message: 'Input npm package name:',
+            required: true,
+          },
+        },
+        schema: v.objectAsync({
+          themeManualInput: v.pipeAsync(
+            v.string(),
+            v.customAsync(async (packageName) => {
+              if (typeof packageName !== 'string') {
+                return false;
+              }
+              try {
+                fetchedPackages[packageName] = await fetchPackageMetadata({
+                  fetch,
+                  packageName,
+                  version: 'latest',
+                });
+                return true;
+              } catch (error) {
+                return false;
+              }
+            }, 'Package not found'),
+            validateThemeMetadataSchema,
+          ),
+        }),
+        validateProgressMessage: 'Fetching package metadata...',
+        interactiveLogger,
+      }).then((ret) => ret.themeManualInput);
+      if (
+        !(await confirmHiddenTheme({
+          fetch,
+          packageName: theme,
+          interactiveLogger,
+        }))
+      ) {
+        continue;
+      }
+    }
+
+    return {
+      theme: [
+        {
+          specifier: themePackage ? `${theme}@^${themePackage.version}` : theme,
+        },
+      ],
+      themePackage,
+    };
+  }
+}
+
+/**
+ * A template `source` starting with `./` or `../` is a directory inside the
+ * theme package, taken from the same version as the chosen theme.
+ */
+async function resolveThemeTemplateSource({
+  source,
+  themePackage,
+  interactiveLogger,
+}: {
+  source: string;
+  themePackage: VivliostylePackageJson;
+  interactiveLogger: InteractiveLogger;
+}): Promise<{ template: string; useLocalTemplate: boolean }> {
+  if (!source.startsWith('./') && !source.startsWith('../')) {
+    return { template: source, useLocalTemplate: false };
+  }
+  const [dir] = await useTmpDirectory();
+  const packageDir = await interactiveLogger.logLoading(
+    `Downloading ${themePackage.name}@${themePackage.version}...`,
+    () =>
+      installPackageForTemplate({
+        packageName: themePackage.name,
+        version: themePackage.version,
+        dir,
+      }),
+  );
+  const templateDir = upath.resolve(packageDir, source);
+  if (
+    !pathContains(packageDir, templateDir) ||
+    !fs.existsSync(templateDir) ||
+    !fs.statSync(templateDir).isDirectory()
+  ) {
+    throw new DetailError(
+      `The template source of ${themePackage.name} is not a directory inside the package.`,
+      source,
+    );
+  }
+  return { template: templateDir, useLocalTemplate: true };
 }
 
 async function askThemeTemplate({
   interactiveLogger,
-  themeMetadata,
+  themePackage,
+  templateId,
 }: {
   interactiveLogger: InteractiveLogger;
-  themeMetadata?: VivliostylePackageMetadata;
+  themePackage?: VivliostylePackageJson;
+  /** A template already chosen, e.g. in the browser. */
+  templateId?: string;
 }): Promise<
   Required<Pick<ParsedVivliostyleInlineConfig, 'template'>> & {
     extraTemplateVariables: Record<string, unknown>;
+    useLocalTemplate: boolean;
   }
 > {
-  const themeTemplate = themeMetadata?.template;
+  const themeTemplate = themePackage?.vivliostyle?.template;
   const options = Object.entries(themeTemplate ?? {}).map(([value, tmpl]) => ({
     label: tmpl.name || value,
     value,
     hint: truncateString(tmpl.description || ''),
   }));
-  if (!themeTemplate || options.length === 0) {
+  if (!themePackage || !themeTemplate || options.length === 0) {
+    // theme.vivliostyle.org previews such themes with the basic template, so
+    // the project matches what the user saw there.
     interactiveLogger.logWarn(
-      'The chosen theme does not set template settings. Applying the minimal template.',
+      'The chosen theme does not set template settings. Applying the basic template.',
     );
-    const minimalTemplate = TEMPLATE_SETTINGS.find(
-      (t) => t.value === 'minimal',
-    );
+    const basicTemplate = TEMPLATE_SETTINGS.find((t) => t.value === 'basic');
     /* v8 ignore next 3 */
-    if (!minimalTemplate) {
-      throw new Error('The minimal template setting is not found.');
+    if (!basicTemplate) {
+      throw new Error('The basic template setting is not found.');
     }
     return {
-      template: minimalTemplate.template,
+      template: basicTemplate.template,
       extraTemplateVariables: {},
+      useLocalTemplate: false,
     };
   }
 
-  const { usingTemplate } = await askQuestion({
-    question: {
-      usingTemplate: {
-        type: 'autocomplete',
-        message: 'Which template do you want to use?',
-        options,
+  let usingTemplate =
+    templateId === undefined ? undefined : themeTemplate[templateId];
+  if (templateId !== undefined && !usingTemplate) {
+    interactiveLogger.logWarn(
+      `The theme has no template "${templateId}". Please choose one.`,
+    );
+  }
+  if (!usingTemplate) {
+    ({ usingTemplate } = await askQuestion({
+      question: {
+        usingTemplate: {
+          type: 'autocomplete',
+          message: 'Which template do you want to use?',
+          options,
+        },
       },
-    },
-    schema: v.object({
-      usingTemplate: v.pipe(
-        v.string(),
-        v.transform((input) => themeTemplate[input]),
-      ),
-    }),
-    interactiveLogger,
-  });
+      schema: v.object({
+        usingTemplate: v.pipe(
+          v.string(),
+          v.transform((input) => themeTemplate[input]),
+        ),
+      }),
+      interactiveLogger,
+    }));
+  }
 
   let extraTemplateVariables: Record<string, unknown> = {};
   if (usingTemplate.prompt?.length) {
@@ -567,7 +817,12 @@ async function askThemeTemplate({
       interactiveLogger,
     });
   }
-  return { template: usingTemplate.source, extraTemplateVariables };
+  const { template, useLocalTemplate } = await resolveThemeTemplateSource({
+    source: usingTemplate.source,
+    themePackage,
+    interactiveLogger,
+  });
+  return { template, extraTemplateVariables, useLocalTemplate };
 }
 
 function askInstallDependencies({
