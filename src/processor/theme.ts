@@ -127,6 +127,9 @@ export async function installThemeDependencies({
       // The audit report is not used, and reify awaits its registry request
       // even for local-only installs, which hangs the process while offline
       audit: false,
+      // Themes are stylesheets and need no lifecycle scripts; running the
+      // scripts of any package a theme depends on is not worth the risk.
+      ignoreScripts: true,
     };
     const tree = await new Arborist(commonOpt).buildIdealTree();
     signal?.throwIfAborted();
