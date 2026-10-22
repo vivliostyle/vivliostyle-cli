@@ -321,11 +321,13 @@ my-vivliostyle-theme/
 └── template/
     └── default/
         ├── vivliostyle-template.json   # 対応する CLI バージョンを宣言（省略可）
-        ├── vivliostyle.config.js   # {{title}}、{{author}} などを使用
+        ├── vivliostyle.config.json # {{title}}、{{author}} などを使用
         ├── manuscript.md
         └── assets/
             └── cover.webp          # バイナリファイルはそのままコピー
 ```
+
+テーマのテンプレートの設定ファイルには、`vivliostyle.config.json`を使うことを推奨します。Vivliostyle Pubも同じテンプレートからプロジェクトを作成しますが、JSONの設定ファイルしか読み込みません。
 
 ## ミニマルテンプレートの例
 

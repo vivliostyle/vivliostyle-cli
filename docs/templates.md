@@ -321,11 +321,13 @@ my-vivliostyle-theme/
 └── template/
     └── default/
         ├── vivliostyle-template.json   # declares compatible CLI versions (optional)
-        ├── vivliostyle.config.js   # uses {{title}}, {{author}}, etc.
+        ├── vivliostyle.config.json # uses {{title}}, {{author}}, etc.
         ├── manuscript.md
         └── assets/
             └── cover.webp          # binary file, copied as-is
 ```
+
+Prefer `vivliostyle.config.json` for the config of a theme template: Vivliostyle Pub creates projects from the same templates and reads only JSON configs.
 
 ## Minimal Template Example
 
