@@ -28,7 +28,6 @@ import {
   createFetch,
   fetchPackageMetadata,
   fetchThemeCatalog,
-  fetchThemeModeration,
   getThemeSiteUrl,
   installPackageForTemplate,
   listVivliostyleThemes,
@@ -382,19 +381,6 @@ export const THEME_ANSWER_NOT_USE = 'Not use Vivliostyle theme';
 export const THEME_ANSWER_MANUAL = 'Install other themes from npm';
 export const THEME_ANSWER_BROWSER = 'Choose a theme in the browser';
 
-const HIDDEN_REASONS: Record<string, string> = {
-  deprecated: 'the package is deprecated',
-  unpublished: 'the package was unpublished',
-  'invalid-package': 'the package is not a valid theme',
-  'not-a-theme': 'the package is not marked as a Vivliostyle theme',
-  spam: 'it was reported as spam',
-  malware: 'it was reported as malicious',
-  inappropriate: 'it was reported as inappropriate',
-  infringement: 'it was reported as infringing rights',
-  impersonation: 'it was reported as an impersonation',
-  broken: 'it was reported as not working',
-};
-
 /**
  * Lists themes from theme.vivliostyle.org, which leaves out deprecated,
  * invalid, and moderated packages, and falls back to the npm search.
@@ -451,43 +437,6 @@ const ThemePackageSchema = v.object({
   version: v.string(),
   vivliostyle: v.optional(VivliostylePackageMetadata),
 });
-
-/** Warns about a theme hidden on theme.vivliostyle.org and asks to proceed. */
-async function confirmHiddenTheme({
-  fetch,
-  packageName,
-  interactiveLogger,
-}: {
-  fetch: ReturnType<typeof createFetch>;
-  packageName: string;
-  interactiveLogger: InteractiveLogger;
-}): Promise<boolean> {
-  const moderation = await fetchThemeModeration({ fetch, packageName });
-  if (moderation?.status !== 'hidden') {
-    return true;
-  }
-  const reason =
-    (moderation.reason && HIDDEN_REASONS[moderation.reason]) ||
-    'it was hidden by the moderators';
-  interactiveLogger.logWarn(
-    `${packageName} is not listed on ${getThemeSiteUrl()} because ${reason}.`,
-  );
-  const { proceed } = await askQuestion({
-    question: {
-      proceed: {
-        type: 'select',
-        message: 'Do you want to use this theme anyway?',
-        options: [
-          { value: 'no', label: 'No, choose another theme' },
-          { value: 'yes', label: 'Yes, use this theme' },
-        ],
-      },
-    },
-    schema: v.object({ proceed: v.picklist(['no', 'yes']) }),
-    interactiveLogger,
-  });
-  return proceed === 'yes';
-}
 
 async function askThemeInBrowser({
   fetch,
@@ -681,15 +630,6 @@ async function askTheme({
         validateProgressMessage: 'Fetching package metadata...',
         interactiveLogger,
       }).then((ret) => ret.themeManualInput);
-      if (
-        !(await confirmHiddenTheme({
-          fetch,
-          packageName: theme,
-          interactiveLogger,
-        }))
-      ) {
-        continue;
-      }
     }
 
     return {

@@ -68,11 +68,6 @@ const packages: Record<string, PackageJson> = {
     version: '1.2.3',
     vivliostyle: { theme: { name: 'Plain', style: 'theme.css' } },
   },
-  'theme-hidden': {
-    name: 'theme-hidden',
-    version: '0.1.0',
-    vivliostyle: { theme: { name: 'Hidden', style: 'theme.css' } },
-  },
 };
 
 const catalogTheme = (name: string): CatalogTheme => ({
@@ -93,8 +88,6 @@ const mockedNpmModule = vi.hoisted(() => ({
     vi.fn<typeof import('../src/npm.js').fetchPackageMetadata>(),
   getThemeSiteUrl: () => 'https://theme.example',
   fetchThemeCatalog: vi.fn<typeof import('../src/npm.js').fetchThemeCatalog>(),
-  fetchThemeModeration:
-    vi.fn<typeof import('../src/npm.js').fetchThemeModeration>(),
   installPackageForTemplate:
     vi.fn<typeof import('../src/npm.js').installPackageForTemplate>(),
 }));
@@ -144,22 +137,6 @@ function themeOptionValues(): string[] {
   return ((question?.options ?? []) as { value: string }[]).map((o) => o.value);
 }
 
-/** Answers "type a name" first and "no theme" once the user goes back. */
-function answerHiddenThemeThenNone() {
-  let round = 0;
-  mockedClackModule.answers.mockImplementation((name) => {
-    round += name === 'theme' ? 1 : 0;
-    return {
-      ...baseAnswers,
-      presetTemplate: 'minimal',
-      theme: [THEME_ANSWER_MANUAL, THEME_ANSWER_NOT_USE][round - 1],
-      themeManualInput: 'theme-hidden',
-      proceed: 'no',
-    };
-  });
-  return () => round;
-}
-
 beforeEach(() => {
   vol.reset();
   mockedClackModule.answers.mockReset().mockReturnValue({});
@@ -175,9 +152,6 @@ beforeEach(() => {
   mockedNpmModule.fetchThemeCatalog.mockResolvedValue(
     ['theme-relative', 'theme-plain'].map((name) => catalogTheme(name)),
   );
-  mockedNpmModule.fetchThemeModeration.mockResolvedValue({
-    status: 'visible',
-  });
   mockedNpmModule.installPackageForTemplate.mockImplementation(
     ({ packageName, dir }) => {
       const root = `${dir}/node_modules/${packageName}`;
@@ -340,21 +314,6 @@ describe('theme list', () => {
     await expect(
       runCommand(['create'], { cwd: '/work' }),
     ).resolves.not.toThrow();
-  });
-
-  it('asks before using a hidden theme typed by hand', async () => {
-    mockedNpmModule.fetchThemeModeration.mockResolvedValue({
-      status: 'hidden',
-      reason: 'malware',
-    });
-    const rounds = answerHiddenThemeThenNone();
-
-    await runCommand(['create'], { cwd: '/work' });
-
-    expect(rounds()).toBe(2);
-    expect(vol.toJSON()['/work/project/vivliostyle.config.js']).not.toMatch(
-      'theme-hidden',
-    );
   });
 });
 

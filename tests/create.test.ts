@@ -92,7 +92,6 @@ const mockedNpmModule = vi.hoisted(async () => {
     getThemeSiteUrl: () => 'https://theme.vivliostyle.org',
     fetchThemeCatalog: () =>
       Promise.reject(new Error('The catalog is not mocked')),
-    fetchThemeModeration: () => Promise.resolve({ status: 'visible' }),
     installPackageForTemplate: () =>
       Promise.reject(new Error('Installing packages is not mocked')),
   } satisfies typeof import('../src/npm.js');

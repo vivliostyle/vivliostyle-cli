@@ -170,33 +170,6 @@ export async function fetchThemeCatalog({
   ).themes;
 }
 
-const ThemeModerationSchema = v.object({
-  status: v.picklist(['visible', 'hidden']),
-  reason: v.optional(v.string()),
-});
-export type ThemeModeration = v.InferOutput<typeof ThemeModerationSchema>;
-
-/** Returns undefined when the catalog cannot tell, e.g. for unknown packages. */
-export async function fetchThemeModeration({
-  fetch,
-  packageName,
-}: {
-  fetch: typeof globalThis.fetch;
-  packageName: string;
-}): Promise<ThemeModeration | undefined> {
-  try {
-    const response = await fetch(
-      `${getThemeSiteUrl()}/api/v1/themes/${packageName}`,
-    );
-    return v.parse(
-      v.object({ moderation: ThemeModerationSchema }),
-      await response.json(),
-    ).moderation;
-  } catch {
-    return undefined;
-  }
-}
-
 /**
  * Installs a package into `dir` without running lifecycle scripts and
  * returns its directory. Arborist verifies the tarball against the
