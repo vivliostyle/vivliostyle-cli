@@ -1521,7 +1521,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
     proxyServer: v.pipe(
       ValidString,
       v.description($`
-          HTTP/SOCK proxy server url for underlying Playwright.
+          HTTP/SOCK proxy server url for underlying browser.
         `),
     ),
     proxyBypass: v.pipe(
@@ -1551,7 +1551,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
     ignoreHttpsErrors: v.pipe(
       v.boolean(),
       v.description($`
-          true to ignore HTTPS errors when Playwright browser opens a new page.
+          true to ignore HTTPS errors when the browser opens a new page.
         `),
     ),
     openViewer: v.pipe(
