@@ -70,6 +70,14 @@ jobs:
       - run: pnpm test
   build-and-push-image:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: default
+            dockerfile: Dockerfile
+          - variant: slim
+            dockerfile: Dockerfile.slim
     services:
       registry:
         image: registry:2
@@ -96,20 +104,25 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: network=host
+          # required by the mmdebstrap step in Dockerfile.slim
+          buildkitd-flags: --allow-insecure-entitlement security.insecure
       - name: Build container
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ${{ matrix.dockerfile }}
           push: true
+          # required by the mmdebstrap step in Dockerfile.slim
+          allow: security.insecure
           build-args: |
             VS_CLI_VERSION=${{ steps.package.outputs.version }}
             BROWSER=${{ steps.browser.outputs.browser }}
-          tags: localhost:5000/vivliostyle/cli:latest
+          tags: localhost:5000/vivliostyle/cli:${{ matrix.variant }}
       - name: Inspect
         run: |
-          docker buildx imagetools inspect localhost:5000/vivliostyle/cli:latest
+          docker buildx imagetools inspect localhost:5000/vivliostyle/cli:${{ matrix.variant }}
       - name: Pull the built image into the Docker daemon
-        run: docker pull localhost:5000/vivliostyle/cli:latest
+        run: docker pull localhost:5000/vivliostyle/cli:${{ matrix.variant }}
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -118,4 +131,5 @@ jobs:
       - name: Run the image tests
         run: pnpm test:docker
         env:
-          VIVLIOSTYLE_CLI_IMAGE: localhost:5000/vivliostyle/cli:latest
+          VIVLIOSTYLE_CLI_IMAGE: localhost:5000/vivliostyle/cli:${{ matrix.variant }}
+          VIVLIOSTYLE_CLI_IMAGE_SLIM: ${{ matrix.variant == 'slim' && '1' || '' }}
