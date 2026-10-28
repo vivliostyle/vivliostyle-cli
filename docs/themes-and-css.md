@@ -218,6 +218,7 @@ A theme package describes itself in the `vivliostyle.theme` field of `package.js
 ```json
 {
   "name": "vivliostyle-theme-my-theme",
+  "description": "A theme for paperback novels",
   "author": "John Doe <john@example.com>",
   "main": "theme.css",
   "keywords": ["vivliostyle", "vivliostyle-theme"],
@@ -227,11 +228,16 @@ A theme package describes itself in the `vivliostyle.theme` field of `package.js
       "author": "John Doe",
       "style": "theme.css",
       "category": "novel",
-      "topics": ["paperback"]
+      "topics": ["paperback"],
+      "i18n": {
+        "ja": { "name": "マイテーマ", "description": "文庫本の小説向けのテーマ" }
+      }
     }
   }
 }
 ```
+
+`i18n` holds translations of `name` and of the `description` of the package, keyed by a BCP 47 language tag. Write the untranslated values in English.
 
 A theme package can provide more than one project template. See [Providing Templates in a Vivliostyle Themes Package](./templates.md#providing-templates-in-a-vivliostyle-themes-package).
 
@@ -249,6 +255,7 @@ It validates the schema of the `vivliostyle` field and reports the following:
 - Warning: The author is not specified.
 - Warning: `keywords` does not include `vivliostyle-theme`.
 - Warning: `vivliostyle.theme.category` is not one of the known categories.
+- Warning: A key of `vivliostyle.theme.i18n` is not a BCP 47 language tag in the canonical form, such as `ja` or `zh-Hant`.
 
 The command exits with a non-zero status when any error is reported, so it can be used in a `prepublishOnly` script or in CI. The generated package includes a `validate` script that runs this command.
 

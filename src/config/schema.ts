@@ -1823,6 +1823,31 @@ export const VivliostyleThemeMetadata = v.pipe(
         you can list and describe them here.
       `),
     ),
+    i18n: v.pipe(
+      v.optional(
+        v.record(
+          ValidString,
+          v.object({
+            name: v.pipe(
+              v.optional(ValidString),
+              v.description($`
+                Translated name of the theme.
+              `),
+            ),
+            description: v.pipe(
+              v.optional(ValidString),
+              v.description($`
+                Translated description of the theme package.
+              `),
+            ),
+          }),
+        ),
+      ),
+      v.description($`
+        Translations of the theme name and of the \`description\` of the package, keyed by a BCP 47 language tag such as \`ja\`.
+        Write the untranslated values in English.
+      `),
+    ),
   }),
   v.title('VivliostyleThemeMetadata'),
 );

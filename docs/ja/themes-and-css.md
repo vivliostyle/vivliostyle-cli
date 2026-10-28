@@ -218,6 +218,7 @@ my-theme/
 ```json
 {
   "name": "vivliostyle-theme-my-theme",
+  "description": "A theme for paperback novels",
   "author": "John Doe <john@example.com>",
   "main": "theme.css",
   "keywords": ["vivliostyle", "vivliostyle-theme"],
@@ -227,11 +228,16 @@ my-theme/
       "author": "John Doe",
       "style": "theme.css",
       "category": "novel",
-      "topics": ["paperback"]
+      "topics": ["paperback"],
+      "i18n": {
+        "ja": { "name": "マイテーマ", "description": "文庫本の小説向けのテーマ" }
+      }
     }
   }
 }
 ```
+
+`i18n`には、`name`とパッケージの`description`の翻訳を、BCP 47の言語タグをキーとして記述します。翻訳元の値は英語で記述してください。
 
 テーマパッケージは複数のプロジェクトテンプレートを提供することもできます。[Theme パッケージでテンプレートを提供する](./templates.md#theme-パッケージでテンプレートを提供する) を参照してください。
 
@@ -249,6 +255,7 @@ vivliostyle theme validate
 - 警告：著者が指定されていない
 - 警告：`keywords` に `vivliostyle-theme` が含まれていない
 - 警告：`vivliostyle.theme.category` が既知のカテゴリではない
+- 警告：`vivliostyle.theme.i18n`のキーが、`ja`や`zh-Hant`のような正規形のBCP 47言語タグではない
 
 エラーがある場合はゼロ以外の終了コードで終了するため、`prepublishOnly` スクリプトや CI で利用できます。生成されたパッケージには、このコマンドを実行する `validate` スクリプトが含まれています。
 

@@ -150,5 +150,29 @@ function inspectThemePackage({
     });
   }
 
+  for (const tag of Object.keys(pkg.vivliostyle?.theme?.i18n ?? {})) {
+    const canonical = canonicalizeLanguageTag(tag);
+    if (!canonical) {
+      results.push({
+        type: 'warning',
+        message: `"${tag}" in "vivliostyle.theme.i18n" is not a BCP 47 language tag. Use a tag such as "ja".`,
+      });
+    } else if (canonical !== tag) {
+      // Translations are looked up by comparing the tags as strings
+      results.push({
+        type: 'warning',
+        message: `Language tag "${tag}" in "vivliostyle.theme.i18n" is not in the canonical form. Use "${canonical}".`,
+      });
+    }
+  }
+
   return { results, packageName: pkg.name };
+}
+
+function canonicalizeLanguageTag(tag: string): string | undefined {
+  try {
+    return Intl.getCanonicalLocales(tag)[0];
+  } catch {
+    return undefined;
+  }
 }
