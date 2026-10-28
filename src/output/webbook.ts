@@ -107,7 +107,10 @@ async function copyMountedThemePackages({
       copied.add(name);
       const files = await glob(
         ['**/*.{html,htm,xhtml,xht}', `**/*.{${fileExtensions.join(',')}}`],
-        { cwd: pkgDir, ignore: ['node_modules/**', 'example/**'] },
+        {
+          cwd: pkgDir,
+          ignore: ['node_modules/**', 'example/**', 'templates/**'],
+        },
       );
       for (const file of files) {
         const source = upath.join(pkgDir, file);

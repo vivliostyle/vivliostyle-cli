@@ -50,10 +50,10 @@ function getIgnoreThemeDirectoryPatterns({
   cwd: string;
 }): string[] {
   return pathContains(cwd, themesDir)
-    ? [
-        `${upath.relative(cwd, themesDir)}/node_modules/*/example`,
-        `${upath.relative(cwd, themesDir)}/node_modules/*/*/example`,
-      ]
+    ? ['example', 'templates'].flatMap((dir) => [
+        `${upath.relative(cwd, themesDir)}/node_modules/*/${dir}`,
+        `${upath.relative(cwd, themesDir)}/node_modules/*/*/${dir}`,
+      ])
     : [];
 }
 
@@ -146,7 +146,7 @@ export function getAssetMatcher({
   ];
   return new GlobMatcher([
     // Step 1: Glob files with an extension in `fileExtension`
-    // Ignore files in node_modules directory, theme example files and files matched `excludes`
+    // Ignore files in node_modules directory, theme example and template files and files matched `excludes`
     {
       patterns: fileExtensions.map((ext) => `**/*.${ext}`),
       ignore: [
