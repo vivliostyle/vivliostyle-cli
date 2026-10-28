@@ -20,6 +20,7 @@ const validPackageJson = {
       style: 'theme.css',
       category: 'novel',
       topics: [],
+      i18n: { ja: { name: 'テスト', description: 'テスト用のテーマ' } },
     },
   },
 };
@@ -198,6 +199,54 @@ describe('theme validate command', () => {
         message: expect.stringContaining('Unknown theme category "poetry"'),
       },
     ]);
+  });
+
+  it('warns about i18n keys that are not canonical language tags', async () => {
+    setupTheme({
+      ...validPackageJson,
+      vivliostyle: {
+        theme: {
+          ...validPackageJson.vivliostyle.theme,
+          i18n: {
+            ja: { name: 'テスト' },
+            'zh-hant': { name: '測試' },
+            ja_JP: { name: 'テスト' },
+          },
+        },
+      },
+    });
+
+    await expect(validate('theme')).resolves.toEqual([
+      {
+        type: 'warning',
+        message: expect.stringContaining('Use "zh-Hant"'),
+      },
+      {
+        type: 'warning',
+        message: expect.stringContaining(
+          '"ja_JP" in "vivliostyle.theme.i18n" is not a BCP 47 language tag',
+        ),
+      },
+    ]);
+  });
+
+  it('rejects translations that are not objects', async () => {
+    setupTheme({
+      ...validPackageJson,
+      vivliostyle: {
+        theme: {
+          ...validPackageJson.vivliostyle.theme,
+          i18n: { ja: 'テスト' },
+        },
+      },
+    });
+
+    const results = await validate('theme');
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({
+      type: 'error',
+      message: expect.stringContaining('Invalid package.json'),
+    });
   });
 
   it('reports schema violations with a code frame', async () => {
