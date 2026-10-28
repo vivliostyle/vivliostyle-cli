@@ -328,6 +328,7 @@ it('copy webpub assets properly', async () => {
     'themeA/package.json': '{"main": "theme.css"}',
     'themeA/theme.css': '',
     'themeA/example/a.css': '',
+    'themeA/templates/default/assets/a.png': '',
     '@org/themeB/package.json': '{"main": "theme.css"}',
     '@org/themeB/theme.css': '',
     '@org/themeB/example/a.css': '',
@@ -375,6 +376,7 @@ it('copies theme packages mounted from the project node_modules', async () => {
     '/work/input/node_modules/theme-x/theme.css':
       "@import 'theme-y';\nbody { color: blue; }\n",
     '/work/input/node_modules/theme-x/logo.png': '',
+    '/work/input/node_modules/theme-x/templates/default/cover.png': '',
     '/work/input/node_modules/theme-y/package.json': JSON.stringify({
       name: 'theme-y',
       main: 'theme.css',
@@ -395,6 +397,9 @@ it('copies theme packages mounted from the project node_modules', async () => {
   );
   expect(file).toHaveProperty([
     '/work/output/themes/node_modules/theme-x/logo.png',
+  ]);
+  expect(file).not.toHaveProperty([
+    '/work/output/themes/node_modules/theme-x/templates/default/cover.png',
   ]);
   const manifest = JSON.parse(file['/work/output/publication.json'] as string);
   expect(manifest.resources).toEqual(
