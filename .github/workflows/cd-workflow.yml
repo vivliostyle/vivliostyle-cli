@@ -40,10 +40,28 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha
+      - name: Docker meta (slim)
+        id: docker_meta_slim
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/vivliostyle/cli
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+          flavor: |
+            suffix=-slim,onlatest=true
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          # required by the mmdebstrap step in Dockerfile.slim
+          buildkitd-flags: --allow-insecure-entitlement security.insecure
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -61,3 +79,17 @@ jobs:
             BROWSER=${{ steps.browser.outputs.browser }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
+      - name: Build container (slim)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.slim
+          push: true
+          # required by the mmdebstrap step
+          allow: security.insecure
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VS_CLI_VERSION=${{ steps.package.outputs.version }}
+            BROWSER=${{ steps.browser.outputs.browser }}
+          tags: ${{ steps.docker_meta_slim.outputs.tags }}
+          labels: ${{ steps.docker_meta_slim.outputs.labels }}
