@@ -187,11 +187,11 @@ A [Vivliostyle Themes](./themes-and-css.md) package can bundle one or more proje
       "default": {
         "name": "Default template",
         "description": "A basic starting point",
-        "source": "./template/default"
+        "source": "./templates/default"
       },
       "with-prompts": {
         "name": "Template with custom options",
-        "source": "./template/with-prompts",
+        "source": "./templates/with-prompts",
         "prompt": [
           {
             "type": "text",
@@ -318,7 +318,7 @@ Place the template files under a directory referenced by `source`. The files wil
 my-vivliostyle-theme/
 ├── package.json          # vivliostyle.template declared here
 ├── theme.css
-└── template/
+└── templates/
     └── default/
         ├── vivliostyle-template.json   # declares compatible CLI versions (optional)
         ├── vivliostyle.config.json # uses {{title}}, {{author}}, etc.
@@ -328,6 +328,8 @@ my-vivliostyle-theme/
 ```
 
 Prefer `vivliostyle.config.json` for the config of a theme template: Vivliostyle Pub creates projects from the same templates and reads only JSON configs.
+
+A theme package created with [`vivliostyle theme create`](./themes-and-css.md#scaffolding-a-theme-package) is laid out this way from the start, with sample manuscripts in `templates/default/`.
 
 ## Minimal Template Example
 

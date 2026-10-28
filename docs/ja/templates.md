@@ -187,11 +187,11 @@ export default defineConfig({
       "default": {
         "name": "デフォルトテンプレート",
         "description": "基本的なスタート地点",
-        "source": "./template/default"
+        "source": "./templates/default"
       },
       "with-prompts": {
         "name": "カスタムオプション付きテンプレート",
-        "source": "./template/with-prompts",
+        "source": "./templates/with-prompts",
         "prompt": [
           {
             "type": "text",
@@ -318,7 +318,7 @@ export default defineConfig({
 my-vivliostyle-theme/
 ├── package.json               # vivliostyle.template を宣言
 ├── theme.css
-└── template/
+└── templates/
     └── default/
         ├── vivliostyle-template.json   # 対応する CLI バージョンを宣言（省略可）
         ├── vivliostyle.config.json # {{title}}、{{author}} などを使用
@@ -328,6 +328,8 @@ my-vivliostyle-theme/
 ```
 
 テーマのテンプレートの設定ファイルには、`vivliostyle.config.json`を使うことを推奨します。Vivliostyle Pubも同じテンプレートからプロジェクトを作成しますが、JSONの設定ファイルしか読み込みません。
+
+[`vivliostyle theme create`](./themes-and-css.md#テーマパッケージの雛形を作成する)で作成したテーマパッケージは、最初からこの構成になっており、`templates/default/`にサンプル原稿が置かれます。
 
 ## ミニマルテンプレートの例
 

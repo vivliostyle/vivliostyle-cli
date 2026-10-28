@@ -4,6 +4,7 @@ import './mocks/tmp.js';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { format } from '../src/create-template.js';
 import type * as UtilModule from '../src/util.js';
 import { runCommand } from './command-util.js';
 
@@ -83,7 +84,10 @@ const readPackageJson = (path: string) =>
     description: string;
     author: string;
     license: string;
-    vivliostyle: { theme: { name: string; category: string } };
+    vivliostyle: {
+      theme: { name: string; category: string };
+      template?: Record<string, { name: string; source: string }>;
+    };
   };
 
 const promptOptionsFor = (name: string) =>
@@ -193,6 +197,58 @@ describe('theme create command', () => {
     expect(
       vol.readFileSync('/work/my-theme/vivliostyle.config.js', 'utf8'),
     ).toMatch('author: "Acme \\"Inc.\\" <acme@example.com>",');
+  });
+
+  it('provides a project template for `vivliostyle create`', async () => {
+    await runCommand(
+      [
+        'theme create',
+        '--name',
+        'vivliostyle-theme-x',
+        '--author',
+        'A',
+        '--category',
+        'misc',
+        '--description',
+        '',
+        '--no-install-dependencies',
+        'my-theme',
+      ],
+      { cwd: '/work' },
+    );
+
+    const pkg = readPackageJson('/work/my-theme/package.json');
+    expect(pkg.vivliostyle.template).toEqual({
+      default: { name: 'X sample', source: './templates/default' },
+    });
+    const templateDir = '/work/my-theme/templates/default';
+    const config = vol.readFileSync(
+      `${templateDir}/vivliostyle.config.json`,
+      'utf8',
+    ) as string;
+    const projectConfig = (variables: Record<string, unknown>) =>
+      JSON.parse(format(config, variables)) as {
+        title: string;
+        author: string;
+        theme: string;
+        entry: (string | object)[];
+      };
+    expect(
+      projectConfig({
+        title: 'my book',
+        author: 'Author',
+        theme: 'vivliostyle-theme-x@^0.1.0',
+      }),
+    ).toMatchObject({
+      title: 'My Book',
+      author: 'Author',
+      theme: 'vivliostyle-theme-x@^0.1.0',
+    });
+    const { theme, entry } = projectConfig({ title: 'B', author: 'A' });
+    expect(theme).toBe('vivliostyle-theme-x');
+    for (const path of entry.filter((e) => typeof e === 'string')) {
+      expect(vol.existsSync(`${templateDir}/${path}`)).toBe(true);
+    }
   });
 
   it.each([

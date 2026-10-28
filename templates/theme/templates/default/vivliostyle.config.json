@@ -1,0 +1,16 @@
+{
+  "title": \{{json (proper title)}},
+  "author": \{{json author}},
+  "language": "en",
+  "size": "A5",
+  "theme": \{{#if theme}}\{{json theme}}\{{else}}"{{name}}"\{{/if}},
+  "entry": [
+    { "rel": "contents" },
+    "01_typography.md",
+    "02_figures-and-tables.md",
+    "03_code-and-math.md"
+  ],
+  "toc": {
+    "sectionDepth": 2
+  }
+}

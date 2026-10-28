@@ -21,7 +21,7 @@ export default defineConfig({
 });
 ```
 
-Inline code such as `npm run example:preview` should be distinguishable from the surrounding text without breaking the line rhythm.
+Inline code such as `vivliostyle build` should be distinguishable from the surrounding text without breaking the line rhythm.
 
 ## Math
 

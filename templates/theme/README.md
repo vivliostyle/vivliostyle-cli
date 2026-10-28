@@ -39,14 +39,16 @@ export default defineConfig({
 ```
 {{name}}
 ├── README.md
-├── example/                  Sample manuscripts for checking the theme
-│   ├── assets/
-│   ├── 01_typography.md
-│   ├── 02_figures-and-tables.md
-│   └── 03_code-and-math.md
 ├── package.json
+├── templates/
+│   └── default/              Project template with sample manuscripts
+│       ├── assets/
+│       ├── 01_typography.md
+│       ├── 02_figures-and-tables.md
+│       ├── 03_code-and-math.md
+│       └── vivliostyle.config.json
 ├── theme.css                 The stylesheet of the theme
-└── vivliostyle.config.js     Configuration for previewing and building the example
+└── vivliostyle.config.js     Configuration for previewing and building the template
 ```
 
 ### Customizing the theme
@@ -55,15 +57,19 @@ export default defineConfig({
 
 Users of the theme can override the same variables in their own stylesheet, so prefer variables over hard-coded values where possible.
 
+### Editing the template
+
+`templates/default/` is the template of projects that use the theme: `vivliostyle create` offers it when a user chooses the theme. Replace the sample manuscripts with ones that show off your theme, and list them in the `entry` of both `templates/default/vivliostyle.config.json` and `vivliostyle.config.js`. See [the theme specification](https://github.com/vivliostyle/themes/blob/main/docs/spec.md#templates) for how to write the template.
+
 ### Commands
 
-Preview the example manuscripts with the theme applied. The preview reloads when you edit the files:
+Preview the sample manuscripts of the template with the theme applied. The preview reloads when you edit the files:
 
 ```sh
 npm run example:preview
 ```
 
-Build the example as a PDF and a web publication into `dist/`:
+Build the sample manuscripts as a PDF and a web publication into `dist/`:
 
 ```sh
 npm run example:build

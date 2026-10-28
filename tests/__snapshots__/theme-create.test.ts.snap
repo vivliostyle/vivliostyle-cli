@@ -45,14 +45,16 @@ export default defineConfig({
 \`\`\`
 vivliostyle-theme-my-theme
 ├── README.md
-├── example/                  Sample manuscripts for checking the theme
-│   ├── assets/
-│   ├── 01_typography.md
-│   ├── 02_figures-and-tables.md
-│   └── 03_code-and-math.md
 ├── package.json
+├── templates/
+│   └── default/              Project template with sample manuscripts
+│       ├── assets/
+│       ├── 01_typography.md
+│       ├── 02_figures-and-tables.md
+│       ├── 03_code-and-math.md
+│       └── vivliostyle.config.json
 ├── theme.css                 The stylesheet of the theme
-└── vivliostyle.config.js     Configuration for previewing and building the example
+└── vivliostyle.config.js     Configuration for previewing and building the template
 \`\`\`
 
 ### Customizing the theme
@@ -61,15 +63,19 @@ vivliostyle-theme-my-theme
 
 Users of the theme can override the same variables in their own stylesheet, so prefer variables over hard-coded values where possible.
 
+### Editing the template
+
+\`templates/default/\` is the template of projects that use the theme: \`vivliostyle create\` offers it when a user chooses the theme. Replace the sample manuscripts with ones that show off your theme, and list them in the \`entry\` of both \`templates/default/vivliostyle.config.json\` and \`vivliostyle.config.js\`. See [the theme specification](https://github.com/vivliostyle/themes/blob/main/docs/spec.md#templates) for how to write the template.
+
 ### Commands
 
-Preview the example manuscripts with the theme applied. The preview reloads when you edit the files:
+Preview the sample manuscripts of the template with the theme applied. The preview reloads when you edit the files:
 
 \`\`\`sh
 npm run example:preview
 \`\`\`
 
-Build the example as a PDF and a web publication into \`dist/\`:
+Build the sample manuscripts as a PDF and a web publication into \`dist/\`:
 
 \`\`\`sh
 npm run example:build
@@ -85,9 +91,55 @@ npm run validate
 
 Publish the theme to npm with \`npm publish\`. Packages with the \`vivliostyle-theme\` keyword are listed on [npm](https://www.npmjs.com/search?q=keywords%3Avivliostyle-theme) and can be chosen when creating a project with Create Book. See [Vivliostyle Themes](https://github.com/vivliostyle/themes) for the theme specification and how to contribute your theme to the official collection.
 ",
-  "/work/my-theme/example/01_typography.md": "# Typography
+  "/work/my-theme/package.json": "{
+  \\"name\\": \\"vivliostyle-theme-my-theme\\",
+  \\"version\\": \\"0.1.0\\",
+  \\"description\\": \\"A theme for testing\\",
+  \\"keywords\\": [
+    \\"vivliostyle\\",
+    \\"vivliostyle-theme\\"
+  ],
+  \\"license\\": \\"MIT\\",
+  \\"author\\": \\"Theme Author\\",
+  \\"files\\": [
+    \\"*.css\\",
+    \\"templates\\",
+    \\"vivliostyle.config.js\\"
+  ],
+  \\"type\\": \\"module\\",
+  \\"main\\": \\"theme.css\\",
+  \\"scripts\\": {
+    \\"example:build\\": \\"vivliostyle build\\",
+    \\"example:preview\\": \\"vivliostyle preview\\",
+    \\"validate\\": \\"vivliostyle theme validate\\",
+    \\"prepublishOnly\\": \\"vivliostyle theme validate\\"
+  },
+  \\"dependencies\\": {
+    \\"@vivliostyle/theme-base\\": \\"^3.0.0\\"
+  },
+  \\"devDependencies\\": {
+    \\"@vivliostyle/cli\\": \\"^999.0.0\\"
+  },
+  \\"vivliostyle\\": {
+    \\"theme\\": {
+      \\"name\\": \\"My Theme\\",
+      \\"author\\": \\"Theme Author\\",
+      \\"style\\": \\"theme.css\\",
+      \\"category\\": \\"novel\\",
+      \\"topics\\": []
+    },
+    \\"template\\": {
+      \\"default\\": {
+        \\"name\\": \\"My Theme sample\\",
+        \\"source\\": \\"./templates/default\\"
+      }
+    }
+  }
+}
+",
+  "/work/my-theme/templates/default/01_typography.md": "# Typography
 
-This document is a sample manuscript for checking how a theme styles body text. Edit \`theme.css\` and run \`npm run example:preview\` to see the result right away.
+This document is a sample manuscript that shows how the theme styles body text.
 
 ## Paragraphs
 
@@ -143,7 +195,7 @@ A horizontal rule separates parts of a document without a heading.
 
 The text continues after the rule.
 ",
-  "/work/my-theme/example/02_figures-and-tables.md": "# Figures and Tables
+  "/work/my-theme/templates/default/02_figures-and-tables.md": "# Figures and Tables
 
 Figures and tables are numbered automatically and can be referenced from the text.
 
@@ -170,7 +222,7 @@ Markdown tables become \`<table>\` elements. A paragraph with the class \`tbl-ca
 
 Check the borders, the padding of the cells, and the style of the header row, and try a table that is too wide for the page.
 ",
-  "/work/my-theme/example/03_code-and-math.md": "# Code and Math
+  "/work/my-theme/templates/default/03_code-and-math.md": "# Code and Math
 
 ## Code Blocks
 
@@ -193,7 +245,7 @@ export default defineConfig({
 });
 \`\`\`
 
-Inline code such as \`npm run example:preview\` should be distinguishable from the surrounding text without breaking the line rhythm.
+Inline code such as \`vivliostyle build\` should be distinguishable from the surrounding text without breaking the line rhythm.
 
 ## Math
 
@@ -205,7 +257,7 @@ $$
 
 Long formulas show how the theme aligns display math and how much space it leaves around it.
 ",
-  "/work/my-theme/example/assets/page-layout.svg": "<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 300 400\\" width=\\"210\\" height=\\"280\\" role=\\"img\\" aria-label=\\"Diagram of a page with margins and margin boxes\\">
+  "/work/my-theme/templates/default/assets/page-layout.svg": "<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 300 400\\" width=\\"210\\" height=\\"280\\" role=\\"img\\" aria-label=\\"Diagram of a page with margins and margin boxes\\">
   <rect x=\\"0.5\\" y=\\"0.5\\" width=\\"299\\" height=\\"399\\" fill=\\"#ffffff\\" stroke=\\"#333333\\"/>
   <rect x=\\"40\\" y=\\"46\\" width=\\"220\\" height=\\"308\\" fill=\\"none\\" stroke=\\"#999999\\" stroke-dasharray=\\"4 3\\"/>
   <rect x=\\"40\\" y=\\"14\\" width=\\"220\\" height=\\"20\\" fill=\\"#f0f0ec\\"/>
@@ -233,43 +285,20 @@ Long formulas show how the theme aligns display math and how much space it leave
   <text x=\\"280\\" y=\\"200\\" font-family=\\"sans-serif\\" font-size=\\"9\\" fill=\\"#666666\\" text-anchor=\\"middle\\" transform=\\"rotate(90 280 200)\\">outside margin</text>
 </svg>
 ",
-  "/work/my-theme/package.json": "{
-  \\"name\\": \\"vivliostyle-theme-my-theme\\",
-  \\"version\\": \\"0.1.0\\",
-  \\"description\\": \\"A theme for testing\\",
-  \\"keywords\\": [
-    \\"vivliostyle\\",
-    \\"vivliostyle-theme\\"
+  "/work/my-theme/templates/default/vivliostyle.config.json": "{
+  \\"title\\": {{json (proper title)}},
+  \\"author\\": {{json author}},
+  \\"language\\": \\"en\\",
+  \\"size\\": \\"A5\\",
+  \\"theme\\": {{#if theme}}{{json theme}}{{else}}\\"vivliostyle-theme-my-theme\\"{{/if}},
+  \\"entry\\": [
+    { \\"rel\\": \\"contents\\" },
+    \\"01_typography.md\\",
+    \\"02_figures-and-tables.md\\",
+    \\"03_code-and-math.md\\"
   ],
-  \\"license\\": \\"MIT\\",
-  \\"author\\": \\"Theme Author\\",
-  \\"files\\": [
-    \\"*.css\\",
-    \\"example\\",
-    \\"vivliostyle.config.js\\"
-  ],
-  \\"type\\": \\"module\\",
-  \\"main\\": \\"theme.css\\",
-  \\"scripts\\": {
-    \\"example:build\\": \\"vivliostyle build\\",
-    \\"example:preview\\": \\"vivliostyle preview\\",
-    \\"validate\\": \\"vivliostyle theme validate\\",
-    \\"prepublishOnly\\": \\"vivliostyle theme validate\\"
-  },
-  \\"dependencies\\": {
-    \\"@vivliostyle/theme-base\\": \\"^3.0.0\\"
-  },
-  \\"devDependencies\\": {
-    \\"@vivliostyle/cli\\": \\"^999.0.0\\"
-  },
-  \\"vivliostyle\\": {
-    \\"theme\\": {
-      \\"name\\": \\"My Theme\\",
-      \\"author\\": \\"Theme Author\\",
-      \\"style\\": \\"theme.css\\",
-      \\"category\\": \\"novel\\",
-      \\"topics\\": []
-    }
+  \\"toc\\": {
+    \\"sectionDepth\\": 2
   }
 }
 ",
@@ -386,9 +415,9 @@ export default defineConfig({
   image: \\"ghcr.io/vivliostyle/cli:999.0.0\\",
   entry: [
     { rel: \\"contents\\" },
-    \\"example/01_typography.md\\",
-    \\"example/02_figures-and-tables.md\\",
-    \\"example/03_code-and-math.md\\",
+    \\"templates/default/01_typography.md\\",
+    \\"templates/default/02_figures-and-tables.md\\",
+    \\"templates/default/03_code-and-math.md\\",
   ],
   toc: {
     sectionDepth: 2,

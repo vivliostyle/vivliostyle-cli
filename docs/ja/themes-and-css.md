@@ -195,19 +195,21 @@ pnpm create vivliostyle-theme # For pnpm users
 ```
 my-theme/
 ├── README.md
-├── example/
-│   ├── assets/
-│   ├── 01_typography.md
-│   ├── 02_figures-and-tables.md
-│   └── 03_code-and-math.md
 ├── package.json
+├── templates/
+│   └── default/
+│       ├── assets/
+│       ├── 01_typography.md
+│       ├── 02_figures-and-tables.md
+│       ├── 03_code-and-math.md
+│       └── vivliostyle.config.json
 ├── theme.css
 └── vivliostyle.config.js
 ```
 
 - `theme.css`：テーマのスタイルシートです。[`@vivliostyle/theme-base`](https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base) とその機能モジュールを読み込み、CSS 変数で調整しています。
-- `example/`：見出し、リスト、脚注、図、表、コード、数式など、テーマがスタイルを定めるべき要素を網羅したサンプル原稿です。`npm run example:preview` を実行すると、テーマを適用したプレビューが開きます。
-- `vivliostyle.config.js`：サンプル原稿のプレビューとビルドに使う構成ファイルです。
+- `templates/default/`：テーマのプロジェクトテンプレートで、`package.json` の `vivliostyle.template` フィールドで宣言されています。`vivliostyle create` でこのテーマを選んだユーザーには、このディレクトリのテンプレートを提示します。サンプル原稿は、見出し、リスト、脚注、図、表、コード、数式など、テーマがスタイルを定めるべき要素を網羅しています。
+- `vivliostyle.config.js`：開発中のテーマでテンプレートのサンプル原稿をプレビュー、ビルドするための構成ファイルです。`npm run example:preview`を実行すると、テーマを適用したプレビューが開きます。
 
 ### テーマのメタデータ
 
@@ -231,7 +233,7 @@ my-theme/
 }
 ```
 
-テーマパッケージはプロジェクトのテンプレートを提供することもできます。[Theme パッケージでテンプレートを提供する](./templates.md#theme-パッケージでテンプレートを提供する) を参照してください。
+テーマパッケージは複数のプロジェクトテンプレートを提供することもできます。[Theme パッケージでテンプレートを提供する](./templates.md#theme-パッケージでテンプレートを提供する) を参照してください。
 
 ### テーマパッケージを検証する
 

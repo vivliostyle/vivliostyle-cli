@@ -317,7 +317,7 @@ function caveat(
   }
   steps.push(
     `Edit ${green('theme.css')} to style your theme`,
-    `${cyan('npm run example:preview')} to preview the example document with your theme`,
+    `${cyan('npm run example:preview')} to preview the sample manuscripts in ${green('templates/default')} with your theme`,
     `${cyan('npm run validate')} to validate the theme package before publishing`,
     `${cyan('npm publish')} to publish your theme to npm`,
   );

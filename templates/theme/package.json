@@ -10,7 +10,7 @@
   "author": {{json author}},
   "files": [
     "*.css",
-    "example",
+    "templates",
     "vivliostyle.config.js"
   ],
   "type": "module",
@@ -34,6 +34,12 @@
       "style": "theme.css",
       "category": "{{category}}",
       "topics": []
+    },
+    "template": {
+      "default": {
+        "name": "{{themeName}} sample",
+        "source": "./templates/default"
+      }
     }
   }
 }

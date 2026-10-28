@@ -1,6 +1,6 @@
 # Typography
 
-This document is a sample manuscript for checking how a theme styles body text. Edit `theme.css` and run `npm run example:preview` to see the result right away.
+This document is a sample manuscript that shows how the theme styles body text.
 
 ## Paragraphs
 

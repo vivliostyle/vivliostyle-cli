@@ -195,19 +195,21 @@ The generated package has the following structure:
 ```
 my-theme/
 ├── README.md
-├── example/
-│   ├── assets/
-│   ├── 01_typography.md
-│   ├── 02_figures-and-tables.md
-│   └── 03_code-and-math.md
 ├── package.json
+├── templates/
+│   └── default/
+│       ├── assets/
+│       ├── 01_typography.md
+│       ├── 02_figures-and-tables.md
+│       ├── 03_code-and-math.md
+│       └── vivliostyle.config.json
 ├── theme.css
 └── vivliostyle.config.js
 ```
 
 - `theme.css`: The stylesheet of the theme. It imports [`@vivliostyle/theme-base`](https://github.com/vivliostyle/themes/tree/main/packages/%40vivliostyle/theme-base) and its feature modules, and adjusts them with CSS variables.
-- `example/`: Sample manuscripts that cover the elements a theme should style, such as headings, lists, footnotes, figures, tables, code, and math. `npm run example:preview` opens a preview of them with the theme applied.
-- `vivliostyle.config.js`: The configuration used to preview and build the sample manuscripts.
+- `templates/default/`: The project template of the theme, declared in the `vivliostyle.template` field of `package.json`. `vivliostyle create` offers it to users who choose the theme. Its sample manuscripts cover the elements a theme should style, such as headings, lists, footnotes, figures, tables, code, and math.
+- `vivliostyle.config.js`: The configuration used to preview and build the sample manuscripts of the template with the theme under development. `npm run example:preview` opens a preview of them with the theme applied.
 
 ### Theme Metadata
 
@@ -231,7 +233,7 @@ A theme package describes itself in the `vivliostyle.theme` field of `package.js
 }
 ```
 
-A theme package can also provide project templates. See [Providing Templates in a Vivliostyle Themes Package](./templates.md#providing-templates-in-a-vivliostyle-themes-package).
+A theme package can provide more than one project template. See [Providing Templates in a Vivliostyle Themes Package](./templates.md#providing-templates-in-a-vivliostyle-themes-package).
 
 ### Validating a Theme Package
 

@@ -10,9 +10,9 @@ export default defineConfig({
   image: "ghcr.io/vivliostyle/cli:{{cliVersion}}",
   entry: [
     { rel: "contents" },
-    "example/01_typography.md",
-    "example/02_figures-and-tables.md",
-    "example/03_code-and-math.md",
+    "templates/default/01_typography.md",
+    "templates/default/02_figures-and-tables.md",
+    "templates/default/03_code-and-math.md",
   ],
   toc: {
     sectionDepth: 2,
