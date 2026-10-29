@@ -30,6 +30,7 @@ const premultipliedAlphaJp2 = path.join(fixturesDir, 'alpha-premultiplied.jp2');
 const opaqueAlphaPng = path.join(fixturesDir, 'alpha-opaque.png');
 const transparentRgbPng = path.join(fixturesDir, 'transparent-rgb.png');
 const transparentGrayPng = path.join(fixturesDir, 'transparent-gray.png');
+const opaqueGrayPng = path.join(fixturesDir, 'opaque-gray.png');
 const chromiumTransparentRgb = new Uint8Array([
   1, 2, 3, 187, 33, 91, 77, 88, 99,
 ]);
@@ -1323,6 +1324,56 @@ describe('replaceImages', () => {
       smaskInData: null,
     });
     expect(await countUnreachableObjects(destPdf)).toBe(unreachableBefore);
+  });
+
+  it('matches an opaque grayscale source expanded to RGB', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const expandedPdf = await replaceFirstPageImage(
+      srcPdf,
+      2,
+      1,
+      new Uint8Array([200, 200, 200, 50, 50, 50]),
+      null,
+    );
+    const { pdf: destPdf } = await replaceImages(expandedPdf, {
+      replacements: [
+        {
+          source: opaqueGrayPng,
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceGray',
+      image: 'DeviceGray',
+    });
+  });
+
+  it('does not match a grayscale source when RGB channels differ', async () => {
+    const srcPdf = fs.readFileSync(path.join(fixturesDir, 'image.pdf'));
+    const colorPdf = await replaceFirstPageImage(
+      srcPdf,
+      2,
+      1,
+      new Uint8Array([200, 200, 201, 50, 50, 50]),
+      null,
+    );
+    const { pdf: destPdf } = await replaceImages(colorPdf, {
+      replacements: [
+        {
+          source: opaqueGrayPng,
+          replacement: path.join(fixturesDir, 'ck_gray.pgm'),
+        },
+      ],
+      ifIncompatibleImagesFound: 'ignore',
+    });
+
+    expect(await getImageColorSpace(destPdf)).toEqual({
+      object: '/DeviceRGB',
+      image: 'DeviceRGB',
+    });
   });
   it.each([
     { version: '1.2', expectedVersion: '1.4' },

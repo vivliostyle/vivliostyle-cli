@@ -180,14 +180,14 @@ function imagesEqual(
     ((pdfColorSpace.isRGB() && sourceGate.pixmap.colorSpace === 'RGB') ||
       (pdfColorSpace.isCMYK() && sourceGate.pixmap.colorSpace === 'CMYK') ||
       (pdfColorSpace.isGray() && sourceGate.pixmap.colorSpace === 'Gray'));
-  // NOTE: Chromium/Skia preserves DeviceGray only for opaque kGray_8 images;
-  // gray images with alpha take the BGRA-backed DeviceRGB path.
+  // NOTE: Chromium/Skia preserves DeviceGray only for kGray_8 images, but
+  // Blink decodes raster images into N32 or F16 frames, so decoded gray
+  // images take the BGRA-backed DeviceRGB path with or without alpha.
+  // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/blink/renderer/platform/image-decoders/image_frame.cc;l=124-150
   // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=346-368
   // https://source.chromium.org/chromium/chromium/src/+/refs/tags/152.0.7977.54:third_party/skia/src/pdf/SkPDFBitmap.cpp;l=220-259
   const sourceGrayExpandedToRgb =
-    pdfColorSpace?.isRGB() === true &&
-    sourceGate.pixmap.colorSpace === 'Gray' &&
-    sourceGate.pixmap.hasAlpha;
+    pdfColorSpace?.isRGB() === true && sourceGate.pixmap.colorSpace === 'Gray';
   if (
     pdfColorSpace === null ||
     sourceGate.pixmap.colorSpace === null ||
