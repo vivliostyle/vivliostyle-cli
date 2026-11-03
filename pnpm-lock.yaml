@@ -143,8 +143,8 @@ importers:
         specifier: 2.7.2
         version: 2.7.2(supports-color@7.2.0)(typescript@6.0.3)
       '@vivliostyle/viewer':
-        specifier: 2.45.2
-        version: 2.45.2
+        specifier: 2.46.0
+        version: 2.46.0
       ajv:
         specifier: 8.18.0
         version: 8.18.0
@@ -3189,8 +3189,8 @@ packages:
   '@vitest/utils@4.1.9':
     resolution: {integrity: sha512-A51o8ymO5PpqlWNnBP9ZHPXDIpuMtTLlGSjN7la4US+LJzoUMyhwjA5QXlm39JexgwHKW4Xjs8Z2d3dLCXOeuA==}
 
-  '@vivliostyle/core@2.45.2':
-    resolution: {integrity: sha512-PIvmTSLWHYANbIVAtJrb5Uio5cTm1NGK67UuxdifMv9XgYSkOd5LTuYlUgUICuubDLra9CUp6wEJ+gUDFBxiyA==}
+  '@vivliostyle/core@2.46.0':
+    resolution: {integrity: sha512-7unKsruHyyCmqygOjUfax6F9k4NSstmSxDNJdKbJXsYw9VZfFDTcoxMTYMqZT/egiQP4EqYMAT5nWRLeVq58ZQ==}
     engines: {node: '>=20'}
 
   '@vivliostyle/jsdom@25.0.1-vivliostyle-cli.2':
@@ -3231,8 +3231,8 @@ packages:
     engines: {node: '>= 22'}
     hasBin: true
 
-  '@vivliostyle/viewer@2.45.2':
-    resolution: {integrity: sha512-tpfReL2R4H81WMszL8gj6/sE5pNAOnKf8egCBKrIrvl0mX0YI7xWCCeP1zrZhaPKtlntLz47uZ2DlTuKdLcq6w==}
+  '@vivliostyle/viewer@2.46.0':
+    resolution: {integrity: sha512-ByU9aHXJEAwv8i6odsBqvDTGxF+t2U6guC8R1NhfpmaHri7a18xcrFzUC7RohtFLVSix+IYEYhZ8IPN2NzKi8g==}
     engines: {node: '>=20'}
 
   '@zachleat/heading-anchors@1.0.5':
@@ -9754,7 +9754,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@vivliostyle/core@2.45.2':
+  '@vivliostyle/core@2.46.0':
     dependencies:
       fast-diff: 1.3.0
 
@@ -9905,9 +9905,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@vivliostyle/viewer@2.45.2':
+  '@vivliostyle/viewer@2.46.0':
     dependencies:
-      '@vivliostyle/core': 2.45.2
+      '@vivliostyle/core': 2.46.0
       i18next-ko: 3.0.1
       knockout: 3.5.3
 
