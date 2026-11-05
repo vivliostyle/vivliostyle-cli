@@ -17,6 +17,7 @@ ignoreWorkspaceRootCheck: true
 # devDep mirrors the pinned packageManager). The embargo stays on for the rest.
 minimumReleaseAgeExclude:
   - '@vivliostyle/*'
+  - '@u1f992/mupdf'
   - 'pnpm'
 
 # pnpm 11 defaults this to "install", which makes the pre-commit hook
