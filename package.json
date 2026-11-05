@@ -64,7 +64,7 @@
     "hast-util-to-html": "9.0.5",
     "hastscript": "9.0.1",
     "mime-types": "3.0.1",
-    "mupdf": "1.28.0",
+    "mupdf": "npm:@u1f992/mupdf@1.29.0-alpha.0",
     "node-fetch-native": "1.6.7",
     "node-stream-zip": "1.15.0",
     "npm-package-arg": "12.0.2",
