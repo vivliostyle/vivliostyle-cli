@@ -92,7 +92,7 @@ custom(comma separated): 182mm,257mm or 8.5in,11in`,
     .option(
       '-p, --press-ready',
       `make generated PDF compatible with press ready PDF/X-1a [false]
-This option is equivalent with "--preflight press-ready"`,
+This option is equivalent with "--preflight press-ready" (note: deprecated, see https://github.com/vivliostyle/vivliostyle-cli/issues/949)`,
     )
     .option(
       '-t, --timeout <seconds>',
@@ -118,14 +118,15 @@ This option is equivalent with "--preflight press-ready"`,
     .addOption(
       new Option(
         '--preflight <mode>',
-        'apply the process to generate PDF for printing',
+        'apply the process to generate PDF for printing (note: `press-ready` and `press-ready-local` are deprecated, see https://github.com/vivliostyle/vivliostyle-cli/issues/949)',
       ).choices(['press-ready', 'press-ready-local']),
     )
     .option(
       '--preflight-option <options...>',
       `options for preflight process (ex: gray-scale, enforce-outline)
 Please refer the document of press-ready for further information.
-https://github.com/vibranthq/press-ready`,
+https://github.com/vibranthq/press-ready
+(note: deprecated together with --preflight, see https://github.com/vivliostyle/vivliostyle-cli/issues/949)`,
     )
     .option('--cmyk', 'convert device-cmyk() colors to CMYK in the output PDF')
     .addOption(new Option('--sandbox', `launch chrome with sandbox`).hideHelp())
