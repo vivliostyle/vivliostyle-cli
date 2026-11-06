@@ -158,7 +158,7 @@ export function warnDeprecatedConfig(
   config: ParsedVivliostyleConfigSchema,
   inlineOptions: Pick<
     ParsedVivliostyleInlineConfig,
-    'cmyk' | 'preflight' | 'pressReady'
+    'cmyk' | 'output' | 'preflight' | 'pressReady'
   > = {},
 ): void {
   /* oxlint-disable typescript/no-deprecated -- This function intentionally inspects deprecated config fields to emit migration warnings */
@@ -238,6 +238,10 @@ export function warnDeprecatedConfig(
   const preflightOptions = [
     inlineOptions.preflight,
     inlineOptions.pressReady ? 'press-ready' : undefined,
+    ...(inlineOptions.output ?? []).flatMap((o) => [
+      o.preflight,
+      o.pdfPostprocess?.preflight,
+    ]),
     config.inlineOptions.preflight,
     ...config.tasks.flatMap((task) => [
       task.pressReady ? 'press-ready' : undefined,
