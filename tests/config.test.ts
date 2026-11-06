@@ -1340,23 +1340,6 @@ it('warns when top-level cmyk config uses overrideMap', () => {
   expect(warn).toHaveBeenCalledWith(expect.stringContaining("'fallback'"));
 });
 
-it('does not warn for current top-level preflight options', () => {
-  const warn = vi.spyOn(Logger, 'logWarn').mockImplementation(() => {});
-  onTestFinished(() => warn.mockRestore());
-  const config = v.parse(VivliostyleConfigSchema, {
-    entry: 'manuscript.md',
-    output: 'output.pdf',
-  });
-  const inlineConfig = v.parse(VivliostyleInlineConfig, {
-    preflight: 'press-ready',
-    preflightOption: ['gray-scale'],
-  });
-
-  warnDeprecatedConfig(config, inlineConfig);
-
-  expect(warn).not.toHaveBeenCalled();
-});
-
 it('pdfPostprocess takes precedence over legacy pressReady option', async () => {
   const config = await getTaskConfig(['build'], resolveFixture('config'), {
     entry: 'manuscript.md',

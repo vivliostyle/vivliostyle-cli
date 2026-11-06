@@ -1,5 +1,8 @@
 # Preflight
 
+> [!WARNING]
+> The `press-ready` and `press-ready-local` preflight options are deprecated and may be removed in a future major release. See [#949](https://github.com/vivliostyle/vivliostyle-cli/issues/949) for the background and to share your feedback.
+
 Set the `pdfPostprocess.preflight` option to apply post-processing to the PDF for special purposes such as printing-related requirements. Currently, Vivliostyle supports post-processing converts to PDF/X-1a by setting `press-ready` that's powered by [vibranthq/press-ready](https://github.com/vibranthq/press-ready).
 
 ### vivliostyle.config.js
