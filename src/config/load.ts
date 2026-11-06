@@ -19,6 +19,7 @@ import {
 import {
   type InlineOptions,
   type ParsedVivliostyleConfigSchema,
+  type ParsedVivliostyleInlineConfig,
   VivliostyleConfigSchema,
 } from './schema.js';
 
@@ -143,9 +144,22 @@ export async function loadVivliostyleConfig({
   );
 }
 
+function formatDeprecationWarning(summary: string, issueUrl: string): string {
+  const issueLinkText = underline(issueUrl);
+  const issueLink = terminalLink(issueLinkText, issueUrl, {
+    fallback: () => issueLinkText,
+  });
+  return `${summary}\n${cyan(
+    `     See ${issueLink} for details and to share your feedback.`,
+  )}`;
+}
+
 export function warnDeprecatedConfig(
   config: ParsedVivliostyleConfigSchema,
-  inlineOptions: Pick<InlineOptions, 'cmyk'> = {},
+  inlineOptions: Pick<
+    ParsedVivliostyleInlineConfig,
+    'cmyk' | 'preflight' | 'pressReady'
+  > = {},
 ): void {
   /* oxlint-disable typescript/no-deprecated -- This function intentionally inspects deprecated config fields to emit migration warnings */
   if (config.tasks.some((task) => task.includeAssets)) {
@@ -221,6 +235,20 @@ export function warnDeprecatedConfig(
       "'overrideMap' property of cmyk configuration was deprecated and will be removed in a future release. Please use 'fallback' property instead.",
     );
   }
+  const preflightOptions = [
+    inlineOptions.preflight,
+    inlineOptions.pressReady ? 'press-ready' : undefined,
+    config.inlineOptions.preflight,
+    ...config.tasks.flatMap((task) => [
+      task.pressReady ? 'press-ready' : undefined,
+      task.pdfPostprocess?.preflight,
+      ...(task.output
+        ? [task.output]
+            .flat()
+            .flatMap((o) => [o.preflight, o.pdfPostprocess?.preflight])
+        : []),
+    ]),
+  ];
   /* oxlint-enable typescript/no-deprecated */
 
   if (
@@ -231,16 +259,20 @@ export function warnDeprecatedConfig(
         [task.output].flat().some((o) => o.renderMode === 'docker'),
     )
   ) {
-    const issueUrl =
-      'https://github.com/vivliostyle/vivliostyle-cli/issues/823';
-    const issueLinkText = underline(issueUrl);
-    const issueLink = terminalLink(issueLinkText, issueUrl, {
-      fallback: () => issueLinkText,
-    });
     Logger.logWarn(
-      `'renderMode: docker' option was deprecated and may be removed in a future major release.\n${cyan(
-        `     See ${issueLink} for details and to share your feedback.`,
-      )}`,
+      formatDeprecationWarning(
+        "'renderMode: docker' option was deprecated and may be removed in a future major release.",
+        'https://github.com/vivliostyle/vivliostyle-cli/issues/823',
+      ),
+    );
+  }
+
+  if (preflightOptions.some((preflight) => preflight !== undefined)) {
+    Logger.logWarn(
+      formatDeprecationWarning(
+        "'preflight: press-ready' and 'preflight: press-ready-local' options were deprecated and may be removed in a future major release.",
+        'https://github.com/vivliostyle/vivliostyle-cli/issues/949',
+      ),
     );
   }
 }

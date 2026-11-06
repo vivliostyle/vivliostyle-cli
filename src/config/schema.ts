@@ -614,15 +614,19 @@ const PdfPostprocessConfigSchema = v.pipe(
     v.object({
       preflight: v.pipe(
         v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
+        v.metadata({ deprecated: true }),
         v.description($`
           Apply the process to generate a print-ready PDF.
+          \`press-ready\` and \`press-ready-local\` are deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
         `),
       ),
       preflightOption: v.pipe(
         v.array(ValidString),
+        v.metadata({ deprecated: true }),
         v.description($`
           Options for the preflight process (e.g., \`gray-scale\`, \`enforce-outline\`).
           Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
+          This option is deprecated together with \`preflight\` and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
         `),
       ),
       cmyk: CmykSchema,
@@ -1444,6 +1448,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
       v.description($`
           Make generated PDF compatible with press ready PDF/X-1a.
           This option is equivalent with "preflight": "press-ready"
+          This option is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
         `),
     ),
     title: v.pipe(ValidString, v.description($`Title`)),
@@ -1473,6 +1478,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
       v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
       v.description($`
           Apply the process to generate PDF for printing.
+          \`press-ready\` and \`press-ready-local\` are deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
         `),
     ),
     preflightOption: v.pipe(
@@ -1481,6 +1487,7 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
       v.description($`
           Options for preflight process (ex: gray-scale, enforce-outline).
           Please refer the document of press-ready for further information.
+          This option is deprecated together with \`preflight\` and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
         `),
     ),
     cmyk: CmykSchema,

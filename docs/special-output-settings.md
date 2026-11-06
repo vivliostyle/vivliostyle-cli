@@ -38,6 +38,9 @@ vivliostyle build webpub/publication.json -o pdfbook.pdf
 
 - [Example: preflight](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/preflight)
 
+> [!WARNING]
+> The `preflight: press-ready` and `preflight: press-ready-local` options (`--preflight press-ready`, `--preflight press-ready-local`, `--press-ready`) are deprecated and may be removed in a future major release. See [#949](https://github.com/vivliostyle/vivliostyle-cli/issues/949) for the background and to share your feedback.
+
 To output in PDF/X-1a format suitable for print submission, specify the `--preflight press-ready` option in the `vivliostyle build` command, or specify `preflight: 'press-ready'` in the [configuration file](./using-config-file.md). To use this feature, you need to install [Docker](https://docs.docker.com/get-started/get-docker/) in advance.
 
 By specifying the `--preflight-option` option, you can add options to [press-ready](https://github.com/vibranthq/press-ready) that performs this processing.
