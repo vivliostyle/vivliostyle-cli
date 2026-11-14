@@ -33,7 +33,8 @@
       "author": {{json author}},
       "style": "theme.css",
       "category": "{{category}}",
-      "topics": []
+      "topics": [],
+      "i18n": {}
     }
   }
 }

@@ -78,3 +78,11 @@ npm run validate
 ## Publishing
 
 Publish the theme to npm with `npm publish`. Packages with the `vivliostyle-theme` keyword are listed on [npm](https://www.npmjs.com/search?q=keywords%3Avivliostyle-theme) and can be chosen when creating a project with Create Book. See [Vivliostyle Themes](https://github.com/vivliostyle/themes) for the theme specification and how to contribute your theme to the official collection.
+
+Write `description` and `vivliostyle.theme.name` in `package.json` in English, and add their translations to `vivliostyle.theme.i18n`, keyed by a language tag such as `ja`:
+
+```json
+"i18n": {
+  "ja": { "name": "Name in Japanese", "description": "Description in Japanese" }
+}
+```
