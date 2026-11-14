@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { XMLValidator } from 'fast-xml-parser';
+import { SyntaxValidator } from 'fast-xml-validator';
 import {
   decodePDFRawStream,
   PDFArray,
@@ -149,7 +149,7 @@ it('labels the output as PDF/X-4 with XMP mirroring the document information', a
     '/GTS_PDFX',
   );
   const packet = xmp(document);
-  expect(XMLValidator.validate(packet)).toBe(true);
+  expect(SyntaxValidator.validate(packet)).toBe(true);
   expect(packet).toMatch(
     /^<\?xpacket begin="\u{FEFF}" id="W5M0MpCehiHzreSzNTczkc9d"\?>\n/v,
   );
