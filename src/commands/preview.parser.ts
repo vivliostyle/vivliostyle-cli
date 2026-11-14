@@ -73,7 +73,7 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     .addOption(
       new Option(
         '--proxy-server <proxyServer>',
-        `HTTP/SOCK proxy server url for underlying Playwright`,
+        `HTTP/SOCK proxy server url for underlying browser`,
       ),
     )
     .addOption(
@@ -105,7 +105,7 @@ It is useful that using own viewer that has staging features. (ex: https://vivli
     .addOption(
       new Option(
         '--ignore-https-errors',
-        `true to ignore HTTPS errors when Playwright browser opens a new page`,
+        `true to ignore HTTPS errors when the browser opens a new page`,
       ),
     )
     .option('--host <host>', 'IP address the server should listen on')

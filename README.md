@@ -149,12 +149,12 @@ Options:
                                      It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   --viewer-param <parameters>        specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
   --browser <browser>                Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]
-  --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
+  --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying browser
   --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
   --proxy-user <proxyUser>           optional username for HTTP proxy authentication
   --proxy-pass <proxyPass>           optional password for HTTP proxy authentication
   --log-level <level>                specify a log level of console outputs (choices: "silent", "info", "verbose", "debug", default: "info")
-  --ignore-https-errors              true to ignore HTTPS errors when Playwright browser opens a new page
+  --ignore-https-errors              true to ignore HTTPS errors when the browser opens a new page
   --host <host>                      IP address the server should listen on
   --port <port>                      port the server should listen on
   --no-enable-static-serve           disable static file serving
@@ -201,12 +201,12 @@ Options:
                                      It is useful that using own viewer that has staging features. (ex: https://vivliostyle.vercel.app/)
   --viewer-param <parameters>        specify viewer parameters. (ex: "allowScripts=false&pixelRatio=16")
   --browser <browser>                Specify a browser type and version to launch the Vivliostyle viewer (ex: chrome@129, firefox) [chrome]
-  --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying Playwright
+  --proxy-server <proxyServer>       HTTP/SOCK proxy server url for underlying browser
   --proxy-bypass <proxyBypass>       optional comma-separated domains to bypass proxy
   --proxy-user <proxyUser>           optional username for HTTP proxy authentication
   --proxy-pass <proxyPass>           optional password for HTTP proxy authentication
   --log-level <level>                specify a log level of console outputs (choices: "silent", "info", "verbose", "debug", default: "info")
-  --ignore-https-errors              true to ignore HTTPS errors when Playwright browser opens a new page
+  --ignore-https-errors              true to ignore HTTPS errors when the browser opens a new page
   --host <host>                      IP address the server should listen on
   --port <port>                      port the server should listen on
   --no-open-viewer                   do not open viewer
