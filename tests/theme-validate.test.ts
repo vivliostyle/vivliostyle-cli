@@ -263,6 +263,21 @@ describe('theme validate command', () => {
     ]);
   });
 
+  it('accepts an empty translated description like the package description', async () => {
+    setupTheme({
+      ...validPackageJson,
+      description: '',
+      vivliostyle: {
+        theme: {
+          ...validPackageJson.vivliostyle.theme,
+          i18n: { ja: { name: 'テスト', description: '' } },
+        },
+      },
+    });
+
+    await expect(validate('theme')).resolves.toEqual([]);
+  });
+
   it('rejects translations that are not objects', async () => {
     setupTheme({
       ...validPackageJson,

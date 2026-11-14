@@ -1835,7 +1835,7 @@ export const VivliostyleThemeMetadata = v.pipe(
               `),
             ),
             description: v.pipe(
-              v.optional(ValidString),
+              v.optional(v.string()),
               v.description($`
                 Translated description of the theme package.
               `),
