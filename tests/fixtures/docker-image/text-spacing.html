@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Text spacing font probe</title>
+    <style>
+      @page {
+        size: 100mm 100mm;
+        margin: 10mm;
+      }
+      section {
+        break-after: page;
+      }
+      section:last-child {
+        break-after: auto;
+        /* Makes the filler from https://github.com/vivliostyle/vivliostyle.js/pull/2035 visible and embedded. */
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <section>Control page</section>
+    <section>日本語ABC日本語</section>
+  </body>
+</html>
