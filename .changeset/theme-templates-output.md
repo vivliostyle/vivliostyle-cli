@@ -2,4 +2,4 @@
 "@vivliostyle/cli": patch
 ---
 
-Leave out the `templates/` directory of theme packages, as well as `example/`, from the files copied into the output.
+Leave out the `templates/` directory of theme packages from the files copied into the output.

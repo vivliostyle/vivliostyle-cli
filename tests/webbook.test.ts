@@ -5,6 +5,7 @@ import './mocks/fs.js';
 import './mocks/tmp.js';
 import './mocks/vivliostyle__jsdom.js';
 import type { VivliostyleConfigSchema } from '../src/config/schema.js';
+import { getWebPubResourceMatcher } from '../src/processor/asset.js';
 import { formatHtml, runCommand, toTree } from './command-util.js';
 
 const mockedThemeModule = vi.hoisted(() => ({
@@ -329,9 +330,11 @@ it('copy webpub assets properly', async () => {
     'themeA/theme.css': '',
     'themeA/example/a.css': '',
     'themeA/templates/default/assets/a.png': '',
+    'themeA/img/templates/a.png': '',
     '@org/themeB/package.json': '{"main": "theme.css"}',
     '@org/themeB/theme.css': '',
     '@org/themeB/example/a.css': '',
+    '@org/themeB/templates/default/a.png': '',
   };
   mockedThemeModule.checkThemeInstallationNecessity.mockImplementationOnce(
     () => true,
@@ -355,6 +358,27 @@ it('copy webpub assets properly', async () => {
   await runCommand(['build'], { cwd: '/work/input' });
 
   expect(toTree(vol, { dir: '/work/input/output' })).toMatchSnapshot();
+});
+
+it('excludes theme example and template files from the webpub resource matcher', () => {
+  const matcher = getWebPubResourceMatcher({
+    cwd: '/work/input/.vivliostyle',
+    themesDir: '/work/input/.vivliostyle/themes',
+    manifestPath: '/work/input/.vivliostyle/publication.json',
+    outputs: [],
+    entries: [],
+    copyAsset: { includes: [], excludes: [], fileExtensions: ['png', 'css'] },
+  });
+  const themes = 'themes/node_modules';
+
+  expect(matcher.match(`${themes}/themeA/theme.css`)).toBe(true);
+  expect(matcher.match(`${themes}/themeA/img/templates/a.png`)).toBe(true);
+  expect(matcher.match(`${themes}/themeA/example/a.png`)).toBe(false);
+  expect(matcher.match(`${themes}/themeA/templates/default/a.png`)).toBe(false);
+  expect(matcher.match(`${themes}/@org/themeB/theme.css`)).toBe(true);
+  expect(matcher.match(`${themes}/@org/themeB/templates/default/a.png`)).toBe(
+    false,
+  );
 });
 
 it('copies theme packages mounted from the project node_modules', async () => {

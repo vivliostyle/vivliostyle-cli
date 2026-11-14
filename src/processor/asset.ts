@@ -51,8 +51,8 @@ function getIgnoreThemeDirectoryPatterns({
 }): string[] {
   return pathContains(cwd, themesDir)
     ? ['example', 'templates'].flatMap((dir) => [
-        `${upath.relative(cwd, themesDir)}/node_modules/*/${dir}`,
-        `${upath.relative(cwd, themesDir)}/node_modules/*/*/${dir}`,
+        `${upath.relative(cwd, themesDir)}/node_modules/*/${dir}/**`,
+        `${upath.relative(cwd, themesDir)}/node_modules/@*/*/${dir}/**`,
       ])
     : [];
 }
