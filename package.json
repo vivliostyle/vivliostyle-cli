@@ -122,6 +122,7 @@
     "@typescript/native-preview": "7.0.0-dev.20260622.1",
     "@vitest/coverage-v8": "4.1.9",
     "adm-zip": "0.6.1",
+    "fast-xml-validator": "1.4.2",
     "file-type": "22.0.1",
     "husky": "9.1.7",
     "json-schema-to-typescript": "15.0.4",

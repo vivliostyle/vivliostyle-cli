@@ -374,6 +374,9 @@ importers:
       adm-zip:
         specifier: 0.6.1
         version: 0.6.1
+      fast-xml-validator:
+        specifier: 1.4.2
+        version: 1.4.2
       file-type:
         specifier: 22.0.1
         version: 22.0.1(supports-color@7.2.0)
@@ -1875,8 +1878,17 @@ packages:
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
 
+  '@nodable/base-output-builder@2.0.1':
+    resolution: {integrity: sha512-dZ5tRk1YEjKjwEJh/xcPlKWfuuuILj7Nqltlswm4GImQ4pFX94wF83UJ+0Q1YLCTlw8czA7yTGOTbX3++mfbTw==}
+
+  '@nodable/compact-builder@2.0.1':
+    resolution: {integrity: sha512-DyDr1Fo2HW2gXF1AdFHM1X7sGK8Fx7zd+P4bveXymOWyP6kn9HXhtSxBDpTAmGvafQb/pBlQVAPhH8haHv//yA==}
+
   '@nodable/entities@3.1.0':
     resolution: {integrity: sha512-LsS/DjHr+uDM647Gru/cA8+J3a3HfhttwCKLyuoyN7yXTFCxKBtSgMQBvrW9yNPa2/zDRUNuGPaH5QUFoa4arQ==}
+
+  '@nodable/flexible-xml-parser@1.11.4':
+    resolution: {integrity: sha512-KzMTEsfLL9OQL7E7TWVM+8dXpwuhteW8jCrmaT+mQaE4NlZhs6AHzfkpY4kTT0qVSeV/lDPKRJW63QwiYjG+kA==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3842,6 +3854,9 @@ packages:
   destr@2.0.5:
     resolution: {integrity: sha512-ugFTXCtDZunbzasqBxrK93Ik/DRYsO6S/fedkWEMKqt04xZ4csmnmwGDBAb07QWNaGMAmnTIemsYZCksjATwsA==}
 
+  detailed-xml-validator@2.2.0:
+    resolution: {integrity: sha512-dffr/kTqIqq2BpybOEddhQRF1KBQcLdKHww9/urAKwZC1+epDnPnbT5IOb0ffCT4QTioAvKYEsojXeOYk030UQ==}
+
   detect-indent@6.1.0:
     resolution: {integrity: sha512-reYkTUJAZb9gUuZ2RvVCNhVHdg62RHnJ7WJl8ftMi4diZ6NWlciOzQN88pUhSELEwflJht4oQDv0F0BMlwaYtA==}
     engines: {node: '>=8'}
@@ -4187,6 +4202,9 @@ packages:
   fast-xml-parser@5.12.0:
     resolution: {integrity: sha512-/pXxRBtwxY9w8z7YbgsvIPPcPvFDsTbIkWwTQJhzNJPokj+TbN6ftmcv4j/pEQDvOCNnKGDzuk5Bo2oogIOiFg==}
     hasBin: true
+
+  fast-xml-validator@1.4.2:
+    resolution: {integrity: sha512-dN1Z5tBDxhJ1e8ccerKI+MWdwZ8oUWhWTSYISFeHKUOzlaZrwnwxcHKN3d7R9IOqtCtk6ynbEiZhjo/8RtDwIA==}
 
   fastq@1.15.0:
     resolution: {integrity: sha512-wBrocU2LCXXa+lWBt8RoIRD89Fi8OdABODa/kEnyeyjS5aZO5/GNvI5sEINADqP/h8M29UHTHUb53sUu5Ihqdw==}
@@ -8693,7 +8711,26 @@ snapshots:
 
   '@noble/hashes@1.8.0': {}
 
+  '@nodable/base-output-builder@2.0.1':
+    dependencies:
+      '@nodable/entities': 3.1.0
+      is-unsafe: 2.0.3
+      path-expression-matcher: 1.6.2
+      strnum: 2.5.1
+
+  '@nodable/compact-builder@2.0.1':
+    dependencies:
+      '@nodable/base-output-builder': 2.0.1
+      path-expression-matcher: 1.6.2
+
   '@nodable/entities@3.1.0': {}
+
+  '@nodable/flexible-xml-parser@1.11.4':
+    dependencies:
+      '@nodable/base-output-builder': 2.0.1
+      '@nodable/compact-builder': 2.0.1
+      path-expression-matcher: 1.6.2
+      xml-naming: 0.3.0
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -10555,6 +10592,12 @@ snapshots:
 
   destr@2.0.5: {}
 
+  detailed-xml-validator@2.2.0:
+    dependencies:
+      '@nodable/base-output-builder': 2.0.1
+      '@nodable/compact-builder': 2.0.1
+      '@nodable/flexible-xml-parser': 1.11.4
+
   detect-indent@6.1.0: {}
 
   detect-libc@2.0.4: {}
@@ -10937,6 +10980,12 @@ snapshots:
       is-unsafe: 2.0.3
       path-expression-matcher: 1.6.2
       strnum: 2.5.1
+      xml-naming: 0.3.0
+
+  fast-xml-validator@1.4.2:
+    dependencies:
+      detailed-xml-validator: 2.2.0
+      path-expression-matcher: 1.6.2
       xml-naming: 0.3.0
 
   fastq@1.15.0:
