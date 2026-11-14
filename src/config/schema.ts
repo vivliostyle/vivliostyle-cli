@@ -687,7 +687,7 @@ export const OutputConfig = v.pipe(
           v.union([v.literal('press-ready'), v.literal('press-ready-local')]),
           v.metadata({ deprecated: true }),
           v.description($`
-            Use \`pdfPostprocess.preflight\` instead
+            \`press-ready\` and \`press-ready-local\` are deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
           `),
         ),
         /** @deprecated */
@@ -695,7 +695,7 @@ export const OutputConfig = v.pipe(
           v.array(ValidString),
           v.metadata({ deprecated: true }),
           v.description($`
-            Use \`pdfPostprocess.preflightOption\` instead
+            This option is deprecated together with \`preflight\` and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
           `),
         ),
         pdfPostprocess: PdfPostprocessConfigSchema,
@@ -1092,7 +1092,7 @@ export const BuildTask = v.pipe(
           v.boolean(),
           v.metadata({ deprecated: true }),
           v.description($`
-            Use \`pdfPostprocess.preflight: "press-ready"\` instead
+            This option is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
           `),
         ),
         pdfPostprocess: PdfPostprocessConfigSchema,

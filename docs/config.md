@@ -66,7 +66,7 @@ type VivliostyleConfigSchema =
     - Custom (comma-separated): `182mm,257mm` or `8.5in,11in`
 
   - ~~`pressReady`~~ _Deprecated_  
-    Use `pdfPostprocess.preflight: "press-ready"` instead
+    This option is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
   - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
     PDF post-processing options.
@@ -388,10 +388,10 @@ type ArticleEntryConfig = {
     `renderMode: docker` is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/823
 
   - ~~`preflight`~~ _Deprecated_  
-    Use `pdfPostprocess.preflight` instead
+    `press-ready` and `press-ready-local` are deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
   - ~~`preflightOption`~~ _Deprecated_  
-    Use `pdfPostprocess.preflightOption` instead
+    This option is deprecated together with `preflight` and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
   - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
     PDF post-processing options.
