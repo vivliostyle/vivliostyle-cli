@@ -66,7 +66,7 @@ type VivliostyleConfigSchema =
     - Custom (comma-separated): `182mm,257mm` or `8.5in,11in`
 
   - ~~`pressReady`~~ _Deprecated_  
-    Use `pdfPostprocess.preflight: "press-ready"` instead
+    This option is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
   - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
     PDF post-processing options.
@@ -388,10 +388,10 @@ type ArticleEntryConfig = {
     `renderMode: docker` is deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/823
 
   - ~~`preflight`~~ _Deprecated_  
-    Use `pdfPostprocess.preflight` instead
+    `press-ready` and `press-ready-local` are deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
   - ~~`preflightOption`~~ _Deprecated_  
-    Use `pdfPostprocess.preflightOption` instead
+    This option is deprecated together with `preflight` and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
   - `pdfPostprocess`: [PdfPostprocessConfig](#pdfpostprocessconfig)  
     PDF post-processing options.
@@ -423,12 +423,14 @@ pdfPostprocess takes precedence.
 
 - `PdfPostprocessConfig`
 
-  - `preflight`: "press-ready" | "press-ready-local"  
+  - ~~`preflight`~~ _Deprecated_  
     Apply the process to generate a print-ready PDF.
+    `press-ready` and `press-ready-local` are deprecated and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
-  - `preflightOption`: (string)[]  
+  - ~~`preflightOption`~~ _Deprecated_  
     Options for the preflight process (e.g., `gray-scale`, `enforce-outline`).
     Refer to the press-ready documentation for more information: [press-ready](https://github.com/vibranthq/press-ready)
+    This option is deprecated together with `preflight` and may be removed in a future major release. See https://github.com/vivliostyle/vivliostyle-cli/issues/949
 
   - `cmyk`: boolean | [CmykConfig](#cmykconfig)  
     Convert device-cmyk() colors to CMYK in the output PDF.
