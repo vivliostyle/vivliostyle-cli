@@ -1,5 +1,44 @@
 # @vivliostyle/cli
 
+## 11.5.0
+
+### Minor Changes
+
+- Accept translations of the theme name and the package description in `vivliostyle.theme.i18n`, keyed by a BCP 47 language tag. `vivliostyle theme validate` warns about keys that are not language tags in the canonical form. ([#953](https://github.com/vivliostyle/vivliostyle-cli/pull/953))
+
+- Update Vivliostyle.js to 2.46.0. ([#947](https://github.com/vivliostyle/vivliostyle-cli/pull/947))
+
+  - Support `vertical-lr`, `sideways-rl`, and `sideways-lr` writing modes.
+  - Support CSS `text-spacing-trim: trim-all` and use browser-native text spacing when available.
+  - Fix text spacing, ruby annotations, hanging punctuation, font-relative sizing, and pagination issues.
+  - Improve layout performance.
+
+  See the [Vivliostyle.js v2.46.0 release notes](https://github.com/vivliostyle/vivliostyle.js/releases/tag/v2.46.0) for details.
+
+### Patch Changes
+
+- Fix `vivliostyle theme validate` accepting the style locator, `keywords`, and `vivliostyle.theme.category` of `package.json` with leading or trailing whitespace, such as `"style": "theme.css "`. These values are now inspected as written, as the theme loader and npm read them. ([#953](https://github.com/vivliostyle/vivliostyle-cli/pull/953))
+
+- Log document processor diagnostics in order at appropriate levels, then stop conversion after collecting all fatal diagnostics. ([#907](https://github.com/vivliostyle/vivliostyle-cli/pull/907))
+
+- Describe the `--proxy-server` and `--ignore-https-errors` options in terms of the underlying browser instead of Playwright. ([#944](https://github.com/vivliostyle/vivliostyle-cli/pull/944))
+
+- Deprecate the `preflight: press-ready` and `preflight: press-ready-local` options, including the `--preflight` and `--press-ready` flags. Using them now prints a warning that links to https://github.com/vivliostyle/vivliostyle-cli/issues/949, where you can find the background and share your feedback. ([#950](https://github.com/vivliostyle/vivliostyle-cli/pull/950))
+
+- Replace mupdf with @u1f992/mupdf@1.29.0-alpha.0 (temporary until upstream 1.29.0) ([#948](https://github.com/vivliostyle/vivliostyle-cli/pull/948))
+
+- Match opaque grayscale `replaceImage` source images against the RGB images that Chromium embeds for them. ([#946](https://github.com/vivliostyle/vivliostyle-cli/pull/946))
+
+- Install themes without running the lifecycle scripts of the theme or its dependencies. ([#951](https://github.com/vivliostyle/vivliostyle-cli/pull/951))
+
+- Leave out the `templates/` directory of theme packages from the files copied into the output. ([#952](https://github.com/vivliostyle/vivliostyle-cli/pull/952))
+
+- Update default browser versions ([#942](https://github.com/vivliostyle/vivliostyle-cli/pull/942))
+
+  - Chrome: 157.0.8103.78
+  - Chromium: 1744658
+  - Firefox: stable_160.0
+
 ## 11.4.0
 
 ### Minor Changes
