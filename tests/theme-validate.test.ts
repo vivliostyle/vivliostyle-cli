@@ -95,7 +95,7 @@ describe('theme validate command', () => {
     });
 
     await expect(validate('theme')).resolves.toEqual([
-      { type: 'error', message: 'Style file is not found: missing.css' },
+      { type: 'error', message: 'Style file is not found: "missing.css"' },
     ]);
   });
 
@@ -124,7 +124,7 @@ describe('theme validate command', () => {
       {
         type: 'error',
         message:
-          'Style file must be located inside the theme package directory: ../outside.css',
+          'Style file must be located inside the theme package directory: "../outside.css"',
       },
     ]);
   });
@@ -143,7 +143,40 @@ describe('theme validate command', () => {
     await expect(validate('theme')).resolves.toEqual([
       {
         type: 'warning',
-        message: 'Style file does not have a ".css" extension: theme.scss',
+        message: 'Style file does not have a ".css" extension: "theme.scss"',
+      },
+    ]);
+  });
+
+  it('inspects the values as written without trimming', async () => {
+    setupTheme({
+      ...validPackageJson,
+      keywords: ['vivliostyle-theme '],
+      vivliostyle: {
+        theme: {
+          ...validPackageJson.vivliostyle.theme,
+          style: 'theme.css ',
+          category: ' novel',
+          i18n: { ' ja': { name: 'テスト' }, ja: { name: 'テスト' } },
+        },
+      },
+    });
+
+    await expect(validate('theme')).resolves.toEqual([
+      { type: 'error', message: 'Style file is not found: "theme.css "' },
+      {
+        type: 'warning',
+        message: expect.stringContaining('"vivliostyle-theme"'),
+      },
+      {
+        type: 'warning',
+        message: expect.stringContaining('Unknown theme category " novel"'),
+      },
+      {
+        type: 'warning',
+        message: expect.stringContaining(
+          '" ja" in "vivliostyle.theme.i18n" is not a BCP 47 language tag',
+        ),
       },
     ]);
   });

@@ -83,18 +83,20 @@ function inspectThemePackage({
   themeDir: string;
   packageJsonPath: string;
 }): { results: ThemeValidationResult[]; packageName?: string } {
-  const parseResult = v.safeParse(VivliostyleThemePackageJson, parsed);
-  if (!parseResult.success) {
+  if (!v.is(VivliostyleThemePackageJson, parsed)) {
+    const { issues = [] } = v.safeParse(VivliostyleThemePackageJson, parsed);
     return {
       results: [
         {
           type: 'error',
-          message: `Invalid package.json: ${packageJsonPath}\n${prettifySchemaError(rawJson, parseResult.issues)}`,
+          message: `Invalid package.json: ${packageJsonPath}\n${prettifySchemaError(rawJson, issues)}`,
         },
       ],
     };
   }
-  const pkg = parseResult.output;
+  // npm and the theme loader read package.json as written, so inspect the
+  // values without the trimming applied by the schema
+  const pkg = parsed;
   const results: ThemeValidationResult[] = [];
 
   const style = pkg.vivliostyle?.theme?.style ?? pkg.style ?? pkg.main;
@@ -103,17 +105,17 @@ function inspectThemePackage({
     if (!pathContains(themeDir, stylePath)) {
       results.push({
         type: 'error',
-        message: `Style file must be located inside the theme package directory: ${style}`,
+        message: `Style file must be located inside the theme package directory: "${style}"`,
       });
     } else if (!fs.existsSync(stylePath) || !fs.statSync(stylePath).isFile()) {
       results.push({
         type: 'error',
-        message: `Style file is not found: ${style}`,
+        message: `Style file is not found: "${style}"`,
       });
     } else if (upath.extname(stylePath).toLowerCase() !== '.css') {
       results.push({
         type: 'warning',
-        message: `Style file does not have a ".css" extension: ${style}`,
+        message: `Style file does not have a ".css" extension: "${style}"`,
       });
     }
   } else {

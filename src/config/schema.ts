@@ -1826,7 +1826,7 @@ export const VivliostyleThemeMetadata = v.pipe(
     i18n: v.pipe(
       v.optional(
         v.record(
-          ValidString,
+          v.string(),
           v.object({
             name: v.pipe(
               v.optional(ValidString),
