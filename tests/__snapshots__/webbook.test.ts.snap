@@ -8,6 +8,9 @@ exports[`copy webpub assets properly 1`] = `
 │     │  └─ themeB/
 │     │     └─ theme.css
 │     └─ themeA/
+│        ├─ img/
+│        │  └─ templates/
+│        │     └─ a.png
 │        └─ theme.css
 ├─ doc.html
 └─ publication.json"
