@@ -1,4 +1,9 @@
-import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
+import {
+  execFileSync,
+  spawn,
+  type ChildProcess,
+  type ChildProcessWithoutNullStreams,
+} from 'node:child_process';
 import { once } from 'node:events';
 import fs from 'node:fs/promises';
 import { createServer as createHttpServer } from 'node:http';
@@ -62,7 +67,15 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       </script>`);
   });
 
-  function start(args: string[], cwd = project, env?: NodeJS.ProcessEnv) {
+  function start(
+    args: string[],
+    cwd = project,
+    inspection?: {
+      env: NodeJS.ProcessEnv;
+      substitute?: ChildProcessWithoutNullStreams;
+    },
+  ) {
+    const substitute = inspection?.substitute;
     const child = spawn(process.execPath, [cli, ...args], {
       cwd,
       env: {
@@ -70,17 +83,24 @@ describe.skipIf(!supported)('bundled build daemon', () => {
         DEBUG: 'vs-cli,vs-cli:pdf-timing',
         TMPDIR: directory,
         VS_BUILD_DAEMON_TEST: args[0] === 'build-daemon' ? 'service' : 'client',
-        ...env,
+        ...inspection?.env,
       },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [
+        'ignore',
+        'pipe',
+        'pipe',
+        ...(substitute
+          ? [substitute.stdin, substitute.stdout, substitute.stderr]
+          : []),
+      ],
     });
     children.add(child);
     let output = '';
     const collect = (chunk: string) => {
       output += chunk;
     };
-    child.stdout.setEncoding('utf8').on('data', collect);
-    child.stderr.setEncoding('utf8').on('data', collect);
+    child.stdout?.setEncoding('utf8').on('data', collect);
+    child.stderr?.setEncoding('utf8').on('data', collect);
     const exit = new Promise<{
       code: number | null;
       signal: NodeJS.Signals | null;
@@ -100,7 +120,9 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     };
   }
 
-  async function startServices(env?: NodeJS.ProcessEnv) {
+  async function startServices(
+    inspection?: Awaited<ReturnType<typeof mockProcessInspection>>,
+  ) {
     const worker = start(['build-worker', '--socket', workerSocket]);
     await worker.waitFor(/Browser worker ready at /v);
     const daemon = start(
@@ -112,7 +134,7 @@ describe.skipIf(!supported)('bundled build daemon', () => {
         workerSocket,
       ],
       project,
-      env,
+      inspection,
     );
     await daemon.waitFor(/Build daemon ready at /v);
     return { worker, daemon };
@@ -224,6 +246,7 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       const children = require('node:child_process');
       const { appendFileSync, existsSync } = require('node:fs');
       const { syncBuiltinESMExports } = require('node:module');
+      const { Socket } = require('node:net');
       const executor = process.argv[1]?.endsWith('/build-daemon/internal-executor.js');
       const supervisor = process.argv[2] === 'build-daemon';
       const mode = process.env.VS_TEST_INSPECTION_MODE;
@@ -233,13 +256,31 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       children.execFile = (file, args, options, callback) => {
         if (args.includes('pgid=') && (executor || supervisor)) {
           appendFileSync('inspection.log', executor ? 'executor ps\n' : 'supervisor ps\n');
-          if (mode === 'startup' || (armed() && (executor || mode === 'retain'))) {
+          if (supervisor && (mode === 'startup' || (mode === 'retain' && armed()))) {
+            // The test owns the substitute so it can wait for its exit. The daemon
+            // holds duplicates of the three actual stdio pipe endpoints.
+            const stdin = new Socket({ fd: 3, readable: false, writable: true });
+            const stdout = new Socket({ fd: 4, readable: true, writable: false });
+            const stderr = new Socket({ fd: 5, readable: true, writable: false });
+            stdout.resume();
+            stderr.resume();
+            return {
+              stdin, stdout, stderr,
+              kill(signal) {
+                appendFileSync('inspection.log', 'substitute ' + signal + '\n');
+                throw new Error('Simulated signalling failure');
+              },
+              unref() {
+                const closed = [stdin, stdout, stderr].every((stream) => stream.destroyed);
+                appendFileSync('inspection.log', 'substitute unref, stdio closed: ' + closed + '\n');
+              },
+            };
+          }
+          if (executor && armed()) {
             // Exercise retry handling first, then let a hung inspection consume
             // the balance of the current deadline.
             const script = ++failures <= 2 ? 'process.exit(1)' : 'setInterval(() => {}, 1000)';
-            // An inspection stuck in the kernel may never report its exit.
-            const report = supervisor && failures > 2 ? () => {} : callback;
-            return inspect(process.execPath, ['-e', script], options, report);
+            return inspect(process.execPath, ['-e', script], options, callback);
           }
         }
         return inspect(file, args, options, callback);
@@ -260,9 +301,27 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       };
       `,
     );
+    const substitute =
+      mode === 'recover'
+        ? undefined
+        : spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);
+    if (substitute) {
+      children.add(substitute);
+      exits.add(
+        once(substitute, 'exit').then(() => {
+          children.delete(substitute);
+          substitute.stdin.destroy();
+          substitute.stdout.destroy();
+          substitute.stderr.destroy();
+        }),
+      );
+    }
     return {
-      NODE_OPTIONS: `--require=${JSON.stringify(preload)}`,
-      VS_TEST_INSPECTION_MODE: mode,
+      env: {
+        NODE_OPTIONS: `--require=${JSON.stringify(preload)}`,
+        VS_TEST_INSPECTION_MODE: mode,
+      },
+      substitute,
     };
   }
 
@@ -806,8 +865,23 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     expect((await pdf('build-101')).getPageCount()).toBeGreaterThan(0);
   }, 90_000);
 
-  it('requires process-group inspection before daemon readiness', async () => {
-    const env = await mockProcessInspection('startup');
+  async function assertInspectionSubstituteAlive(
+    substitute: ChildProcess | undefined,
+  ) {
+    expect(substitute?.pid).toBeGreaterThan(0);
+    expect(process.kill(Number(substitute?.pid), 0)).toBe(true);
+    expect(substitute).toMatchObject({ exitCode: null, signalCode: null });
+    const trace = await fs.readFile(
+      path.join(project, 'inspection.log'),
+      'utf8',
+    );
+    expect(trace).toContain(
+      'substitute SIGKILL\nsubstitute unref, stdio closed: true\n',
+    );
+  }
+
+  it('reports a startup inspection timeout and exits while the substitute ps is alive', async () => {
+    const inspection = await mockProcessInspection('startup');
     const daemon = start(
       [
         'build-daemon',
@@ -817,8 +891,12 @@ describe.skipIf(!supported)('bundled build daemon', () => {
         workerSocket,
       ],
       project,
-      env,
+      inspection,
     );
+    await vi.waitFor(() => expect(daemon.child.exitCode).toBe(1), {
+      timeout: 10_000,
+      interval: 50,
+    });
     const result = await daemon.exit;
     expect(result).toMatchObject({
       code: 1,
@@ -826,6 +904,7 @@ describe.skipIf(!supported)('bundled build daemon', () => {
         'requires ps with process-group inspection',
       ),
     });
+    await assertInspectionSubstituteAlive(inspection.substitute);
     expect(result.output).not.toContain('Build daemon ready');
     expect(await executorDirectories()).toEqual([]);
     await expect(fs.stat(daemonSocket)).rejects.toMatchObject({
@@ -834,7 +913,8 @@ describe.skipIf(!supported)('bundled build daemon', () => {
   }, 20_000);
 
   async function queueDuringInspectionFailures(mode: 'recover' | 'retain') {
-    const services = await startServices(await mockProcessInspection(mode));
+    const inspection = await mockProcessInspection(mode);
+    const services = await startServices(inspection);
     const [temporary] = await executorDirectories();
     await fs.writeFile(path.join(temporary, 'scratch'), 'unfinished build');
     await file('fail-inspection', '');
@@ -856,7 +936,13 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       ),
     });
     expect(performance.now() - startedAt).toBeLessThan(11_500);
-    return { ...services, temporary, next, started };
+    return {
+      ...services,
+      temporary,
+      next,
+      started,
+      substitute: inspection.substitute,
+    };
   }
 
   async function assertInspectionRetries() {
@@ -890,7 +976,7 @@ describe.skipIf(!supported)('bundled build daemon', () => {
   }, 35_000);
 
   it('stops the daemon and retains temporary files if verification after SIGKILL fails', async () => {
-    const { daemon, worker, temporary, next } =
+    const { daemon, worker, temporary, next, substitute } =
       await queueDuringInspectionFailures('retain');
     const diagnostic = 'Could not verify that build daemon executor group';
     const verifyingAt = performance.now();
@@ -899,10 +985,15 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       error: expect.stringContaining(diagnostic),
     });
     expect(performance.now() - verifyingAt).toBeLessThan(2000);
+    await vi.waitFor(() => expect(daemon.child.exitCode).toBe(1), {
+      timeout: 3000,
+      interval: 50,
+    });
     expect(await daemon.exit).toMatchObject({
       code: 1,
       output: expect.stringContaining(diagnostic),
     });
+    await assertInspectionSubstituteAlive(substitute);
     expect(await executorDirectories()).toEqual([temporary]);
     await expect(
       fs.readFile(path.join(temporary, 'scratch'), 'utf8'),

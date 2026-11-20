@@ -32,8 +32,7 @@ function readProcessTable(timeout = 5000, bounded = false) {
       ['-A', '-o', 'pgid=', '-o', 'pid=', '-o', 'stat='],
       {
         maxBuffer: Infinity,
-        timeout,
-        killSignal: bounded ? 'SIGKILL' : undefined,
+        timeout: bounded ? undefined : timeout,
       },
       (error, output) => {
         clearTimeout(watchdog);
@@ -49,10 +48,18 @@ function readProcessTable(timeout = 5000, bounded = false) {
       },
     );
     if (bounded) {
-      // execFile waits for the subprocess to close after sending the signal.
       watchdog = setTimeout(() => {
-        ps.unref();
         reject(new Error('Timed out running ps for the build group.'));
+        try {
+          ps.kill('SIGKILL');
+        } catch {
+          // Release our handles even if the subprocess could not be signalled.
+        } finally {
+          ps.stdin?.destroy();
+          ps.stdout?.destroy();
+          ps.stderr?.destroy();
+          ps.unref();
+        }
       }, timeout);
     }
   });
