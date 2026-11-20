@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockedCommands = vi.hoisted(() => ({
   runBuildCli: vi.fn<(...args: any[]) => unknown>(),
+  runBuildDaemonCli: vi.fn<(...args: any[]) => unknown>(),
   runBuildWorkerCli: vi.fn<(...args: any[]) => unknown>(),
   runCreateCli: vi.fn<(...args: any[]) => unknown>(),
   runInitCli: vi.fn<(...args: any[]) => unknown>(),
@@ -11,6 +12,10 @@ const mockedCommands = vi.hoisted(() => ({
 
 vi.mock('../src/commands/build.runner.js', () => ({
   runBuildCli: mockedCommands.runBuildCli,
+}));
+
+vi.mock('../src/commands/build-daemon.runner.js', () => ({
+  runBuildDaemonCli: mockedCommands.runBuildDaemonCli,
 }));
 
 vi.mock('../src/commands/build-worker.runner.js', () => ({
@@ -44,6 +49,7 @@ function expectRootHelp(calls: unknown[][]) {
     'init',
     'build',
     'build-worker',
+    'build-daemon',
     'preview',
     'theme',
   ]) {
@@ -67,6 +73,7 @@ describe('dispatchCli', () => {
   it.each([
     ['build', mockedCommands.runBuildCli],
     ['build-worker', mockedCommands.runBuildWorkerCli],
+    ['build-daemon', mockedCommands.runBuildDaemonCli],
     ['create', mockedCommands.runCreateCli],
     ['init', mockedCommands.runInitCli],
     ['preview', mockedCommands.runPreviewCli],

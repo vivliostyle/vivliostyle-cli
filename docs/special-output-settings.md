@@ -62,6 +62,31 @@ If you forcibly kill the supervising CLI, the build process attempts to stop its
 
 Press Ctrl+C in the worker terminal or send it SIGTERM to close Chromium and remove the socket. Queued clients and any active render receive an error. If the worker is killed without cleanup, use a new private directory or remove the stale socket after verifying that the old worker has stopped. The worker refuses to overwrite an existing path.
 
+## Reusing the build process for one project
+
+On Linux and macOS, `build-daemon` keeps one Node.js build process running for a project. Start a [Chromium worker](#reusing-chromium-for-pdf-builds) first, then start the daemon from the project directory in another terminal. Set `socket_dir` to the private directory you created for the worker.
+
+```sh
+cd /absolute/path/to/project
+socket_dir=/tmp/vivliostyle.XXXXXXXX
+vivliostyle build-daemon --socket "$socket_dir/daemon.sock" --browser-worker "$socket_dir/build.sock"
+```
+
+After the daemon reports readiness, run builds from the same project directory using the absolute daemon socket path.
+
+```sh
+vivliostyle build --build-daemon /tmp/vivliostyle.XXXXXXXX/daemon.sock document1.md -o document1.pdf
+vivliostyle build --build-daemon /tmp/vivliostyle.XXXXXXXX/daemon.sock document2.md -o document2.pdf -o document2.epub
+```
+
+Both sockets require an owner-only directory. The daemon compares canonical working directories, so a symlink to the project directory also works. Choose either `--build-daemon` or `--browser-worker` on `build`. The daemon uses the configured worker for local Chrome or Chromium rendering and supports PDF post-processing and EPUB and WebPub outputs.
+
+The daemon serves builds in submission order and sends each build's logs and result to its invoking CLI. It uses the environment from daemon startup. It reloads the main Vivliostyle, Vite, and PostCSS config files for each build. Restart the daemon after editing separately imported config helpers or plugins. Each task starts and closes its own Vite server because the server's middleware captures that task's configuration and caches.
+
+Interrupting or disconnecting a client removes its queued build or cancels its active build. The daemon waits for cleanup before starting the next build. If the executor crashes or fails to stop within ten seconds of cancellation, the daemon replaces it for subsequent builds. A forced stop can leave partial project outputs from the interrupted build. Press Ctrl+C in the daemon terminal or send it SIGTERM to reject queued builds, stop the active build, and remove the daemon socket. Stop the Chromium worker separately.
+
+To compare one-shot builds, Chromium reuse, and daemon builds from the repository, run `pnpm build:cli` followed by `node scripts/benchmark-browser-worker.ts`. The benchmark accepts document paths and an optional `--executable-browser <path>`. It reports per-build wall time, phase timings, and service startup and shutdown time.
+
 ## Generating Print-Ready PDF (PDF/X-1a Format)
 
 - [Example: preflight](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/preflight)

@@ -26,6 +26,11 @@ export const dispatchCli = createCommandDispatcher({
       load: async () =>
         (await import('./commands/build-worker.runner.js')).runBuildWorkerCli,
     },
+    'build-daemon': {
+      description: 'Serve builds for the current project',
+      load: async () =>
+        (await import('./commands/build-daemon.runner.js')).runBuildDaemonCli,
+    },
     preview: {
       description: 'Open the preview page and interactively save PDFs',
       load: async () =>

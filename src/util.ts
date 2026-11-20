@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import childProcess, { type ExecFileOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -51,11 +52,16 @@ export async function exec(
   return subprocess;
 }
 
-const cleanupHandlers: (() => void | Promise<void>)[] = [];
+interface CleanupScope {
+  handlers: (() => void | Promise<void>)[];
+  draining?: Promise<void>;
+}
+
+const cleanupScopes = new AsyncLocalStorage<CleanupScope>();
+const processCleanup: CleanupScope = { handlers: [] };
 const terminationHooks = new Set<
   (exitCode: number, signal: NodeJS.Signals) => void | Promise<void>
 >();
-let cleanupPromise: Promise<void> | undefined;
 let processTerminationInstalled = false;
 let handlingProcessTermination = false;
 
@@ -65,19 +71,20 @@ export const registerCleanupHandler = (
   handler: () => void | Promise<void>,
   { prepend = false }: { prepend?: boolean } = {},
 ): (() => void) => {
+  const { handlers } = cleanupScopes.getStore() ?? processCleanup;
   const callback = () => {
     Logger.debug(debugMessage);
     return handler();
   };
   if (prepend) {
-    cleanupHandlers.unshift(callback);
+    handlers.unshift(callback);
   } else {
-    cleanupHandlers.push(callback);
+    handlers.push(callback);
   }
   return () => {
-    const index = cleanupHandlers.indexOf(callback);
+    const index = handlers.indexOf(callback);
     if (index !== -1) {
-      cleanupHandlers.splice(index, 1);
+      handlers.splice(index, 1);
     }
   };
 };
@@ -123,29 +130,40 @@ export function registerTerminationHook(
 }
 
 export function runCleanupHandlers(): Promise<void> {
-  if (cleanupPromise) {
-    return cleanupPromise;
+  const scope = cleanupScopes.getStore() ?? processCleanup;
+  if (scope.draining) {
+    return scope.draining;
   }
   let resolveCleanup: (() => void) | undefined;
   const currentCleanupPromise = new Promise<void>((resolve) => {
     resolveCleanup = resolve;
   });
-  cleanupPromise = currentCleanupPromise;
+  scope.draining = currentCleanupPromise;
   void (async () => {
     try {
-      while (cleanupHandlers.length > 0) {
+      while (scope.handlers.length > 0) {
         try {
-          await cleanupHandlers.shift()?.();
+          await scope.handlers.shift()?.();
         } catch (e) {
           // NOOP
         }
       }
     } finally {
-      cleanupPromise = undefined;
+      scope.draining = undefined;
       resolveCleanup?.();
     }
   })();
   return currentCleanupPromise;
+}
+
+export function withCleanupScope<T>(task: () => Promise<T>): Promise<T> {
+  return cleanupScopes.run({ handlers: [] }, async () => {
+    try {
+      return await task();
+    } finally {
+      await runCleanupHandlers();
+    }
+  });
 }
 
 async function handleProcessTermination(
@@ -333,7 +351,7 @@ export function inflateZip(filePath: string, dest: string): Promise<void> {
 
 export function useTmpDirectory(): Promise<[string, () => void]> {
   const directory = new Promise<string>((res, rej) => {
-    tmp.dir({ unsafeCleanup: true }, (err, path) => {
+    tmp.dir({ unsafeCleanup: true, keep: true }, (err, path) => {
       if (err) {
         rej(err);
         return;

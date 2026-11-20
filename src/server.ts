@@ -5,6 +5,7 @@ import upath from 'upath';
 import {
   createServer,
   type InlineConfig,
+  type Plugin,
   preview,
   type PreviewServer,
   type ResolvedConfig as ResolvedViteConfig,
@@ -244,11 +245,23 @@ export async function createViteServer({
   inlineConfig: ParsedVivliostyleInlineConfig;
   mode: 'preview' | 'build';
 }): Promise<ViteDevServer | PreviewServer> {
+  let partialServer: ViteDevServer | PreviewServer | undefined;
+  const captureServer: Plugin = {
+    name: 'vivliostyle:server-cleanup',
+    enforce: 'pre',
+    configureServer(server) {
+      partialServer = server;
+    },
+    configurePreviewServer(server) {
+      partialServer = server;
+    },
+  };
   const viteInlineConfig = {
     clearScreen: false,
     configFile: false,
     appType: 'custom',
     plugins: [
+      captureServer,
       vsDevServerPlugin({ config, inlineConfig }),
       vsViewerPlugin({ config, inlineConfig }),
       vsBrowserPlugin({ config, inlineConfig }),
@@ -278,15 +291,23 @@ export async function createViteServer({
   let closeServerPromise: Promise<void> | undefined;
   let closeLaunchedServer: (() => Promise<void>) | undefined;
   const closeServer = () =>
-    (closeServerPromise ??= serverLaunch.then((server) => {
-      closeLaunchedServer ??= server.close.bind(server);
-      return closeLaunchedServer();
-    }));
+    (closeServerPromise ??= serverLaunch.then(
+      (server) => {
+        closeLaunchedServer ??= server.close.bind(server);
+        return closeLaunchedServer();
+      },
+      async () => {
+        await partialServer?.close();
+      },
+    ));
   registerCleanupHandler('Closing Vite server', closeServer, {
     prepend: true,
   });
 
-  const server = await serverLaunch;
+  const server = await serverLaunch.catch(async (error: unknown) => {
+    await closeServer().catch(() => {});
+    throw error;
+  });
   closeLaunchedServer = server.close.bind(server);
   server.close = closeServer;
   return server;

@@ -62,6 +62,31 @@ vivliostyle build --browser-worker /tmp/vivliostyle.XXXXXXXX/build.sock document
 
 ワーカーを起動したターミナルで Ctrl+C を押すか、SIGTERM を送信すると、Chromium が終了し、ソケットが削除されます。待機中のクライアントとレンダリング中のクライアントにはエラーが返ります。強制終了でソケットが残った場合は、新しい専用ディレクトリを使うか、以前のワーカーが停止していることを確認してから残ったソケットを削除します。ワーカーは既存のパスを上書きしません。
 
+## プロジェクトごとにビルドプロセスを再利用する
+
+Linux と macOS では、`build-daemon` でプロジェクト専用の Node.js ビルドプロセスを常駐させることができます。先に [Chromium ワーカー](#pdf-ビルドで-chromium-を再利用する)を起動し、別のターミナルでプロジェクトディレクトリからデーモンを起動します。`socket_dir` にはワーカー用に作成した、所有者だけがアクセスできるディレクトリを指定します。
+
+```sh
+cd /absolute/path/to/project
+socket_dir=/tmp/vivliostyle.XXXXXXXX
+vivliostyle build-daemon --socket "$socket_dir/daemon.sock" --browser-worker "$socket_dir/build.sock"
+```
+
+デーモンの起動完了が表示されたら、同じプロジェクトディレクトリからデーモンソケットの絶対パスを指定してビルドします。
+
+```sh
+vivliostyle build --build-daemon /tmp/vivliostyle.XXXXXXXX/daemon.sock document1.md -o document1.pdf
+vivliostyle build --build-daemon /tmp/vivliostyle.XXXXXXXX/daemon.sock document2.md -o document2.pdf -o document2.epub
+```
+
+どちらのソケットにも、所有者だけがアクセスできるディレクトリが必要です。作業ディレクトリはシンボリックリンクを解決したパスで比較するため、プロジェクトディレクトリへのシンボリックリンクも使えます。`build` では `--build-daemon` と `--browser-worker` のどちらか一方を指定します。デーモンは起動時に指定したワーカーを使ってローカルの Chrome または Chromium でレンダリングし、PDF の後処理や EPUB、WebPub の出力にも対応します。
+
+デーモンはリクエストを受け付けた順にビルドし、ログと結果を各 CLI に返します。環境変数はデーモン起動時のものを使います。Vivliostyle、Vite、PostCSS のメイン設定ファイルはビルドごとに読み直します。設定ファイルから別途インポートする補助モジュールやプラグインを変更した場合は、デーモンを再起動してください。Vite のミドルウェアはタスク固有の設定とキャッシュを保持するため、Vite サーバーはタスクごとに起動・終了します。
+
+クライアントを中断したり接続を切断したりすると、待機中のビルドはキューから取り除かれ、実行中のビルドはキャンセルされます。デーモンは後片付けが完了してから次のビルドを開始します。実行プロセスが異常終了した場合や、キャンセルから 10 秒以内に停止しない場合、後続のビルドには新しい実行プロセスを使います。強制停止したビルドの出力がプロジェクト内に残ることがあります。デーモンのターミナルで Ctrl+C を押すか SIGTERM を送ると、待機中のビルドを拒否し、実行中のビルドを停止してデーモンソケットを削除します。Chromium ワーカーは別途停止してください。
+
+リポジトリで通常のビルド、Chromium の再利用、デーモンを使うビルドを比較するには、`pnpm build:cli` に続いて `node scripts/benchmark-browser-worker.ts` を実行します。文書のパスと、オプションで `--executable-browser <path>` を指定できます。ビルドの実経過時間、各処理段階の時間、サービスの起動・終了時間が表示されます。
+
 ## 印刷用 PDF（PDF/X-1a 形式）の生成
 
 - [Example: preflight](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/preflight)

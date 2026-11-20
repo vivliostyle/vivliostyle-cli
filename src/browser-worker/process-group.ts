@@ -62,12 +62,13 @@ async function runningDescendants(group: number): Promise<number[]> {
 export async function stopBuildDescendants(
   group: number,
   deadline: number,
-  mode: 'exit' | 'cancel' | 'orphan',
+  mode: 'exit' | 'cancel' | 'orphan' | 'reuse',
 ): Promise<void> {
   let terminating = mode !== 'exit';
+  const signalled = new Set<number>();
   while (signalProcess(-group, 0)) {
     const graceExpired = performance.now() >= deadline;
-    if (mode !== 'orphan') {
+    if (mode === 'exit' || mode === 'cancel') {
       if (graceExpired) {
         signalProcess(-group, 'SIGKILL');
       } else if (!terminating) {
@@ -80,17 +81,24 @@ export async function stopBuildDescendants(
       descendants = await runningDescendants(group);
     } catch (error) {
       // Keep the lease if process status is temporarily unavailable.
-      Logger.debug('Could not inspect the browser worker build group', error);
+      Logger.debug('Could not inspect the build process group', error);
       await setTimeout(100);
       continue;
     }
     if (descendants.length === 0) {
       return;
     }
-    if (mode === 'orphan' && graceExpired) {
-      // Keep the orphaned leader alive to hold the lease until its group drains.
+    if ((mode === 'orphan' || mode === 'reuse') && graceExpired) {
+      // Keep the leader alive to hold the lease until its descendants drain.
       for (const pid of descendants) {
         signalProcess(pid, 'SIGKILL');
+      }
+    } else if (mode === 'reuse') {
+      for (const pid of descendants) {
+        if (!signalled.has(pid)) {
+          signalProcess(pid, 'SIGTERM');
+          signalled.add(pid);
+        }
       }
     }
     await setTimeout(50);

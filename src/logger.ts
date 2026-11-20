@@ -290,7 +290,7 @@ export class Logger {
         } as const
       )[logLevel];
       if (this.#logLevel >= 3) {
-        debug.enable('vs-cli');
+        debug.enable([process.env.DEBUG, 'vs-cli'].filter(Boolean).join(','));
       }
     }
     if (logger) {
@@ -315,6 +315,35 @@ export class Logger {
 
   static setLogPrefix(prefix: string): void {
     this.#logPrefix = prefix;
+  }
+
+  static preserveState(): Disposable {
+    const level = this.#logLevel;
+    const loggerInstance = this.#loggerInstance;
+    const nonBlockingLogPrinted = this.#nonBlockingLogPrinted;
+    const customLogger = this.#customLogger;
+    const prefix = this.#logPrefix;
+    const stdin = this.#stdin;
+    const stdout = this.#stdout;
+    const stderr = this.#stderr;
+    const signal = this.#signal;
+    const containerForkMode = this.#containerForkMode;
+    const namespaces = process.env.DEBUG;
+    return {
+      [Symbol.dispose]: () => {
+        this.#logLevel = level;
+        this.#loggerInstance = loggerInstance;
+        this.#nonBlockingLogPrinted = nonBlockingLogPrinted;
+        this.#customLogger = customLogger;
+        this.#logPrefix = prefix;
+        this.#stdin = stdin;
+        this.#stdout = stdout;
+        this.#stderr = stderr;
+        this.#signal = signal;
+        this.#containerForkMode = containerForkMode;
+        debug.enable(namespaces ?? '');
+      },
+    };
   }
 
   #spinnerInstance: Spinner;

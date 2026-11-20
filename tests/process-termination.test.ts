@@ -11,6 +11,7 @@ import {
   registerTerminationHook,
   runCleanupHandlers,
   setupProcessTermination,
+  withCleanupScope,
 } from '../src/util.js';
 
 const fixturePath = fileURLToPath(
@@ -42,7 +43,8 @@ describe('process termination', () => {
         }),
     );
     const regularCleanup = vi.fn<() => void>();
-    const terminationHook = vi.fn<(exitCode: number) => void>();
+    const terminationHook =
+      vi.fn<(exitCode: number, signal: NodeJS.Signals) => void>();
     registerTerminationHook(terminationHook);
     registerCleanupHandler('regular cleanup', regularCleanup);
     registerCleanupHandler('priority cleanup', cleanup, { prepend: true });
@@ -62,7 +64,7 @@ describe('process termination', () => {
     listeners.get('SIGHUP')?.();
     listeners.get('SIGHUP')?.();
 
-    expect(terminationHook).toHaveBeenCalledWith(129);
+    expect(terminationHook).toHaveBeenCalledWith(129, 'SIGHUP');
     expect(regularCleanup).not.toHaveBeenCalled();
     expect(exit).not.toHaveBeenCalled();
 
@@ -87,6 +89,28 @@ describe('process termination', () => {
 
     expect(firstCleanup).toHaveBeenCalledOnce();
     expect(secondCleanup).toHaveBeenCalledOnce();
+  });
+
+  it('drains a failed request without running process cleanup', async () => {
+    const processCleanup = vi.fn<() => void>();
+    const requestCleanup = vi.fn<() => void>();
+    const failure = new Error('Build failed');
+    const unregister = registerCleanupHandler(
+      'process cleanup',
+      processCleanup,
+    );
+    try {
+      const request = withCleanupScope(async () => {
+        await Promise.resolve();
+        registerCleanupHandler('request cleanup', requestCleanup);
+        throw failure;
+      });
+      await expect(request).rejects.toBe(failure);
+      expect(requestCleanup).toHaveBeenCalledOnce();
+      expect(processCleanup).not.toHaveBeenCalled();
+    } finally {
+      unregister();
+    }
   });
 });
 

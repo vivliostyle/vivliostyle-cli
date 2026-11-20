@@ -3,29 +3,34 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
+
+import { Browser, detectBrowserPlatform, install } from '@puppeteer/browsers';
+
+import { DEFAULT_BROWSER_VERSIONS } from '../dist/constants.js';
 
 const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
-const requestedDocuments = process.argv
-  .slice(2)
-  .map((file) => path.resolve(file));
+const { values, positionals } = parseArgs({
+  options: { 'executable-browser': { type: 'string' } },
+  allowPositionals: true,
+});
+const requestedDocuments = positionals.map((file) => path.resolve(file));
 if (process.platform !== 'linux' && process.platform !== 'darwin') {
-  throw new Error('The browser worker benchmark requires Linux or macOS.');
+  throw new Error('The build benchmark requires Linux or macOS.');
 }
 await fs.access(cli);
 const documentCwd = requestedDocuments.length > 0 ? process.cwd() : undefined;
 const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'vs-bench-'));
-const socket = path.join(directory, 'build.sock');
+const cwd = documentCwd ?? directory;
+const workerSocket = path.join(directory, 'chromium.sock');
+const daemonSocket = path.join(directory, 'build.sock');
 const round = (milliseconds: number) => Math.round(milliseconds);
 
-function startCli(
-  cwd: string,
-  args: string[],
-  onStdout?: (output: string) => void,
-) {
+function startCli(args: string[], onStdout?: (output: string) => void) {
   const start = performance.now();
   const child = spawn(process.execPath, [cli, ...args], {
     cwd,
-    env: { ...process.env, DEBUG: 'vs-cli:pdf-timing' },
+    env: { ...process.env, DEBUG: 'vs-cli:build-timing,vs-cli:pdf-timing' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let stdout = '';
@@ -54,44 +59,136 @@ function startCli(
   return { child, exit };
 }
 
-async function build(document: string, index: number, worker: boolean) {
-  const { code, output, wallMs } = await startCli(documentCwd ?? directory, [
+async function getBrowserExecutable() {
+  if (values['executable-browser']) {
+    return path.resolve(values['executable-browser']);
+  }
+  const platform = detectBrowserPlatform();
+  if (!platform) {
+    throw new Error('No managed Chrome build is available on this platform.');
+  }
+  const { executablePath } = await install({
+    browser: Browser.CHROME,
+    buildId: DEFAULT_BROWSER_VERSIONS.chrome[platform],
+    cacheDir: fileURLToPath(
+      new URL(
+        '../node_modules/.cache/vivliostyle-browser-worker',
+        import.meta.url,
+      ),
+    ),
+  });
+  return executablePath;
+}
+
+function timing(output: string, field: string): number | undefined {
+  const samples = [...output.matchAll(new RegExp(`\\b${field}=(\\d+)`, 'gv'))];
+  return samples.length > 0
+    ? samples.reduce((total, [, sample]) => total + Number(sample), 0)
+    : undefined;
+}
+
+type Mode = 'one-shot' | 'browser worker' | 'build daemon';
+
+async function build(
+  document: string,
+  index: number,
+  mode: Mode,
+  executable: string,
+) {
+  const transport = {
+    'one-shot': [],
+    'browser worker': ['--browser-worker', workerSocket],
+    'build daemon': ['--build-daemon', daemonSocket],
+  }[mode];
+  const { code, output, wallMs } = await startCli([
     'build',
-    ...(worker ? ['--browser-worker', socket] : []),
+    ...transport,
     '--log-level',
     'silent',
+    '--executable-browser',
+    executable,
     document,
     '-o',
-    path.join(directory, `build-${index}.pdf`),
+    path.join(directory, `${mode}-${index}.pdf`),
   ]).exit;
   if (code !== 0) {
     throw new Error(`Build failed for ${document}\n${output}`);
   }
-  const launch = /PDF browser pid=\d+ launchMs=(\d+)/v.exec(output)?.[1];
-  const render = /PDF render renderMs=(\d+)/v.exec(output)?.[1];
-  if (launch === undefined || render === undefined) {
-    throw new Error(`Build timing was unavailable for ${document}\n${output}`);
-  }
   return {
+    mode,
+    build: index === 0 ? 'first' : 'subsequent',
     document: path.basename(document),
     wallMs: round(wallMs),
-    launchMs: Number(launch),
-    renderMs: Number(render),
+    configMs: timing(output, 'configMs'),
+    viteConfigMs: timing(output, 'viteConfigMs'),
+    viteStartupMs: timing(output, 'viteStartupMs'),
+    compileMs: timing(output, 'compileMs'),
+    launchMs: timing(output, 'launchMs'),
+    renderMs: timing(output, 'renderMs'),
+    postprocessMs: timing(output, 'postprocessMs'),
   };
 }
 
-async function stopWorker(worker: ReturnType<typeof startCli>) {
+async function stopService(service: ReturnType<typeof startCli>) {
   const start = performance.now();
-  worker.child.kill('SIGTERM');
+  service.child.kill('SIGTERM');
   const forceKill = setTimeout(() => {
-    worker.child.kill('SIGKILL');
-  }, 10_000);
+    service.child.kill('SIGKILL');
+  }, 15_000);
   try {
-    const result = await worker.exit;
-    return { ...result, shutdownMs: round(performance.now() - start) };
+    const result = await service.exit;
+    if (result.code !== 143) {
+      throw new Error(`Service failed to shut down normally\n${result.output}`);
+    }
+    return round(performance.now() - start);
   } finally {
     clearTimeout(forceKill);
   }
+}
+
+async function startService(args: string[], pattern: RegExp) {
+  const start = performance.now();
+  const ready = Promise.withResolvers<number>();
+  const service = startCli(args, (output) => {
+    if (pattern.test(output)) {
+      ready.resolve(performance.now());
+    }
+  });
+  const timer = setTimeout(() => {
+    ready.reject(new Error(`${args[0]} readiness timed out.`));
+  }, 20_000);
+  try {
+    const readyAt = await Promise.race([
+      ready.promise,
+      service.exit.then(({ output }) => {
+        throw new Error(`Service exited before readiness\n${output}`);
+      }),
+    ]);
+    return { service, startupMs: round(readyAt - start) };
+  } catch (error) {
+    await stopService(service).catch(() => {});
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function stopServices(
+  daemon: Awaited<ReturnType<typeof startService>> | undefined,
+  worker: Awaited<ReturnType<typeof startService>> | undefined,
+) {
+  let daemonShutdownMs = 0;
+  let workerShutdownMs = 0;
+  try {
+    if (daemon) {
+      daemonShutdownMs = await stopService(daemon.service);
+    }
+  } finally {
+    if (worker) {
+      workerShutdownMs = await stopService(worker.service);
+    }
+  }
+  return { daemonShutdownMs, workerShutdownMs };
 }
 
 try {
@@ -114,74 +211,54 @@ try {
           }),
         );
   await Promise.all(documents.map((document) => fs.access(document)));
-
-  console.log('Priming the managed browser cache with a one-shot build.');
-  await build(documents[0], 0, false);
+  const executable = await getBrowserExecutable();
+  await fs.access(executable);
+  console.log(`Chromium executable: ${executable}`);
+  console.log('Warming filesystem caches with an unmeasured one-shot build.');
+  await build(documents[0], 0, 'one-shot', executable);
 
   const rows = [];
-  const oneShotStart = performance.now();
-  for (const [index, document] of documents.entries()) {
-    rows.push({ mode: 'one-shot', ...(await build(document, index, false)) });
-  }
-  const oneShotMs = round(performance.now() - oneShotStart);
-
-  const persistentStart = performance.now();
-  const ready = Promise.withResolvers<number>();
-  const worker = startCli(
-    directory,
-    ['build-worker', '--socket', socket],
-    (output) => {
-      if (/Browser worker ready at [^\n]+\n/v.test(output)) {
-        ready.resolve(performance.now());
+  const totals = [];
+  for (const mode of ['one-shot', 'browser worker', 'build daemon'] as const) {
+    const start = performance.now();
+    const worker =
+      mode === 'one-shot'
+        ? undefined
+        : await startService(
+            ['build-worker', '--socket', workerSocket],
+            /Browser worker ready at [^\n]+\n/v,
+          );
+    let daemon: Awaited<ReturnType<typeof startService>> | undefined;
+    let shutdown: Awaited<ReturnType<typeof stopServices>>;
+    try {
+      if (mode === 'build daemon') {
+        daemon = await startService(
+          [
+            'build-daemon',
+            '--socket',
+            daemonSocket,
+            '--browser-worker',
+            workerSocket,
+          ],
+          /Build daemon ready at [^\n]+\n/v,
+        );
       }
-    },
-  );
-  let startupMs = 0;
-  let workerExit: Awaited<ReturnType<typeof stopWorker>>;
-  let readinessTimer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    readinessTimer = setTimeout(() => {
-      ready.reject(new Error('Worker readiness timed out.'));
-    }, 20_000);
-    const readyAt = await Promise.race([
-      ready.promise,
-      worker.exit.then(({ output }) => {
-        throw new Error(`Worker exited before readiness\n${output}`);
-      }),
-    ]);
-    clearTimeout(readinessTimer);
-    startupMs = round(readyAt - persistentStart);
-    for (const [index, document] of documents.entries()) {
-      rows.push({
-        mode: index === 0 ? 'persistent first' : 'persistent reused',
-        ...(await build(document, index, true)),
-      });
+      for (const [index, document] of documents.entries()) {
+        rows.push(await build(document, index, mode, executable));
+      }
+    } finally {
+      shutdown = await stopServices(daemon, worker);
     }
-  } finally {
-    clearTimeout(readinessTimer);
-    workerExit = await stopWorker(worker);
+    totals.push({
+      mode,
+      totalMs: round(performance.now() - start),
+      workerStartupMs: worker?.startupMs ?? 0,
+      daemonStartupMs: daemon?.startupMs ?? 0,
+      ...shutdown,
+    });
   }
-  if (workerExit.code !== 143) {
-    throw new Error(
-      `Worker failed to shut down normally\n${workerExit.output}`,
-    );
-  }
-  const persistentMs = round(performance.now() - persistentStart);
   console.table(rows);
-  console.table([
-    {
-      mode: 'one-shot',
-      totalMs: oneShotMs,
-      workerStartupMs: 0,
-      workerShutdownMs: 0,
-    },
-    {
-      mode: 'persistent',
-      totalMs: persistentMs,
-      workerStartupMs: startupMs,
-      workerShutdownMs: workerExit.shutdownMs,
-    },
-  ]);
+  console.table(totals);
 } finally {
   await fs.rm(directory, { recursive: true, force: true });
 }

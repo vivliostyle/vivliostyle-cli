@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 
 import postcss from 'postcss';
 import postcssrc from 'postcss-load-config';
@@ -427,6 +428,33 @@ export function loadPostcssConfig(
 
 export function clearPostcssConfigCache(): void {
   postcssConfigCache.clear();
+}
+
+export async function reloadPostcssConfig(): Promise<void> {
+  const previous = [...postcssConfigCache.values()];
+  clearPostcssConfigCache();
+  // postcss-load-config cache-busts ESM imports. Node's ESM loader still reads
+  // CommonJS exports from the require cache, including on a failed plugin load.
+  const { cache } = createRequire(import.meta.url);
+  for (const result of await Promise.allSettled(previous)) {
+    if (result.status === 'fulfilled' && result.value?.file) {
+      // The main config can be a symlink to a differently named module.
+      try {
+        Reflect.deleteProperty(cache, fs.realpathSync(result.value.file));
+      } catch {
+        // An edited or removed link will be resolved again on the next load.
+      }
+    }
+  }
+  for (const file of Object.keys(cache)) {
+    if (
+      /^(?:\.postcssrc|postcss\.config)\.[cm]?[jt]s$/v.test(
+        upath.basename(file),
+      )
+    ) {
+      Reflect.deleteProperty(cache, file);
+    }
+  }
 }
 
 /**

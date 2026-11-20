@@ -1,5 +1,6 @@
 import type {
   InlineConfig,
+  Plugin,
   PreviewServer,
   ResolvedConfig as ResolvedViteConfig,
   ViteDevServer,
@@ -64,6 +65,23 @@ const inlineConfig = {} as ParsedVivliostyleInlineConfig;
 describe('Vite server cleanup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('closes a partially started build server when Vite rejects the launch', async () => {
+    const close = vi.fn<() => Promise<void>>(async () => {});
+    const launchError = new Error('Failed to bind the build server');
+    mockedVite.preview.mockImplementationOnce((inline) => {
+      const capture = inline!.plugins![0] as Plugin;
+      const configure = capture.configurePreviewServer as (
+        server: PreviewServer,
+      ) => void;
+      configure({ close } as unknown as PreviewServer);
+      return Promise.reject(launchError);
+    });
+    await expect(
+      createViteServer({ config, viteConfig, inlineConfig, mode: 'build' }),
+    ).rejects.toBe(launchError);
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it.each([

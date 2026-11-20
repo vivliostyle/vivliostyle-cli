@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
+import debug from 'debug';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { type PreviewServer, build as viteBuild } from 'vite';
@@ -20,6 +21,8 @@ import { validateThemeCssDependencies } from '../processor/css.js';
 import { createViteServer, generateCmykReserveMap } from '../server.js';
 import { cwd, runCleanupHandlers } from '../util.js';
 
+const buildTiming = debug('vs-cli:build-timing');
+
 export async function build(
   inlineConfig: ParsedVivliostyleInlineConfig,
   {
@@ -33,6 +36,7 @@ export async function build(
   }
   Logger.debug('build > inlineConfig %O', inlineConfig);
 
+  const configStart = performance.now();
   let vivliostyleConfig =
     (await loadVivliostyleConfig(inlineConfig)) ??
     setupConfigFromFlags(inlineConfig);
@@ -42,6 +46,10 @@ export async function build(
     quick: false,
   });
   const { inlineOptions } = vivliostyleConfig;
+  buildTiming(
+    'Build configuration configMs=%d',
+    Math.round(performance.now() - configStart),
+  );
   Logger.debug('build > vivliostyleConfig %O', vivliostyleConfig);
 
   for (const [i, task] of vivliostyleConfig.tasks.entries()) {
@@ -69,10 +77,16 @@ export async function build(
         );
       }
     }
+    const viteConfigStart = performance.now();
     const viteConfig = await resolveViteConfig({
       ...config,
       mode: 'build',
     });
+    buildTiming(
+      'Build Vite configuration viteConfigMs=%d',
+      Math.round(performance.now() - viteConfigStart),
+    );
+    inlineConfig.signal?.throwIfAborted();
 
     let server: PreviewServer | undefined;
     if (!containerForkMode) {
@@ -84,15 +98,22 @@ export async function build(
           configFile: viteConfig.configFile,
           root: config.serverRootDir,
         });
+        inlineConfig.signal?.throwIfAborted();
       }
 
       if (!inlineConfig.disableServerStartup) {
+        const viteStart = performance.now();
         server = await createViteServer({
           config,
           viteConfig,
           inlineConfig,
           mode: 'build',
         });
+        buildTiming(
+          'Build Vite startup viteStartupMs=%d',
+          Math.round(performance.now() - viteStart),
+        );
+        inlineConfig.signal?.throwIfAborted();
 
         const addressInfo = server.httpServer?.address();
         if (addressInfo && typeof addressInfo !== 'string') {
@@ -113,6 +134,7 @@ export async function build(
 
       // build artifacts
       if (isWebPubConfig(config)) {
+        const compileStart = performance.now();
         inlineConfig.signal?.throwIfAborted();
         const { cleanupWorkspace, compile, prepareThemeDirectory } =
           await import('../processor/compile.js');
@@ -122,6 +144,10 @@ export async function build(
         await validateThemeCssDependencies(config);
         await compile(config);
         await copyAssets(config);
+        buildTiming(
+          'Build compilation compileMs=%d',
+          Math.round(performance.now() - compileStart),
+        );
       }
 
       // Write CMYK reserve map if configured

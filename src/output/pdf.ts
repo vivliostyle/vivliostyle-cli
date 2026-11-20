@@ -178,6 +178,7 @@ export async function buildPDF({
   signal?.throwIfAborted();
 
   Logger.logUpdate('Processing PDF');
+  const postprocessStart = performance.now();
   fs.mkdirSync(upath.dirname(target.path), { recursive: true });
 
   await postProcessPDF({
@@ -204,6 +205,10 @@ export async function buildPDF({
     pdfx: target.pdfx,
     signal,
   });
+  pdfTiming(
+    'PDF post-processing postprocessMs=%d',
+    Math.round(performance.now() - postprocessStart),
+  );
 
   return target.path;
 }

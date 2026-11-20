@@ -8,33 +8,50 @@ import { resolveWorkerSocket } from './protocol.js';
 export const inheritedSocketFd = 3;
 
 export function workerUnavailable(socketPath: string, cause?: unknown): Error {
+  return serviceUnavailable('Browser worker', socketPath, cause);
+}
+
+function serviceUnavailable(
+  service: string,
+  socketPath: string,
+  cause?: unknown,
+): Error {
   return new Error(
-    `Browser worker unavailable at ${socketPath}${cause ? `: ${toError(cause).message}` : ''}`,
+    `${service} unavailable at ${socketPath}${cause ? `: ${toError(cause).message}` : ''}`,
     { cause },
   );
 }
 
-export async function connectBrowserWorker(
+export function connectBrowserWorker(
   socketPath: string,
   signal: AbortSignal,
 ): Promise<Socket> {
+  return connectOwnerSocket(socketPath, signal, 'Browser worker');
+}
+
+export async function connectOwnerSocket(
+  socketPath: string,
+  signal: AbortSignal,
+  service: string,
+): Promise<Socket> {
   signal.throwIfAborted();
+  const unavailable = (cause?: unknown) =>
+    serviceUnavailable(service, socketPath, cause);
   let address: string;
   try {
-    address = resolveWorkerSocket(socketPath);
+    address = resolveWorkerSocket(socketPath, service.toLowerCase());
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-      throw workerUnavailable(socketPath, error);
+      throw unavailable(error);
     }
     throw error;
   }
   const info = fs.lstatSync(address, { throwIfNoEntry: false });
   if (!info) {
-    throw workerUnavailable(socketPath);
+    throw unavailable();
   }
   if (!info.isSocket() || info.uid !== process.getuid?.()) {
-    throw workerUnavailable(
-      socketPath,
+    throw unavailable(
       new Error('Expected a Unix socket owned by the current user.'),
     );
   }
@@ -51,6 +68,6 @@ export async function connectBrowserWorker(
   } catch (error) {
     socket.destroy();
     signal.throwIfAborted();
-    throw workerUnavailable(socketPath, error);
+    throw unavailable(error);
   }
 }

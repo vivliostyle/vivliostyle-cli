@@ -146,6 +146,10 @@ https://github.com/vibranthq/press-ready
       '--browser-worker <absolute-path>',
       'reuse Chromium through a running build worker (Linux and macOS)',
     )
+    .option(
+      '--build-daemon <absolute-path>',
+      'submit the build to a daemon for this project (Linux and macOS)',
+    )
     .option('--image <image>', 'specify a docker image to render')
     .option(
       '--viewer <URL>',
@@ -228,14 +232,27 @@ function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) ? +val * 1000 : undefined;
 }
 
-export function parseBuildOptions(argv: string[]): {
+export function parseBuildOptions(
+  argv: string[],
+  { exitOverride = false } = {},
+): {
   options: CliFlags;
   browserWorker?: string;
+  buildDaemon?: string;
 } {
-  const program = setupBuildParserProgram().parse(argv);
-  const { browserWorker, ...options } = program.opts<
-    CliFlags & { browserWorker?: string }
+  const program = setupBuildParserProgram();
+  if (exitOverride) {
+    program.exitOverride();
+  }
+  program.parse(argv);
+  const { browserWorker, buildDaemon, ...options } = program.opts<
+    CliFlags & { browserWorker?: string; buildDaemon?: string }
   >();
+  if (browserWorker !== undefined && buildDaemon !== undefined) {
+    throw new Error(
+      '--build-daemon and --browser-worker are mutually exclusive on build.',
+    );
+  }
   const [input] = program.args;
   // An input named vivliostyle.config is a config path.
   const buildOptions =
@@ -244,5 +261,5 @@ export function parseBuildOptions(argv: string[]): {
     upath.basename(input).startsWith('vivliostyle.config')
       ? { ...options, config: input }
       : { ...options, input };
-  return { options: buildOptions, browserWorker };
+  return { options: buildOptions, browserWorker, buildDaemon };
 }

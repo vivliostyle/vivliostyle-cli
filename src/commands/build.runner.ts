@@ -7,10 +7,21 @@ import { parseBuildOptions } from './build.parser.js';
 
 export async function runBuildCli(argv: string[]): Promise<void> {
   await runCliCommand(async (cliSignal) => {
-    const { options, browserWorker } = parseBuildOptions(argv);
+    const { options, browserWorker, buildDaemon } = parseBuildOptions(argv);
     const containerOptions = isInContainer()
       ? process.env.VS_CLI_BUILD_PDF_OPTIONS
       : undefined;
+    if (buildDaemon !== undefined) {
+      if (containerOptions || options.renderMode === 'docker') {
+        throw new Error(
+          '--build-daemon cannot be used with Docker PDF rendering.',
+        );
+      }
+      Logger.setLogOptions({ logLevel: options.logLevel, signal: cliSignal });
+      const { submitBuild } = await import('../build-daemon/client.js');
+      await submitBuild(argv.slice(2), buildDaemon, cliSignal);
+      return;
+    }
     if (browserWorker !== undefined) {
       if (containerOptions || options.renderMode === 'docker') {
         throw new Error(

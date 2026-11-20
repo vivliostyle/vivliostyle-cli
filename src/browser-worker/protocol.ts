@@ -101,9 +101,12 @@ export type WorkerMessage =
       };
     };
 
-export function resolveWorkerSocket(socketPath: string): string {
+export function resolveWorkerSocket(
+  socketPath: string,
+  service = 'browser worker',
+): string {
   if (process.platform !== 'linux' && process.platform !== 'darwin') {
-    throw new Error('Browser workers are supported only on Linux and macOS.');
+    throw new Error(`The ${service} is supported only on Linux and macOS.`);
   }
   const name = path.basename(socketPath);
   if (
@@ -113,7 +116,7 @@ export function resolveWorkerSocket(socketPath: string): string {
     socketPath.endsWith('/') ||
     socketPath.includes('\0')
   ) {
-    throw new Error('The browser worker socket must be an absolute file path.');
+    throw new Error(`The ${service} socket must be an absolute file path.`);
   }
   const directory = fs.realpathSync(path.dirname(socketPath));
   const info = fs.statSync(directory);
@@ -123,14 +126,14 @@ export function resolveWorkerSocket(socketPath: string): string {
     info.mode & 0o077
   ) {
     throw new Error(
-      `The browser worker socket directory must be owned by the current user and accessible only to its owner (chmod 700): ${directory}`,
+      `The ${service} socket directory must be owned by the current user and accessible only to its owner (chmod 700): ${directory}`,
     );
   }
   const socket = path.join(directory, name);
   const maxPathBytes = process.platform === 'darwin' ? 103 : 107;
   if (Buffer.byteLength(socket) > maxPathBytes) {
     throw new Error(
-      `The browser worker socket path exceeds ${maxPathBytes} bytes. Use a shorter path.`,
+      `The ${service} socket path exceeds ${maxPathBytes} bytes. Use a shorter path.`,
     );
   }
   return socket;
@@ -138,14 +141,16 @@ export function resolveWorkerSocket(socketPath: string): string {
 
 // Frames contain a four-byte big-endian JSON length and that many UTF-8 bytes.
 // A PDF header is followed by exactly 'size' raw bytes on the same connection.
-export class WorkerConnection {
+export class WorkerConnection<Message = ClientMessage | WorkerMessage> {
   readonly #socket: Socket;
   readonly #stream: AsyncIterator<unknown, unknown>;
+  readonly #service: string;
   #pending: Buffer = Buffer.alloc(0);
 
-  constructor(socket: Socket) {
+  constructor(socket: Socket, service = 'Browser worker') {
     this.#socket = socket;
     this.#stream = socket[Symbol.asyncIterator]();
+    this.#service = service;
   }
 
   async #read(size: number): Promise<Buffer> {
@@ -161,7 +166,7 @@ export class WorkerConnection {
     while (offset < size) {
       const { done, value } = await this.#stream.next();
       if (done || !Buffer.isBuffer(value)) {
-        throw new Error('Browser worker connection closed.');
+        throw new Error(`${this.#service} connection closed.`);
       }
       const copied = value.copy(bytes, offset);
       this.#pending = value.subarray(copied);
@@ -173,7 +178,7 @@ export class WorkerConnection {
   async readMessage(): Promise<unknown> {
     const size = (await this.#read(4)).readUInt32BE();
     if (size === 0 || size > maxMessageSize) {
-      throw new Error('Invalid browser worker message length.');
+      throw new Error(`${this.#service} message has an invalid frame length.`);
     }
     return JSON.parse((await this.#read(size)).toString('utf8'));
   }
@@ -189,11 +194,11 @@ export class WorkerConnection {
     return this.#read(size);
   }
 
-  send(message: ClientMessage | WorkerMessage): void {
+  send(message: Message): void {
     const json = Buffer.from(JSON.stringify(message));
     if (json.length > maxMessageSize) {
       throw new Error(
-        'Browser worker message exceeds the protocol size limit.',
+        `${this.#service} message exceeds the protocol size limit.`,
       );
     }
     const frame = Buffer.allocUnsafe(4 + json.length);
