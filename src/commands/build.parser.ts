@@ -1,9 +1,8 @@
 import { Command, Option } from 'commander';
 import upath from 'upath';
 
-import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { versionForDisplay } from '../util.js';
-import { type CliFlags, parseInlineFlags } from './cli-flags.js';
+import type { CliFlags } from './cli-flags.js';
 
 function setupBuildParserProgram(): Command {
   // Provide an order-sensitive command parser
@@ -229,8 +228,8 @@ function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) ? +val * 1000 : undefined;
 }
 
-export function parseBuildCli(argv: string[]): {
-  inlineConfig: ParsedVivliostyleInlineConfig;
+export function parseBuildOptions(argv: string[]): {
+  options: CliFlags;
   browserWorker?: string;
 } {
   const program = setupBuildParserProgram().parse(argv);
@@ -239,18 +238,11 @@ export function parseBuildCli(argv: string[]): {
   >();
   const [input] = program.args;
   // An input named vivliostyle.config is a config path.
-  const inlineConfig = parseInlineFlags(
+  const buildOptions =
     input &&
-      !options.config &&
-      upath.basename(input).startsWith('vivliostyle.config')
+    !options.config &&
+    upath.basename(input).startsWith('vivliostyle.config')
       ? { ...options, config: input }
-      : { ...options, input },
-  );
-  return { inlineConfig, browserWorker };
-}
-
-export function parseBuildCommand(
-  argv: string[],
-): ParsedVivliostyleInlineConfig {
-  return parseBuildCli(argv).inlineConfig;
+      : { ...options, input };
+  return { options: buildOptions, browserWorker };
 }

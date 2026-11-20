@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  parseBuildCli,
-  parseBuildCommand,
-} from '../src/commands/build.parser.js';
+import { parseBuildOptions } from '../src/commands/build.parser.js';
+import { parseInlineFlags } from '../src/commands/cli-flags.js';
 
 describe('build command parser', () => {
   it('keeps the browser worker option out of inline configuration', () => {
-    const parsed = parseBuildCli([
+    const parsed = parseBuildOptions([
       'vivliostyle',
       'build',
       '--browser-worker',
@@ -15,18 +13,18 @@ describe('build command parser', () => {
       'document.md',
     ]);
     expect(parsed.browserWorker).toBe('/tmp/vs/build.sock');
-    expect(parsed.inlineConfig).not.toHaveProperty('browserWorker');
+    expect(parsed.options).not.toHaveProperty('browserWorker');
   });
 
   it('accepts a positional input starting with a hyphen after --', () => {
-    const options = parseBuildCommand([
+    const { options } = parseBuildOptions([
       'vivliostyle',
       'build',
       '--',
       '-input.md',
     ]);
 
-    expect(options.input).toEqual({
+    expect(parseInlineFlags(options).input).toEqual({
       format: 'markdown',
       entry: '-input.md',
     });

@@ -503,6 +503,17 @@ describe.skipIf(!supported)('bundled browser worker', () => {
     expect(await succeeded(build('after-launch-recovery'))).toBe(replacement);
   }, 60_000);
 
+  it('validates build options before leasing the worker', async () => {
+    await startWorker();
+    const invalid = await build('invalid-options', {
+      args: ['--timeout=-1'],
+    }).exit;
+    expect(invalid.code).toBe(1);
+    expect(invalid.output).toContain('Invalid value: Expected >=0');
+    expect(invalid.output).not.toContain('PDF browser pid=');
+    await succeeded(build('valid-options'));
+  }, 30_000);
+
   it('releases the lease after interrupting a config that does not settle', async () => {
     await startWorker();
     const pid = await succeeded(build('before-config'));

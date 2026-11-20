@@ -59,9 +59,11 @@ vi.mock('../src/core/theme-validate.js', () => ({
 }));
 
 vi.mock('../src/commands/build.parser.js', () => ({
-  parseBuildCli: (...args: string[]) => ({
-    inlineConfig: mocked.parseBuildFlags(...args),
-  }),
+  parseBuildOptions: () => ({ options: {} }),
+}));
+
+vi.mock('../src/commands/cli-flags.js', () => ({
+  parseInlineFlags: mocked.parseBuildFlags,
 }));
 
 vi.mock('../src/commands/create.parser.js', () => ({

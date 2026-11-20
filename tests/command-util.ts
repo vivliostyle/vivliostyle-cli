@@ -7,8 +7,11 @@ import * as v from 'valibot';
 import type { ViteDevServer } from 'vite';
 import { afterEach } from 'vitest';
 
-import { parseBuildCommand } from '../src/commands/build.parser.js';
-import { setupConfigFromFlags } from '../src/commands/cli-flags.js';
+import { parseBuildOptions } from '../src/commands/build.parser.js';
+import {
+  parseInlineFlags,
+  setupConfigFromFlags,
+} from '../src/commands/cli-flags.js';
 import { parseCreateCommand } from '../src/commands/create.parser.js';
 import { parsePreviewCommand } from '../src/commands/preview.parser.js';
 import { parseThemeCreateCommand } from '../src/commands/theme-create.parser.js';
@@ -51,6 +54,10 @@ afterEach(async () => {
   }
   runningServers.clear();
 });
+
+function parseBuildCommand(argv: string[]) {
+  return parseInlineFlags(parseBuildOptions(argv).options);
+}
 
 type CommandName =
   | 'build'

@@ -1,7 +1,8 @@
 import { Socket } from 'node:net';
 import { setTimeout } from 'node:timers/promises';
 
-import { parseBuildCli } from '../commands/build.parser.js';
+import { parseBuildOptions } from '../commands/build.parser.js';
+import { parseInlineFlags } from '../commands/cli-flags.js';
 import { build } from '../core/build.js';
 import { runCliCommand } from '../entry-util.js';
 import { Logger } from '../logger.js';
@@ -46,10 +47,11 @@ const unregister = registerTerminationHook(async () => {
   await orphanCleanup;
 });
 const command = runCliCommand(async (signal) => {
-  const { inlineConfig, browserWorker } = parseBuildCli(process.argv);
+  const { options, browserWorker } = parseBuildOptions(process.argv);
   if (browserWorker === undefined) {
     throw new Error('The internal build requires --browser-worker.');
   }
+  const inlineConfig = parseInlineFlags(options);
   Logger.setLogOptions(inlineConfig);
   await withBrowserWorker(socket, browserWorker, signal, (renderWithWorker) =>
     build({ ...inlineConfig, signal }, { renderWithWorker }),
