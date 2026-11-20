@@ -83,7 +83,13 @@ Both sockets require an owner-only directory. The daemon compares canonical work
 
 The daemon serves builds in submission order and sends each build's logs and result to its invoking CLI. It uses the environment from daemon startup. It reloads the main Vivliostyle, Vite, and PostCSS config files for each build. Restart the daemon after editing separately imported config helpers or plugins. Each task starts and closes its own Vite server because the server's middleware captures that task's configuration and caches.
 
-Interrupting or disconnecting a client removes its queued build or cancels its active build. The daemon waits for cleanup before starting the next build. If the executor crashes or fails to stop within ten seconds of cancellation, the daemon replaces it for subsequent builds. A forced stop can leave partial project outputs from the interrupted build. Press Ctrl+C in the daemon terminal or send it SIGTERM to reject queued builds, stop the active build, and remove the daemon socket. Stop the Chromium worker separately.
+The daemon retires its Node.js executor after 100 dispatched builds, including failed builds and builds cancelled after dispatch. It starts a replacement when the next build needs one. The daemon socket, queue, and Chromium worker stay active across rotation.
+
+Interrupting or disconnecting a client removes its queued build or cancels its active build. On Ctrl+C, the client sends a cancellation request and waits up to 12 seconds before closing the connection and exiting with status 130. The daemon also treats a closed connection as cancellation.
+
+The daemon requires `ps` with process-group inspection. It allows up to ten seconds for cancellation or descendant cleanup and uses SIGKILL if the executor group fails to stop within the grace period. Before dispatching another build, it gives the group one more second to stop and verifies that no live members remain. If verification fails, the daemon reports the failure, rejects queued builds, and keeps the executor's private temporary directory. Otherwise, it removes that directory after the executor and its descendants stop, including after a crash, forced cancellation, rotation, or daemon shutdown. Ordinary builds also clean up their own temporary files. A forced stop can leave partial outputs in the project directory.
+
+Press Ctrl+C in the daemon terminal or send it SIGTERM to reject queued builds, stop the active build, and remove the daemon socket. Stop the Chromium worker separately.
 
 To compare one-shot builds, Chromium reuse, and daemon builds from the repository, run `pnpm build:cli` followed by `node scripts/benchmark-browser-worker.ts`. The benchmark accepts document paths and an optional `--executable-browser <path>`. It reports per-build wall time, phase timings, and service startup and shutdown time.
 

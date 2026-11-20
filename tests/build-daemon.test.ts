@@ -62,7 +62,7 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       </script>`);
   });
 
-  function start(args: string[], cwd = project) {
+  function start(args: string[], cwd = project, env?: NodeJS.ProcessEnv) {
     const child = spawn(process.execPath, [cli, ...args], {
       cwd,
       env: {
@@ -70,6 +70,7 @@ describe.skipIf(!supported)('bundled build daemon', () => {
         DEBUG: 'vs-cli,vs-cli:pdf-timing',
         TMPDIR: directory,
         VS_BUILD_DAEMON_TEST: args[0] === 'build-daemon' ? 'service' : 'client',
+        ...env,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -99,16 +100,20 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     };
   }
 
-  async function startServices() {
+  async function startServices(env?: NodeJS.ProcessEnv) {
     const worker = start(['build-worker', '--socket', workerSocket]);
     await worker.waitFor(/Browser worker ready at /v);
-    const daemon = start([
-      'build-daemon',
-      '--socket',
-      daemonSocket,
-      '--browser-worker',
-      workerSocket,
-    ]);
+    const daemon = start(
+      [
+        'build-daemon',
+        '--socket',
+        daemonSocket,
+        '--browser-worker',
+        workerSocket,
+      ],
+      project,
+      env,
+    );
     await daemon.waitFor(/Build daemon ready at /v);
     return { worker, daemon };
   }
@@ -205,6 +210,62 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     );
   }
 
+  async function executorDirectories() {
+    return (await fs.readdir(directory))
+      .filter((name) => name.startsWith('vivliostyle-executor-'))
+      .map((name) => path.join(directory, name));
+  }
+
+  async function mockProcessInspection(mode: 'recover' | 'retain' | 'startup') {
+    const preload = path.join(project, 'inspect.cjs');
+    await fs.writeFile(
+      preload,
+      String.raw`
+      const children = require('node:child_process');
+      const { appendFileSync, existsSync } = require('node:fs');
+      const { syncBuiltinESMExports } = require('node:module');
+      const executor = process.argv[1]?.endsWith('/build-daemon/internal-executor.js');
+      const supervisor = process.argv[2] === 'build-daemon';
+      const mode = process.env.VS_TEST_INSPECTION_MODE;
+      const armed = () => existsSync('fail-inspection');
+      const inspect = children.execFile;
+      let failures = 0;
+      children.execFile = (file, args, options, callback) => {
+        if (args.includes('pgid=') && (executor || supervisor)) {
+          appendFileSync('inspection.log', executor ? 'executor ps\n' : 'supervisor ps\n');
+          if (mode === 'startup' || (armed() && (executor || mode === 'retain'))) {
+            // Exercise retry handling first, then let a hung inspection consume
+            // the balance of the current deadline.
+            const script = ++failures <= 2 ? 'process.exit(1)' : 'setInterval(() => {}, 1000)';
+            // An inspection stuck in the kernel may never report its exit.
+            const report = supervisor && failures > 2 ? () => {} : callback;
+            return inspect(process.execPath, ['-e', script], options, report);
+          }
+        }
+        return inspect(file, args, options, callback);
+      };
+      syncBuiltinESMExports();
+      const kill = process.kill;
+      process.kill = (pid, signal) => {
+        if (supervisor && pid < 0 && armed()) {
+          if (signal === 'SIGKILL') {
+            appendFileSync('inspection.log', 'supervisor kill\n');
+          } else if (signal === 0) {
+            // Force the supervisor down the ps verification path on systems
+            // that reap every member and make kill(0) return ESRCH immediately.
+            return true;
+          }
+        }
+        return kill(pid, signal);
+      };
+      `,
+    );
+    return {
+      NODE_OPTIONS: `--require=${JSON.stringify(preload)}`,
+      VS_TEST_INSPECTION_MODE: mode,
+    };
+  }
+
   async function listenOnPort(requestedPort: number) {
     const server = createServer();
     server.listen(requestedPort, '127.0.0.1');
@@ -265,6 +326,7 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       socket.destroy();
     }
     for (const child of children) {
+      child.kill('SIGCONT');
       child.kill('SIGTERM');
     }
     const force = setTimeout(() => {
@@ -394,12 +456,44 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     expect(last.output).toContain('Config runtime service undefined');
     await shutdown(daemon);
     expect(() => process.kill(first.executor, 0)).toThrow(/ESRCH/v);
+    expect(await executorDirectories()).toEqual([]);
     await expect(fs.stat(daemonSocket)).rejects.toMatchObject({
       code: 'ENOENT',
     });
     expect(process.kill(first.browser, 0)).toBe(true);
     await shutdown(worker);
   }, 90_000);
+
+  it('restores the CommonJS loader after a Vite config throws', async () => {
+    await startServices();
+    await file('vite.config.cjs', "throw new Error('Broken CommonJS config');");
+    const failed = await build('vite-broken').exit;
+    expect(failed).toMatchObject({
+      code: 1,
+      output: expect.stringContaining('Broken CommonJS config'),
+    });
+    const pid = /Build daemon executor pid=(\d+)/v.exec(failed.output)?.[1];
+    expect(pid).toBeDefined();
+    await file('index.html', '<!doctype html><title>Vite entry</title>');
+    await file(
+      'vite.config.cjs',
+      "module.exports = { marker: 'repaired', build: { write: false } };",
+    );
+    await file(
+      'probe.mjs',
+      `
+      import { createRequire } from 'node:module';
+      const require = createRequire(process.cwd() + '/probe.mjs');
+      console.log('CommonJS config:', require('./vite.config.cjs').marker);
+      export default { entry: 'first.md' };
+    `,
+    );
+    const recovered = await succeeded(
+      build('vite-repaired', ['--config', 'probe.mjs']),
+    );
+    expect(recovered.executor).toBe(Number(pid));
+    expect(recovered.output).toContain('CommonJS config: repaired');
+  }, 60_000);
 
   it('serializes overlapping jobs and drains cancellation, disconnect, and shutdown', async () => {
     const { daemon, worker } = await startServices();
@@ -519,19 +613,25 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     `,
     );
     await file(
-      'stalled.mjs',
+      'stalled-vite.mjs',
       `
       import { spawn } from 'node:child_process';
       import { appendFileSync } from 'node:fs';
       appendFileSync('attempts', 'stalled\\n');
       spawn(process.execPath, ['descendant.mjs']);
       await new Promise(() => {});
-      export default { entry: 'first.md' };
+      export default {};
     `,
     );
     const { connection } = raw();
     connection.send(
-      request(flags('stalled').concat('--config', 'stalled.mjs')),
+      request(
+        flags('stalled').concat(
+          'https://example.invalid/document.html',
+          '--vite-config-file',
+          'stalled-vite.mjs',
+        ),
+      ),
     );
     await expect(connection.readMessage()).resolves.toEqual({
       type: 'started',
@@ -542,7 +642,20 @@ describe.skipIf(!supported)('bundled build daemon', () => {
         fs.readFile(path.join(project, 'descendant.pid'), 'utf8').then(Number),
       waitOptions,
     );
-    const next = build('after-stall');
+    const [temporary] = await executorDirectories();
+    expect((await fs.stat(temporary)).mode & 0o777).toBe(0o700);
+    expect(await fs.readdir(temporary)).toEqual([
+      expect.stringMatching(/^tmp-/v),
+    ]);
+    await file(
+      'after-stall.mjs',
+      `
+      import { existsSync } from 'node:fs';
+      console.log('Old temporary directory exists:', existsSync(${JSON.stringify(temporary)}));
+      export default { entry: 'first.md' };
+    `,
+    );
+    const next = build('after-stall', ['--config', 'after-stall.mjs']);
     await next.waitFor(waiting);
     connection.send({ type: 'cancel' });
     await expect(
@@ -553,6 +666,11 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     const replacement = await succeeded(next);
     expect(replacement.executor).not.toBe(first.executor);
     expect(replacement.browser).toBe(first.browser);
+    expect(replacement.output).toContain(
+      'Old temporary directory exists: false',
+    );
+    const [crashTemporary] = await executorDirectories();
+    expect(crashTemporary).not.toBe(temporary);
     const processes = execFileSync(
       '/bin/ps',
       ['-A', '-o', 'pid=', '-o', 'stat='],
@@ -577,8 +695,179 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     const recovered = await succeeded(build('after-crash'));
     expect(recovered.executor).not.toBe(replacement.executor);
     expect(recovered.browser).toBe(first.browser);
+    expect(await executorDirectories()).not.toContain(crashTemporary);
     await assertResourcesReleased();
   }, 90_000);
+
+  it('bounds client cancellation when the daemon is paused', async () => {
+    const { daemon } = await startServices();
+    const active = await hold('paused');
+    daemon.child.kill('SIGSTOP');
+    try {
+      const startTime = performance.now();
+      active.child.kill('SIGINT');
+      expect(await active.exit).toMatchObject({ code: 130 });
+      const elapsed = performance.now() - startTime;
+      expect(elapsed).toBeGreaterThanOrEqual(11_500);
+      expect(elapsed).toBeLessThan(14_000);
+    } finally {
+      daemon.child.kill('SIGCONT');
+    }
+    await succeeded(build('after-resume'));
+    await assertResourcesReleased();
+  }, 60_000);
+
+  it('rotates after 100 dispatches while preserving the Chromium worker', async () => {
+    await startServices();
+    const first = await succeeded(build('before-rotation'));
+    const [originalTemporary] = await executorDirectories();
+
+    const cancelled = await hold('rotation-cancelled');
+    cancelled.child.kill('SIGINT');
+    expect(await cancelled.exit).toMatchObject({
+      code: 130,
+      output: expect.stringContaining(
+        `Build daemon executor pid=${first.executor}`,
+      ),
+    });
+    for (let count = 3; count < 100; count++) {
+      const { connection } = raw();
+      connection.send(request(['--unknown-build-option']));
+      await expect(connection.readMessage()).resolves.toEqual({
+        type: 'started',
+        pid: first.executor,
+      });
+      await expect(
+        readUntil(connection, (reply) => reply.type === 'result'),
+      ).resolves.toMatchObject({
+        type: 'result',
+        error: expect.stringContaining('unknown option'),
+      });
+    }
+
+    expect(await succeeded(build('build-100'))).toMatchObject({
+      executor: first.executor,
+      browser: first.browser,
+    });
+    await vi.waitFor(async () => {
+      expect(await executorDirectories()).toEqual([]);
+      expect(() => process.kill(first.executor, 0)).toThrow(/ESRCH/v);
+    }, waitOptions);
+    const replacement = await succeeded(build('build-101'));
+    expect(replacement.executor).not.toBe(first.executor);
+    expect(replacement.browser).toBe(first.browser);
+    expect(await executorDirectories()).not.toContain(originalTemporary);
+    expect((await pdf('build-100')).getPageCount()).toBeGreaterThan(0);
+    expect((await pdf('build-101')).getPageCount()).toBeGreaterThan(0);
+  }, 90_000);
+
+  it('requires process-group inspection before daemon readiness', async () => {
+    const env = await mockProcessInspection('startup');
+    const daemon = start(
+      [
+        'build-daemon',
+        '--socket',
+        daemonSocket,
+        '--browser-worker',
+        workerSocket,
+      ],
+      project,
+      env,
+    );
+    const result = await daemon.exit;
+    expect(result).toMatchObject({
+      code: 1,
+      output: expect.stringContaining(
+        'requires ps with process-group inspection',
+      ),
+    });
+    expect(result.output).not.toContain('Build daemon ready');
+    expect(await executorDirectories()).toEqual([]);
+    await expect(fs.stat(daemonSocket)).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+  }, 20_000);
+
+  async function queueDuringInspectionFailures(mode: 'recover' | 'retain') {
+    const services = await startServices(await mockProcessInspection(mode));
+    const [temporary] = await executorDirectories();
+    await fs.writeFile(path.join(temporary, 'scratch'), 'unfinished build');
+    await file('fail-inspection', '');
+    const job = raw();
+    const startedAt = performance.now();
+    job.connection.send(request(['--unknown-build-option']));
+    const started = await job.connection.readMessage();
+    expect(started).toMatchObject({ type: 'started', pid: expect.any(Number) });
+
+    const { connection: next } = raw();
+    next.send(request(['--unknown-build-option']));
+    await expect(next.readMessage()).resolves.toEqual({ type: 'queued' });
+    await expect(
+      readUntil(job.connection, (reply) => reply.type === 'result'),
+    ).resolves.toMatchObject({
+      type: 'result',
+      error: expect.stringContaining(
+        'shutdown grace period while cleaning up descendants',
+      ),
+    });
+    expect(performance.now() - startedAt).toBeLessThan(11_500);
+    return { ...services, temporary, next, started };
+  }
+
+  async function assertInspectionRetries() {
+    const trace = await fs.readFile(
+      path.join(project, 'inspection.log'),
+      'utf8',
+    );
+    expect(trace.match(/executor ps/gv)?.length).toBeGreaterThan(2);
+    expect(trace).toMatch(/supervisor kill\nsupervisor ps/v);
+  }
+
+  it('recovers from an inspection timeout after verifying the executor group stopped', async () => {
+    const { temporary, next, started } =
+      await queueDuringInspectionFailures('recover');
+    const replacement = await next.readMessage();
+    expect(replacement).toMatchObject({
+      type: 'started',
+      pid: expect.any(Number),
+    });
+    expect(replacement).not.toEqual(started);
+    expect(await executorDirectories()).not.toContain(temporary);
+    await fs.unlink(path.join(project, 'fail-inspection'));
+    await expect(
+      readUntil(next, (reply) => reply.type === 'result'),
+    ).resolves.toMatchObject({
+      type: 'result',
+      error: expect.stringContaining('unknown option'),
+    });
+    await assertInspectionRetries();
+    await succeeded(build('after-inspection-failure'));
+  }, 35_000);
+
+  it('stops the daemon and retains temporary files if verification after SIGKILL fails', async () => {
+    const { daemon, worker, temporary, next } =
+      await queueDuringInspectionFailures('retain');
+    const diagnostic = 'Could not verify that build daemon executor group';
+    const verifyingAt = performance.now();
+    await expect(next.readMessage()).resolves.toMatchObject({
+      type: 'result',
+      error: expect.stringContaining(diagnostic),
+    });
+    expect(performance.now() - verifyingAt).toBeLessThan(2000);
+    expect(await daemon.exit).toMatchObject({
+      code: 1,
+      output: expect.stringContaining(diagnostic),
+    });
+    expect(await executorDirectories()).toEqual([temporary]);
+    await expect(
+      fs.readFile(path.join(temporary, 'scratch'), 'utf8'),
+    ).resolves.toBe('unfinished build');
+    await expect(fs.stat(daemonSocket)).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+    expect(worker.child.exitCode).toBeNull();
+    await assertInspectionRetries();
+  }, 35_000);
 
   it('validates socket paths, project directory, protocol, and worker constraints', async () => {
     const workerArgs = ['--browser-worker', workerSocket];

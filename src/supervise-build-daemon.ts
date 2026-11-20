@@ -1,10 +1,14 @@
 import { fork } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
   buildShutdownGraceMs,
   signalProcess,
-  stopBuildDescendants,
+  waitForDaemonBuildGroup,
 } from './browser-worker/process-group.js';
 import type {
   BuildReply,
@@ -13,45 +17,60 @@ import type {
   ExecutorRequest,
 } from './build-daemon/protocol.js';
 import { Logger } from './logger.js';
+import { toError } from './util.js';
 
 const entry = fileURLToPath(
   new URL('./build-daemon/internal-executor.js', import.meta.url),
 );
+const maxDispatchedBuilds = 100;
 
 export class BuildExecutor {
   readonly #child;
+  readonly #directory: string;
+  readonly #onRetirementFailure: (error: Error) => void;
   readonly #ready = Promise.withResolvers<null>();
-  readonly exited: Promise<Error>;
+  readonly #exit = Promise.withResolvers<Error>();
+  readonly #killed = Promise.withResolvers<null>();
+  #killDeadline?: number;
+  #retirement?: Promise<void>;
   #onReply?: (reply: ExecutorReply) => void;
-  #onExit?: (error: Error) => void;
-  #nextId = 0;
+  #dispatched = 0;
 
-  constructor(cwd: string, workerSocket: string) {
-    this.#child = fork(entry, [workerSocket], {
-      cwd,
-      detached: true,
-      execArgv: [],
-      stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-    });
-    const group = this.#child.pid;
-    const exit = Promise.withResolvers<Error>();
-    this.#child.on('error', (error) => exit.resolve(error));
-    this.#child.once('exit', (code, signal) => {
-      exit.resolve(
-        new Error(`Build daemon executor exited (${signal ?? code}).`),
-      );
-    });
-    this.exited = exit.promise.then(async (error) => {
-      if (group !== undefined) {
-        await stopBuildDescendants(
-          group,
-          performance.now() + buildShutdownGraceMs,
-          'exit',
-        );
-      }
+  constructor(
+    cwd: string,
+    workerSocket: string,
+    onRetirementFailure: (error: Error) => void,
+  ) {
+    this.#onRetirementFailure = onRetirementFailure;
+    this.#directory = mkdtempSync(
+      path.resolve(tmpdir(), 'vivliostyle-executor-'),
+    );
+    try {
+      this.#child = fork(entry, [workerSocket], {
+        cwd,
+        detached: true,
+        env: { ...process.env, TMPDIR: this.#directory },
+        execArgv: [],
+        stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+      });
+    } catch (error) {
+      rmSync(this.#directory, { recursive: true, force: true });
+      throw error;
+    }
+    const onExit = (error: Error) => {
       this.#ready.reject(error);
-      this.#onExit?.(error);
-      return error;
+      this.#exit.resolve(error);
+      void this.stop();
+    };
+    this.#child.on('error', (error) => {
+      if (this.#child.pid === undefined) {
+        onExit(error);
+      } else {
+        void this.stop(true);
+      }
+    });
+    this.#child.once('exit', (code, signal) => {
+      onExit(new Error(`Build daemon executor exited (${signal ?? code}).`));
     });
     void this.#ready.promise.catch(() => {});
     this.#child.on('message', (raw) => {
@@ -69,7 +88,7 @@ export class BuildExecutor {
         if (this.#onReply) {
           this.#onReply({
             type: 'log',
-            id: this.#nextId,
+            id: this.#dispatched,
             stream,
             data: data.toString('base64'),
           });
@@ -80,26 +99,42 @@ export class BuildExecutor {
     }
   }
 
-  get connected(): boolean {
-    return this.#child.connected;
+  get retiring(): boolean {
+    return (
+      this.#retirement !== undefined ||
+      !this.#child.connected ||
+      this.#dispatched >= maxDispatchedBuilds
+    );
   }
 
   ready(): Promise<null> {
     return this.#ready.promise;
   }
 
-  #kill(): void {
-    const pid = this.#child.pid;
-    if (pid !== undefined) {
-      signalProcess(-pid, 'SIGKILL');
+  #signalGroup(signal: NodeJS.Signals): void {
+    const group = this.#child.pid;
+    if (group !== undefined) {
+      try {
+        signalProcess(-group, signal);
+      } catch (error) {
+        Logger.debug('Could not signal the build daemon executor group', error);
+      }
+    }
+  }
+
+  #forceKill(): void {
+    if (this.#killDeadline === undefined) {
+      this.#signalGroup('SIGKILL');
+      this.#killDeadline = performance.now() + 1000;
+      this.#killed.resolve(null);
     }
   }
 
   #send(request: ExecutorRequest): void {
-    if (this.connected) {
+    if (this.#child.connected) {
       this.#child.send(request, (error) => {
         if (error) {
-          this.#kill();
+          void this.stop(true);
         }
       });
     }
@@ -110,65 +145,113 @@ export class BuildExecutor {
     signal: AbortSignal,
     reply: (message: BuildReply) => void,
   ): Promise<BuildResult> {
+    signal.throwIfAborted();
     const result = Promise.withResolvers<BuildResult>();
-    const id = ++this.#nextId;
-    let timedOut = false;
+    const finished = Promise.race([
+      result.promise,
+      this.#exit.promise.then((error) => {
+        throw error;
+      }),
+      this.#killed.promise.then(() => {
+        throw new Error('Build daemon executor was killed.');
+      }),
+    ]);
+    const id = this.#dispatched + 1;
     let forceKill: ReturnType<typeof setTimeout> | undefined;
     const abort = () => {
       this.#send({ type: 'cancel', message: String(signal.reason) });
       forceKill = setTimeout(() => {
-        timedOut = true;
-        this.#kill();
+        result.reject(
+          new Error(
+            'Build daemon executor exceeded its shutdown grace period.',
+          ),
+        );
+        void this.stop(true);
       }, buildShutdownGraceMs);
     };
-    signal.throwIfAborted();
     signal.addEventListener('abort', abort, { once: true });
     try {
-      await this.ready();
+      await Promise.race([this.ready(), finished]);
       signal.throwIfAborted();
       const pid = this.#child.pid;
-      if (pid === undefined || !this.connected) {
-        throw await this.exited;
+      if (pid === undefined || !this.#child.connected) {
+        throw await this.#exit.promise;
       }
       this.#onReply = (message) => {
         if (message.type !== 'ready' && message.id === id) {
           if (message.type === 'result') {
-            result.resolve({ type: 'result', error: message.error });
+            if (message.retire) {
+              result.reject(new Error(message.error));
+              void this.stop(true);
+            } else {
+              result.resolve({ type: 'result', error: message.error });
+            }
           } else {
             const { type, stream, data } = message;
             reply({ type, stream, data });
           }
         }
       };
-      this.#onExit = (error) => {
-        result.reject(
-          timedOut
-            ? new Error(
-                'Build daemon executor exceeded its shutdown grace period.',
-              )
-            : error,
-        );
-      };
       reply({ type: 'started', pid });
       this.#send({ type: 'build', id, args });
-      return await result.promise;
+      this.#dispatched = id;
+      return await finished;
     } finally {
       clearTimeout(forceKill);
       this.#onReply = undefined;
-      this.#onExit = undefined;
       signal.removeEventListener('abort', abort);
     }
   }
 
-  async stop(): Promise<void> {
-    const forceKill = setTimeout(() => this.#kill(), buildShutdownGraceMs);
+  stop(force = false): Promise<void> {
+    if (force) {
+      this.#forceKill();
+    }
+    if (!this.#retirement) {
+      this.#retirement = this.#retire();
+      void this.#retirement.catch((error) => {
+        this.#onRetirementFailure(toError(error));
+      });
+    }
+    return this.#retirement;
+  }
+
+  async #retire(): Promise<void> {
+    const deadline = performance.now() + buildShutdownGraceMs;
+    const forceKill = setTimeout(() => this.#forceKill(), buildShutdownGraceMs);
     try {
-      if (this.connected) {
+      if (this.#child.connected) {
         this.#child.disconnect();
       }
-      await this.exited;
+      await Promise.race([this.#exit.promise, this.#killed.promise]);
+      const group = this.#child.pid;
+      if (group !== undefined) {
+        if (this.#killDeadline === undefined) {
+          this.#signalGroup('SIGTERM');
+          if (!(await waitForDaemonBuildGroup(group, deadline, 'retirement'))) {
+            this.#forceKill();
+          }
+        }
+        if (
+          this.#killDeadline !== undefined &&
+          !(await waitForDaemonBuildGroup(
+            group,
+            this.#killDeadline,
+            'retirement',
+          ))
+        ) {
+          throw new Error(
+            `Could not verify that build daemon executor group ${group} stopped after SIGKILL. Retaining temporary directory ${this.#directory}.`,
+          );
+        }
+      }
+      clearTimeout(forceKill);
+      await rm(this.#directory, { recursive: true, force: true });
     } finally {
       clearTimeout(forceKill);
+      this.#child.stdout?.destroy();
+      this.#child.stderr?.destroy();
+      this.#child.unref();
     }
   }
 }

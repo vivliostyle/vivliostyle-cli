@@ -5,7 +5,10 @@ import path from 'node:path';
 
 import * as v from 'valibot';
 
-import { buildShutdownGraceMs } from '../browser-worker/process-group.js';
+import {
+  buildShutdownGraceMs,
+  checkBuildDaemonProcessInspection,
+} from '../browser-worker/process-group.js';
 import {
   resolveWorkerSocket,
   WorkerConnection,
@@ -53,12 +56,15 @@ export async function runBuildDaemon(
   }
 
   const directory = fs.realpathSync(process.cwd());
+  await checkBuildDaemonProcessInspection();
+  signal.throwIfAborted();
   const clients = new Set<Client>();
   const queue: Job[] = [];
-  let executor = new BuildExecutor(directory, workerAddress);
+  let executor: BuildExecutor | undefined;
   let active: Job | undefined;
   let processing: Promise<void> | undefined;
   let stopping = false;
+  let retirementFailure: Error | undefined;
 
   function finish({ socket, connection }: Client, error?: string) {
     if (!socket.destroyed && !socket.writableEnded) {
@@ -81,6 +87,23 @@ export async function runBuildDaemon(
     finish(client, message);
   }
 
+  function createExecutor() {
+    return new BuildExecutor(directory, workerAddress, (error) => {
+      retirementFailure = error;
+      if (signal.aborted) {
+        Logger.stderr.write(`${error.message}\n`);
+      }
+      void shutdown().catch(stopped.reject);
+    });
+  }
+
+  async function retireExecutor() {
+    if (executor?.retiring) {
+      await executor.stop();
+      executor = undefined;
+    }
+  }
+
   async function runQueue() {
     for (;;) {
       if (stopping) {
@@ -94,11 +117,9 @@ export async function runBuildDaemon(
       const { client, controller } = job;
       const { socket, connection } = client;
       try {
-        if (!executor.connected) {
-          await executor.exited;
-          controller.signal.throwIfAborted();
-          executor = new BuildExecutor(directory, workerAddress);
-        }
+        await retireExecutor();
+        controller.signal.throwIfAborted();
+        executor ??= createExecutor();
         const result = await executor.run(
           job.args,
           controller.signal,
@@ -118,9 +139,19 @@ export async function runBuildDaemon(
           : result.error;
         finish(client, error);
       } catch (error) {
-        finish(client, stopping ? shutdownMessage : toError(error).message);
+        finish(
+          client,
+          retirementFailure?.message ??
+            (stopping ? shutdownMessage : toError(error).message),
+        );
       } finally {
         active = undefined;
+      }
+      try {
+        await retireExecutor();
+      } catch {
+        // The executor's retirement failure has already started daemon shutdown.
+        return;
       }
     }
   }
@@ -201,7 +232,7 @@ export async function runBuildDaemon(
       });
       for (const client of clients) {
         if (client !== active?.client) {
-          finish(client, shutdownMessage);
+          finish(client, retirementFailure?.message ?? shutdownMessage);
         }
       }
       queue.length = 0;
@@ -213,11 +244,15 @@ export async function runBuildDaemon(
       }, buildShutdownGraceMs + 1000);
       try {
         await processing;
-        await executor.stop();
+        await executor?.stop().catch(() => {});
         await closed;
       } finally {
         clearTimeout(timer);
-        stopped.resolve(null);
+        if (retirementFailure) {
+          stopped.reject(retirementFailure);
+        } else {
+          stopped.resolve(null);
+        }
       }
     })());
 
@@ -227,6 +262,7 @@ export async function runBuildDaemon(
   signal.addEventListener('abort', onAbort, { once: true });
   const unregister = registerTerminationHook(shutdown);
   try {
+    executor = createExecutor();
     await executor.ready();
     signal.throwIfAborted();
     listening = once(server, 'listening');

@@ -1,11 +1,12 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { createRequire } from 'node:module';
 import type { Socket } from 'node:net';
 
 import { withBrowserWorker } from '../browser-worker/client.js';
 import {
   buildShutdownGraceMs,
   signalProcess,
-  stopBuildDescendants,
+  waitForDaemonBuildGroup,
 } from '../browser-worker/process-group.js';
 import { connectBrowserWorker } from '../browser-worker/socket.js';
 import { parseBuildOptions } from '../commands/build.parser.js';
@@ -21,6 +22,11 @@ if (!process.channel || !workerSocketArg) {
   throw new Error('The internal build executor requires a build daemon.');
 }
 const workerSocket = workerSocketArg;
+
+// Vite uses the shared CommonJS table when loading a bundled CJS config.
+// oxlint-disable-next-line typescript/no-deprecated -- Node's legacy loader table is the state to restore
+const extensions = createRequire(import.meta.url).extensions;
+class DescendantCleanupTimeout extends Error {}
 
 const requestContext = new AsyncLocalStorage<number>();
 let active:
@@ -81,8 +87,15 @@ function preserveProcessSettings(): Disposable {
   // oxlint-disable-next-line typescript/no-deprecated -- POSIX executor restores the mask when the request drains
   const umask = process.umask();
   const exitCode = process.exitCode;
+  const loaders = Object.getOwnPropertyDescriptors(extensions);
   return {
     [Symbol.dispose]() {
+      for (const key of Reflect.ownKeys(extensions)) {
+        if (!Object.hasOwn(loaders, key)) {
+          Reflect.deleteProperty(extensions, key);
+        }
+      }
+      Object.defineProperties(extensions, loaders);
       logger[Symbol.dispose]();
       process.chdir(directory);
       process.umask(umask);
@@ -97,12 +110,28 @@ function preserveProcessSettings(): Disposable {
   };
 }
 
+async function drainBuildDescendants(socket: Socket | undefined) {
+  // Keep the browser lease until the descendants drain or the supervisor kills us.
+  if (
+    !(await waitForDaemonBuildGroup(
+      process.pid,
+      performance.now() + buildShutdownGraceMs,
+      'request',
+    ))
+  ) {
+    throw new DescendantCleanupTimeout(
+      'Build daemon executor exceeded its shutdown grace period while cleaning up descendants.',
+    );
+  }
+  socket?.destroy();
+}
+
 async function execute(args: string[], signal: AbortSignal): Promise<void> {
   using _ = preserveProcessSettings();
-  await reloadPostcssConfig();
 
   let socket: Socket | undefined;
   try {
+    await reloadPostcssConfig();
     const { options, browserWorker } = parseBuildOptions(
       ['vivliostyle', 'build', ...args],
       { exitOverride: true },
@@ -127,16 +156,7 @@ async function execute(args: string[], signal: AbortSignal): Promise<void> {
     );
     signal.throwIfAborted();
   } finally {
-    // Keep the browser lease until the request and its descendants have drained.
-    try {
-      await stopBuildDescendants(
-        process.pid,
-        performance.now() + buildShutdownGraceMs,
-        'reuse',
-      );
-    } finally {
-      socket?.destroy();
-    }
+    await drainBuildDescendants(socket);
   }
 }
 
@@ -158,14 +178,18 @@ process.on('message', (raw) => {
     // Install the active job before its synchronous startup can write logs.
     await Promise.resolve();
     let error: string | undefined;
+    let retire = false;
     try {
       await execute(args, controller.signal);
     } catch (reason) {
-      error = getFormattedError(toError(reason));
+      retire = reason instanceof DescendantCleanupTimeout;
+      error = retire
+        ? toError(reason).message
+        : getFormattedError(toError(reason));
     } finally {
       active = undefined;
     }
-    send({ type: 'result', id, error });
+    send({ type: 'result', id, error, retire });
   });
   active = { id, controller, done };
 });

@@ -41,7 +41,13 @@ export async function submitBuild(
   const socket = await connectOwnerSocket(socketPath, signal, 'Build daemon');
   const connection = new WorkerConnection<BuildRequest>(socket, 'Build daemon');
   const completed = Promise.withResolvers<null>();
-  const cancel = () => connection.send({ type: 'cancel' });
+  let cancelDeadline: ReturnType<typeof setTimeout> | undefined;
+  const cancel = () => {
+    connection.send({ type: 'cancel' });
+    cancelDeadline = setTimeout(() => {
+      socket.destroy();
+    }, 12_000);
+  };
   const unregister = registerTerminationHook(async () => {
     await completed.promise;
   });
@@ -83,6 +89,7 @@ export async function submitBuild(
     signal.throwIfAborted();
     throw error;
   } finally {
+    clearTimeout(cancelDeadline);
     signal.removeEventListener('abort', cancel);
     unregister();
     socket.destroy();
