@@ -68,9 +68,14 @@ export function createParserProgram({
     program.parse(argv);
     let options = program.opts<CliFlags>();
     options = parseArgs?.(options, program.args ?? []) ?? options;
-    options = warnDeprecatedFlags(options);
-    return v.parse(VivliostyleInlineConfig, options);
+    return parseInlineFlags(options);
   };
+}
+
+export function parseInlineFlags(
+  options: CliFlags,
+): ParsedVivliostyleInlineConfig {
+  return v.parse(VivliostyleInlineConfig, warnDeprecatedFlags(options));
 }
 
 export function setupConfigFromFlags(

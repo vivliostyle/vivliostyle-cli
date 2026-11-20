@@ -1,10 +1,13 @@
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import type {
   BrowserPlatform,
   InstalledBrowser,
   Browser as SupportedBrowser,
 } from '@puppeteer/browsers';
+import debug from 'debug';
 import type {
   Browser,
   BrowserContext,
@@ -27,6 +30,8 @@ import {
   toError,
   useTmpDirectory,
 } from './util.js';
+
+export const pdfTiming = debug('vs-cli:pdf-timing');
 
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 const browserEnumMap = {
@@ -104,34 +109,36 @@ export async function runBrowserOperationWithAbort<T>({
   }
 }
 
-async function launchBrowser({
-  browserType,
-  proxy,
-  executablePath,
-  headless,
-  noSandbox,
-  disableDevShmUsage,
-  ignoreHttpsErrors,
-  protocolTimeout,
-}: {
+export type BrowserLaunchSettings = {
   browserType: BrowserType;
-  proxy:
-    | {
-        server: string;
-        bypass: string | undefined;
-        username: string | undefined;
-        password: string | undefined;
-      }
-    | undefined;
+  proxy?: { server: string; bypass?: string };
   executablePath: string;
   headless: boolean;
   noSandbox: boolean;
   disableDevShmUsage: boolean;
   ignoreHttpsErrors: boolean;
-  protocolTimeout: number;
+};
+
+export async function launchBrowser({
+  settings: {
+    browserType,
+    proxy,
+    executablePath,
+    headless,
+    noSandbox,
+    disableDevShmUsage,
+    ignoreHttpsErrors,
+  },
+  protocolTimeout,
+  pipe,
+  signal,
+}: {
+  settings: BrowserLaunchSettings;
+  protocolTimeout?: number;
+  pipe?: boolean;
+  signal?: AbortSignal;
 }): Promise<{
   browser: Browser;
-  browserContext: BrowserContext;
   closeBrowser: () => Promise<void>;
 }> {
   const puppeteer = await importNodeModule('puppeteer-core');
@@ -215,6 +222,8 @@ async function launchBrowser({
     acceptInsecureCerts: ignoreHttpsErrors,
     waitForInitialPage: false,
     protocolTimeout,
+    pipe,
+    signal,
   } satisfies LaunchOptions;
   Logger.debug('launchOptions %O', launchOptions);
   // #416: set Chromium language to English to avoid locale-dependent issues
@@ -223,23 +232,71 @@ async function launchBrowser({
   // profiles.ini) under HOME (chrome_paths_linux.cc, nsXREDirProvider.cpp). A
   // container UID with no /etc/passwd entry (e.g. `docker run --user`)
   // gets the unwritable HOME `/`, so the browser cannot launch (see #835).
+  const workerDirectory = pipe
+    ? await fs.promises.mkdtemp(path.join(os.tmpdir(), 'vivliostyle-browser-'))
+    : undefined;
   if (process.platform === 'linux' && !isWritableDir(env.HOME)) {
-    [env.HOME] = await useTmpDirectory();
+    if (workerDirectory) {
+      env.HOME = workerDirectory;
+    } else {
+      [env.HOME] = await useTmpDirectory();
+    }
   }
-  const browserLaunch = puppeteer.launch({
-    ...launchOptions,
-    env,
-    handleSIGINT: false,
-    handleSIGTERM: false,
-    handleSIGHUP: false,
-  });
+  const removeWorkerDirectory = async () => {
+    if (workerDirectory) {
+      await fs.promises.rm(workerDirectory, { recursive: true, force: true });
+    }
+  };
+  const userDataDir = workerDirectory && path.join(workerDirectory, 'profile');
+  const browserLaunch = (async () => {
+    // The pipe launcher does not catch child-process spawn errors. Let the
+    // shell exec Chromium so these errors surface as a closed pipe. An exec
+    // that succeeds keeps Chromium in the process group Puppeteer owns.
+    const launcher = '/bin/sh';
+    if (pipe) {
+      await fs.promises.access(launcher, fs.constants.X_OK);
+    }
+    return puppeteer.launch({
+      ...launchOptions,
+      ...(pipe && {
+        executablePath: launcher,
+        ignoreDefaultArgs: true,
+        args: [
+          '-c',
+          'exec "$@"',
+          'vivliostyle-chromium',
+          executablePath,
+          ...(await puppeteer.defaultArgs({ ...launchOptions, userDataDir })),
+        ],
+      }),
+      userDataDir,
+      env,
+      handleSIGINT: false,
+      handleSIGTERM: false,
+      handleSIGHUP: false,
+    });
+  })();
   let closeBrowserPromise: Promise<void> | undefined;
   const closeBrowser = () =>
-    (closeBrowserPromise ??= browserLaunch.then((browser) => browser.close()));
-  registerCleanupHandler('Closing browser', closeBrowser);
-  const browser = await browserLaunch;
-  const [browserContext] = browser.browserContexts();
-  return { browser, browserContext, closeBrowser };
+    (closeBrowserPromise ??= (async () => {
+      try {
+        const browser = await browserLaunch;
+        await browser.close();
+      } finally {
+        await removeWorkerDirectory();
+      }
+    })());
+  const unregister = pipe
+    ? undefined
+    : registerCleanupHandler('Closing browser', closeBrowser);
+  try {
+    const browser = await browserLaunch;
+    return { browser, closeBrowser };
+  } catch (error) {
+    unregister?.();
+    await removeWorkerDirectory();
+    throw error;
+  }
 }
 
 function isWritableDir(dir: string | undefined): boolean {
@@ -364,8 +421,8 @@ export async function getExecutableBrowserPath({
   });
 }
 
-function checkBrowserAvailability(path: string): boolean {
-  return fs.existsSync(path);
+function checkBrowserAvailability(executablePath: string): boolean {
+  return fs.existsSync(executablePath);
 }
 
 async function downloadBrowser({
@@ -396,34 +453,18 @@ async function downloadBrowser({
   return installedBrowser.executablePath;
 }
 
-export async function launchPreview({
-  mode,
-  url,
-  signal,
-  onBrowserOpen,
-  onPageOpen,
-  config: {
+export async function resolveBrowserLaunchSettings(
+  mode: 'preview' | 'build',
+  {
     browser: browserConfig,
     proxy,
     sandbox,
     ignoreHttpsErrors,
-    timeout,
-  },
-}: {
-  mode: 'preview' | 'build';
-  url: string;
-  signal?: AbortSignal;
-  onBrowserOpen?: (browser: Browser) => void | Promise<void>;
-  onPageOpen?: (page: Page) => void | Promise<void>;
-  config: Pick<
+  }: Pick<
     ResolvedTaskConfig,
-    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors' | 'timeout'
-  >;
-}): Promise<{
-  browser: Browser;
-  page: Page;
-  closeBrowser: () => Promise<void>;
-}> {
+    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors'
+  >,
+): Promise<BrowserLaunchSettings> {
   let executableBrowser = browserConfig.executablePath;
   Logger.debug(`Specified browser path: ${executableBrowser}`);
   if (executableBrowser) {
@@ -450,46 +491,109 @@ export async function launchPreview({
     }
   }
 
-  signal?.throwIfAborted();
-  const { browser, browserContext, closeBrowser } = await launchBrowser({
+  return {
     browserType: browserConfig.type,
-    proxy,
+    proxy: proxy && { server: proxy.server, bypass: proxy.bypass },
     executablePath: executableBrowser,
     headless: mode === 'build',
     noSandbox: !sandbox,
     disableDevShmUsage: isInContainer(),
     ignoreHttpsErrors,
-    protocolTimeout: timeout,
-  });
-  await onBrowserOpen?.(browser);
+  };
+}
+
+export async function openViewerPage({
+  browserContext,
+  mode,
+  url,
+  credentials,
+  signal,
+  onPageOpen,
+}: {
+  browserContext: BrowserContext;
+  mode: 'preview' | 'build';
+  url: string;
+  credentials?: { username: string; password: string };
+  signal?: AbortSignal;
+  onPageOpen?: (page: Page) => void | Promise<void>;
+}): Promise<Page> {
   signal?.throwIfAborted();
+  const page =
+    (await browserContext.pages())[0] ?? (await browserContext.newPage());
+  // Vivliostyle Viewer uses this viewport size to detect headless rendering.
+  // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
+  await page.setViewport(mode === 'build' ? { width: 800, height: 600 } : null);
+  await onPageOpen?.(page);
+  // Prevent confirm dialog from being auto-dismissed.
+  page.on('dialog', () => {});
+  if (credentials) {
+    await page.authenticate(credentials);
+  }
+  await page.goto(url, { signal });
+  return page;
+}
 
-  const page = await runBrowserOperationWithAbort({
-    signal,
-    closeBrowser,
-    operation: async () => {
-      const previewPage =
-        (await browserContext.pages())[0] ?? (await browserContext.newPage());
-      // This viewport size is important to detect headless environment in Vivliostyle viewer
-      // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
-      await previewPage.setViewport(
-        mode === 'build' ? { width: 800, height: 600 } : null,
-      );
-      await onPageOpen?.(previewPage);
-
-      // Prevent confirm dialog from being auto-dismissed
-      previewPage.on('dialog', () => {});
-
-      if (proxy?.username && proxy?.password) {
-        await previewPage.authenticate({
-          username: proxy.username,
-          password: proxy.password,
-        });
-      }
-      await previewPage.goto(url, { signal });
-      return previewPage;
-    },
+export async function launchPreview({
+  mode,
+  url,
+  signal,
+  onBrowserOpen,
+  onPageOpen,
+  config,
+}: {
+  mode: 'preview' | 'build';
+  url: string;
+  signal?: AbortSignal;
+  onBrowserOpen?: (browser: Browser) => void | Promise<void>;
+  onPageOpen?: (page: Page) => void | Promise<void>;
+  config: Pick<
+    ResolvedTaskConfig,
+    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors' | 'timeout'
+  >;
+}): Promise<{
+  browser: Browser;
+  page: Page;
+  closeBrowser: () => Promise<void>;
+}> {
+  const settings = await resolveBrowserLaunchSettings(mode, config);
+  signal?.throwIfAborted();
+  const launchStart = performance.now();
+  const { browser, closeBrowser } = await launchBrowser({
+    settings,
+    protocolTimeout: config.timeout,
   });
+  if (mode === 'build' && pdfTiming.enabled) {
+    pdfTiming(
+      'PDF browser pid=%d launchMs=%d',
+      browser.process()?.pid ?? 0,
+      Math.round(performance.now() - launchStart),
+    );
+  }
+  try {
+    await onBrowserOpen?.(browser);
+    signal?.throwIfAborted();
 
-  return { browser, page, closeBrowser };
+    const { proxy } = config;
+    const [browserContext] = browser.browserContexts();
+    const page = await runBrowserOperationWithAbort({
+      signal,
+      closeBrowser,
+      operation: () =>
+        openViewerPage({
+          browserContext,
+          mode,
+          url,
+          credentials:
+            proxy?.username && proxy.password
+              ? { username: proxy.username, password: proxy.password }
+              : undefined,
+          signal,
+          onPageOpen,
+        }),
+    });
+    return { browser, page, closeBrowser };
+  } catch (error) {
+    await closeBrowser();
+    throw error;
+  }
 }

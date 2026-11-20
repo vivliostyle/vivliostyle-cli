@@ -34,6 +34,34 @@ WebPub は、Web 上で読むことができる出版物を作るのに使えま
 vivliostyle build webpub/publication.json -o pdfbook.pdf
 ```
 
+## PDF ビルドで Chromium を再利用する
+
+Linux と macOS では、フォアグラウンドでビルドワーカーを起動しておくと、複数の独立した CLI プロセスから同じ Chrome または Chromium を再利用できます。自分のユーザーだけがアクセスできるディレクトリを作成し、ターミナルでワーカーを起動します。
+
+```sh
+worker_dir=$(mktemp -d /tmp/vivliostyle.XXXXXXXX)
+vivliostyle build-worker --socket "$worker_dir/build.sock"
+```
+
+ワーカーの準備が完了したら、表示されたソケットの絶対パスを別のターミナルで指定します。
+
+```sh
+vivliostyle build --browser-worker /tmp/vivliostyle.XXXXXXXX/build.sock document1.md -o document1.pdf
+vivliostyle build --browser-worker /tmp/vivliostyle.XXXXXXXX/build.sock document2.md -o document2.pdf
+```
+
+ワーカーは最初の PDF リクエストで Chromium を起動し、PDF 出力先ごとに新しいブラウザーコンテキストを開きます。起動設定が同じ場合はブラウザープロセスを再利用します。実行ファイル、ブラウザーのバージョン、サンドボックス、プロキシサーバーや除外リスト、TLS の設定が変わるとブラウザーを起動し直します。`--browser-worker` は CLI 専用のオプションです。省略するとビルドごとにブラウザーを起動します。このオプションでは Firefox、Docker による PDF レンダリング、Windows はサポート対象外です。ワーカーを使うビルドでも、同時に EPUB や WebPub を出力できます。
+
+同じソケットを使うビルドは、設定の読み込みや作業ディレクトリへのアクセスを始める前に、到着順で待機します。呼び出し元の CLI は、後処理、ファイルの書き込み、クリーンアップが完了するまで順番を保持します。別のワーカーを使うビルド、ワーカーを使用しないビルド、他のツールからは、同じ作業ディレクトリに同時にアクセスできます。
+
+ワーカー使用時の `--timeout` は Chromium の準備完了後から計測し、ブラウザーコンテキストの作成、ページの読み込み、組版、PDF の印刷に適用されます。待機時間、ブラウザーの起動、呼び出し元での準備や後処理は計測の対象外です。レンダリングが失敗すると、呼び出し元の CLI にエラーが返ります。Chromium が異常終了した場合、次の PDF リクエストでブラウザーを起動し直します。
+
+ビルドが SIGINT、SIGTERM、SIGHUP を受け取ると、呼び出し元の CLI はそのシグナルをビルドのプロセスグループに転送し、10 秒後もグループ内のプロセスが動作していれば SIGKILL を送信します。ビルドが中断されずに終了した場合、同じグループ内に残っているプロセスには SIGTERM を送信し、必要に応じて SIGKILL で終了させます。次のビルドは、これらのプロセスが停止し、ワーカーが実行中のレンダリングコンテキストを閉じてから始まります。
+
+呼び出し元の CLI を強制終了すると、ビルドプロセスは CLI との通信が切れたことを検知して自身のプロセスグループの停止を試みます。プラグインが別のプロセスグループで起動したプロセスは、ビルドを中断した後も動作し、作業ディレクトリにアクセスし続ける場合があります。
+
+ワーカーを起動したターミナルで Ctrl+C を押すか、SIGTERM を送信すると、Chromium が終了し、ソケットが削除されます。待機中のクライアントとレンダリング中のクライアントにはエラーが返ります。強制終了でソケットが残った場合は、新しい専用ディレクトリを使うか、以前のワーカーが停止していることを確認してから残ったソケットを削除します。ワーカーは既存のパスを上書きしません。
+
 ## 印刷用 PDF（PDF/X-1a 形式）の生成
 
 - [Example: preflight](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/preflight)

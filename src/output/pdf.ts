@@ -1,32 +1,37 @@
 import fs from 'node:fs';
 import { pathToFileURL, URL } from 'node:url';
 
-import type { Browser, Page } from 'puppeteer-core';
 import terminalLink from 'terminal-link';
 import upath from 'upath';
 import { cyan, gray, green, red } from 'yoctocolors';
 
-import { launchPreview, runBrowserOperationWithAbort } from '../browser.js';
+import type { WorkerPdfRenderer } from '../browser-worker/client.js';
+import {
+  launchPreview,
+  pdfTiming,
+  runBrowserOperationWithAbort,
+} from '../browser.js';
 import type {
   ParsedEntry,
   PdfOutput,
   ResolvedTaskConfig,
 } from '../config/resolve.js';
-import type { CmykMap, Meta, Payload, TOCItem } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
-import { pathEquals, toError } from '../util.js';
-import type { PageSizeData } from './pdf-document.js';
+import { pathEquals } from '../util.js';
 import { postProcessPDF } from './pdf-postprocess.js';
+import { createPdfRenderer, type PdfRenderProgress } from './pdf-render.js';
 
 export async function buildPDF({
   target,
   config,
   signal,
+  renderWithWorker,
 }: {
   target: PdfOutput;
   config: ResolvedTaskConfig;
   signal?: AbortSignal;
+  renderWithWorker?: WorkerPdfRenderer;
 }): Promise<string | null> {
   Logger.logUpdate(`Launching PDF build environment`);
 
@@ -125,192 +130,51 @@ export async function buildPDF({
     Logger.logUpdateProgress(renderBuildingText());
   }
 
-  const { browser, page, closeBrowser } = await launchPreview({
-    mode: 'build',
-    url: viewerFullUrl,
-    signal,
-    config,
-    onBrowserOpen: () => {
-      Logger.logUpdate('Building pages');
-    },
-    onPageOpen: async (openedPage) => {
-      openedPage.on('pageerror', (error) => {
-        Logger.logError(red(toError(error).message));
-      });
-
-      openedPage.on('console', (msg) => {
-        switch (msg.type()) {
-          case 'error':
-            if (msg.location().url?.endsWith('/vivliostyle-viewer.js')) {
-              Logger.logError(msg.text());
-              throw new Error(msg.text());
-            }
-            return;
-          case 'debug':
-            if (/time slice/v.test(msg.text())) {
-              return;
-            }
-            break;
-          default:
-            break;
+  const report = (event: PdfRenderProgress) => {
+    switch (event.type) {
+      case 'pagination':
+        handlePaginationProgress(event.pages, event.fraction, event.href);
+        break;
+      case 'typeset':
+        typesettingFinished = true;
+        if (lastEntry) {
+          Logger.logInfo(stringifyEntry(lastEntry));
         }
-        if (msg.type() === 'error') {
-          Logger.logVerbose(red('console.error()'), msg.text());
-        } else {
-          Logger.logVerbose(gray(`console.${msg.type()}()`), msg.text());
-        }
-      });
-
-      openedPage.on('response', (response) => {
+        break;
+      case 'printing':
+        Logger.logUpdate('Building PDF');
+        break;
+      case 'browser':
+        pdfTiming('PDF browser pid=%d launchMs=%d', event.pid, event.launchMs);
+        Logger.logUpdate('Building pages');
+        break;
+      case 'error':
+        Logger.logError(red(event.message));
+        break;
+      case 'debug':
+        Logger.debug(event.message);
+        break;
+      case 'console':
+        Logger.logVerbose(gray(`console.${event.level}()`), event.message);
+        break;
+      case 'response':
         Logger.debug(
           gray('viewer:response'),
-          green(response.status().toString()),
-          response.url(),
+          green(String(event.status)),
+          event.url,
         );
-
-        if (400 > response.status() && 200 <= response.status()) {
-          return;
+        if (
+          !(event.status >= 200 && event.status < 400) &&
+          !(event.url.startsWith('file://') && event.ok)
+        ) {
+          Logger.logError(red(String(event.status)), event.url);
         }
-        // file protocol doesn't have status code
-        if (response.url().startsWith('file://') && response.ok()) {
-          return;
-        }
-
-        Logger.logError(red(`${response.status()}`), response.url());
-      });
-
-      try {
-        await openedPage.exposeFunction(
-          '__vsCliReportPaginationProgress',
-          handlePaginationProgress,
-        );
-        await openedPage.evaluateOnNewDocument(() => {
-          /* v8 ignore start */
-          let tick = 0;
-          const timer = setInterval(() => {
-            if (!window.coreViewer) {
-              // Give up if the viewer never appears
-              if (++tick > 600) {
-                clearInterval(timer);
-              }
-              return;
-            }
-            clearInterval(timer);
-            window.coreViewer.addListener('paginationprogress', (payload) => {
-              // oxlint-disable-next-line no-underscore-dangle -- exposed function name prefixed to avoid page global collisions
-              window.__vsCliReportPaginationProgress?.(
-                payload.pages ?? 0,
-                payload.fraction ?? 0,
-                payload.href,
-              );
-            });
-          }, 100);
-          /* v8 ignore stop */
-        });
-      } catch (error) {
-        Logger.debug('Failed to set up pagination progress reporting', error);
-      }
-
-      openedPage.setDefaultTimeout(config.timeout);
-    },
-  });
-
-  const browserResult = await runBrowserOperationWithAbort({
-    signal,
-    closeBrowser,
-    operation: async () => {
-      const browserVersion = await browser.version();
-      Logger.debug(green('success'), `browserVersion=${browserVersion}`);
-
-      let remainTime = config.timeout;
-      const startTime = Date.now();
-
-      await page.waitForNetworkIdle({ signal });
-      await page.waitForFunction(() => !!window.coreViewer, { signal });
-
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- read the undocumented `protocol` field puppeteer-core sets on the browser
-      const { protocol } = browser as Browser & {
-        protocol: 'cdp' | 'webDriverBiDi';
-      };
-      await page.waitForFunction(
-        /* v8 ignore next */
-        () => window.coreViewer.readyState === 'complete',
-        { polling: 1000, signal },
-      );
-      // Ignore progress dispatched after this point
-      typesettingFinished = true;
-
-      if (lastEntry) {
-        Logger.logInfo(stringifyEntry(lastEntry));
-      }
-
-      const pageProgression = await page.evaluate((): 'ltr' | 'rtl' =>
-        /* v8 ignore next 5 */
-        document.querySelector<HTMLElement>('#vivliostyle-viewer-viewport')
-          ?.dataset.vivliostylePageProgression === 'rtl'
-          ? 'rtl'
-          : 'ltr',
-      );
-      const viewerCoreVersion = await page.evaluate(() =>
-        /* v8 ignore next 3 */
-        document
-          .querySelector('#vivliostyle-menu_settings .version')
-          ?.textContent?.replace(/^.*?: (\d[\-+.\w]+).*$/v, '$1'),
-      );
-      const metadata = await loadMetadata(page);
-      const toc = await loadTOC(page);
-      const pageSizeData = await loadPageSizeData(page);
-      const cmykMap = target.cmyk ? await loadCmykMap(page) : {};
-
-      remainTime -= Date.now() - startTime;
-      if (remainTime <= 0) {
-        throw new Error('Typesetting process timed out');
-      }
-      Logger.debug('Remaining timeout:', remainTime);
-
-      Logger.logUpdate('Building PDF');
-
-      // For Firefox WebDriver BiDi, explicitly set width and height
-      // because page.pdf() doesn't support for the preferCSSPageSize option.
-      // Use a sufficiently large value to accommodate user-defined page sizes.
-      const dimensionSizeForWebDriverBiDi =
-        Number.parseInt(process.env.VS_CLI_PDF_BUILD_PDF_PAGE_SIZE || '', 10) ||
-        // 1000mm
-        3780;
-      const pdf = await page.pdf({
-        margin: {
-          top: 0,
-          bottom: 0,
-          right: 0,
-          left: 0,
-        },
-        printBackground: true,
-        tagged: true,
-        // timeout: remainTime,
-        ...(protocol === 'webDriverBiDi'
-          ? {
-              width: dimensionSizeForWebDriverBiDi,
-              height: dimensionSizeForWebDriverBiDi,
-            }
-          : {
-              preferCSSPageSize: true,
-            }),
-      });
-
-      return {
-        browserVersion,
-        pageProgression,
-        viewerCoreVersion,
-        metadata,
-        toc,
-        pageSizeData,
-        cmykMap,
-        pdf,
-      };
-    },
-  });
-
-  await closeBrowser();
+        break;
+    }
+  };
+  const browserResult = renderWithWorker
+    ? await renderWithWorker(config, viewerFullUrl, !!target.cmyk, report)
+    : await renderLocally(config, viewerFullUrl, !!target.cmyk, report, signal);
   signal?.throwIfAborted();
 
   Logger.logUpdate('Processing PDF');
@@ -344,58 +208,44 @@ export async function buildPDF({
   return target.path;
 }
 
-function loadMetadata(page: Page): Promise<Meta> {
-  return page.evaluate(() => window.coreViewer.getMetadata());
-}
-
-// Show and hide the TOC in order to read its contents.
-// Chromium needs to see the TOC links in the DOM to add
-// the PDF destinations used during postprocessing.
-function loadTOC(page: Page): Promise<TOCItem[]> {
-  /* v8 ignore start */
-  return page.evaluate(
-    () =>
-      new Promise<TOCItem[]>((resolve) => {
-        function listener(payload: Payload) {
-          if (payload.a !== 'toc') {
-            return;
-          }
-          window.coreViewer.removeListener('done', listener);
-          window.coreViewer.showTOC(false);
-          resolve(window.coreViewer.getTOC());
-        }
-        window.coreViewer.addListener('done', listener);
-        window.coreViewer.showTOC(true);
-      }),
-  );
-  /* v8 ignore stop */
-}
-
-function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
-  /* v8 ignore start */
-  return page.evaluate(() => {
-    const sizeData: PageSizeData[] = [];
-    const pageContainers = document.querySelectorAll<HTMLElement>(
-      '#vivliostyle-viewer-viewport > div > div > div[data-vivliostyle-page-container]',
-    );
-
-    for (const pageContainer of pageContainers) {
-      const bleedBox = pageContainer.querySelector<HTMLElement>(
-        'div[data-vivliostyle-bleed-box]',
-      );
-      sizeData.push({
-        mediaWidth: Number.parseFloat(pageContainer.style.width) * 0.75,
-        mediaHeight: Number.parseFloat(pageContainer.style.height) * 0.75,
-        bleedOffset: Number.parseFloat(bleedBox?.style.left ?? '') * 0.75,
-        bleedSize: Number.parseFloat(bleedBox?.style.paddingLeft ?? '') * 0.75,
-      });
-    }
-    return sizeData;
+async function renderLocally(
+  config: ResolvedTaskConfig,
+  url: string,
+  cmyk: boolean,
+  report: (event: PdfRenderProgress) => void,
+  signal?: AbortSignal,
+) {
+  const renderer = createPdfRenderer({
+    timeout: config.timeout,
+    cmyk: cmyk,
+    report,
   });
-  /* v8 ignore stop */
-}
-
-function loadCmykMap(page: Page): Promise<CmykMap> {
-  /* v8 ignore next 3 */
-  return page.evaluate(() => window.coreViewer.getCmykMap?.() ?? {});
+  let readyAt = performance.now();
+  const { browser, page, closeBrowser } = await launchPreview({
+    mode: 'build',
+    url: url,
+    signal,
+    config,
+    onBrowserOpen: () => {
+      readyAt = performance.now();
+      Logger.logUpdate('Building pages');
+    },
+    onPageOpen: renderer.onPageOpen,
+  });
+  let closing: Promise<void> | undefined;
+  const close = () => (closing ??= closeBrowser());
+  try {
+    const result = await runBrowserOperationWithAbort({
+      signal,
+      closeBrowser: close,
+      operation: () => renderer.render(browser, page, signal),
+    });
+    pdfTiming(
+      'PDF render renderMs=%d',
+      Math.round(performance.now() - readyAt),
+    );
+    return result;
+  } finally {
+    await close();
+  }
 }

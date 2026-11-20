@@ -13,7 +13,7 @@ const mocked = vi.hoisted(() => ({
   validateTheme: vi.fn<(...args: any[]) => Promise<ThemeValidationResult[]>>(
     () => Promise.resolve([]),
   ),
-  parseBuildCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
+  parseBuildFlags: vi.fn<(...args: any[]) => Record<string, unknown>>(),
   parseCreateCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
   parseInitCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
   parsePreviewCommand: vi.fn<(...args: any[]) => Record<string, unknown>>(),
@@ -59,7 +59,9 @@ vi.mock('../src/core/theme-validate.js', () => ({
 }));
 
 vi.mock('../src/commands/build.parser.js', () => ({
-  parseBuildCommand: mocked.parseBuildCommand,
+  parseBuildCli: (...args: string[]) => ({
+    inlineConfig: mocked.parseBuildFlags(...args),
+  }),
 }));
 
 vi.mock('../src/commands/create.parser.js', () => ({
@@ -102,7 +104,7 @@ describe('CLI command signals', () => {
   });
 
   it.each([
-    ['build', mocked.parseBuildCommand, mocked.build, runBuildCli],
+    ['build', mocked.parseBuildFlags, mocked.build, runBuildCli],
     ['create', mocked.parseCreateCommand, mocked.create, runCreateCli],
     ['init', mocked.parseInitCommand, mocked.create, runInitCli],
     ['preview', mocked.parsePreviewCommand, mocked.preview, runPreviewCli],

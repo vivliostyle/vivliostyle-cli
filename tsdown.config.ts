@@ -8,6 +8,7 @@ export default defineConfig({
     'src/node-modules.ts',
     'src/vite-adapter.ts',
     'src/config/schema.ts',
+    'src/browser-worker/internal-build.ts',
     'src/commands/build.ts',
     'src/commands/create.ts',
     'src/commands/init.ts',

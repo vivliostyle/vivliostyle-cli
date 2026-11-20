@@ -34,6 +34,34 @@ WebPub can be used to create publications that can be read on the web. You can a
 vivliostyle build webpub/publication.json -o pdfbook.pdf
 ```
 
+## Reusing Chromium for PDF builds
+
+On Linux and macOS, a foreground build worker can keep Chrome or Chromium running between independent CLI invocations. Create a directory accessible only to your user and start the worker in one terminal:
+
+```sh
+worker_dir=$(mktemp -d /tmp/vivliostyle.XXXXXXXX)
+vivliostyle build-worker --socket "$worker_dir/build.sock"
+```
+
+After the worker reports readiness, use the absolute socket path it printed in another terminal:
+
+```sh
+vivliostyle build --browser-worker /tmp/vivliostyle.XXXXXXXX/build.sock document1.md -o document1.pdf
+vivliostyle build --browser-worker /tmp/vivliostyle.XXXXXXXX/build.sock document2.md -o document2.pdf
+```
+
+The worker launches Chromium on the first PDF request and opens a fresh browser context for each PDF target. Matching launch settings reuse the same browser process. Executable, browser version, sandbox, proxy server or bypass list, and TLS setting changes replace it. `--browser-worker` is a CLI option. Omit it for a one-shot build. Firefox, Docker PDF rendering, and Windows are unsupported when using the option. A build using the worker can also produce EPUB and WebPub output.
+
+Each build using the same socket waits its turn in arrival order before evaluating its configuration or touching the workspace. The invoking CLI holds its turn through post-processing, output writes, and cleanup. Builds using a different worker, one-shot builds, and other tools can still access the same workspace concurrently.
+
+With the worker, `--timeout` starts after Chromium is ready and covers browser-context creation, navigation, typesetting, and PDF printing. Queue time, browser startup, and local preparation and post-processing are outside that deadline. A failed render is reported to the invoking CLI. If Chromium crashes, the next PDF request starts a replacement.
+
+When a build receives SIGINT, SIGTERM, or SIGHUP, the CLI forwards the signal to the build's process group and sends SIGKILL if the group is still running after ten seconds. When a build exits without interruption, the CLI sends SIGTERM to any remaining processes in its group and escalates to SIGKILL if needed. The next build waits for those processes to stop and for the worker to close any active render context.
+
+If you forcibly kill the supervising CLI, the build process attempts to stop its group when it loses contact with the supervisor. If a plugin starts a process in a separate group, that process can continue running and accessing the workspace after cancellation.
+
+Press Ctrl+C in the worker terminal or send it SIGTERM to close Chromium and remove the socket. Queued clients and any active render receive an error. If the worker is killed without cleanup, use a new private directory or remove the stale socket after verifying that the old worker has stopped. The worker refuses to overwrite an existing path.
+
 ## Generating Print-Ready PDF (PDF/X-1a Format)
 
 - [Example: preflight](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/preflight)

@@ -1,8 +1,9 @@
 import { Command, Option } from 'commander';
 import upath from 'upath';
 
+import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
 import { versionForDisplay } from '../util.js';
-import { createParserProgram } from './cli-flags.js';
+import { type CliFlags, parseInlineFlags } from './cli-flags.js';
 
 function setupBuildParserProgram(): Command {
   // Provide an order-sensitive command parser
@@ -142,6 +143,10 @@ https://github.com/vibranthq/press-ready
       '--executable-browser <path>',
       'specify a path of executable browser you installed',
     )
+    .option(
+      '--browser-worker <absolute-path>',
+      'reuse Chromium through a running build worker (Linux and macOS)',
+    )
     .option('--image <image>', 'specify a docker image to render')
     .option(
       '--viewer <URL>',
@@ -224,17 +229,28 @@ function validateTimeoutFlag(val: string) {
   return Number.isFinite(+val) ? +val * 1000 : undefined;
 }
 
-export const parseBuildCommand = createParserProgram({
-  setupProgram: setupBuildParserProgram,
-  parseArgs: (options, [input]) => {
-    if (
-      input &&
+export function parseBuildCli(argv: string[]): {
+  inlineConfig: ParsedVivliostyleInlineConfig;
+  browserWorker?: string;
+} {
+  const program = setupBuildParserProgram().parse(argv);
+  const { browserWorker, ...options } = program.opts<
+    CliFlags & { browserWorker?: string }
+  >();
+  const [input] = program.args;
+  // An input named vivliostyle.config is a config path.
+  const inlineConfig = parseInlineFlags(
+    input &&
       !options.config &&
       upath.basename(input).startsWith('vivliostyle.config')
-    ) {
-      // Load an input argument as a Vivliostyle config
-      return { ...options, config: input };
-    }
-    return { ...options, input };
-  },
-});
+      ? { ...options, config: input }
+      : { ...options, input },
+  );
+  return { inlineConfig, browserWorker };
+}
+
+export function parseBuildCommand(
+  argv: string[],
+): ParsedVivliostyleInlineConfig {
+  return parseBuildCli(argv).inlineConfig;
+}

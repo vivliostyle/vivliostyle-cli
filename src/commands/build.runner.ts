@@ -1,14 +1,14 @@
 import process from 'node:process';
 
-import { build } from '../core/build.js';
 import { runCliCommand } from '../entry-util.js';
 import { Logger } from '../logger.js';
 import { isInContainer } from '../util.js';
-import { parseBuildCommand } from './build.parser.js';
+import { parseBuildCli } from './build.parser.js';
 
 export async function runBuildCli(argv: string[]): Promise<void> {
   await runCliCommand(async (cliSignal) => {
-    let inlineConfig = parseBuildCommand(argv);
+    const { inlineConfig: parsedConfig, browserWorker } = parseBuildCli(argv);
+    let inlineConfig = parsedConfig;
     let containerForkMode = false;
     if (isInContainer() && process.env.VS_CLI_BUILD_PDF_OPTIONS) {
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- options forwarded from the parent build process as JSON
@@ -16,6 +16,19 @@ export async function runBuildCli(argv: string[]): Promise<void> {
       containerForkMode = true;
       Logger.debug('bypassedPdfBuilderOption %O', inlineConfig);
     }
-    await build({ ...inlineConfig, signal: cliSignal }, { containerForkMode });
+    inlineConfig = { ...inlineConfig, signal: cliSignal };
+    if (browserWorker === undefined) {
+      const { build } = await import('../core/build.js');
+      await build(inlineConfig, { containerForkMode });
+    } else {
+      if (containerForkMode || inlineConfig.renderMode === 'docker') {
+        throw new Error(
+          '--browser-worker cannot be used with Docker PDF rendering.',
+        );
+      }
+      Logger.setLogOptions(inlineConfig);
+      const { superviseBuild } = await import('../supervise-build.js');
+      await superviseBuild(argv.slice(2), browserWorker, cliSignal);
+    }
   });
 }

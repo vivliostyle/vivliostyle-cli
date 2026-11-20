@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockedCommands = vi.hoisted(() => ({
   runBuildCli: vi.fn<(...args: any[]) => unknown>(),
+  runBuildWorkerCli: vi.fn<(...args: any[]) => unknown>(),
   runCreateCli: vi.fn<(...args: any[]) => unknown>(),
   runInitCli: vi.fn<(...args: any[]) => unknown>(),
   runPreviewCli: vi.fn<(...args: any[]) => unknown>(),
@@ -10,6 +11,10 @@ const mockedCommands = vi.hoisted(() => ({
 
 vi.mock('../src/commands/build.runner.js', () => ({
   runBuildCli: mockedCommands.runBuildCli,
+}));
+
+vi.mock('../src/commands/build-worker.runner.js', () => ({
+  runBuildWorkerCli: mockedCommands.runBuildWorkerCli,
 }));
 
 vi.mock('../src/commands/create.runner.js', () => ({
@@ -34,7 +39,14 @@ function expectRootHelp(calls: unknown[][]) {
   const output = calls.flat().map(String).join('');
 
   expect(output).toContain('Usage: vivliostyle [options] [command]');
-  for (const command of ['create', 'init', 'build', 'preview', 'theme']) {
+  for (const command of [
+    'create',
+    'init',
+    'build',
+    'build-worker',
+    'preview',
+    'theme',
+  ]) {
     expect(output).toMatch(new RegExp(`^  ${command}\\b`, 'mv'));
   }
 }
@@ -54,6 +66,7 @@ describe('dispatchCli', () => {
 
   it.each([
     ['build', mockedCommands.runBuildCli],
+    ['build-worker', mockedCommands.runBuildWorkerCli],
     ['create', mockedCommands.runCreateCli],
     ['init', mockedCommands.runInitCli],
     ['preview', mockedCommands.runPreviewCli],

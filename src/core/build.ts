@@ -5,6 +5,7 @@ import upath from 'upath';
 import { type PreviewServer, build as viteBuild } from 'vite';
 import { cyan, gray } from 'yoctocolors';
 
+import type { WorkerPdfRenderer } from '../browser-worker/client.js';
 import { setupConfigFromFlags } from '../commands/cli-flags.js';
 import { loadVivliostyleConfig, warnDeprecatedConfig } from '../config/load.js';
 import { mergeConfig, mergeInlineConfig } from '../config/merge.js';
@@ -27,7 +28,10 @@ import { cwd, runCleanupHandlers } from '../util.js';
 
 export async function build(
   inlineConfig: ParsedVivliostyleInlineConfig,
-  { containerForkMode = false }: { containerForkMode?: boolean } = {},
+  {
+    containerForkMode = false,
+    renderWithWorker,
+  }: { containerForkMode?: boolean; renderWithWorker?: WorkerPdfRenderer } = {},
 ): Promise<void> {
   Logger.setLogOptions({ ...inlineConfig, containerForkMode });
   if (containerForkMode) {
@@ -51,6 +55,26 @@ export async function build(
 
     let config = resolveTaskConfig(task, inlineOptions);
     Logger.debug('build > config %O', config);
+    inlineConfig.signal?.throwIfAborted();
+    if (
+      renderWithWorker &&
+      config.outputs.some((target) => target.format === 'pdf')
+    ) {
+      if (
+        config.outputs.some(
+          (target) => target.format === 'pdf' && target.renderMode === 'docker',
+        )
+      ) {
+        throw new Error(
+          '--browser-worker cannot be used with Docker PDF rendering.',
+        );
+      }
+      if (config.browser.type === 'firefox') {
+        throw new Error(
+          '--browser-worker requires Chrome or Chromium. Firefox is unsupported.',
+        );
+      }
+    }
     const viteConfig = await resolveViteConfig({
       ...config,
       mode: 'build',
@@ -95,6 +119,7 @@ export async function build(
 
       // build artifacts
       if (isWebPubConfig(config)) {
+        inlineConfig.signal?.throwIfAborted();
         await cleanupWorkspace(config);
         await prepareThemeDirectory(config, inlineConfig.signal);
         await validateThemeCssDependencies(config);
@@ -108,6 +133,7 @@ export async function build(
 
     // generate files
     for (const target of config.outputs) {
+      inlineConfig.signal?.throwIfAborted();
       let output: string | null = null;
       const { format } = target;
       if (format === 'pdf') {
@@ -122,6 +148,7 @@ export async function build(
             target,
             config,
             signal: inlineConfig.signal,
+            renderWithWorker,
           });
         }
       } else if (format === 'webpub' || format === 'epub') {

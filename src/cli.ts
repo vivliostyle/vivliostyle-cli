@@ -21,6 +21,11 @@ export const dispatchCli = createCommandDispatcher({
       load: async () =>
         (await import('./commands/build.runner.js')).runBuildCli,
     },
+    'build-worker': {
+      description: 'Keep Chromium available for PDF builds',
+      load: async () =>
+        (await import('./commands/build-worker.runner.js')).runBuildWorkerCli,
+    },
     preview: {
       description: 'Open the preview page and interactively save PDFs',
       load: async () =>

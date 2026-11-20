@@ -52,7 +52,9 @@ export async function exec(
 }
 
 const cleanupHandlers: (() => void | Promise<void>)[] = [];
-const terminationHooks = new Set<(exitCode: number) => void>();
+const terminationHooks = new Set<
+  (exitCode: number, signal: NodeJS.Signals) => void | Promise<void>
+>();
 let cleanupPromise: Promise<void> | undefined;
 let processTerminationInstalled = false;
 let handlingProcessTermination = false;
@@ -110,9 +112,9 @@ export const executeWithCleanupOnInterrupt = <T>(
   return runPromise.finally(unregister);
 };
 
-// Termination hooks notify active work before cleanup starts closing resources.
+// Termination hooks notify active work and can hold process cleanup until it drains.
 export function registerTerminationHook(
-  hook: (exitCode: number) => void,
+  hook: (exitCode: number, signal: NodeJS.Signals) => void | Promise<void>,
 ): () => void {
   terminationHooks.add(hook);
   return () => {
@@ -146,19 +148,27 @@ export function runCleanupHandlers(): Promise<void> {
   return currentCleanupPromise;
 }
 
-async function handleProcessTermination(exitCode: number) {
+async function handleProcessTermination(
+  exitCode: number,
+  signal: NodeJS.Signals,
+) {
   if (handlingProcessTermination) {
     return;
   }
   handlingProcessTermination = true;
+  const pendingHooks: Promise<void>[] = [];
   for (const hook of terminationHooks) {
     try {
-      hook(exitCode);
+      const pending = hook(exitCode, signal);
+      if (pending) {
+        pendingHooks.push(pending);
+      }
     } catch (e) {
       // NOOP
     }
   }
   try {
+    await Promise.allSettled(pendingHooks);
     await runCleanupHandlers();
   } finally {
     process.exit(exitCode);
@@ -171,9 +181,9 @@ export function setupProcessTermination(): void {
   }
   processTerminationInstalled = true;
 
-  process.on('SIGINT', () => void handleProcessTermination(130));
-  process.on('SIGTERM', () => void handleProcessTermination(143));
-  process.on('SIGHUP', () => void handleProcessTermination(129));
+  process.on('SIGINT', () => void handleProcessTermination(130, 'SIGINT'));
+  process.on('SIGTERM', () => void handleProcessTermination(143, 'SIGTERM'));
+  process.on('SIGHUP', () => void handleProcessTermination(129, 'SIGHUP'));
   process.once('exit', () => {
     void runCleanupHandlers();
   });
