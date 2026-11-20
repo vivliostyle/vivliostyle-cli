@@ -15,13 +15,7 @@ import { resolveViteConfig } from '../config/vite.js';
 import { buildPDFWithContainer } from '../container.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { buildPDF } from '../output/pdf.js';
-import { buildWebPublication } from '../output/webbook.js';
 import { copyAssets } from '../processor/asset.js';
-import {
-  cleanupWorkspace,
-  compile,
-  prepareThemeDirectory,
-} from '../processor/compile.js';
 import { validateThemeCssDependencies } from '../processor/css.js';
 import { createViteServer, generateCmykReserveMap } from '../server.js';
 import { cwd, runCleanupHandlers } from '../util.js';
@@ -120,6 +114,9 @@ export async function build(
       // build artifacts
       if (isWebPubConfig(config)) {
         inlineConfig.signal?.throwIfAborted();
+        const { cleanupWorkspace, compile, prepareThemeDirectory } =
+          await import('../processor/compile.js');
+        inlineConfig.signal?.throwIfAborted();
         await cleanupWorkspace(config);
         await prepareThemeDirectory(config, inlineConfig.signal);
         await validateThemeCssDependencies(config);
@@ -152,6 +149,8 @@ export async function build(
           });
         }
       } else if (format === 'webpub' || format === 'epub') {
+        const { buildWebPublication } = await import('../output/webbook.js');
+        inlineConfig.signal?.throwIfAborted();
         output = await buildWebPublication({ target, config });
       }
       if (output && !containerForkMode) {
