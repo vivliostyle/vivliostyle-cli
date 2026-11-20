@@ -24,9 +24,29 @@ if (!process.channel || !workerSocketArg) {
 const workerSocket = workerSocketArg;
 
 // Vite uses the shared CommonJS table when loading a bundled CJS config.
-// oxlint-disable-next-line typescript/no-deprecated -- Node's legacy loader table is the state to restore
+// oxlint-disable-next-line typescript/no-deprecated -- Inspect Node's legacy loader table for changes
 const extensions = createRequire(import.meta.url).extensions;
 class DescendantCleanupTimeout extends Error {}
+
+function loadersChanged(before: PropertyDescriptorMap): boolean {
+  const keys = Reflect.ownKeys(before);
+  return (
+    keys.length !== Reflect.ownKeys(extensions).length ||
+    keys.some((key) => {
+      const previous = before[key];
+      const current = Object.getOwnPropertyDescriptor(extensions, key);
+      return (
+        !current ||
+        previous.configurable !== current.configurable ||
+        previous.enumerable !== current.enumerable ||
+        previous.writable !== current.writable ||
+        previous.get !== current.get ||
+        previous.set !== current.set ||
+        !Object.is(previous.value, current.value)
+      );
+    })
+  );
+}
 
 const requestContext = new AsyncLocalStorage<number>();
 let active:
@@ -87,15 +107,8 @@ function preserveProcessSettings(): Disposable {
   // oxlint-disable-next-line typescript/no-deprecated -- POSIX executor restores the mask when the request drains
   const umask = process.umask();
   const exitCode = process.exitCode;
-  const loaders = Object.getOwnPropertyDescriptors(extensions);
   return {
     [Symbol.dispose]() {
-      for (const key of Reflect.ownKeys(extensions)) {
-        if (!Object.hasOwn(loaders, key)) {
-          Reflect.deleteProperty(extensions, key);
-        }
-      }
-      Object.defineProperties(extensions, loaders);
       logger[Symbol.dispose]();
       process.chdir(directory);
       process.umask(umask);
@@ -177,15 +190,20 @@ process.on('message', (raw) => {
   const done = requestContext.run(id, async () => {
     // Install the active job before its synchronous startup can write logs.
     await Promise.resolve();
+    // Cached CommonJS plugins may register loaders only when first evaluated.
+    const loaders = Object.getOwnPropertyDescriptors(extensions);
     let error: string | undefined;
-    let retire = false;
+    let retire: 'graceful' | 'force' | undefined;
     try {
       await execute(args, controller.signal);
     } catch (reason) {
-      retire = reason instanceof DescendantCleanupTimeout;
-      error = retire
-        ? toError(reason).message
-        : getFormattedError(toError(reason));
+      if (reason instanceof DescendantCleanupTimeout) {
+        retire = 'force';
+        error = reason.message;
+      } else {
+        retire = loadersChanged(loaders) ? 'graceful' : undefined;
+        error = getFormattedError(toError(reason));
+      }
     } finally {
       active = undefined;
     }

@@ -40,4 +40,4 @@ export type ExecutorRequest =
 export type ExecutorReply =
   | { type: 'ready' }
   | (BuildLog & { id: number })
-  | (BuildResult & { id: number; retire?: boolean });
+  | (BuildResult & { id: number; retire?: 'graceful' | 'force' });

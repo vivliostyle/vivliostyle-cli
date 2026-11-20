@@ -464,16 +464,58 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     await shutdown(worker);
   }, 90_000);
 
-  it('restores the CommonJS loader after a Vite config throws', async () => {
+  it('reuses CommonJS loaders registered by cached plugins', async () => {
     await startServices();
+    await file(
+      'register-loader.cjs',
+      `
+      const { readFileSync } = require('node:fs');
+      console.log('Registering book data loader');
+      require.extensions['.book-data'] = (target, filename) => {
+        target.exports = readFileSync(filename, 'utf8');
+      };
+      `,
+    );
+    async function buildWithTitle(name: string, title: string) {
+      await file(`${name}.book-data`, title);
+      await file(
+        'book.config.mjs',
+        `
+        import { createRequire } from 'node:module';
+        const require = createRequire(process.cwd() + '/book.config.mjs');
+        require('./register-loader.cjs');
+        export default { entry: 'first.md', title: require('./${name}.book-data') };
+        `,
+      );
+      const result = await succeeded(
+        build(name, ['--config', 'book.config.mjs']),
+      );
+      expect((await pdf(name)).getTitle()).toBe(title);
+      return result;
+    }
+    const first = await buildWithTitle('first', 'First book title');
+    const second = await buildWithTitle('second', 'Second book title');
+    expect(first.output).toContain('Registering book data loader');
+    expect(second.output).not.toContain('Registering book data loader');
+    expect(second).toMatchObject({
+      executor: first.executor,
+      browser: first.browser,
+    });
+  }, 60_000);
+
+  it('replaces the executor after a Vite config failure changes its CommonJS loaders', async () => {
+    await startServices();
+    const first = await succeeded(build('before-vite-failure'));
+    const [temporary] = await executorDirectories();
     await file('vite.config.cjs', "throw new Error('Broken CommonJS config');");
     const failed = await build('vite-broken').exit;
     expect(failed).toMatchObject({
       code: 1,
       output: expect.stringContaining('Broken CommonJS config'),
     });
-    const pid = /Build daemon executor pid=(\d+)/v.exec(failed.output)?.[1];
-    expect(pid).toBeDefined();
+    expect(failed.output).toContain(
+      `Build daemon executor pid=${first.executor}`,
+    );
     await file('index.html', '<!doctype html><title>Vite entry</title>');
     await file(
       'vite.config.cjs',
@@ -491,8 +533,11 @@ describe.skipIf(!supported)('bundled build daemon', () => {
     const recovered = await succeeded(
       build('vite-repaired', ['--config', 'probe.mjs']),
     );
-    expect(recovered.executor).toBe(Number(pid));
+    expect(recovered.executor).not.toBe(first.executor);
+    expect(recovered.browser).toBe(first.browser);
     expect(recovered.output).toContain('CommonJS config: repaired');
+    expect(() => process.kill(first.executor, 0)).toThrow(/ESRCH/v);
+    expect(await executorDirectories()).not.toContain(temporary);
   }, 60_000);
 
   it('serializes overlapping jobs and drains cancellation, disconnect, and shutdown', async () => {

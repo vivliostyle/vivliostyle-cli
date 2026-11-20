@@ -83,7 +83,7 @@ Both sockets require an owner-only directory. The daemon compares canonical work
 
 The daemon serves builds in submission order and sends each build's logs and result to its invoking CLI. It uses the environment from daemon startup. It reloads the main Vivliostyle, Vite, and PostCSS config files for each build. Restart the daemon after editing separately imported config helpers or plugins. Each task starts and closes its own Vite server because the server's middleware captures that task's configuration and caches.
 
-The daemon retires its Node.js executor after 100 dispatched builds, including failed builds and builds cancelled after dispatch. It starts a replacement when the next build needs one. The daemon socket, queue, and Chromium worker stay active across rotation.
+The daemon retires its Node.js executor after 100 dispatched builds, including failed builds and builds cancelled after dispatch. It also retires the executor if a failed build changes the CommonJS loader table. It starts a replacement when the next build needs one. The daemon socket, queue, and Chromium worker stay active across rotation.
 
 Interrupting or disconnecting a client removes its queued build or cancels its active build. On Ctrl+C, the client sends a cancellation request and waits up to 12 seconds before closing the connection and exiting with status 130. The daemon also treats a closed connection as cancellation.
 

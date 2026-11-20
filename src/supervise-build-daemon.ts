@@ -180,11 +180,14 @@ export class BuildExecutor {
       this.#onReply = (message) => {
         if (message.type !== 'ready' && message.id === id) {
           if (message.type === 'result') {
-            if (message.retire) {
+            if (message.retire === 'force') {
               result.reject(new Error(message.error));
               void this.stop(true);
             } else {
               result.resolve({ type: 'result', error: message.error });
+              if (message.retire === 'graceful') {
+                void this.stop();
+              }
             }
           } else {
             const { type, stream, data } = message;
