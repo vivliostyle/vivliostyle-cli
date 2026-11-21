@@ -146,6 +146,10 @@ describe.skipIf(!supported)('bundled browser worker', () => {
   }
 
   beforeAll(async () => {
+    if (process.env.BROWSER_PATH) {
+      executablePath = process.env.BROWSER_PATH;
+      return;
+    }
     // The one-shot PDF suite can download its managed browser concurrently.
     const platform = detectBrowserPlatform();
     if (!platform) {

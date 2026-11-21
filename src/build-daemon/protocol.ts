@@ -2,17 +2,20 @@ import * as v from 'valibot';
 
 export const buildProtocolVersion = 1;
 
-export const BuildRequestSchema = v.object({
-  type: v.literal('build'),
-  version: v.number(),
-  cwd: v.string(),
-  args: v.array(v.string()),
-});
+export const InitialRequestSchema = v.variant('type', [
+  v.object({
+    type: v.literal('build'),
+    version: v.number(),
+    cwd: v.string(),
+    args: v.array(v.string()),
+  }),
+  v.object({ type: v.literal('describe'), version: v.number() }),
+]);
 
 export const CancelRequestSchema = v.object({ type: v.literal('cancel') });
 
 export type BuildRequest =
-  | v.InferOutput<typeof BuildRequestSchema>
+  | v.InferOutput<typeof InitialRequestSchema>
   | v.InferOutput<typeof CancelRequestSchema>;
 
 export interface BuildLog {
@@ -28,6 +31,7 @@ export interface BuildResult {
 }
 
 export type BuildReply =
+  | { type: 'session'; version: number; cliPath: string; cwd: string }
   | { type: 'queued' }
   | { type: 'started'; pid: number }
   | BuildLog

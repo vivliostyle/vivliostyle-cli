@@ -93,6 +93,19 @@ Press Ctrl+C in the daemon terminal or send it SIGTERM to reject queued builds, 
 
 To compare one-shot builds, Chromium reuse, and daemon builds from the repository, run `pnpm build:cli` followed by `node scripts/benchmark-browser-worker.ts`. The benchmark accepts document paths and an optional `--executable-browser <path>`. It reports per-build wall time, phase timings, and service startup and shutdown time.
 
+## Running a standalone build daemon
+
+On Linux and macOS, use `--standalone` to run the build daemon and its Chromium worker as one service. The build process runs in a private temporary directory, separate from the project directory where you start the command.
+
+```sh
+socket_dir=$(mktemp -d /tmp/vivliostyle.XXXXXXXX)
+vivliostyle build-daemon --standalone --socket "$socket_dir/daemon.sock"
+```
+
+Wait for `Build daemon ready` before connecting. Clients such as pfpdf can discover the CLI entry point and working directory through the owner-only socket. Press Ctrl+C to stop the service. Vivliostyle cancels any active build, stops the worker, and removes the socket and working directory. You can then remove the empty directory you created for the socket.
+
+The discovery request is `{"type":"describe","version":1}`. The daemon answers with `{"type":"session","version":1,"cliPath":"…","cwd":"…"}` and closes that connection. Both messages use a four-byte big-endian length followed by UTF-8 JSON. Clients run the advertised CLI from the advertised working directory with `build --build-daemon`.
+
 ## Generating Print-Ready PDF (PDF/X-1a Format)
 
 - [Example: preflight](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/preflight)

@@ -18,8 +18,8 @@ import { BuildExecutor } from '../supervise-build-daemon.js';
 import { registerTerminationHook, toError } from '../util.js';
 import {
   buildProtocolVersion,
-  BuildRequestSchema,
   CancelRequestSchema,
+  InitialRequestSchema,
   type BuildReply,
 } from './protocol.js';
 
@@ -34,12 +34,19 @@ interface Job {
   controller: AbortController;
 }
 
+interface StandaloneSession {
+  cliPath: string;
+  cwd: string;
+  stopWorker: () => Promise<void>;
+}
+
 const shutdownMessage = 'Build daemon is shutting down.';
 
 export async function runBuildDaemon(
   socketPath: string,
   browserWorker: string,
   signal: AbortSignal,
+  standalone?: StandaloneSession,
 ): Promise<void> {
   signal.throwIfAborted();
   const address = resolveWorkerSocket(socketPath, 'build daemon');
@@ -55,7 +62,7 @@ export async function runBuildDaemon(
     );
   }
 
-  const directory = fs.realpathSync(process.cwd());
+  const directory = fs.realpathSync(standalone?.cwd ?? process.cwd());
   await checkBuildDaemonProcessInspection();
   signal.throwIfAborted();
   const clients = new Set<Client>();
@@ -69,10 +76,14 @@ export async function runBuildDaemon(
   function finish({ socket, connection }: Client, error?: string) {
     if (!socket.destroyed && !socket.writableEnded) {
       connection.send({ type: 'result', error: error?.slice(0, 64 * 1024) });
-      socket.end(() => {
-        socket.destroy();
-      });
+      endSocket(socket);
     }
+  }
+
+  function endSocket(socket: Socket) {
+    socket.end(() => {
+      socket.destroy();
+    });
   }
 
   function cancel(client: Client, message: string) {
@@ -160,7 +171,7 @@ export async function runBuildDaemon(
     const { socket, connection } = client;
     try {
       const request = v.parse(
-        BuildRequestSchema,
+        InitialRequestSchema,
         await connection.readMessage(),
       );
       if (stopping || socket.destroyed) {
@@ -170,6 +181,21 @@ export async function runBuildDaemon(
         throw new Error(
           `Incompatible build daemon protocol. Expected version ${buildProtocolVersion}.`,
         );
+      }
+      if (request.type === 'describe') {
+        if (!standalone) {
+          throw new Error(
+            'Session discovery requires a standalone build daemon.',
+          );
+        }
+        connection.send({
+          type: 'session',
+          version: buildProtocolVersion,
+          cliPath: standalone.cliPath,
+          cwd: directory,
+        });
+        endSocket(socket);
+        return;
       }
       if (
         !path.isAbsolute(request.cwd) ||
@@ -227,9 +253,11 @@ export async function runBuildDaemon(
     (shuttingDown ??= (async () => {
       stopping = true;
       await listening?.catch(() => {});
-      const closed = new Promise<void>((resolve) => {
-        server.close(() => resolve());
-      });
+      const closeServer = () =>
+        new Promise<void>((resolve) => {
+          server.close(() => resolve());
+        });
+      const closed = standalone ? undefined : closeServer();
       for (const client of clients) {
         if (client !== active?.client) {
           finish(client, retirementFailure?.message ?? shutdownMessage);
@@ -245,13 +273,17 @@ export async function runBuildDaemon(
       try {
         await processing;
         await executor?.stop().catch(() => {});
-        await closed;
       } finally {
-        clearTimeout(timer);
-        if (retirementFailure) {
-          stopped.reject(retirementFailure);
-        } else {
-          stopped.resolve(null);
+        try {
+          await standalone?.stopWorker();
+        } finally {
+          await (closed ?? closeServer());
+          clearTimeout(timer);
+          if (retirementFailure) {
+            stopped.reject(retirementFailure);
+          } else {
+            stopped.resolve(null);
+          }
         }
       }
     })());

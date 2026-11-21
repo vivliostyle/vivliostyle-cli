@@ -93,6 +93,19 @@ vivliostyle build --build-daemon /tmp/vivliostyle.XXXXXXXX/daemon.sock document2
 
 リポジトリで通常のビルド、Chromium の再利用、デーモンを使うビルドを比較するには、`pnpm build:cli` に続いて `node scripts/benchmark-browser-worker.ts` を実行します。文書のパスと、オプションで `--executable-browser <path>` を指定できます。ビルドの実経過時間、各処理段階の時間、サービスの起動・終了時間が表示されます。
 
+## スタンドアロンのビルドデーモンを起動する
+
+Linux と macOS では、`--standalone` を指定すると、ビルドデーモンと Chromium ワーカーを単一のサービスとして起動できます。ビルドプロセスには、コマンドを起動したプロジェクトディレクトリとは別の、専用の一時作業ディレクトリを使用します。
+
+```sh
+socket_dir=$(mktemp -d /tmp/vivliostyle.XXXXXXXX)
+vivliostyle build-daemon --standalone --socket "$socket_dir/daemon.sock"
+```
+
+`Build daemon ready` が表示されてから接続してください。pfpdf などのクライアントは、所有者のみがアクセスできるソケットから、CLI のエントリーポイントと作業ディレクトリを取得できます。Ctrl+C を押すと、実行中のビルドをキャンセルし、ワーカーを停止してから、ソケットと作業ディレクトリを削除します。その後、ソケット用に作成した空のディレクトリを削除できます。
+
+接続情報は `{"type":"describe","version":1}` で要求します。デーモンは `{"type":"session","version":1,"cliPath":"…","cwd":"…"}` を返して接続を閉じます。どちらのメッセージでも、UTF-8 の JSON の前にバイト長を 4 バイトのビッグエンディアン形式で付けます。クライアントは、返された作業ディレクトリから、返された CLI に `build --build-daemon` を指定して実行します。
+
 ## 印刷用 PDF（PDF/X-1a 形式）の生成
 
 - [Example: preflight](https://github.com/vivliostyle/vivliostyle-cli/tree/main/examples/preflight)

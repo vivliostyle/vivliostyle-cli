@@ -86,6 +86,7 @@ function reportProgress(client: Client, event: PdfRenderProgress): void {
 export async function runBrowserWorker(
   socketPath: string,
   signal: AbortSignal,
+  onReady?: () => void,
 ): Promise<void> {
   const address = resolveWorkerSocket(socketPath);
   if (fs.lstatSync(address, { throwIfNoEntry: false })) {
@@ -291,7 +292,11 @@ export async function runBrowserWorker(
     await listening;
     signal.throwIfAborted();
     fs.chmodSync(address, 0o600);
-    Logger.stdout.write(`Browser worker ready at ${address}\n`);
+    if (onReady) {
+      onReady();
+    } else {
+      Logger.stdout.write(`Browser worker ready at ${address}\n`);
+    }
     await stopped.promise;
   } finally {
     try {

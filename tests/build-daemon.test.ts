@@ -343,6 +343,10 @@ describe.skipIf(!supported)('bundled build daemon', () => {
   }
 
   beforeAll(async () => {
+    if (process.env.BROWSER_PATH) {
+      executablePath = process.env.BROWSER_PATH;
+      return;
+    }
     const platform = detectBrowserPlatform();
     if (!platform) {
       throw new Error(
@@ -405,6 +409,70 @@ describe.skipIf(!supported)('bundled build daemon', () => {
       await fs.rm(directory, { recursive: true, force: true });
     }
   }, 20_000);
+
+  it('describes an isolated standalone session, reuses it, and cleans up on shutdown', async () => {
+    await file(
+      'vivliostyle.config.cjs',
+      'throw new Error("wrong working directory");',
+    );
+    const daemon = start([
+      'build-daemon',
+      '--standalone',
+      '--socket',
+      daemonSocket,
+    ]);
+    await daemon.waitFor(/Build daemon ready at /v);
+    expect((await fs.stat(daemonSocket)).mode & 0o777).toBe(0o600);
+
+    const { connection } = raw();
+    connection.send({ type: 'describe', version: buildProtocolVersion });
+    const session = (await connection.readMessage()) as Extract<
+      BuildReply,
+      { type: 'session' }
+    >;
+    expect(session).toMatchObject({
+      type: 'session',
+      version: buildProtocolVersion,
+      cliPath: await fs.realpath(cli),
+    });
+    expect(path.dirname(session.cwd)).toBe(await fs.realpath(directory));
+    expect(session.cwd).not.toBe(await fs.realpath(project));
+
+    const { connection: incompatible } = raw();
+    incompatible.send({ type: 'describe', version: buildProtocolVersion + 1 });
+    await expect(incompatible.readMessage()).resolves.toMatchObject({
+      type: 'result',
+      error: expect.stringContaining('Incompatible build daemon protocol'),
+    });
+    const source = path.join(project, 'first.md');
+    const mismatch = await build('mismatch', [source]).exit;
+    expect(mismatch.output).toContain(
+      'Build daemon clients must run from its project directory',
+    );
+
+    const first = await succeeded(build('first', [source], session.cwd));
+    const second = await succeeded(
+      build('second', [path.join(project, 'second.md')], session.cwd),
+    );
+    expect(first.executor).toBe(second.executor);
+    expect(first.browser).toBe(second.browser);
+    for (const name of ['first', 'second']) {
+      const rendered = await PDFDocument.load(
+        await fs.readFile(path.join(session.cwd, `${name}.pdf`)),
+      );
+      expect(rendered.getPageCount()).toBeGreaterThan(0);
+    }
+
+    await shutdown(daemon);
+    await expect(fs.stat(daemonSocket)).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+    await expect(fs.stat(session.cwd)).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+    expect(() => process.kill(first.executor, 0)).toThrow(/ESRCH/v);
+    expect(() => process.kill(first.browser, 0)).toThrow(/ESRCH/v);
+  }, 30_000);
 
   it('reuses Node and Chromium while reloading main configs and generating mixed outputs', async () => {
     const { daemon, worker } = await startServices();
