@@ -98,6 +98,9 @@ Each PDF build uses its own browser context. Chrome remains running until you
 stop it. Set browser launch options, such as proxy settings, when starting
 Chrome. The option is for local Chromium PDF rendering.
 
+For HTTP inputs, a browser that enforces CORS needs the source server to allow
+requests from the Vivliostyle Viewer's origin.
+
 **Other processes on the same machine can also control the browser through the
 DevTools connection.** Use the dedicated profile and keep the interface bound to
 loopback.
