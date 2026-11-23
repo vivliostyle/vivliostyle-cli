@@ -383,11 +383,17 @@ function loadPageSizeData(page: Page): Promise<PageSizeData[]> {
       const bleedBox = pageContainer.querySelector<HTMLElement>(
         'div[data-vivliostyle-bleed-box]',
       );
+      // data-vivliostyle-page-orientation, set by Vivliostyle.js on a page
+      // with page-orientation (vivliostyle/vivliostyle.js#2292)
+      const orientation = pageContainer.dataset.vivliostylePageOrientation;
       sizeData.push({
         mediaWidth: Number.parseFloat(pageContainer.style.width) * 0.75,
         mediaHeight: Number.parseFloat(pageContainer.style.height) * 0.75,
         bleedOffset: Number.parseFloat(bleedBox?.style.left ?? '') * 0.75,
         bleedSize: Number.parseFloat(bleedBox?.style.paddingLeft ?? '') * 0.75,
+        ...(orientation === 'rotate-left' || orientation === 'rotate-right'
+          ? { orientation }
+          : {}),
       });
     }
     return sizeData;
