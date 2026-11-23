@@ -206,10 +206,21 @@ async function launchBrowser({
     args.push('--no-startup-window');
   }
   // TODO: Investigate appropriate settings on Firefox
+  const extraPrefsFirefox =
+    browserType === 'firefox'
+      ? {
+          // Firefox's Local Network Access holds requests from a public
+          // origin (e.g. a remote viewer such as https://vivliostyle.org/viewer/)
+          // to localhost until the user answers a permission prompt, which
+          // never happens under automation, so the build hangs.
+          'network.lna.blocking': false,
+        }
+      : undefined;
 
   const launchOptions = {
     executablePath,
     args,
+    extraPrefsFirefox,
     browser: browserType === 'chromium' ? 'chrome' : browserType,
     headless,
     acceptInsecureCerts: ignoreHttpsErrors,

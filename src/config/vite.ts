@@ -2,8 +2,10 @@ import upath from 'upath';
 import {
   type ConfigEnv,
   createLogger,
+  defaultAllowedOrigins,
   type InlineConfig,
   mergeConfig as mergeViteConfig,
+  type Plugin,
   resolveConfig,
   type ResolvedConfig as ResolvedViteConfig,
 } from 'vite';
@@ -21,6 +23,49 @@ const defaultConfigEnv: Record<'preview' | 'build', ConfigEnv> = {
   build: { command: 'serve', mode: 'production', isPreview: true },
 };
 
+/**
+ * Returns the origin of a remote viewer that Vite's default CORS policy
+ * (which only allows localhost origins) would reject, or undefined.
+ */
+export function getRemoteViewerOrigin(
+  viewer: string | undefined,
+): string | undefined {
+  if (!viewer || !URL.canParse(viewer)) {
+    return undefined;
+  }
+  const { protocol, origin } = new URL(viewer);
+  if (
+    (protocol !== 'http:' && protocol !== 'https:') ||
+    defaultAllowedOrigins.test(origin)
+  ) {
+    return undefined;
+  }
+  return origin;
+}
+
+/**
+ * A remote viewer (e.g. `--viewer https://vivliostyle.org/viewer/`) fetches
+ * the documents from the local server cross-origin. Chromium runs with
+ * --disable-web-security, but Firefox enforces CORS, so allow the viewer's
+ * origin in addition to Vite's default allowed origins. A `cors` option the
+ * user configured is left untouched.
+ */
+function remoteViewerCorsPlugin(viewerOrigin: string): Plugin {
+  return {
+    name: 'vivliostyle:remote-viewer-cors',
+    config(config) {
+      if (config.server?.cors !== undefined) {
+        return;
+      }
+      const cors = { origin: [defaultAllowedOrigins, viewerOrigin] };
+      return {
+        server: { cors },
+        ...(config.preview?.cors === undefined && { preview: { cors } }),
+      } satisfies InlineConfig;
+    },
+  };
+}
+
 export async function resolveViteConfig({
   serverRootDir,
   server,
@@ -28,6 +73,7 @@ export async function resolveViteConfig({
   viteConfigFile,
   logLevel,
   workspaceDir,
+  viewer,
   mode,
 }: Pick<
   ResolvedTaskConfig,
@@ -37,6 +83,7 @@ export async function resolveViteConfig({
   | 'viteConfigFile'
   | 'logLevel'
   | 'workspaceDir'
+  | 'viewer'
 > & {
   mode: 'preview' | 'build';
 }): Promise<ResolvedViteConfig> {
@@ -86,6 +133,7 @@ export async function resolveViteConfig({
       ? upath.join(workspaceDir, '.vite')
       : upath.join(root, '.vite');
 
+  const viewerOrigin = getRemoteViewerOrigin(viewer);
   const finalUserConfig = mergeViteConfig(viteConfig ?? {}, {
     server,
     preview: server,
@@ -93,6 +141,7 @@ export async function resolveViteConfig({
     root,
     customLogger: viteLogger,
     cacheDir,
+    plugins: viewerOrigin ? [remoteViewerCorsPlugin(viewerOrigin)] : [],
   } satisfies InlineConfig);
   return resolveConfig(
     finalUserConfig,
