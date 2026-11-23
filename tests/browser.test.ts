@@ -8,8 +8,11 @@ import type { BrowserPlatform } from '../src/util.js';
 const mockedLaunch = vi.hoisted(() =>
   vi.fn<(options?: unknown) => Promise<unknown>>(),
 );
+const mockedConnect = vi.hoisted(() =>
+  vi.fn<(options?: unknown) => Promise<unknown>>(),
+);
 const mockedRegisterCleanupHandler = vi.hoisted(() =>
-  vi.fn<(message: string, handler: () => void | Promise<void>) => void>(),
+  vi.fn<(message: string, handler: () => void | Promise<void>) => () => void>(),
 );
 const mockedUseTmpDirectory = vi.hoisted(() =>
   vi.fn<() => Promise<[string, () => void]>>(() =>
@@ -34,7 +37,7 @@ vi.mock('../src/node-modules.js', () => ({
   importNodeModule: vi.fn<(name: string) => Promise<unknown>>((name) =>
     Promise.resolve(
       name === 'puppeteer-core'
-        ? { launch: mockedLaunch }
+        ? { launch: mockedLaunch, connect: mockedConnect }
         : {
             resolveBuildId: mockedResolveBuildId,
             computeExecutablePath: mockedComputeExecutablePath,
@@ -64,6 +67,89 @@ describe('launchPreview', () => {
     registeredCleanupHandler = undefined;
     mockedRegisterCleanupHandler.mockImplementation((_message, handler) => {
       registeredCleanupHandler = handler;
+      return () => {
+        registeredCleanupHandler = undefined;
+      };
+    });
+  });
+
+  describe('external Chromium', () => {
+    const browserURL = 'http://127.0.0.1:9222';
+    const open = () =>
+      launchPreview({
+        mode: 'build',
+        url: 'http://127.0.0.1:3000',
+        config: {
+          browser: {
+            type: 'chrome',
+            tag: 'stable',
+            executablePath: undefined,
+            url: browserURL,
+          },
+          proxy: undefined,
+          sandbox: false,
+          ignoreHttpsErrors: false,
+          timeout: 1000,
+        },
+      });
+
+    it('closes its context and disconnects once', async () => {
+      const page = {
+        setViewport: vi.fn<() => void>(),
+        on: vi.fn<() => void>(),
+        goto: vi.fn<() => void>(),
+      };
+      const context = {
+        newPage: vi.fn<() => typeof page>().mockReturnValue(page),
+        close: vi.fn<() => void>(),
+      };
+      const browser = {
+        createBrowserContext: vi
+          .fn<() => typeof context>()
+          .mockReturnValue(context),
+        disconnect: vi.fn<() => void>(),
+        close: vi.fn<() => void>(),
+      };
+      mockedConnect.mockResolvedValueOnce(browser);
+
+      const result = await open();
+      expect(mockedConnect).toHaveBeenCalledWith({
+        browserURL,
+        protocolTimeout: 1000,
+      });
+      expect(browser.createBrowserContext).toHaveBeenCalledOnce();
+      expect(context.newPage).toHaveBeenCalledOnce();
+      expect(result.page).toBe(page);
+      await Promise.all([result.closeBrowser(), registeredCleanupHandler?.()]);
+      expect(context.close).toHaveBeenCalledOnce();
+      expect(browser.disconnect).toHaveBeenCalledOnce();
+      expect(browser.close).not.toHaveBeenCalled();
+      expect(mockedLaunch).not.toHaveBeenCalled();
+      expect(mockedResolveBuildId).not.toHaveBeenCalled();
+    });
+
+    it('disconnects when context creation fails', async () => {
+      const error = new Error('Cannot create context');
+      const browser = {
+        createBrowserContext: vi
+          .fn<() => Promise<never>>()
+          .mockRejectedValue(error),
+        disconnect: vi.fn<() => void>(),
+      };
+      mockedConnect.mockResolvedValueOnce(browser);
+
+      await expect(open()).rejects.toThrow(error);
+      expect(browser.disconnect).toHaveBeenCalledOnce();
+      expect(registeredCleanupHandler).toBeUndefined();
+    });
+
+    it('reports connection errors without launching a browser', async () => {
+      mockedConnect.mockRejectedValueOnce(new Error('Connection refused'));
+
+      await expect(open()).rejects.toThrow(
+        `Cannot connect to Chromium at ${browserURL}`,
+      );
+      expect(mockedLaunch).not.toHaveBeenCalled();
     });
   });
 

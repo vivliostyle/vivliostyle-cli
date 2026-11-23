@@ -394,6 +394,7 @@ export type ResolvedTaskConfig = {
     type: BrowserType;
     tag: string;
     executablePath: string | undefined;
+    url?: string;
   };
   proxy:
     | {
@@ -693,6 +694,7 @@ export function resolveTaskConfig(
         config.browser?.tag ??
         (platform ? DEFAULT_BROWSER_VERSIONS[type][platform] : 'latest'),
       executablePath: options.executableBrowser,
+      ...(options.browserUrl && { url: options.browserUrl }),
     };
   })();
   const proxyServer =

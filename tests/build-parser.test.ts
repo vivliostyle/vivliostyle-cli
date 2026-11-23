@@ -16,4 +16,28 @@ describe('build command parser', () => {
       entry: '-input.md',
     });
   });
+
+  it('accepts a Chromium DevTools HTTP URL', () => {
+    const options = parseBuildCommand([
+      'vivliostyle',
+      'build',
+      '--browser-url',
+      'http://127.0.0.1:9222',
+      'input.md',
+    ]);
+
+    expect(options.browserUrl).toBe('http://127.0.0.1:9222');
+  });
+
+  it('rejects a WebSocket URL for --browser-url', () => {
+    expect(() =>
+      parseBuildCommand([
+        'vivliostyle',
+        'build',
+        '--browser-url',
+        'ws://127.0.0.1:9222/devtools/browser/id',
+        'input.md',
+      ]),
+    ).toThrow('requires a Chromium DevTools HTTP(S) URL');
+  });
 });

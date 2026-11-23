@@ -50,6 +50,38 @@ export async function build(
     using _ = Logger.startLogging('Start building');
 
     let config = resolveTaskConfig(task, inlineOptions);
+    if (config.browser.url) {
+      if (
+        containerForkMode ||
+        config.outputs.some(
+          (target) => target.format === 'pdf' && target.renderMode === 'docker',
+        )
+      ) {
+        throw new Error(
+          '--browser-url cannot be used with Docker PDF rendering.',
+        );
+      }
+      if (config.browser.type === 'firefox') {
+        throw new Error(
+          '--browser-url requires Chromium and cannot be used with Firefox.',
+        );
+      }
+      const launchOptions = [
+        config.browser.executablePath && '--executable-browser',
+        task.browser?.tag && '--browser with a version',
+        inlineOptions.sandbox && '--sandbox',
+        inlineOptions.proxyServer && '--proxy-server',
+        inlineOptions.proxyBypass && '--proxy-bypass',
+        inlineOptions.proxyUser && '--proxy-user',
+        inlineOptions.proxyPass && '--proxy-pass',
+        inlineOptions.ignoreHttpsErrors && '--ignore-https-errors',
+      ].filter(Boolean);
+      if (launchOptions.length > 0) {
+        throw new Error(
+          `--browser-url cannot be used with ${launchOptions.join(', ')}. Configure the running Chromium when launching it.`,
+        );
+      }
+    }
     Logger.debug('build > config %O', config);
     const viteConfig = await resolveViteConfig({
       ...config,

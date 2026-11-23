@@ -105,16 +105,16 @@ export async function runBrowserOperationWithAbort<T>({
 }
 
 async function launchBrowser({
-  browserType,
+  browserConfig,
   proxy,
-  executablePath,
   headless,
   noSandbox,
   disableDevShmUsage,
   ignoreHttpsErrors,
   protocolTimeout,
+  signal,
 }: {
-  browserType: BrowserType;
+  browserConfig: ResolvedTaskConfig['browser'];
   proxy:
     | {
         server: string;
@@ -123,17 +123,20 @@ async function launchBrowser({
         password: string | undefined;
       }
     | undefined;
-  executablePath: string;
   headless: boolean;
   noSandbox: boolean;
   disableDevShmUsage: boolean;
   ignoreHttpsErrors: boolean;
   protocolTimeout: number;
+  signal?: AbortSignal;
 }): Promise<{
   browser: Browser;
   browserContext: BrowserContext;
   closeBrowser: () => Promise<void>;
 }> {
+  const browserType = browserConfig.type;
+  const executablePath = await resolveExecutableBrowser(browserConfig);
+  signal?.throwIfAborted();
   const puppeteer = await importNodeModule('puppeteer-core');
 
   const args: string[] = [];
@@ -396,6 +399,93 @@ async function downloadBrowser({
   return installedBrowser.executablePath;
 }
 
+async function resolveExecutableBrowser(
+  browserConfig: ResolvedTaskConfig['browser'],
+): Promise<string> {
+  let executableBrowser = browserConfig.executablePath;
+  Logger.debug(`Specified browser path: ${executableBrowser}`);
+  if (executableBrowser) {
+    if (!checkBrowserAvailability(executableBrowser)) {
+      throw new Error(
+        `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
+      );
+    }
+  } else if (
+    detectBrowserPlatform() === 'linux_arm' &&
+    browserConfig.type === 'chromium'
+  ) {
+    Logger.logInfo(
+      'The official Chromium binaries are not available for ARM64 Linux. Using the system-installed Chromium browser instead.',
+    );
+    executableBrowser = '/usr/bin/chromium';
+  } else {
+    executableBrowser = await getExecutableBrowserPath(browserConfig);
+    Logger.debug(`Using default browser: ${executableBrowser}`);
+    if (!checkBrowserAvailability(executableBrowser)) {
+      // The browser isn't downloaded first time starting CLI so try to download it
+      await cleanupOutdatedBrowsers();
+      await downloadBrowser(browserConfig);
+    }
+  }
+  return executableBrowser;
+}
+
+async function connectBrowser(
+  browserURL: string,
+  protocolTimeout: number,
+  signal?: AbortSignal,
+): Promise<{
+  browser: Browser;
+  browserContext: BrowserContext;
+  closeBrowser: () => Promise<void>;
+}> {
+  const puppeteer = await importNodeModule('puppeteer-core');
+  signal?.throwIfAborted();
+  const browser = await puppeteer
+    .connect({ browserURL, protocolTimeout })
+    .catch((cause: unknown) => {
+      signal?.throwIfAborted();
+      throw new Error(
+        `Cannot connect to Chromium at ${browserURL}: ${toError(cause).message}`,
+        {
+          cause,
+        },
+      );
+    });
+
+  if (signal?.aborted) {
+    await browser.disconnect();
+    signal.throwIfAborted();
+  }
+
+  const contextCreation = browser.createBrowserContext();
+  let closePromise: Promise<void> | undefined;
+  const closeBrowser = () =>
+    (closePromise ??= (async () => {
+      try {
+        await (await contextCreation).close();
+      } catch (error) {
+        Logger.debug('Failed to release Chromium context', error);
+      } finally {
+        await browser.disconnect();
+        unregister();
+      }
+    })());
+  const unregister = registerCleanupHandler(
+    'Releasing Chromium context and connection',
+    closeBrowser,
+    { prepend: true },
+  );
+  try {
+    const browserContext = await contextCreation;
+    signal?.throwIfAborted();
+    return { browser, browserContext, closeBrowser };
+  } catch (error) {
+    await closeBrowser();
+    throw error;
+  }
+}
+
 export async function launchPreview({
   mode,
   url,
@@ -424,52 +514,31 @@ export async function launchPreview({
   page: Page;
   closeBrowser: () => Promise<void>;
 }> {
-  let executableBrowser = browserConfig.executablePath;
-  Logger.debug(`Specified browser path: ${executableBrowser}`);
-  if (executableBrowser) {
-    if (!checkBrowserAvailability(executableBrowser)) {
-      throw new Error(
-        `Cannot find the browser. Please check the executable browser path: ${executableBrowser}`,
-      );
-    }
-  } else if (
-    detectBrowserPlatform() === 'linux_arm' &&
-    browserConfig.type === 'chromium'
-  ) {
-    Logger.logInfo(
-      'The official Chromium binaries are not available for ARM64 Linux. Using the system-installed Chromium browser instead.',
-    );
-    executableBrowser = '/usr/bin/chromium';
-  } else {
-    executableBrowser = await getExecutableBrowserPath(browserConfig);
-    Logger.debug(`Using default browser: ${executableBrowser}`);
-    if (!checkBrowserAvailability(executableBrowser)) {
-      // The browser isn't downloaded first time starting CLI so try to download it
-      await cleanupOutdatedBrowsers();
-      await downloadBrowser(browserConfig);
-    }
-  }
-
   signal?.throwIfAborted();
-  const { browser, browserContext, closeBrowser } = await launchBrowser({
-    browserType: browserConfig.type,
-    proxy,
-    executablePath: executableBrowser,
-    headless: mode === 'build',
-    noSandbox: !sandbox,
-    disableDevShmUsage: isInContainer(),
-    ignoreHttpsErrors,
-    protocolTimeout: timeout,
-  });
-  await onBrowserOpen?.(browser);
-  signal?.throwIfAborted();
+  const browserURL = mode === 'build' ? browserConfig.url : undefined;
+  const { browser, browserContext, closeBrowser } = browserURL
+    ? await connectBrowser(browserURL, timeout, signal)
+    : await launchBrowser({
+        browserConfig,
+        proxy,
+        headless: mode === 'build',
+        noSandbox: !sandbox,
+        disableDevShmUsage: isInContainer(),
+        ignoreHttpsErrors,
+        protocolTimeout: timeout,
+        signal,
+      });
 
   const page = await runBrowserOperationWithAbort({
     signal,
     closeBrowser,
     operation: async () => {
-      const previewPage =
-        (await browserContext.pages())[0] ?? (await browserContext.newPage());
+      await onBrowserOpen?.(browser);
+      signal?.throwIfAborted();
+      const previewPage = browserURL
+        ? await browserContext.newPage()
+        : ((await browserContext.pages())[0] ??
+          (await browserContext.newPage()));
       // This viewport size is important to detect headless environment in Vivliostyle viewer
       // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
       await previewPage.setViewport(
@@ -489,6 +558,16 @@ export async function launchPreview({
       await previewPage.goto(url, { signal });
       return previewPage;
     },
+  }).catch(async (error: unknown) => {
+    try {
+      await closeBrowser();
+    } catch (closeError) {
+      Logger.debug(
+        'Failed to close browser after page setup error',
+        closeError,
+      );
+    }
+    throw error;
   });
 
   return { browser, page, closeBrowser };

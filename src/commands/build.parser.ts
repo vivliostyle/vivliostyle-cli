@@ -142,6 +142,10 @@ https://github.com/vibranthq/press-ready
       '--executable-browser <path>',
       'specify a path of executable browser you installed',
     )
+    .option(
+      '--browser-url <URL>',
+      'connect to a running Chromium via its DevTools HTTP URL for local PDF builds',
+    )
     .option('--image <image>', 'specify a docker image to render')
     .option(
       '--viewer <URL>',

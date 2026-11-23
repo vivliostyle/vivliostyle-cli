@@ -35,6 +35,7 @@ export interface CliFlags {
   preflightOption?: string[];
   sandbox?: boolean;
   executableBrowser?: string;
+  browserUrl?: string;
   image?: string;
   /** @deprecated */
   http?: boolean;
