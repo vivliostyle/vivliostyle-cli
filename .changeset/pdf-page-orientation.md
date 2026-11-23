@@ -1,5 +1,5 @@
 ---
-'@vivliostyle/cli': patch
+'@vivliostyle/cli': minor
 ---
 
-Set the PDF page boxes of pages with `page-orientation: rotate-left` or `rotate-right` in their rotated size and position. Vivliostyle.js marks such pages with `data-vivliostyle-page-orientation` (vivliostyle/vivliostyle.js#2292), and Chromium prints them rotated, on a sheet with the width and height swapped. Before this change, the CLI cropped these pages to their unrotated size.
+Support `page-orientation` in PDF output: pages with `page-orientation: rotate-left` or `rotate-right` get their PDF page boxes in the rotated size and position. This requires a Vivliostyle.js version with vivliostyle/vivliostyle.js#2292.
