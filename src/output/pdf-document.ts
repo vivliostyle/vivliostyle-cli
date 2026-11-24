@@ -29,10 +29,18 @@ interface PDFTocItem extends TOCItem {
 }
 
 export interface PageSizeData {
+  /** Page width as laid out, before the page-orientation rotation (pt) */
   mediaWidth: number;
+  /** Page height as laid out, before the page-orientation rotation (pt) */
   mediaHeight: number;
   bleedOffset: number;
   bleedSize: number;
+  /**
+   * The page-orientation of the page, which Vivliostyle.js sets on the page
+   * container as `data-vivliostyle-page-orientation`.
+   * The browser rotates a `rotate-left` or `rotate-right` page in the PDF.
+   */
+  orientation?: 'upright' | 'rotate-left' | 'rotate-right';
 }
 
 export interface PDFMetadata {
@@ -244,28 +252,44 @@ function applyPageBoxes(
     }
     using pageObject = disposable(document.findPage(i));
     using mediaBox = disposable(pageObject.getInheritable('MediaBox'));
+    using mediaLeft = disposable(mediaBox.get(0));
     using mediaBottom = disposable(mediaBox.get(1));
+    using mediaRight = disposable(mediaBox.get(2));
     using mediaTop = disposable(mediaBox.get(3));
-    const yOffset =
-      mediaTop.asNumber() - mediaBottom.asNumber() - sizeData.mediaHeight;
-    pageObject.put('MediaBox', [
-      0,
-      yOffset,
-      sizeData.mediaWidth,
-      yOffset + sizeData.mediaHeight,
-    ]);
+    // The browser prints each page on a sheet that can be slightly larger
+    // than the page, because it rounds the sheet size, and the page is placed
+    // at the top-left corner of the sheet.
+    // A page with page-orientation: rotate-left or rotate-right is rotated
+    // with the sheet: the sheet's width and height are swapped, and the page is
+    // placed at the bottom-left corner (rotate-left) or the top-right corner
+    // (rotate-right) of the sheet.
+    const { orientation } = sizeData;
+    const rotated =
+      orientation === 'rotate-left' || orientation === 'rotate-right';
+    const width = rotated ? sizeData.mediaHeight : sizeData.mediaWidth;
+    const height = rotated ? sizeData.mediaWidth : sizeData.mediaHeight;
+    const x =
+      orientation === 'rotate-right'
+        ? mediaRight.asNumber() - width
+        : mediaLeft.asNumber();
+    const y =
+      orientation === 'rotate-left'
+        ? mediaBottom.asNumber()
+        : mediaTop.asNumber() - height;
+    pageObject.put('MediaBox', [x, y, x + width, y + height]);
+    const { bleedOffset } = sizeData;
     pageObject.put('BleedBox', [
-      sizeData.bleedOffset,
-      yOffset + sizeData.bleedOffset,
-      sizeData.mediaWidth - sizeData.bleedOffset,
-      yOffset + sizeData.mediaHeight - sizeData.bleedOffset,
+      x + bleedOffset,
+      y + bleedOffset,
+      x + width - bleedOffset,
+      y + height - bleedOffset,
     ]);
-    const trimOffset = sizeData.bleedOffset + sizeData.bleedSize;
+    const trimOffset = bleedOffset + sizeData.bleedSize;
     pageObject.put('TrimBox', [
-      trimOffset,
-      yOffset + trimOffset,
-      sizeData.mediaWidth - trimOffset,
-      yOffset + sizeData.mediaHeight - trimOffset,
+      x + trimOffset,
+      y + trimOffset,
+      x + width - trimOffset,
+      y + height - trimOffset,
     ]);
     setMinimumPdfVersion(13);
   }
