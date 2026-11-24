@@ -23,10 +23,6 @@ const defaultConfigEnv: Record<'preview' | 'build', ConfigEnv> = {
   build: { command: 'serve', mode: 'production', isPreview: true },
 };
 
-/**
- * Returns the origin of a remote viewer that Vite's default CORS policy
- * (which only allows localhost origins) would reject, or undefined.
- */
 export function getRemoteViewerOrigin(
   viewer: string | undefined,
 ): string | undefined {
