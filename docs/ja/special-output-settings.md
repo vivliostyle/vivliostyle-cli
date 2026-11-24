@@ -67,6 +67,28 @@ Docker render mode を使用する際は、以下の点に注意してくださ�
 - Docker はホスト環境から隔離されているため、ホストにインストールされているフォントを利用することができません。Docker コンテナで標準で使用できるフォントは限られており、通常はローカルのフォントファイルを配置して CSS で指定するか、Google Fonts などの Web フォントを使用する必要があります。
 - Docker にマウントされるファイルはプロジェクトの workspace directory （通常は `vivliostyle.config.js` を含むディレクトリ）のみで、その他のファイルは Docker コンテナ内部から参照することができない。イメージなどドキュメント内で参照されるファイルは全て workspace directory に含める必要があります。
 
+## 起動済みの Chromium をローカルでの PDF 生成に再利用
+
+専用のプロフィールとループバックの DevTools アドレスを指定して、Chrome または Chromium を起動します。プロフィールには未使用の専用ディレクトリを指定してください。
+
+```sh
+google-chrome --headless --user-data-dir="$HOME/.vivliostyle-chrome" \
+  --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 about:blank
+```
+
+別のターミナルから同じ接続先を指定して、2 つの原稿をビルドします。
+
+```sh
+vivliostyle build --browser-url http://127.0.0.1:9222 input.md -o output.pdf
+vivliostyle build --browser-url http://127.0.0.1:9222 chapter.md -o chapter.pdf
+```
+
+PDF の生成ごとに専用のブラウザーコンテキストを使います。Chrome は手動で停止するまで動作し続けます。プロキシなどのブラウザーの設定は、Chrome の起動時に指定してください。このオプションは、ローカルの Chromium で PDF を生成する場合に使えます。
+
+HTTP URL を入力に指定し、ブラウザーで CORS が有効な場合は、入力元のサーバーが Vivliostyle Viewer のオリジンからのリクエストを許可する必要があります。
+
+**同じマシン上の他のプロセスも、DevTools 接続を通じてブラウザーを操作できます。** 専用のプロフィールを使い、接続先をループバックに限定してください。
+
 ## PDF の「しおり」(Bookmarks) の生成
 
 `vivliostyle build` コマンドで出力される PDF には、目次の内容が「しおり」(PDF Bookmarks) として生成されます。PDF の「しおり」は、Adobe Acrobat のような PDF 閲覧ソフトで目次ナビゲーションに利用できます。

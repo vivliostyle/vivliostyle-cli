@@ -67,6 +67,34 @@ When using Docker render mode, please note the following points:
 - Docker is isolated from the host environment, so you cannot use fonts installed on the host. The fonts available by default in the Docker container are limited. You usually need to place local font files and specify them in CSS, or use web fonts such as Google Fonts.
 - The files mounted on Docker are only the project workspace directory (usually the directory containing `vivliostyle.config.js`), and other files cannot be referenced from inside the Docker container. All files referenced in the document, such as images, must be included in the workspace directory.
 
+## Reuse a running Chromium for local PDF builds
+
+Launch Chrome or Chromium with a dedicated profile and a loopback DevTools
+address. Choose an unused profile directory for this purpose.
+
+```sh
+google-chrome --headless --user-data-dir="$HOME/.vivliostyle-chrome" \
+  --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 about:blank
+```
+
+In a second terminal, build two manuscripts through the same connection.
+
+```sh
+vivliostyle build --browser-url http://127.0.0.1:9222 input.md -o output.pdf
+vivliostyle build --browser-url http://127.0.0.1:9222 chapter.md -o chapter.pdf
+```
+
+Each PDF build uses its own browser context. Chrome remains running until you
+stop it. Set browser launch options, such as proxy settings, when starting
+Chrome. The option is for local Chromium PDF rendering.
+
+For HTTP inputs, a browser that enforces CORS needs the source server to allow
+requests from the Vivliostyle Viewer's origin.
+
+**Other processes on the same machine can also control the browser through the
+DevTools connection.** Use the dedicated profile and keep the interface bound to
+loopback.
+
 ## Generating PDF Bookmarks
 
 The PDF output by the `vivliostyle build` command generates bookmarks based on the table of contents. PDF bookmarks can be used for table of contents navigation in PDF viewing software such as Adobe Acrobat.

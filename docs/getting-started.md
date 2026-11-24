@@ -77,33 +77,7 @@ You can also specify a web URL in addition to local HTML files.
 vivliostyle build https://vivliostyle.github.io/vivliostyle_doc/samples/gutenberg/Alice.html -s A4 -o Alice.pdf
 ```
 
-### Reuse a running Chromium for local PDF builds
-
-Launch Chrome or Chromium with a dedicated profile and a loopback DevTools
-address. Choose an unused profile directory for this purpose.
-
-```sh
-google-chrome --headless --user-data-dir="$HOME/.vivliostyle-chrome" \
-  --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 about:blank
-```
-
-In a second terminal, build two manuscripts through the same connection.
-
-```sh
-vivliostyle build --browser-url http://127.0.0.1:9222 input.md -o output.pdf
-vivliostyle build --browser-url http://127.0.0.1:9222 chapter.md -o chapter.pdf
-```
-
-Each PDF build uses its own browser context. Chrome remains running until you
-stop it. Set browser launch options, such as proxy settings, when starting
-Chrome. The option is for local Chromium PDF rendering.
-
-For HTTP inputs, a browser that enforces CORS needs the source server to allow
-requests from the Vivliostyle Viewer's origin.
-
-**Other processes on the same machine can also control the browser through the
-DevTools connection.** Use the dedicated profile and keep the interface bound to
-loopback.
+See [Reuse a running Chromium for local PDF builds](./special-output-settings.md#reuse-a-running-chromium-for-local-pdf-builds).
 
 ### Generate PDFs from other formats
 
