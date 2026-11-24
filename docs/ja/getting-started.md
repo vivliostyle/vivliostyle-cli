@@ -130,8 +130,6 @@ vivliostyle help build
 vivliostyle help preview
 ```
 
-`build` と `preview` でブラウザーのプロキシを回避する設定は、`--proxy-bypass`、`NOPROXY`、`NO_PROXY`、`no_proxy` の順に優先されます。明示的な空の環境変数も、優先度の低い設定より優先されます。例えば `--proxy-bypass localhost,127.0.0.1` はローカルのビューアーへのリクエストでプロキシを回避します。
-
 秘密の機能: `vivliostyle` というコマンドの代わりに `vs` というコマンド名でも使用できるので、タイプ数を少し減らせます。
 
 以下もご覧ください:

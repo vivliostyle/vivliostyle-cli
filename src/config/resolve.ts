@@ -30,6 +30,7 @@ import type { CMYKValue } from '../global-viewer.js';
 import { Logger } from '../logger.js';
 import { resolveLocalStyleFile } from '../processor/css.js';
 import { readMarkdownMetadata } from '../processor/markdown.js';
+import { resolveProxyBypass } from '../proxy.js';
 import {
   cliVersion,
   cwd as defaultCwd,
@@ -700,12 +701,7 @@ export function resolveTaskConfig(
   const proxy = proxyServer
     ? {
         server: proxyServer,
-        bypass:
-          options.proxyBypass ??
-          process.env.NOPROXY ??
-          process.env.NO_PROXY ??
-          process.env.no_proxy ??
-          undefined,
+        bypass: resolveProxyBypass(options.proxyBypass),
         username: options.proxyUser,
         password: options.proxyPass,
       }
