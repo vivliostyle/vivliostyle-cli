@@ -125,11 +125,7 @@ export async function buildPDF({
     Logger.logUpdateProgress(renderBuildingText());
   }
 
-  const {
-    browser,
-    page,
-    closeBrowser: releaseBrowser,
-  } = await launchPreview({
+  const { browser, page, closeBrowser } = await launchPreview({
     mode: 'build',
     url: viewerFullUrl,
     signal,
@@ -219,11 +215,10 @@ export async function buildPDF({
     },
   });
 
-  let closePromise: Promise<void> | undefined;
-  const closeBrowser = () => (closePromise ??= releaseBrowser());
   const browserResult = await runBrowserOperationWithAbort({
     signal,
     closeBrowser,
+    closeOnError: true,
     operation: async () => {
       const browserVersion = await browser.version();
       Logger.debug(green('success'), `browserVersion=${browserVersion}`);
@@ -314,24 +309,9 @@ export async function buildPDF({
         pdf,
       };
     },
-  }).then(
-    async (result) => {
-      await closeBrowser();
-      return result;
-    },
-    async (error: unknown) => {
-      try {
-        await closeBrowser();
-      } catch (closeError) {
-        Logger.debug(
-          'Failed to close browser after PDF rendering error',
-          closeError,
-        );
-      }
-      throw error;
-    },
-  );
+  });
 
+  await closeBrowser();
   signal?.throwIfAborted();
 
   Logger.logUpdate('Processing PDF');

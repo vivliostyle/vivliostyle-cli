@@ -143,6 +143,27 @@ describe('launchPreview', () => {
       expect(registeredCleanupHandler).toBeUndefined();
     });
 
+    it('unregisters before a failing disconnect and preserves the setup error', async () => {
+      const error = new Error('Cannot create context');
+      const cleanupAtDisconnect =
+        vi.fn<(handler: typeof registeredCleanupHandler) => void>();
+      const disconnect = vi.fn<() => Promise<void>>(() => {
+        cleanupAtDisconnect(registeredCleanupHandler);
+        return Promise.reject(new Error('Cannot disconnect'));
+      });
+      mockedConnect.mockResolvedValueOnce({
+        createBrowserContext: vi
+          .fn<() => Promise<never>>()
+          .mockRejectedValue(error),
+        disconnect,
+      });
+
+      await expect(open()).rejects.toBe(error);
+      expect(disconnect).toHaveBeenCalledOnce();
+      expect(cleanupAtDisconnect.mock.calls[0]?.[0]).toBeUndefined();
+      expect(registeredCleanupHandler).toBeUndefined();
+    });
+
     it('reports connection errors without launching a browser', async () => {
       mockedConnect.mockRejectedValueOnce(new Error('Connection refused'));
 
@@ -151,6 +172,77 @@ describe('launchPreview', () => {
       );
       expect(mockedLaunch).not.toHaveBeenCalled();
     });
+  });
+
+  function launchWithNavigation(
+    mode: 'preview' | 'build',
+    goto: () => Promise<never>,
+    signal?: AbortSignal,
+  ) {
+    const close = vi.fn<() => Promise<void>>().mockResolvedValue();
+    mockedLaunch.mockResolvedValueOnce({
+      browserContexts: () => [
+        {
+          pages: () => [
+            {
+              setViewport: vi.fn<() => void>(),
+              on: vi.fn<() => void>(),
+              goto,
+            },
+          ],
+        },
+      ],
+      close,
+    });
+    const result = launchPreview({
+      mode,
+      signal,
+      url: 'http://127.0.0.1:3000',
+      config: {
+        browser: {
+          type: 'chrome',
+          tag: 'stable',
+          executablePath: process.execPath,
+        },
+        proxy: undefined,
+        sandbox: false,
+        ignoreHttpsErrors: false,
+        timeout: 1000,
+      },
+    });
+    return { close, result };
+  }
+
+  it.each([
+    ['preview', 0],
+    ['build', 1],
+  ] as const)(
+    'preserves navigation errors in %s and closes the browser %i time(s)',
+    async (mode, closeCount) => {
+      const error = new Error('Navigation failed');
+      const { close, result } = launchWithNavigation(mode, () =>
+        Promise.reject(error),
+      );
+
+      await expect(result).rejects.toBe(error);
+      expect(close).toHaveBeenCalledTimes(closeCount);
+    },
+  );
+
+  it('closes the preview browser when navigation is aborted', async () => {
+    const controller = new AbortController();
+    const reason = new Error('Preview cancelled');
+    const { close, result } = launchWithNavigation(
+      'preview',
+      () => {
+        controller.abort(reason);
+        return Promise.reject(new Error('Navigation interrupted'));
+      },
+      controller.signal,
+    );
+
+    await expect(result).rejects.toBe(reason);
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it('disables Puppeteer signal handlers', async () => {
