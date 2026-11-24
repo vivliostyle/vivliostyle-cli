@@ -1022,6 +1022,38 @@ export function resolveTaskConfig(
     ];
   })();
 
+  if (browser.url) {
+    if (
+      outputs.some(
+        (target) => target.format === 'pdf' && target.renderMode === 'docker',
+      )
+    ) {
+      throw new Error(
+        '--browser-url cannot be used with Docker PDF rendering.',
+      );
+    }
+    if (browser.type === 'firefox') {
+      throw new Error(
+        '--browser-url requires Chromium and cannot be used with Firefox.',
+      );
+    }
+    const launchOptions = [
+      browser.executablePath && '--executable-browser',
+      config.browser?.tag !== undefined && '--browser with a version',
+      sandbox && '--sandbox',
+      options.proxyServer !== undefined && '--proxy-server',
+      options.proxyBypass !== undefined && '--proxy-bypass',
+      options.proxyUser !== undefined && '--proxy-user',
+      options.proxyPass !== undefined && '--proxy-pass',
+      ignoreHttpsErrors && '--ignore-https-errors',
+    ].filter(Boolean);
+    if (launchOptions.length > 0) {
+      throw new Error(
+        `--browser-url cannot be used with ${launchOptions.join(', ')}. Configure the running Chromium when launching it.`,
+      );
+    }
+  }
+
   const { server, rootUrl } = (() => {
     let host = config.server?.host ?? false;
     // oxlint-disable-next-line typescript/prefer-nullish-coalescing
