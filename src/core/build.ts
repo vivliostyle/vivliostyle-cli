@@ -89,6 +89,8 @@ export async function build(
 
       // build artifacts
       if (isWebPubConfig(config)) {
+        // Both compile.js and webbook.js indirectly load jsdom and HTML
+        // processing modules. Import each only in the branch that uses it.
         const { cleanupWorkspace, compile, prepareThemeDirectory } =
           await import('../processor/compile.js');
         await cleanupWorkspace(config);

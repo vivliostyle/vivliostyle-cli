@@ -172,6 +172,9 @@ export function vsDevServerPlugin({
   }
 
   async function reload(forceUpdate = false) {
+    // server.ts statically imports this plugin, so a static import of compile.js
+    // would load jsdom and HTML processing modules at startup for every command
+    // that starts the dev server. Import it dynamically here and in transform().
     const { generateManifest, prepareThemeDirectory } =
       await import('../processor/compile.js');
     const prevConfig = config;
