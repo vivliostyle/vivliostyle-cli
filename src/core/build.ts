@@ -14,13 +14,7 @@ import { resolveViteConfig } from '../config/vite.js';
 import { buildPDFWithContainer } from '../container.js';
 import { isUnicodeSupported, Logger, randomBookSymbol } from '../logger.js';
 import { buildPDF } from '../output/pdf.js';
-import { buildWebPublication } from '../output/webbook.js';
 import { copyAssets } from '../processor/asset.js';
-import {
-  cleanupWorkspace,
-  compile,
-  prepareThemeDirectory,
-} from '../processor/compile.js';
 import { validateThemeCssDependencies } from '../processor/css.js';
 import { createViteServer, generateCmykReserveMap } from '../server.js';
 import { cwd, runCleanupHandlers } from '../util.js';
@@ -95,6 +89,10 @@ export async function build(
 
       // build artifacts
       if (isWebPubConfig(config)) {
+        // Both compile.js and webbook.js indirectly load jsdom and HTML
+        // processing modules. Import each only in the branch that uses it.
+        const { cleanupWorkspace, compile, prepareThemeDirectory } =
+          await import('../processor/compile.js');
         await cleanupWorkspace(config);
         await prepareThemeDirectory(config, inlineConfig.signal);
         await validateThemeCssDependencies(config);
@@ -125,6 +123,7 @@ export async function build(
           });
         }
       } else if (format === 'webpub' || format === 'epub') {
+        const { buildWebPublication } = await import('../output/webbook.js');
         output = await buildWebPublication({ target, config });
       }
       if (output && !containerForkMode) {

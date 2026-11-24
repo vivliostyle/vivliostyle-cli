@@ -156,6 +156,33 @@ describe('launchPreview', () => {
       args: expect.arrayContaining([`--proxy-bypass-list=${expected}`]),
     });
   });
+  it.each([
+    ['firefox', { 'network.lna.blocking': false }],
+    ['chrome', undefined],
+  ] as const)(
+    'sets the Firefox Local Network Access pref only for %s',
+    async (type, expectedPrefs) => {
+      mockedLaunch.mockRejectedValue(new Error('Browser launch stopped'));
+
+      await expect(
+        launchPreview({
+          mode: 'build',
+          url: 'https://example.com',
+          config: {
+            browser: { type, tag: 'stable', executablePath: process.execPath },
+            proxy: undefined,
+            sandbox: false,
+            ignoreHttpsErrors: false,
+            timeout: 1000,
+          },
+        }),
+      ).rejects.toThrow('Browser launch stopped');
+
+      expect(mockedLaunch.mock.calls[0][0]).toMatchObject({
+        extraPrefsFirefox: expectedPrefs,
+      });
+    },
+  );
 
   it('shares browser closure between callers and cleanup', async () => {
     let resolveClose: (() => void) | undefined;

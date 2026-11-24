@@ -24,11 +24,6 @@ import {
   GlobMatcher,
 } from '../processor/asset.js';
 import {
-  generateManifest,
-  prepareThemeDirectory,
-  transformManuscript,
-} from '../processor/compile.js';
-import {
   clearPostcssConfigCache,
   collectThemeCssEntryFiles,
   type PostcssConfig,
@@ -177,6 +172,11 @@ export function vsDevServerPlugin({
   }
 
   async function reload(forceUpdate = false) {
+    // server.ts statically imports this plugin, so a static import of compile.js
+    // would load jsdom and HTML processing modules at startup for every command
+    // that starts the dev server. Import it dynamically here and in transform().
+    const { generateManifest, prepareThemeDirectory } =
+      await import('../processor/compile.js');
     const prevConfig = config;
     clearPostcssConfigCache();
     config = await reloadConfig(prevConfig, inlineConfig, server?.config);
@@ -314,9 +314,11 @@ export function vsDevServerPlugin({
     const rootUrl = host
       ? `${server?.config.server.https ? 'https' : 'http'}://${host}`
       : config.rootUrl;
+    const transformConfig = { ...config, rootUrl };
     const promise = (async () => {
       try {
-        const html = await transformManuscript(entry, { ...config, rootUrl });
+        const { transformManuscript } = await import('../processor/compile.js');
+        const html = await transformManuscript(entry, transformConfig);
         if (!html) {
           transformCache.delete(entry.target);
           return;

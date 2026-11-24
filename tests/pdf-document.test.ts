@@ -254,6 +254,66 @@ it('writes page boxes equal to the MediaBox without bleed or crop marks', async 
   expect(box('TrimBox')).toEqual(box('MediaBox'));
 });
 
+it('places the page boxes of rotated pages by page-orientation', async () => {
+  fs.mkdirSync(temporaryDir, { recursive: true });
+  const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
+  onTestFinished(() => fs.rmSync(output, { force: true }));
+
+  // A 700x500 landscape page is printed on a 600x900 portrait sheet when
+  // rotated. The page sits at the bottom-left corner of the sheet with
+  // rotate-left and at the top-right corner with rotate-right.
+  const input = await PDFDocument.create();
+  input.addPage([900, 600]);
+  input.addPage([600, 900]);
+  input.addPage([600, 900]);
+  const landscape = {
+    mediaWidth: 700,
+    mediaHeight: 500,
+    bleedOffset: 10,
+    bleedSize: 20,
+  };
+  await postProcessPDF({
+    pdf: await input.save(),
+    output,
+    pageSizeData: [
+      { ...landscape, orientation: 'upright' },
+      { ...landscape, orientation: 'rotate-left' },
+      { ...landscape, orientation: 'rotate-right' },
+    ],
+    preflight: undefined,
+    preflightOption: [],
+    image: '',
+    cmyk: false,
+    cmykMap: {},
+    replaceImage: [],
+  });
+
+  const document = await PDFDocument.load(fs.readFileSync(output));
+  const boxes = (index: number) => {
+    const page = document.getPage(index);
+    return {
+      media: page.getMediaBox(),
+      bleed: page.getBleedBox(),
+      trim: page.getTrimBox(),
+    };
+  };
+  expect(boxes(0)).toEqual({
+    media: { x: 0, y: 100, width: 700, height: 500 },
+    bleed: { x: 10, y: 110, width: 680, height: 480 },
+    trim: { x: 30, y: 130, width: 640, height: 440 },
+  });
+  expect(boxes(1)).toEqual({
+    media: { x: 0, y: 0, width: 500, height: 700 },
+    bleed: { x: 10, y: 10, width: 480, height: 680 },
+    trim: { x: 30, y: 30, width: 440, height: 640 },
+  });
+  expect(boxes(2)).toEqual({
+    media: { x: 100, y: 200, width: 500, height: 700 },
+    bleed: { x: 110, y: 210, width: 480, height: 680 },
+    trim: { x: 130, y: 230, width: 440, height: 640 },
+  });
+});
+
 it('removes a trailing page before visiting its content', async () => {
   fs.mkdirSync(temporaryDir, { recursive: true });
   const output = path.join(temporaryDir, `pdf-document-${randomUUID()}.pdf`);
