@@ -130,6 +130,8 @@ vivliostyle help build
 vivliostyle help preview
 ```
 
+For browser proxy bypass in `build` and `preview`, `--proxy-bypass` takes precedence over `NOPROXY`, `NO_PROXY`, and `no_proxy`, in that order. An explicitly empty environment variable takes precedence over lower-priority settings. For example, `--proxy-bypass localhost,127.0.0.1` bypasses the proxy for local viewer requests.
+
 Secret feature: Instead of the `vivliostyle` command, you can also use the command name `vs` to reduce the number of keystrokes slightly.
 
 See also:

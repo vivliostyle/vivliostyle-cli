@@ -108,6 +108,55 @@ describe('launchPreview', () => {
     });
   });
 
+  it.each([
+    {
+      bypass: 'localhost,127.0.0.1',
+      expected: '<-loopback>;localhost;127.0.0.1',
+    },
+    { bypass: undefined, expected: '<-loopback>' },
+    { bypass: ' , localhost, , ', expected: '<-loopback>;localhost' },
+    { bypass: ' , ', expected: '<-loopback>' },
+  ])('applies proxy bypass rules: $expected', async ({ bypass, expected }) => {
+    mockedLaunch.mockResolvedValue({
+      browserContexts: () => [
+        {
+          pages: () => [],
+          newPage: () => ({
+            setViewport: vi.fn<() => void>(),
+            on: vi.fn<() => void>(),
+            goto: vi.fn<() => void>(),
+          }),
+        },
+      ],
+      close: vi.fn<() => void>(),
+    });
+
+    await launchPreview({
+      mode: 'build',
+      url: 'http://localhost',
+      config: {
+        browser: {
+          type: 'chrome',
+          tag: 'stable',
+          executablePath: process.execPath,
+        },
+        proxy: {
+          server: 'http://localhost:3128',
+          bypass,
+          username: undefined,
+          password: undefined,
+        },
+        sandbox: false,
+        ignoreHttpsErrors: false,
+        timeout: 1000,
+      },
+    });
+
+    expect(mockedLaunch.mock.calls[0][0]).toMatchObject({
+      args: expect.arrayContaining([`--proxy-bypass-list=${expected}`]),
+    });
+  });
+
   it('shares browser closure between callers and cleanup', async () => {
     let resolveClose: (() => void) | undefined;
     const browserClose = vi.fn<() => Promise<void>>(

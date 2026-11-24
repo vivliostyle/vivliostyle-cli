@@ -700,7 +700,12 @@ export function resolveTaskConfig(
   const proxy = proxyServer
     ? {
         server: proxyServer,
-        bypass: options.proxyBypass ?? process.env.NOPROXY ?? undefined,
+        bypass:
+          options.proxyBypass ??
+          process.env.NOPROXY ??
+          process.env.NO_PROXY ??
+          process.env.no_proxy ??
+          undefined,
         username: options.proxyUser,
         password: options.proxyPass,
       }
