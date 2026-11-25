@@ -1,5 +1,31 @@
 # @vivliostyle/cli
 
+## 11.6.0
+
+### Minor Changes
+
+- Support `page-orientation` in PDF output: pages with `page-orientation: rotate-left` or `rotate-right` get their PDF page boxes in the rotated size and position. This requires a Vivliostyle.js version with vivliostyle/vivliostyle.js#2292. ([#964](https://github.com/vivliostyle/vivliostyle-cli/pull/964))
+
+- Add `--browser-url` to `vivliostyle build` to reuse a running Chromium instance for local PDF builds. ([#967](https://github.com/vivliostyle/vivliostyle-cli/pull/967))
+
+- Update Vivliostyle.js to 2.47.0 with support for CSS `page-orientation` and CSS bookmarks, plus other improvements. ([#969](https://github.com/vivliostyle/vivliostyle-cli/pull/969))
+
+### Patch Changes
+
+- Fix Firefox builds and previews with a remote `--viewer` (e.g. `https://vivliostyle.org/viewer/`) hanging until the timeout: disable Firefox's Local Network Access prompt, and allow the remote viewer's origin in the server's CORS policy ([#965](https://github.com/vivliostyle/vivliostyle-cli/pull/965))
+
+- Load the manuscript processing modules only when they are needed, reducing the startup time of commands that do not compile manuscripts. ([#966](https://github.com/vivliostyle/vivliostyle-cli/pull/966))
+
+- Fix npm registry requests failing with `invalid onError method` on Node.js 26 when a proxy is configured, which broke theme and template lookups in `create` behind a proxy. ([#979](https://github.com/vivliostyle/vivliostyle-cli/pull/979))
+
+- Honor proxy bypass environment variables consistently in browser and npm requests, and explicit loopback bypass rules in the browser. ([#971](https://github.com/vivliostyle/vivliostyle-cli/pull/971))
+
+- Update default browser versions ([#962](https://github.com/vivliostyle/vivliostyle-cli/pull/962))
+
+  - Chrome: 158.0.8127.88
+  - Chromium: 1753808
+  - Firefox: stable_161.0
+
 ## 11.5.0
 
 ### Minor Changes
