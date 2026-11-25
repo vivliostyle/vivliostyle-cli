@@ -77,6 +77,8 @@ You can also specify a web URL in addition to local HTML files.
 vivliostyle build https://vivliostyle.github.io/vivliostyle_doc/samples/gutenberg/Alice.html -s A4 -o Alice.pdf
 ```
 
+See [Reuse a running Chromium for local PDF builds](./special-output-settings.md#reuse-a-running-chromium-for-local-pdf-builds).
+
 ### Generate PDFs from other formats
 
 Vivliostyle CLI supports reading EPUB, unzipped EPUB OPF files, `pub-manifest` (web publication manifest JSON files), and `webbook` (HTML files with links to a table of contents or web publication manifest).

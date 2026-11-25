@@ -77,6 +77,8 @@ vivliostyle build book.html -o book.pdf
 vivliostyle build https://vivliostyle.github.io/vivliostyle_doc/samples/gutenberg/Alice.html -s A4 -o Alice.pdf
 ```
 
+[起動済みの Chromium をローカルでの PDF 生成に再利用する手順](./special-output-settings.md#起動済みの-chromium-をローカルでの-pdf-生成に再利用)。
+
 ### 他の形式から PDF を生成
 
 EPUB や 解凍された EPUB の OPF ファイル、`pub-manifest`（Web 出版物のマニフェスト JSON ファイル）、`webbook`（目次や Web 出版物のマニフェストへのリンクがある HTML ファイル）形式の読み込みに対応します。

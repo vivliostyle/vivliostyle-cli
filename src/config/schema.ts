@@ -1498,6 +1498,16 @@ export const VivliostyleInlineConfigWithoutChecks = v.partial(
           Specify a path of executable browser you installed.
         `),
     ),
+    browserUrl: v.pipe(
+      ValidString,
+      v.check(
+        (value) =>
+          URL.canParse(value) &&
+          ['http:', 'https:'].includes(new URL(value).protocol),
+        '--browser-url requires a Chromium DevTools HTTP(S) URL.',
+      ),
+      v.description($`Connect to a running Chromium for local PDF builds.`),
+    ),
     image: v.pipe(
       ValidString,
       v.description($`
@@ -1761,6 +1771,7 @@ export type InlineOptions = Pick<
   | 'quick'
   | 'sandbox'
   | 'executableBrowser'
+  | 'browserUrl'
   | 'proxyServer'
   | 'proxyBypass'
   | 'proxyUser'

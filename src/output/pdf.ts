@@ -218,6 +218,7 @@ export async function buildPDF({
   const browserResult = await runBrowserOperationWithAbort({
     signal,
     closeBrowser,
+    closeOnError: true,
     operation: async () => {
       const browserVersion = await browser.version();
       Logger.debug(green('success'), `browserVersion=${browserVersion}`);

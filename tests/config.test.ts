@@ -1,7 +1,7 @@
 import { VFM, readMetadata } from '@vivliostyle/vfm';
 import * as v from 'valibot';
 import { ValiError } from 'valibot';
-import { expect, expectTypeOf, it, onTestFinished, vi } from 'vitest';
+import { describe, expect, expectTypeOf, it, onTestFinished, vi } from 'vitest';
 
 const mockedGlobSync = vi.hoisted(() =>
   vi.fn<typeof import('tinyglobby').globSync>(),
@@ -47,6 +47,62 @@ const findFileEntry = (entries: any[], pathnameSuffix: string) =>
       e.source?.type === 'file' &&
       e.source.pathname.endsWith(pathnameSuffix),
   );
+
+describe('--browser-url configuration', () => {
+  const browserUrl = 'http://127.0.0.1:9222';
+  const args = ['build', '--browser-url', browserUrl];
+  const cwd = resolveFixture('config');
+
+  it('rejects Docker PDF output from the config file', async () => {
+    await expect(
+      getTaskConfig(args, cwd, {
+        entry: 'manuscript.md',
+        output: { format: 'pdf', path: 'output.pdf', renderMode: 'docker' },
+      }),
+    ).rejects.toThrow('Docker PDF rendering');
+  });
+
+  it.each([
+    { flags: ['--render-mode', 'docker'], conflict: 'Docker PDF rendering' },
+    { flags: ['--browser', 'firefox'], conflict: 'Firefox' },
+    {
+      flags: ['--browser', 'chrome@stable'],
+      conflict: '--browser with a version',
+    },
+    {
+      flags: ['--executable-browser', 'chrome'],
+      conflict: '--executable-browser',
+    },
+    { flags: ['--sandbox'], conflict: '--sandbox' },
+    { flags: ['--ignore-https-errors'], conflict: '--ignore-https-errors' },
+    {
+      flags: ['--proxy-server', 'http://127.0.0.1:3128'],
+      conflict: '--proxy-server',
+    },
+    { flags: ['--proxy-bypass', 'localhost'], conflict: '--proxy-bypass' },
+    { flags: ['--proxy-user', 'user'], conflict: '--proxy-user' },
+    { flags: ['--proxy-pass', 'password'], conflict: '--proxy-pass' },
+  ])('rejects $conflict', async ({ flags, conflict }) => {
+    await expect(
+      getTaskConfig([...args, ...flags, 'manuscript.md'], cwd),
+    ).rejects.toThrow(conflict);
+  });
+
+  it('allows the default browser tag with an inherited HTTP_PROXY', async () => {
+    const proxyServer = 'http://127.0.0.1:3128';
+    vi.stubEnv('HTTP_PROXY', proxyServer);
+    onTestFinished(() => {
+      vi.unstubAllEnvs();
+    });
+
+    await expect(
+      getTaskConfig([...args, 'manuscript.md'], cwd),
+    ).resolves.toMatchObject({
+      browser: { url: browserUrl, type: 'chrome', tag: expect.any(String) },
+      proxy: { server: proxyServer },
+    });
+  });
+});
 
 const validConfigData = {
   title: 'title',

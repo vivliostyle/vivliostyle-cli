@@ -184,19 +184,23 @@ describe('buildPDF cancellation', () => {
     const protocolError = new Error(
       'Protocol error (Page.printToPDF): Printing failed',
     );
-    setupPdfBuild(
+    const { closeBrowser } = setupPdfBuild(
       vi.fn(() => {
         throw protocolError;
       }),
+      vi.fn<() => Promise<void>>().mockRejectedValue(new Error('Close failed')),
     );
 
     await expect(buildPDF({ target, config })).rejects.toBe(protocolError);
+    expect(closeBrowser).toHaveBeenCalledOnce();
   });
 
   it('passes the signal to PDF postprocess', async () => {
     const controller = new AbortController();
     mockedPostProcessPDF.mockResolvedValue();
-    setupPdfBuild(vi.fn(() => Promise.resolve(new Uint8Array([1]))));
+    const { closeBrowser } = setupPdfBuild(
+      vi.fn(() => Promise.resolve(new Uint8Array([1]))),
+    );
 
     await expect(
       buildPDF({
@@ -206,6 +210,7 @@ describe('buildPDF cancellation', () => {
       }),
     ).resolves.toBe('output.pdf');
 
+    expect(closeBrowser).toHaveBeenCalledOnce();
     expect(mockedPostProcessPDF).toHaveBeenCalledWith(
       expect.objectContaining({
         output: 'output.pdf',

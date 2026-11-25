@@ -47,58 +47,55 @@ function getAbortReason(signal: AbortSignal): Error {
   return toError(signal.reason);
 }
 
+async function closeBrowserAfterError(closeBrowser: () => Promise<void>) {
+  try {
+    await closeBrowser();
+  } catch (error) {
+    Logger.debug('Failed to close browser', error);
+  }
+}
+
 export async function runBrowserOperationWithAbort<T>({
   signal,
   closeBrowser,
   operation,
+  closeOnError = false,
 }: {
   signal?: AbortSignal;
   closeBrowser: () => Promise<void>;
   operation: () => Promise<T>;
+  closeOnError?: boolean;
 }): Promise<T> {
-  if (!signal) {
-    return operation();
-  }
-
-  signal.throwIfAborted();
-
   let abortClosePromise: Promise<void> | undefined;
   let removeAbortListener: (() => void) | undefined;
-  const abortPromise = new Promise<never>((_, reject) => {
-    const handleAbort = () => {
-      abortClosePromise = closeBrowser();
-      void abortClosePromise.then(
-        () => reject(getAbortReason(signal)),
-        () => reject(getAbortReason(signal)),
-      );
-    };
-    signal.addEventListener('abort', handleAbort, { once: true });
-    removeAbortListener = () => {
-      signal.removeEventListener('abort', handleAbort);
-    };
-  });
-
-  const operationPromise = operation().catch((err) => {
-    if (signal.aborted) {
-      throw getAbortReason(signal);
-    }
-    throw err;
-  });
-
   try {
-    const result = await Promise.race([operationPromise, abortPromise]);
+    if (!signal) {
+      return await operation();
+    }
+    signal.throwIfAborted();
+    const abortPromise = new Promise<never>((_, reject) => {
+      const handleAbort = () => {
+        abortClosePromise = closeBrowserAfterError(closeBrowser);
+        void abortClosePromise.then(() => reject(getAbortReason(signal)));
+      };
+      signal.addEventListener('abort', handleAbort, { once: true });
+      removeAbortListener = () => {
+        signal.removeEventListener('abort', handleAbort);
+      };
+    });
+
+    const result = await Promise.race([operation(), abortPromise]);
     signal.throwIfAborted();
     return result;
-  } catch (err) {
-    if (signal.aborted) {
-      try {
-        await (abortClosePromise ?? closeBrowser());
-      } catch (closeError) {
-        Logger.debug('Failed to close browser after abort', closeError);
-      }
+  } catch (error) {
+    if (signal?.aborted) {
+      await (abortClosePromise ?? closeBrowserAfterError(closeBrowser));
       throw getAbortReason(signal);
     }
-    throw err;
+    if (closeOnError) {
+      await closeBrowserAfterError(closeBrowser);
+    }
+    throw error;
   } finally {
     removeAbortListener?.();
   }
@@ -106,8 +103,8 @@ export async function runBrowserOperationWithAbort<T>({
 
 async function launchBrowser({
   browserType,
-  proxy,
   executablePath,
+  proxy,
   headless,
   noSandbox,
   disableDevShmUsage,
@@ -115,6 +112,7 @@ async function launchBrowser({
   protocolTimeout,
 }: {
   browserType: BrowserType;
+  executablePath: string;
   proxy:
     | {
         server: string;
@@ -123,7 +121,6 @@ async function launchBrowser({
         password: string | undefined;
       }
     | undefined;
-  executablePath: string;
   headless: boolean;
   noSandbox: boolean;
   disableDevShmUsage: boolean;
@@ -407,34 +404,9 @@ async function downloadBrowser({
   return installedBrowser.executablePath;
 }
 
-export async function launchPreview({
-  mode,
-  url,
-  signal,
-  onBrowserOpen,
-  onPageOpen,
-  config: {
-    browser: browserConfig,
-    proxy,
-    sandbox,
-    ignoreHttpsErrors,
-    timeout,
-  },
-}: {
-  mode: 'preview' | 'build';
-  url: string;
-  signal?: AbortSignal;
-  onBrowserOpen?: (browser: Browser) => void | Promise<void>;
-  onPageOpen?: (page: Page) => void | Promise<void>;
-  config: Pick<
-    ResolvedTaskConfig,
-    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors' | 'timeout'
-  >;
-}): Promise<{
-  browser: Browser;
-  page: Page;
-  closeBrowser: () => Promise<void>;
-}> {
+async function resolveExecutableBrowser(
+  browserConfig: ResolvedTaskConfig['browser'],
+): Promise<string> {
   let executableBrowser = browserConfig.executablePath;
   Logger.debug(`Specified browser path: ${executableBrowser}`);
   if (executableBrowser) {
@@ -460,33 +432,144 @@ export async function launchPreview({
       await downloadBrowser(browserConfig);
     }
   }
+  return executableBrowser;
+}
 
+async function connectBrowser({
+  browserURL,
+  protocolTimeout,
+  signal,
+}: {
+  browserURL: string;
+  protocolTimeout: number;
+  signal?: AbortSignal;
+}): Promise<{
+  browser: Browser;
+  browserContext: BrowserContext;
+  closeBrowser: () => Promise<void>;
+}> {
+  const puppeteer = await importNodeModule('puppeteer-core');
   signal?.throwIfAborted();
-  const { browser, browserContext, closeBrowser } = await launchBrowser({
-    browserType: browserConfig.type,
+  const browser = await puppeteer
+    .connect({ browserURL, protocolTimeout })
+    .catch((cause: unknown) => {
+      signal?.throwIfAborted();
+      throw new Error(
+        `Cannot connect to Chromium at ${browserURL}: ${toError(cause).message}`,
+        {
+          cause,
+        },
+      );
+    });
+
+  if (signal?.aborted) {
+    await closeBrowserAfterError(() => browser.disconnect());
+    signal.throwIfAborted();
+  }
+
+  const contextCreation = browser.createBrowserContext();
+  // oxlint-disable-next-line prefer-const -- assign when registering closeBrowser below
+  let unregister: () => void;
+  let closePromise: Promise<void> | undefined;
+  const closeBrowser = () =>
+    (closePromise ??= (async () => {
+      try {
+        await (await contextCreation).close();
+      } catch (error) {
+        Logger.debug('Failed to release Chromium context', error);
+      } finally {
+        unregister();
+        await browser.disconnect();
+      }
+    })());
+  unregister = registerCleanupHandler(
+    'Releasing Chromium context and connection',
+    closeBrowser,
+    { prepend: true },
+  );
+  try {
+    const browserContext = await contextCreation;
+    signal?.throwIfAborted();
+    return { browser, browserContext, closeBrowser };
+  } catch (error) {
+    await closeBrowserAfterError(closeBrowser);
+    throw error;
+  }
+}
+
+export async function launchPreview({
+  mode,
+  url,
+  signal,
+  onBrowserOpen,
+  onPageOpen,
+  config: {
+    browser: browserConfig,
     proxy,
-    executablePath: executableBrowser,
-    headless: mode === 'build',
-    noSandbox: !sandbox,
-    disableDevShmUsage: isInContainer(),
+    sandbox,
     ignoreHttpsErrors,
-    protocolTimeout: timeout,
-  });
-  await onBrowserOpen?.(browser);
+    timeout,
+  },
+}: {
+  mode: 'preview' | 'build';
+  url: string;
+  signal?: AbortSignal;
+  onBrowserOpen?: (browser: Browser) => void | Promise<void>;
+  onPageOpen?: (
+    page: Page,
+    closeBrowser: () => Promise<void>,
+  ) => void | Promise<void>;
+  config: Pick<
+    ResolvedTaskConfig,
+    'browser' | 'proxy' | 'sandbox' | 'ignoreHttpsErrors' | 'timeout'
+  >;
+}): Promise<{
+  browser: Browser;
+  page: Page;
+  closeBrowser: () => Promise<void>;
+}> {
   signal?.throwIfAborted();
+  const browserURL = mode === 'build' ? browserConfig.url : undefined;
+  let session;
+  if (browserURL) {
+    session = await connectBrowser({
+      browserURL,
+      protocolTimeout: timeout,
+      signal,
+    });
+  } else {
+    const executablePath = await resolveExecutableBrowser(browserConfig);
+    signal?.throwIfAborted();
+    session = await launchBrowser({
+      browserType: browserConfig.type,
+      executablePath,
+      proxy,
+      headless: mode === 'build',
+      noSandbox: !sandbox,
+      disableDevShmUsage: isInContainer(),
+      ignoreHttpsErrors,
+      protocolTimeout: timeout,
+    });
+  }
+  const { browser, browserContext, closeBrowser } = session;
 
   const page = await runBrowserOperationWithAbort({
     signal,
     closeBrowser,
+    closeOnError: mode === 'build',
     operation: async () => {
-      const previewPage =
-        (await browserContext.pages())[0] ?? (await browserContext.newPage());
+      await onBrowserOpen?.(browser);
+      signal?.throwIfAborted();
+      const previewPage = browserURL
+        ? await browserContext.newPage()
+        : ((await browserContext.pages())[0] ??
+          (await browserContext.newPage()));
       // This viewport size is important to detect headless environment in Vivliostyle viewer
       // https://github.com/vivliostyle/vivliostyle.js/blob/73bcf323adcad80126b0175630609451ccd09d8a/packages/core/src/vivliostyle/vgen.ts#L2489-L2500
       await previewPage.setViewport(
         mode === 'build' ? { width: 800, height: 600 } : null,
       );
-      await onPageOpen?.(previewPage);
+      await onPageOpen?.(previewPage, closeBrowser);
 
       // Prevent confirm dialog from being auto-dismissed
       previewPage.on('dialog', () => {});

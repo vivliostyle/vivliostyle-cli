@@ -4,10 +4,14 @@ import type { Page } from 'puppeteer-core';
 import type { ViteDevServer } from 'vite';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { launchPreview } from '../src/browser.js';
 import type { ResolvedTaskConfig } from '../src/config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../src/config/schema.js';
+import { Logger } from '../src/logger.js';
 
-const mockedLaunchPreview = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
+const mockedLaunchPreview = vi.hoisted(() =>
+  vi.fn<(...args: Parameters<typeof launchPreview>) => Promise<unknown>>(),
+);
 const mockedGetViewerFullUrl = vi.hoisted(() =>
   vi.fn<() => Promise<unknown>>(),
 );
@@ -52,9 +56,9 @@ describe('vsBrowserPlugin cancellation', () => {
         throw protocolError;
       }),
     } as unknown as Page;
-    mockedLaunchPreview.mockResolvedValue({
-      page,
-      closeBrowser,
+    mockedLaunchPreview.mockImplementation(async ({ onPageOpen }) => {
+      await onPageOpen?.(page, closeBrowser);
+      return { page, closeBrowser };
     });
 
     const plugin = vsBrowserPlugin({
@@ -84,6 +88,47 @@ describe('vsBrowserPlugin cancellation', () => {
       }),
     );
     expect(closeBrowser).toHaveBeenCalledOnce();
+  });
+
+  it('keeps serving and reports navigation errors after the preview page opens', async () => {
+    const error = new Error('Navigation failed');
+    const logError = vi.spyOn(Logger, 'logError').mockImplementation(() => {});
+    const closeBrowser = vi.fn<() => Promise<void>>().mockResolvedValue();
+    const page = {
+      on: vi.fn<() => void>(),
+      off: vi.fn<() => void>(),
+    } as unknown as Page;
+    mockedLaunchPreview.mockImplementation(async ({ onPageOpen }) => {
+      await onPageOpen?.(page, closeBrowser);
+      throw error;
+    });
+
+    const plugin = vsBrowserPlugin({
+      config,
+      inlineConfig: { openViewer: true } as ParsedVivliostyleInlineConfig,
+    });
+    const server = {
+      listen: vi
+        .fn<() => Promise<unknown>>()
+        .mockImplementation(() => Promise.resolve(server)),
+      close: vi.fn<() => Promise<void>>().mockResolvedValue(),
+      config: {},
+      httpServer: {},
+      // oxlint-disable-next-line prefer-event-target -- Vite's watcher is a chokidar FSWatcher, which is an EventEmitter
+      watcher: new EventEmitter(),
+    } as unknown as ViteDevServer;
+    (plugin.configureServer as (server: ViteDevServer) => void)(server);
+
+    try {
+      await expect(server.listen()).resolves.toBe(server);
+      expect(logError).toHaveBeenCalledExactlyOnceWith(error.message);
+      expect(closeBrowser).not.toHaveBeenCalled();
+      expect(server.close).not.toHaveBeenCalled();
+      await (plugin.closeBundle as () => Promise<void>)();
+      expect(closeBrowser).toHaveBeenCalledOnce();
+    } finally {
+      logError.mockRestore();
+    }
   });
 
   it('drops watcher events until the preview page is opened', async () => {

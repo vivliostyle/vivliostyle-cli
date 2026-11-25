@@ -3,8 +3,9 @@ import type * as vite from 'vite';
 import { launchPreview, runBrowserOperationWithAbort } from '../browser.js';
 import type { ResolvedTaskConfig } from '../config/resolve.js';
 import type { ParsedVivliostyleInlineConfig } from '../config/schema.js';
+import { Logger } from '../logger.js';
 import { getViewerFullUrl } from '../server.js';
-import { getOsLocale, runCleanupHandlers } from '../util.js';
+import { getOsLocale, runCleanupHandlers, toError } from '../util.js';
 import { reloadConfig } from './plugin-util.js';
 
 export function vsBrowserPlugin({
@@ -18,6 +19,10 @@ export function vsBrowserPlugin({
   let server: vite.ViteDevServer | undefined;
   let closeBrowser: (() => Promise<void>) | undefined;
 
+  async function closePreviewBrowser() {
+    await closeBrowser?.();
+  }
+
   function handlePageClose() {
     void (async () => {
       await server?.close();
@@ -28,26 +33,35 @@ export function vsBrowserPlugin({
   async function openPreviewPage() {
     const locale = getOsLocale();
     const url = await getViewerFullUrl(config);
-    const { page, closeBrowser: closeLaunchedBrowser } = await launchPreview({
+    let pageOpened = false;
+    const result = await launchPreview({
       mode: 'preview',
       url,
       signal: inlineConfig.signal,
       config,
-      /* v8 ignore next 4 */
-      onPageOpen: (openedPage) => {
+      onPageOpen: (page, closeLaunchedBrowser) => {
         // Terminate preview when the previewing page is closed
-        openedPage.on('close', handlePageClose);
+        page.on('close', handlePageClose);
+        closeBrowser = () => {
+          page.off('close', handlePageClose);
+          return closeLaunchedBrowser();
+        };
+        pageOpened = true;
       },
+    }).catch((error: unknown) => {
+      if (!pageOpened || inlineConfig.signal?.aborted) {
+        throw error;
+      }
+      Logger.logError(toError(error).message);
     });
-
-    closeBrowser = () => {
-      page.off('close', handlePageClose);
-      return closeLaunchedBrowser();
-    };
+    if (!result) {
+      return;
+    }
+    const { page } = result;
 
     await runBrowserOperationWithAbort({
       signal: inlineConfig.signal,
-      closeBrowser,
+      closeBrowser: closePreviewBrowser,
       operation: async () => {
         // Vivliostyle Viewer uses `i18nextLng` in localStorage for UI language
         if (!import.meta.env?.VITEST) {
@@ -110,8 +124,6 @@ export function vsBrowserPlugin({
         }
       };
     },
-    async closeBundle() {
-      await closeBrowser?.();
-    },
+    closeBundle: closePreviewBrowser,
   };
 }
