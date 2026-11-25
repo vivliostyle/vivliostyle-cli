@@ -99,3 +99,15 @@ it('sends proxy credentials to the proxy server', async () => {
     `Basic ${Buffer.from('user:pass').toString('base64')}`,
   );
 });
+
+it('uses the global fetch without a proxy', async () => {
+  vi.stubEnv('HTTP_PROXY', '');
+  const globalFetch = vi.spyOn(globalThis, 'fetch');
+  try {
+    const response = await createFetch({})(targetUrl);
+    expect(await response.text()).toBe('direct');
+    expect(globalFetch).toHaveBeenCalledOnce();
+  } finally {
+    globalFetch.mockRestore();
+  }
+});

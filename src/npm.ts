@@ -1,5 +1,3 @@
-import { EnvHttpProxyAgent, fetch as undiciFetch } from 'undici';
-
 import { resolveProxyBypass } from './proxy.js';
 
 export interface PackageJson {
@@ -40,7 +38,19 @@ export interface PackageSearchResult {
   time: string;
 }
 
-export type Fetch = typeof undiciFetch;
+export interface FetchResponse {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  url: string;
+  json(): Promise<unknown>;
+  text(): Promise<string>;
+}
+
+export type Fetch = (
+  url: string,
+  init?: { signal?: AbortSignal },
+) => Promise<FetchResponse>;
 
 export function createFetch(options: {
   proxyServer?: string;
@@ -50,29 +60,37 @@ export function createFetch(options: {
   signal?: AbortSignal;
 }): Fetch {
   const proxyUrl = options.proxyServer ?? process.env.HTTP_PROXY;
+  const noProxy = resolveProxyBypass(options.proxyBypass) ?? '';
   const token =
     options.proxyUser && options.proxyPass
       ? `Basic ${Buffer.from(
           `${options.proxyUser}:${options.proxyPass}`,
         ).toString('base64')}`
       : undefined;
-  // Pair the dispatcher with undici's own fetch: Node's built-in fetch
-  // bundles a different undici whose handler API may not match.
-  const dispatcher = proxyUrl
-    ? new EnvHttpProxyAgent({
+  let proxiedFetch: Promise<Fetch> | undefined;
+  const resolveFetch = (): Promise<Fetch> => {
+    if (!proxyUrl) {
+      return Promise.resolve(globalThis.fetch);
+    }
+    // undici is loaded only for proxied requests so that bundles of the CLI
+    // for non-Node runtimes (e.g. the vivliostyle.pub worker) never evaluate
+    // it. Its dispatcher is paired with its own fetch because Node's built-in
+    // fetch bundles a different undici whose handler API may not match.
+    proxiedFetch ??= import('undici').then(({ EnvHttpProxyAgent, fetch }) => {
+      const dispatcher = new EnvHttpProxyAgent({
         httpProxy: proxyUrl,
         httpsProxy: proxyUrl,
-        noProxy: resolveProxyBypass(options.proxyBypass) ?? '',
+        noProxy,
         token,
-      })
-    : undefined;
+      });
+      return (url, init) => fetch(url, { ...init, dispatcher });
+    });
+    return proxiedFetch;
+  };
   return (url, fetchOptions) => {
     const signal = fetchOptions?.signal ?? options.signal;
-    return undiciFetch(url, {
-      dispatcher,
-      ...fetchOptions,
-      signal,
-    })
+    return resolveFetch()
+      .then((fetch) => fetch(url, { ...fetchOptions, signal }))
       .catch((error) => {
         signal?.throwIfAborted();
         throw error;
