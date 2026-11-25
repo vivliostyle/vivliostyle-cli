@@ -1,6 +1,3 @@
-import { fetch as _fetch } from 'node-fetch-native';
-import { createProxy } from 'node-fetch-native/proxy';
-
 import { resolveProxyBypass } from './proxy.js';
 
 export interface PackageJson {
@@ -41,50 +38,59 @@ export interface PackageSearchResult {
   time: string;
 }
 
+export interface FetchResponse {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  url: string;
+  json(): Promise<unknown>;
+  text(): Promise<string>;
+}
+
+export type Fetch = (
+  url: string,
+  init?: { signal?: AbortSignal },
+) => Promise<FetchResponse>;
+
 export function createFetch(options: {
   proxyServer?: string;
   proxyBypass?: string;
   proxyUser?: string;
   proxyPass?: string;
   signal?: AbortSignal;
-}): typeof _fetch {
+}): Fetch {
   const proxyUrl = options.proxyServer ?? process.env.HTTP_PROXY;
-  const bypass = resolveProxyBypass(options.proxyBypass);
-  const proxy = proxyUrl
-    ? createProxy({
-        url: proxyUrl,
-        noProxy: bypass === '' ? [] : bypass,
-      })
-    : undefined;
+  const noProxy = resolveProxyBypass(options.proxyBypass) ?? '';
   const token =
     options.proxyUser && options.proxyPass
       ? `Basic ${Buffer.from(
           `${options.proxyUser}:${options.proxyPass}`,
         ).toString('base64')}`
       : undefined;
-  if (proxy && token) {
-    // Find kProxyHeaders symbol
-    // https://github.com/nodejs/undici/blob/3d231da2d7ddb7d9354f67ddd86af02890d29d71/lib/dispatcher/proxy-agent.js
-    const proxyHeadersKey = Object.getOwnPropertySymbols(proxy.dispatcher).find(
-      (symbol) => symbol.description === 'proxy headers',
-    );
-    if (proxyHeadersKey) {
-      /* oxlint-disable typescript/no-unsafe-type-assertion -- reach into the proxy dispatcher's internal symbol-keyed headers */
-      (
-        proxy.dispatcher as unknown as {
-          [key: typeof proxyHeadersKey]: Record<string, string>;
-        }
-      )[proxyHeadersKey]['proxy-authorization'] = token;
-      /* oxlint-enable typescript/no-unsafe-type-assertion */
+  let proxiedFetch: Promise<Fetch> | undefined;
+  const resolveFetch = (): Promise<Fetch> => {
+    if (!proxyUrl) {
+      return Promise.resolve(globalThis.fetch);
     }
-  }
+    // undici is loaded only for proxied requests so that bundles of the CLI
+    // for non-Node runtimes (e.g. the vivliostyle.pub worker) never evaluate
+    // it. Its dispatcher is paired with its own fetch because Node's built-in
+    // fetch bundles a different undici whose handler API may not match.
+    proxiedFetch ??= import('undici').then(({ EnvHttpProxyAgent, fetch }) => {
+      const dispatcher = new EnvHttpProxyAgent({
+        httpProxy: proxyUrl,
+        httpsProxy: proxyUrl,
+        noProxy,
+        token,
+      });
+      return (url, init) => fetch(url, { ...init, dispatcher });
+    });
+    return proxiedFetch;
+  };
   return (url, fetchOptions) => {
     const signal = fetchOptions?.signal ?? options.signal;
-    return _fetch(url, {
-      ...proxy,
-      ...fetchOptions,
-      signal,
-    })
+    return resolveFetch()
+      .then((fetch) => fetch(url, { ...fetchOptions, signal }))
       .catch((error) => {
         signal?.throwIfAborted();
         throw error;
@@ -103,12 +109,16 @@ export function createFetch(options: {
 export function listVivliostyleThemes({
   fetch,
 }: {
-  fetch: typeof globalThis.fetch;
+  fetch: Fetch;
 }): Promise<PackageSearchResult> {
   const keyword = 'vivliostyle-theme';
   return fetch(
     `https://registry.npmjs.org/-/v1/search?text=keywords:${keyword}&size=250`,
-  ).then((response) => response.json());
+  ).then(
+    (response) =>
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- trust the npm registry search response shape
+      response.json() as Promise<PackageSearchResult>,
+  );
 }
 
 export function fetchPackageMetadata({
@@ -116,11 +126,13 @@ export function fetchPackageMetadata({
   packageName,
   version,
 }: {
-  fetch: typeof globalThis.fetch;
+  fetch: Fetch;
   packageName: string;
   version: string;
 }): Promise<PackageJson> {
   return fetch(`https://registry.npmjs.org/${packageName}/${version}`).then(
-    (response) => response.json(),
+    (response) =>
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- trust the npm registry package metadata shape
+      response.json() as Promise<PackageJson>,
   );
 }

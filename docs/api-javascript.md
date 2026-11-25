@@ -84,6 +84,10 @@ build({
 
 `string` = `...`
 
+###### browserUrl?
+
+`string` = `...`
+
 ###### category?
 
 `"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
@@ -333,6 +337,10 @@ Scaffold a new Vivliostyle project.
 `string` = `...`
 
 ###### browser?
+
+`string` = `...`
+
+###### browserUrl?
 
 `string` = `...`
 
@@ -719,6 +727,10 @@ Scaffold a new Vivliostyle theme package.
 
 `string` = `...`
 
+###### browserUrl?
+
+`string` = `...`
+
 ###### category?
 
 `"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
@@ -966,6 +978,10 @@ Scaffold a new Vivliostyle theme package.
 `string` = `...`
 
 ###### browser?
+
+`string` = `...`
+
+###### browserUrl?
 
 `string` = `...`
 
@@ -1239,6 +1255,10 @@ Open a browser for previewing the publication.
 
 `string` = `...`
 
+###### browserUrl?
+
+`string` = `...`
+
 ###### category?
 
 `"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` = `...`
@@ -1488,6 +1508,10 @@ Validate a Vivliostyle theme package.
 `string` = `...`
 
 ###### browser?
+
+`string` = `...`
+
+###### browserUrl?
 
 `string` = `...`
 
@@ -1864,6 +1888,7 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-browser"></a> `browser?` | `object` |
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
+| <a id="property-browserurl"></a> `browserUrl?` | `string` |
 | <a id="property-category"></a> `category?` | `"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` |
 | <a id="property-cliversion"></a> `cliVersion` | `string` |
 | <a id="property-cmyk"></a> `cmyk?` | `boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
@@ -1943,6 +1968,7 @@ interface to the schema, so a drift in either direction is rejected.
 | <a id="property-browser-1"></a> `browser?` | `object` |
 | `browser.tag?` | `string` |
 | `browser.type` | `"chrome"` \| `"chromium"` \| `"firefox"` |
+| <a id="property-browserurl-1"></a> `browserUrl?` | `string` |
 | <a id="property-category-1"></a> `category` | `"novel"` \| `"magazine"` \| `"journal"` \| `"report"` \| `"misc"` |
 | <a id="property-cliversion-1"></a> `cliVersion` | `string` |
 | <a id="property-cmyk-1"></a> `cmyk?` | `boolean` \| \{ `fallback?`: [`CmykConversion`](#cmykconversion) \| [`CmykConvertFunction`](#cmykconvertfunction); `ifIncompatibleImagesFound?`: `"warn"` \| `"error"` \| `"ignore"`; `ifUnmappedColorsFound?`: `"warn"` \| `"error"` \| `"ignore"`; `mapOutput?`: `string`; `overrideMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `reserveMap?`: \[`string` \| \{ `b`: `number`; `g`: `number`; `r`: `number`; \}, \{ `c`: `number`; `k`: `number`; `m`: `number`; `y`: `number`; \}\][]; `warnUnmapped?`: `boolean`; \} |
