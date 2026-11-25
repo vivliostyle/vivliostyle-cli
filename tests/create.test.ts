@@ -65,8 +65,7 @@ const mockedNpmModule = vi.hoisted(async () => {
     ),
   ) as PackageJson;
   return {
-    createFetch: () =>
-      (() => {}) as unknown as typeof import('node-fetch-native').fetch,
+    createFetch: () => (() => {}) as unknown as import('../src/npm.js').Fetch,
     listVivliostyleThemes: () =>
       Promise.resolve({
         objects: [

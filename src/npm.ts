@@ -1,5 +1,4 @@
-import { fetch as _fetch } from 'node-fetch-native';
-import { createProxy } from 'node-fetch-native/proxy';
+import { EnvHttpProxyAgent, fetch as undiciFetch } from 'undici';
 
 import { resolveProxyBypass } from './proxy.js';
 
@@ -41,47 +40,36 @@ export interface PackageSearchResult {
   time: string;
 }
 
+export type Fetch = typeof undiciFetch;
+
 export function createFetch(options: {
   proxyServer?: string;
   proxyBypass?: string;
   proxyUser?: string;
   proxyPass?: string;
   signal?: AbortSignal;
-}): typeof _fetch {
+}): Fetch {
   const proxyUrl = options.proxyServer ?? process.env.HTTP_PROXY;
-  const bypass = resolveProxyBypass(options.proxyBypass);
-  const proxy = proxyUrl
-    ? createProxy({
-        url: proxyUrl,
-        noProxy: bypass === '' ? [] : bypass,
-      })
-    : undefined;
   const token =
     options.proxyUser && options.proxyPass
       ? `Basic ${Buffer.from(
           `${options.proxyUser}:${options.proxyPass}`,
         ).toString('base64')}`
       : undefined;
-  if (proxy && token) {
-    // Find kProxyHeaders symbol
-    // https://github.com/nodejs/undici/blob/3d231da2d7ddb7d9354f67ddd86af02890d29d71/lib/dispatcher/proxy-agent.js
-    const proxyHeadersKey = Object.getOwnPropertySymbols(proxy.dispatcher).find(
-      (symbol) => symbol.description === 'proxy headers',
-    );
-    if (proxyHeadersKey) {
-      /* oxlint-disable typescript/no-unsafe-type-assertion -- reach into the proxy dispatcher's internal symbol-keyed headers */
-      (
-        proxy.dispatcher as unknown as {
-          [key: typeof proxyHeadersKey]: Record<string, string>;
-        }
-      )[proxyHeadersKey]['proxy-authorization'] = token;
-      /* oxlint-enable typescript/no-unsafe-type-assertion */
-    }
-  }
+  // Pair the dispatcher with undici's own fetch: Node's built-in fetch
+  // bundles a different undici whose handler API may not match.
+  const dispatcher = proxyUrl
+    ? new EnvHttpProxyAgent({
+        httpProxy: proxyUrl,
+        httpsProxy: proxyUrl,
+        noProxy: resolveProxyBypass(options.proxyBypass) ?? '',
+        token,
+      })
+    : undefined;
   return (url, fetchOptions) => {
     const signal = fetchOptions?.signal ?? options.signal;
-    return _fetch(url, {
-      ...proxy,
+    return undiciFetch(url, {
+      dispatcher,
       ...fetchOptions,
       signal,
     })
@@ -103,12 +91,16 @@ export function createFetch(options: {
 export function listVivliostyleThemes({
   fetch,
 }: {
-  fetch: typeof globalThis.fetch;
+  fetch: Fetch;
 }): Promise<PackageSearchResult> {
   const keyword = 'vivliostyle-theme';
   return fetch(
     `https://registry.npmjs.org/-/v1/search?text=keywords:${keyword}&size=250`,
-  ).then((response) => response.json());
+  ).then(
+    (response) =>
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- trust the npm registry search response shape
+      response.json() as Promise<PackageSearchResult>,
+  );
 }
 
 export function fetchPackageMetadata({
@@ -116,11 +108,13 @@ export function fetchPackageMetadata({
   packageName,
   version,
 }: {
-  fetch: typeof globalThis.fetch;
+  fetch: Fetch;
   packageName: string;
   version: string;
 }): Promise<PackageJson> {
   return fetch(`https://registry.npmjs.org/${packageName}/${version}`).then(
-    (response) => response.json(),
+    (response) =>
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- trust the npm registry package metadata shape
+      response.json() as Promise<PackageJson>,
   );
 }

@@ -9,14 +9,16 @@ let proxy: Server;
 let targetUrl: string;
 let proxyUrl: string;
 let proxyRequests = 0;
+let lastProxyAuthorization: string | undefined;
 
 beforeAll(async () => {
   target = createServer((_request, response) => {
     response.end('direct');
   });
   proxy = createServer();
-  proxy.on('connect', (_request, socket) => {
+  proxy.on('connect', (request, socket) => {
     proxyRequests++;
+    lastProxyAuthorization = request.headers['proxy-authorization'];
     socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n');
   });
   await Promise.all([
@@ -80,4 +82,20 @@ it('prefers NOPROXY over NO_PROXY for npm fetches', async () => {
   const response = await createFetch({ proxyServer: proxyUrl })(targetUrl);
   expect(await response.text()).toBe('direct');
   expect(proxyRequests).toBe(before);
+});
+
+it('sends proxy credentials to the proxy server', async () => {
+  vi.stubEnv('NOPROXY', '');
+  const before = proxyRequests;
+  await expect(
+    createFetch({
+      proxyServer: proxyUrl,
+      proxyUser: 'user',
+      proxyPass: 'pass',
+    })(targetUrl),
+  ).rejects.toThrow('fetch failed');
+  expect(proxyRequests).toBeGreaterThan(before);
+  expect(lastProxyAuthorization).toBe(
+    `Basic ${Buffer.from('user:pass').toString('base64')}`,
+  );
 });
