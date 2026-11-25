@@ -170,16 +170,18 @@ async function launchBrowser({
         );
       }
       args.push(`--proxy-server=${proxy.server}`);
-      const proxyBypassRules = [];
+      // Remove Chromium's implicit loopback bypass, while allowing explicit
+      // bypass rules to override it. Chromium evaluates the last match first.
+      const proxyBypassRules = ['<-loopback>'];
       if (proxy.bypass) {
         proxyBypassRules.push(
           ...proxy.bypass
             .split(',')
             .map((t) => t.trim())
+            .filter(Boolean)
             .map((t) => (t.startsWith('.') ? '*' + t : t)),
         );
       }
-      proxyBypassRules.push('<-loopback>');
       args.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
     }
     // #579: disable web security to allow cross-origin requests

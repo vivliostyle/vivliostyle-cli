@@ -1,6 +1,8 @@
 import { fetch as _fetch } from 'node-fetch-native';
 import { createProxy } from 'node-fetch-native/proxy';
 
+import { resolveProxyBypass } from './proxy.js';
+
 export interface PackageJson {
   name: string;
   version: string;
@@ -47,10 +49,11 @@ export function createFetch(options: {
   signal?: AbortSignal;
 }): typeof _fetch {
   const proxyUrl = options.proxyServer ?? process.env.HTTP_PROXY;
+  const bypass = resolveProxyBypass(options.proxyBypass);
   const proxy = proxyUrl
     ? createProxy({
         url: proxyUrl,
-        noProxy: options.proxyBypass ?? process.env.NO_PROXY ?? undefined,
+        noProxy: bypass === '' ? [] : bypass,
       })
     : undefined;
   const token =

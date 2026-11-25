@@ -246,6 +246,85 @@ it('override option by environment variable', async () => {
   expect(validConfig1.proxy?.bypass).toBe('bypass.example.com');
 });
 
+it.each([
+  {
+    legacy: undefined,
+    key: 'NO_PROXY',
+    value: 'upper.example',
+    args: ['build'],
+    expected: 'upper.example',
+  },
+  {
+    legacy: undefined,
+    key: 'no_proxy',
+    value: 'lower.example',
+    args: ['build'],
+    expected: 'lower.example',
+  },
+  {
+    legacy: 'legacy.example',
+    key: 'NO_PROXY',
+    value: 'upper.example',
+    args: ['build'],
+    expected: 'legacy.example',
+  },
+  {
+    legacy: '',
+    key: 'NO_PROXY',
+    value: 'upper.example',
+    args: ['build'],
+    expected: '',
+  },
+  {
+    legacy: 'legacy.example',
+    key: 'NO_PROXY',
+    value: 'upper.example',
+    args: ['build', '--proxy-bypass', 'flag.example'],
+    expected: 'flag.example',
+  },
+])(
+  'resolves proxy bypass precedence: $expected',
+  async ({ legacy, key, value, args, expected }) => {
+    vi.stubEnv('HTTP_PROXY', 'http://localhost:9001');
+    vi.stubEnv('NOPROXY', legacy);
+    // Windows treats environment variable names case-insensitively.
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- clear an inherited variable
+    vi.stubEnv('NO_PROXY', undefined);
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- clear an inherited variable
+    vi.stubEnv('no_proxy', undefined);
+    vi.stubEnv(key, value);
+    onTestFinished(() => {
+      vi.unstubAllEnvs();
+    });
+    const config = await getTaskConfig(
+      args,
+      resolveFixture('config'),
+      validConfigData,
+    );
+    expect(config.proxy?.bypass).toBe(expected);
+  },
+);
+
+it.skipIf(process.platform === 'win32')(
+  'prefers NO_PROXY over no_proxy when both are set',
+  async () => {
+    vi.stubEnv('HTTP_PROXY', 'http://localhost:9001');
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- clear an inherited variable
+    vi.stubEnv('NOPROXY', undefined);
+    vi.stubEnv('NO_PROXY', 'upper.example');
+    vi.stubEnv('no_proxy', 'lower.example');
+    onTestFinished(() => {
+      vi.unstubAllEnvs();
+    });
+    const config = await getTaskConfig(
+      ['build'],
+      resolveFixture('config'),
+      validConfigData,
+    );
+    expect(config.proxy?.bypass).toBe('upper.example');
+  },
+);
+
 it('deny invalid config', async () => {
   await expect(
     getTaskConfig(
