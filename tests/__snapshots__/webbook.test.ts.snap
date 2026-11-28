@@ -158,6 +158,7 @@ exports[`generate webpub from a single-document publication > tree 1`] = `
 "output/
 ├─ assets/
 │  ├─ subdir.css
+│  ├─ subdir.svg
 │  └─ 日本語.svg
 ├─ subdir/
 │  └─ index.html

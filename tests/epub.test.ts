@@ -26,6 +26,55 @@ function checkValidEpubZip(epub: Buffer) {
   expect(epub.readUInt16LE(66)).not.toBe(0);
 }
 
+it('includes responsive image candidates from HTML in EPUB', async () => {
+  const image = '<svg xmlns="http://www.w3.org/2000/svg"/>';
+  vol.fromJSON({
+    '/work/input/index.html': `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head><title>Responsive images</title></head>
+      <body>
+        <picture>
+          <source media="print" srcset="assets/print.svg?v=1">
+          <source srcset="assets/screen.svg 1x, assets/screen,wide.svg 2x">
+          <img
+            src="assets/fallback.svg"
+            srcset="data:image/gif;base64,R0lGODlhAQABAAAAACw= 1x, assets/fallback-2x.svg 2x"
+            alt="Example image"
+          >
+        </picture>
+      </body>
+      </html>
+    `,
+    '/work/input/assets/print.svg': image,
+    '/work/input/assets/screen.svg': image,
+    '/work/input/assets/screen,wide.svg': image,
+    '/work/input/assets/fallback.svg': image,
+    '/work/input/assets/fallback-2x.svg': image,
+  });
+  await runCommand(['build', 'input/index.html', '-o', 'output.epub'], {
+    cwd: '/work',
+  });
+
+  const zip = new AdmZip(vol.readFileSync('/work/output.epub') as Buffer);
+  const manifest = zip.readFile('EPUB/content.opf')?.toString();
+  assert(manifest);
+
+  expect(zip.readFile('EPUB/index.xhtml')?.toString()).toContain(
+    'srcset="assets/print.svg?v=1"',
+  );
+  for (const file of [
+    'assets/print.svg',
+    'assets/screen.svg',
+    'assets/screen,wide.svg',
+    'assets/fallback.svg',
+    'assets/fallback-2x.svg',
+  ]) {
+    expect(zip.readFile(`EPUB/${file}`)?.toString()).toBe(image);
+    expect(manifest).toContain(`href="${file}"`);
+  }
+});
+
 it('generate EPUB from single HTML with pub manifest', async () => {
   const manifest: PublicationManifest = {
     '@context': ['https://schema.org', 'https://www.w3.org/ns/pub-context'],

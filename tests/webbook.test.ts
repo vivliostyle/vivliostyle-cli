@@ -155,6 +155,10 @@ it('generate webpub from a single-document publication', async () => {
         <link rel="stylesheet" href="../assets/subdir.css">
       </head>
       <body>
+        <picture>
+          <source srcset="../assets/subdir.svg 1x, ../assets/missing.svg 2x">
+          <img src="../assets/日本語.svg" alt="Example image">
+        </picture>
       </body>
       </html>
     `,
@@ -170,6 +174,7 @@ it('generate webpub from a single-document publication', async () => {
     `,
     '/work/input/assets/日本語.svg': '<svg></svg>',
     '/work/input/assets/subdir.css': '',
+    '/work/input/assets/subdir.svg': '<svg></svg>',
   });
   await runCommand(['build', 'input/webbook.html', '-o', 'output'], {
     cwd: '/work',
@@ -181,6 +186,9 @@ it('generate webpub from a single-document publication', async () => {
   expect(await formatHtml(entry)).toMatchSnapshot('entry');
   expect(file['/work/output/escape check%.html']).toBe(
     file['/work/input/escape check%.html'],
+  );
+  expect(file['/work/output/assets/subdir.svg']).toBe(
+    file['/work/input/assets/subdir.svg'],
   );
   expect(file['/work/output/assets/日本語.svg']).toBe(
     file['/work/input/assets/日本語.svg'],
