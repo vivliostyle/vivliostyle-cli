@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 
 import { copy } from 'fs-extra/esm';
 import { lookup as mime } from 'mime-types';
+import parseSrcset from 'parse-srcset';
 import { glob } from 'tinyglobby';
 import upath from 'upath';
 
@@ -335,18 +336,42 @@ export async function retrieveWebbookEntry({
       !upath.relative(rootUrl, url).startsWith('..');
   }
   const retriever = new Map(resourceLoader.fetcherMap);
+  const retrieveResource = (url: string) => {
+    if (!pathContains(url) || retriever.has(url)) {
+      return;
+    }
+    const fetchPromise = resourceLoader.fetch(url);
+    if (fetchPromise) {
+      retriever.set(url, fetchPromise);
+    }
+  };
+  const responsiveImageUrls = new Set<string>();
+  const collectResponsiveImages = (document: Document) => {
+    // Collect every candidate so the reading system can choose one later.
+    for (const element of document.querySelectorAll(
+      'picture > source[srcset], img[srcset]',
+    )) {
+      for (const candidate of parseSrcset(
+        element.getAttribute('srcset') ?? '',
+      )) {
+        const url = URL.parse(candidate.url, document.baseURI);
+        if (!url) {
+          continue;
+        }
+        if (url.protocol === 'file:') {
+          // The query is not part of the on-disk filename.
+          url.search = '';
+        }
+        responsiveImageUrls.add(url.href);
+      }
+    }
+  };
 
+  collectResponsiveImages(dom.window.document);
   if (manifest && manifestUrl) {
     [manifest.resources || []].flat().forEach((v) => {
       const url = typeof v === 'string' ? v : v.url;
-      const fullUrl = new URL(encodeURI(url), manifestUrl).href;
-      if (!pathContains(fullUrl) || retriever.has(fullUrl)) {
-        return;
-      }
-      const fetchPromise = resourceLoader.fetch(fullUrl);
-      if (fetchPromise && !retriever.has(fullUrl)) {
-        retriever.set(fullUrl, fetchPromise);
-      }
+      retrieveResource(new URL(encodeURI(url), manifestUrl).href);
     });
     for (const v of [manifest.readingOrder || []].flat()) {
       const url = typeof v === 'string' ? v : v.url;
@@ -361,7 +386,7 @@ export async function retrieveWebbookEntry({
         continue;
       }
       const subpathResourceLoader = new ResourceLoader();
-      await getJsdomFromUrlOrFile({
+      const subpathDom = await getJsdomFromUrlOrFile({
         src: fullUrl,
         resourceLoader: subpathResourceLoader,
         virtualConsole: createVirtualConsole((error) => {
@@ -373,7 +398,14 @@ export async function retrieveWebbookEntry({
           retriever.set(k, fetcher);
         }
       });
+      collectResponsiveImages(subpathDom.window.document);
     }
+  }
+
+  // Start these fetches after loading the reading order so the saver can
+  // handle missing candidates without an early unhandled rejection.
+  for (const url of responsiveImageUrls) {
+    retrieveResource(url);
   }
 
   const fetchedResources = await ResourceLoader.saveFetchedResources({

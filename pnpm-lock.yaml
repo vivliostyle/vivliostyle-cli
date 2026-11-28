@@ -217,6 +217,9 @@ importers:
       os-locale:
         specifier: 8.0.0
         version: 8.0.0
+      parse-srcset:
+        specifier: 1.0.2
+        version: 1.0.2
       picomatch:
         specifier: 4.0.4
         version: 4.0.4
@@ -344,6 +347,9 @@ importers:
       '@types/npmcli__arborist':
         specifier: 6.3.3
         version: 6.3.3
+      '@types/parse-srcset':
+        specifier: 1.0.0
+        version: 1.0.0
       '@types/picomatch':
         specifier: 4.0.3
         version: 4.0.3
@@ -3134,6 +3140,9 @@ packages:
 
   '@types/pacote@11.1.5':
     resolution: {integrity: sha512-kMsfmhP2G45ngnpvH0LKd1celWnjgdiws1FHu3vMmYuoElGdqnd0ydf1ucZzeXamYnLe0NvSzGP2gYiETOEiQA==}
+
+  '@types/parse-srcset@1.0.0':
+    resolution: {integrity: sha512-5ehc1s3aIQJ05ZVAmYoqDUN8zvlrIZvRUfYP+2bhGNzrY5RQBeJS9JO9jpkVm/vSOW/MkRYLArS/fhXY5cgXPg==}
 
   '@types/parse5@5.0.3':
     resolution: {integrity: sha512-kUNnecmtkunAoQ3CnjmMkzNU/gtxG8guhi+Fk2U/kOpIKjIMKnXGp4IJCgQJrXSgMsWYimYG4TGjz/UzbGEBTw==}
@@ -9801,6 +9810,8 @@ snapshots:
       '@types/npm-registry-fetch': 8.0.4
       '@types/npmlog': 4.1.4
       '@types/ssri': 7.1.1
+
+  '@types/parse-srcset@1.0.0': {}
 
   '@types/parse5@5.0.3': {}
 
